@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -30,6 +29,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -119,7 +119,7 @@ public class DraftProteanWarEngineSpellbookEffectHandler implements NormalEffect
 
     private Card steelPlumeMarshal(UUID ownerId) {
         Card card = new Card();
-        card.addEffect(EffectSlot.ON_ATTACK, new BoostAllOwnCreaturesEffect(2, 2,
+        card.addTrigger(Triggers.attacks(), new BoostAllOwnCreaturesEffect(2, 2,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsAttackingPredicate(),
                         new PermanentHasKeywordPredicate(Keyword.FLYING),

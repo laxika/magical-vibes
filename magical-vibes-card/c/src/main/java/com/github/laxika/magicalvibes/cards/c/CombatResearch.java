@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
@@ -12,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DMU", collectorNumber = "44")
 public class CombatResearch extends Card {
@@ -21,8 +23,8 @@ public class CombatResearch extends Card {
                 // Enchanted creature has "Whenever this creature deals combat damage to a player,
                 // draw a card."
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                        new DrawCardEffect(1),
+                        new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
+                        new DrawCardEffect(1)),
                         GrantScope.ENCHANTED_CREATURE))
                 // As long as enchanted creature is legendary, it gets +1/+1.
                 .addStaticEffect(new StaticBoostEffect(

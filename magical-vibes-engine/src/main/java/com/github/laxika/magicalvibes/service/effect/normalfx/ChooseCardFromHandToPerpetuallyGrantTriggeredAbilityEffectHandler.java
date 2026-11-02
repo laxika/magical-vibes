@@ -46,6 +46,6 @@ public class ChooseCardFromHandToPerpetuallyGrantTriggeredAbilityEffectHandler
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.PerpetualTriggeredAbilityCardChoice(
                 entry.getControllerId(), validIndices,
                 "Choose a card in your hand. It perpetually gains the triggered ability.",
-                choice.slot(), choice.grantedEffects(), choice.cardFilter()));
+                choice.grantedAbilities(), choice.cardFilter()));
     }
 }

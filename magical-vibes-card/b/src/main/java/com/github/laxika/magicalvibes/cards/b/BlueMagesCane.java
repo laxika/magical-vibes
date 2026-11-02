@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CopyCardsExiledWithSourceAndMayCastCopiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
@@ -44,11 +44,11 @@ public class BlueMagesCane extends Card {
         addStaticEffect(new StaticBoostEffect(0, 2, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantSubtypeEffect(CardSubtype.WIZARD, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_ATTACK,
+                        new TriggeredAbility(Triggers.attacks(),
                         SequenceEffect.of(
                                 new ExileTargetCardFromGraveyardAndImprintOnSourceEffect(
                                         instantOrSorcery, GraveyardSearchScope.OPPONENT_GRAVEYARD, true),
-                                CopyCardsExiledWithSourceAndMayCastCopiesEffect.oneForThreeGeneric()),
+                                CopyCardsExiledWithSourceAndMayCastCopiesEffect.oneForThreeGeneric())),
                         GrantScope.EQUIPPED_CREATURE));
 
         addActivatedAbility(new EquipActivatedAbility("{2}"));

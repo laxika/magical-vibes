@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
@@ -28,7 +27,7 @@ public class OgreChitterlord extends Card {
 
     public OgreChitterlord() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), ratTrigger());
-        addEffect(EffectSlot.ON_ATTACK, ratTrigger());
+        addTrigger(Triggers.attacks(), ratTrigger());
     }
 
     private static SequenceEffect ratTrigger() {

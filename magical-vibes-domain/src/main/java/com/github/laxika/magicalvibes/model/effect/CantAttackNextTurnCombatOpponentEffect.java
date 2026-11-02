@@ -5,7 +5,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * controller's next turn. Wall of Dust's "Whenever this creature blocks a creature, that creature
  * can't attack during its controller's next turn."
  * <p>
- * Placed on the {@link com.github.laxika.magicalvibes.model.EffectSlot#ON_BLOCK} slot, auto-targeting
+ * Placed on the {@code Triggers.blocks()} ability, auto-targeting
  * the blocked attacker. The referenced creature is passed as the stack entry's target but the trigger
  * does not target (it can't fizzle). At resolution the opponent's {@code cantAttackNextTurn} flag is
  * set; the turn engine promotes it to an active restriction at the start of that creature's

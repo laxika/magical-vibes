@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOpponentOrTheirPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ public class RoarOfResistance extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsTokenPredicate()))));
 
-        addEffect(EffectSlot.ON_ANY_PLAYER_ATTACKS, new MayPayManaEffect(
+        addTrigger(Triggers.playerAttacks(), new MayPayManaEffect(
                 "{1}{R}",
                 new BoostAllCreaturesEffect(
                         2, 0, new PermanentIsAttackingOpponentOrTheirPlaneswalkerPredicate()),

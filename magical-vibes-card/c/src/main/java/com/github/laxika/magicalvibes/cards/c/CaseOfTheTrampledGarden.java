@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPowerAtLeast;
@@ -39,7 +38,7 @@ public class CaseOfTheTrampledGarden extends Card {
                 )), new SolveSourceEffect()));
 
         target(TargetFilters.attackingCreature())
-                .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+                .addTrigger(Triggers.youAttack(),
                         new ConditionalEffect(new SourceIsSolved(), SequenceEffect.of(
                                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
                                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))));

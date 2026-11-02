@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -48,7 +47,7 @@ public class MoiraBrownGuideAuthor extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                 "Target must be a nonland permanent you control"))
-                .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+                .addTrigger(Triggers.youAttack(),
                         new PutCounterOnTargetPermanentEffect(CounterType.QUEST));
     }
 }

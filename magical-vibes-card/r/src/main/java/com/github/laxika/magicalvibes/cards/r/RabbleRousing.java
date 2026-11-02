@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -31,7 +30,7 @@ public class RabbleRousing extends Card {
                 CardColor.GREEN, Set.of(CardColor.GREEN, CardColor.WHITE),
                 List.of(CardSubtype.CITIZEN), Set.of(), Set.of(), false, false,
                 List.of(), List.of(), false, false, false, 0, Set.of());
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, SequenceEffect.of(
+        addTrigger(Triggers.youAttack(), SequenceEffect.of(
                 citizen,
                 new ConditionalEffect(new ControlsPermanentCount(10, new PermanentIsCreaturePredicate()),
                         new PlayImprintedCardWithoutPayingManaCostEffect())));

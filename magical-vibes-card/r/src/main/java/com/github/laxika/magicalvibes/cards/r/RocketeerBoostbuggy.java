@@ -5,13 +5,13 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -20,7 +20,7 @@ import java.util.Set;
 public class RocketeerBoostbuggy extends Card {
 
     public RocketeerBoostbuggy() {
-        addEffect(EffectSlot.ON_ATTACK, CreateTokenEffect.ofTreasureToken(1));
+        addTrigger(Triggers.attacks(), CreateTokenEffect.ofTreasureToken(1));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

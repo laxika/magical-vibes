@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -23,8 +22,8 @@ public class AgrusKosSpiritOfJustice extends Card {
         target(TargetFilters.creature(), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), exileIfSuspected())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), suspectIfNotSuspected())
-                .addEffect(EffectSlot.ON_ATTACK, exileIfSuspected())
-                .addEffect(EffectSlot.ON_ATTACK, suspectIfNotSuspected());
+                .addTrigger(Triggers.attacks(), exileIfSuspected())
+                .addTrigger(Triggers.attacks(), suspectIfNotSuspected());
     }
 
     private ConditionalEffect exileIfSuspected() {

@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,7 +26,7 @@ public class HamletCaptain extends Card {
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
         ));
         var boostOtherHumans = new BoostAllOwnCreaturesEffect(1, 1, otherHumansFilter);
-        addEffect(EffectSlot.ON_ATTACK, boostOtherHumans);
-        addEffect(EffectSlot.ON_BLOCK, boostOtherHumans);
+        addTrigger(Triggers.attacks(), boostOtherHumans);
+        addTrigger(Triggers.blocks(), boostOtherHumans);
     }
 }

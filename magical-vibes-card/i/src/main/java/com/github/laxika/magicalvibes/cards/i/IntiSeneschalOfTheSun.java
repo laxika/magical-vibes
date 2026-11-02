@@ -13,13 +13,14 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LCI", collectorNumber = "156")
 @CardRegistration(set = "LCI", collectorNumber = "295")
 public class IntiSeneschalOfTheSun extends Card {
 
     public IntiSeneschalOfTheSun() {
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new MayEffect(
+        addTrigger(Triggers.youAttack(), new MayEffect(
                 new DiscardCardThenEffect(
                         null,
                         SequenceEffect.of(

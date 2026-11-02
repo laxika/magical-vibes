@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -49,14 +50,14 @@ public class CatchOfTheDay extends Card {
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new ConditionalEffect(new SourceHasChosenMode(WARD), new CounterUnlessPaysEffect(3)));
 
-        addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(new SourceHasChosenMode(SCRY),
+        addTrigger(Triggers.attacks(), new ConditionalEffect(new SourceHasChosenMode(SCRY),
                 new ScryEffect(2)));
 
         var opponentCreature = TargetFilters.creatureAnOpponentControls();
-        target(opponentCreature).addEffect(EffectSlot.ON_ATTACK,
+        target(opponentCreature).addTrigger(Triggers.attacks(),
                 new ConditionalEffect(new SourceHasChosenMode(GOAD),
                         new GoadTargetCreatureUntilNextTurnEffect(opponentCreature.predicate())))
-                .addEffect(EffectSlot.ON_ATTACK,
+                .addTrigger(Triggers.attacks(),
                         new ConditionalEffect(new SourceHasChosenMode(TAP),
                                 new TapPermanentsEffect(TapUntapScope.TARGET, opponentCreature.predicate())));
 

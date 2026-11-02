@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,7 +26,7 @@ import java.util.List;
 public class AinokStrikeLeader extends Card {
 
     public AinokStrikeLeader() {
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+        addTrigger(Triggers.youAttack(),
                 new ConditionalEffect(
                         new AnyOf(List.of(
                                 new HasAttacker(new PermanentIsSourcePermanentPredicate()),

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.m.MaestrosGift;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -28,7 +27,7 @@ public class InspiredSkypainterMaestrosGift extends Card {
 
         // Whenever one or more creature tokens you control deal combat damage to a player, this
         // creature becomes prepared.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                 new AllyCombatDamageTriggerEffect(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentControlledBySourceControllerPredicate(),

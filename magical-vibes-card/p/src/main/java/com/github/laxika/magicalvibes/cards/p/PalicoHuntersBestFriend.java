@@ -5,13 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.model.effect.AttachSelectedEquipmentToCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -58,6 +58,6 @@ public class PalicoHuntersBestFriend extends Card {
                                 new CardSubtypePredicate(CardSubtype.AURA),
                                 new CardSubtypePredicate(CardSubtype.EQUIPMENT))),
                         new AttachSelectedEquipmentToCreatureEffect());
-        addEffect(EffectSlot.ON_ATTACK, search);
+        addTrigger(Triggers.attacks(), search);
     }
 }

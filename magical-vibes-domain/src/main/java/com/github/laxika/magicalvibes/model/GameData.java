@@ -4054,7 +4054,7 @@ public class GameData {
     public PendingTokenCreationReplacement pendingTokenCreationReplacement;
 
     /** Tracks which permanents (by UUID) have already fired a {@code OncePerTurnTriggerEffect} in the
-     *  {@code ON_ATTACK} slot this turn — "attacks for the first time each turn" (Aurelia, the
+     *  {@code Triggers.attacks()} ability this turn — "attacks for the first time each turn" (Aurelia, the
      *  Warleader). Kept separate from {@link #oncePerTurnTriggersFiredThisTurn} so a permanent with
      *  both a once-each-turn death watcher and a once-each-turn attack trigger doesn't gate one on the
      *  other. Cleared at start of new turn. */

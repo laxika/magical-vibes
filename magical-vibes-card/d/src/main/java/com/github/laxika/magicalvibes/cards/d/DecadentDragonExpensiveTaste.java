@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.e.ExpensiveTaste;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WOE", collectorNumber = "223")
 @CardRegistration(set = "WOE", collectorNumber = "287")
@@ -14,7 +14,7 @@ public class DecadentDragonExpensiveTaste extends Card {
     public DecadentDragonExpensiveTaste() {
         setBackFaceCard(new ExpensiveTaste());
         addCastingOption(new AdventureCast("{2}{B}"));
-        addEffect(EffectSlot.ON_ATTACK, CreateTokenEffect.ofTreasureToken(1));
+        addTrigger(Triggers.attacks(), CreateTokenEffect.ofTreasureToken(1));
     }
 
     @Override

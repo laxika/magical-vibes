@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -21,7 +20,7 @@ public class DreadwingScavenger extends Card {
 
     public DreadwingScavenger() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), loot());
-        addEffect(EffectSlot.ON_ATTACK, loot());
+        addTrigger(Triggers.attacks(), loot());
 
         GraveyardCardThreshold threshold = new GraveyardCardThreshold(7, null);
         addStaticEffect(new ConditionalEffect(threshold,

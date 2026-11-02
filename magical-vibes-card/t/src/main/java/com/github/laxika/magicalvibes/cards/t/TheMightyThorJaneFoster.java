@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -33,7 +32,7 @@ public class TheMightyThorJaneFoster extends Card {
         target(new PermanentPredicateTargetFilter(
                 targetFilter,
                 "Target must be a nontoken artifact or creature"
-        ), 0, 1).addEffect(EffectSlot.ON_ATTACK,
+        ), 0, 1).addTrigger(Triggers.attacks(),
                 FlickerEffect.flickerTargetReturningTapped());
         addTrigger(Triggers.enters(Triggers.EQUIPMENT, ObjectRelation.ANOTHER_YOU_CONTROL), new DrawCardEffect());
     }

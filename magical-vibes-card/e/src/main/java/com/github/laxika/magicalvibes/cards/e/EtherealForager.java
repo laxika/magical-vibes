@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardExiledWithSourceIntoHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ public class EtherealForager extends Card {
                 new CardTypePredicate(CardType.SORCERY)));
 
         addCastingCost(new DelveCost());
-        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        addTrigger(Triggers.attacks(), new MayEffect(
                 new PutCardExiledWithSourceIntoHandEffect(null, instantOrSorcery, true),
                 "Return an instant or sorcery card exiled with Ethereal Forager to its owner's hand?"));
     }

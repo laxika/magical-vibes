@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AttackingPlayerIsOpponent;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.MakeChosenPermanentAttackingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ public class TahngarthFirstMate extends Card {
 
     public TahngarthFirstMate() {
         addStaticEffect(new CanBeBlockedByAtMostNCreaturesEffect(1));
-        addEffect(EffectSlot.ON_ANY_PLAYER_ATTACKS, new ConditionalEffect(
+        addTrigger(Triggers.playerAttacks(), new ConditionalEffect(
                 new AllOf(List.of(
                         new AttackingPlayerIsOpponent(),
                         new MinimumAttackers(1),

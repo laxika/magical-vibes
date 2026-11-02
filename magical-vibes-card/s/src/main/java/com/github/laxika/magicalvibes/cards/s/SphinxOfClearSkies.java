@@ -6,13 +6,14 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsAndSeparateEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DMU", collectorNumber = "67")
 public class SphinxOfClearSkies extends Card {
 
     public SphinxOfClearSkies() {
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new RevealTopCardsAndSeparateEffect(new BasicLandTypesAmongControlledLands()));
     }
 }

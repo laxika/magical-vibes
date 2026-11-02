@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.k.KaldringTheRimestaff;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ public class JornGodOfWinter extends Card {
         setBackFaceCard(new KaldringTheRimestaff());
         setModalDoubleFaced(true);
 
-        addEffect(EffectSlot.ON_ATTACK, new UntapPermanentsEffect(
+        addTrigger(Triggers.attacks(), new UntapPermanentsEffect(
                 TapUntapScope.CONTROLLED,
                 new PermanentHasSupertypePredicate(CardSupertype.SNOW)));
 

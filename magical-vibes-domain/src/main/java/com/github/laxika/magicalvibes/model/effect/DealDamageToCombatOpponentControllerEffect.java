@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * creature blocks a creature, this creature deals damage to that creature's controller equal to
  * this creature's power" ({@code amount = new SourcePower()}).
  * <p>
- * Placed on the {@link com.github.laxika.magicalvibes.model.EffectSlot#ON_BLOCK} slot (for the
+ * Placed on the {@code Triggers.blocks()} ability (for the
  * "blocks" half, auto-targeting the blocked attacker). As a {@link CombatOpponentReferencingEffect}
  * the combat opponent is passed as the stack entry's non-targeting target (it can't fizzle) and, on
  * an aura/equipment, {@code CombatTriggerService} auto-targets the enchanted/equipped creature's

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Marker for an {@code ON_ATTACK} triggered ability that carries <em>two</em> permanent targets chosen
+ * Marker for an {@code Triggers.attacks()} triggered ability that carries <em>two</em> permanent targets chosen
  * sequentially as the ability goes on the stack: first a creature the attacking player controls, then
  * up to one creature the defending player controls (Decimator Beetle). The ordinary attack-trigger
  * pipeline collects only a single target, so {@code CombatAttackService} routes any trigger whose

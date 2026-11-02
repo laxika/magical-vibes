@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DIS", collectorNumber = "115")
 @CardRegistration(set = "GK2", collectorNumber = "64")
@@ -16,7 +17,7 @@ public class JaggedPoppet extends Card {
     public JaggedPoppet() {
         addEffect(EffectSlot.ON_DEALT_DAMAGE,
                 new DiscardEffect(new EventValue(), DiscardRecipient.CONTROLLER));
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new ConditionalEffect(new ControllerHandEmpty(),
                         new DiscardEffect(new EventValue(), DiscardRecipient.TARGET_PLAYER)));
     }

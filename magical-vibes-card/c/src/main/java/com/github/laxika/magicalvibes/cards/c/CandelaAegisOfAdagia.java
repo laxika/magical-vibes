@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -67,7 +66,7 @@ public class CandelaAegisOfAdagia extends Card {
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
 
         // Station 8+ also grants the combat damage trigger
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new ConditionalEffect(
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new ConditionalEffect(
                 new SourceCounterThreshold(8, CounterType.CHARGE),
                 new PutCardToBattlefieldEffect(
                         new CardAllOfPredicate(List.of(

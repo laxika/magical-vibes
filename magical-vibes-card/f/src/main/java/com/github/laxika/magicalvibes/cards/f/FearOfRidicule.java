@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -33,7 +33,7 @@ public class FearOfRidicule extends Card {
         CreateTokenCopyOfTargetPermanentEffect tokenCopy = new CreateTokenCopyOfTargetPermanentEffect(
                 List.of(), Set.of(CardType.ENCHANTMENT, CardType.CREATURE), 1, 1, java.util.Map.of(),
                 false, false, false, false, false, false, null, Set.of()).withReplacedCardTypes();
-        addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                 new AllyCombatDamageTriggerEffect(
                         enchantmentCreature,
                         new ExileRandomCreatureCardFromDamagedPlayerLibraryAndCreateTokenCopyEffect(tokenCopy),

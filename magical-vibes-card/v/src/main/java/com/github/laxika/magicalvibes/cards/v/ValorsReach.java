@@ -13,12 +13,13 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MOC", collectorNumber = "69")
 public class ValorsReach extends Card {
 
     public ValorsReach() {
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+        addTrigger(Triggers.youAttack(),
                 new ConditionalEffect(
                         new ExactlyAttackers(2),
                         new GrantKeywordToTriggeringAttackersEffect(

@@ -7,16 +7,17 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.StaticAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BandsWithOtherEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.EnumSet;
 import java.util.Locale;
 import java.util.Set;
@@ -108,7 +109,8 @@ final class TokenCardFactory {
             }
         }
         if (token.tokenEffects() != null
-                && token.tokenEffects().stream().anyMatch(ability -> LegacySlots.slotOf(ability) == EffectSlot.ON_ATTACK)
+                && token.tokenEffects().stream().anyMatch(ability -> ability instanceof TriggeredAbility triggered
+                        && triggered.hasTrigger(Triggers.attacks()))
                 && token.subtypes() != null && token.subtypes().contains(CardSubtype.AURA)) {
             tokenCard.setAttackTriggerOwnedByAura(true);
         }

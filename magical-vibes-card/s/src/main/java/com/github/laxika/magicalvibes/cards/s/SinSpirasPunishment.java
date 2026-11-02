@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileRandomPermanentFromGraveyardCreateTappedTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -15,6 +14,6 @@ public class SinSpirasPunishment extends Card {
     public SinSpirasPunishment() {
         var effect = new ExileRandomPermanentFromGraveyardCreateTappedTokenCopyEffect();
         addTrigger(Triggers.enters(ObjectRelation.THIS), effect);
-        addEffect(EffectSlot.ON_ATTACK, effect);
+        addTrigger(Triggers.attacks(), effect);
     }
 }

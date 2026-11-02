@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -17,7 +16,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SmaugTheMagnificent extends Card {
 
     public SmaugTheMagnificent() {
-        addEffect(EffectSlot.ON_ATTACK, new DealDamageToAnyTargetEffect(new PermanentCount(
+        addTrigger(Triggers.attacks(), new DealDamageToAnyTargetEffect(new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.TREASURE), CountScope.CONTROLLER)));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), CreateTokenEffect.ofTreasureToken(1));
     }

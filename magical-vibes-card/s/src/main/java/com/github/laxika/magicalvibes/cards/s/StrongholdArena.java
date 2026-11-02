@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -34,7 +33,7 @@ public class StrongholdArena extends Card {
                 new Scaled(new RepeatedAdditionalCostCount("{W}"), 3)))));
 
         // The trigger is batched when one or more creatures deal combat damage in a damage step.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                 new AllyCombatDamageTriggerEffect(null,
                         new MayEffect(new RevealTopCardPutIntoHandAndChangeLifeEffect(false),
                                 "Reveal the top card of your library?"), false, true));

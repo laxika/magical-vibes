@@ -35,7 +35,7 @@ public class LurkerInTheDeep extends Card {
 
         SeekEffect seekNonland = new SeekEffect(new CardNotPredicate(new CardTypePredicate(CardType.LAND)));
         addTrigger(Triggers.enters(ObjectRelation.THIS), seekNonland);
-        addEffect(EffectSlot.ON_ATTACK, seekNonland);
+        addTrigger(Triggers.attacks(), seekNonland);
         addEffect(EffectSlot.ON_CONTROLLER_SEEKS, new ConjureDuplicatesOfSoughtCardsAndManifestEffect());
 
         addStaticEffect(new ConditionalEffect(

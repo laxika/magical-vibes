@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CreatureCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnGraveyardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -14,13 +13,14 @@ import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
 public class CreepingInn extends Card {
 
     public CreepingInn() {
-        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        addTrigger(Triggers.attacks(), new MayEffect(
                 ExileOwnGraveyardCardThenEffect.ifYouDo(
                         new CardTypePredicate(CardType.CREATURE),
                         SequenceEffect.of(

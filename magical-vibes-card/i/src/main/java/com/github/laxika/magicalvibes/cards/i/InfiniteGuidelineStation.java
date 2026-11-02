@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -63,6 +62,6 @@ public class InfiniteGuidelineStation extends Card {
                 new SourceCounterThreshold(12, CounterType.CHARGE),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
 
-        addEffect(EffectSlot.ON_ATTACK, new DrawCardEffect(multicoloredPermanents));
+        addTrigger(Triggers.attacks(), new DrawCardEffect(multicoloredPermanents));
     }
 }

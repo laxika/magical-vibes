@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
@@ -51,14 +51,15 @@ public class GuardianScalelord extends Card {
                 .targetGraveyard(true)
                 .build();
 
-        addEffect(EffectSlot.ON_ATTACK, attackTrigger);
+        addTrigger(Triggers.attacks(), attackTrigger);
         target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                 new ConditionalEffect(
                         new TargetPermanentMatches(anotherCreature),
                         SequenceEffect.of(
                                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET),
-                                new GrantEffectToTargetUntilEndOfTurnEffect(EffectSlot.ON_ATTACK, attackTrigger)
+                                new GrantEffectToTargetUntilEndOfTurnEffect(new TriggeredAbility(Triggers.attacks(),
+                                        attackTrigger))
                         )
                 )
         ));

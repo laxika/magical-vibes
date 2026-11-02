@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOpponentOfSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OPC2", collectorNumber = "22")
 @CardRegistration(set = "OPCA", collectorNumber = "43")
@@ -21,7 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class KharashaFoothills extends Card {
 
     public KharashaFoothills() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS, new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.creatureYouControlAttacks(), new TriggeringPermanentConditionalEffect(
                 new PermanentIsAttackingOpponentOfSourceControllerPredicate(),
                 new CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect()));
         target(TargetFilters.creature()).addEffect(EffectSlot.CHAOS_TRIGGERED, SequenceEffect.of(

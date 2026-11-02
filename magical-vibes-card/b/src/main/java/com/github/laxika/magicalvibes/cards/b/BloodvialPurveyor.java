@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -34,6 +33,6 @@ public class BloodvialPurveyor extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.BLOOD)
                 )),
                 CountScope.DEFENDING_PLAYER);
-        addEffect(EffectSlot.ON_ATTACK, new BoostSelfEffect(defendingPlayerBloodTokens, new Fixed(0)));
+        addTrigger(Triggers.attacks(), new BoostSelfEffect(defendingPlayerBloodTokens, new Fixed(0)));
     }
 }

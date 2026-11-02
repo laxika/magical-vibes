@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -33,8 +33,8 @@ public class FireNationTurret extends Card {
                         new GrantKeywordEffect(Keyword.FIREBENDING, GrantScope.TARGET))
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new GrantEffectToTargetUntilEndOfTurnEffect(
-                                EffectSlot.ON_ATTACK,
-                                new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 2)));
+                                new TriggeredAbility(Triggers.attacks(),
+                                new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 2))));
 
         // {R}: Put a charge counter on this artifact.
         addActivatedAbility(new ActivatedAbility(

@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardNamedIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -15,8 +15,8 @@ import java.util.Set;
 public class GhalmaTheShaper extends Card {
 
     public GhalmaTheShaper() {
-        addEffect(EffectSlot.ON_ATTACK, new ConjureCardNamedIntoHandEffect("SOM", "24", false));
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(), new ConjureCardNamedIntoHandEffect("SOM", "24", false));
+        addTrigger(Triggers.attacks(),
                 new CreateTokenEffect(1, "Myr", 1, 1, null,
                         List.of(CardSubtype.MYR), Set.of(), Set.of(CardType.ARTIFACT)));
     }

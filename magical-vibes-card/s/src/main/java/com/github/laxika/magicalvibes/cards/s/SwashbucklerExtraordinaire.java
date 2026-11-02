@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
@@ -29,7 +28,7 @@ public class SwashbucklerExtraordinaire extends Card {
         GrantKeywordEffect grantDoubleStrike =
                 new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGETS);
         var targetGroup = targetUpTo(new EventValue(), TargetFilters.creature(), 100);
-        targetGroup.addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new MayEffect(
+        targetGroup.addTrigger(Triggers.youAttack(), new MayEffect(
                 SequenceEffect.of(
                         new SacrificeAnyNumberOfPermanentsEffect(
                                 new PermanentHasSubtypePredicate(CardSubtype.TREASURE)),

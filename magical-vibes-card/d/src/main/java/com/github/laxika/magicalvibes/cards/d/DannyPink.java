@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,7 +31,7 @@ public class DannyPink extends Card {
                         new PermanentIsAttackingPredicate(),
                         new PermanentPowerLessThanSourcePowerPredicate())),
                 "Target must be an attacking creature with lesser power"))
-                .addEffect(EffectSlot.ON_ATTACK,
+                .addTrigger(Triggers.attacks(),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         addStaticEffect(new GrantTriggeredAbilityEffect(

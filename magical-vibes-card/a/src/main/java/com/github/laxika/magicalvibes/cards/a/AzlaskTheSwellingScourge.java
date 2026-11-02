@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.ControllerExperienceCounters;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExperienceCountersEffect;
@@ -47,9 +47,9 @@ public class AzlaskTheSwellingScourge extends Card {
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ALL_OWN_CREATURES,
                                 scionsAndSpawns),
                         new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
-                                EffectSlot.ON_ATTACK,
+                                new TriggeredAbility(Triggers.attacks(),
                                 new SacrificePermanentsEffect(
-                                        1, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER),
+                                        1, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER)),
                                 scionsAndSpawns)),
                 "{W}{U}{B}{R}{G}: Creatures you control get +X/+X until end of turn, where X is the number "
                         + "of experience counters you have. Scions and Spawns you control gain indestructible "

@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "HML", collectorNumber = "96")
 public class RysorianBadger extends Card {
@@ -18,7 +18,7 @@ public class RysorianBadger extends Card {
         // The cards are chosen from the defending player's graveyard as the trigger goes on the
         // stack; the "you may" is decided on resolution, and both riders only apply when at least one
         // card was exiled.
-        addEffect(EffectSlot.ON_ATTACKS_UNBLOCKED,
+        addTrigger(Triggers.attacksUnblocked(),
                 new MayEffect(new ExileCardsFromGraveyardEffect(2, 1, true,
                         new CardTypePredicate(CardType.CREATURE), true),
                         "Exile the chosen cards from the defending player's graveyard?"));

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -20,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -47,7 +47,7 @@ public class OyaminartokPolarWerebear extends Card {
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new SourceHasDealtDamage()),
                 new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)));
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, CreateTokenEffect.ofFoodToken(1));
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), CreateTokenEffect.ofFoodToken(1));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

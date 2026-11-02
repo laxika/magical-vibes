@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsOwnCommander;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect;
@@ -33,7 +33,7 @@ public class IronwillForger extends Card {
                 new ConditionalEffect(
                         new ControllerControlsOwnCommander(),
                         new GrantEffectToTargetUntilEndOfTurnEffect(
-                                EffectSlot.ON_ATTACK,
-                                CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect.myriad())));
+                                new TriggeredAbility(Triggers.attacks(),
+                                CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect.myriad()))));
     }
 }

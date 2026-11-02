@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordToMatchingCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -18,7 +18,7 @@ public class PhyresisRoach extends Card {
     public PhyresisRoach() {
         addStaticEffect(new ToxicEffect(1));
         CardSubtypePredicate insectCard = new CardSubtypePredicate(CardSubtype.INSECT);
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new PerpetuallyGrantKeywordToMatchingCardsEffect(
                         insectCard,
                         new PermanentHasSubtypePredicate(CardSubtype.INSECT),

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -34,7 +34,7 @@ public class AndRilFlameOfTheWest extends Card {
                 CardType.CREATURE, 2, "Spirit", 1, 1, CardColor.WHITE, null,
                 List.of(CardSubtype.SPIRIT), Set.of(Keyword.FLYING), Set.of(),
                 true, false, List.of(), List.of(), false, false, false, 0, Set.of());
-        addEffect(EffectSlot.ON_ATTACK, new ConditionalReplacementEffect(
+        addTrigger(Triggers.attacks(), new ConditionalReplacementEffect(
                 new EnchantedPermanentMatches(
                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
                         "equipped creature is legendary"),

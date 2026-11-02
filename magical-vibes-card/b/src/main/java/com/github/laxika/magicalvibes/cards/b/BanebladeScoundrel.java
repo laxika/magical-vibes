@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MID", collectorNumber = "85")
 @CardRegistration(set = "DBL", collectorNumber = "85")
@@ -13,7 +13,7 @@ public class BanebladeScoundrel extends Card {
     public BanebladeScoundrel() {
         setBackFaceCard(new BaneclawMarauder());
 
-        addEffect(EffectSlot.ON_BECOMES_BLOCKED,
+        addTrigger(Triggers.becomesBlocked(),
                 new BoostAllCreaturesEffect(-1, -1, new PermanentBlockingSourcePredicate()));
     }
 

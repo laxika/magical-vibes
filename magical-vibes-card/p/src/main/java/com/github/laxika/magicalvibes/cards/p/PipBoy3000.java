@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -40,7 +41,8 @@ public class PipBoy3000 extends Card {
                         List.of(new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS)),
                         TargetFilters.land(), null, 0, 2, false, null)
         )));
-        addStaticEffect(new GrantTriggeredAbilityEffect(EffectSlot.ON_ATTACK, attackChoice, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.attacks(),
+                attackChoice), GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

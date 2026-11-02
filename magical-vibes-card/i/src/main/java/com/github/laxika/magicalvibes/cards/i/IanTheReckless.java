@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -13,13 +12,14 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PIP", collectorNumber = "59")
 @CardRegistration(set = "PIP", collectorNumber = "587")
 public class IanTheReckless extends Card {
 
     public IanTheReckless() {
-        addEffect(EffectSlot.ON_ATTACK, new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.attacks(), new TriggeringPermanentConditionalEffect(
                 new PermanentIsModifiedPredicate(),
                 new MayEffect(
                         new ConditionalEffect(

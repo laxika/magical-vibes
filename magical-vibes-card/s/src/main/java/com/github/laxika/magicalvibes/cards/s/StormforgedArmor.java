@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.MakeCreatedPermanentsAttackin
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,10 +22,10 @@ public class StormforgedArmor extends Card {
 
     public StormforgedArmor() {
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_ATTACK,
+                new TriggeredAbility(Triggers.attacks(),
                 SequenceEffect.of(
                         new ConjureCardToBattlefieldEffect("DRK", "57"),
-                        new MakeCreatedPermanentsAttackingEffect(true)),
+                        new MakeCreatedPermanentsAttackingEffect(true))),
                 GrantScope.EQUIPPED_CREATURE));
 
         addActivatedAbility(new ActivatedAbility(

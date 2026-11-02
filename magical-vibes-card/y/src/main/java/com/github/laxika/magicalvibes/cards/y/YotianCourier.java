@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,7 +30,7 @@ public class YotianCourier extends Card {
         CardAllOfPredicate nonlandCard = new CardAllOfPredicate(List.of(
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
 
-        addEffect(EffectSlot.ON_ATTACK, new ChooseModeNotChosenDuringLastCombatEffect(List.of(
+        addTrigger(Triggers.attacks(), new ChooseModeNotChosenDuringLastCombatEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a tapped Powerstone token.",
                         CreateTokenEffect.ofPowerstoneToken(new Fixed(1))),

@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceHasSubtype;
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureTypeWithBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,8 +31,8 @@ public class KellanPlanarTrailblazer extends Card {
                 SequenceEffect.of(
                         new ConditionalEffect(new SourceHasSubtype(CardSubtype.SCOUT),
                                 new GrantEffectToTargetEffect(
-                                        EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                                        new ExileTopCardMayPlayThisTurnEffect(false),
+                                        new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
+                                        new ExileTopCardMayPlayThisTurnEffect(false)),
                                         EffectDuration.PERMANENT, false, GrantScope.SELF)),
                         BecomeCreatureTypeWithBasePowerToughnessEffect.settingCreatureTypes(
                                 null, null, CardSubtype.SCOUT,

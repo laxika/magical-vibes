@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
@@ -44,10 +43,10 @@ public class TheRani extends Card {
         target(new PermanentPredicateTargetFilter(ANOTHER_CREATURE, "Target must be another creature"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new CreateTokenAttachedToTargetEffect(markOfTheRaniToken(), PlayerRelation.ANY))
-                .addEffect(EffectSlot.ON_ATTACK,
+                .addTrigger(Triggers.attacks(),
                         new CreateTokenAttachedToTargetEffect(markOfTheRaniToken(), PlayerRelation.ANY));
 
-        addEffect(EffectSlot.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT,
+        addTrigger(Triggers.creatureDealsCombatDamageToOpponent(),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsGoadedPredicate(),
                         CreateTokenEffect.ofClueToken(1)));

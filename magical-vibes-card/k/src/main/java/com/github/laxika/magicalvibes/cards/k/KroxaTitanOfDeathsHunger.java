@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileNCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.TriggerMode;
@@ -24,7 +23,7 @@ public class KroxaTitanOfDeathsHunger extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
                 new SacrificeSelfUnlessEscapedEffect());
         addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT, new KroxaDiscardEffect());
-        addEffect(EffectSlot.ON_ATTACK, new KroxaDiscardEffect());
+        addTrigger(Triggers.attacks(), new KroxaDiscardEffect());
 
         addCastingOption(new GraveyardCast(null, "{B}{B}{R}{R}", List.of(
                 new ExileNCardsFromGraveyardCastingCost(null, "other cards", 5)),

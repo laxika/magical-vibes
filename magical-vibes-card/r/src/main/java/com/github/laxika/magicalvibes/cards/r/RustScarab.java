@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendin
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,7 +28,7 @@ public class RustScarab extends Card {
                                 new PermanentIsEnchantmentPredicate())),
                         new PermanentControlledByDefendingPlayerPredicate())),
                 "Target must be an artifact or enchantment defending player controls"))
-                .addEffect(EffectSlot.ON_BECOMES_BLOCKED,
+                .addTrigger(Triggers.becomesBlocked(),
                         new MayEffect(new DestroyTargetPermanentEffect(),
                                 "destroy target artifact or enchantment defending player controls?"));
     }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -23,7 +22,7 @@ public class PrimalCocoon extends Card {
                         new PutCounterOnReferencedPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE))
 
                 // When enchanted creature attacks or blocks, sacrifice Primal Cocoon.
-                .addEffect(EffectSlot.ON_ATTACK, new SacrificeSelfEffect())
-                .addEffect(EffectSlot.ON_BLOCK, new SacrificeSelfEffect());
+                .addTrigger(Triggers.attacks(), new SacrificeSelfEffect())
+                .addTrigger(Triggers.blocks(), new SacrificeSelfEffect());
     }
 }

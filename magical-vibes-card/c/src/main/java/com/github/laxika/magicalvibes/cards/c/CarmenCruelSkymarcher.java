@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -29,7 +28,7 @@ public class CarmenCruelSkymarcher extends Card {
 
         // Whenever Carmen attacks, return up to one target permanent card with mana value less than
         // or equal to Carmen's power from your graveyard to the battlefield.
-        addEffect(EffectSlot.ON_ATTACK, ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.attacks(), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardAllOfPredicate(List.of(
                         new CardIsPermanentPredicate(),

@@ -16,7 +16,6 @@ public enum EffectSlot {
     ON_SELF_BECOMES_CONTROLLED,
     /** Triggers when this permanent changes control away from its current controller. */
     ON_SELF_LOSES_CONTROL,
-    ON_BLOCK,
     /** Triggers whenever a time counter is removed from this card while it is suspended in exile. */
     ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE,
     /** Triggers when this permanent's controller sets a scheme in motion. */
@@ -25,28 +24,9 @@ public enum EffectSlot {
     /** Triggers whenever a Case is solved by the controller. */
     ON_ALLY_CASE_SOLVES,
     ON_CONTROLLER_FORETELLS,
-    ON_COMBAT_DAMAGE_TO_PLAYER,
-    ON_COMBAT_DAMAGE_TO_CREATURE,
-    /** Triggers once per combat damage step when the source deals combat damage to one or more blockers. */
-    ON_COMBAT_DAMAGE_TO_BLOCKING_CREATURE,
     ON_DAMAGE_TO_PLAYER,
     /** Combat or noncombat damage dealt by the source to an opponent of its controller. */
     ON_DAMAGE_TO_OPPONENT,
-    ON_ATTACK,
-    ON_BECOMES_BLOCKED,
-    /** Triggers once per attacking creature the controller controls that ends up unblocked
-     *  ("Whenever this creature attacks and isn't blocked"). Fires during the declare-blockers
-     *  step once blocks are locked in — after the defender declares blockers, or immediately when
-     *  the defender has no possible blockers. Player-affecting effects (e.g. a discard) read the
-     *  defending player from the stack entry's (non-targeting) {@code targetId}. Checked in
-     *  {@code CombatBlockService}. Used by Abyssal Nightstalker. */
-    ON_ATTACKS_UNBLOCKED,
-    /** Aura slot: triggers when the creature this aura is attached to attacks and isn't blocked
-     *  ("Whenever enchanted creature attacks and isn't blocked"). Fires during the declare-blockers
-     *  step alongside {@code ON_ATTACKS_UNBLOCKED}; the stack entry bakes the enchanted attacker as
-     *  the (non-targeting) {@code sourcePermanentId} and the defending player as the {@code targetId}.
-     *  Checked in {@code CombatBlockService}. Used by Cloak of Confusion. */
-    ON_ENCHANTED_CREATURE_ATTACKS_UNBLOCKED,
     ON_CONTROLLER_DRAWS,
     /** Triggers when the controller draws their second card of the turn. */
     ON_CONTROLLER_DRAWS_SECOND_CARD,
@@ -251,9 +231,6 @@ public enum EffectSlot {
      *  The damaged creature is captured as the non-targeting {@code targetId} of the queued
      *  ability. Checked from both combat and noncombat creature-damage paths. */
     ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_CREATURE,
-    /** Triggers on an Equipment whenever the creature it is attached to deals combat damage to anything. */
-    ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE,
-    ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER,
     /** Triggers whenever the game changes between day and night. */
     ON_DAY_NIGHT_CHANGE,
     /** Triggers whenever the game changes between day and night while this card is in its controller's graveyard. */
@@ -262,11 +239,6 @@ public enum EffectSlot {
     /** Triggers whenever this permanent is dealt noncombat damage. The amount is snapshotted onto
      *  the triggered ability's event value. */
     ON_NONCOMBAT_DAMAGE_TO_SELF,
-    /** Triggers whenever this creature is dealt combat damage. The amount of combat damage dealt
-     *  is snapshotted onto the triggered ability's event value. */
-    ON_COMBAT_DAMAGE_TO_SELF,
-    /** Triggers once per combat damage step in which this permanent's controller is dealt combat damage. */
-    ON_CONTROLLER_DEALT_COMBAT_DAMAGE,
     ON_OPPONENT_LOSES_LIFE,
     ON_OPPONENT_SHUFFLES_LIBRARY,
     ON_ANY_PLAYER_SHUFFLES_LIBRARY,
@@ -310,37 +282,7 @@ public enum EffectSlot {
     /** Triggers whenever this permanent's controller loses a coin flip. */
     ON_CONTROLLER_LOSES_COIN_FLIP,
     ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE,
-    ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
-    /** Triggers whenever one or more matching creatures deal combat damage to a player or battle. */
-    ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE,
-    /** Triggers from a permanent whenever a creature with the same name deals combat damage to a player. */
-    ON_CREATURE_WITH_SAME_NAME_COMBAT_DAMAGE_TO_PLAYER,
-    /** Triggers whenever any creature deals combat damage to one of this permanent's controller's opponents. */
-    ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT,
-    /** Triggers whenever any creature deals combat damage to any player, including this permanent's controller. */
-    ON_ANY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
-    /** Triggers whenever a creature deals combat damage to its owner. */
-    ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OWNER,
-    /** Triggers once when one or more goaded creatures deal combat damage to one of this permanent's controller's opponents. */
-    ON_GOADED_CREATURES_COMBAT_DAMAGE_TO_OPPONENT,
     ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
-    /** Triggers once when one or more creatures the controller controls are declared as attackers.
-     *  Unlike ON_ATTACK (which fires per creature), this fires exactly once per combat. */
-    ON_ALLY_CREATURES_ATTACK,
-    /** "Whenever a creature you control attacking causes a triggered ability of that creature to
-     *  trigger", including enlist ("whenever this creature enlists a creature"). Each collector checks
-     *  which attacking creature and which ability it watches. */
-    ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS,
-    /** Command-zone mirror of {@link #ON_ALLY_CREATURES_ATTACK} for Eminence abilities. */
-    COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK,
-    /** Triggers once for each player directly attacked by one or more creatures the controller
-     *  controls. Attacking a planeswalker does not count. Checked in
-     *  {@code CombatAttackService.declareAttackers}. */
-    ON_ALLY_CREATURES_ATTACK_PLAYER,
-    /** Triggers once for each player or planeswalker directly attacked by one or more creatures the
-     *  controller controls ("whenever you attack a player or planeswalker with ..."). Attacking a
-     *  battle does not count. Checked in {@code CombatAttackService.declareAttackers}. */
-    ON_ALLY_CREATURES_ATTACK_PLAYER_OR_PLANESWALKER,
     /** State-triggered abilities (MTG rule 603.8). Checked after SBAs; fire once onto the
      *  stack and don't retrigger while the ability is already on the stack. */
     STATE_TRIGGERED,
@@ -406,29 +348,6 @@ public enum EffectSlot {
     ON_CONTROLLER_PAYS_LIFE,
     /** Triggers whenever an opponent pays a mana tax imposed by a spell or permanent controlled by this permanent. */
     ON_OPPONENT_PAYS_TAX,
-    /** Triggers when one or more creatures the controller controls are declared as attackers,
-     *  while this card is in the controller's graveyard.  The attacker count is passed via
-     *  xValue.  Checked in {@code CombatAttackService.declareAttackers}. */
-    GRAVEYARD_ON_ALLY_CREATURES_ATTACK,
-    /** Triggers once per unblocked creature the controller controls while this card is in exile. */
-    EXILE_ON_ALLY_CREATURE_ATTACKS_UNBLOCKED,
-    /** Triggers when one or more creatures the controller controls attack while this card is in exile. */
-    EXILE_ON_ALLY_CREATURES_ATTACK,
-    /** Triggers when a creature the controller controls (matching the trigger's dealer predicate)
-     *  deals combat damage to a player, while this card is in the controller's graveyard. Holds an
-     *  {@link com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect}. Checked in
-     *  {@code CombatDamageService.checkAllyCreatureCombatDamageToPlayerTriggers}. Used by Auntie's Snitch. */
-    GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
-    /** Triggers from a graveyard whenever an equipped creature the card's owner controls deals
-     *  combat damage to a player or planeswalker. */
-    GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER,
-    /** Triggers when combat damage is dealt to the controller or to a planeswalker they control,
-     *  while this card is in the controller's graveyard. Fired once per combat damage step per
-     *  damaged player in {@code CombatDamageService.checkGraveyardCombatDamageToYouOrPlaneswalkerTriggers}.
-     *  Unlike the other graveyard slots this one supports targeting: the trigger is routed through
-     *  the {@code AttackTriggerTarget} pending-choice pipeline, so the card's {@code target(...)}
-     *  filter narrows the legal targets. Used by Vengeful Pharaoh. */
-    GRAVEYARD_ON_COMBAT_DAMAGE_TO_YOU_OR_YOUR_PLANESWALKER,
     /** "Whenever an opponent is dealt damage by a red instant or sorcery spell you control or by a red
      *  planeswalker you control" — fired from the controller's graveyard (Chandra's Phoenix). Checked in
      *  {@code TriggerCollectionService.checkRedSpellOrPlaneswalkerDamageToOpponentTriggers}, called from
@@ -571,24 +490,6 @@ public enum EffectSlot {
     /** Triggers whenever a creature controlled by this permanent's controller exploits a nontoken
      *  creature. Fired after the exploit sacrifice completes. */
     ON_ALLY_CREATURE_EXPLOITS_NONTOKEN_CREATURE,
-    /** Triggers once per attacking creature the controller controls. Unlike ON_ALLY_CREATURES_ATTACK
-     *  (which fires once per combat), this fires separately for each creature declared as an attacker.
-     *  Supports TriggeringCardConditionalEffect and TriggeringPermanentConditionalEffect to filter
-     *  by the attacking creature (e.g. Vampires and creatures with counters).
-     *  Checked in {@code CombatAttackService.declareAttackers}. Used by Sanctum Seeker. */
-    ON_ALLY_CREATURE_ATTACKS,
-    /** Triggers once per unblocked attacking creature the controller controls, during the
-     *  declare-blockers step (once "isn't blocked" is determined). Supports
-     *  {@code TriggeringCardConditionalEffect} to filter by the unblocked creature (e.g. Rogues).
-     *  The queued trigger sets the unblocked creature as the (non-targeting) {@code sourcePermanentId}
-     *  so self-scoped effects like {@code BoostSelfEffect} apply to "it" (the unblocked creature),
-     *  not the trigger's source permanent. Checked in {@code CombatBlockService}. Used by
-     *  Stinkdrinker Bandit. */
-    ON_ALLY_CREATURE_ATTACKS_UNBLOCKED,
-    /** Triggers once per combat when one or more creatures an opponent controls attack this
-     *  permanent's controller directly and end up unblocked. The attacking player's ID is stored
-     *  as the non-targeting {@code targetId}; checked during declare blockers. */
-    ON_OPPONENT_CREATURES_ATTACK_YOU_UNBLOCKED,
     /** Triggers whenever a creature controlled by the same player becomes the target of a spell
      *  or ability controlled by an opponent. Fires on ALL permanents with this slot on the
      *  creature's controller's battlefield (not just the targeted creature).
@@ -655,44 +556,6 @@ public enum EffectSlot {
      *  Checked in {@code TriggerCollectionService.checkBecomesTargetOfSpellTriggers}.
      *  Used by Wild Defiance. */
     ON_ALLY_CREATURE_BECOMES_TARGET_OF_INSTANT_OR_SORCERY,
-    /** Triggers once per attacking creature whenever a creature attacks the controller of this
-     *  permanent or a planeswalker they control. Fires on the defending player's permanents.
-     *  The attacking creature's permanent ID is set as the (non-targeting) targetId on the stack
-     *  entry so the resolved effect can act on it. Checked in
-     *  {@code CombatAttackService.declareAttackers}. Used by Lost in the Woods. */
-    ON_CREATURE_ATTACKS_YOU,
-    /** Triggers once per attacking creature when it attacks this permanent's controller directly.
-     *  Attacking a planeswalker they control does not trigger it. The attacking creature's permanent
-     *  ID is stored as the non-targeting targetId. Checked in {@code CombatAttackService.declareAttackers}. */
-    ON_CREATURE_ATTACKS_YOU_DIRECTLY,
-    /** Triggers once per attacking creature whenever a creature attacks the player this permanent's
-     *  controller is the defending player for, including a battle that player protects (CR 310.9d,
-     *  "defending player" refers to the protector of an attacked battle). Attacks on battles fire only
-     *  this slot, not {@link #ON_CREATURE_ATTACKS_YOU}. Checked in {@code CombatAttackService.declareAttackers}. */
-    ON_CREATURE_ATTACKS_DEFENDING_PLAYER,
-    /** Triggers once per combat when one or more creatures attack the controller of this permanent.
-     *  Unlike {@link #ON_CREATURE_ATTACKS_YOU} this fires a single time no matter how many creatures
-     *  attack, and only counts creatures attacking the player directly (attacking a planeswalker they
-     *  control does not trigger it). Fires on the attacked player's permanents; no targetId is set, so
-     *  effects scale via {@code PermanentCount(PermanentIsAttackingSourceControllerPredicate(), ...)}.
-     *  Checked in {@code CombatAttackService.declareAttackers}. Used by Orim's Prayer. */
-    ON_CREATURES_ATTACK_YOU,
-    /** Triggers once per combat when an opponent attacks a planeswalker controlled by this
-     *  permanent's controller with one or more creatures. The attacking player's ID is stored as
-     *  the non-targeting {@code targetId} on the stack entry. */
-    ON_OPPONENT_ATTACKS_PLANESWALKER_YOU_CONTROL,
-    /** Triggers once per attacking creature whenever a creature attacks, regardless of who controls
-     *  the attacker or whom it attacks. Fires on every permanent with this slot across all
-     *  battlefields (e.g. Caltrops pings every attacker). The attacking creature's permanent ID is
-     *  set as the (non-targeting) targetId on the stack entry so the resolved effect can act on it.
-     *  Checked in {@code CombatAttackService.declareAttackers}. Used by Caltrops. */
-    ON_ANY_CREATURE_ATTACKS,
-    /** Triggers once per combat whenever a player attacks with one or more creatures, regardless of
-     *  who controls the attackers. Fires on every permanent with this slot across all battlefields.
-     *  The attacking player's ID is set as the (non-targeting) targetId on the stack entry, so
-     *  player-scoped effects (e.g. {@code EachPermanentScope.TARGET_PLAYER}) act on "that player".
-     *  Checked in {@code CombatAttackService.declareAttackers}. Used by Total War. */
-    ON_ANY_PLAYER_ATTACKS,
     /** Triggers whenever the controller clashes (MTG rule 701.29). Fired from
      *  {@code TriggerCollectionService.performClash} after the clash ends. Targeting triggers route
      *  through the {@code PermanentChoiceContext.ClashTriggerTarget} interaction so the controller
@@ -709,19 +572,6 @@ public enum EffectSlot {
      *  loses, so in practice this trigger goes onto the stack but the game finishes
      *  before it can resolve. Used by Withengar Unbound. */
     ON_PLAYER_LOSES_GAME,
-    /** Triggers once when this creature blocks two or more creatures. Unlike ON_BLOCK (which fires
-     *  per blocker assignment), this fires exactly once during the declare-blockers step when the
-     *  creature is assigned to block 2+ attackers. The effect is resolved against the blocker itself
-     *  (sourcePermanentId), so self-scoped effects like {@code GrantKeywordEffect(FIRST_STRIKE, SELF)}
-     *  apply to the blocker. Checked in {@code CombatBlockService}. Used by Lairwatch Giant. */
-    ON_BLOCKS_MULTIPLE_CREATURES,
-    /** Global watcher slot: triggers whenever any creature blocks, whoever controls it ("Whenever a
-     *  creature blocks"). Fires once per blocking creature during the declare-blockers step, even if
-     *  that creature blocks several attackers, and is checked on every battlefield. The blocking
-     *  creature is baked in as the trigger's (non-targeting) {@code targetId}, so
-     *  {@code LoseLifeEffect(N, TARGET_PERMANENT_CONTROLLER)} hits "that creature's controller".
-     *  Checked in {@code CombatBlockService}. Used by Carnage Gladiator. */
-    ON_ANY_CREATURE_BLOCKS,
     /** Triggers when a creature is championed with this permanent (i.e. exiled by this permanent's
      *  Champion ability). Fired from {@code PermanentChoiceBattlefieldHandlerService.handleChampionCreature}
      *  right after the championed creature is exiled. Effects that target a player are routed through
@@ -735,35 +585,6 @@ public enum EffectSlot {
     ON_SELF_SADDLES_OR_CREWS_DURING_MAIN_PHASE,
     /** Triggers whenever a creature stations this Spacecraft. */
     ON_SELF_BECOMES_STATIONED,
-    /** Triggers whenever a creature the controller controls becomes blocked. Fires once per blocked
-     *  attacker, on every permanent with this slot on the blocked creature's controller's battlefield
-     *  (not just the blocked creature). The blocked creature's permanent ID is set as the non-targeting
-     *  {@code sourcePermanentId} on the stack entry so self-scoped effects like {@code BoostSelfEffect}
-     *  apply to "it" (the blocked creature). Wrap the effect in {@code TriggeringCardConditionalEffect}
-     *  to filter by the blocked creature. Checked in {@code CombatBlockService}. Used by Unstoppable Ash. */
-    ON_ALLY_CREATURE_BECOMES_BLOCKED,
-    /** Triggers once when one or more creatures controlled by this permanent's controller become
-     *  blocked during a single declare-blockers step. Fires on every permanent with this slot on
-     *  that player's battlefield. No combatant is baked into the entry, so effects such as token
-     *  creation resolve once for the whole blocking event. Checked in {@code CombatBlockService}. */
-    ON_ALLY_CREATURES_BECOME_BLOCKED,
-    /** Global watcher: triggers once for every attacker/blocker pair created in the declare-blockers
-     *  step, on every permanent with this slot across all battlefields, regardless of who controls
-     *  the creatures involved. Effects implementing {@code BlockPairConditionalEffect} are filtered
-     *  at trigger time against the pair (e.g. "by a creature with lesser power"), and the participant
-     *  the effect names is baked as the non-targeting {@code targetId} on the stack entry, with the
-     *  attacker as {@code sourcePermanentId}. A {@code BlockedCreatureTriggerEffect} wrapper instead
-     *  filters the blocked attacker by card predicate and fires once per matching attacker. Checked
-     *  in {@code CombatBlockService}. Used by No Quarter and Spined Sliver. */
-    ON_ANY_CREATURE_BECOMES_BLOCKED,
-    /** Global watcher: triggers once each time blockers are declared and at least one creature
-     *  blocked, regardless of who controls the blockers. Unlike
-     *  {@link #ON_ANY_CREATURE_BECOMES_BLOCKED} it fires a single time no matter how many
-     *  attacker/blocker pairs were created. Fires on every permanent with this slot across all
-     *  battlefields; no {@code targetId} is set, so effects act on the board (e.g. an all-matching
-     *  sacrifice filtered by {@code PermanentIsBlockingPredicate}). Checked in
-     *  {@code CombatBlockService}. Used by Tide of War. */
-    ON_ANY_CREATURES_BLOCK,
     /** Global watcher: triggers whenever any source (creature or spell) deals damage, regardless of
      *  who controls it or what it damages. Holds a {@code ReflectSourceDamageToItsControllerEffect}
      *  carrying the color the watcher reacts to. Fires on every permanent with this slot across all
@@ -794,25 +615,6 @@ public enum EffectSlot {
      *  {@code TriggerCollectionService.queueSourceDealsDamageReflections}. Used by El-Hajjâj
      *  ({@code GainLifeEffect(new EventValue())} — "you gain that much life"). */
     ON_SELF_DEALS_DAMAGE,
-    /** Triggers whenever this permanent itself deals combat damage to anything — a creature, a
-     *  player, or a planeswalker. All combat damage dealt by the source in one combat damage step
-     *  is summed into one trigger. */
-    ON_SELF_DEALS_COMBAT_DAMAGE,
-    /** Triggers whenever this permanent itself deals combat damage to a player or planeswalker. */
-    ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER,
-    /** Triggers whenever this permanent itself deals combat damage to a player or battle. */
-    ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE,
-    /** Triggers whenever the creature equipped by this permanent deals combat damage to a player or battle. */
-    ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE,
-    /** Triggers whenever a creature its controller controls deals combat damage to anything — a
-     *  creature, a player, or a planeswalker. Fires on the watcher permanent (which need not be a
-     *  creature), once per damage-dealing creature per combat damage step; all damage that creature
-     *  deals simultaneously is one trigger. The trigger is non-targeting and binds the watcher as its
-     *  source permanent, so a self-referencing effect ({@code PutCountersOnSelfEffect}) acts on the
-     *  watcher. Dispatched from the same per-source batched choke point as
-     *  {@link #ON_SELF_DEALS_COMBAT_DAMAGE} ({@code CombatDamageService}) via
-     *  {@code TriggerCollectionService.queueSourceDealsCombatDamageTriggers}. Used by Five-Alarm Fire. */
-    ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE,
     /** Triggers whenever a creature the controller controls deals damage to a planeswalker. */
     ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER,
     /** Triggers whenever any creature deals damage to this permanent when it is an enchanted planeswalker. */
@@ -894,17 +696,6 @@ public enum EffectSlot {
      *  {@code TriggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers}.
      *  Used by Mangara's Equity. */
     ON_CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT,
-    /** Triggers whenever a creature deals combat damage to this permanent's controller — "Whenever a
-     *  creature deals combat damage to you, ...". Fires on the watcher permanent, once per damaging
-     *  creature per combat damage step, from
-     *  {@code TriggerCollectionService.checkDamageDealtToControllerTriggers} (combat branch only).
-     *  Unlike {@link #ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU} (immediate, permanent sources of any kind,
-     *  combat or not) this slot is creature- and combat-only and puts a real triggered ability on the
-     *  stack whose {@code targetId} is the damaging creature, so {@code DestroyTargetPermanentEffect}
-     *  resolves as "destroy that creature" without targeting. The damaging creature and its
-     *  controller are stamped on the trigger entry, and {@code TriggeringPermanentConditionalEffect}
-     *  may filter which creatures fire the ability. Used by Teysa, Envoy of Ghosts. */
-    ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU,
     /** Triggers whenever an opponent of this card's owner gains life while this card is in
      *  that owner's graveyard. */
     GRAVEYARD_ON_OPPONENT_GAINS_LIFE,

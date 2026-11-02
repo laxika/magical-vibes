@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -38,7 +38,7 @@ public class KirinTouchedOrochi extends Card {
                         PutCounterOnTargetPermanentEffect.withTargetRestriction(
                                 CounterType.PLUS_ONE_PLUS_ONE, 1, creatureYouControl)));
 
-        addEffect(EffectSlot.ON_ATTACK, new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
+        addTrigger(Triggers.attacks(), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile target creature card from a graveyard. When you do, create a 1/1 colorless Spirit creature token.",
                         creatureCardMode),

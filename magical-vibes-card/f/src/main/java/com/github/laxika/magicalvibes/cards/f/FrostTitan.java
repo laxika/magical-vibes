@@ -27,7 +27,7 @@ public class FrostTitan extends Card {
         // tap target permanent. It doesn't untap during its controller's next untap step.
         addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.TARGET));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new SkipNextUntapEffect(TapUntapScope.TARGET));
-        addEffect(EffectSlot.ON_ATTACK, new TapPermanentsEffect(TapUntapScope.TARGET));
-        addEffect(EffectSlot.ON_ATTACK, new SkipNextUntapEffect(TapUntapScope.TARGET));
+        addTrigger(Triggers.attacks(), new TapPermanentsEffect(TapUntapScope.TARGET));
+        addTrigger(Triggers.attacks(), new SkipNextUntapEffect(TapUntapScope.TARGET));
     }
 }

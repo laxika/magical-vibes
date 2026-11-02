@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -32,7 +31,7 @@ public class DugganPrivateDetective extends Card {
         CardsInHand cardsInHand = new CardsInHand(CountScope.CONTROLLER);
         addStaticEffect(new SetPowerToughnessToAmountEffect(cardsInHand, cardsInHand));
         addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.ofClueToken(1));
-        addEffect(EffectSlot.ON_ATTACK, CreateTokenEffect.ofClueToken(1));
+        addTrigger(Triggers.attacks(), CreateTokenEffect.ofClueToken(1));
 
         PermanentPredicate anotherCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

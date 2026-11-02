@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
@@ -21,7 +20,7 @@ import java.util.List;
 public class FireLordZuko extends Card {
 
     public FireLordZuko() {
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new AwardManaUntilEndOfCombatEffect(ManaColor.RED, new SourcePower()));
 
         PutCounterOnEachControlledPermanentEffect counterEffect =

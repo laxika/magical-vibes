@@ -59,9 +59,9 @@ public class BecomeCopyOfTargetCreaturePermanentlyEffectHandler implements Norma
         Card originalCard = source.getCard();
         TriggeredAbility retainedAbility = findRetainedAbility(originalCard, copyEffect);
         EffectRegistration retainedRegistration = findRetainedRegistration(originalCard, copyEffect);
-        var additionalRetainedRegistrations = copyEffect.additionalRetainedEffectSlots().stream()
-                .flatMap(slot -> originalCard.getEffectRegistrations(slot).stream()
-                        .map(registration -> new RetainedRegistration(slot, registration)))
+        List<TriggeredAbility> additionalRetainedAbilities = copyEffect.additionalRetainedTriggers().stream()
+                .flatMap(trigger -> originalCard.getTriggeredAbilities().stream()
+                        .filter(ability -> ability.hasTrigger(trigger)))
                 .toList();
         List<CardEffect> retainedTargetingEffects = new ArrayList<>();
         if (retainedRegistration != null) {
@@ -70,9 +70,8 @@ public class BecomeCopyOfTargetCreaturePermanentlyEffectHandler implements Norma
         if (retainedAbility != null) {
             retainedAbility.effects().forEach(registration -> retainedTargetingEffects.add(registration.effect()));
         }
-        additionalRetainedRegistrations.stream()
-                .map(retained -> retained.registration().effect())
-                .forEach(retainedTargetingEffects::add);
+        additionalRetainedAbilities.forEach(ability ->
+                ability.effects().forEach(registration -> retainedTargetingEffects.add(registration.effect())));
         String originalName = source.getCard().getName();
         permanentCopierService.applyCloneCopy(source, target, null, null);
         // The copied abilities are new abilities, so "choose a mode that hasn't been chosen" starts over.
@@ -92,10 +91,7 @@ public class BecomeCopyOfTargetCreaturePermanentlyEffectHandler implements Norma
         if (retainedAbility != null) {
             source.getCard().addTriggeredAbility(retainedAbility);
         }
-        for (RetainedRegistration retained : additionalRetainedRegistrations) {
-            source.getCard().addEffect(retained.slot(), retained.registration().effect(),
-                    retained.registration().triggerMode());
-        }
+        additionalRetainedAbilities.forEach(source.getCard()::addTriggeredAbility);
         source.getCard().appendSpellTargetingForEffectsFrom(originalCard, retainedTargetingEffects);
         log.info("Game {} - {} becomes a copy of {}", gameData.id, originalName, target.getCard().getName());
     }
@@ -147,8 +143,5 @@ public class BecomeCopyOfTargetCreaturePermanentlyEffectHandler implements Norma
                     || containsEffect(may.elseEffect(), target);
         }
         return false;
-    }
-
-    private record RetainedRegistration(EffectSlot slot, EffectRegistration registration) {
     }
 }

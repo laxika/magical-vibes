@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -20,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -52,9 +54,9 @@ public class SurgicalSuiteHospitalRoom extends Card {
         addStaticEffect(new ConditionalEffect(
                         new SourceRoomDoorUnlocked(1),
                         new GrantTriggeredAbilityEffect(
-                                EffectSlot.ON_ALLY_CREATURES_ATTACK,
+                                new TriggeredAbility(Triggers.youAttack(),
                                 PutCounterOnTargetPermanentEffect.withTargetRestriction(
-                                        CounterType.PLUS_ONE_PLUS_ONE, 1, attackingCreature),
+                                        CounterType.PLUS_ONE_PLUS_ONE, 1, attackingCreature)),
                                 GrantScope.SELF)));
     }
 }

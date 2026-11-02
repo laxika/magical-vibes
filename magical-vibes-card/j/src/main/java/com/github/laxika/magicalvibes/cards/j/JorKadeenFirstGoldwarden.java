@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.SourcePowerAtLeast;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,8 +25,8 @@ public class JorKadeenFirstGoldwarden extends Card {
         ));
         PermanentCount equippedCreatures = new PermanentCount(equippedCreature, CountScope.CONTROLLER);
 
-        addEffect(EffectSlot.ON_ATTACK, new BoostSelfEffect(equippedCreatures, equippedCreatures));
-        addEffect(EffectSlot.ON_ATTACK, ConditionalEffect.unless(
+        addTrigger(Triggers.attacks(), new BoostSelfEffect(equippedCreatures, equippedCreatures));
+        addTrigger(Triggers.attacks(), ConditionalEffect.unless(
                 new SourcePowerAtLeast(4),
                 new DrawCardEffect(1)));
     }

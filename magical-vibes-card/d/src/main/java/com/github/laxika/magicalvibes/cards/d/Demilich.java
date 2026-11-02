@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -31,7 +31,7 @@ public class Demilich extends Card {
         addStaticEffect(new ReduceOwnColoredCastCostEffect(ManaColor.BLUE,
                 new SpellsCastThisTurn(instantOrSorcery, CountScope.CONTROLLER)));
         target(new GraveyardCardPredicateTargetFilter(instantOrSorcery, ownGraveyard), 0, 1)
-                .addEffect(EffectSlot.ON_ATTACK,
+                .addTrigger(Triggers.attacks(),
                         new ExileTargetCardFromGraveyardAndMayCastCopyEffect(
                                 instantOrSorcery, ownGraveyard, false));
         addCastingCost(new ExileNCardsFromGraveyardCost(4, null, instantOrSorcery, true));

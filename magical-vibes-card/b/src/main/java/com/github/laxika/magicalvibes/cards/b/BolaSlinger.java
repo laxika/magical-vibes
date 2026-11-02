@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
@@ -45,14 +45,15 @@ public class BolaSlinger extends Card {
         CardEffect attackTrigger = new TapPermanentsEffect(TapUntapScope.TARGET, opponentArtifactOrCreature);
         target(new PermanentPredicateTargetFilter(opponentArtifactOrCreature,
                 "Target must be an artifact or creature an opponent controls"))
-                .addEffect(EffectSlot.ON_ATTACK,
+                .addTrigger(Triggers.attacks(),
                         new TapPermanentsEffect(TapUntapScope.TARGET, opponentArtifactOrCreature));
 
         target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                 new ConditionalEffect(
                         new TargetPermanentMatches(anotherCreature),
-                        new GrantEffectToTargetUntilEndOfTurnEffect(EffectSlot.ON_ATTACK, attackTrigger)
+                        new GrantEffectToTargetUntilEndOfTurnEffect(new TriggeredAbility(Triggers.attacks(),
+                                attackTrigger))
                 )
         ));
     }

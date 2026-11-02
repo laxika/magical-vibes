@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureUnl
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfThenReflexiveEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -21,7 +21,7 @@ public class CraigBooneNovacGuard extends Card {
 
     public CraigBooneNovacGuard() {
         addStaticEffect(new GrantKeywordEffect(Set.of(Keyword.LIFELINK, Keyword.REACH), GrantScope.SELF));
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+        addTrigger(Triggers.youAttack(),
                 new ConditionalEffect(new MinimumAttackers(2),
                         new PutCountersOnSelfThenReflexiveEffect(
                                 CounterType.QUEST,

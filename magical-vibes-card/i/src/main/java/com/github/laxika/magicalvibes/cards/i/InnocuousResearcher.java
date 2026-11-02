@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -20,7 +19,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class InnocuousResearcher extends Card {
 
     public InnocuousResearcher() {
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new ParleyEffect(CreateTokenEffect.ofClueToken(1)));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),

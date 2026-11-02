@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class MageHuntersOnslaught extends Card {
                 "Target must be a creature or planeswalker"))
                 .addSpellEffect(new DestroyTargetPermanentEffect())
                 .addSpellEffect(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
-                        EffectSlot.ON_ANY_CREATURE_BLOCKS,
-                        new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER)));
+                        new TriggeredAbility(Triggers.creatureBlocks(),
+                        new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER))));
     }
 }

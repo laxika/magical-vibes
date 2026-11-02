@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -41,8 +42,8 @@ public class FireNationPalace extends Card {
                 List.of(
                         new GrantKeywordEffect(Keyword.FIREBENDING, GrantScope.TARGET),
                         new GrantEffectToTargetUntilEndOfTurnEffect(
-                                EffectSlot.ON_ATTACK,
-                                new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 4))
+                                new TriggeredAbility(Triggers.attacks(),
+                                new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 4)))
                 ),
                 "{1}{R}, {T}: Target creature you control gains firebending 4 until end of turn.",
                 TargetFilters.creatureYouControl()

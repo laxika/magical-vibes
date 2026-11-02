@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
@@ -36,7 +35,7 @@ public class OverlordOfTheFloodpits extends Card {
                 new DrawCardEffect(2),
                 new DiscardEffect(1, DiscardRecipient.CONTROLLER));
         addTrigger(Triggers.enters(ObjectRelation.THIS), drawTwoDiscardOne);
-        addEffect(EffectSlot.ON_ATTACK, drawTwoDiscardOne);
+        addTrigger(Triggers.attacks(), drawTwoDiscardOne);
 
         addStaticEffect(new ConditionalEffect(
                 new CastForAlternateCost(),

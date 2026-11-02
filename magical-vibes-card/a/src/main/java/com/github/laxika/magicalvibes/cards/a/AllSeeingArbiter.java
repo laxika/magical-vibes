@@ -29,7 +29,7 @@ public class AllSeeingArbiter extends Card {
                 new DrawCardEffect(2),
                 new DiscardEffect(1, DiscardRecipient.CONTROLLER));
         addTrigger(Triggers.enters(ObjectRelation.THIS), drawTwoThenDiscard);
-        addEffect(EffectSlot.ON_ATTACK, drawTwoThenDiscard);
+        addTrigger(Triggers.attacks(), drawTwoThenDiscard);
 
         addEffect(EffectSlot.ON_CONTROLLER_DISCARDS, new BoostTargetCreatureEffect(
                 new Scaled(new DistinctManaValuesAmongCardsInGraveyard(), -1),

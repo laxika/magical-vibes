@@ -6,16 +6,16 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -27,12 +27,12 @@ public class CruelAdministrator extends Card {
             CardType.CREATURE, 1, "Soldier", 2, 2,
             CardColor.RED, Set.of(), List.of(CardSubtype.SOLDIER),
             Set.of(Keyword.FIREBENDING), Set.of(), false, false,
-            List.of(LegacySlots.triggered(EffectSlot.ON_ATTACK, new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 1))),
+            List.of(new TriggeredAbility(Triggers.attacks(), new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 1))),
             List.of(), false, false, false, 0, Set.of());
 
     public CruelAdministrator() {
         addStaticEffect(new ConditionalEffect(new Raid(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))));
-        addEffect(EffectSlot.ON_ATTACK, SOLDIER_TOKEN);
+        addTrigger(Triggers.attacks(), SOLDIER_TOKEN);
     }
 }

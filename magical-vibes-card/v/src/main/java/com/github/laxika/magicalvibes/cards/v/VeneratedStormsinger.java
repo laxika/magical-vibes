@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -24,9 +23,9 @@ public class VeneratedStormsinger extends Card {
             new GainLifeEffect(1));
 
     public VeneratedStormsinger() {
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new CreateTokenEffect(1, "Warrior", 1, 1, CardColor.RED, List.of(CardSubtype.WARRIOR), true));
-        addEffect(EffectSlot.ON_ATTACK, new SacrificeCreatedPermanentsAtEndStepEffect());
+        addTrigger(Triggers.attacks(), new SacrificeCreatedPermanentsAtEndStepEffect());
         addTrigger(Triggers.creatureDies(ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL), DEATH_TRIGGER);
     }
 }

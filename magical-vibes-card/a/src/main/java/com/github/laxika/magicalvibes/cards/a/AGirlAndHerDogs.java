@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -41,6 +40,6 @@ public class AGirlAndHerDogs extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))),
                 CountScope.CONTROLLER);
-        addEffect(EffectSlot.ON_ATTACK, new BoostSelfEffect(legendaryCreatures, legendaryCreatures));
+        addTrigger(Triggers.attacks(), new BoostSelfEffect(legendaryCreatures, legendaryCreatures));
     }
 }

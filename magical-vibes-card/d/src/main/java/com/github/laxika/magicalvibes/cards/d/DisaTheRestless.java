@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -57,7 +56,7 @@ public class DisaTheRestless extends Card {
                 List.of(
                         StaticAbility.of(new SetPowerToughnessToAmountEffect(
                         cardTypes, new Sum(cardTypes, new Fixed(1))))));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                 new AllyCombatDamageTriggerEffect(null, tarmogoyfToken, false, true));
     }
 }

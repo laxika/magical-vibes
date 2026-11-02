@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -34,7 +33,7 @@ public class ArtisanOfKozilek extends Card {
                         .build(),
                 "Return a creature card from your graveyard to the battlefield?"));
 
-        addEffect(EffectSlot.ON_ATTACK, new SacrificePermanentsEffect(
+        addTrigger(Triggers.attacks(), new SacrificePermanentsEffect(
                 2, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER));
     }
 }

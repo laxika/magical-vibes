@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -24,8 +24,8 @@ public class NerdRage extends Card {
                 .addStaticEffect(new GrantEffectEffect(
                         new NoMaximumHandSizeEffect(), GrantScope.ENCHANTED_CREATURE))
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_ATTACK,
-                        new ConditionalEffect(new CardsInHandAtLeast(10), new BoostSelfEffect(10, 10)),
+                        new TriggeredAbility(Triggers.attacks(),
+                        new ConditionalEffect(new CardsInHandAtLeast(10), new BoostSelfEffect(10, 10))),
                         GrantScope.ENCHANTED_CREATURE));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(2));
     }

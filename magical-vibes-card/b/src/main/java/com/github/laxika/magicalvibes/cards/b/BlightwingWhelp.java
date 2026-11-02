@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.DefendingPlayerPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.SeekCardsToHandEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,7 +25,7 @@ public class BlightwingWhelp extends Card {
                 List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)),
                 "{B}: Blightwing Whelp gains haste until end of turn."
         ));
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new SeekCardsToHandEffect(
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new SeekCardsToHandEffect(
                 new Fixed(1), null,
                 new ManaValueBound(new DefendingPlayerPoisonCounters(), true, 0)));
         addStaticEffect(new ToxicEffect(1));

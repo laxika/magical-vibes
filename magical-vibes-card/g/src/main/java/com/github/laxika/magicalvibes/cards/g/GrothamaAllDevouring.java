@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToSourceByControllerThisTurn;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
@@ -18,7 +17,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class GrothamaAllDevouring extends Card {
 
     public GrothamaAllDevouring() {
-        addEffect(EffectSlot.ON_ANY_CREATURE_ATTACKS,
+        addTrigger(Triggers.creatureAttacks(),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()),
                         new MayEffect(

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -23,7 +22,7 @@ public class TheUnbeatableSquirrelGirl extends Card {
         CreateTokenEffect squirrel = new CreateTokenEffect(
                 1, "Squirrel", 1, 1, CardColor.GREEN, List.of(CardSubtype.SQUIRREL), Set.of(), Set.of());
         addTrigger(Triggers.enters(ObjectRelation.THIS), squirrel);
-        addEffect(EffectSlot.ON_ATTACK, squirrel);
+        addTrigger(Triggers.attacks(), squirrel);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

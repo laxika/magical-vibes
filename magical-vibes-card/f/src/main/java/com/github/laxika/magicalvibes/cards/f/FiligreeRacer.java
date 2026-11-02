@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
@@ -22,7 +21,7 @@ public class FiligreeRacer extends Card {
 
     public FiligreeRacer() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new EnergyCountersEffect(4));
-        addEffect(EffectSlot.ON_ATTACK, new ForcedCostOrElseEffect(
+        addTrigger(Triggers.attacks(), new ForcedCostOrElseEffect(
                 new PayEnergyCost(2),
                 List.of(),
                 true,

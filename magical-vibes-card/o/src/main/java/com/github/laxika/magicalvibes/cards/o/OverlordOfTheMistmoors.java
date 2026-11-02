@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -37,7 +36,7 @@ public class OverlordOfTheMistmoors extends Card {
                 2, "Insect", 2, 1, CardColor.WHITE, List.of(CardSubtype.INSECT),
                 Set.of(Keyword.FLYING), Set.of());
         addTrigger(Triggers.enters(ObjectRelation.THIS), insect);
-        addEffect(EffectSlot.ON_ATTACK, insect);
+        addTrigger(Triggers.attacks(), insect);
 
         addStaticEffect(new ConditionalEffect(
                 new CastForAlternateCost(),

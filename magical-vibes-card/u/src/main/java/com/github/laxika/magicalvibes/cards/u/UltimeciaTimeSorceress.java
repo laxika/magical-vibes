@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -23,7 +22,7 @@ public class UltimeciaTimeSorceress extends Card {
         setBackFaceCard(new UltimeciaOmnipotent());
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), new SurveilEffect(2));
-        addEffect(EffectSlot.ON_ATTACK, new SurveilEffect(2));
+        addTrigger(Triggers.attacks(), new SurveilEffect(2));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 ConditionalEffect.unless(
                         new GraveyardCardThreshold(8, null),

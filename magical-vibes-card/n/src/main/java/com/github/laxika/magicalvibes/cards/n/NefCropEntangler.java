@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AKH", collectorNumber = "144")
 @CardRegistration(set = "AKR", collectorNumber = "166")
@@ -17,7 +17,7 @@ public class NefCropEntangler extends Card {
         // Trample is a static keyword loaded from Scryfall. Exert: "You may exert this creature as it
         // attacks. When you do, it gets +1/+2 until end of turn." Modeled as an optional attack trigger
         // (matching Gust Walker). Choosing to exert also keeps the creature tapped through its next untap.
-        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        addTrigger(Triggers.attacks(), new MayEffect(
                 SequenceEffect.of(
                         new BoostSelfEffect(1, 2),
                         new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)

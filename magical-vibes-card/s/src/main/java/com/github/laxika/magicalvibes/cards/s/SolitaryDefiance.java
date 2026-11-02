@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -41,7 +42,7 @@ public class SolitaryDefiance extends Card {
                         EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                         new CounterUnlessPaysEffect(2), GrantScope.OWN_CREATURES)));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
+        addTrigger(Triggers.creatureYouControlAttacks(),
                 new ConditionalEffect(new AttacksAlone(), SequenceEffect.of(
                         new SeekCardsToHandEffect(new Fixed(2),
                                 new CardNotPredicate(new CardTypePredicate(CardType.LAND))),

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.SourceToughness;
 import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -30,8 +30,8 @@ public class ImperiousMindbreaker extends Card {
         addStaticEffect(new ConditionalEffect(
                 new SourceIsPaired(),
                 new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_ATTACK,
-                        new MillEffect(new SourceToughness(), MillRecipient.EACH_OPPONENT),
+                        new TriggeredAbility(Triggers.attacks(),
+                        new MillEffect(new SourceToughness(), MillRecipient.EACH_OPPONENT)),
                         GrantScope.SELF_AND_PAIRED)));
     }
 }

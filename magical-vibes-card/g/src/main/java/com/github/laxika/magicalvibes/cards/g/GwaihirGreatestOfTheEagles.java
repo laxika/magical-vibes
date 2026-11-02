@@ -5,9 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -38,7 +37,7 @@ public class GwaihirGreatestOfTheEagles extends Card {
                 "Target must be an attacking creature");
 
         // Whenever Gwaihir attacks, target attacking creature gains flying until end of turn.
-        target(attackingCreature).addEffect(EffectSlot.ON_ATTACK,
+        target(attackingCreature).addTrigger(Triggers.attacks(),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
 
         // At the beginning of each end step, if you gained 3 or more life this turn, create a 3/3
@@ -49,7 +48,7 @@ public class GwaihirGreatestOfTheEagles extends Card {
                 CardColor.WHITE, null,
                 List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of(),
                 false, false,
-                List.of(LegacySlots.triggered(EffectSlot.ON_ATTACK, birdAttackTrigger)), List.of(),
+                List.of(new TriggeredAbility(Triggers.attacks(), birdAttackTrigger)), List.of(),
                 false, false, false, 0, Set.of())
                 .withTokenTargetFilter(attackingCreature);
         addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(

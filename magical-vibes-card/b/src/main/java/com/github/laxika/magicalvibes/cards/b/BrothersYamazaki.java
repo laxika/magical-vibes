@@ -2,13 +2,13 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BushidoEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleWhenExactlyTwoSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -17,8 +17,8 @@ import java.util.Set;
 public class BrothersYamazaki extends Card {
 
     public BrothersYamazaki() {
-        addEffect(EffectSlot.ON_BLOCK, new BushidoEffect(1));
-        addEffect(EffectSlot.ON_BECOMES_BLOCKED, new BushidoEffect(1));
+        addTrigger(Triggers.blocks(), new BushidoEffect(1));
+        addTrigger(Triggers.becomesBlocked(), new BushidoEffect(1));
         addStaticEffect(new IgnoreLegendRuleWhenExactlyTwoSameNameEffect());
         // "Each OTHER creature named Brothers Yamazaki" — any controller, so ALL_CREATURES
         // (which already excludes the source) narrowed by the name.

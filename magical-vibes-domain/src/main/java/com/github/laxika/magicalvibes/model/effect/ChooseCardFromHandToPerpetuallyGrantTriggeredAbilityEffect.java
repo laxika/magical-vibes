@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
 
 import java.util.List;
 import java.util.Objects;
@@ -21,6 +23,16 @@ public record ChooseCardFromHandToPerpetuallyGrantTriggeredAbilityEffect(
         grantedEffects = List.copyOf(grantedEffects);
         Objects.requireNonNull(cardFilter, "cardFilter");
         this(LegacySlots.abilities(slot, grantedEffects), cardFilter);
+    }
+
+    /** One triggered ability with {@code trigger} for each of {@code grantedEffects}, in order. */
+    public ChooseCardFromHandToPerpetuallyGrantTriggeredAbilityEffect(Trigger trigger,
+                                                                      List<CardEffect> grantedEffects,
+                                                                      CardPredicate cardFilter) {
+        Objects.requireNonNull(trigger, "trigger");
+        Objects.requireNonNull(cardFilter, "cardFilter");
+        this(grantedEffects.stream().<Ability>map(effect -> new TriggeredAbility(trigger, effect)).toList(),
+                cardFilter);
     }
 
     /** The slot of {@link #grantedAbilities}. */

@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -18,7 +18,7 @@ import java.util.Set;
 public class KariZevSkyshipRaider extends Card {
 
     public KariZevSkyshipRaider() {
-        addEffect(EffectSlot.ON_ATTACK, new CreateTokenEffect(
+        addTrigger(Triggers.attacks(), new CreateTokenEffect(
                 CardType.CREATURE, 1, "Ragavan", 2, 1, CardColor.RED, null,
                 List.of(CardSubtype.MONKEY), Set.of(), Set.of(),
                 true, false, List.of(), List.of(),

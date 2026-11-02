@@ -9,12 +9,13 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryToHandAndRegisterDiscardAtNextEndStepEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YDFT", collectorNumber = "21")
 public class AriusFlybyTrawler extends Card {
 
     public AriusFlybyTrawler() {
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new SeekLibraryToHandAndRegisterDiscardAtNextEndStepEffect(
                         new CardNotPredicate(new CardSubtypePredicate(CardSubtype.SHARK))));
         addEffect(EffectSlot.ON_CONTROLLER_DISCARD_EVENT,

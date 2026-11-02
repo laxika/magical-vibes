@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -25,7 +24,7 @@ public class TheFugitiveDoctor extends Card {
 
     public TheFugitiveDoctor() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.ofClueToken(1));
-        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        addTrigger(Triggers.attacks(), new MayEffect(
                 new SacrificePermanentThenEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.CLUE),
                         new GrantFlashbackToTargetGraveyardCardEffect(

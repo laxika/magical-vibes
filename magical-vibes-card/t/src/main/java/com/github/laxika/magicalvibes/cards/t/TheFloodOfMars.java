@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.BecomeTargetPermanentCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -38,12 +38,12 @@ public class TheFloodOfMars extends Card {
         target(new PermanentPredicateTargetFilter(
                 anotherCreatureOrLand,
                 "Target must be another creature or land"))
-                .addEffect(EffectSlot.ON_ATTACK, new PutCounterOnTargetPermanentEffect(CounterType.FLOOD))
-                .addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
+                .addTrigger(Triggers.attacks(), new PutCounterOnTargetPermanentEffect(CounterType.FLOOD))
+                .addTrigger(Triggers.attacks(), new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentIsCreaturePredicate()),
                         new BecomeTargetPermanentCopyOfSourceEffect(),
                         false))
-                .addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
+                .addTrigger(Triggers.attacks(), new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentIsLandPredicate()),
                         new GrantSubtypeEffect(CardSubtype.ISLAND, GrantScope.TARGET),
                         false));

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
@@ -57,11 +56,11 @@ public class HuntersTalent extends Card {
                 "This Class must be level 2."));
 
         target(TargetFilters.attackingCreature())
-                .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+                .addTrigger(Triggers.youAttack(),
                         ConditionalEffect.atTriggerTime(
                                 new SourceClassLevelAtLeast(2),
                                 new BoostTargetCreatureEffect(1, 0)))
-                .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+                .addTrigger(Triggers.youAttack(),
                         ConditionalEffect.atTriggerTime(
                                 new SourceClassLevelAtLeast(2),
                                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)));

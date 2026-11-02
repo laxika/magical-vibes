@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasCompletedDungeon;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -22,7 +21,7 @@ public class AcererakTheArchlich extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new NotCondition(new ControllerHasCompletedDungeon(com.github.laxika.magicalvibes.model.Dungeon.TOMB_OF_ANNIHILATION)),
                 SequenceEffect.of(ReturnToHandEffect.self(), new VentureIntoDungeonEffect())));
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new EachOpponentCreatesTokenUnlessSacrificesCreatureEffect(CreateTokenEffect.blackZombie(1)));
     }
 }

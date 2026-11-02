@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -16,7 +16,7 @@ public class GuildThief extends Card {
 
     public GuildThief() {
         // Whenever this creature deals combat damage to a player, put a +1/+1 counter on it.
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         // {3}{U}: This creature can't be blocked this turn.

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
@@ -32,6 +31,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -53,7 +53,7 @@ public class SkanosDragonVassal extends Card {
     public static void addAttackAbility(Card card, CardEffect effect) {
         card.target(new PermanentPredicateTargetFilter(
                 anotherAttackingCreature(), "Target must be another attacking creature"))
-                .addEffect(EffectSlot.ON_ATTACK, effect);
+                .addTrigger(Triggers.attacks(), effect);
     }
 
     public static CardEffect specializedAttackEffect(CardColor color) {

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Divided;
@@ -36,7 +35,7 @@ public class LordXanderTheCollector extends Card {
                                 nonland,
                                 SacrificeRecipient.TARGET_PLAYER));
 
-        addEffect(EffectSlot.ON_ATTACK, new MillHalfDefendingPlayerEffect(false));
+        addTrigger(Triggers.attacks(), new MillHalfDefendingPlayerEffect(false));
     }
 
     private static PlayerPredicateTargetFilter opponentTarget() {

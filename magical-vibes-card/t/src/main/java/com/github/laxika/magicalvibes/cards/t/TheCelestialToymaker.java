@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.PileGroupingOrGuessCountThisTurn;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -16,7 +15,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class TheCelestialToymaker extends Card {
 
     public TheCelestialToymaker() {
-        addEffect(EffectSlot.ON_ATTACK, new RevealTopCardsAndSeparateEffect(
+        addTrigger(Triggers.attacks(), new RevealTopCardsAndSeparateEffect(
                 3, CardPileDisposition.HAND_AND_EXILE_WITH_FACE_DOWN_PILE,
                 true, false, true, true));
         addTrigger(Triggers.endStep(ActivePlayer.ANY), new LoseLifeEffect(

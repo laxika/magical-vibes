@@ -58,7 +58,7 @@ public record SacrificeSelfThenEffect(CardEffect thenEffect, boolean reflexive)
     }
 
     /**
-     * On an {@code ON_COMBAT_DAMAGE_TO_PLAYER} slot the sacrifice half always needs the source
+     * On an {@code Triggers.dealsCombatDamageToPlayer()} ability the sacrifice half always needs the source
      * permanent bound, so {@code SOURCE_SELF} is the floor. A payload that also needs the damaged
      * player ({@code DAMAGED_PLAYER}) asks for a superset of that and wins.
      */

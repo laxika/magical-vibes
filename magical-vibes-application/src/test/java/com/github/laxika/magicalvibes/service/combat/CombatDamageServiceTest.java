@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.combat;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CombatDamagePhase1State;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -35,6 +34,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -553,10 +554,10 @@ class CombatDamageServiceTest {
             Permanent attacker = addAttacker("Small attacker", 1, 1);
             Permanent blocker = addBlocker("Large blocker", 2, 4, 0);
             var effect = new com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect(true);
-            when(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                    eq(gameData), any(Permanent.class), any(EffectSlot.class)))
+            when(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                    eq(gameData), any(Permanent.class), any(Trigger.class)))
                     .thenAnswer(invocation -> invocation.getArgument(1) == attacker
-                            && invocation.getArgument(2) == EffectSlot.ON_COMBAT_DAMAGE_TO_CREATURE
+                            && Triggers.dealsCombatDamageToCreature().equals(invocation.getArgument(2))
                             && gameData.playerBattlefields.get(player1Id).contains(attacker)
                             ? List.of(effect) : List.of());
 
@@ -1272,9 +1273,9 @@ class CombatDamageServiceTest {
         }
 
         private Permanent addAttackerWithEffect(String name, int power, int toughness,
-                                                 EffectSlot slot, com.github.laxika.magicalvibes.model.effect.CardEffect effect) {
+                                                 Trigger trigger, com.github.laxika.magicalvibes.model.effect.CardEffect effect) {
             Card card = createCard(name, power, toughness);
-            card.addEffect(slot, effect);
+            card.addTrigger(trigger, effect);
             Permanent perm = new Permanent(card);
             perm.setSummoningSick(false);
             perm.setAttacking(true);
@@ -1288,7 +1289,7 @@ class CombatDamageServiceTest {
             ChooseOneEffect.ChooseOneOption option = new ChooseOneEffect.ChooseOneOption(
                     "Draw a card", new DrawCardEffect());
             addAttackerWithEffect("Silent Hallcreeper", 1, 1,
-                    EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+                    Triggers.dealsCombatDamageToPlayer(),
                     new ChooseModeNotYetChosenEffect(List.of(option)));
 
             combatDamageService.resolveCombatDamage(gameData);
@@ -1303,7 +1304,7 @@ class CombatDamageServiceTest {
         @DisplayName("TargetPlayerDiscardsEffect stack entry has defenderId as targetId")
         void targetPlayerDiscardsEffectSetsDefenderAsTarget() {
             addAttackerWithEffect("Animated Sword", 3, 3,
-                    EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+                    Triggers.dealsCombatDamageToPlayer(),
                     new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
 
             combatDamageService.resolveCombatDamage(gameData);
@@ -1320,7 +1321,7 @@ class CombatDamageServiceTest {
         void conditionalCombatDamageDiscardEffectSnapshotsDamageAmount() {
             ControllerHandEmpty condition = new ControllerHandEmpty();
             addAttackerWithEffect("Jagged Poppet", 3, 3,
-                    EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+                    Triggers.dealsCombatDamageToPlayer(),
                     new ConditionalEffect(condition,
                             new DiscardEffect(new EventValue(), DiscardRecipient.TARGET_PLAYER)));
             when(conditionEvaluationService.isMet(eq(gameData), eq(condition), any())).thenReturn(true);
@@ -1339,7 +1340,7 @@ class CombatDamageServiceTest {
         @DisplayName("Sequence combat damage trigger snapshots the damage amount for nested steps")
         void sequenceCombatDamageTriggerSnapshotsDamageAmount() {
             addAttackerWithEffect("April", 3, 3,
-                    EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+                    Triggers.dealsCombatDamageToPlayer(),
                     SequenceEffect.of(
                             new DrawCardEffect(new EventValue()),
                             new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
@@ -1357,7 +1358,7 @@ class CombatDamageServiceTest {
         @DisplayName("MillEffect (target player) stack entry has defenderId as targetId")
         void millTargetPlayerEffectSetsDefenderAsTarget() {
             addAttackerWithEffect("Animated Sword", 3, 3,
-                    EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MillEffect(10, MillRecipient.TARGET_PLAYER));
+                    Triggers.dealsCombatDamageToPlayer(), new MillEffect(10, MillRecipient.TARGET_PLAYER));
 
             combatDamageService.resolveCombatDamage(gameData);
 
@@ -1372,7 +1373,7 @@ class CombatDamageServiceTest {
         @DisplayName("DealDamageToPlayersEffect(TARGET_PLAYER) stack entry has defenderId as targetId")
         void dealDamageByHandSizeEffectSetsDefenderAsTarget() {
             addAttackerWithEffect("Animated Sword", 3, 3,
-                    EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+                    Triggers.dealsCombatDamageToPlayer(),
                     new DealDamageToPlayersEffect(new CardsInHand(CountScope.TARGET_PLAYER), DamageRecipient.TARGET_PLAYER));
 
             combatDamageService.resolveCombatDamage(gameData);
@@ -1391,7 +1392,7 @@ class CombatDamageServiceTest {
             Permanent creature = addAttacker("Enchanted creature", 3, 3);
             Card auraCard = createCard("Curious Inquiry", 1, 1);
             auraCard.setType(CardType.ENCHANTMENT);
-            auraCard.addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+            auraCard.addTrigger(Triggers.dealsCombatDamageToPlayer(),
                     new CreateTokenForTriggeringPlayerEffect(CreateTokenEffect.ofClueToken(1)));
             Permanent aura = new Permanent(auraCard);
             aura.setAttachedTo(creature.getId());
@@ -1415,9 +1416,9 @@ class CombatDamageServiceTest {
             equipmentCard.setType(CardType.ARTIFACT);
             equipmentCard.target(new PermanentPredicateTargetFilter(
                             new PermanentIsPlaneswalkerPredicate(), "Target must be a planeswalker"), 0, 1)
-                    .addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DestroyTargetPermanentEffect());
+                    .addTrigger(Triggers.dealsCombatDamageToPlayer(), new DestroyTargetPermanentEffect());
             equipmentCard.target(TargetFilters.artifact(), 0, 1)
-                    .addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DestroyTargetPermanentEffect());
+                    .addTrigger(Triggers.dealsCombatDamageToPlayer(), new DestroyTargetPermanentEffect());
             Permanent equipment = new Permanent(equipmentCard);
             equipment.setAttachedTo(creature.getId());
             gameData.playerBattlefields.get(player2Id).add(equipment);
@@ -1450,7 +1451,7 @@ class CombatDamageServiceTest {
         @DisplayName("Batched ally creature player-or-battle trigger fires once and keeps its watcher as source")
         void batchedAllyCreaturePlayerOrBattleTriggerFiresOnce() {
             Card watcherCard = createCard("Dragon watcher", 2, 2);
-            watcherCard.addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE,
+            watcherCard.addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayerOrBattle(),
                     new AllyCombatDamageTriggerEffect(null, new DrawCardEffect(1), false, true));
             Permanent watcher = new Permanent(watcherCard);
             gameData.playerBattlefields.get(player1Id).add(watcher);
@@ -1470,7 +1471,7 @@ class CombatDamageServiceTest {
         @DisplayName("Batched ally creature trigger snapshots matching damage total")
         void batchedAllyCreatureTriggerSnapshotsMatchingDamageTotal() {
             Card watcherCard = createCard("Quartzwood watcher", 2, 2);
-            watcherCard.addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+            watcherCard.addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                     new AllyCombatDamageTriggerEffect(null,
                             new CreateTokenEffect("Dinosaur Beast", new EventValue(), new EventValue(), null,
                                     List.of(), Set.of(), Set.of()), false, true));

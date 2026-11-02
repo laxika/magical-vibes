@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.SourcePowerAtLeast;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -33,7 +32,7 @@ public class AngelicSellSword extends Card {
                 new TriggeringCardConditionalEffect(
                         new CardNotPredicate(new CardIsTokenPredicate()), mercenaryToken()));
 
-        addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
+        addTrigger(Triggers.attacks(), new ConditionalEffect(
                 new SourcePowerAtLeast(6), new DrawCardEffect(1)));
     }
 

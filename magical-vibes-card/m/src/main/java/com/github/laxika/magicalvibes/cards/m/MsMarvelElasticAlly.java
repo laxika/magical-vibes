@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -22,7 +21,7 @@ public class MsMarvelElasticAlly extends Card {
 
         // Whenever a creature you control with power greater than its base power deals combat
         // damage to a player, draw a card. This ability triggers only once each turn.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                 new OncePerTurnTriggerEffect(new AllyCombatDamageTriggerEffect(
                         new PermanentPowerGreaterThanBasePowerPredicate(),
                         new DrawCardEffect(1))));

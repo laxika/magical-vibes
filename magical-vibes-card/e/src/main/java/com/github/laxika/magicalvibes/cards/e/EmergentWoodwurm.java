@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
@@ -36,7 +36,7 @@ public class EmergentWoodwurm extends Card {
                 LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false,
                 LibrarySearchDestination.BATTLEFIELD, true, false, new SourcePower());
 
-        addEffect(EffectSlot.ON_ATTACK, attackTrigger);
+        addTrigger(Triggers.attacks(), attackTrigger);
 
         PermanentPredicate anotherCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
@@ -46,7 +46,8 @@ public class EmergentWoodwurm extends Card {
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3),
                 new ConditionalEffect(
                         new TargetPermanentMatches(anotherCreature),
-                        new GrantEffectToTargetUntilEndOfTurnEffect(EffectSlot.ON_ATTACK, attackTrigger)
+                        new GrantEffectToTargetUntilEndOfTurnEffect(new TriggeredAbility(Triggers.attacks(),
+                                attackTrigger))
                 )
         ));
     }

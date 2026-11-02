@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,7 +23,7 @@ public class TheMeep extends Card {
     public TheMeep() {
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysLifeEffect(new Fixed(3)));
-        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        addTrigger(Triggers.attacks(), new MayEffect(
                 new SacrificePermanentThenEffect(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

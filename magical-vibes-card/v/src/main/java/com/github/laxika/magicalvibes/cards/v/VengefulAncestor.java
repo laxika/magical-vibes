@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
@@ -20,9 +19,9 @@ public class VengefulAncestor extends Card {
         GoadTargetCreatureUntilNextTurnEffect goad = new GoadTargetCreatureUntilNextTurnEffect();
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), goad)
-                .addEffect(EffectSlot.ON_ATTACK, goad);
+                .addTrigger(Triggers.attacks(), goad);
 
-        addEffect(EffectSlot.ON_ANY_CREATURE_ATTACKS,
+        addTrigger(Triggers.creatureAttacks(),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsGoadedPredicate(),
                         new TargetCreatureDealsDamageToControllerEffect(1)));

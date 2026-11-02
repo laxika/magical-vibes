@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOtherCreaturesForUnblockableEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -16,7 +16,7 @@ import java.util.List;
 public class TidalTerror extends Card {
 
     public TidalTerror() {
-        addEffect(EffectSlot.ON_ATTACK, new TapOtherCreaturesForUnblockableEffect(2));
+        addTrigger(Triggers.attacks(), new TapOtherCreaturesForUnblockableEffect(2));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{2}",
                 List.of(new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.ISLAND))),

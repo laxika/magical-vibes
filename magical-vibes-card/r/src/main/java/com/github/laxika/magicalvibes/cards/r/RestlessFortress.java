@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -38,7 +38,7 @@ public class RestlessFortress extends Card {
                 "{2}{W}{B}: This land becomes a 1/4 white and black Nightmare creature until end of turn. "
                         + "It's still a land."
         ));
-        addEffect(EffectSlot.ON_ATTACK, new LoseLifeEffect(2, LoseLifeRecipient.DEFENDING_PLAYER));
-        addEffect(EffectSlot.ON_ATTACK, new GainLifeEffect(2));
+        addTrigger(Triggers.attacks(), new LoseLifeEffect(2, LoseLifeRecipient.DEFENDING_PLAYER));
+        addTrigger(Triggers.attacks(), new GainLifeEffect(2));
     }
 }

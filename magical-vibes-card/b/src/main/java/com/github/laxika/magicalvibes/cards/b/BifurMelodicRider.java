@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasEnduringStory;
 import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -28,6 +27,6 @@ public class BifurMelodicRider extends Card {
         PutCounterOnTargetPermanentEffect counter =
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1);
         addTrigger(Triggers.enters(ObjectRelation.THIS), counter);
-        addEffect(EffectSlot.ON_ATTACK, counter);
+        addTrigger(Triggers.attacks(), counter);
     }
 }

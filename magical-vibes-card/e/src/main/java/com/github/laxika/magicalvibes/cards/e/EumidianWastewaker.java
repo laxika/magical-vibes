@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EncoreEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.EumidianWastewakerEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "EOC", collectorNumber = "8")
@@ -16,7 +16,7 @@ import java.util.List;
 public class EumidianWastewaker extends Card {
 
     public EumidianWastewaker() {
-        addEffect(EffectSlot.ON_ATTACK, new EumidianWastewakerEffect());
+        addTrigger(Triggers.attacks(), new EumidianWastewakerEffect());
         addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{6}{B}{B}",

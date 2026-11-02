@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
@@ -46,6 +45,6 @@ public class TitanOfLittjara extends Card {
                         new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
                 "Draw cards and discard a card?");
         addTrigger(Triggers.enters(ObjectRelation.THIS), drawAndDiscard);
-        addEffect(EffectSlot.ON_ATTACK, drawAndDiscard);
+        addTrigger(Triggers.attacks(), drawAndDiscard);
     }
 }

@@ -1,0 +1,53 @@
+# slot	factory	zone (- for the trigger's default)	event	relation	filter	javadoc
+ON_ATTACK	attacks	-	ATTACKS	THIS	-	"Whenever this creature attacks"; on an Aura or Equipment, "whenever enchanted (equipped) creature attacks" or the ability it grants that creature.
+ON_ALLY_CREATURE_ATTACKS	creatureYouControlAttacks	-	ATTACKS	YOU_CONTROL	-	"Whenever a creature you control attacks", this one included.
+ON_ANY_CREATURE_ATTACKS	creatureAttacks	-	ATTACKS	ANY	-	"Whenever a creature attacks".
+ON_CREATURE_ATTACKS_YOU	creatureAttacksYouOrYourPlaneswalker	-	ATTACKS_YOU_OR_YOUR_PLANESWALKER	ANY	-	"Whenever a creature attacks you or a planeswalker you control".
+ON_CREATURE_ATTACKS_YOU_DIRECTLY	creatureAttacksYou	-	ATTACKS_YOU	ANY	-	"Whenever a creature attacks you".
+ON_CREATURE_ATTACKS_DEFENDING_PLAYER	creatureAttacksWhileYouDefend	-	ATTACKS_WHILE_YOU_DEFEND	OPPONENT_CONTROLS	-	"Whenever a creature an opponent controls attacks, if you're the defending player".
+ON_ALLY_CREATURES_ATTACK	youAttack	-	ONE_OR_MORE_ATTACK	YOU_CONTROL	-	"Whenever you attack": one or more creatures you control attack.
+COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK	youAttack	COMMAND				
+GRAVEYARD_ON_ALLY_CREATURES_ATTACK	youAttack	GRAVEYARD				
+EXILE_ON_ALLY_CREATURES_ATTACK	youAttack	EXILE				
+ON_ALLY_CREATURES_ATTACK_PLAYER	youAttackPlayer	-	ONE_OR_MORE_ATTACK_A_PLAYER	YOU_CONTROL	-	"Whenever you attack a player", once for each player attacked.
+ON_ALLY_CREATURES_ATTACK_PLAYER_OR_PLANESWALKER	youAttackPlayerOrPlaneswalker	-	ONE_OR_MORE_ATTACK_A_PLAYER_OR_PLANESWALKER	YOU_CONTROL	-	"Whenever you attack a player or planeswalker", once for each one attacked.
+ON_ANY_PLAYER_ATTACKS	playerAttacks	-	ONE_OR_MORE_ATTACK	ANY	-	"Whenever a player attacks": one or more creatures attack.
+ON_CREATURES_ATTACK_YOU	creaturesAttackYou	-	ONE_OR_MORE_ATTACK_YOU	ANY	-	"Whenever one or more creatures attack you".
+ON_OPPONENT_ATTACKS_PLANESWALKER_YOU_CONTROL	opponentAttacksYourPlaneswalker	-	ONE_OR_MORE_ATTACK_YOUR_PLANESWALKER	OPPONENT_CONTROLS	-	"Whenever an opponent attacks a planeswalker you control with one or more creatures".
+ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS	attackingCreatureYouControlAbilityTriggers	-	ATTACKING_CREATURE_ABILITY_TRIGGERS	YOU_CONTROL	-	An attacking creature you control causes a triggered ability of its own to trigger, or this creature enlists a creature.
+ON_ATTACKS_UNBLOCKED	attacksUnblocked	-	ATTACKS_UNBLOCKED	THIS	-	"Whenever this creature attacks and isn't blocked".
+ON_ENCHANTED_CREATURE_ATTACKS_UNBLOCKED	enchantedCreatureAttacksUnblocked	-	ATTACKS_UNBLOCKED	ENCHANTED	-	"Whenever enchanted creature attacks and isn't blocked".
+ON_ALLY_CREATURE_ATTACKS_UNBLOCKED	creatureYouControlAttacksUnblocked	-	ATTACKS_UNBLOCKED	YOU_CONTROL	-	"Whenever a creature you control attacks and isn't blocked".
+EXILE_ON_ALLY_CREATURE_ATTACKS_UNBLOCKED	creatureYouControlAttacksUnblocked	EXILE				
+ON_OPPONENT_CREATURES_ATTACK_YOU_UNBLOCKED	creaturesAttackYouUnblocked	-	ONE_OR_MORE_ATTACK_YOU_UNBLOCKED	OPPONENT_CONTROLS	-	"Whenever one or more creatures an opponent controls attack you and aren't blocked".
+ON_BLOCK	blocks	-	BLOCKS	THIS	-	"Whenever this creature blocks"; on an Aura or Equipment, the creature it is attached to.
+ON_BLOCKS_MULTIPLE_CREATURES	blocksTwoOrMore	-	BLOCKS_TWO_OR_MORE	THIS	-	"Whenever this creature blocks two or more creatures".
+ON_ANY_CREATURE_BLOCKS	creatureBlocks	-	BLOCKS	ANY	-	"Whenever a creature blocks".
+ON_ANY_CREATURES_BLOCK	creaturesBlock	-	ONE_OR_MORE_BLOCK	ANY	-	"Whenever one or more creatures block".
+ON_BECOMES_BLOCKED	becomesBlocked	-	BECOMES_BLOCKED	THIS	-	"Whenever this creature becomes blocked"; on an Aura or Equipment, the creature it is attached to.
+ON_ALLY_CREATURE_BECOMES_BLOCKED	creatureYouControlBecomesBlocked	-	BECOMES_BLOCKED	YOU_CONTROL	-	"Whenever a creature you control becomes blocked", this one included.
+ON_ALLY_CREATURES_BECOME_BLOCKED	creaturesYouControlBecomeBlocked	-	ONE_OR_MORE_BECOME_BLOCKED	YOU_CONTROL	-	"Whenever one or more creatures you control become blocked".
+ON_ANY_CREATURE_BECOMES_BLOCKED	creatureBecomesBlocked	-	BECOMES_BLOCKED	ANY	-	"Whenever a creature becomes blocked".
+ON_COMBAT_DAMAGE_TO_PLAYER	dealsCombatDamageToPlayer	-	COMBAT_DAMAGE_TO_PLAYER	THIS	-	"Whenever this creature deals combat damage to a player"; on an Aura or Equipment, the creature it is attached to; on a Curse, "whenever a creature deals combat damage to enchanted player".
+ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER	equippedCreatureDealsCombatDamageToPlayer	-	COMBAT_DAMAGE_TO_PLAYER	EQUIPPED	-	"Whenever equipped creature deals combat damage to a player", once each combat damage step.
+ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER	creatureYouControlDealsCombatDamageToPlayer	-	COMBAT_DAMAGE_TO_PLAYER	YOU_CONTROL	-	"Whenever a creature you control deals combat damage to a player".
+GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER	creatureYouControlDealsCombatDamageToPlayer	GRAVEYARD				
+ON_ANY_CREATURE_COMBAT_DAMAGE_TO_PLAYER	creatureDealsCombatDamageToPlayer	-	COMBAT_DAMAGE_TO_PLAYER	ANY	-	"Whenever a creature deals combat damage to a player".
+ON_CREATURE_WITH_SAME_NAME_COMBAT_DAMAGE_TO_PLAYER	creatureWithSameNameDealsCombatDamageToPlayer	-	COMBAT_DAMAGE_TO_PLAYER	ANY	SAME_NAME	"Whenever a creature with the same name as this deals combat damage to a player".
+ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT	creatureDealsCombatDamageToOpponent	-	COMBAT_DAMAGE_TO_OPPONENT	ANY	-	"Whenever a creature deals combat damage to one of your opponents".
+ON_GOADED_CREATURES_COMBAT_DAMAGE_TO_OPPONENT	goadedCreaturesDealCombatDamageToOpponent	-	ONE_OR_MORE_COMBAT_DAMAGE_TO_OPPONENT	ANY	GOADED	"Whenever one or more goaded creatures deal combat damage to one of your opponents".
+ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OWNER	creatureDealsCombatDamageToItsOwner	-	COMBAT_DAMAGE_TO_OWNER	ANY	-	"Whenever a creature deals combat damage to its owner".
+ON_COMBAT_DAMAGE_TO_CREATURE	dealsCombatDamageToCreature	-	COMBAT_DAMAGE_TO_CREATURE	THIS	-	"Whenever this creature deals combat damage to a creature", once for each creature.
+ON_COMBAT_DAMAGE_TO_BLOCKING_CREATURE	dealsCombatDamageToBlockingCreature	-	COMBAT_DAMAGE_TO_BLOCKING_CREATURE	THIS	-	"Whenever this creature deals combat damage to one or more blocking creatures".
+ON_SELF_DEALS_COMBAT_DAMAGE	dealsCombatDamage	-	COMBAT_DAMAGE	THIS	-	"Whenever this creature deals combat damage", once each combat damage step.
+ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE	equippedCreatureDealsCombatDamage	-	COMBAT_DAMAGE	EQUIPPED	-	"Whenever equipped creature deals combat damage", once each combat damage step.
+ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE	creatureYouControlDealsCombatDamage	-	COMBAT_DAMAGE	YOU_CONTROL	-	"Whenever a creature you control deals combat damage", once for each creature each combat damage step.
+ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER	dealsCombatDamageToPlayerOrPlaneswalker	-	COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER	THIS	-	"Whenever this creature deals combat damage to a player or planeswalker".
+GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER	creatureYouControlDealsCombatDamageToPlayerOrPlaneswalker	GRAVEYARD	COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER	YOU_CONTROL	-	"Whenever a creature you control deals combat damage to a player or planeswalker".
+ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE	dealsCombatDamageToPlayerOrBattle	-	COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE	THIS	-	"Whenever this creature deals combat damage to a player or battle".
+ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE	equippedCreatureDealsCombatDamageToPlayerOrBattle	-	COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE	EQUIPPED	-	"Whenever equipped creature deals combat damage to a player or battle".
+ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE	creatureYouControlDealsCombatDamageToPlayerOrBattle	-	COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE	YOU_CONTROL	-	"Whenever a creature you control deals combat damage to a player or battle".
+ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU	creatureDealsCombatDamageToYou	-	COMBAT_DAMAGE_TO_YOU	ANY	-	"Whenever a creature deals combat damage to you".
+ON_COMBAT_DAMAGE_TO_SELF	dealtCombatDamage	-	DEALT_COMBAT_DAMAGE	THIS	-	"Whenever this permanent is dealt combat damage".
+ON_CONTROLLER_DEALT_COMBAT_DAMAGE	youAreDealtCombatDamage	-	YOU_DEALT_COMBAT_DAMAGE	ANY	-	"Whenever combat damage is dealt to you".
+GRAVEYARD_ON_COMBAT_DAMAGE_TO_YOU_OR_YOUR_PLANESWALKER	youOrYourPlaneswalkerDealtCombatDamage	GRAVEYARD	YOU_OR_YOUR_PLANESWALKER_DEALT_COMBAT_DAMAGE	ANY	-	"Whenever combat damage is dealt to you or a planeswalker you control".

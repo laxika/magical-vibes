@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -41,7 +40,7 @@ public class YumaProudProtector extends Card {
                 new CardsInGraveyard(new CardTypePredicate(CardType.LAND), CountScope.CONTROLLER)));
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), SACRIFICE_LAND_TO_DRAW);
-        addEffect(EffectSlot.ON_ATTACK, SACRIFICE_LAND_TO_DRAW);
+        addTrigger(Triggers.attacks(), SACRIFICE_LAND_TO_DRAW);
 
         addTrigger(Triggers.putIntoGraveyardFromAnywhere(Triggers.NONTOKEN, ObjectRelation.ANOTHER_YOU_OWN),
                 new TriggeringCardConditionalEffect(

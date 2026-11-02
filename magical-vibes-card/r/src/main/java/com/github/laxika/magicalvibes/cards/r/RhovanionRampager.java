@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
 import com.github.laxika.magicalvibes.model.effect.AmassGoblinsEffect;
@@ -20,7 +19,7 @@ import java.util.List;
 public class RhovanionRampager extends Card {
 
     public RhovanionRampager() {
-        addEffect(EffectSlot.ON_ATTACK, new MaySacrificePermanentForCounterSourceEffect(
+        addTrigger(Triggers.attacks(), new MaySacrificePermanentForCounterSourceEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())

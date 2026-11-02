@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
@@ -37,7 +36,7 @@ public class RuxaPatientProfessor extends Card {
                 .build();
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), returnCreature);
-        addEffect(EffectSlot.ON_ATTACK, returnCreature);
+        addTrigger(Triggers.attacks(), returnCreature);
         PermanentHasNoAbilitiesPredicate noAbilities = new PermanentHasNoAbilitiesPredicate();
         addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES, noAbilities));
         addStaticEffect(new GrantEffectEffect(

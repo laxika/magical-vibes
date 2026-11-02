@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -20,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.UnleashEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MKC", collectorNumber = "36")
 @CardRegistration(set = "MKC", collectorNumber = "346")
@@ -38,7 +38,7 @@ public class TesakJudithsHellhound extends Card {
                 Keyword.HASTE, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasCountersPredicate(CounterType.ANY)));
 
-        addEffect(EffectSlot.ON_ATTACK, new AwardManaEffect(
+        addTrigger(Triggers.attacks(), new AwardManaEffect(
                 ManaColor.RED,
                 new PermanentCount(new PermanentIsAttackingPredicate(), CountScope.CONTROLLER)));
     }

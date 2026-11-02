@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.TapSubtypeBoostSelfAndDamageDefenderEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -39,6 +38,6 @@ public class MyrBattlesphere extends Card {
         // Whenever this creature attacks, you may tap X untapped Myr you control.
         // If you do, this creature gets +X/+0 until end of turn and deals X damage
         // to the player or planeswalker it's attacking.
-        addEffect(EffectSlot.ON_ATTACK, new TapSubtypeBoostSelfAndDamageDefenderEffect(CardSubtype.MYR));
+        addTrigger(Triggers.attacks(), new TapSubtypeBoostSelfAndDamageDefenderEffect(CardSubtype.MYR));
     }
 }

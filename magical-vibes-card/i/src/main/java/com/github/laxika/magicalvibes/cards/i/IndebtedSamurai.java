@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BushidoEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -17,8 +16,8 @@ public class IndebtedSamurai extends Card {
 
     public IndebtedSamurai() {
         // Bushido 1
-        addEffect(EffectSlot.ON_BLOCK, new BushidoEffect(1));
-        addEffect(EffectSlot.ON_BECOMES_BLOCKED, new BushidoEffect(1));
+        addTrigger(Triggers.blocks(), new BushidoEffect(1));
+        addTrigger(Triggers.becomesBlocked(), new BushidoEffect(1));
 
         // Whenever a Samurai you control dies, you may put a +1/+1 counter on this creature.
         addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),

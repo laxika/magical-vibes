@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TMC", collectorNumber = "22")
 @CardRegistration(set = "TMC", collectorNumber = "90")
@@ -19,7 +20,7 @@ public class CaseyJonesBackAlleyBrute extends Card {
 
     public CaseyJonesBackAlleyBrute() {
         target(TargetFilters.attackingCreature())
-                .addEffect(EffectSlot.ON_ATTACK,
+                .addTrigger(Triggers.attacks(),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         target(new PlayerPredicateTargetFilter(

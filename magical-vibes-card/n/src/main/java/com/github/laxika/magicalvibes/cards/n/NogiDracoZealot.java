@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceBecomesSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -30,7 +30,7 @@ public class NogiDracoZealot extends Card {
 
         // Whenever Nogi attacks, if you control three or more Dragons, until end of turn, Nogi
         // becomes a Dragon with base power and toughness 5/5 and gains flying.
-        addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
+        addTrigger(Triggers.attacks(), new ConditionalEffect(
                 new ControlsPermanentCount(3, new PermanentHasSubtypePredicate(CardSubtype.DRAGON)),
                 SequenceEffect.of(
                         new SourceBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.DRAGON),

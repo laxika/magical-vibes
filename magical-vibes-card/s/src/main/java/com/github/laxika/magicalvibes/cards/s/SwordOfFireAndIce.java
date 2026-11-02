@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -27,7 +27,7 @@ public class SwordOfFireAndIce extends Card {
         addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new ProtectionFromColorsEffect(
                 Set.of(CardColor.RED, CardColor.BLUE), GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER, SequenceEffect.of(
+        addTrigger(Triggers.equippedCreatureDealsCombatDamageToPlayer(), SequenceEffect.of(
                 new DealDamageToAnyTargetEffect(2),
                 new DrawCardEffect(1)));
         addActivatedAbility(new EquipActivatedAbility("{2}"));

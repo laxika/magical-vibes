@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourcePowerAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoublePlusOneCountersOnSourceEffect;
@@ -24,10 +24,10 @@ public class LevelUp extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new PutCounterOnReferencedPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE))
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_ATTACK,
+                        new TriggeredAbility(Triggers.attacks(),
                         SequenceEffect.of(
                                 new DoublePlusOneCountersOnSourceEffect(),
-                                new ConditionalEffect(new SourcePowerAtLeast(10), new DrawCardEffect(1))),
+                                new ConditionalEffect(new SourcePowerAtLeast(10), new DrawCardEffect(1)))),
                         GrantScope.ENCHANTED_CREATURE));
     }
 }

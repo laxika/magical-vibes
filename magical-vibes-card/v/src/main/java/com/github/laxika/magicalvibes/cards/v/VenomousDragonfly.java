@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MMQ", collectorNumber = "282")
 public class VenomousDragonfly extends Card {
@@ -15,7 +15,7 @@ public class VenomousDragonfly extends Card {
         // destroy that creature at end of combat.
         DestroyCombatOpponentAtEndOfCombatEffect destroyAtEndOfCombat =
                 new DestroyCombatOpponentAtEndOfCombatEffect(new PermanentIsCreaturePredicate(), false);
-        addEffect(EffectSlot.ON_BLOCK, destroyAtEndOfCombat);
-        addEffect(EffectSlot.ON_BECOMES_BLOCKED, destroyAtEndOfCombat, TriggerMode.PER_BLOCKER);
+        addTrigger(Triggers.blocks(), destroyAtEndOfCombat);
+        addTrigger(Triggers.becomesBlocked(), TriggerMode.PER_BLOCKER, destroyAtEndOfCombat);
     }
 }

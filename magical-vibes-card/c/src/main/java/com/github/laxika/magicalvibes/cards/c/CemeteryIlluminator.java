@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAnyGraveyardCardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
@@ -17,7 +16,7 @@ public class CemeteryIlluminator extends Card {
     public CemeteryIlluminator() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ExileAnyGraveyardCardAndImprintOnSourceEffect());
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new ExileAnyGraveyardCardAndImprintOnSourceEffect());
         addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
         addStaticEffect(new AllowCastFromTopOfLibraryEffect(

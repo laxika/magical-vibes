@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
@@ -26,7 +26,7 @@ public class FlayerOfLoyalties extends Card {
 
     public FlayerOfLoyalties() {
         // Annihilator 2 (printed).
-        addEffect(EffectSlot.ON_ATTACK, new SacrificePermanentsEffect(
+        addTrigger(Triggers.attacks(), new SacrificePermanentsEffect(
                 2, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER));
         // When you cast this spell, gain control of target creature until end of turn.
         // Untap it. Until end of turn, it has base power and toughness 10/10 and gains trample,
@@ -38,8 +38,8 @@ public class FlayerOfLoyalties extends Card {
                 .addTrigger(Triggers.youCastThisSpell(),
                         new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.HASTE), GrantScope.TARGET))
                 .addTrigger(Triggers.youCastThisSpell(), new GrantEffectToTargetUntilEndOfTurnEffect(
-                        EffectSlot.ON_ATTACK,
+                        new TriggeredAbility(Triggers.attacks(),
                         new SacrificePermanentsEffect(
-                                2, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER)));
+                                2, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER))));
     }
 }

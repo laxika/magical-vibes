@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsMonarch;
@@ -41,7 +40,7 @@ public class TheSpearOfBashenga extends Card {
                         new PermanentNotPredicate(new PermanentIsLandPredicate()),
                         new PermanentControlledByDefendingPlayerPredicate())),
                 "Target must be a tapped nonland permanent the monarch controls"))
-                .addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
+                .addTrigger(Triggers.attacks(), new ConditionalEffect(
                         new AttackedTargetIsMonarch(), new DestroyTargetPermanentEffect(false)));
 
         addActivatedAbility(new EquipActivatedAbility("{2}"));

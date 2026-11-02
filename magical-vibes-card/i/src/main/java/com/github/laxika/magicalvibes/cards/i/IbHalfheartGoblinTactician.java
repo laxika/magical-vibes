@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -28,7 +28,7 @@ import java.util.Set;
 public class IbHalfheartGoblinTactician extends Card {
 
     public IbHalfheartGoblinTactician() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_BECOMES_BLOCKED,
+        addTrigger(Triggers.creatureYouControlBecomesBlocked(),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

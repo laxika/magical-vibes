@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -42,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
+import com.github.laxika.magicalvibes.service.trigger.CombatWatch;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -67,19 +67,19 @@ public class CombatTriggerService {
     private final ETBTokenTargetService etbTokenTargetService;
     private final GraveyardTargetingService graveyardTargetingService;
 
-    private boolean isOwnAttackTrigger(Permanent perm, EffectSlot slot) {
-        return slot == EffectSlot.ON_ATTACK
+    private boolean isOwnAttackTrigger(Permanent perm, CombatWatch slot) {
+        return slot == CombatWatch.ON_ATTACK
                 && (perm.getCard().isAttackTriggerOwnedByAura()
                 || (perm.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
                 && !perm.getCard().isAttackTriggerGrantedByEquipment()));
     }
 
     /**
-     * Checks attached permanents (auras/equipment) for triggers in the given slot
+     * Checks attached permanents (auras/equipment) for the abilities the given watch reads
      * on the specified creature. Queues targeted triggers for target selection,
      * pushes non-targeted triggers directly onto the stack.
      */
-    public void checkAuraTriggersForCreature(GameData gameData, Permanent creature, EffectSlot slot) {
+    public void checkAuraTriggersForCreature(GameData gameData, Permanent creature, CombatWatch slot) {
         checkAuraTriggersForCreature(gameData, creature, slot, null);
     }
 
@@ -89,7 +89,7 @@ public class CombatTriggerService {
      * When a {@link DestroySubtypeCombatOpponentEffect} matches the opponent's subtype,
      * the trigger is auto-targeted and placed directly on the stack as non-targeting.
      */
-    public void checkAuraTriggersForCreature(GameData gameData, Permanent creature, EffectSlot slot,
+    public void checkAuraTriggersForCreature(GameData gameData, Permanent creature, CombatWatch slot,
                                               Permanent combatOpponent) {
         checkAuraTriggersForCreature(gameData, creature, slot, combatOpponent, null);
     }
@@ -98,7 +98,7 @@ public class CombatTriggerService {
      * Checks attached triggers while allowing the block collector to suppress each attached
      * permanent's ONCE_PER_BLOCK registration after its first trigger in the block declaration.
      */
-    public void checkAuraTriggersForCreature(GameData gameData, Permanent creature, EffectSlot slot,
+    public void checkAuraTriggersForCreature(GameData gameData, Permanent creature, CombatWatch slot,
                                               Permanent combatOpponent,
                                               Set<UUID> oncePerBlockTriggeredPermanents) {
         UUID creatureControllerId = gameData.findControllerOf(creature);
@@ -114,7 +114,7 @@ public class CombatTriggerService {
                         && !perm.getCard().isAttackTriggerOwnedByAura()) {
                     return;
                 }
-                List<EffectRegistration> auraRegs = perm.getCard().getEffectRegistrations(slot);
+                List<EffectRegistration> auraRegs = slot.registrationsOf(perm.getCard());
                 // Skip per-blocker effects — they are handled by checkAttachedPerBlockerTriggers
                 boolean hasOncePerBlockRegistration = auraRegs.stream()
                         .anyMatch(registration -> registration.triggerMode() == TriggerMode.ONCE_PER_BLOCK);
@@ -165,7 +165,7 @@ public class CombatTriggerService {
                                 effectsForStack.add(conditional.wrapped());
                                 autoTargetOpponent = true;
                             }
-                        } else if (slot != EffectSlot.ON_ATTACK
+                        } else if (slot != CombatWatch.ON_ATTACK
                                 && effect instanceof CombatOpponentReferencingEffect c
                                 && c.referencesCombatOpponent()) {
                             if (combatOpponent != null
@@ -183,7 +183,7 @@ public class CombatTriggerService {
                     }
                     // An Equipment's or Aura's own "have target creature block it" (Grappling Hook) refers to
                     // the attacking creature, not to the attached permanent that is the trigger's source.
-                    if (slot == EffectSlot.ON_ATTACK) {
+                    if (slot == CombatWatch.ON_ATTACK) {
                         effectsForStack.replaceAll(e -> e instanceof MayEffect may
                                 && may.wrapped() instanceof MustBlockSourceEffect mustBlock
                                 && mustBlock.sourcePermanentId() == null
@@ -204,7 +204,7 @@ public class CombatTriggerService {
                     effectsForStack.replaceAll(e -> e instanceof ConditionalEffect ce
                             && ce.condition() instanceof AttacksAlone ? ce.wrapped() : e);
 
-                    if (slot == EffectSlot.ON_ATTACK) {
+                    if (slot == CombatWatch.ON_ATTACK) {
                         ConditionContext attackTargetContext = ConditionContext
                                 .forPermanent(creature, finalCreatureControllerId)
                                 .withTargetId(creature.getAttackTarget());
@@ -240,7 +240,7 @@ public class CombatTriggerService {
 
                     if (effectsForStack.isEmpty()) continue;
 
-                    int previousCopies = slot == EffectSlot.ON_ATTACK
+                    int previousCopies = slot == CombatWatch.ON_ATTACK
                             ? beginAttackTriggerCopies(gameData, auraOwnerId, perm)
                             : -1;
                     try {
@@ -266,7 +266,7 @@ public class CombatTriggerService {
                             gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                             log.info("Game {} - {} auto-targeted combat trigger pushed onto stack (attached to {})",
                                     gameData.id, perm.getCard().getName(), creature.getCard().getName());
-                        } else if (slot == EffectSlot.ON_ATTACK && effectsForStack.stream()
+                        } else if (slot == CombatWatch.ON_ATTACK && effectsForStack.stream()
                                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
                             UUID attackedTargetId = creature.getAttackTarget();
                             UUID defendingPlayerId = attackedTargetId == null ? null
@@ -300,7 +300,7 @@ public class CombatTriggerService {
                                                     List.of(), firstGroup, 0, skippedGroups, 0, List.of(), false,
                                                     null, creature.getId()));
                                 } else {
-                                    UUID attackedTargetId = slot == EffectSlot.ON_ATTACK
+                                    UUID attackedTargetId = slot == CombatWatch.ON_ATTACK
                                             ? creature.getAttackTarget() : null;
                                     UUID defendingPlayerId = attackedTargetId == null ? null
                                             : gameData.playerIds.contains(attackedTargetId)
@@ -314,11 +314,11 @@ public class CombatTriggerService {
                                     boolean permOwnedAttackTrigger = isOwnAttackTrigger(perm, slot);
                                     UUID grantedAttackControllerId = permOwnedAttackTrigger
                                             ? auraOwnerId : finalCreatureControllerId;
-                                    UUID targetChooserId = slot == EffectSlot.ON_ATTACK
+                                    UUID targetChooserId = slot == CombatWatch.ON_ATTACK
                                             && perm.getCard().isAttackTriggerTargetChosenByDefendingPlayer()
                                             ? defendingPlayerId : grantedAttackControllerId;
                                     gameData.queueInteraction(
-                                            slot == EffectSlot.ON_ATTACK
+                                            slot == CombatWatch.ON_ATTACK
                                                     ? new PermanentChoiceContext.AttackTriggerTarget(
                                                             perm.getCard(), grantedAttackControllerId, effectsForStack,
                                                             permOwnedAttackTrigger ? perm.getId() : creature.getId(),
@@ -338,7 +338,7 @@ public class CombatTriggerService {
                                 // An attack ability granted to the enchanted creature (Invocation of Saint Traft,
                                 // Unquenchable Fury) is an ability of that creature, so the creature is its source
                                 // and its controller controls it (CR 113.7, CR 113.8).
-                                boolean grantedToCreature = slot == EffectSlot.ON_ATTACK
+                                boolean grantedToCreature = slot == CombatWatch.ON_ATTACK
                                         && (triggeringPlayerId != null || !isOwnAttackTrigger(perm, slot));
                                 StackEntry trigger = new StackEntry(
                                         StackEntryType.TRIGGERED_ABILITY,
@@ -429,7 +429,7 @@ public class CombatTriggerService {
 
         gameData.forEachPermanent((ownerId, perm) -> {
             if (perm.isAttached() && perm.getAttachedTo().equals(attacker.getId())) {
-                List<CardEffect> perBlockerEffects = perm.getCard().getEffectRegistrations(EffectSlot.ON_BECOMES_BLOCKED).stream()
+                List<CardEffect> perBlockerEffects = CombatWatch.ON_BECOMES_BLOCKED.registrationsOf(perm.getCard()).stream()
                         .filter(r -> r.triggerMode() == TriggerMode.PER_BLOCKER)
                         .map(EffectRegistration::effect)
                         .toList();

@@ -74,6 +74,15 @@ public class GrantedTriggeredAbilitySupport {
     }
 
     /**
+     * Controller-aware form for collecting abilities from a permanent snapshot after it has left the battlefield.
+     */
+    public List<CardEffect> grantedTriggerEffects(GameData gameData, Permanent permanent, UUID controllerId,
+                                                  Trigger trigger) {
+        return grantedTriggerEffects(gameData, permanent,
+                gameQueryService.computeStaticBonus(gameData, permanent, controllerId), trigger);
+    }
+
+    /**
      * Form for callers that already hold the permanent's static bonus for the current game state, sparing a second
      * layered query.
      */

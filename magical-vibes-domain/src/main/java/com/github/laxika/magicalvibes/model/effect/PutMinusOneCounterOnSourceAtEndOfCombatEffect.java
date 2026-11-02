@@ -5,7 +5,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * combat." (e.g. Wicker Warcrawler). Resolution creates a
  * {@link com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger} carrying a
  * {@link PutCountersOnSelfEffect}, so the counter lands after combat damage and the delayed trigger
- * uses the stack. Put on the ON_ATTACK and/or ON_BLOCK effect slot.
+ * uses the stack. Put on the Triggers.attacks() and/or Triggers.blocks() effect slot.
  */
 public record PutMinusOneCounterOnSourceAtEndOfCombatEffect() implements CardEffect {
 }

@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AddAnotherCounterOfEachKindToTargetEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AER", collectorNumber = "46")
 @CardRegistration(set = "KLR", collectorNumber = "67")
@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AddAnotherCounterOfEachKindTo
 public class SkyshipPlunderer extends Card {
 
     public SkyshipPlunderer() {
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new AddAnotherCounterOfEachKindToTargetEffect());
     }
 }

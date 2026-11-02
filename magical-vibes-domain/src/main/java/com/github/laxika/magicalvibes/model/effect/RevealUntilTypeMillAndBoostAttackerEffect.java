@@ -10,7 +10,7 @@ import java.util.Set;
  * until end of turn for each card revealed this way. All revealed cards (including the matching
  * card) are put into that player's graveyard.
  * <p>
- * Used on equipment with ON_ATTACK triggers. The defending player is derived as the opponent
+ * Used on equipment with Triggers.attacks() triggers. The defending player is derived as the opponent
  * of the controller. The equipped creature is found via the source equipment's attachedTo.
  * <p>
  * If the player's library contains no matching card, their entire library is revealed,

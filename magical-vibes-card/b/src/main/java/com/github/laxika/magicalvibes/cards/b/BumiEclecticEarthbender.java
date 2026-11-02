@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -25,7 +24,7 @@ public class BumiEclecticEarthbender extends Card {
         PermanentAllOfPredicate landCreatures = new PermanentAllOfPredicate(List.of(
                 new PermanentIsLandPredicate(),
                 new PermanentIsCreaturePredicate()));
-        addEffect(EffectSlot.ON_ATTACK, new PutCounterOnEachControlledPermanentEffect(
+        addTrigger(Triggers.attacks(), new PutCounterOnEachControlledPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, 2, landCreatures));
     }
 }

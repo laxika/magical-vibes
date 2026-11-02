@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -24,7 +23,7 @@ public class QueenBrahne extends Card {
 
     public QueenBrahne() {
         // Prowess is applied by the engine from the Scryfall keyword, so no explicit boost trigger is added here.
-        addEffect(EffectSlot.ON_ATTACK, new CreateTokenEffect(
+        addTrigger(Triggers.attacks(), new CreateTokenEffect(
                 CardType.CREATURE, 1, "Wizard", 0, 1, CardColor.BLACK, null,
                 List.of(CardSubtype.WIZARD), Set.of(), Set.of(), false, false,
                 List.of(

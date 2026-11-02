@@ -1,13 +1,8 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 /**
  * Which of the old spell, land-play and activation slot collectors reads a triggered ability, now that the ability has
@@ -17,7 +12,7 @@ import java.util.List;
  * the stack, as the slot's handlers did, until steps 14 and 15 of the refactor replace them with trigger options and
  * effects that read the event.
  */
-public enum SpellAbilityWatch {
+public enum SpellAbilityWatch implements TriggerWatch {
     /** "Whenever a mana ability of this creature resolves" (granted only: Tyvar the Bellicose). */
     ON_SELF_MANA_ABILITY_RESOLVES(Triggers.thisManaAbilityResolves(), Zone.BATTLEFIELD),
     /** "Whenever a player casts a spell". */
@@ -75,23 +70,13 @@ public enum SpellAbilityWatch {
         this.zone = zone;
     }
 
-    /** The trigger the slot's cards were converted to. */
+    @Override
     public Trigger trigger() {
         return trigger;
     }
 
-    /** The zone the slot's collector reads the abilities in. */
+    @Override
     public Zone zone() {
         return zone;
-    }
-
-    /** The effects of {@code card}'s abilities this watch reads, in the order they were added. */
-    public List<CardEffect> effectsOf(Card card) {
-        return card.getTriggerEffects(trigger, zone);
-    }
-
-    /** The registrations of {@code card}'s abilities this watch reads, with their trigger modes. */
-    public List<EffectRegistration> registrationsOf(Card card) {
-        return card.getTriggerEffectRegistrations(trigger, zone);
     }
 }

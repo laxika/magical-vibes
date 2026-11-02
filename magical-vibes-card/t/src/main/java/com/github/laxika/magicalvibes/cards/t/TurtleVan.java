@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentCrewedBySourceThisTu
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -32,7 +32,7 @@ public class TurtleVan extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentCrewedBySourceThisTurnPredicate())),
                         "Target must be a creature that crewed this Vehicle this turn"))
-                .addEffect(EffectSlot.ON_ATTACK, SequenceEffect.of(
+                .addTrigger(Triggers.attacks(), SequenceEffect.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
                         new ConditionalEffect(
                                 new TargetPermanentMatches(new PermanentAnyOfPredicate(List.of(

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BOT", collectorNumber = "5")
 @CardRegistration(set = "BOT", collectorNumber = "20")
@@ -29,7 +30,7 @@ public class StarscreamPowerHungry extends Card {
                 new ControllerIsMonarch(),
                 new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER)));
 
-        addEffect(EffectSlot.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU,
+        addTrigger(Triggers.creatureDealsCombatDamageToYou(),
                 new BatchedCombatDamageToYouTriggerEffect(new TransformSelfEffect()));
     }
 

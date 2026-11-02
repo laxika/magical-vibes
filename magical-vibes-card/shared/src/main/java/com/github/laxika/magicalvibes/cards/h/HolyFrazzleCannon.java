@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCreatureTypeWithEquippedCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,10 +21,10 @@ import java.util.List;
 public class HolyFrazzleCannon extends Card {
 
     public HolyFrazzleCannon() {
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new PutCounterOnReferencedPermanentEffect(
                         PermanentReference.TRIGGERING, CounterType.PLUS_ONE_PLUS_ONE));
-        addEffect(EffectSlot.ON_ATTACK, new PutCounterOnEachMatchingPermanentEffect(
+        addTrigger(Triggers.attacks(), new PutCounterOnEachMatchingPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE,
                 1,
                 new PermanentAllOfPredicate(List.of(

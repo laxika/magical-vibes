@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -34,7 +33,7 @@ public class OrdealOfPurphoros extends Card {
         setAttackTriggerOwnedByAura(true);
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_ATTACK, SequenceEffect.of(
+                .addTrigger(Triggers.attacks(), SequenceEffect.of(
                         new PutCounterOnReferencedPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
                         new ConditionalEffect(
                                 new EnchantedPermanentMatches(

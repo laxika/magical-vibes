@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsOfDefendingPlayerLibraryEffect;
@@ -26,7 +25,7 @@ public class DominatorDrone extends Card {
                         new PermanentIsColorlessPredicate(),
                         new PermanentIsCreaturePredicate()))),
                 new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT)));
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new ExileTopCardsOfDefendingPlayerLibraryEffect(1));
     }
 }

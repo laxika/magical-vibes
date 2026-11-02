@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,14 +34,15 @@ public class RegisterGlobalTriggeredAbilityUntilNextTurnEffectHandler implements
         var registration = (RegisterGlobalTriggeredAbilityUntilNextTurnEffect) effect;
         // "Whenever a creature attacks you or <this permanent>" (Tasha, Unholy Archmage) watches the
         // registering permanent, so attacks on other planeswalkers the player controls don't count.
-        UUID watchedPermanentId = registration.slot() == EffectSlot.ON_CREATURE_ATTACKS_YOU
+        TriggeredAbility ability = (TriggeredAbility) registration.grantedAbility();
+        UUID watchedPermanentId = ability.hasTrigger(Triggers.creatureAttacksYouOrYourPlaneswalker())
                 ? entry.getSourcePermanentId() : null;
         gameData.temporaryGlobalTriggeredAbilities.add(new TemporaryGlobalTriggeredAbility(
-                entry.getControllerId(), entry.getCard(), registration.slot(), registration.triggeredEffect(),
+                entry.getControllerId(), entry.getCard(), ability,
                 null, false, true, gameData.turnNumber, null, watchedPermanentId));
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " registers a global triggered ability until their next turn."));
         log.info("Game {} - {} registers a global {} trigger until their next turn",
-                gameData.id, entry.getCard().getName(), registration.slot().name());
+                gameData.id, entry.getCard().getName(), LegacySlots.label(ability));
     }
 }

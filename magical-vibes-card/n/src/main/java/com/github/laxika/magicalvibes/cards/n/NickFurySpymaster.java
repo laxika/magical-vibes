@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,7 +26,7 @@ public class NickFurySpymaster extends Card {
             new CardMaxManaValuePredicate(3)));
 
     public NickFurySpymaster() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS, new ConditionalEffect(new AttacksAlone(),
+        addTrigger(Triggers.creatureYouControlAttacks(), new ConditionalEffect(new AttacksAlone(),
                 SequenceEffect.of(
                         new DrawCardEffect(1),
                         new MayEffect(

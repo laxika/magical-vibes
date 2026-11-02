@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -26,7 +25,7 @@ public class FootChopper extends Card {
                 new LivingWeaponEffect(new CreateTokenEffect("Ninja", 1, 1, CardColor.BLACK,
                         List.of(CardSubtype.NINJA), Set.of(), Set.of())));
         addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.equippedCreatureDealsCombatDamageToPlayer(),
                 new MayEffect(
                         new SacrificeEquippedCreatureThenDrawPowerEffect(),
                         "You may sacrifice the equipped creature to draw cards equal to its power?"));

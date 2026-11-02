@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -42,6 +41,6 @@ public class ImmardTheStormcleaver extends Card {
 
         var triggeredCounterMode = new ChooseOneAtResolutionEffect(counterMode);
         addTrigger(Triggers.enters(ObjectRelation.THIS), triggeredCounterMode);
-        addEffect(EffectSlot.ON_ATTACK, triggeredCounterMode);
+        addTrigger(Triggers.attacks(), triggeredCounterMode);
     }
 }

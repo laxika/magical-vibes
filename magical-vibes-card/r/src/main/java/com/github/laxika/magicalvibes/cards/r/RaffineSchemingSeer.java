@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SNC", collectorNumber = "213")
 @CardRegistration(set = "SLZ", collectorNumber = "93")
@@ -20,7 +21,7 @@ public class RaffineSchemingSeer extends Card {
         // Ward {1}.
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(1));
 
-        target(TargetFilters.attackingCreature()).addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+        target(TargetFilters.attackingCreature()).addTrigger(Triggers.youAttack(),
                 new DrawDiscardAndConniveEffect(
                         new PermanentCount(new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER), true));
     }

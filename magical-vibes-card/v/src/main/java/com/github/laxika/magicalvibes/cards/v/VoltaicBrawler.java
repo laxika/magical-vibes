@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -22,7 +21,7 @@ public class VoltaicBrawler extends Card {
     public VoltaicBrawler() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new EnergyCountersEffect(2));
 
-        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        addTrigger(Triggers.attacks(), new MayEffect(
                 ConditionalEffect.unless(new ControllerEnergyAtLeast(1),
                         SequenceEffect.of(
                                 new EnergyCountersEffect(-1),

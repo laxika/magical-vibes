@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerDealtCombatDamageBySubtypeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -27,12 +27,12 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class LostMonarchOfIfnir extends Card {
 
     public LostMonarchOfIfnir() {
-        addEffect(EffectSlot.ON_BECOMES_BLOCKED,
+        addTrigger(Triggers.becomesBlocked(),
                 new LoseLifeEffect(3, LoseLifeRecipient.DEFENDING_PLAYER));
 
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_BECOMES_BLOCKED,
-                new LoseLifeEffect(3, LoseLifeRecipient.DEFENDING_PLAYER),
+                new TriggeredAbility(Triggers.becomesBlocked(),
+                new LoseLifeEffect(3, LoseLifeRecipient.DEFENDING_PLAYER)),
                 GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)));
 

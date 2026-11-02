@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -53,7 +52,7 @@ public class OverlordOfTheBalemurk extends Card {
                                 .build(),
                         "Return a non-Avatar creature card or a planeswalker card from your graveyard to your hand?"));
         addTrigger(Triggers.enters(ObjectRelation.THIS), millThenReturn);
-        addEffect(EffectSlot.ON_ATTACK, millThenReturn);
+        addTrigger(Triggers.attacks(), millThenReturn);
 
         addStaticEffect(new ConditionalEffect(
                 new CastForAlternateCost(),

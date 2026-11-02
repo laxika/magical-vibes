@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsOneThenDrawsForEachCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
@@ -27,7 +26,7 @@ public class KefkaCourtMage extends Card {
         EachPlayerDiscardsOneThenDrawsForEachCardTypeEffect discardTrigger =
                 new EachPlayerDiscardsOneThenDrawsForEachCardTypeEffect();
         addTrigger(Triggers.enters(ObjectRelation.THIS), discardTrigger);
-        addEffect(EffectSlot.ON_ATTACK, discardTrigger);
+        addTrigger(Triggers.attacks(), discardTrigger);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

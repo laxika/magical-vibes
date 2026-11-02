@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -33,6 +32,6 @@ public class PrimevalTitan extends Card {
                 "You may search your library for up to two land cards, put them onto the battlefield tapped, then shuffle."
         );
         addTrigger(Triggers.enters(ObjectRelation.THIS), searchEffect);
-        addEffect(EffectSlot.ON_ATTACK, searchEffect);
+        addTrigger(Triggers.attacks(), searchEffect);
     }
 }

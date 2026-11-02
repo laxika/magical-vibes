@@ -3,13 +3,13 @@ package com.github.laxika.magicalvibes.cards.z;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CSP", collectorNumber = "135")
 @CardRegistration(set = "MM3", collectorNumber = "204")
@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class ZurTheEnchanter extends Card {
 
     public ZurTheEnchanter() {
-        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        addTrigger(Triggers.attacks(), new MayEffect(
                 new SearchLibraryEffect(
                         new CardTypePredicate(CardType.ENCHANTMENT),
                         LibrarySearchDestination.BATTLEFIELD,

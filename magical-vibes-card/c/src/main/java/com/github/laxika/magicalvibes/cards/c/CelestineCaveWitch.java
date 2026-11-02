@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToDefendingPlayerEffect;
@@ -32,7 +31,7 @@ public class CelestineCaveWitch extends Card {
                 CardType.CREATURE, 2, "Insect", 1, 1, CardColor.BLACK, null,
                 List.of(CardSubtype.INSECT), Set.of(), Set.of(), false, false,
                 List.of(), List.of(), false, false, false, 0, Set.of()));
-        addEffect(EffectSlot.ON_ATTACK, ConditionalEffect.unless(
+        addTrigger(Triggers.attacks(), ConditionalEffect.unless(
                 new ControlsPermanentCount(1, new PermanentHasSubtypePredicate(CardSubtype.INSECT)),
                 new MayEffect(
                         new SacrificePermanentThenEffect(

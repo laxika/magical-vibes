@@ -30,7 +30,7 @@ public enum MayPayPayer {
 
     /**
      * The defending player of the attack that triggered the ability — the attacked player, or the
-     * controller of the attacked planeswalker, read from the {@code ON_ATTACK} trigger's
+     * controller of the attacked planeswalker, read from the {@code Triggers.attacks()} ability's
      * {@code attackedTargetId} ("defending player may pay {X}", Mtenda Lion).
      */
     DEFENDING_PLAYER,

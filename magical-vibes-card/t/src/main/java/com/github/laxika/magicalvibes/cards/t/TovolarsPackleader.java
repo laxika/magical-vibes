@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.PreviousActivePlayerCastTwoOrMoreSpellsLastTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -30,7 +29,7 @@ public class TovolarsPackleader extends Card {
 
     public TovolarsPackleader() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), wolfTokens());
-        addEffect(EffectSlot.ON_ATTACK, wolfTokens());
+        addTrigger(Triggers.attacks(), wolfTokens());
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                 new ConditionalEffect(new PreviousActivePlayerCastTwoOrMoreSpellsLastTurn(), new TransformSelfEffect()));
 

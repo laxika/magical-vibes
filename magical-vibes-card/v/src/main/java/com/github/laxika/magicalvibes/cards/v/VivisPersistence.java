@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
@@ -57,7 +56,7 @@ public class VivisPersistence extends Card {
                 AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsCommanderPredicate(true), returnToHand));
-        addEffect(EffectSlot.GRAVEYARD_ON_ALLY_CREATURES_ATTACK,
+        addTrigger(new TriggerCondition(Triggers.youAttack(), AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
                 new ConditionalEffect(
                         new HasAttacker(new PermanentIsCommanderPredicate(true)), returnToHand));
     }

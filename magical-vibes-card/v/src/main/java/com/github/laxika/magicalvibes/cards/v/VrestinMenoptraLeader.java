@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -54,7 +53,7 @@ public class VrestinMenoptraLeader extends Card {
         PermanentAllOfPredicate attackingInsect = new PermanentAllOfPredicate(List.of(
                 new PermanentIsAttackingPredicate(),
                 new PermanentHasSubtypePredicate(CardSubtype.INSECT)));
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+        addTrigger(Triggers.youAttack(),
                 new PutCounterOnTriggeringAttackersEffect(CounterType.PLUS_ONE_PLUS_ONE, attackingInsect));
     }
 }

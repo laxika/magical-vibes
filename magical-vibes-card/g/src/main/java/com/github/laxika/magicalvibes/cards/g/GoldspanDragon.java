@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +24,7 @@ import java.util.List;
 public class GoldspanDragon extends Card {
 
     public GoldspanDragon() {
-        addEffect(EffectSlot.ON_ATTACK, CreateTokenEffect.ofTreasureToken(1));
+        addTrigger(Triggers.attacks(), CreateTokenEffect.ofTreasureToken(1));
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL, CreateTokenEffect.ofTreasureToken(1));
 
         ActivatedAbility treasureManaAbility = new ActivatedAbility(

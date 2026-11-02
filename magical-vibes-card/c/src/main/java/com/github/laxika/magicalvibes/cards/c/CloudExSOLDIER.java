@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.SourcePowerAtLeast;
@@ -42,8 +41,8 @@ public class CloudExSOLDIER extends Card {
         PermanentCount equippedAttackingCreatures = new PermanentCount(
                 equippedAttackingCreature, CountScope.CONTROLLER);
 
-        addEffect(EffectSlot.ON_ATTACK, new DrawCardEffect(equippedAttackingCreatures));
-        addEffect(EffectSlot.ON_ATTACK, ConditionalEffect.unless(
+        addTrigger(Triggers.attacks(), new DrawCardEffect(equippedAttackingCreatures));
+        addTrigger(Triggers.attacks(), ConditionalEffect.unless(
                 new SourcePowerAtLeast(7), CreateTokenEffect.ofTreasureToken(2)));
     }
 }

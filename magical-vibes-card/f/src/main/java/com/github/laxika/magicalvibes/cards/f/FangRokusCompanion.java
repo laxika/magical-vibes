@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -37,7 +36,7 @@ public class FangRokusCompanion extends Card {
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
                 )),
                 "Target must be another legendary creature you control"
-        )).addEffect(EffectSlot.ON_ATTACK,
+        )).addTrigger(Triggers.attacks(),
                 new BoostTargetCreatureEffect(new SourcePower(), new Fixed(0)));
 
         addTrigger(Triggers.dies(ObjectRelation.THIS), new TriggeringPermanentConditionalEffect(

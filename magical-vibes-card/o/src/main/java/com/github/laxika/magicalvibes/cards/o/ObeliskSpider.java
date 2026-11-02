@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "HOU", collectorNumber = "141")
 @CardRegistration(set = "AKR", collectorNumber = "249")
@@ -15,8 +16,8 @@ public class ObeliskSpider extends Card {
 
     public ObeliskSpider() {
         // Whenever this creature deals combat damage to a creature, put a -1/-1 counter on that creature.
-        // The damaged creature is baked as targetId by ON_COMBAT_DAMAGE_TO_CREATURE (non-targeting).
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_CREATURE,
+        // The damaged creature is baked as targetId by Triggers.dealsCombatDamageToCreature() (non-targeting).
+        addTrigger(Triggers.dealsCombatDamageToCreature(),
                 new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1));
 
         // Whenever you put one or more -1/-1 counters on a creature, each opponent loses 1 life and you

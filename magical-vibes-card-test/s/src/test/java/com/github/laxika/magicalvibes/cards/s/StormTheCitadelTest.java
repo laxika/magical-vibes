@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -34,7 +34,7 @@ class StormTheCitadelTest extends BaseCardTest {
         assertThat(ownCreature.getEffectiveToughness()).isEqualTo(4);
         assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
         assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(ownCreature.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER))
+        assertThat(ownCreature.getTemporaryTriggerEffects(Triggers.dealsCombatDamageToPlayerOrPlaneswalker()))
                 .isNotEmpty();
     }
 
@@ -73,7 +73,7 @@ class StormTheCitadelTest extends BaseCardTest {
         castStormTheCitadel();
 
         assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER))
+        assertThat(creature.getTemporaryTriggerEffects(Triggers.dealsCombatDamageToPlayerOrPlaneswalker()))
                 .isNotEmpty();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -82,7 +82,7 @@ class StormTheCitadelTest extends BaseCardTest {
 
         assertThat(creature.getEffectivePower()).isEqualTo(2);
         assertThat(creature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(creature.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER))
+        assertThat(creature.getTemporaryTriggerEffects(Triggers.dealsCombatDamageToPlayerOrPlaneswalker()))
                 .isEmpty();
     }
 

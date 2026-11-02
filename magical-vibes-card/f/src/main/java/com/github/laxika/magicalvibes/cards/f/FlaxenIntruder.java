@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.w.WelcomeHome;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +23,7 @@ public class FlaxenIntruder extends Card {
         setBackFaceCard(new WelcomeHome());
         addCastingOption(new AdventureCast("{5}{G}{G}"));
 
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MayEffect(
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new MayEffect(
                 new SacrificeSelfThenEffect(new QueueReflexiveAbilityEffect(new DestroyTargetPermanentEffect(
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),

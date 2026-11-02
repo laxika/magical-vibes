@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -23,6 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -50,10 +52,10 @@ public class HaraldUnitesTheElves extends Card {
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
         ));
         addEffect(EffectSlot.SAGA_CHAPTER_III, new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
-                EffectSlot.ON_ANY_CREATURE_ATTACKS,
+                new TriggeredAbility(Triggers.creatureAttacks(),
                 new TriggeringPermanentControllerConditionalEffect(
                         new TriggeringPermanentConditionalEffect(
                                 new PermanentHasSubtypePredicate(CardSubtype.ELF),
-                                new BoostTargetCreatureEffect(-1, -1, opponentCreature)))));
+                                new BoostTargetCreatureEffect(-1, -1, opponentCreature))))));
     }
 }

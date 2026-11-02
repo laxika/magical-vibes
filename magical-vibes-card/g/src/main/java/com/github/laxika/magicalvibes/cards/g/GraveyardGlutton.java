@@ -13,7 +13,7 @@ public class GraveyardGlutton extends Card {
 
     public GraveyardGlutton() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), exileFromGraveyard());
-        addEffect(EffectSlot.ON_ATTACK, exileFromGraveyard());
+        addTrigger(Triggers.attacks(), exileFromGraveyard());
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessDiscardsEffect());
     }
 

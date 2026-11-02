@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -26,7 +25,7 @@ public class StoneGiantOfHighPass extends Card {
                 "Stone Boulder", 3, 1, null,
                 List.of(CardSubtype.WALL), Set.of(Keyword.DEFENDER), Set.of(CardType.ARTIFACT));
         addTrigger(Triggers.enters(ObjectRelation.THIS), stoneBoulder);
-        addEffect(EffectSlot.ON_ATTACK, stoneBoulder);
+        addTrigger(Triggers.attacks(), stoneBoulder);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

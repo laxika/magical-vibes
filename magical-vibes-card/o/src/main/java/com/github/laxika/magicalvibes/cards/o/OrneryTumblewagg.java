@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -26,7 +25,7 @@ public class OrneryTumblewagg extends Card {
         target(TargetFilters.creature()).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
-        target(TargetFilters.creature()).addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
+        target(TargetFilters.creature()).addTrigger(Triggers.attacks(), new ConditionalEffect(
                 new SourceIsSaddled(),
                 new DoubleCountersOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)));
 

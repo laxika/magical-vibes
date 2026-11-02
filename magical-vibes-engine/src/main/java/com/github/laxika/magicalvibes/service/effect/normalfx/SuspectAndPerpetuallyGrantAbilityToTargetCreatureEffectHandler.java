@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SuspectAndPerpetuallyGrantAbilityToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -56,11 +57,12 @@ public class SuspectAndPerpetuallyGrantAbilityToTargetCreatureEffectHandler
             return;
         }
         UUID cardId = target.getOriginalCard().getId();
-        gameData.grantPerpetualAbilityOnce(cardId, EffectSlot.ON_COMBAT_DAMAGE_TO_CREATURE, grantedAbility);
+        gameData.grantPerpetualAbilityOnce(cardId,
+                new TriggeredAbility(Triggers.dealsCombatDamageToCreature(), grantedAbility));
 
-        if (!target.getPersistentTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_CREATURE)
+        if (!target.getPersistentTriggerEffects(Triggers.dealsCombatDamageToCreature())
                 .contains(grantedAbility)) {
-            target.addPersistentTriggeredEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_CREATURE, grantedAbility);
+            target.addPersistentAbility(new TriggeredAbility(Triggers.dealsCombatDamageToCreature(), grantedAbility));
         }
     }
 }

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -54,7 +53,7 @@ public class OverlordOfTheHauntwoods extends Card {
                 0,
                 Set.of());
         addTrigger(Triggers.enters(ObjectRelation.THIS), everywhere);
-        addEffect(EffectSlot.ON_ATTACK, everywhere);
+        addTrigger(Triggers.attacks(), everywhere);
 
         addStaticEffect(new ConditionalEffect(
                 new CastForAlternateCost(),

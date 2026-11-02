@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LifeGainOpponentLifeLossWatcher;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -3327,7 +3328,7 @@ public class TriggerCollectionService {
                                                                          UUID creatureControllerId,
                                                                          UUID damagedPlayerId, int damageDealt) {
         for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (watcher.slot() != EffectSlot.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_PLAYER
+            if (!watcher.ability().hasTrigger(CombatWatch.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_PLAYER.trigger())
                     || watcher.watchedPermanentId() != null) {
                 continue;
             }
@@ -3392,16 +3393,16 @@ public class TriggerCollectionService {
             List<CardEffect> effects = new ArrayList<>();
             if (!controllerId.equals(damagedPlayerId)) {
                 if (!printedAbilitiesLost) {
-                    effects.addAll(source.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT));
+                    effects.addAll(CombatWatch.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT.effectsOf(source.getCard()));
                 }
-                effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                        gameData, source, EffectSlot.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT));
+                effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                        gameData, source, CombatWatch.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT.trigger()));
             }
             if (!printedAbilitiesLost) {
-                effects.addAll(source.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_PLAYER));
+                effects.addAll(CombatWatch.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_PLAYER.effectsOf(source.getCard()));
             }
-            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                    gameData, source, EffectSlot.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_PLAYER));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                    gameData, source, CombatWatch.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_PLAYER.trigger()));
             for (CardEffect effect : effects) {
                 CardEffect resolvedEffect = effect;
                 boolean matches = true;
@@ -3459,8 +3460,7 @@ public class TriggerCollectionService {
         }
         UUID planarControllerId = gameData.planechase.controllerId;
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-            for (CardEffect effect : object.getCard().getEffects(
-                    EffectSlot.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT)) {
+            for (CardEffect effect : CombatWatch.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT.effectsOf(object.getCard())) {
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         object.getCard(),
@@ -3494,7 +3494,7 @@ public class TriggerCollectionService {
                     || gameQueryService.hasLostPrintedAbilities(gameData, source)) {
                 continue;
             }
-            for (CardEffect effect : source.getCard().getEffects(EffectSlot.ON_CONTROLLER_DEALT_COMBAT_DAMAGE)) {
+            for (CardEffect effect : CombatWatch.ON_CONTROLLER_DEALT_COMBAT_DAMAGE.effectsOf(source.getCard())) {
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         source.getCard(),
@@ -3533,9 +3533,9 @@ public class TriggerCollectionService {
 
             List<CardEffect> effects = new ArrayList<>(
                     gameQueryService.hasLostPrintedAbilities(gameData, source) ? List.of()
-                            : source.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OWNER));
-            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                    gameData, source, EffectSlot.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OWNER));
+                            : CombatWatch.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OWNER.effectsOf(source.getCard()));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                    gameData, source, CombatWatch.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OWNER.trigger()));
             for (CardEffect effect : effects) {
                 CardEffect resolvedEffect = effect;
                 boolean matches = true;
@@ -3620,14 +3620,11 @@ public class TriggerCollectionService {
                 return;
             }
 
-            List<CardEffect> effects = new ArrayList<>(source.getCard().getEffects(
-                    EffectSlot.ON_GOADED_CREATURES_COMBAT_DAMAGE_TO_OPPONENT));
-            effects.addAll(source.getTemporaryTriggeredEffects(
-                    EffectSlot.ON_GOADED_CREATURES_COMBAT_DAMAGE_TO_OPPONENT));
-            effects.addAll(source.getPersistentTriggeredEffects(
-                    EffectSlot.ON_GOADED_CREATURES_COMBAT_DAMAGE_TO_OPPONENT));
-            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                    gameData, source, EffectSlot.ON_GOADED_CREATURES_COMBAT_DAMAGE_TO_OPPONENT));
+            List<CardEffect> effects = new ArrayList<>(CombatWatch.ON_GOADED_CREATURES_COMBAT_DAMAGE_TO_OPPONENT.effectsOf(source.getCard()));
+            effects.addAll(source.getTemporaryTriggerEffects(CombatWatch.ON_GOADED_CREATURES_COMBAT_DAMAGE_TO_OPPONENT.trigger()));
+            effects.addAll(source.getPersistentTriggerEffects(CombatWatch.ON_GOADED_CREATURES_COMBAT_DAMAGE_TO_OPPONENT.trigger()));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                    gameData, source, CombatWatch.ON_GOADED_CREATURES_COMBAT_DAMAGE_TO_OPPONENT.trigger()));
             Permanent matchingDealer = damageDealers.stream()
                     .filter(creature -> gameQueryService.isGoaded(gameData, creature))
                     .findFirst()
@@ -3879,7 +3876,7 @@ public class TriggerCollectionService {
             for (Permanent perm : gameData.permanentsAndFaceUpSchemes(damagedPlayerId)) {
                 if (!perm.getCard().getEffects(EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU).isEmpty()
                         || (isCombatDamage
-                                && !perm.getCard().getEffects(EffectSlot.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU).isEmpty())) {
+                                && !CombatWatch.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU.effectsOf(perm.getCard()).isEmpty())) {
                     hasTrigger = true;
                     break;
                 }
@@ -3919,7 +3916,7 @@ public class TriggerCollectionService {
     }
 
     /**
-     * Puts every {@link EffectSlot#ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU} ability on the damaged
+     * Puts every {@link CombatWatch#ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU} ability on the damaged
      * player's battlefield and face-up schemes (CR 314.4) onto the stack when a creature dealt them combat damage. The whole slot
      * becomes one triggered ability per watching permanent whose {@code targetId} is the damaging
      * creature, so "destroy that creature" is expressed with {@code DestroyTargetPermanentEffect}
@@ -3933,8 +3930,7 @@ public class TriggerCollectionService {
         for (Permanent perm : new ArrayList<>(gameData.permanentsAndFaceUpSchemes(damagedPlayerId))) {
             if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
             List<CardEffect> effects = new ArrayList<>();
-            List<CardEffect> authoredEffects = perm.getCard()
-                    .getEffects(EffectSlot.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU);
+            List<CardEffect> authoredEffects = CombatWatch.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU.effectsOf(perm.getCard());
             for (int effectIndex = 0; effectIndex < authoredEffects.size(); effectIndex++) {
                 CardEffect effect = authoredEffects.get(effectIndex);
                 String triggerKey = perm.getId() + ":" + effectIndex;
@@ -4554,7 +4550,7 @@ public class TriggerCollectionService {
     public Map<UUID, List<Permanent>> snapshotAllyCreatureDealsCombatDamageWatchers(GameData gameData) {
         Map<UUID, List<Permanent>> watchers = new LinkedHashMap<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
-            if (!permanent.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE).isEmpty()) {
+            if (!CombatWatch.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE.effectsOf(permanent.getCard()).isEmpty()) {
                 watchers.computeIfAbsent(controllerId, ignored -> new ArrayList<>()).add(permanent);
             }
         });
@@ -4574,7 +4570,7 @@ public class TriggerCollectionService {
         var ctx = new TriggerContext.SourceDealsCombatDamage(
                 sourceCard, sourceControllerId, sourcePermanentId, totalDamage, damageToPlayers, damagedPlayerId);
         dispatchSourceDealsCombatDamageTriggers(gameData, sourceCard, sourceControllerId, sourcePermanentId,
-                totalDamage, damageToPlayers, snapshottedSelfEffects, EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE);
+                totalDamage, damageToPlayers, snapshottedSelfEffects, CombatWatch.ON_SELF_DEALS_COMBAT_DAMAGE);
 
         // "Whenever a creature you control deals combat damage" watchers (Five-Alarm Fire). Scanned on
         // the damage source's controller's battlefield only; the watcher itself needn't be a creature.
@@ -4590,9 +4586,9 @@ public class TriggerCollectionService {
         List<Permanent> allyWatchers = snapshottedAllyWatchers != null
                 ? snapshottedAllyWatchers : List.copyOf(battlefield);
         for (Permanent watcher : allyWatchers) {
-            for (CardEffect effect : watcher.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE)) {
+            for (CardEffect effect : CombatWatch.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE.effectsOf(watcher.getCard())) {
                 var match = new TriggerMatchContext(gameData, watcher, sourceControllerId, effect);
-                dispatch(match, EffectSlot.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE, effect, ctx);
+                dispatch(match, CombatWatch.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE, effect, ctx);
             }
         }
 
@@ -4602,15 +4598,14 @@ public class TriggerCollectionService {
                 return;
             }
             if (damageToPlayers > 0) {
-                for (CardEffect effect : watcher.getCard().getEffects(
-                        EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER)) {
+                for (CardEffect effect : CombatWatch.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER.effectsOf(watcher.getCard())) {
                     var match = new TriggerMatchContext(gameData, watcher, watcherControllerId, effect);
-                    dispatch(match, EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER, effect, ctx);
+                    dispatch(match, CombatWatch.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER, effect, ctx);
                 }
             }
-            for (CardEffect effect : watcher.getCard().getEffects(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE)) {
+            for (CardEffect effect : CombatWatch.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE.effectsOf(watcher.getCard())) {
                 var match = new TriggerMatchContext(gameData, watcher, watcherControllerId, effect);
-                dispatch(match, EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE, effect, ctx);
+                dispatch(match, CombatWatch.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE, effect, ctx);
             }
         });
     }
@@ -4629,10 +4624,9 @@ public class TriggerCollectionService {
                     || !isEquippedBy(gameData, watcher, sourcePermanentId)) {
                 return;
             }
-            for (CardEffect effect : watcher.getCard().getEffects(
-                    EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE)) {
+            for (CardEffect effect : CombatWatch.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE.effectsOf(watcher.getCard())) {
                 var match = new TriggerMatchContext(gameData, watcher, watcherControllerId, effect);
-                dispatch(match, EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE,
+                dispatch(match, CombatWatch.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE,
                         effect, ctx);
             }
         });
@@ -8385,8 +8379,7 @@ public class TriggerCollectionService {
         return gameData.planechase != null
                 && Objects.equals(gameData.planechase.controllerId, damagedPlayerId)
                 && gameData.planechase.faceUp.stream()
-                .anyMatch(object -> !object.getCard()
-                        .getEffects(EffectSlot.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU).isEmpty());
+                .anyMatch(object -> !CombatWatch.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU.effectsOf(object.getCard()).isEmpty());
     }
 
     private void queuePlanarCreatureCombatDamageToYouTriggers(GameData gameData, UUID damagedPlayerId,
@@ -8399,8 +8392,7 @@ public class TriggerCollectionService {
 
         UUID creatureControllerId = gameQueryService.findPermanentController(gameData, sourceCreature.getId());
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-            for (CardEffect effect : object.getCard().getEffects(
-                    EffectSlot.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU)) {
+            for (CardEffect effect : CombatWatch.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU.effectsOf(object.getCard())) {
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         object.getCard(),
@@ -9031,7 +9023,7 @@ public class TriggerCollectionService {
         if (sourceCard == null || sourceControllerId == null || sourcePermanentId == null || totalDamage <= 0) return;
         dispatchSourceDealsCombatDamageTriggers(gameData, sourceCard, sourceControllerId, sourcePermanentId,
                 totalDamage, damageToPlayers, snapshottedEffects,
-                EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER);
+                CombatWatch.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER);
     }
 
     public void queueSourceDealsCombatDamageToPlayerOrBattleTriggers(GameData gameData, Card sourceCard,
@@ -9043,7 +9035,7 @@ public class TriggerCollectionService {
         if (sourceCard == null || sourceControllerId == null || sourcePermanentId == null || totalDamage <= 0) return;
         dispatchSourceDealsCombatDamageTriggers(gameData, sourceCard, sourceControllerId, sourcePermanentId,
                 totalDamage, damageToPlayers, snapshottedEffects,
-                EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE);
+                CombatWatch.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE);
         queueEquippedCreatureDealsCombatDamageToPlayerOrBattleTriggers(
                 gameData, sourceCard, sourceControllerId, sourcePermanentId, totalDamage, damageToPlayers);
     }
@@ -9052,23 +9044,24 @@ public class TriggerCollectionService {
                                                          UUID sourceControllerId, UUID sourcePermanentId,
                                                          int totalDamage, int damageToPlayers,
                                                          List<CardEffect> snapshottedEffects,
-                                                         EffectSlot slot) {
+                                                         CombatWatch watch) {
         var ctx = new TriggerContext.SourceDealsCombatDamage(
                 sourceCard, sourceControllerId, sourcePermanentId, totalDamage, damageToPlayers);
-        List<CardEffect> effects = new ArrayList<>(sourceCard.getEffects(slot));
+        List<CardEffect> effects = new ArrayList<>(watch.effectsOf(sourceCard));
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (snapshottedEffects != null) {
             effects.addAll(snapshottedEffects);
         } else if (sourcePermanent != null) {
-            effects.addAll(sourcePermanent.getTemporaryTriggeredEffects(slot));
-            effects.addAll(sourcePermanent.getPersistentTriggeredEffects(slot));
+            effects.addAll(sourcePermanent.getTemporaryTriggerEffects(watch.trigger()));
+            effects.addAll(sourcePermanent.getPersistentTriggerEffects(watch.trigger()));
         }
         for (CardEffect effect : effects) {
             var match = new TriggerMatchContext(gameData, sourcePermanent, sourceControllerId, effect);
-            dispatch(match, slot, effect, ctx);
+            dispatch(match, watch, effect, ctx);
         }
         for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (watcher.slot() != slot || !sourcePermanentId.equals(watcher.watchedPermanentId())) continue;
+            if (!watcher.ability().hasTrigger(watch.trigger())
+                    || !sourcePermanentId.equals(watcher.watchedPermanentId())) continue;
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     watcher.sourceCard(),
@@ -9490,7 +9483,7 @@ public class TriggerCollectionService {
 
     public void checkTemporaryGlobalCreatureAttackTriggers(GameData gameData, Permanent attacker) {
         for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (watcher.slot() != EffectSlot.ON_ANY_CREATURE_ATTACKS) continue;
+            if (!watcher.ability().hasTrigger(CombatWatch.ON_ANY_CREATURE_ATTACKS.trigger())) continue;
             CardEffect effect = watcher.effect();
             boolean matches = true;
             while (matches) {
@@ -9548,7 +9541,7 @@ public class TriggerCollectionService {
             return;
         }
         for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (watcher.slot() != EffectSlot.ON_CREATURE_ATTACKS_YOU
+            if (!watcher.ability().hasTrigger(CombatWatch.ON_CREATURE_ATTACKS_YOU.trigger())
                     || !watcher.controllerId().equals(attackedPlayerId)) {
                 continue;
             }
@@ -9579,7 +9572,7 @@ public class TriggerCollectionService {
     /** Fires temporary triggers that watch one or more creatures controlled by their controller attack. */
     public void checkTemporaryGlobalAllyCreatureAttackTriggers(GameData gameData, UUID attackingPlayerId) {
         for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (watcher.slot() != EffectSlot.ON_ALLY_CREATURES_ATTACK
+            if (!watcher.ability().hasTrigger(CombatWatch.ON_ALLY_CREATURES_ATTACK.trigger())
                     || !watcher.controllerId().equals(attackingPlayerId)) {
                 continue;
             }
@@ -9676,22 +9669,25 @@ public class TriggerCollectionService {
         TriggerContext context = new TriggerContext.AttackingCreatureTriggeredAbility(
                 attacker, triggeredAbility, enlistment, enlistedCreature);
         for (Permanent watcher : List.copyOf(battlefield)) {
-            dispatchSlot(gameData, watcher, controllerId, EffectSlot.ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS, context);
+            dispatchWatch(gameData, watcher, controllerId, CombatWatch.ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS, context);
         }
     }
 
-    /** Collects turn-scoped global triggers for an event that identifies a permanent. */
-    public void collectTemporaryGlobalTriggers(GameData gameData, EffectSlot slot, UUID targetId,
+    /**
+     * Collects turn-scoped global triggers for an event that identifies a permanent. {@code key} is the
+     * {@code EffectSlot} or {@link TriggerWatch} the watchers were registered for.
+     */
+    public void collectTemporaryGlobalTriggers(GameData gameData, Object key, UUID targetId,
                                                int eventValue) {
-        collectTemporaryGlobalTriggers(gameData, slot, targetId, eventValue, null);
+        collectTemporaryGlobalTriggers(gameData, key, targetId, eventValue, null);
     }
 
     /** Collects turn-scoped global triggers while applying controller-relative permanent scopes. */
-    public void collectTemporaryGlobalTriggers(GameData gameData, EffectSlot slot, UUID targetId,
+    public void collectTemporaryGlobalTriggers(GameData gameData, Object slot, UUID targetId,
                                                int eventValue, UUID targetControllerId) {
         for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (watcher.slot() != slot || watcher.watchedPermanentId() != null
-                    || (slot == EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER
+            if (!watches(watcher, slot) || watcher.watchedPermanentId() != null
+                    || (slot == CombatWatch.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER
                     && !watcher.controllerId().equals(
                     gameQueryService.findPermanentController(gameData, targetId)))) {
                 continue;
@@ -9707,7 +9703,7 @@ public class TriggerCollectionService {
             }
 
             CardEffect resolvedEffect = watcher.effect();
-            if (targetId != null && (slot == EffectSlot.ON_ANY_CREATURE_BLOCKS
+            if (targetId != null && (slot == CombatWatch.ON_ANY_CREATURE_BLOCKS
                     || slot == EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED
                     || slot == EffectSlot.ON_OPPONENT_PERMANENT_BECOMES_TAPPED)
                     && resolvedEffect instanceof TriggeringPermanentConditionalEffect conditional) {
@@ -9727,6 +9723,13 @@ public class TriggerCollectionService {
 
             enqueueTemporaryGlobalTrigger(gameData, watcher, resolvedEffect, targetId, eventValue);
         }
+    }
+
+    /** Whether {@code watcher} was registered for {@code key}, an {@code EffectSlot} or a {@link TriggerWatch}. */
+    private static boolean watches(TemporaryGlobalTriggeredAbility watcher, Object key) {
+        return key instanceof TriggerWatch watch
+                ? watcher.ability().hasTrigger(watch.trigger())
+                : watcher.slot() == key;
     }
 
     private void enqueueTemporaryGlobalTrigger(GameData gameData,
@@ -9758,7 +9761,7 @@ public class TriggerCollectionService {
         gameData.enqueueTrigger(entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
         log.info("Game {} - {} temporary global {} trigger fires",
-                gameData.id, watcher.sourceCard().getName(), watcher.slot());
+                gameData.id, watcher.sourceCard().getName(), LegacySlots.label(watcher.ability()));
     }
 
     private void enqueueTemporaryGlobalTrigger(GameData gameData,
@@ -9775,7 +9778,7 @@ public class TriggerCollectionService {
         gameData.enqueueTrigger(entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
         log.info("Game {} - {} temporary global {} trigger fires",
-                gameData.id, watcher.sourceCard().getName(), watcher.slot());
+                gameData.id, watcher.sourceCard().getName(), LegacySlots.label(watcher.ability()));
     }
 
     // ── Enchanted-permanent-tap triggers ───────────────────────────────
@@ -15760,7 +15763,7 @@ public class TriggerCollectionService {
         UUID planarControllerId = gameData.planechase.controllerId;
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
             List<CardEffect> matchingEffects = new ArrayList<>();
-            for (CardEffect effect : object.getCard().getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK)) {
+            for (CardEffect effect : CombatWatch.ON_ALLY_CREATURES_ATTACK.effectsOf(object.getCard())) {
                 if (effect instanceof ConditionalEffect conditional) {
                     boolean conditionMet = conditionEvaluationService.isMet(
                             gameData,
@@ -15822,9 +15825,9 @@ public class TriggerCollectionService {
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
             List<CardEffect> matchingEffects = new ArrayList<>();
             List<CardEffect> attackEffects = new ArrayList<>(
-                    object.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_ATTACKS));
+                    CombatWatch.ON_ANY_CREATURE_ATTACKS.effectsOf(object.getCard()));
             if (planarControllerId.equals(attackerControllerId)) {
-                attackEffects.addAll(object.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS));
+                attackEffects.addAll(CombatWatch.ON_ALLY_CREATURE_ATTACKS.effectsOf(object.getCard()));
             }
             for (CardEffect effect : attackEffects) {
                 if (effect instanceof TriggeringCardConditionalEffect conditional) {
@@ -15879,8 +15882,7 @@ public class TriggerCollectionService {
         FilterContext triggerContext = FilterContext.of(gameData)
                 .withSourceControllerId(planarControllerId);
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-            for (CardEffect effect : object.getCard().getEffects(
-                    EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER)) {
+            for (CardEffect effect : CombatWatch.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER.effectsOf(object.getCard())) {
                 if (!(effect instanceof AllyCombatDamageTriggerEffect trigger)) {
                     continue;
                 }
@@ -16165,7 +16167,7 @@ public class TriggerCollectionService {
                 grantedSpellCascade || triggersOnlyOnceEachTurn ? 1 : 1 +
                 gameQueryService.countAdditionalTriggeredAbilityTriggers(
                         match.gameData(), match.controllerId(), match.permanent(),
-                        isDirectAttackTriggerSlot(effectSlot), context)
+                        isDirectAttackTrigger(slot), context)
                 + (context.causedByCreatureDying() && !effect.onlyTriggersOnSacrifice()
                 ? gameQueryService.countAdditionalCreatureDeathTriggeredAbilityTriggers(
                         match.gameData(), match.controllerId(), match.permanent())
@@ -16187,11 +16189,11 @@ public class TriggerCollectionService {
         }
     }
 
-    private boolean isDirectAttackTriggerSlot(EffectSlot slot) {
-        if (slot == null) {
+    private boolean isDirectAttackTrigger(Object key) {
+        if (!(key instanceof CombatWatch watch)) {
             return false;
         }
-        return switch (slot) {
+        return switch (watch) {
             case ON_ATTACK, ON_ALLY_CREATURES_ATTACK, ON_ALLY_CREATURES_ATTACK_PLAYER,
                     ON_ALLY_CREATURES_ATTACK_PLAYER_OR_PLANESWALKER,
                     ON_ALLY_CREATURE_ATTACKS,
@@ -16475,7 +16477,7 @@ public class TriggerCollectionService {
      * {@link #dispatchSlot} for the abilities {@code watch} reads: the permanent's own abilities with its trigger, and
      * those other permanents grant it, each dispatched to {@code watch}'s handlers.
      */
-    private boolean dispatchWatch(GameData gameData, Permanent perm, UUID controllerId, SpellAbilityWatch watch,
+    private boolean dispatchWatch(GameData gameData, Permanent perm, UUID controllerId, TriggerWatch watch,
                                   TriggerContext ctx) {
         return dispatchRegistrations(gameData, perm, controllerId, watch, ctx, null,
                 watch.registrationsOf(perm.getCard()),

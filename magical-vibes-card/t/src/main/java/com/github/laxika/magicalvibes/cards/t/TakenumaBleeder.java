@@ -9,20 +9,21 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * Takenuma Bleeder — {2}{B} Creature — Ogre Shaman 3/3.
  * <p>
  * "Whenever this creature attacks or blocks, you lose 1 life if you don't control a Demon."
- * One trigger per combat event, so the effect goes on both {@link EffectSlot#ON_ATTACK} and
- * {@link EffectSlot#ON_BLOCK}; the life loss is gated on not controlling a Demon.
+ * One trigger per combat event, so the effect goes on both {@code Triggers.attacks()} and
+ * {@code Triggers.blocks()}; the life loss is gated on not controlling a Demon.
  */
 @CardRegistration(set = "BOK", collectorNumber = "86")
 public class TakenumaBleeder extends Card {
 
     public TakenumaBleeder() {
-        addEffect(EffectSlot.ON_ATTACK, bleedUnlessDemon());
-        addEffect(EffectSlot.ON_BLOCK, bleedUnlessDemon());
+        addTrigger(Triggers.attacks(), bleedUnlessDemon());
+        addTrigger(Triggers.blocks(), bleedUnlessDemon());
     }
 
     private ConditionalEffect bleedUnlessDemon() {

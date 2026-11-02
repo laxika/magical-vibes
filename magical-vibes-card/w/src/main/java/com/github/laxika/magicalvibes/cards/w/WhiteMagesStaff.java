@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -27,7 +27,7 @@ public class WhiteMagesStaff extends Card {
                         List.of(CardSubtype.HERO), Set.of(), Set.of())));
         addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_ATTACK, new GainLifeEffect(1), GrantScope.EQUIPPED_CREATURE));
+                new TriggeredAbility(Triggers.attacks(), new GainLifeEffect(1)), GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantSubtypeEffect(CardSubtype.CLERIC, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }

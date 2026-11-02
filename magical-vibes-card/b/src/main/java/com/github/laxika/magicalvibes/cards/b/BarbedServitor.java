@@ -22,7 +22,7 @@ public class BarbedServitor extends Card {
 
     public BarbedServitor() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new SuspectEffect(GrantScope.SELF));
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1)));
 
         target(new PlayerPredicateTargetFilter(

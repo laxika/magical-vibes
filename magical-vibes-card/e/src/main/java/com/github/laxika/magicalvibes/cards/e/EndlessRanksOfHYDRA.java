@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -49,7 +48,7 @@ public class EndlessRanksOfHYDRA extends Card {
                 AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsCommanderPredicate(true), returnToHand));
-        addEffect(EffectSlot.GRAVEYARD_ON_ALLY_CREATURES_ATTACK,
+        addTrigger(new TriggerCondition(Triggers.youAttack(), AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
                 new ConditionalEffect(
                         new HasAttacker(new PermanentIsCommanderPredicate(true)), returnToHand));
     }

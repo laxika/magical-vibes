@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -15,15 +14,16 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WOE", collectorNumber = "318")
 public class ChargingHooligan extends Card {
 
     public ChargingHooligan() {
-        addEffect(EffectSlot.ON_ATTACK, new BoostSelfEffect(
+        addTrigger(Triggers.attacks(), new BoostSelfEffect(
                 new PermanentCount(new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER),
                 new Fixed(0)));
-        addEffect(EffectSlot.ON_ATTACK, ConditionalEffect.unless(
+        addTrigger(Triggers.attacks(), ConditionalEffect.unless(
                 new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.RAT)),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
     }

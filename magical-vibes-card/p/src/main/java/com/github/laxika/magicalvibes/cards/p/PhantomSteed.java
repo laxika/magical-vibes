@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfExiledCreatureWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
@@ -45,8 +44,8 @@ public class PhantomSteed extends Card {
                 false,
                 List.of(),
                 List.of(), false, false, new Fixed(1), false, Set.of(), false);
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new CreateTokenCopyOfExiledCreatureWithSourceEffect(tokenCopy, false, true));
-        addEffect(EffectSlot.ON_ATTACK, new SacrificeCreatedPermanentsAtEndOfCombatEffect());
+        addTrigger(Triggers.attacks(), new SacrificeCreatedPermanentsAtEndOfCombatEffect());
     }
 }

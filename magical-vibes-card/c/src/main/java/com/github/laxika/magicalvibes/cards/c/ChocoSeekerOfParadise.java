@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
@@ -24,7 +23,7 @@ import java.util.List;
 public class ChocoSeekerOfParadise extends Card {
 
     public ChocoSeekerOfParadise() {
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+        addTrigger(Triggers.youAttack(),
                 new ConditionalEffect(new com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers(
                         1, new PermanentHasSubtypePredicate(CardSubtype.BIRD)),
                         new LookAtTopCardsChooseOneToHandThenLandsToBattlefieldTappedEffect(

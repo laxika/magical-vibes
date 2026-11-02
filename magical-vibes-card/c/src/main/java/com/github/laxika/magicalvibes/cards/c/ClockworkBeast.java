@@ -34,7 +34,7 @@ public class ClockworkBeast extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ZERO, new Fixed(7)));
 
         // At end of combat, if this creature attacked or blocked this combat, remove a +1/+0 counter
-        // from it. Scheduling only from ON_ATTACK/ON_BLOCK encodes the "attacked or blocked" condition.
+        // from it. Scheduling only from Triggers.attacks()/Triggers.blocks() encodes the "attacked or blocked" condition.
         addTrigger(Triggers.endOfCombat(),
                 new ConditionalEffect(new SourceAttackedOrBlockedThisCombat(),
                         new RemoveCounterFromSourceAtEndOfCombatEffect(CounterType.PLUS_ONE_PLUS_ZERO)));

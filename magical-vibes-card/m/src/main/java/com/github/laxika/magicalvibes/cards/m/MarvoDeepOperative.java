@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.IfWonClashEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MKC", collectorNumber = "7")
 @CardRegistration(set = "MKC", collectorNumber = "315")
@@ -16,7 +17,7 @@ public class MarvoDeepOperative extends Card {
 
     public MarvoDeepOperative() {
         // Whenever this creature attacks, clash with the defending player.
-        addEffect(EffectSlot.ON_ATTACK, new ClashEffect(null));
+        addTrigger(Triggers.attacks(), new ClashEffect(null));
 
         // Whenever you win a clash, draw a card. Then you may cast a spell from your hand with
         // mana value 8 or less without paying its mana cost.

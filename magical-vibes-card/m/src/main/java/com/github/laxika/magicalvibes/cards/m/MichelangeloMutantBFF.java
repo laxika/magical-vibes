@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -26,7 +25,7 @@ public class MichelangeloMutantBFF extends Card {
         addStaticEffect(new EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect(
                 1, new PermanentHasCountersPredicate(CounterType.ANY)));
         addTrigger(Triggers.enters(ObjectRelation.THIS), mutagenToken());
-        addEffect(EffectSlot.ON_ATTACK, mutagenToken());
+        addTrigger(Triggers.attacks(), mutagenToken());
     }
 
     private static CreateTokenEffect mutagenToken() {

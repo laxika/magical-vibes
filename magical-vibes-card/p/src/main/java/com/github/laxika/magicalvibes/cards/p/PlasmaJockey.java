@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
@@ -27,7 +26,7 @@ public class PlasmaJockey extends Card {
         addCastingOption(AlternateHandCast.blitz("{2}{R}"));
 
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.ON_ATTACK, new CantBlockThisTurnEffect(TapUntapScope.TARGET));
+                .addTrigger(Triggers.attacks(), new CantBlockThisTurnEffect(TapUntapScope.TARGET));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new CastForAlternateCost(),
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));

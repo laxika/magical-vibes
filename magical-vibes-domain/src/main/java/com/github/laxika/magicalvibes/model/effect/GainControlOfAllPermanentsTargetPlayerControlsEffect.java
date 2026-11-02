@@ -11,7 +11,7 @@ import java.util.List;
  * <p>At resolution the controller gains control of every matching permanent that player controls at
  * that moment via the standard layer-2 control machinery (one permanent
  * {@link GainControlOfTargetEffect} floating effect per permanent). As a spell or activated ability
- * the player is chosen by targeting; as an {@code ON_COMBAT_DAMAGE_TO_PLAYER} trigger the damaged
+ * the player is chosen by targeting; as an {@code Triggers.dealsCombatDamageToPlayer()} ability the damaged
  * player is bound as the stack entry's target instead.
 
  * <p>Optional {@code thenEffects} resolve for every permanent gained after all control changes have

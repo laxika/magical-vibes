@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardNamedIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -29,7 +28,7 @@ public class UrzasConstructionDrone extends Card {
                 new CardTypePredicate(CardType.LAND),
                 new CardSubtypePredicate(CardSubtype.URZAS)));
         SeekLibraryEffect seekUrzasLand = new SeekLibraryEffect(1, urzasLand);
-        addEffect(EffectSlot.ON_ATTACK, seekUrzasLand);
+        addTrigger(Triggers.attacks(), seekUrzasLand);
         addTrigger(Triggers.dies(ObjectRelation.THIS), seekUrzasLand);
     }
 }

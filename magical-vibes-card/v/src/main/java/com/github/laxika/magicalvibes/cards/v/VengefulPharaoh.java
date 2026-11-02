@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSourceCardFromGraveyardIntoLibraryNFromTopEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M12", collectorNumber = "116")
 public class VengefulPharaoh extends Card {
@@ -19,9 +22,11 @@ public class VengefulPharaoh extends Card {
         // ability does nothing if the card left the graveyard after the trigger, even if it has since
         // returned there as a new object (CR 400.7).
         target(TargetFilters.attackingCreature())
-                .addEffect(EffectSlot.GRAVEYARD_ON_COMBAT_DAMAGE_TO_YOU_OR_YOUR_PLANESWALKER,
+                .addTrigger(new TriggerCondition(Triggers.youOrYourPlaneswalkerDealtCombatDamage(), AbilityZones.GRAVEYARD),
+                        TriggerOptions.DEFAULT,
                         new ConditionalEffect(new SourceCardInGraveyard(), new DestroyTargetPermanentEffect()));
-        addEffect(EffectSlot.GRAVEYARD_ON_COMBAT_DAMAGE_TO_YOU_OR_YOUR_PLANESWALKER,
+        addTrigger(new TriggerCondition(Triggers.youOrYourPlaneswalkerDealtCombatDamage(), AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT,
                 new ConditionalEffect(new SourceCardInGraveyard(),
                         new PutSourceCardFromGraveyardIntoLibraryNFromTopEffect(0)));
     }

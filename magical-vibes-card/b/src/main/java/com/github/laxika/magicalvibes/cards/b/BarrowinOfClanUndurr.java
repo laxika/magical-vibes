@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasCompletedDungeon;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardsFromControllerGraveyardToBattlefieldEffect;
@@ -21,7 +20,7 @@ public class BarrowinOfClanUndurr extends Card {
 
     public BarrowinOfClanUndurr() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new VentureIntoDungeonEffect());
-        addEffect(EffectSlot.ON_ATTACK, ConditionalEffect.unless(new ControllerHasCompletedDungeon(),
+        addTrigger(Triggers.attacks(), ConditionalEffect.unless(new ControllerHasCompletedDungeon(),
                 new ReturnCardsFromControllerGraveyardToBattlefieldEffect(
                         new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),

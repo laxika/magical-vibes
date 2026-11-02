@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.Ability;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public record BecomeCopyOfExiledCreaturePermanentlyEffect(
     }
 
     public BecomeCopyOfExiledCreaturePermanentlyEffect(CardEffect additionalEffect) {
-        this(List.of(LegacySlots.triggered(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, List.of(additionalEffect))));
+        this(List.of(new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(), additionalEffect)));
     }
 
     public BecomeCopyOfExiledCreaturePermanentlyEffect() {

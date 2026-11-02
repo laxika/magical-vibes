@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentCountAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -34,12 +35,11 @@ public class GiantShark extends Card {
                 new BoostSelfEffect(2, 0),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)
         );
-        addEffect(EffectSlot.ON_BLOCK, new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.blocks(), new TriggeringPermanentConditionalEffect(
                 new PermanentDealtDamageThisTurnPredicate(), damagedCombatOpponentBonus));
-        addEffect(EffectSlot.ON_BECOMES_BLOCKED,
+        addTrigger(Triggers.becomesBlocked(), TriggerMode.PER_BLOCKER,
                 new TriggeringPermanentConditionalEffect(
-                        new PermanentDealtDamageThisTurnPredicate(), damagedCombatOpponentBonus),
-                TriggerMode.PER_BLOCKER);
+                        new PermanentDealtDamageThisTurnPredicate(), damagedCombatOpponentBonus));
 
         addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
                 new PermanentControllerControlsPermanentCountAtMostPredicate(

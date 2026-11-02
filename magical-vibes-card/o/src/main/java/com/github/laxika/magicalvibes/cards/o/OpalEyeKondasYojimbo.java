@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BushidoEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageFromChosenSourceToSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -14,8 +14,8 @@ import java.util.List;
 public class OpalEyeKondasYojimbo extends Card {
 
     public OpalEyeKondasYojimbo() {
-        addEffect(EffectSlot.ON_BLOCK, new BushidoEffect(1));
-        addEffect(EffectSlot.ON_BECOMES_BLOCKED, new BushidoEffect(1));
+        addTrigger(Triggers.blocks(), new BushidoEffect(1));
+        addTrigger(Triggers.becomesBlocked(), new BushidoEffect(1));
 
         addActivatedAbility(new ActivatedAbility(true, null,
                 List.of(new RedirectNextDamageFromChosenSourceToSelfEffect()),

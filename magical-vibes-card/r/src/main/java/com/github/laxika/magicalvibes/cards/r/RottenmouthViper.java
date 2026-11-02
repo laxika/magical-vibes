@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
@@ -25,6 +24,6 @@ public class RottenmouthViper extends Card {
                 new PutCountersOnSelfEffect(CounterType.BLIGHT),
                 new TormentOfHailfireEffect(4, null, new CountersOnSource(CounterType.BLIGHT)).deferringChoices());
         addTrigger(Triggers.enters(ObjectRelation.THIS), blightTrigger);
-        addEffect(EffectSlot.ON_ATTACK, blightTrigger);
+        addTrigger(Triggers.attacks(), blightTrigger);
     }
 }

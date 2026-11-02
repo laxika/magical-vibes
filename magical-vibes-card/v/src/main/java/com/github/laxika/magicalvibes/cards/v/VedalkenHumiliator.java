@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -10,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MOC", collectorNumber = "243")
 @CardRegistration(set = "BRC", collectorNumber = "100")
@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 public class VedalkenHumiliator extends Card {
 
     public VedalkenHumiliator() {
-        addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
+        addTrigger(Triggers.attacks(), new ConditionalEffect(
                 new Metalcraft(),
                 SequenceEffect.of(
                         new LosesAllAbilitiesEffect(GrantScope.OPPONENT_CREATURES,

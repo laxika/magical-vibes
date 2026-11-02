@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToAllCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -48,7 +49,7 @@ public class TheCheetahPlanet extends Card {
         addEffect(EffectSlot.CHAOS_TRIGGERED,
                 new GrantStaticEffectToAllCreaturesUntilEndOfTurnEffect(
                         new GrantTriggeredAbilityEffect(
-                                EffectSlot.ON_ATTACK,
+                                new TriggeredAbility(Triggers.attacks(),
                                 new MayEffect(
                                         SequenceEffect.of(
                                                 new UntapPermanentsEffect(TapUntapScope.TARGET,
@@ -56,7 +57,7 @@ public class TheCheetahPlanet extends Card {
                                                 new MustBlockSourceEffect(
                                                         null,
                                                         new PermanentControlledByDefendingPlayerPredicate())),
-                                        "Have target creature defending player controls untap and block this Cat if able?"),
+                                        "Have target creature defending player controls untap and block this Cat if able?")),
                                 GrantScope.SELF),
                         new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.CAT))));
     }

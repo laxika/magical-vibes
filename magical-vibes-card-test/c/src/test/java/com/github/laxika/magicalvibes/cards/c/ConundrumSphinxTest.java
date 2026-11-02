@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ConundrumSphinxTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Attacking puts ON_ATTACK trigger on the stack")
+    @DisplayName("Attacking puts the attack trigger on the stack")
     void attackPutsTriggerOnStack() {
         addCreatureReady(player1, new ConundrumSphinx());
 

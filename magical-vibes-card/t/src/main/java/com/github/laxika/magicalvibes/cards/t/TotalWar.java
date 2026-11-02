@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 /**
@@ -21,7 +22,7 @@ import java.util.List;
  * controlled continuously since the beginning of the turn."
  *
  * <p>The trigger fires once per combat for any attacking player ({@link
- * EffectSlot#ON_ANY_PLAYER_ATTACKS}, which stores that player as the non-targeting target), so the
+ * Triggers.playerAttacks()}, which stores that player as the non-targeting target), so the
  * sweep is scoped to {@link EachPermanentScope#TARGET_PLAYER}. "Hasn't controlled continuously
  * since the beginning of the turn" is the summoning-sickness signal, so creatures that just arrived
  * are spared even if they have haste and stayed home.
@@ -30,7 +31,7 @@ import java.util.List;
 public class TotalWar extends Card {
 
     public TotalWar() {
-        addEffect(EffectSlot.ON_ANY_PLAYER_ATTACKS, new DestroyAllPermanentsEffect(
+        addTrigger(Triggers.playerAttacks(), new DestroyAllPermanentsEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsTappedPredicate()),

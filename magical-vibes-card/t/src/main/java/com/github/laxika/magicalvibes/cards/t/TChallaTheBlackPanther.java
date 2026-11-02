@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
@@ -55,7 +54,7 @@ public class TChallaTheBlackPanther extends Card {
 
     public TChallaTheBlackPanther() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), VIBRANIUM_TOKEN);
-        addEffect(EffectSlot.ON_ATTACK, VIBRANIUM_TOKEN);
+        addTrigger(Triggers.attacks(), VIBRANIUM_TOKEN);
         addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.ARTIFACT),

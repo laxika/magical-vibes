@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -30,7 +29,7 @@ public class TidusYunasGuardian extends Card {
                                 new MoveCounterFromTargetCreatureToTargetCreatureEffect(),
                                 "Move a counter?"));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                 new OncePerTurnTriggerEffect(new AllyCombatDamageTriggerEffect(
                         new PermanentHasCountersPredicate(CounterType.ANY),
                         new MayEffect(

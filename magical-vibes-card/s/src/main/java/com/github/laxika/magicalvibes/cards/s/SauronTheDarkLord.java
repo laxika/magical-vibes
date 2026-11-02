@@ -47,7 +47,7 @@ public class SauronTheDarkLord extends Card {
         PermanentPredicate army = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentHasSubtypePredicate(CardSubtype.ARMY)));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                 new AllyCombatDamageTriggerEffect(army, new RingTemptsYouEffect()));
 
         CardEffect discardAndDraw = new DiscardOwnHandThenDrawEffect(new Fixed(4));

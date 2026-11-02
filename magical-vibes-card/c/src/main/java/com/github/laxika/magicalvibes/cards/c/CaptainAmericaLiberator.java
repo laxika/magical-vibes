@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -25,7 +24,7 @@ public class CaptainAmericaLiberator extends Card {
                         LibrarySearchDestination.BATTLEFIELD,
                         new ManaValueBound(new Fixed(3), false, 0)),
                 "Search your library for an Equipment card with mana value 3 or less?"));
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 CreateTokenEffect.whiteSoldier(new AttachmentsOnSource(false, true)));
     }
 }

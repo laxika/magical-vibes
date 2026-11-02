@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -55,7 +54,8 @@ public class ReturnOfTheMoleMan extends Card {
                 Set.of(),
                 false,
                 false,
-                List.of(LegacySlots.triggered(EffectSlot.ON_ATTACK, new MayEffect(new MillEffect(1, MillRecipient.CONTROLLER), "Mill a card?"))),
+                List.of(new TriggeredAbility(Triggers.attacks(),
+                        new MayEffect(new MillEffect(1, MillRecipient.CONTROLLER), "Mill a card?"))),
                 List.of(),
                 false,
                 false,

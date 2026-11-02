@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RampageEffect;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -88,7 +89,7 @@ public class GrantEffectToTargetEffectHandler implements NormalEffectHandlerBean
         // Some abilities intentionally add another instance each time they resolve (Bushido).
         if (e.skipIfAlreadyPresent()
                 && (alreadyHasGrantedEffect(target, e.grantedAbility(), e.grantedEffect())
-                || alreadyHasRampage(gameData, target, e.slot(), e.grantedEffect()))) {
+                || alreadyHasRampage(gameData, target, e.grantedAbility(), e.grantedEffect()))) {
             return;
         }
 
@@ -138,20 +139,24 @@ public class GrantEffectToTargetEffectHandler implements NormalEffectHandlerBean
         return target.getTemporaryTriggeredEffects(slot).contains(granted);
     }
 
-    private boolean alreadyHasRampage(GameData gameData, Permanent target, EffectSlot slot,
+    private boolean alreadyHasRampage(GameData gameData, Permanent target, Ability ability,
                                       CardEffect granted) {
-        if (!(granted instanceof RampageEffect) || slot != EffectSlot.ON_BECOMES_BLOCKED) {
+        Trigger becomesBlocked = Triggers.becomesBlocked();
+        if (!(granted instanceof RampageEffect) || !(ability instanceof TriggeredAbility triggered)
+                || !triggered.hasTrigger(becomesBlocked)) {
             return false;
         }
-        if (containsRampage(target.getCard().getEffects(slot))
-                || containsRampage(target.getPersistentTriggeredEffects(slot))
-                || containsRampage(target.getTemporaryTriggeredEffects(slot))) {
+        if (containsRampage(target.getCard().getTriggerEffects(becomesBlocked))
+                || containsRampage(target.getPersistentTriggerEffects(becomesBlocked))
+                || containsRampage(target.getTemporaryTriggerEffects(becomesBlocked))) {
             return true;
         }
         return gameQueryService.getGrantedEffects(gameData, target).stream()
                 .filter(GrantTriggeredAbilityEffect.class::isInstance)
                 .map(GrantTriggeredAbilityEffect.class::cast)
-                .anyMatch(effect -> effect.slot() == slot && effect.grantedEffect() instanceof RampageEffect);
+                .anyMatch(effect -> effect.grantedAbility() instanceof TriggeredAbility grantedTriggered
+                        && grantedTriggered.hasTrigger(becomesBlocked)
+                        && effect.grantedEffect() instanceof RampageEffect);
     }
 
     private static boolean containsRampage(Iterable<CardEffect> effects) {

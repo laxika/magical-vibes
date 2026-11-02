@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -66,6 +65,6 @@ public class SpecimenFreighter extends Card {
                 new SourceCounterThreshold(9, CounterType.CHARGE),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
 
-        addEffect(EffectSlot.ON_ATTACK, new MillDefendingPlayerEffect(4));
+        addTrigger(Triggers.attacks(), new MillDefendingPlayerEffect(4));
     }
 }

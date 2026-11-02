@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,6 +17,6 @@ public class InfestedWerewolf extends Card {
 
     public InfestedWerewolf() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), CREATE_INSECTS);
-        addEffect(EffectSlot.ON_ATTACK, CREATE_INSECTS);
+        addTrigger(Triggers.attacks(), CREATE_INSECTS);
     }
 }

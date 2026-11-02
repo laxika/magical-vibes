@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyDamagedCreatureAtEndOf
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CSP", collectorNumber = "115")
 @CardRegistration(set = "DDM", collectorNumber = "57")
@@ -19,7 +20,7 @@ public class OhranViper extends Card {
                 new DestroyDamagedCreatureAtEndOfCombatEffect(new PermanentIsSourcePermanentPredicate()));
 
         // Whenever this creature deals combat damage to a player, you may draw a card.
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new MayEffect(new DrawCardEffect(1), "Draw a card?"));
     }
 }

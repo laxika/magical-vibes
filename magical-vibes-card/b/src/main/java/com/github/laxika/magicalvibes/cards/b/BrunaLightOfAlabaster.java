@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AttachAurasToSourceEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * Bruna, Light of Alabaster — "Whenever Bruna attacks or blocks, you may attach to it any number of
@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachAurasToSourceEffect;
 public class BrunaLightOfAlabaster extends Card {
 
     public BrunaLightOfAlabaster() {
-        addEffect(EffectSlot.ON_ATTACK, new AttachAurasToSourceEffect());
-        addEffect(EffectSlot.ON_BLOCK, new AttachAurasToSourceEffect());
+        addTrigger(Triggers.attacks(), new AttachAurasToSourceEffect());
+        addTrigger(Triggers.blocks(), new AttachAurasToSourceEffect());
     }
 }

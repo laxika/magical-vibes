@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -33,7 +32,7 @@ public class ClandestineMeddler extends Card {
         ), 0, 1).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new SuspectEffect(GrantScope.TARGET));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+        addTrigger(Triggers.youAttack(),
                 new ConditionalEffect(
                         new HasAttacker(new PermanentIsSuspectedPredicate()),
                         new SurveilEffect(1)

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -20,7 +19,7 @@ public class YarusRoarOfTheOldGods extends Card {
 
     public YarusRoarOfTheOldGods() {
         addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER, new AllyCombatDamageTriggerEffect(
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(), new AllyCombatDamageTriggerEffect(
                 new PermanentIsFaceDownPredicate(), new DrawCardEffect(1), false, true));
         addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), new TriggeringPermanentConditionalEffect(
                 new PermanentIsFaceDownPredicate(),

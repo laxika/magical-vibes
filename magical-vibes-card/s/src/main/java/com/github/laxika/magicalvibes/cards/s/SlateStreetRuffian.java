@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "GTC", collectorNumber = "78")
 @CardRegistration(set = "DDM", collectorNumber = "53")
@@ -12,7 +12,7 @@ public class SlateStreetRuffian extends Card {
 
     public SlateStreetRuffian() {
         // Whenever this creature becomes blocked, defending player discards a card.
-        addEffect(EffectSlot.ON_BECOMES_BLOCKED,
+        addTrigger(Triggers.becomesBlocked(),
                 new DiscardEffect(1, DiscardRecipient.DEFENDING_PLAYER));
     }
 }

@@ -25,7 +25,7 @@ import java.util.List;
  *
  * <p>When {@code payerIsDefendingPlayer} is true the prompt goes to the defending player of the
  * attack that triggered the ability — the attacked player, or the attacked planeswalker's
- * controller, read from the {@code ON_ATTACK} trigger's {@code attackedTargetId} (Ogre Marauder:
+ * controller, read from the {@code Triggers.attacks()} ability's {@code attackedTargetId} (Ogre Marauder:
  * "unless defending player sacrifices a creature of their choice"). Mutually exclusive with the
  * other payer flags.
  *
@@ -106,7 +106,7 @@ public record ForcedCostOrElseEffect(
     }
 
     /**
-     * "…unless defending player [pays the cost]" on an {@code ON_ATTACK} trigger — the defending
+     * "…unless defending player [pays the cost]" on an {@code Triggers.attacks()} ability — the defending
      * player is asked, and declining (or being unable to pay) resolves the else effects.
      */
     public static ForcedCostOrElseEffect defendingPlayerMayPay(CostEffect forcedCost,
@@ -116,7 +116,7 @@ public record ForcedCostOrElseEffect(
 
     /**
      * "Defending player faces a villainous choice — That player [pays the cost], or [else
-     * effects]" on an {@code ON_ATTACK} trigger.
+     * effects]" on an {@code Triggers.attacks()} ability.
      */
     public static ForcedCostOrElseEffect defendingPlayerFacesVillainousChoice(
             CostEffect forcedCost, List<CardEffect> elseEffects) {

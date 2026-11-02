@@ -8,12 +8,13 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MSH", collectorNumber = "217")
 public class KangTemporalTyrant extends Card {
 
     public KangTemporalTyrant() {
-        addEffect(EffectSlot.ON_ATTACK, new DrawDiscardAndConniveEffect());
+        addTrigger(Triggers.attacks(), new DrawDiscardAndConniveEffect());
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD, SequenceEffect.of(
                 new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
                 new GainLifeEffect(1)));

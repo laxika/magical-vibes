@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -19,7 +18,7 @@ public class SardianAvenger extends Card {
 
     public SardianAvenger() {
         // Whenever this creature attacks, it gets +X/+0 until end of turn, where X is the number of artifacts your opponents control.
-        addEffect(EffectSlot.ON_ATTACK, new BoostSelfEffect(
+        addTrigger(Triggers.attacks(), new BoostSelfEffect(
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.OPPONENTS),
                 new Fixed(0)));
 

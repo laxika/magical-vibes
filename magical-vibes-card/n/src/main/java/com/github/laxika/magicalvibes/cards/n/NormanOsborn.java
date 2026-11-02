@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ public class NormanOsborn extends Card {
         setModalDoubleFaced(true);
 
         addStaticEffect(new CantBeBlockedEffect());
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DrawDiscardAndConniveEffect());
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new DrawDiscardAndConniveEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

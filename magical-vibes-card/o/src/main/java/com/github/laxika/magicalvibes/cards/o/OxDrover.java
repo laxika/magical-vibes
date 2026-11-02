@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
@@ -38,7 +37,7 @@ public class OxDrover extends Card {
         target(opponentTarget)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), oxToken)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1))
-                .addEffect(EffectSlot.ON_ATTACK, oxToken)
-                .addEffect(EffectSlot.ON_ATTACK, new DrawCardEffect(1));
+                .addTrigger(Triggers.attacks(), oxToken)
+                .addTrigger(Triggers.attacks(), new DrawCardEffect(1));
     }
 }

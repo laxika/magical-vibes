@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -32,7 +31,7 @@ public class FellBeastOfMordor extends Card {
         target(targetOpponent)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), loseLife)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), gainLife)
-                .addEffect(EffectSlot.ON_ATTACK, loseLife)
-                .addEffect(EffectSlot.ON_ATTACK, gainLife);
+                .addTrigger(Triggers.attacks(), loseLife)
+                .addTrigger(Triggers.attacks(), gainLife);
     }
 }

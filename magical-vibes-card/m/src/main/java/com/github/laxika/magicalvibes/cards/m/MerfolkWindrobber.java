@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.OpponentGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -16,7 +16,7 @@ import java.util.List;
 public class MerfolkWindrobber extends Card {
 
     public MerfolkWindrobber() {
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MillEffect(1, MillRecipient.TARGET_PLAYER));
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new MillEffect(1, MillRecipient.TARGET_PLAYER));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

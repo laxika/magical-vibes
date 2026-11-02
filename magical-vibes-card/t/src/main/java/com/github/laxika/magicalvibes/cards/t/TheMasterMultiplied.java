@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleForControlledTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeredAbilitiesCantCauseSacrificeOrExileCreatureTokensEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "146")
 @CardRegistration(set = "WHO", collectorNumber = "429")
@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeredAbilitiesCantCauseSa
 public class TheMasterMultiplied extends Card {
 
     public TheMasterMultiplied() {
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect.myriad());
         addStaticEffect(new IgnoreLegendRuleForControlledTokensEffect());
         addStaticEffect(new TriggeredAbilitiesCantCauseSacrificeOrExileCreatureTokensEffect());

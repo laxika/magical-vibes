@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreaturePermanentlyEffect;
@@ -27,7 +26,7 @@ import java.util.List;
 public class AuroraShifter extends Card {
 
     public AuroraShifter() {
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new EnergyCountersEffect(new EventValue()));
 
         PermanentAllOfPredicate anotherCreatureYouControl = new PermanentAllOfPredicate(List.of(
@@ -47,7 +46,7 @@ public class AuroraShifter extends Card {
                                         null,
                                         Triggers.beginningOfCombat(ActivePlayer.YOU),
                                         anotherCreatureYouControl,
-                                        List.of(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER))))),
+                                        List.of(Triggers.dealsCombatDamageToPlayer()))))),
                 "Pay {E}{E} to have Aurora Shifter become a copy of another creature you control?"));
     }
 }

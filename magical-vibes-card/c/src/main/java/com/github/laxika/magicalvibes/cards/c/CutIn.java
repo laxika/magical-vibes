@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -49,10 +50,10 @@ public class CutIn extends Card {
                 false,
                 List.of(
                         StaticAbility.of(new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_ATTACK,
+                        new TriggeredAbility(Triggers.attacks(),
                         new ConditionalEffect(
                                 new SourceMatchesPermanentPredicate(new PermanentToughnessAtMostPredicate(3)),
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE), true),
+                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE), true)),
                         GrantScope.ENCHANTED_CREATURE))),
                 List.of(),
                 false,

@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsGoadedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -466,5 +468,259 @@ public final class Triggers {
     /** "Whenever a mana ability of this permanent resolves". */
     public static AbilityTrigger thisManaAbilityResolves() {
         return new AbilityTrigger(AbilityTrigger.AbilityEvent.THIS_MANA_ABILITY_RESOLVES, PlayerRelation.YOU);
+    }
+
+    /**
+     * "Whenever this creature attacks"; on an Aura or Equipment, "whenever enchanted (equipped) creature attacks" or
+     * the ability it grants that creature.
+     */
+    public static CombatTrigger attacks() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.ATTACKS, ObjectRelation.THIS);
+    }
+
+    /** "Whenever a creature you control attacks", this one included. */
+    public static CombatTrigger creatureYouControlAttacks() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.ATTACKS, ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever a creature attacks". */
+    public static CombatTrigger creatureAttacks() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.ATTACKS, ObjectRelation.ANY);
+    }
+
+    /** "Whenever a creature attacks you or a planeswalker you control". */
+    public static CombatTrigger creatureAttacksYouOrYourPlaneswalker() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.ATTACKS_YOU_OR_YOUR_PLANESWALKER, ObjectRelation.ANY);
+    }
+
+    /** "Whenever a creature attacks you". */
+    public static CombatTrigger creatureAttacksYou() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.ATTACKS_YOU, ObjectRelation.ANY);
+    }
+
+    /** "Whenever a creature an opponent controls attacks, if you're the defending player". */
+    public static CombatTrigger creatureAttacksWhileYouDefend() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.ATTACKS_WHILE_YOU_DEFEND, ObjectRelation.OPPONENT_CONTROLS);
+    }
+
+    /** "Whenever you attack": one or more creatures you control attack. */
+    public static CombatTrigger youAttack() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.ONE_OR_MORE_ATTACK, ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever you attack a player", once for each player attacked. */
+    public static CombatTrigger youAttackPlayer() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.ONE_OR_MORE_ATTACK_A_PLAYER, ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever you attack a player or planeswalker", once for each one attacked. */
+    public static CombatTrigger youAttackPlayerOrPlaneswalker() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.ONE_OR_MORE_ATTACK_A_PLAYER_OR_PLANESWALKER,
+                ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever a player attacks": one or more creatures attack. */
+    public static CombatTrigger playerAttacks() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.ONE_OR_MORE_ATTACK, ObjectRelation.ANY);
+    }
+
+    /** "Whenever one or more creatures attack you". */
+    public static CombatTrigger creaturesAttackYou() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.ONE_OR_MORE_ATTACK_YOU, ObjectRelation.ANY);
+    }
+
+    /** "Whenever an opponent attacks a planeswalker you control with one or more creatures". */
+    public static CombatTrigger opponentAttacksYourPlaneswalker() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.ONE_OR_MORE_ATTACK_YOUR_PLANESWALKER,
+                ObjectRelation.OPPONENT_CONTROLS);
+    }
+
+    /**
+     * An attacking creature you control causes a triggered ability of its own to trigger, or this creature enlists a
+     * creature.
+     */
+    public static CombatTrigger attackingCreatureYouControlAbilityTriggers() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.ATTACKING_CREATURE_ABILITY_TRIGGERS,
+                ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever this creature attacks and isn't blocked". */
+    public static CombatTrigger attacksUnblocked() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.ATTACKS_UNBLOCKED, ObjectRelation.THIS);
+    }
+
+    /** "Whenever enchanted creature attacks and isn't blocked". */
+    public static CombatTrigger enchantedCreatureAttacksUnblocked() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.ATTACKS_UNBLOCKED, ObjectRelation.ENCHANTED);
+    }
+
+    /** "Whenever a creature you control attacks and isn't blocked". */
+    public static CombatTrigger creatureYouControlAttacksUnblocked() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.ATTACKS_UNBLOCKED, ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever one or more creatures an opponent controls attack you and aren't blocked". */
+    public static CombatTrigger creaturesAttackYouUnblocked() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.ONE_OR_MORE_ATTACK_YOU_UNBLOCKED,
+                ObjectRelation.OPPONENT_CONTROLS);
+    }
+
+    /** "Whenever this creature blocks"; on an Aura or Equipment, the creature it is attached to. */
+    public static CombatTrigger blocks() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.BLOCKS, ObjectRelation.THIS);
+    }
+
+    /** "Whenever this creature blocks two or more creatures". */
+    public static CombatTrigger blocksTwoOrMore() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.BLOCKS_TWO_OR_MORE, ObjectRelation.THIS);
+    }
+
+    /** "Whenever a creature blocks". */
+    public static CombatTrigger creatureBlocks() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.BLOCKS, ObjectRelation.ANY);
+    }
+
+    /** "Whenever one or more creatures block". */
+    public static CombatTrigger creaturesBlock() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.ONE_OR_MORE_BLOCK, ObjectRelation.ANY);
+    }
+
+    /** "Whenever this creature becomes blocked"; on an Aura or Equipment, the creature it is attached to. */
+    public static CombatTrigger becomesBlocked() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.BECOMES_BLOCKED, ObjectRelation.THIS);
+    }
+
+    /** "Whenever a creature you control becomes blocked", this one included. */
+    public static CombatTrigger creatureYouControlBecomesBlocked() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.BECOMES_BLOCKED, ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever one or more creatures you control become blocked". */
+    public static CombatTrigger creaturesYouControlBecomeBlocked() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.ONE_OR_MORE_BECOME_BLOCKED, ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever a creature becomes blocked". */
+    public static CombatTrigger creatureBecomesBlocked() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.BECOMES_BLOCKED, ObjectRelation.ANY);
+    }
+
+    /**
+     * "Whenever this creature deals combat damage to a player"; on an Aura or Equipment, the creature it is attached
+     * to; on a Curse, "whenever a creature deals combat damage to enchanted player".
+     */
+    public static CombatTrigger dealsCombatDamageToPlayer() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.COMBAT_DAMAGE_TO_PLAYER, ObjectRelation.THIS);
+    }
+
+    /** "Whenever equipped creature deals combat damage to a player", once each combat damage step. */
+    public static CombatTrigger equippedCreatureDealsCombatDamageToPlayer() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.COMBAT_DAMAGE_TO_PLAYER, ObjectRelation.EQUIPPED);
+    }
+
+    /** "Whenever a creature you control deals combat damage to a player". */
+    public static CombatTrigger creatureYouControlDealsCombatDamageToPlayer() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.COMBAT_DAMAGE_TO_PLAYER, ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever a creature deals combat damage to a player". */
+    public static CombatTrigger creatureDealsCombatDamageToPlayer() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.COMBAT_DAMAGE_TO_PLAYER, ObjectRelation.ANY);
+    }
+
+    /** "Whenever a creature with the same name as this deals combat damage to a player". */
+    public static CombatTrigger creatureWithSameNameDealsCombatDamageToPlayer() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.COMBAT_DAMAGE_TO_PLAYER, ObjectRelation.ANY,
+                new PermanentHasSameNameAsSourcePredicate());
+    }
+
+    /** "Whenever a creature deals combat damage to one of your opponents". */
+    public static CombatTrigger creatureDealsCombatDamageToOpponent() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.COMBAT_DAMAGE_TO_OPPONENT, ObjectRelation.ANY);
+    }
+
+    /** "Whenever one or more goaded creatures deal combat damage to one of your opponents". */
+    public static CombatTrigger goadedCreaturesDealCombatDamageToOpponent() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.ONE_OR_MORE_COMBAT_DAMAGE_TO_OPPONENT, ObjectRelation.ANY,
+                new PermanentIsGoadedPredicate());
+    }
+
+    /** "Whenever a creature deals combat damage to its owner". */
+    public static CombatTrigger creatureDealsCombatDamageToItsOwner() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.COMBAT_DAMAGE_TO_OWNER, ObjectRelation.ANY);
+    }
+
+    /** "Whenever this creature deals combat damage to a creature", once for each creature. */
+    public static CombatTrigger dealsCombatDamageToCreature() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.COMBAT_DAMAGE_TO_CREATURE, ObjectRelation.THIS);
+    }
+
+    /** "Whenever this creature deals combat damage to one or more blocking creatures". */
+    public static CombatTrigger dealsCombatDamageToBlockingCreature() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.COMBAT_DAMAGE_TO_BLOCKING_CREATURE, ObjectRelation.THIS);
+    }
+
+    /** "Whenever this creature deals combat damage", once each combat damage step. */
+    public static CombatTrigger dealsCombatDamage() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.COMBAT_DAMAGE, ObjectRelation.THIS);
+    }
+
+    /** "Whenever equipped creature deals combat damage", once each combat damage step. */
+    public static CombatTrigger equippedCreatureDealsCombatDamage() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.COMBAT_DAMAGE, ObjectRelation.EQUIPPED);
+    }
+
+    /** "Whenever a creature you control deals combat damage", once for each creature each combat damage step. */
+    public static CombatTrigger creatureYouControlDealsCombatDamage() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.COMBAT_DAMAGE, ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever this creature deals combat damage to a player or planeswalker". */
+    public static CombatTrigger dealsCombatDamageToPlayerOrPlaneswalker() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER,
+                ObjectRelation.THIS);
+    }
+
+    /** "Whenever a creature you control deals combat damage to a player or planeswalker". */
+    public static CombatTrigger creatureYouControlDealsCombatDamageToPlayerOrPlaneswalker() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER,
+                ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever this creature deals combat damage to a player or battle". */
+    public static CombatTrigger dealsCombatDamageToPlayerOrBattle() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE, ObjectRelation.THIS);
+    }
+
+    /** "Whenever equipped creature deals combat damage to a player or battle". */
+    public static CombatTrigger equippedCreatureDealsCombatDamageToPlayerOrBattle() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE, ObjectRelation.EQUIPPED);
+    }
+
+    /** "Whenever a creature you control deals combat damage to a player or battle". */
+    public static CombatTrigger creatureYouControlDealsCombatDamageToPlayerOrBattle() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE,
+                ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever a creature deals combat damage to you". */
+    public static CombatTrigger creatureDealsCombatDamageToYou() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.COMBAT_DAMAGE_TO_YOU, ObjectRelation.ANY);
+    }
+
+    /** "Whenever this permanent is dealt combat damage". */
+    public static CombatTrigger dealtCombatDamage() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.DEALT_COMBAT_DAMAGE, ObjectRelation.THIS);
+    }
+
+    /** "Whenever combat damage is dealt to you". */
+    public static CombatTrigger youAreDealtCombatDamage() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.YOU_DEALT_COMBAT_DAMAGE, ObjectRelation.ANY);
+    }
+
+    /** "Whenever combat damage is dealt to you or a planeswalker you control". */
+    public static CombatTrigger youOrYourPlaneswalkerDealtCombatDamage() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.YOU_OR_YOUR_PLANESWALKER_DEALT_COMBAT_DAMAGE,
+                ObjectRelation.ANY);
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -21,7 +20,7 @@ public class GlintSleeveSiphoner extends Card {
     public GlintSleeveSiphoner() {
         EnergyCountersEffect gainEnergy = new EnergyCountersEffect(1);
         addTrigger(Triggers.enters(ObjectRelation.THIS), gainEnergy);
-        addEffect(EffectSlot.ON_ATTACK, gainEnergy);
+        addTrigger(Triggers.attacks(), gainEnergy);
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
                 ConditionalEffect.unless(new ControllerEnergyAtLeast(2),

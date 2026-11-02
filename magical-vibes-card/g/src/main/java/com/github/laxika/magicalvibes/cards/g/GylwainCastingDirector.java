@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
@@ -95,8 +96,8 @@ public class GylwainCastingDirector extends Card {
                         StaticAbility.of(SequenceEffect.of(
                         new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE),
                         new GrantTriggeredAbilityEffect(
-                                EffectSlot.ON_ATTACK,
-                                new ScryEffect(1),
+                                new TriggeredAbility(Triggers.attacks(),
+                                new ScryEffect(1)),
                                 GrantScope.ENCHANTED_CREATURE)))),
                 List.of(),
                 false,

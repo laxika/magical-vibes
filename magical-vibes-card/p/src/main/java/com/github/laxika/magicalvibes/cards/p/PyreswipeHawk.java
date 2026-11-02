@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControlled;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -20,7 +19,7 @@ import java.util.List;
 public class PyreswipeHawk extends Card {
 
     public PyreswipeHawk() {
-        addEffect(EffectSlot.ON_ATTACK, new BoostSelfEffect(
+        addTrigger(Triggers.attacks(), new BoostSelfEffect(
                 new GreatestManaValueAmongControlled(new PermanentIsArtifactPredicate()),
                 new Fixed(0)));
 

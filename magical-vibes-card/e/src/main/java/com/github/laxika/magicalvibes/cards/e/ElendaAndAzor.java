@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -21,7 +20,7 @@ import java.util.Set;
 public class ElendaAndAzor extends Card {
 
     public ElendaAndAzor() {
-        addEffect(EffectSlot.ON_ATTACK, new PayXManaDrawXCardsEffect("{X}{W}{U}{B}"));
+        addTrigger(Triggers.attacks(), new PayXManaDrawXCardsEffect("{X}{W}{U}{B}"));
         addTrigger(Triggers.endStep(ActivePlayer.ANY), new MayPayLifeEffect(
                 4,
                 new CreateTokenEffect(

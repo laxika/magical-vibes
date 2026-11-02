@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -31,7 +31,7 @@ public class GoldbugScrappyScout extends Card {
                 new GrantCardTypeEffect(CardType.CREATURE, GrantScope.SELF)));
         addStaticEffect(new ControllerSpellsCantBeCounteredEffect(
                 new CardSubtypePredicate(CardSubtype.HUMAN)));
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, ConditionalEffect.atTriggerTime(
+        addTrigger(Triggers.youAttack(), ConditionalEffect.atTriggerTime(
                 new AllOf(List.of(
                         new SourceIsAttacking(),
                         new MinimumMatchingAttackers(1,

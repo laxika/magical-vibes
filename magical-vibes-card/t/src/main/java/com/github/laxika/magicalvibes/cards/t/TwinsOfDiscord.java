@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.OpponentDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ChooseManaValueParityAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ import java.util.List;
 public class TwinsOfDiscord extends Card {
 
     public TwinsOfDiscord() {
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, SequenceEffect.of(
+        addTrigger(Triggers.youAttack(), SequenceEffect.of(
                 new ChooseManaValueParityAtResolutionEffect(),
                 new CreaturesOfChosenManaValueParityCantBlockThisTurnEffect()));
 

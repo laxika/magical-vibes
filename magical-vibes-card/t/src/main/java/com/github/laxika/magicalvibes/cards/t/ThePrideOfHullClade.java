@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.SourceToughness;
@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -33,8 +34,8 @@ public class ThePrideOfHullClade extends Card {
                         new BoostTargetCreatureEffect(1, 0),
                         new CanAttackAsThoughNoDefenderEffect(true),
                         new GrantEffectToTargetUntilEndOfTurnEffect(
-                                EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                                new DrawCardEffect(new SourceToughness()))),
+                                new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
+                                new DrawCardEffect(new SourceToughness())))),
                 "{2}{U}{U}: Target creature you control gets +1/+0, gains \"Whenever this creature deals combat damage to a player, draw cards equal to its toughness,\" and can attack as though it didn't have defender until end of turn.",
                 TargetFilters.creatureYouControl()
         ));

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
@@ -39,7 +38,7 @@ public class CampsiteCuisine extends Card {
         var grantKeywords = new GrantKeywordEffect(
                 Set.of(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE), GrantScope.TARGETS);
         targetUpTo(new EventValue(), TargetFilters.attackingCreature(), 100)
-                .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new MayEffect(
+                .addTrigger(Triggers.youAttack(), new MayEffect(
                         SequenceEffect.of(
                                 new SacrificeAnyNumberOfPermanentsEffect(
                                         new PermanentHasSubtypePredicate(CardSubtype.FOOD)),

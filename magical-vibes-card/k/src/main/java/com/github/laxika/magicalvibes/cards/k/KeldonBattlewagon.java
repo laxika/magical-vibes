@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public class KeldonBattlewagon extends Card {
 
     public KeldonBattlewagon() {
         addStaticEffect(new CantBlockEffect());
-        addEffect(EffectSlot.ON_ATTACK, new SacrificeAtEndOfCombatEffect());
+        addTrigger(Triggers.attacks(), new SacrificeAtEndOfCombatEffect());
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,

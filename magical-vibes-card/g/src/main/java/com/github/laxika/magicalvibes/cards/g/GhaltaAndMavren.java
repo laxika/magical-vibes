@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -71,7 +71,7 @@ public class GhaltaAndMavren extends Card {
                 Set.of(Keyword.LIFELINK),
                 Set.of());
 
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
+        addTrigger(Triggers.youAttack(), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(DINOSAUR_MODE, dinosaur),
                 new ChooseOneEffect.ChooseOneOption(VAMPIRE_MODE, vampire)))));
     }

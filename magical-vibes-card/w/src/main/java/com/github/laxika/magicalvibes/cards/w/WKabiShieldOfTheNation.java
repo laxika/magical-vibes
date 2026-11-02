@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMinManaValuePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -24,7 +24,7 @@ import java.util.Set;
 public class WKabiShieldOfTheNation extends Card {
 
     public WKabiShieldOfTheNation() {
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ConditionalEffect(
+        addTrigger(Triggers.youAttack(), new ConditionalEffect(
                 new AllConditions(List.of(
                         new HasAttacker(new PermanentIsCommanderPredicate(true)),
                         new ControlsPermanent(new PermanentAllOfPredicate(List.of(

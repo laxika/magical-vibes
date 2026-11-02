@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -32,7 +31,7 @@ public class TomeOfLegends extends Card {
         PermanentIsCommanderPredicate yourCommander = new PermanentIsCommanderPredicate(true);
         addTrigger(Triggers.enters(null, ObjectRelation.ANY),
                 new TriggeringPermanentConditionalEffect(yourCommander, addPageCounter, true));
-        addEffect(EffectSlot.ON_ANY_CREATURE_ATTACKS,
+        addTrigger(Triggers.creatureAttacks(),
                 new TriggeringPermanentConditionalEffect(yourCommander, addPageCounter));
 
         addActivatedAbility(new ActivatedAbility(

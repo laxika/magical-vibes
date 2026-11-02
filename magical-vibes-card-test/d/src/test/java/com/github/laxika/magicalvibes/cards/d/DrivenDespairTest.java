@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FrilledSandwalla;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -56,14 +56,14 @@ class DrivenDespairTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(bears.getTemporaryTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).isNotEmpty();
+        assertThat(bears.getTemporaryTriggerEffects(Triggers.dealsCombatDamageToPlayer())).isNotEmpty();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(bears.getTemporaryTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).isEmpty();
+        assertThat(bears.getTemporaryTriggerEffects(Triggers.dealsCombatDamageToPlayer())).isEmpty();
     }
 
     @Test
@@ -79,7 +79,7 @@ class DrivenDespairTest extends BaseCardTest {
 
         assertThat(early.hasKeyword(Keyword.TRAMPLE)).isTrue();
         assertThat(late.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(late.getTemporaryTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).isEmpty();
+        assertThat(late.getTemporaryTriggerEffects(Triggers.dealsCombatDamageToPlayer())).isEmpty();
     }
 
     @Test
@@ -125,7 +125,7 @@ class DrivenDespairTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.hasKeyword(Keyword.MENACE)).isFalse();
-        assertThat(bears.getTemporaryTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).isEmpty();
+        assertThat(bears.getTemporaryTriggerEffects(Triggers.dealsCombatDamageToPlayer())).isEmpty();
     }
 
     @Test

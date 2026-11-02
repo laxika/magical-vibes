@@ -18,7 +18,7 @@ public class RavenEagle extends Card {
     public RavenEagle() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 ExileGraveyardCardCreateTokenIfCreatureEffect.upToOne(CreateTokenEffect.ofClueToken(1)));
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 ExileGraveyardCardCreateTokenIfCreatureEffect.upToOne(CreateTokenEffect.ofClueToken(1)));
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD,
                 SequenceEffect.of(

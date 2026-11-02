@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -34,7 +33,7 @@ public class SauronDinoDevotee extends Card {
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), modal(anotherCreature));
-        addEffect(EffectSlot.ON_ATTACK, modal(anotherCreature));
+        addTrigger(Triggers.attacks(), modal(anotherCreature));
     }
 
     private ChooseOneAtTriggerTimeEffect modal(PermanentAllOfPredicate anotherCreature) {

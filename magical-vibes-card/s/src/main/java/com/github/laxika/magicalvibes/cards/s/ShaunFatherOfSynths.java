@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
@@ -50,7 +49,7 @@ public class ShaunFatherOfSynths extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 anotherAttackingLegendaryCreature,
                 "Target must be another attacking legendary creature you control"
-        )).addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+        )).addTrigger(Triggers.youAttack(),
                 new MayEffect(synthCopy, "Create a tapped and attacking Synth token copy?"));
 
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),

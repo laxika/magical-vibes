@@ -21,7 +21,7 @@ public class TroubleInPairs extends Card {
     public TroubleInPairs() {
         addStaticEffect(new OpponentExtraTurnSkipReplacementEffect());
 
-        addEffect(EffectSlot.ON_ANY_PLAYER_ATTACKS,
+        addTrigger(Triggers.playerAttacks(),
                 new ConditionalEffect(new OpponentAttacksWithAtLeastCreatures(2, false), new DrawCardEffect()));
 
         addEffect(EffectSlot.ON_OPPONENT_DRAWS,

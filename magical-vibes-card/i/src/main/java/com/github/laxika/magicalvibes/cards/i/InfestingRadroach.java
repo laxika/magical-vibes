@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerRadCountersEffect;
@@ -20,7 +19,7 @@ public class InfestingRadroach extends Card {
 
     public InfestingRadroach() {
         addStaticEffect(new CantBlockEffect());
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new GiveTargetPlayerRadCountersEffect(new EventValue()));
         addTrigger(new TriggerCondition(Triggers.milled(Triggers.NONLAND, ObjectRelation.OPPONENT_OWNS),
                 AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,

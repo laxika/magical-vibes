@@ -3,22 +3,22 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BLC", collectorNumber = "33")
 @CardRegistration(set = "BLC", collectorNumber = "66")
 public class ScurryOfSquirrels extends Card {
 
     public ScurryOfSquirrels() {
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect.myriad());
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect.myriad());
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+                .addTrigger(Triggers.dealsCombatDamageToPlayer(),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

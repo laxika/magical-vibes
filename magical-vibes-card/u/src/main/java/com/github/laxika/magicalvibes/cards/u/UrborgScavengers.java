@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardPutCounterOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -18,7 +17,7 @@ public class UrborgScavengers extends Card {
     public UrborgScavengers() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ExileTargetCardFromGraveyardPutCounterOnSourceEffect());
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new ExileTargetCardFromGraveyardPutCounterOnSourceEffect());
         addStaticEffect(new GainKeywordsOfCardsExiledWithSourceEffect(false));
     }

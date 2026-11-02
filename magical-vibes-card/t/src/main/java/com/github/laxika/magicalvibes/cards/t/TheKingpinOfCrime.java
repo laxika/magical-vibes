@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantPlayerStaticEffectsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -27,7 +26,7 @@ public class TheKingpinOfCrime extends Card {
                         "Pay {W/B} to extort?")),
                 (String) null));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new MayPayLifeEffect(
+        addTrigger(Triggers.youAttack(), new MayPayLifeEffect(
                 2,
                 new GrantPlayerStaticEffectsUntilEndOfTurnEffect(List.of(
                         new AssignCombatDamageWithToughnessEffect(

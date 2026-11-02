@@ -4,8 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
@@ -41,7 +40,8 @@ public class MuddleTheEverChanging extends Card {
                                 new CardTypePredicate(CardType.INSTANT),
                                 new CardTypePredicate(CardType.SORCERY)
                         )),
-                        List.of(new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(List.of(LegacySlots.triggered(EffectSlot.ON_ATTACK, List.of(new CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(true)))))),
+                        List.of(new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(List.of(new TriggeredAbility(Triggers.attacks(),
+                                new CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(true))))),
                         null,
                         targetFilter
                 ));

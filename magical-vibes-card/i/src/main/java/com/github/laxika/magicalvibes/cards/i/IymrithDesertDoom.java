@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AFR", collectorNumber = "62")
 @CardRegistration(set = "SLD", collectorNumber = "1013")
@@ -33,7 +34,7 @@ public class IymrithDesertDoom extends Card {
         CardsInHand controllerHand = new CardsInHand(CountScope.CONTROLLER);
         DynamicAmount additionalDraws = new Max(new Fixed(0),
                 new Sum(new Fixed(3), new Scaled(controllerHand, -1)));
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, SequenceEffect.of(
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), SequenceEffect.of(
                 new DrawCardEffect(1),
                 new ConditionalEffect(new CardsInHandAtMost(2), new DrawCardEffect(additionalDraws))));
     }

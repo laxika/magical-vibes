@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
@@ -31,7 +30,7 @@ public class PugnaciousPugilist extends Card {
 
         List<Ability> devilTokenEffects =
                 List.of(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(1)));
-        addEffect(EffectSlot.ON_ATTACK, new CreateTokenEffect(
+        addTrigger(Triggers.attacks(), new CreateTokenEffect(
                 CardType.CREATURE, 1, "Devil", 1, 1, CardColor.RED, null,
                 List.of(CardSubtype.DEVIL), Set.of(), Set.of(), true, false,
                 devilTokenEffects, List.of(), false, false, false, 0, Set.of()));

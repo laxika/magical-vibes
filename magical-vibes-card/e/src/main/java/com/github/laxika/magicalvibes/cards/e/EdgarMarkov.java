@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInCommandZone;
 import com.github.laxika.magicalvibes.model.condition.SourceCardOnBattlefield;
@@ -53,7 +52,7 @@ public class EdgarMarkov extends Card {
                 vampireSpell, List.of(new ConditionalEffect(new SourceCardInCommandZone(), vampireToken))));
 
         // Whenever Edgar Markov attacks, put a +1/+1 counter on each Vampire you control.
-        addEffect(EffectSlot.ON_ATTACK, new PutCounterOnEachControlledPermanentEffect(
+        addTrigger(Triggers.attacks(), new PutCounterOnEachControlledPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, 1,
                 new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE)));
     }

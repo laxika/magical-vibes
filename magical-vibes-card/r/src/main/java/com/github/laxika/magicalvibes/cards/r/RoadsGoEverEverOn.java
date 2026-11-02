@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -23,6 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -49,8 +51,8 @@ public class RoadsGoEverEverOn extends Card {
                 new PermanentControlledBySourceControllerPredicate()));
         addEffect(EffectSlot.SAGA_CHAPTER_IV,
                 new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
-                        EffectSlot.ON_ALLY_CREATURES_ATTACK,
+                        new TriggeredAbility(Triggers.youAttack(),
                         new BoostTargetCreatureEffect(plainsYouControl, plainsYouControl,
-                                creatureYouControl, GrantDuration.END_OF_TURN)));
+                                creatureYouControl, GrantDuration.END_OF_TURN))));
     }
 }

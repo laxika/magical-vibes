@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -29,7 +29,7 @@ public class SilverwingSquadron extends Card {
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
         addStaticEffect(new SetPowerToughnessToAmountEffect(creaturesYouControl, creaturesYouControl));
 
-        addEffect(EffectSlot.ON_ATTACK, new CreateTokenEffect(
+        addTrigger(Triggers.attacks(), new CreateTokenEffect(
                 CardType.CREATURE,
                 new Sum(new PlayersInGame(), new Fixed(-1)),
                 "Knight", 2, 2, CardColor.WHITE, null,

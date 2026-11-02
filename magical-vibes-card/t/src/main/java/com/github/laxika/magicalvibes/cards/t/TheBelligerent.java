@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayFromTopOfLibraryUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -16,8 +16,8 @@ import java.util.List;
 public class TheBelligerent extends Card {
 
     public TheBelligerent() {
-        addEffect(EffectSlot.ON_ATTACK, CreateTokenEffect.ofTreasureToken(1));
-        addEffect(EffectSlot.ON_ATTACK, new AllowPlayFromTopOfLibraryUntilEndOfTurnEffect());
+        addTrigger(Triggers.attacks(), CreateTokenEffect.ofTreasureToken(1));
+        addTrigger(Triggers.attacks(), new AllowPlayFromTopOfLibraryUntilEndOfTurnEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

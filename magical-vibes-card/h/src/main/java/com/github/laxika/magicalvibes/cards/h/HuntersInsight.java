@@ -2,11 +2,12 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M12", collectorNumber = "180")
 @CardRegistration(set = "MAR", collectorNumber = "35")
@@ -22,7 +23,7 @@ public class HuntersInsight extends Card {
         // creature changes controller); EventValue reads the damage dealt so that many cards are drawn.
         target(TargetFilters.creatureYouControl())
                 .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
-                        EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER,
-                        new DrawCardEffect(new EventValue()), true));
+                        new TriggeredAbility(Triggers.dealsCombatDamageToPlayerOrPlaneswalker(),
+                        new DrawCardEffect(new EventValue())), true));
     }
 }

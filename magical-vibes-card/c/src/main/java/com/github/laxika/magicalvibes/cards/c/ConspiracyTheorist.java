@@ -11,13 +11,14 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "STX", collectorNumber = "94")
 @CardRegistration(set = "SOC", collectorNumber = "240")
 public class ConspiracyTheorist extends Card {
 
     public ConspiracyTheorist() {
-        addEffect(EffectSlot.ON_ATTACK, new MayPayManaEffect(
+        addTrigger(Triggers.attacks(), new MayPayManaEffect(
                 "{1}", new DiscardAndDrawCardEffect(), "Pay {1} and discard a card to draw a card?"));
         addEffect(EffectSlot.ON_CONTROLLER_DISCARD_EVENT, new MayEffect(
                 new ExileOneOfDiscardedCardsFromGraveyardEffect(),

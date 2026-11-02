@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -32,7 +31,7 @@ public class VarchildBetrayerOfKjeldor extends Card {
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
         ));
 
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new CreateTokenForTargetPlayerEffect(new CreateTokenEffect(
                         new EventValue(), "Survivor", 1, 1, CardColor.RED,
                         List.of(CardSubtype.SURVIVOR), Set.of(), Set.of())));

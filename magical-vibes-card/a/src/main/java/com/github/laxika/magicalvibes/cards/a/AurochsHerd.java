@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -29,7 +28,7 @@ public class AurochsHerd extends Card {
                         LibrarySearchDestination.HAND),
                 "Search your library for an Aurochs card, reveal it, put it into your hand, then shuffle?"));
 
-        addEffect(EffectSlot.ON_ATTACK, new BoostSelfEffect(
+        addTrigger(Triggers.attacks(), new BoostSelfEffect(
                 new PermanentCount(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsAttackingPredicate(),

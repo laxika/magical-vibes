@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerAndEnchantedPlayerAttackEachOther;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerIsActive;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -31,7 +30,7 @@ public class TenuousTruce extends Card {
                 new ConditionalEffect(new TargetPlayerIsActive(), SequenceEffect.of(
                         new DrawCardEffect(),
                         new DrawCardForTargetPlayerEffect(1))));
-        addEffect(EffectSlot.ON_ANY_PLAYER_ATTACKS,
+        addTrigger(Triggers.playerAttacks(),
                 new ConditionalEffect(
                         new ControllerAndEnchantedPlayerAttackEachOther(),
                         new SacrificeSelfEffect()));

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisCombat;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -32,7 +31,7 @@ public class TolsimirMidnightsLight extends Card {
                 List.of(), List.of(), false, false, true, 0, Set.of()));
 
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
+                .addTrigger(Triggers.creatureYouControlAttacks(),
                         new TriggeringCardConditionalEffect(
                                 new CardSubtypePredicate(CardSubtype.WOLF),
                                 new ConditionalEffect(new SourceAttackedThisCombat(),

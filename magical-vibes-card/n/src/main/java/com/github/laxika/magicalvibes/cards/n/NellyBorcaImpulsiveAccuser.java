@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTriggeringPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnSnapshotEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSuspectedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MKC", collectorNumber = "4")
 @CardRegistration(set = "MKC", collectorNumber = "52")
@@ -22,11 +22,11 @@ public class NellyBorcaImpulsiveAccuser extends Card {
 
     public NellyBorcaImpulsiveAccuser() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_ATTACK, new SuspectEffect(GrantScope.TARGET));
-        addEffect(EffectSlot.ON_ATTACK,
+                .addTrigger(Triggers.attacks(), new SuspectEffect(GrantScope.TARGET));
+        addTrigger(Triggers.attacks(),
                 new GoadCreaturesUntilNextTurnSnapshotEffect(new PermanentIsSuspectedPredicate()));
 
-        addEffect(EffectSlot.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT,
+        addTrigger(Triggers.creatureDealsCombatDamageToOpponent(),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
                         SequenceEffect.of(

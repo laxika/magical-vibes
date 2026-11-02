@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfEachLibraryAndMayCastSpellsEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FDN", collectorNumber = "194")
 @CardRegistration(set = "FDN", collectorNumber = "329")
@@ -23,6 +23,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfEachLibraryAndM
 public class EtaliPrimalStorm extends Card {
 
     public EtaliPrimalStorm() {
-        addEffect(EffectSlot.ON_ATTACK, new ExileTopCardOfEachLibraryAndMayCastSpellsEffect());
+        addTrigger(Triggers.attacks(), new ExileTopCardOfEachLibraryAndMayCastSpellsEffect());
     }
 }

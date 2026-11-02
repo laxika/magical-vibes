@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
@@ -26,6 +25,6 @@ public class FelotharDawnOfTheAbzan extends Card {
                         "a nonland permanent"),
                 "Sacrifice a nonland permanent?");
         addTrigger(Triggers.enters(ObjectRelation.THIS), sacrificeThenCounters);
-        addEffect(EffectSlot.ON_ATTACK, sacrificeThenCounters);
+        addTrigger(Triggers.attacks(), sacrificeThenCounters);
     }
 }

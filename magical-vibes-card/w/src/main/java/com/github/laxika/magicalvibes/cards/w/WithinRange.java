@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -25,7 +24,7 @@ public class WithinRange extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new CreateTokenEffect(2, "Warrior", 1, 1, CardColor.RED,
                         List.of(CardSubtype.WARRIOR), Set.of(), Set.of()));
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER,
+        addTrigger(Triggers.youAttackPlayer(),
                 new LoseLifeEffect(new PermanentCount(new PermanentIsAttackingDefendingPlayerPredicate(), CountScope.ANY_PLAYER),
                         LoseLifeRecipient.DEFENDING_PLAYER));
     }

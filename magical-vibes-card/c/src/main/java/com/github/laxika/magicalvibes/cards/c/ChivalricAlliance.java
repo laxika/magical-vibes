@@ -5,13 +5,13 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -21,7 +21,7 @@ import java.util.Set;
 public class ChivalricAlliance extends Card {
 
     public ChivalricAlliance() {
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ConditionalEffect(
+        addTrigger(Triggers.youAttack(), new ConditionalEffect(
                 new MinimumAttackers(2), new DrawCardEffect()));
 
         addActivatedAbility(new ActivatedAbility(

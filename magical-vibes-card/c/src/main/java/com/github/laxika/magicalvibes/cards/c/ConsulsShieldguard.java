@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -33,7 +32,7 @@ public class ConsulsShieldguard extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )),
                 "Target must be another attacking creature"
-        )).addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        )).addTrigger(Triggers.attacks(), new MayEffect(
                 ConditionalEffect.unless(new ControllerEnergyAtLeast(1),
                         SequenceEffect.of(
                                 new EnergyCountersEffect(-1),

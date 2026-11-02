@@ -5,9 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect;
@@ -31,7 +30,7 @@ public class ScrivTheObligator extends Card {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new CreateTokenAttachedToTargetEffect(contractToken(), PlayerRelation.OPPONENT))
-                .addEffect(EffectSlot.ON_ATTACK,
+                .addTrigger(Triggers.attacks(),
                         new CreateTokenAttachedToTargetEffect(contractToken(), PlayerRelation.OPPONENT));
     }
 
@@ -50,7 +49,7 @@ public class ScrivTheObligator extends Card {
                 false,
                 false,
                 List.of(
-                        LegacySlots.triggered(EffectSlot.ON_ATTACK, SequenceEffect.of(
+                        new TriggeredAbility(Triggers.attacks(), SequenceEffect.of(
                         new ConditionalEffect(new AttackedTargetIsOpponent(),
                                 new BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect(2, 0)),
                         new ConditionalEffect(new NotCondition(new AttackedTargetIsOpponent()),

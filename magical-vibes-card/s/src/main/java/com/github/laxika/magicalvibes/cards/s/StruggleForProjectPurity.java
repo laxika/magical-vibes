@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisResolution;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -41,7 +40,7 @@ public class StruggleForProjectPurity extends Card {
         // "Whenever a player attacks you with one or more creatures" is the trigger event itself, so the
         // attack is judged once when it is declared. Rechecking it on resolution would wrongly stop the
         // trigger when every declared attacker has since left combat.
-        addEffect(EffectSlot.ON_ANY_PLAYER_ATTACKS,
+        addTrigger(Triggers.playerAttacks(),
                 ConditionalEffect.atTriggerTime(
                         new AllOf(List.of(
                                 new SourceHasChosenMode(ENCLAVE),

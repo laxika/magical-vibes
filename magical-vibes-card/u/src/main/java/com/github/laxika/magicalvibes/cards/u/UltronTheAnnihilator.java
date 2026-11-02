@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -29,7 +28,7 @@ public class UltronTheAnnihilator extends Card {
 
     public UltronTheAnnihilator() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), ROBOT_TOKEN);
-        addEffect(EffectSlot.ON_ATTACK, ROBOT_TOKEN);
+        addTrigger(Triggers.attacks(), ROBOT_TOKEN);
         addTrigger(Triggers.dies(null, ObjectRelation.YOU_OWN),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentAllOfPredicate(List.of(

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * — lands, {@link ControlDuration#WHILE_SOURCE_ON_BATTLEFIELD}; Kukemssa Pirates — artifacts,
  * {@link ControlDuration#PERMANENT}.)
  *
- * <p>Wrap in a {@link MayEffect} on an {@code ON_ATTACKS_UNBLOCKED} trigger. The stack entry's
+ * <p>Wrap in a {@link MayEffect} on an {@code Triggers.attacksUnblocked()} ability. The stack entry's
  * {@code targetId} is the defending player and {@code sourcePermanentId} the attacking creature.
  * On resolution the controller picks one permanent the defending player controls that matches
  * {@code filter}; control of it is taken for {@code duration} (a wrapped

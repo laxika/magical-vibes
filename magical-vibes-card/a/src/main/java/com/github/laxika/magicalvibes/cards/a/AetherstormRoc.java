@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
@@ -37,7 +36,7 @@ public class AetherstormRoc extends Card {
         target(new PermanentPredicateTargetFilter(
                 DEFENDING_PLAYER_CREATURE,
                 "Target must be a creature defending player controls"), 0, 1)
-                .addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+                .addTrigger(Triggers.attacks(), new MayEffect(
                         ConditionalEffect.unless(new ControllerEnergyAtLeast(2),
                                 SequenceEffect.of(
                                         new EnergyCountersEffect(-2),

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
@@ -36,8 +35,8 @@ public class DaiLiAgents extends Card {
                         new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)
                 )),
                 CountScope.CONTROLLER);
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new LoseLifeEffect(creaturesWithCounters, LoseLifeRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.ON_ATTACK, new GainLifeEffect(creaturesWithCounters));
+        addTrigger(Triggers.attacks(), new GainLifeEffect(creaturesWithCounters));
     }
 }

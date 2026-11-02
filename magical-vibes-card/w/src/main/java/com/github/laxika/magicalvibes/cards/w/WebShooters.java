@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SPM", collectorNumber = "22")
 @CardRegistration(set = "OM1", collectorNumber = "2")
@@ -23,7 +23,7 @@ public class WebShooters extends Card {
         // its controller controls it.
         setAttackTriggerGrantedByEquipment(true);
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.ON_ATTACK, new TapPermanentsEffect(TapUntapScope.TARGET));
+                .addTrigger(Triggers.attacks(), new TapPermanentsEffect(TapUntapScope.TARGET));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

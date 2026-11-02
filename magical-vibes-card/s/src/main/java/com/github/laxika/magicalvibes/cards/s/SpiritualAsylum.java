@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -10,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,6 +26,6 @@ public class SpiritualAsylum extends Card {
         // OWN_PERMANENTS never includes the source, so Spiritual Asylum covers itself while it is a creature.
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.SHROUD, GrantScope.SELF, new PermanentIsCreaturePredicate()));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS, new SacrificeSelfEffect());
+        addTrigger(Triggers.creatureYouControlAttacks(), new SacrificeSelfEffect());
     }
 }

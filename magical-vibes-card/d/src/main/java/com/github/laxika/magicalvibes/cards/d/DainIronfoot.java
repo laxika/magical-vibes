@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
@@ -42,7 +41,7 @@ public class DainIronfoot extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentIsAttackingPredicate(),
                 new PermanentIsEquippedPredicate()));
-        addEffect(EffectSlot.ON_ATTACK, new GrantKeywordEffect(
+        addTrigger(Triggers.attacks(), new GrantKeywordEffect(
                 Keyword.DOUBLE_STRIKE, GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 equippedAttackingCreature));
     }

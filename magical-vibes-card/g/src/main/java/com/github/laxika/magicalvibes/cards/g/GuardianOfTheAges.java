@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetSelfKeywordIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M14", collectorNumber = "211")
 public class GuardianOfTheAges extends Card {
@@ -20,7 +20,7 @@ public class GuardianOfTheAges extends Card {
         // Defender is auto-loaded from Scryfall.
         // When a creature attacks you or a planeswalker you control, if this creature has
         // defender, it loses defender and gains trample (both indefinitely).
-        addEffect(EffectSlot.ON_CREATURE_ATTACKS_YOU,
+        addTrigger(Triggers.creatureAttacksYouOrYourPlaneswalker(),
                 new ConditionalEffect(
                         new SourceMatchesPermanentPredicate(new PermanentHasKeywordPredicate(Keyword.DEFENDER)),
                         SequenceEffect.of(

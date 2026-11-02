@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -15,7 +15,7 @@ import java.util.Set;
 public class SphinxOfForgottenLore extends Card {
 
     public SphinxOfForgottenLore() {
-        addEffect(EffectSlot.ON_ATTACK, new GrantFlashbackToTargetGraveyardCardEffect(
+        addTrigger(Triggers.attacks(), new GrantFlashbackToTargetGraveyardCardEffect(
                 Set.of(CardType.INSTANT, CardType.SORCERY)));
     }
 }

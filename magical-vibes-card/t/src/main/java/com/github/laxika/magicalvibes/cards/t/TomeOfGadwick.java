@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConjureRandomCardFromSpellboo
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +24,7 @@ public class TomeOfGadwick extends Card {
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysEffect(1),
                 GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.ON_ATTACK, new ConjureRandomCardFromSpellbookToHandEffect(List.of(
+        addTrigger(Triggers.attacks(), new ConjureRandomCardFromSpellbookToHandEffect(List.of(
                 new ConjureRandomCardFromSpellbookToHandEffect.CardPrintingReference("A25", "46"),
                 new ConjureRandomCardFromSpellbookToHandEffect.CardPrintingReference("M10", "68"),
                 new ConjureRandomCardFromSpellbookToHandEffect.CardPrintingReference("TOR", "43"),

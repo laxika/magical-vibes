@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
@@ -52,7 +51,7 @@ public class CaseOfTheMarketMelee extends Card {
         target(new AnyTargetPredicateTargetFilter(
                 TargetPredicates.anyTarget().permanentRestriction().orElseThrow(),
                 new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be any target"),
-                0, Integer.MAX_VALUE).addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+                0, Integer.MAX_VALUE).addTrigger(Triggers.youAttack(),
                 new ConditionalEffect(new SourceIsSolved(),
                         DealDividedDamageEffect.chosenAmongAnyTargetsAtResolution(new XValue())));
     }

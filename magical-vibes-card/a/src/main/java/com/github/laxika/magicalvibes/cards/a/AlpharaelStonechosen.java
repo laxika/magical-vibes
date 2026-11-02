@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "EOE", collectorNumber = "87")
 public class AlpharaelStonechosen extends Card {
@@ -17,7 +18,7 @@ public class AlpharaelStonechosen extends Card {
     public AlpharaelStonechosen() {
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessDiscardsEffect(true));
-        addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
+        addTrigger(Triggers.attacks(), new ConditionalEffect(
                 new VoidCondition(),
                 new LoseLifeEffect(
                         new HalvedRoundedUp(new TargetPlayerLifeTotal()),

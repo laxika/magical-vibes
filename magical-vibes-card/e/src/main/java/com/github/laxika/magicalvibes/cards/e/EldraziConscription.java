@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -26,9 +27,9 @@ public class EldraziConscription extends Card {
                 .addStaticEffect(new StaticBoostEffect(
                         10, 10, Set.of(Keyword.TRAMPLE), GrantScope.ENCHANTED_CREATURE))
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_ATTACK,
+                        new TriggeredAbility(Triggers.attacks(),
                         new SacrificePermanentsEffect(
-                                2, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER),
+                                2, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER)),
                         GrantScope.ENCHANTED_CREATURE));
     }
 }

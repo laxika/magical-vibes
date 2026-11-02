@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetThenExileIfDamagedEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -46,7 +45,7 @@ public class TheWarDoctor extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any target"
         );
-        target(anyTarget).addEffect(EffectSlot.ON_ATTACK,
+        target(anyTarget).addTrigger(Triggers.attacks(),
                 new DealDamageToAnyTargetThenExileIfDamagedEffect(
                         new CountersOnSource(CounterType.TIME)));
     }

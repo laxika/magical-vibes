@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToTargetPlayerEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingEnchanted
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MSC", collectorNumber = "74")
 @CardRegistration(set = "MSC", collectorNumber = "391")
@@ -28,7 +28,7 @@ public class Archnemesis extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         ));
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER,
+        addTrigger(Triggers.youAttackPlayer(),
                 new ConditionalEffect(
                         new HasAttacker(new PermanentIsAttackingEnchantedPlayerPredicate()),
                         SequenceEffect.of(
@@ -36,7 +36,7 @@ public class Archnemesis extends Card {
                                 new DrawCardEffect(1),
                                 new GainLifeEffect(2)
                         )));
-        addEffect(EffectSlot.ON_ANY_PLAYER_ATTACKS,
+        addTrigger(Triggers.playerAttacks(),
                 new ConditionalEffect(
                         new OpponentAttacksWithAtLeastCreatures(1, false),
                         new MayEffect(

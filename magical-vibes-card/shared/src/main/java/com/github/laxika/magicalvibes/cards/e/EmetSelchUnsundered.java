@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.h.HadesSorcererOfEld;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -29,7 +28,7 @@ public class EmetSelchUnsundered extends Card {
                 new DrawCardEffect(1),
                 new DiscardEffect(1, DiscardRecipient.CONTROLLER));
         addTrigger(Triggers.enters(ObjectRelation.THIS), loot);
-        addEffect(EffectSlot.ON_ATTACK, loot);
+        addTrigger(Triggers.attacks(), loot);
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new GraveyardCardThreshold(14, null),

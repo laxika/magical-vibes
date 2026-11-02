@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TargetGroup;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -214,6 +215,7 @@ import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectCondit
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.trigger.CombatWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.*;
 import java.util.List;
@@ -275,14 +277,14 @@ public class CombatAttackService {
                                              boolean mustAttackWithAtLeastOne) {
     }
 
-    private record AttackTriggerSource(Permanent permanent, EffectSlot effectSlot,
+    private record AttackTriggerSource(Permanent permanent, CombatWatch watch,
                                        List<CardEffect> effects, List<UUID> bandMembers) {
-        private AttackTriggerSource(Permanent permanent, EffectSlot effectSlot, List<CardEffect> effects) {
-            this(permanent, effectSlot, effects, null);
+        private AttackTriggerSource(Permanent permanent, CombatWatch watch, List<CardEffect> effects) {
+            this(permanent, watch, effects, null);
         }
 
-        private AttackTriggerSource(Permanent permanent, EffectSlot effectSlot) {
-            this(permanent, effectSlot, null, null);
+        private AttackTriggerSource(Permanent permanent, CombatWatch watch) {
+            this(permanent, watch, null, null);
         }
     }
 
@@ -1144,17 +1146,17 @@ public class CombatAttackService {
             List<CardEffect> nativeAttackEffects = attacker.isFaceDown()
                     || gameQueryService.hasLostPrintedAbilities(gameData, attacker)
                     || equipmentAttackTrigger
-                    ? List.of() : attacker.getCard().getEffects(EffectSlot.ON_ATTACK);
+                    ? List.of() : CombatWatch.ON_ATTACK.effectsOf(attacker.getCard());
             // A granted triggered ability is an ability of the creature, so losing all abilities removes it.
             List<CardEffect> temporaryAttackEffects = new ArrayList<>();
             if (!gameQueryService.hasLostAllAbilities(gameData, attacker)) {
-                temporaryAttackEffects.addAll(attacker.getTemporaryTriggeredEffects(EffectSlot.ON_ATTACK));
-                temporaryAttackEffects.addAll(attacker.getPersistentTriggeredEffects(EffectSlot.ON_ATTACK));
+                temporaryAttackEffects.addAll(attacker.getTemporaryTriggerEffects(CombatWatch.ON_ATTACK.trigger()));
+                temporaryAttackEffects.addAll(attacker.getPersistentTriggerEffects(CombatWatch.ON_ATTACK.trigger()));
             }
             // Continuously granted ON_ATTACK abilities (Thorncaster Sliver giving every Sliver
             // "Whenever this creature attacks, it deals 1 damage to any target").
-            List<CardEffect> grantedAttackEffects = grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                    gameData, attacker, EffectSlot.ON_ATTACK);
+            List<CardEffect> grantedAttackEffects = grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                    gameData, attacker, CombatWatch.ON_ATTACK.trigger());
             // Decayed's "sacrifice it at end of combat" is its own triggered ability (CR 702.147a),
             // so it goes on the stack as a separate object from any printed attack ability.
             boolean decayedTrigger = gameQueryService.hasKeyword(gameData, attacker, Keyword.DECAYED);
@@ -1494,7 +1496,7 @@ public class CombatAttackService {
                                     abilities.add(List.of(granted));
                                 }
                             }
-                            for (var registration : attacker.getCard().getEffectRegistrations(EffectSlot.ON_ATTACK)) {
+                            for (var registration : CombatWatch.ON_ATTACK.registrationsOf(attacker.getCard())) {
                                 if (registration.triggerMode()
                                         == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT
                                         && bundledEffects.remove(registration.effect())) {
@@ -1537,7 +1539,7 @@ public class CombatAttackService {
                                         && attackCard.getTargetGroups().stream().allMatch(group ->
                                         attackCard.bindsEffectToTargetGroup(group.getIndex())
                                                 && attackCard.getEffectsBoundToTargetGroup(group.getIndex()).stream()
-                                                .noneMatch(attackCard.getEffects(EffectSlot.ON_ATTACK)::contains));
+                                                .noneMatch(CombatWatch.ON_ATTACK.effectsOf(attackCard)::contains));
                                 if (!declaredGroupsTargetOtherAbilities
                                         && (attackCard.getTargetGroups().size() > 1
                                         || ((!staticSingleMultiTargetGroup || attachesEquipment)
@@ -1572,7 +1574,7 @@ public class CombatAttackService {
                                     abilities.add(List.of(granted));
                                 }
                             }
-                            for (var registration : attacker.getCard().getEffectRegistrations(EffectSlot.ON_ATTACK)) {
+                            for (var registration : CombatWatch.ON_ATTACK.registrationsOf(attacker.getCard())) {
                                 if (registration.triggerMode()
                                         == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT
                                         && bundledEffects.remove(registration.effect())) {
@@ -1631,12 +1633,13 @@ public class CombatAttackService {
             }
 
             // Check for aura-based "when enchanted creature attacks" triggers
-            combatTriggerService.checkAuraTriggersForCreature(gameData, attacker, EffectSlot.ON_ATTACK);
+            combatTriggerService.checkAuraTriggersForCreature(gameData, attacker, CombatWatch.ON_ATTACK);
 
             // Delayed triggers watching this specific creature (Okoye, Mighty and Adored): the
             // registering card is the source and its controller controls the trigger (CR 603.7).
             for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-                if (watcher.slot() != EffectSlot.ON_ATTACK || !attacker.getId().equals(watcher.watchedPermanentId())) {
+                if (!watcher.ability().hasTrigger(CombatWatch.ON_ATTACK.trigger())
+                        || !attacker.getId().equals(watcher.watchedPermanentId())) {
                     continue;
                 }
                 CardEffect watcherEffect = watcher.effect();
@@ -1870,7 +1873,7 @@ public class CombatAttackService {
         List<AttackTriggerSource> attackTriggerSources = new ArrayList<>();
         for (Permanent perm : battlefield) {
             List<CardEffect> combinedEffects = new ArrayList<>();
-            for (var registration : perm.getCard().getEffectRegistrations(EffectSlot.ON_ALLY_CREATURES_ATTACK)) {
+            for (var registration : CombatWatch.ON_ALLY_CREATURES_ATTACK.registrationsOf(perm.getCard())) {
                 if (registration.effect() instanceof com.github.laxika.magicalvibes.model.effect.BoostCreaturesInAttackingBandsEffect) {
                     Map<UUID, List<UUID>> declaredBands = new java.util.LinkedHashMap<>();
                     for (int attackerIndex : attackerIndices) {
@@ -1883,30 +1886,30 @@ public class CombatAttackService {
                     for (List<UUID> members : declaredBands.values()) {
                         if (members.size() >= 2) {
                             attackTriggerSources.add(new AttackTriggerSource(perm,
-                                    EffectSlot.ON_ALLY_CREATURES_ATTACK, List.of(registration.effect()), List.copyOf(members)));
+                                    CombatWatch.ON_ALLY_CREATURES_ATTACK, List.of(registration.effect()), List.copyOf(members)));
                         }
                     }
                     continue;
                 }
                 if (registration.triggerMode() == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT) {
                     attackTriggerSources.add(new AttackTriggerSource(perm,
-                            EffectSlot.ON_ALLY_CREATURES_ATTACK, List.of(registration.effect())));
+                            CombatWatch.ON_ALLY_CREATURES_ATTACK, List.of(registration.effect())));
                 } else {
                     combinedEffects.add(registration.effect());
                 }
             }
-            combinedEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                    gameData, perm, EffectSlot.ON_ALLY_CREATURES_ATTACK));
+            combinedEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                    gameData, perm, CombatWatch.ON_ALLY_CREATURES_ATTACK.trigger()));
             if (!combinedEffects.isEmpty()) {
                 attackTriggerSources.add(new AttackTriggerSource(perm,
-                        EffectSlot.ON_ALLY_CREATURES_ATTACK, combinedEffects));
+                        CombatWatch.ON_ALLY_CREATURES_ATTACK, combinedEffects));
             }
         }
         for (AttackTriggerSource triggerSource : attackTriggerSources) {
             Permanent perm = triggerSource.permanent();
-            EffectSlot effectSlot = triggerSource.effectSlot();
+            CombatWatch watch = triggerSource.watch();
             List<CardEffect> allyAttackEffects = new ArrayList<>(triggerSource.effects() != null
-                    ? triggerSource.effects() : perm.getCard().getEffects(effectSlot));
+                    ? triggerSource.effects() : watch.effectsOf(perm.getCard()));
             if (allyAttackEffects.isEmpty()) continue;
 
             // Pre-filter attacker-group conditional effects — skip if no matching attacker exists,
@@ -2255,23 +2258,23 @@ public class CombatAttackService {
                 directlyAttackedPlaneswalkers.add(attackedTargetId);
             }
         }
-        List<Map.Entry<EffectSlot, UUID>> attackedDefenderSlots = new ArrayList<>();
+        List<Map.Entry<CombatWatch, UUID>> attackedDefenderSlots = new ArrayList<>();
         for (UUID attackedPlayerId : directlyAttackedPlayers) {
-            attackedDefenderSlots.add(Map.entry(EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER, attackedPlayerId));
+            attackedDefenderSlots.add(Map.entry(CombatWatch.ON_ALLY_CREATURES_ATTACK_PLAYER, attackedPlayerId));
             attackedDefenderSlots.add(Map.entry(
-                    EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER_OR_PLANESWALKER, attackedPlayerId));
+                    CombatWatch.ON_ALLY_CREATURES_ATTACK_PLAYER_OR_PLANESWALKER, attackedPlayerId));
         }
         for (UUID attackedPlaneswalkerId : directlyAttackedPlaneswalkers) {
             attackedDefenderSlots.add(Map.entry(
-                    EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER_OR_PLANESWALKER, attackedPlaneswalkerId));
+                    CombatWatch.ON_ALLY_CREATURES_ATTACK_PLAYER_OR_PLANESWALKER, attackedPlaneswalkerId));
         }
-        for (Map.Entry<EffectSlot, UUID> attackedDefenderSlot : attackedDefenderSlots) {
-            EffectSlot attackPlayerSlot = attackedDefenderSlot.getKey();
+        for (Map.Entry<CombatWatch, UUID> attackedDefenderSlot : attackedDefenderSlots) {
+            CombatWatch attackPlayerSlot = attackedDefenderSlot.getKey();
             UUID attackedPlayerId = attackedDefenderSlot.getValue();
             for (Permanent perm : new ArrayList<>(battlefield)) {
-                List<CardEffect> effects = new ArrayList<>(perm.getCard().getEffects(attackPlayerSlot));
-                effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                        gameData, perm, attackPlayerSlot));
+                List<CardEffect> effects = new ArrayList<>(attackPlayerSlot.effectsOf(perm.getCard()));
+                effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                        gameData, perm, attackPlayerSlot.trigger()));
                 if (effects.isEmpty()) continue;
 
                 ConditionContext targetContext = ConditionContext.forPermanent(perm, playerId)
@@ -2346,23 +2349,22 @@ public class CombatAttackService {
             Permanent attacker = battlefield.get(idx);
             for (Permanent perm : battlefield) {
                 List<CardEffect> perCreatureAttackEffects = new ArrayList<>();
-                List<CardEffect> printedAttackEffects = LayerSystemService.currentCard(gameData, perm)
-                        .getEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS);
+                List<CardEffect> printedAttackEffects = CombatWatch.ON_ALLY_CREATURE_ATTACKS.effectsOf(LayerSystemService.currentCard(gameData, perm));
                 if (!printedAttackEffects.isEmpty() && !perm.isFaceDown()
                         && !gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
                     perCreatureAttackEffects.addAll(printedAttackEffects);
                 }
                 List<CardEffect> temporaryAttackEffects =
-                        perm.getTemporaryTriggeredEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS);
+                        perm.getTemporaryTriggerEffects(CombatWatch.ON_ALLY_CREATURE_ATTACKS.trigger());
                 List<CardEffect> persistentAttackEffects =
-                        perm.getPersistentTriggeredEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS);
+                        perm.getPersistentTriggerEffects(CombatWatch.ON_ALLY_CREATURE_ATTACKS.trigger());
                 if ((!temporaryAttackEffects.isEmpty() || !persistentAttackEffects.isEmpty())
                         && !gameQueryService.hasLostAllAbilities(gameData, perm)) {
                     perCreatureAttackEffects.addAll(temporaryAttackEffects);
                     perCreatureAttackEffects.addAll(persistentAttackEffects);
                 }
-                List<CardEffect> grantedAttackEffects = grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                        gameData, perm, EffectSlot.ON_ALLY_CREATURE_ATTACKS);
+                List<CardEffect> grantedAttackEffects = grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                        gameData, perm, CombatWatch.ON_ALLY_CREATURE_ATTACKS.trigger());
                 perCreatureAttackEffects.addAll(grantedAttackEffects);
                 if (perCreatureAttackEffects.isEmpty()) continue;
 
@@ -2495,7 +2497,7 @@ public class CombatAttackService {
                     if (!mandatoryEffects.isEmpty()) {
                         List<CardEffect> bundledEffects = new ArrayList<>(mandatoryEffects);
                         List<List<CardEffect>> abilities = new ArrayList<>();
-                        for (var registration : perm.getCard().getEffectRegistrations(EffectSlot.ON_ALLY_CREATURE_ATTACKS)) {
+                        for (var registration : CombatWatch.ON_ALLY_CREATURE_ATTACKS.registrationsOf(perm.getCard())) {
                             if (registration.triggerMode()
                                     != com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT) {
                                 continue;
@@ -2631,8 +2633,8 @@ public class CombatAttackService {
             if (graveyard == null) continue;
             boolean attackingPlayersGraveyard = graveyardOwnerId.equals(playerId);
             for (Card card : new ArrayList<>(graveyard)) {
-                List<CardEffect> gyAttackEffects = gameQueryService.getEffectiveGraveyardEffects(
-                        gameData, card, EffectSlot.GRAVEYARD_ON_ALLY_CREATURES_ATTACK);
+                List<CardEffect> gyAttackEffects = gameQueryService.getEffectiveGraveyardTriggerEffects(
+                        gameData, card, CombatWatch.GRAVEYARD_ON_ALLY_CREATURES_ATTACK.trigger());
                 if (gyAttackEffects.isEmpty()) continue;
 
                 for (CardEffect effect : gyAttackEffects) {
@@ -2726,8 +2728,7 @@ public class CombatAttackService {
                 if (exiled.faceDown() || !playerId.equals(exiled.ownerId())) {
                     continue;
                 }
-                List<CardEffect> exileAttackEffects = exiled.card().getEffects(
-                        EffectSlot.EXILE_ON_ALLY_CREATURES_ATTACK);
+                List<CardEffect> exileAttackEffects = CombatWatch.EXILE_ON_ALLY_CREATURES_ATTACK.effectsOf(exiled.card());
                 if (exileAttackEffects.isEmpty()) {
                     continue;
                 }
@@ -2785,13 +2786,13 @@ public class CombatAttackService {
                 List<CardEffect> attackedTriggerEffects = new ArrayList<>();
                 List<CardEffect> candidateEffects = new ArrayList<>();
                 if (!battleAttacked) {
-                    candidateEffects.addAll(perm.getCard().getEffects(EffectSlot.ON_CREATURE_ATTACKS_YOU));
+                    candidateEffects.addAll(CombatWatch.ON_CREATURE_ATTACKS_YOU.effectsOf(perm.getCard()));
                 }
                 candidateEffects.addAll(
-                        perm.getCard().getEffects(EffectSlot.ON_CREATURE_ATTACKS_DEFENDING_PLAYER));
+                        CombatWatch.ON_CREATURE_ATTACKS_DEFENDING_PLAYER.effectsOf(perm.getCard()));
                 if (gameData.playerIds.contains(attackedTargetId)) {
                     candidateEffects.addAll(
-                            perm.getCard().getEffects(EffectSlot.ON_CREATURE_ATTACKS_YOU_DIRECTLY));
+                            CombatWatch.ON_CREATURE_ATTACKS_YOU_DIRECTLY.effectsOf(perm.getCard()));
                 }
                 for (CardEffect attackedEffect : candidateEffects) {
                     // Some triggers only fire for attackers matching a condition (e.g. Raking Canopy:
@@ -2816,10 +2817,10 @@ public class CombatAttackService {
                 try {
                     List<List<CardEffect>> abilities = new ArrayList<>();
                     List<CardEffect> bundledEffects = new ArrayList<>(attackedTriggerEffects);
-                    for (EffectSlot triggerSlot : List.of(EffectSlot.ON_CREATURE_ATTACKS_YOU,
-                            EffectSlot.ON_CREATURE_ATTACKS_YOU_DIRECTLY,
-                            EffectSlot.ON_CREATURE_ATTACKS_DEFENDING_PLAYER)) {
-                        for (var registration : perm.getCard().getEffectRegistrations(triggerSlot)) {
+                    for (CombatWatch triggerSlot : List.of(CombatWatch.ON_CREATURE_ATTACKS_YOU,
+                            CombatWatch.ON_CREATURE_ATTACKS_YOU_DIRECTLY,
+                            CombatWatch.ON_CREATURE_ATTACKS_DEFENDING_PLAYER)) {
+                        for (var registration : triggerSlot.registrationsOf(perm.getCard())) {
                             if (registration.triggerMode() == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT
                                     && bundledEffects.remove(registration.effect())) {
                                 abilities.add(List.of(registration.effect()));
@@ -2870,7 +2871,7 @@ public class CombatAttackService {
             if (defenderBattlefield == null) continue;
             for (Permanent perm : new ArrayList<>(defenderBattlefield)) {
                 List<CardEffect> effects = new ArrayList<>();
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CREATURES_ATTACK_YOU)) {
+                for (CardEffect effect : CombatWatch.ON_CREATURES_ATTACK_YOU.effectsOf(perm.getCard())) {
                     if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
                             && !conditionEvaluationService.isMet(gameData, conditional.condition(),
                             ConditionContext.forPermanent(perm, attackedPlayerId))) {
@@ -2948,8 +2949,7 @@ public class CombatAttackService {
             List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(attackedPlayerId);
             if (defenderBattlefield == null) continue;
             for (Permanent perm : new ArrayList<>(defenderBattlefield)) {
-                List<CardEffect> effects = perm.getCard().getEffects(
-                        EffectSlot.ON_OPPONENT_ATTACKS_PLANESWALKER_YOU_CONTROL);
+                List<CardEffect> effects = CombatWatch.ON_OPPONENT_ATTACKS_PLANESWALKER_YOU_CONTROL.effectsOf(perm.getCard());
                 if (effects.isEmpty()) continue;
 
                 StackEntry trigger = new StackEntry(
@@ -3026,7 +3026,7 @@ public class CombatAttackService {
             for (Map.Entry<UUID, List<Permanent>> bf : gameData.playerBattlefields.entrySet()) {
                 UUID permController = bf.getKey();
                 for (Permanent perm : new ArrayList<>(bf.getValue())) {
-                    List<CardEffect> anyAttackEffects = perm.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_ATTACKS);
+                    List<CardEffect> anyAttackEffects = CombatWatch.ON_ANY_CREATURE_ATTACKS.effectsOf(perm.getCard());
                     if (anyAttackEffects.isEmpty()) continue;
 
                     List<CardEffect> matchingAnyAttackEffects = new ArrayList<>();
@@ -3148,7 +3148,7 @@ public class CombatAttackService {
             for (Permanent perm : new ArrayList<>(bf.getValue())) {
                 List<CardEffect> playerAttackEffects = new ArrayList<>();
                 Map<UUID, List<CardEffect>> effectsByAttackedOpponent = new LinkedHashMap<>();
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_ATTACKS)) {
+                for (CardEffect effect : CombatWatch.ON_ANY_PLAYER_ATTACKS.effectsOf(perm.getCard())) {
                     if (effect instanceof ConditionalEffect conditional) {
                         if (conditional.condition()
                                 instanceof PlayerAttacksOneOfYourOpponentsWithPowerOrToughnessEqualToSourceChosenNumber) {
@@ -3260,7 +3260,7 @@ public class CombatAttackService {
                 try {
                     List<List<CardEffect>> triggerEffectGroups = new ArrayList<>();
                     List<CardEffect> bundledEffects = new ArrayList<>(playerAttackEffects);
-                    for (var registration : perm.getCard().getEffectRegistrations(EffectSlot.ON_ANY_PLAYER_ATTACKS)) {
+                    for (var registration : CombatWatch.ON_ANY_PLAYER_ATTACKS.registrationsOf(perm.getCard())) {
                         if (registration.triggerMode() == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT) {
                             CardEffect registeredEffect = registration.effect();
                             CardEffect resolvedEffect = registeredEffect instanceof ConditionalEffect conditional
@@ -3372,7 +3372,7 @@ public class CombatAttackService {
                 continue;
             }
             List<CardEffect> effects = new ArrayList<>();
-            for (CardEffect effect : card.getEffects(EffectSlot.COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK)) {
+            for (CardEffect effect : CombatWatch.COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK.effectsOf(card)) {
                 if (effect instanceof ConditionalEffect conditional
                         && containsHasAttackerCondition(conditional.condition())) {
                     if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
@@ -4661,7 +4661,8 @@ public class CombatAttackService {
                 }
                 boolean grantsEffect = source.getCard().getStaticEffects().stream()
                         .anyMatch(e -> e instanceof GrantTriggeredAbilityEffect grant
-                                && grant.slot() == EffectSlot.ON_ATTACK
+                                && grant.grantedAbility() instanceof TriggeredAbility granted
+                                && granted.hasTrigger(CombatWatch.ON_ATTACK.trigger())
                                 && grant.grantedEffect().equals(effect));
                 if (grantsEffect) {
                     usedGrantingPermanents.add(source.getId());

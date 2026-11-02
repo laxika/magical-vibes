@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PayXManaReanimateCreatureWithManaValueXEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * Isareth the Awakener — {1}{B}{B} Legendary Creature — Human Wizard (3/3).
@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.PayXManaReanimateCreatureWith
 public class IsarethTheAwakener extends Card {
 
     public IsarethTheAwakener() {
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new PayXManaReanimateCreatureWithManaValueXEffect(CounterType.CORPSE, true));
     }
 }

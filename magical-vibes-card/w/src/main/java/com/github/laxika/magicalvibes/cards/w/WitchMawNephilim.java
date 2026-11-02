@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourcePowerAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -24,7 +23,7 @@ public class WitchMawNephilim extends Card {
                 new SpellCastTriggerEffect(null, List.of(
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2))),
                 "Put two +1/+1 counters on this creature?"));
-        addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
+        addTrigger(Triggers.attacks(), new ConditionalEffect(
                 new SourcePowerAtLeast(10),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF), false));
     }

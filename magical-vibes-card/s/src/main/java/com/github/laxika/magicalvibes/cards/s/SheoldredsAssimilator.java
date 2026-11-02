@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfExiledCardIntoTopFiveEffect;
@@ -20,7 +19,7 @@ public class SheoldredsAssimilator extends Card {
         var graveyardTarget = target(
                 new GraveyardCardPredicateTargetFilter(null, GraveyardSearchScope.ALL_GRAVEYARDS), 0, 1);
         graveyardTarget.addTrigger(Triggers.enters(ObjectRelation.THIS), graveyardTrigger);
-        graveyardTarget.addEffect(EffectSlot.ON_ATTACK, graveyardTrigger);
+        graveyardTarget.addTrigger(Triggers.attacks(), graveyardTrigger);
     }
 
     private CardEffect graveyardTrigger() {

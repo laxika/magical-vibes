@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
@@ -25,7 +24,7 @@ public class NukaNukeLauncher extends Card {
     public NukaNukeLauncher() {
         addStaticEffect(new StaticBoostEffect(3, 0, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantKeywordEffect(Keyword.INTIMIDATE, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new RegisterGlobalTriggeredAbilityUntilEndOfNextTurnEffect(
                         new TriggeredAbility(Triggers.playerCastsSpell(),
                         new TargetPlayerSpellCastTriggerEffect(

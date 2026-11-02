@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MaySacrificePermanentForCounterSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -21,7 +20,7 @@ import java.util.List;
 public class HighSocietyHunter extends Card {
 
     public HighSocietyHunter() {
-        addEffect(EffectSlot.ON_ATTACK, new MaySacrificePermanentForCounterSourceEffect(
+        addTrigger(Triggers.attacks(), new MaySacrificePermanentForCounterSourceEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())

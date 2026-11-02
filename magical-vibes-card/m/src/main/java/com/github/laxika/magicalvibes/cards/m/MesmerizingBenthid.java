@@ -5,9 +5,8 @@ import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -26,7 +25,8 @@ import java.util.Set;
 public class MesmerizingBenthid extends Card {
 
     public MesmerizingBenthid() {
-        List<Ability> illusionTokenEffects = List.of(LegacySlots.triggered(EffectSlot.ON_BLOCK, new SkipNextUntapEffect(TapUntapScope.TARGET)));
+        List<Ability> illusionTokenEffects = List.of(new TriggeredAbility(Triggers.blocks(),
+                new SkipNextUntapEffect(TapUntapScope.TARGET)));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
                 2, "Illusion", 0, 2, CardColor.BLUE, List.of(CardSubtype.ILLUSION),
                 Set.of(), Set.of(), illusionTokenEffects));

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.PermanentLeftBattlefieldUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -30,7 +29,7 @@ public class WestWindAvatar extends Card {
                         "a token or a land", false, false),
                 "Sacrifice a token or a land?");
         addTrigger(Triggers.enters(ObjectRelation.THIS), sacrificeForLife);
-        addEffect(EffectSlot.ON_ATTACK, sacrificeForLife);
+        addTrigger(Triggers.attacks(), sacrificeForLife);
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ConditionalEffect(new PermanentLeftBattlefieldUnderYourControlThisTurn(),

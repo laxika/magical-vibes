@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -17,10 +17,9 @@ public class PhyrexianSlayer extends Card {
     public PhyrexianSlayer() {
         // Whenever Phyrexian Slayer becomes blocked by a white creature, destroy that creature.
         // It can't be regenerated. The trigger is created once per qualifying blocker.
-        addEffect(EffectSlot.ON_BECOMES_BLOCKED,
+        addTrigger(Triggers.becomesBlocked(), TriggerMode.PER_BLOCKER,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentColorInPredicate(Set.of(CardColor.WHITE)),
-                        new DestroyCreatureBlockingThisEffect(true)),
-                TriggerMode.PER_BLOCKER);
+                        new DestroyCreatureBlockingThisEffect(true)));
     }
 }

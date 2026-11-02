@@ -2,16 +2,16 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyAttachmentsOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "RTR", collectorNumber = "234")
 public class StreetSweeper extends Card {
 
     public StreetSweeper() {
-        target(TargetFilters.land()).addEffect(EffectSlot.ON_ATTACK,
+        target(TargetFilters.land()).addTrigger(Triggers.attacks(),
                 new DestroyAttachmentsOnTargetCreatureEffect(true, false, TargetPredicates.land()));
     }
 }

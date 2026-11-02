@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.a.AdantoTheFirstFort;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
@@ -29,7 +28,7 @@ public class LegionsLanding extends Card {
                         List.of(CardSubtype.VAMPIRE), Set.of(Keyword.LIFELINK), Set.of()));
 
         // When you attack with three or more creatures, transform Legion's Landing.
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+        addTrigger(Triggers.youAttack(),
                 new ConditionalEffect(new MinimumAttackers(3), new TransformSelfEffect()));
     }
 

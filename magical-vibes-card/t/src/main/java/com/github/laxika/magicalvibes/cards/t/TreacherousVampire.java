@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -27,8 +26,8 @@ public class TreacherousVampire extends Card {
                 new ExileCardFromGraveyardCost((CardType) null),
                 List.of(new SacrificeSelfEffect()),
                 true);
-        addEffect(EffectSlot.ON_ATTACK, sacrificeUnlessExile);
-        addEffect(EffectSlot.ON_BLOCK, sacrificeUnlessExile);
+        addTrigger(Triggers.attacks(), sacrificeUnlessExile);
+        addTrigger(Triggers.blocks(), sacrificeUnlessExile);
 
         GraveyardCardThreshold threshold = new GraveyardCardThreshold(7, null);
         addStaticEffect(new ConditionalEffect(threshold,

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -24,7 +23,7 @@ public class GlorifyingVerse extends Card {
         // Exalted: whenever a creature you control attacks alone, that creature gets +1/+1 until
         // end of turn. Each Verse contributes its own trigger, as the printed keyword is not
         // auto-triggered; AttacksAlone is checked at resolution.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
+        addTrigger(Triggers.creatureYouControlAttacks(),
                 new ConditionalEffect(new AttacksAlone(), new BoostTargetCreatureEffect(1, 1)));
 
         // Repartee — Whenever you cast an instant or sorcery spell that targets a creature,

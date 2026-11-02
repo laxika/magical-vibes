@@ -6,13 +6,14 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BushidoEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -20,21 +21,21 @@ import java.util.List;
 public class SenseiGoldenTail extends Card {
 
     public SenseiGoldenTail() {
-        addEffect(EffectSlot.ON_BLOCK, new BushidoEffect(1));
-        addEffect(EffectSlot.ON_BECOMES_BLOCKED, new BushidoEffect(1));
+        addTrigger(Triggers.blocks(), new BushidoEffect(1));
+        addTrigger(Triggers.becomesBlocked(), new BushidoEffect(1));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{W}",
                 List.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.TRAINING),
                         new GrantEffectToTargetEffect(
-                                EffectSlot.ON_BLOCK,
-                                new BushidoEffect(1),
+                                new TriggeredAbility(Triggers.blocks(),
+                                new BushidoEffect(1)),
                                 EffectDuration.PERMANENT,
                                 false),
                         new GrantEffectToTargetEffect(
-                                EffectSlot.ON_BECOMES_BLOCKED,
-                                new BushidoEffect(1),
+                                new TriggeredAbility(Triggers.becomesBlocked(),
+                                new BushidoEffect(1)),
                                 EffectDuration.PERMANENT,
                                 false),
                         new GrantSubtypeToTargetCreatureEffect(CardSubtype.SAMURAI)

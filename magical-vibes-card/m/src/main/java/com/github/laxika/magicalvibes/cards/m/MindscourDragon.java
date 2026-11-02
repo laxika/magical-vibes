@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FRF", collectorNumber = "41")
 public class MindscourDragon extends Card {
@@ -16,7 +16,7 @@ public class MindscourDragon extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+        )).addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new MillEffect(4, MillRecipient.TARGET_PLAYER));
     }
 }

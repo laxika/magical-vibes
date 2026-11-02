@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -44,7 +44,7 @@ public class AnimPakalThousandthMoon extends Card {
                 0,
                 Set.of()
         );
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ConditionalEffect(
+        addTrigger(Triggers.youAttack(), new ConditionalEffect(
                 new HasAttacker(new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.GNOME))),
                 SequenceEffect.of(
                         new PutCountersOnSourceEffect(1, 1, 1),

@@ -4,12 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatedPermanentsAttackingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -18,7 +18,7 @@ import java.util.Set;
 public class KavaronHarrier extends Card {
 
     public KavaronHarrier() {
-        addEffect(EffectSlot.ON_ATTACK, new MayPayManaEffect(
+        addTrigger(Triggers.attacks(), new MayPayManaEffect(
                 "{2}",
                 SequenceEffect.of(
                         new CreateTokenEffect(

@@ -4,13 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.SourceToughness;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatedPermanentsAttackingEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -19,7 +19,7 @@ import java.util.Set;
 public class GeminiEngine extends Card {
 
     public GeminiEngine() {
-        addEffect(EffectSlot.ON_ATTACK, new CreateTokenEffect(
+        addTrigger(Triggers.attacks(), new CreateTokenEffect(
                 CardType.CREATURE,
                 new Fixed(1),
                 "Twin",
@@ -39,7 +39,7 @@ public class GeminiEngine extends Card {
                 false,
                 0,
                 Set.of()));
-        addEffect(EffectSlot.ON_ATTACK, new MakeCreatedPermanentsAttackingEffect());
-        addEffect(EffectSlot.ON_ATTACK, new SacrificeCreatedPermanentsAtEndOfCombatEffect());
+        addTrigger(Triggers.attacks(), new MakeCreatedPermanentsAttackingEffect());
+        addTrigger(Triggers.attacks(), new SacrificeCreatedPermanentsAtEndOfCombatEffect());
     }
 }

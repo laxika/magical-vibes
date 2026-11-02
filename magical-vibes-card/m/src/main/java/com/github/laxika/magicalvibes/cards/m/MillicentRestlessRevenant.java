@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
@@ -31,9 +30,9 @@ public class MillicentRestlessRevenant extends Card {
         addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.SPIRIT), CountScope.CONTROLLER)));
 
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, SPIRIT_TOKEN);
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), SPIRIT_TOKEN);
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                 new AllyCombatDamageTriggerEffect(new PermanentAllOfPredicate(List.of(
                         new PermanentHasSubtypePredicate(CardSubtype.SPIRIT),
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()),

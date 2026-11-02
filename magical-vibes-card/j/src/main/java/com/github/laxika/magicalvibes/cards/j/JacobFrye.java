@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -52,7 +51,7 @@ public class JacobFrye extends Card {
 
         GraveyardSearchScope ownGraveyard = GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
         target(new GraveyardCardPredicateTargetFilter(ASSASSIN_OR_FREERUNNING, ownGraveyard), 0, 1)
-                .addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+                .addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                         new AllyCombatDamageTriggerEffect(
                                 new PermanentHasSubtypePredicate(CardSubtype.ASSASSIN),
                                 new ExileTargetCardFromGraveyardAndMayCastCopyEffect(

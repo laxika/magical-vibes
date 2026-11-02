@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfCombatEffect;
@@ -27,8 +26,7 @@ public class BatteringRam extends Card {
                 new GrantKeywordEffect(Keyword.BANDING, GrantScope.SELF, GrantDuration.UNTIL_END_OF_COMBAT));
 
         // Whenever this creature becomes blocked by a Wall, destroy that Wall at end of combat.
-        addEffect(EffectSlot.ON_BECOMES_BLOCKED,
-                new DestroyCombatOpponentAtEndOfCombatEffect(new PermanentHasSubtypePredicate(CardSubtype.WALL), false),
-                TriggerMode.PER_BLOCKER);
+        addTrigger(Triggers.becomesBlocked(), TriggerMode.PER_BLOCKER,
+                new DestroyCombatOpponentAtEndOfCombatEffect(new PermanentHasSubtypePredicate(CardSubtype.WALL), false));
     }
 }

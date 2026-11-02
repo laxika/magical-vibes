@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.EncoreEffect;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ import java.util.List;
 public class KangeesLieutenant extends Card {
 
     public KangeesLieutenant() {
-        addEffect(EffectSlot.ON_ATTACK, new BoostAllOwnCreaturesEffect(1, 1,
+        addTrigger(Triggers.attacks(), new BoostAllOwnCreaturesEffect(1, 1,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsAttackingPredicate(),
                         new PermanentHasKeywordPredicate(Keyword.FLYING))

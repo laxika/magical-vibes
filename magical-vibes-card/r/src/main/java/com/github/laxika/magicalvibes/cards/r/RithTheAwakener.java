@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenPerPermanentOfChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -22,7 +22,7 @@ public class RithTheAwakener extends Card {
         // Flying is auto-loaded from Scryfall.
         // Whenever Rith deals combat damage to a player, you may pay {2}{G}. If you do, choose a
         // color, then create a 1/1 green Saproling creature token for each permanent of that color.
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new MayPayManaEffect("{2}{G}",
                         new CreateTokenPerPermanentOfChosenColorEffect(new CreateTokenEffect(
                                 "Saproling", 1, 1, CardColor.GREEN,

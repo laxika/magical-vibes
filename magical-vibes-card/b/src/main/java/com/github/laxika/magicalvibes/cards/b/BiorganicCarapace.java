@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
@@ -31,10 +31,10 @@ public class BiorganicCarapace extends Card {
 
         addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+                new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                 new DrawCardEffect(new PermanentCount(
                         new PermanentAllOfPredicate(List.of(new PermanentIsModifiedPredicate(),
-                                new PermanentIsCreaturePredicate())), CountScope.CONTROLLER)),
+                                new PermanentIsCreaturePredicate())), CountScope.CONTROLLER))),
                 GrantScope.EQUIPPED_CREATURE));
 
         addActivatedAbility(new EquipActivatedAbility("{2}"));

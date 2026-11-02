@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -16,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -39,10 +41,10 @@ public class DerelictAtticWidowsWalk extends Card {
         addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(1),
                 new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_ALLY_CREATURE_ATTACKS,
+                        new TriggeredAbility(Triggers.creatureYouControlAttacks(),
                         new ConditionalEffect(new AttacksAlone(), SequenceEffect.of(
                                 new BoostTargetCreatureEffect(1, 0),
-                                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET))),
+                                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET)))),
                         GrantScope.SELF)));
     }
 }

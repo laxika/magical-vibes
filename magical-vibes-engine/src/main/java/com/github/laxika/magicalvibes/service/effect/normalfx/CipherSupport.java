@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CipherCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -45,7 +46,7 @@ public class CipherSupport {
         MayEffect trigger = new MayEffect(
                 new CipherCastCopyEffect(entry.getCard().getId()),
                 "Cast a copy of " + entry.getCard().getName() + " without paying its mana cost?");
-        creature.addPersistentTriggeredEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, trigger);
+        creature.addPersistentAbility(new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(), trigger));
 
         int resumeIndex = gameData.pendingEffectResolutionIndex;
         entry.setExileAndReturnToHandAtNextEndStep(false);

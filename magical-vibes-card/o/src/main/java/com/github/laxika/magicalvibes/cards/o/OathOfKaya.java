@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -34,8 +33,8 @@ public class OathOfKaya extends Card {
         )).addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(3));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(3));
 
-        addEffect(EffectSlot.ON_OPPONENT_ATTACKS_PLANESWALKER_YOU_CONTROL,
+        addTrigger(Triggers.opponentAttacksYourPlaneswalker(),
                 new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER));
-        addEffect(EffectSlot.ON_OPPONENT_ATTACKS_PLANESWALKER_YOU_CONTROL, new GainLifeEffect(2));
+        addTrigger(Triggers.opponentAttacksYourPlaneswalker(), new GainLifeEffect(2));
     }
 }

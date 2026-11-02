@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 /**
  * "Whenever this creature attacks, defending player mills {@code count} cards" (Nemesis of Reason).
  * <p>
- * Placed on the {@code ON_ATTACK} slot. Non-targeting: the player being attacked (directly, or the
+ * Placed on the {@code Triggers.attacks()} ability. Non-targeting: the player being attacked (directly, or the
  * controller of the attacked planeswalker) is captured as the trigger's {@code attackedTargetId} by
  * {@code CombatAttackService} and mills {@code count} cards on resolution. Because the defending
  * player is determined by combat rather than chosen, this contributes no player target and never

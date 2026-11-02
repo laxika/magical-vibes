@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -24,7 +23,7 @@ public class ImpetuousDevils extends Card {
                         new PermanentControlledByDefendingPlayerPredicate()
                 )),
                 "Target must be a creature defending player controls"), 0, 1)
-                .addEffect(EffectSlot.ON_ATTACK, new MustBlockSourceEffect(null, null, true));
+                .addTrigger(Triggers.attacks(), new MustBlockSourceEffect(null, null, true));
         addTrigger(Triggers.endStep(ActivePlayer.ANY), new SacrificeSelfEffect());
     }
 }

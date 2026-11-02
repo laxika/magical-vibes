@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MKM", collectorNumber = "432")
 @CardRegistration(set = "SLD", collectorNumber = "2284")
@@ -20,12 +21,12 @@ public class VojaJawsOfTheConclave extends Card {
     public VojaJawsOfTheConclave() {
         PermanentCount elvesYouControl =
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.ELF), CountScope.CONTROLLER);
-        addEffect(EffectSlot.ON_ATTACK, new PutCounterOnEachControlledPermanentEffect(
+        addTrigger(Triggers.attacks(), new PutCounterOnEachControlledPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, elvesYouControl, new PermanentIsCreaturePredicate()));
 
         PermanentCount wolvesYouControl =
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.WOLF), CountScope.CONTROLLER);
-        addEffect(EffectSlot.ON_ATTACK, new DrawCardEffect(wolvesYouControl));
+        addTrigger(Triggers.attacks(), new DrawCardEffect(wolvesYouControl));
 
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(3));
     }

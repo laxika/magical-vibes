@@ -258,14 +258,14 @@ public class Card {
     /** Whether this card's targeted attack trigger is chosen by the defending player. */
     private boolean attackTriggerTargetChosenByDefendingPlayer;
     /**
-     * Whether this Aura's {@code ON_ATTACK} trigger is the Aura's own ability ("Whenever enchanted creature
+     * Whether this Aura's {@code Triggers.attacks()} trigger is the Aura's own ability ("Whenever enchanted creature
      * attacks, ...", controlled by the Aura's controller) rather than an ability it grants to the enchanted
      * creature ("Enchanted creature has 'Whenever this creature attacks, ...'", controlled by the creature's
      * controller).
      */
     private boolean attackTriggerOwnedByAura;
     /**
-     * Whether this Equipment's {@code ON_ATTACK} trigger is an ability it grants to the equipped creature
+     * Whether this Equipment's {@code Triggers.attacks()} trigger is an ability it grants to the equipped creature
      * ("Equipped creature has 'Whenever this creature attacks, ...'", controlled by the creature's
      * controller) rather than the Equipment's own ("Whenever equipped creature attacks, ...").
      */
@@ -1852,6 +1852,16 @@ public class Card {
     }
 
     /**
+     * Adds a triggered ability like {@link #addSimultaneousTrigger(Trigger, CardEffect...)} whose registrations carry
+     * {@code triggerMode}: "whenever this becomes blocked by a creature, it deals 3 damage to that creature's
+     * controller and 3 damage to that creature" is {@link TriggerMode#PER_BLOCKER}.
+     */
+    public void addSimultaneousTrigger(Trigger trigger, TriggerMode triggerMode, CardEffect... effects) {
+        addTriggeredAbility(new TriggeredAbility(trigger, TriggerOptions.DEFAULT,
+                simultaneousGroup(effects, triggerMode, null)));
+    }
+
+    /**
      * Adds {@code ability} as it is, for an ability with several trigger conditions or simultaneous effects.
      * An ability with a {@link LegacySlotTrigger} is added the way its slot groups registrations instead.
      */
@@ -1973,13 +1983,9 @@ public class Card {
      * {@code slot} that it joins, or as a new ability. A group always stays in one ability.
      */
     private void addRegistrations(EffectSlot slot, List<EffectRegistration> group) {
-        EffectRegistration first = group.getFirst();
         int index = switch (LegacySlotGrouping.of(slot)) {
             case EACH -> -1;
             case ALL -> indexOfFirstAbility(slot);
-            case ALL_BUT_INDEPENDENT -> first.triggerMode() == TriggerMode.INDEPENDENT
-                    ? -1
-                    : indexOfSharedAbility(slot);
         };
         if (index < 0) {
             abilities.add(new TriggeredAbility(new LegacySlotTrigger(slot), TriggerOptions.DEFAULT, group));
@@ -2062,17 +2068,6 @@ public class Card {
     private int indexOfFirstAbility(EffectSlot slot) {
         for (int i = 0; i < abilities.size(); i++) {
             if (slotOf(abilities.get(i)) == slot) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    /** The ability of an all-but-independent slot that its non-independent registrations share. */
-    private int indexOfSharedAbility(EffectSlot slot) {
-        for (int i = 0; i < abilities.size(); i++) {
-            if (abilities.get(i) instanceof TriggeredAbility ability && slotOf(ability) == slot
-                    && ability.effects().getFirst().triggerMode() != TriggerMode.INDEPENDENT) {
                 return i;
             }
         }

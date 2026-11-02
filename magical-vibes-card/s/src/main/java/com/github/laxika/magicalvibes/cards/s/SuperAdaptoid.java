@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -66,19 +65,19 @@ public class SuperAdaptoid extends Card {
                         copyKeywordAsCounter(Keyword.TRAMPLE, CounterType.TRAMPLE))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         copyKeywordAsCounter(Keyword.VIGILANCE, CounterType.VIGILANCE))
-                .addEffect(EffectSlot.ON_ATTACK, copyKeywordAsCounter(Keyword.HASTE, CounterType.HASTE))
-                .addEffect(EffectSlot.ON_ATTACK, copyKeywordAsCounter(Keyword.FLYING, CounterType.FLYING))
-                .addEffect(EffectSlot.ON_ATTACK, copyKeywordAsCounter(Keyword.FIRST_STRIKE, CounterType.FIRST_STRIKE))
-                .addEffect(EffectSlot.ON_ATTACK,
+                .addTrigger(Triggers.attacks(), copyKeywordAsCounter(Keyword.HASTE, CounterType.HASTE))
+                .addTrigger(Triggers.attacks(), copyKeywordAsCounter(Keyword.FLYING, CounterType.FLYING))
+                .addTrigger(Triggers.attacks(), copyKeywordAsCounter(Keyword.FIRST_STRIKE, CounterType.FIRST_STRIKE))
+                .addTrigger(Triggers.attacks(),
                         copyKeywordAsCounter(Keyword.DOUBLE_STRIKE, CounterType.DOUBLE_STRIKE))
-                .addEffect(EffectSlot.ON_ATTACK, copyKeywordAsCounter(Keyword.DEATHTOUCH, CounterType.DEATHTOUCH))
-                .addEffect(EffectSlot.ON_ATTACK,
+                .addTrigger(Triggers.attacks(), copyKeywordAsCounter(Keyword.DEATHTOUCH, CounterType.DEATHTOUCH))
+                .addTrigger(Triggers.attacks(),
                         copyKeywordAsCounter(Keyword.INDESTRUCTIBLE, CounterType.INDESTRUCTIBLE))
-                .addEffect(EffectSlot.ON_ATTACK, copyKeywordAsCounter(Keyword.LIFELINK, CounterType.LIFELINK))
-                .addEffect(EffectSlot.ON_ATTACK, copyKeywordAsCounter(Keyword.MENACE, CounterType.MENACE))
-                .addEffect(EffectSlot.ON_ATTACK, copyKeywordAsCounter(Keyword.REACH, CounterType.REACH))
-                .addEffect(EffectSlot.ON_ATTACK, copyKeywordAsCounter(Keyword.TRAMPLE, CounterType.TRAMPLE))
-                .addEffect(EffectSlot.ON_ATTACK, copyKeywordAsCounter(Keyword.VIGILANCE, CounterType.VIGILANCE));
+                .addTrigger(Triggers.attacks(), copyKeywordAsCounter(Keyword.LIFELINK, CounterType.LIFELINK))
+                .addTrigger(Triggers.attacks(), copyKeywordAsCounter(Keyword.MENACE, CounterType.MENACE))
+                .addTrigger(Triggers.attacks(), copyKeywordAsCounter(Keyword.REACH, CounterType.REACH))
+                .addTrigger(Triggers.attacks(), copyKeywordAsCounter(Keyword.TRAMPLE, CounterType.TRAMPLE))
+                .addTrigger(Triggers.attacks(), copyKeywordAsCounter(Keyword.VIGILANCE, CounterType.VIGILANCE));
     }
 
     private static CardEffect copyKeywordAsCounter(Keyword keyword, CounterType counterType) {

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -35,8 +37,8 @@ public class BottomlessPoolLockerRoom extends Card {
         addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(1),
                 new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
-                        new AllyCombatDamageTriggerEffect(null, new DrawCardEffect(1), false, true),
+                        new TriggeredAbility(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
+                        new AllyCombatDamageTriggerEffect(null, new DrawCardEffect(1), false, true)),
                         GrantScope.SELF)));
     }
 }

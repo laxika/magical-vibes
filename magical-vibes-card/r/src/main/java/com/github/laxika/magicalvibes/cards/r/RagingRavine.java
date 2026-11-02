@@ -6,13 +6,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToSourceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -45,8 +46,8 @@ public class RagingRavine extends Card {
                                 3, 3, List.of(CardSubtype.ELEMENTAL), Set.of(),
                                 Set.of(CardColor.RED, CardColor.GREEN)),
                         new GrantEffectToSourceUntilEndOfTurnEffect(
-                                EffectSlot.ON_ATTACK,
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))
+                                new TriggeredAbility(Triggers.attacks(),
+                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)))
                 ),
                 "{2}{R}{G}: Until end of turn, this land becomes a 3/3 red and green Elemental creature "
                         + "with \"Whenever this creature attacks, put a +1/+1 counter on it.\" It's still a land."

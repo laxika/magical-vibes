@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -33,12 +33,12 @@ public class StormQueenOfWakanda extends Card {
                 anotherAttackingCreature,
                 "Target must be another attacking creature"
         ))
-                .addEffect(EffectSlot.ON_ATTACK,
+                .addTrigger(Triggers.attacks(),
                         new BoostTargetCreatureEffect(new SourcePower(), new Fixed(0), anotherAttackingCreature))
-                .addEffect(EffectSlot.ON_ATTACK,
+                .addTrigger(Triggers.attacks(),
                         new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET, anotherAttackingCreature));
 
-        addEffect(EffectSlot.ON_CREATURE_ATTACKS_YOU_DIRECTLY,
+        addTrigger(Triggers.creatureAttacksYou(),
                 new DealDamageToTriggeringAttackerEffect(new SourcePower(),
                         new PermanentHasKeywordPredicate(Keyword.FLYING)));
     }

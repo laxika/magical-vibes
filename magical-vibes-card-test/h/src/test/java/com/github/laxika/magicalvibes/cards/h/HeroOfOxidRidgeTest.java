@@ -22,13 +22,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class HeroOfOxidRidgeTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Attacking puts ON_ATTACK trigger on the stack")
+    @DisplayName("Attacking puts the attack trigger on the stack")
     void attackPutsTriggerOnStack() {
         addCreatureReady(player1, new HeroOfOxidRidge());
 
         declareAttackers(player1, List.of(0));
 
-        // At minimum, the ON_ATTACK trigger should be on the stack (battle cry may also add one)
+        // At minimum, the Triggers.attacks() trigger should be on the stack (battle cry may also add one)
         assertThat(gd.stack).isNotEmpty();
         assertThat(gd.stack).anyMatch(e ->
                 e.getEntryType() == StackEntryType.TRIGGERED_ABILITY

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
@@ -38,7 +37,7 @@ public class TheBeastDeathlessPrince extends Card {
 
         addStaticEffect(new EntersTappedEffect());
         addStaticEffect(new EnterWithCountersEffect(CounterType.STUN, new Fixed(6)));
-        addEffect(EffectSlot.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OWNER, SequenceEffect.of(
+        addTrigger(Triggers.creatureDealsCombatDamageToItsOwner(), SequenceEffect.of(
                 new UntapPermanentsEffect(TapUntapScope.SOURCE_PERMANENT),
                 new DrawCardEffect(1)));
     }

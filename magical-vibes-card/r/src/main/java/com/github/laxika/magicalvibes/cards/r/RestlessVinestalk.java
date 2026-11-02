@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -51,6 +51,6 @@ public class RestlessVinestalk extends Card {
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
         ));
         target(new PermanentPredicateTargetFilter(otherCreature, "Target must be another creature"), 0, 1)
-                .addEffect(EffectSlot.ON_ATTACK, new SetBasePowerToughnessEffect(3, 3));
+                .addTrigger(Triggers.attacks(), new SetBasePowerToughnessEffect(3, 3));
     }
 }

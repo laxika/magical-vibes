@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
@@ -34,7 +33,7 @@ public class SupportSkyforge extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new CreateTokenEffect(4, "Servo", 1, 1, null,
                         List.of(CardSubtype.SERVO), Set.of(), Set.of(CardType.ARTIFACT)));
-        addEffect(EffectSlot.ON_ATTACK, DraftCardFromSpellbookEffect.withArtifactCreatureGrant(SPELLBOOK));
+        addTrigger(Triggers.attacks(), DraftCardFromSpellbookEffect.withArtifactCreatureGrant(SPELLBOOK));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

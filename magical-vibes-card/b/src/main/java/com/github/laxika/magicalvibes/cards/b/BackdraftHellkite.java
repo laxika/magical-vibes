@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -13,7 +13,7 @@ import java.util.Set;
 public class BackdraftHellkite extends Card {
 
     public BackdraftHellkite() {
-        addEffect(EffectSlot.ON_ATTACK, new GrantFlashbackToGraveyardCardsEffect(
+        addTrigger(Triggers.attacks(), new GrantFlashbackToGraveyardCardsEffect(
                 Set.of(CardType.INSTANT, CardType.SORCERY)));
     }
 }

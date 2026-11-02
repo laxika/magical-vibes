@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * <p>The destroy counterpart of
  * {@link GainControlOfPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffect}: use it on an
- * {@code ON_ATTACKS_UNBLOCKED} trigger, whose stack entry carries the defending player as
+ * {@code Triggers.attacksUnblocked()} ability, whose stack entry carries the defending player as
  * {@code targetId} and the attacking creature as {@code sourcePermanentId}. On resolution the
  * controller picks one permanent the defending player controls that matches {@code filter}; it is
  * destroyed and — only when one is actually chosen — the source assigns no combat damage this turn.

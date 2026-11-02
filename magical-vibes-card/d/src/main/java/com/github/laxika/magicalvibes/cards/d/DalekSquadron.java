@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "65")
 @CardRegistration(set = "WHO", collectorNumber = "538")
@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCre
 public class DalekSquadron extends Card {
 
     public DalekSquadron() {
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect.myriad());
     }
 }

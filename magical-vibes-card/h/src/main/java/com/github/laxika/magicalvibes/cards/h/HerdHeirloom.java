@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -42,8 +43,8 @@ public class HerdHeirloom extends Card {
                 List.of(
                         new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET),
                         new GrantEffectToTargetUntilEndOfTurnEffect(
-                                EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                                new DrawCardEffect(1))
+                                new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
+                                new DrawCardEffect(1)))
                 ),
                 "{T}: Until end of turn, target creature you control with power 4 or greater gains trample "
                         + "and \"Whenever this creature deals combat damage to a player, draw a card.\"",

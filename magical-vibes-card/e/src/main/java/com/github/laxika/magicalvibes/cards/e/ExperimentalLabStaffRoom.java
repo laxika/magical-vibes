@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -16,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TurnSourceFaceUpEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -41,14 +43,14 @@ public class ExperimentalLabStaffRoom extends Card {
         addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(1),
                 new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+                        new TriggeredAbility(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                         new AllyCombatDamageTriggerEffect(null, new ChooseOneEffect(List.of(
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Turn that creature face up", new TurnSourceFaceUpEffect()),
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Put a +1/+1 counter on it",
                                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))
-                        )), true),
+                        )), true)),
                         GrantScope.SELF)));
     }
 }

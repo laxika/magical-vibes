@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 /**
  * Deals {@code damage} to the attacking creature that caused this attack trigger (the permanent
  * referenced by the stack entry's non-targeting {@code targetId}, populated by the engine for
- * {@code ON_CREATURE_ATTACKS_YOU} triggers).
+ * {@code Triggers.creatureAttacksYouOrYourPlaneswalker()} triggers).
  *
  * <p>The {@code attackerCondition} restricts <em>which</em> attackers cause the trigger to fire:
  * {@code CombatAttackService} evaluates it against the attacker when attackers are declared and

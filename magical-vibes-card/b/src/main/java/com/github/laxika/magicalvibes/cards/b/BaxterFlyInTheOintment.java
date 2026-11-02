@@ -23,7 +23,7 @@ public class BaxterFlyInTheOintment extends Card {
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasCountersPredicate(CounterType.ANY));
         addTrigger(Triggers.enters(ObjectRelation.THIS), flyingForCounteredCreatures);
-        addEffect(EffectSlot.ON_ATTACK, flyingForCounteredCreatures);
+        addTrigger(Triggers.attacks(), flyingForCounteredCreatures);
 
         // Whenever you draw a card, put a +1/+1 counter on Baxter.
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS,

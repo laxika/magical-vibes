@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -33,7 +32,7 @@ public class CaptainNghathrod extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.HORROR)));
 
         // Whenever a Horror you control deals combat damage to a player, that player mills that many cards.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                 new AllyCombatDamageTriggerEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.HORROR),
                         new MillEffect(new EventValue(), MillRecipient.TARGET_PLAYER)));

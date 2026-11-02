@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.l.LostVale;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -45,7 +44,7 @@ public class DowsingDagger extends Card {
 
         // Whenever equipped creature deals combat damage to a player, you may transform
         // Dowsing Dagger.
-        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.equippedCreatureDealsCombatDamageToPlayer(),
                 new MayEffect(new TransformSelfEffect(), "Transform Dowsing Dagger into Lost Vale?"));
 
         // Equip {2}

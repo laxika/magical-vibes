@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -30,7 +29,7 @@ public class EsikasChariot extends Card {
 
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsTokenPredicate(), "Target must be a token you control"))
-                .addEffect(EffectSlot.ON_ATTACK, new CreateTokenCopyOfTargetPermanentEffect());
+                .addTrigger(Triggers.attacks(), new CreateTokenCopyOfTargetPermanentEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

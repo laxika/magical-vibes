@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
@@ -30,7 +29,7 @@ public class BorborygmosAndFblthp extends Card {
                         new DealDamageToTargetCreatureEffect(new Scaled(new EventValue(), 2)),
                         "land cards"));
         addTrigger(Triggers.enters(ObjectRelation.THIS), drawAndDiscard);
-        addEffect(EffectSlot.ON_ATTACK, drawAndDiscard);
+        addTrigger(Triggers.attacks(), drawAndDiscard);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

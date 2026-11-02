@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -35,7 +34,7 @@ public class CultivatorOfBlades extends Card {
                 new PermanentIsAttackingPredicate(),
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
         ));
-        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        addTrigger(Triggers.attacks(), new MayEffect(
                 new BoostAllCreaturesEffect(new SourcePower(true), new SourcePower(true), otherAttackers),
                 "Have other attacking creatures get +X/+X until end of turn?"
         ));

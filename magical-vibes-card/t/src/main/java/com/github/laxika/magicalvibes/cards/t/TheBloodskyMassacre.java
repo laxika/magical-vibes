@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AwardPersistentManaEffect;
@@ -17,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilit
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -29,10 +31,10 @@ public class TheBloodskyMassacre extends Card {
                 1, "Demon Berserker", 2, 3, CardColor.RED,
                 List.of(CardSubtype.DEMON, CardSubtype.BERSERKER), Set.of(Keyword.MENACE), Set.of()));
         addEffect(EffectSlot.SAGA_CHAPTER_II, new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
-                EffectSlot.ON_ANY_CREATURE_ATTACKS,
+                new TriggeredAbility(Triggers.creatureAttacks(),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.BERSERKER),
-                        SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1)))));
+                        SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1))))));
         addEffect(EffectSlot.SAGA_CHAPTER_III, new AwardPersistentManaEffect(
                 ManaColor.RED,
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.BERSERKER), CountScope.CONTROLLER)));

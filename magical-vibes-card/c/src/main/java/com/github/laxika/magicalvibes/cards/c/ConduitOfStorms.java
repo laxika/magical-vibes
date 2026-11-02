@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaAtNextMainPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public class ConduitOfStorms extends Card {
         setBackFaceCard(new ConduitOfEmrakul());
 
         // Whenever this creature attacks, add {R} at the beginning of your next main phase this turn.
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new RegisterDelayedManaAtNextMainPhaseEffect(ManaColor.RED, 1));
 
         // {3}{R}{R}: Transform this creature.

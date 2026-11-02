@@ -9,12 +9,13 @@ import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestO
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MOC", collectorNumber = "59")
 public class NewArgive extends Card {
 
     public NewArgive() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
+        addTrigger(Triggers.creatureYouControlAttacks(),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsHistoricPredicate(),
                         new BoostTargetCreatureEffect(2, 2)));

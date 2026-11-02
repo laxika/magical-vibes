@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToUpToOneTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -37,13 +37,13 @@ public class GiantInheritance extends Card {
         target(TargetFilters.creature())
                 .addStaticEffect(new StaticBoostEffect(5, 5, GrantScope.ENCHANTED_CREATURE))
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_ATTACK,
+                        new TriggeredAbility(Triggers.attacks(),
                         new CreateTokenAttachedToUpToOneTargetEffect(
                                 monsterRoleToken(),
                                 PlayerRelation.ANY,
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
-                                        new PermanentIsAttackingPredicate()))),
+                                        new PermanentIsAttackingPredicate())))),
                         GrantScope.ENCHANTED_CREATURE));
         // When this Aura is put into a graveyard from the battlefield, return it to its owner's hand.
         addTrigger(Triggers.putIntoGraveyardFrom(Zone.BATTLEFIELD, ObjectRelation.THIS),

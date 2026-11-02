@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnTh
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MSC", collectorNumber = "685")
 public class DaredevilFearlessFighter extends Card {
@@ -21,7 +22,7 @@ public class DaredevilFearlessFighter extends Card {
         target(opponent).addEffect(EffectSlot.ON_CONTROLLER_DEALT_DAMAGE_BY_ALLY_SOURCE,
                 new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.TARGET_PLAYER));
 
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new ExileTopCardMayPlayThisTurnThenDealManaValueDamageToControllerEffect());
     }
 }

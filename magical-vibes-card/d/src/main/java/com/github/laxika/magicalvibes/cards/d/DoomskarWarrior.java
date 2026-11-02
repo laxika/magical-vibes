@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
@@ -51,7 +51,7 @@ public class DoomskarWarrior extends Card {
                 LibrarySearchDestination.HAND,
                 true);
 
-        addEffect(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE, combatDamageAbility);
+        addTrigger(Triggers.dealsCombatDamageToPlayerOrBattle(), combatDamageAbility);
         target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                 new ConditionalEffect(
@@ -59,8 +59,8 @@ public class DoomskarWarrior extends Card {
                         SequenceEffect.of(
                                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET),
                                 new GrantEffectToTargetUntilEndOfTurnEffect(
-                                        EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE,
-                                        combatDamageAbility)))
+                                        new TriggeredAbility(Triggers.dealsCombatDamageToPlayerOrBattle(),
+                                        combatDamageAbility))))
         ));
     }
 }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -39,7 +38,7 @@ public class AlelaCunningConqueror extends Card {
         target(new PermanentPredicateTargetFilter(
                 defendingPlayerCreature,
                 "Target must be a creature that player controls"))
-                .addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+                .addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                         new AllyCombatDamageTriggerEffect(
                                 new PermanentHasSubtypePredicate(CardSubtype.FAERIE),
                                 new GoadTargetCreatureUntilNextTurnEffect(),

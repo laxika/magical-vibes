@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
@@ -30,7 +29,7 @@ public class SwordsmanSharpScoundrel extends Card {
                         new CardSubtypePredicate(CardSubtype.VILLAIN),
                         new AttachTargetEquipmentToTargetCreatureEffect()));
 
-        addEffect(EffectSlot.ON_ANY_CREATURE_ATTACKS,
+        addTrigger(Triggers.creatureAttacks(),
                 new TriggeringPermanentControllerConditionalEffect(
                         new TriggeringPermanentConditionalEffect(
                                 new PermanentIsEquippedPredicate(),

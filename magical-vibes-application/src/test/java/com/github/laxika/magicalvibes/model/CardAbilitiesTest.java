@@ -176,32 +176,16 @@ class CardAbilitiesTest {
 
     @Test
     void aSlotGroupedAllGetsOneAbilityAtThePositionOfItsFirstRegistration() {
-        card.addEffect(EffectSlot.ON_BLOCK, DRAW_ONE);
+        card.addEffect(EffectSlot.ON_SELF_CYCLED, DRAW_ONE);
         card.addEffect(EffectSlot.ON_SELF_BECOMES_UNTAPPED, GAIN_ONE);
-        card.addEffect(EffectSlot.ON_BLOCK, DRAW_TWO, TriggerMode.ONCE_PER_BLOCK);
+        card.addEffect(EffectSlot.ON_SELF_CYCLED, DRAW_TWO, TriggerMode.ONCE_PER_BLOCK);
 
         assertThat(card.getAbilities()).containsExactly(
-                legacy(EffectSlot.ON_BLOCK, new EffectRegistration(DRAW_ONE),
+                legacy(EffectSlot.ON_SELF_CYCLED, new EffectRegistration(DRAW_ONE),
                         new EffectRegistration(DRAW_TWO, TriggerMode.ONCE_PER_BLOCK)),
                 legacy(EffectSlot.ON_SELF_BECOMES_UNTAPPED, new EffectRegistration(GAIN_ONE)));
-        assertThat(card.getEffectRegistrations(EffectSlot.ON_BLOCK)).containsExactly(
+        assertThat(card.getEffectRegistrations(EffectSlot.ON_SELF_CYCLED)).containsExactly(
                 new EffectRegistration(DRAW_ONE), new EffectRegistration(DRAW_TWO, TriggerMode.ONCE_PER_BLOCK));
-    }
-
-    @Test
-    void independentRegistrationsLeaveTheSharedAbilityOfTheirSlot() {
-        card.addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, DRAW_ONE);
-        card.addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, GAIN_ONE, TriggerMode.INDEPENDENT);
-        card.addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, GAIN_TWO, TriggerMode.INDEPENDENT);
-        card.addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, DRAW_TWO);
-
-        assertThat(card.getAbilities()).containsExactly(
-                legacy(EffectSlot.ON_ALLY_CREATURES_ATTACK,
-                        new EffectRegistration(DRAW_ONE), new EffectRegistration(DRAW_TWO)),
-                legacy(EffectSlot.ON_ALLY_CREATURES_ATTACK,
-                        new EffectRegistration(GAIN_ONE, TriggerMode.INDEPENDENT)),
-                legacy(EffectSlot.ON_ALLY_CREATURES_ATTACK,
-                        new EffectRegistration(GAIN_TWO, TriggerMode.INDEPENDENT)));
     }
 
     @Test
@@ -211,8 +195,8 @@ class CardAbilitiesTest {
         assertThatThrownBy(() -> card.getEffectRegistrations(EffectSlot.ON_SELF_BECOMES_UNTAPPED).clear())
                 .isInstanceOf(UnsupportedOperationException.class);
         assertThatThrownBy(() -> card.getAbilities().clear()).isInstanceOf(UnsupportedOperationException.class);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).isEmpty();
-        assertThat(card.getEffectRegistrations(EffectSlot.ON_ATTACK)).isEmpty();
+        assertThat(card.getEffects(EffectSlot.ON_SELF_CYCLED)).isEmpty();
+        assertThat(card.getEffectRegistrations(EffectSlot.ON_SELF_CYCLED)).isEmpty();
     }
 
     @Test

@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsDiscardedOrCycledThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Map;
 import java.util.Set;
@@ -17,7 +17,7 @@ public class LivingLaser extends Card {
         // Whenever Living Laser attacks, for each card you've discarded this turn, create a token
         // that's a copy of Living Laser, except the token isn't legendary. The tokens enter tapped
         // and attacking and are exiled at the beginning of the next end step.
-        addEffect(EffectSlot.ON_ATTACK, new CreateTokenCopyOfSourceEffect(
+        addTrigger(Triggers.attacks(), new CreateTokenCopyOfSourceEffect(
                 true,
                 new CardsDiscardedOrCycledThisTurn(),
                 null,

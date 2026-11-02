@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetCreatureHexproofFromChosenColorAndCantBeBlockedByItUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -18,7 +17,7 @@ public class SungoldSentinel extends Card {
 
     public SungoldSentinel() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), ExileGraveyardCardsEffect.upToOneTargetFromAnyGraveyard());
-        addEffect(EffectSlot.ON_ATTACK, ExileGraveyardCardsEffect.upToOneTargetFromAnyGraveyard());
+        addTrigger(Triggers.attacks(), ExileGraveyardCardsEffect.upToOneTargetFromAnyGraveyard());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

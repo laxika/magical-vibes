@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
@@ -16,20 +15,21 @@ import java.util.Set;
  *
  * <p>{@code retainedTrigger} names the triggered ability holding this effect that the copy keeps ("except it has
  * this ability"), or is {@code null} when it keeps none. A {@link LegacySlotTrigger} keeps the registration of its
- * slot that holds this effect.
+ * slot that holds this effect. {@code additionalRetainedTriggers} names the other triggered abilities the copy keeps
+ * ("it has this ability and 'whenever this deals combat damage to a player, …'").
  */
 public record BecomeCopyOfTargetCreaturePermanentlyEffect(
         String nameOverride,
         Trigger retainedTrigger,
         PermanentPredicate targetPredicate,
-        List<EffectSlot> additionalRetainedEffectSlots,
+        List<Trigger> additionalRetainedTriggers,
         TargetPredicate targetType,
         Set<Keyword> additionalKeywords
 ) implements CardEffect {
 
     public BecomeCopyOfTargetCreaturePermanentlyEffect {
-        additionalRetainedEffectSlots = additionalRetainedEffectSlots == null
-                ? List.of() : List.copyOf(additionalRetainedEffectSlots);
+        additionalRetainedTriggers = additionalRetainedTriggers == null
+                ? List.of() : List.copyOf(additionalRetainedTriggers);
         targetType = targetType == null ? TargetPredicates.creature() : targetType;
         additionalKeywords = additionalKeywords == null ? Set.of() : Set.copyOf(additionalKeywords);
     }
@@ -38,9 +38,9 @@ public record BecomeCopyOfTargetCreaturePermanentlyEffect(
             String nameOverride,
             Trigger retainedTrigger,
             PermanentPredicate targetPredicate,
-            List<EffectSlot> additionalRetainedEffectSlots,
+            List<Trigger> additionalRetainedTriggers,
             TargetPredicate targetType) {
-        this(nameOverride, retainedTrigger, targetPredicate, additionalRetainedEffectSlots, targetType, Set.of());
+        this(nameOverride, retainedTrigger, targetPredicate, additionalRetainedTriggers, targetType, Set.of());
     }
 
     /** Backward-compatible constructor for creature-copy effects. */
@@ -48,8 +48,8 @@ public record BecomeCopyOfTargetCreaturePermanentlyEffect(
             String nameOverride,
             Trigger retainedTrigger,
             PermanentPredicate targetPredicate,
-            List<EffectSlot> additionalRetainedEffectSlots) {
-        this(nameOverride, retainedTrigger, targetPredicate, additionalRetainedEffectSlots,
+            List<Trigger> additionalRetainedTriggers) {
+        this(nameOverride, retainedTrigger, targetPredicate, additionalRetainedTriggers,
                 TargetPredicates.creature(), Set.of());
     }
 

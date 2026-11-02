@@ -5,8 +5,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * blocked by it) both phase out. "Whenever this creature blocks or becomes blocked by a creature,
  * this creature and that creature phase out." (Dream Fighter).
  * <p>
- * Placed on the {@link com.github.laxika.magicalvibes.model.EffectSlot#ON_BLOCK} slot (for the
- * "blocks" half) and on {@link com.github.laxika.magicalvibes.model.EffectSlot#ON_BECOMES_BLOCKED}
+ * Placed on the {@code Triggers.blocks()} ability (for the
+ * "blocks" half) and on {@code Triggers.becomesBlocked()}
  * with {@link com.github.laxika.magicalvibes.model.TriggerMode#PER_BLOCKER} (for the "becomes
  * blocked" half, one trigger per blocker). As a {@link CombatOpponentReferencingEffect} the combat
  * opponent is carried as the trigger's non-targeting target, so the trigger can't fizzle.

@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
@@ -30,7 +30,7 @@ public class GabrielAngelfire extends Card {
                 new ChooseOneEffect.ChooseOneOption("Trample", new GrantKeywordEffect(
                         Keyword.TRAMPLE, GrantScope.SELF, GrantDuration.UNTIL_YOUR_NEXT_UPKEEP)),
                 new ChooseOneEffect.ChooseOneOption("Rampage 3", GrantEffectToTargetEffect.toSource(
-                        EffectSlot.ON_BECOMES_BLOCKED, rampageThree(),
+                        new TriggeredAbility(Triggers.becomesBlocked(), rampageThree()),
                         EffectDuration.UNTIL_CONTROLLERS_NEXT_UPKEEP))
         )));
     }

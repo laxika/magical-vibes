@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CastCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -35,7 +35,7 @@ public class SwordOfOnceAndFuture extends Card {
         addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new ProtectionFromColorsEffect(
                 Set.of(CardColor.BLUE, CardColor.BLACK), GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.equippedCreatureDealsCombatDamageToPlayer(),
                 SurveilThenEffect.direct(2, new CastCardFromGraveyardEffect(
                         INSTANT_OR_SORCERY_WITH_MAX_MANA_VALUE_TWO,
                         GraveyardSearchScope.CONTROLLERS_GRAVEYARD,

@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -29,7 +28,8 @@ public class MoleManMoloidMaster extends Card {
                 CardColor.GREEN, Set.of(CardColor.GREEN),
                 List.of(CardSubtype.MINION), Set.of(), Set.of(),
                 false, false,
-                List.of(LegacySlots.triggered(EffectSlot.ON_ATTACK, new MayEffect(new MillEffect(1, MillRecipient.CONTROLLER), "Mill a card?"))),
+                List.of(new TriggeredAbility(Triggers.attacks(),
+                        new MayEffect(new MillEffect(1, MillRecipient.CONTROLLER), "Mill a card?"))),
                 List.of(), false, false, false, 0, Set.of()));
     }
 }

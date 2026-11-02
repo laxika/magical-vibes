@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.SourceToughness;
 import com.github.laxika.magicalvibes.model.effect.DoublePlusOneCountersOnTargetCreatureEffect;
@@ -23,7 +22,7 @@ public class TanazirQuandrix extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new DoublePlusOneCountersOnTargetCreatureEffect());
 
-        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        addTrigger(Triggers.attacks(), new MayEffect(
                 new SetAllOwnCreaturesBasePowerToughnessEffect(
                         new SourcePower(true),
                         new SourceToughness(),

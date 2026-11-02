@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordEffect;
@@ -24,7 +23,7 @@ public class WingnutBatOnTheBelfry extends Card {
                 new GrantChosenKeywordEffect(
                         List.of(Keyword.FLYING, Keyword.MENACE, Keyword.HASTE), GrantScope.SELF));
 
-        addEffect(EffectSlot.ON_ATTACK, new BoostAllCreaturesEffect(1, 0,
+        addTrigger(Triggers.attacks(), new BoostAllCreaturesEffect(1, 0,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsAttackingPredicate(),
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
@@ -47,7 +46,7 @@ public class ArahboRoarOfTheWorld extends Card {
                         new AnyOf(List.of(new SourceCardInCommandZone(), new SourceCardOnBattlefield())),
                         new BoostTargetCreatureEffect(3, 3)));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
+        addTrigger(Triggers.creatureYouControlAttacks(),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentHasSubtypePredicate(CardSubtype.CAT),

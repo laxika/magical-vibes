@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 /**
  * Capability interface for effects that, when they fire as an
- * {@code ON_COMBAT_DAMAGE_TO_PLAYER} triggered ability in {@code CombatDamageService}, need the
+ * {@code Triggers.dealsCombatDamageToPlayer()} triggered ability in {@code CombatDamageService}, need the
  * created stack entry populated with a particular context — which player the trigger targets and
  * which permanent is its source. Lets the combat engine ask an effect "what trigger context do you
  * need?" instead of matching every concrete effect type by hand.

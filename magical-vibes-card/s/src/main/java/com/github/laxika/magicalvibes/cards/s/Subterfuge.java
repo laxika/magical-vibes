@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopiesOfSourceAttackingOpponentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -30,8 +30,8 @@ public class Subterfuge extends Card {
                         new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new GrantEffectToTargetUntilEndOfTurnEffect(
-                                EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                                new DrawCardEffect(new EventValue())));
+                                new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
+                                new DrawCardEffect(new EventValue()))));
 
         addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,

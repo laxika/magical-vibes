@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TMT", collectorNumber = "136")
 public class VenusTornBetweenWorlds extends Card {
@@ -17,7 +18,7 @@ public class VenusTornBetweenWorlds extends Card {
     public VenusTornBetweenWorlds() {
         addEffect(EffectSlot.ON_DEALT_DAMAGE,
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue()));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                 new AllyCombatDamageTriggerEffect(
                         new PermanentHasCountersPredicate(CounterType.ANY),
                         new MayPayManaEffect("{U}", new DrawCardEffect(1),

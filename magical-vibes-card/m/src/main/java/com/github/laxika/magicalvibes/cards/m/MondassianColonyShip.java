@@ -7,12 +7,13 @@ import com.github.laxika.magicalvibes.model.amount.OtherControlledCreaturesShari
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TurnTargetCreatureFaceDownEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "590")
 public class MondassianColonyShip extends Card {
 
     public MondassianColonyShip() {
-        addEffect(EffectSlot.ON_ANY_CREATURE_ATTACKS,
+        addTrigger(Triggers.creatureAttacks(),
                 new BoostTargetCreatureEffect(
                         new OtherControlledCreaturesSharingCreatureTypeWithTarget(),
                         new OtherControlledCreaturesSharingCreatureTypeWithTarget()));

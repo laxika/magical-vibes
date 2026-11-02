@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RenownEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ORI", collectorNumber = "32")
 @CardRegistration(set = "IMA", collectorNumber = "32")
@@ -11,6 +11,6 @@ public class StalwartAven extends Card {
 
     public StalwartAven() {
         // Renown 1
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new RenownEffect(1));
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new RenownEffect(1));
     }
 }

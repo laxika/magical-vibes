@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.RampageEffect;
@@ -28,6 +27,6 @@ public class Chromium extends Card {
 
         // Rampage 2: whenever Chromium becomes blocked, it gets +2/+2 until end of turn for
         // each creature blocking it beyond the first, i.e. 2 * (blockers - 1).
-        addEffect(EffectSlot.ON_BECOMES_BLOCKED, new RampageEffect(2));
+        addTrigger(Triggers.becomesBlocked(), new RampageEffect(2));
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentController
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MAT", collectorNumber = "36")
 @CardRegistration(set = "MAT", collectorNumber = "86")
@@ -25,7 +25,7 @@ public class NahiriForgedInFury extends Card {
         addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT), CountScope.CONTROLLER)));
 
-        addEffect(EffectSlot.ON_ANY_CREATURE_ATTACKS, new TriggeringPermanentControllerConditionalEffect(
+        addTrigger(Triggers.creatureAttacks(), new TriggeringPermanentControllerConditionalEffect(
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsEquippedPredicate(),
                         new ExileTopCardMayPlayThisTurnEffect(

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -32,7 +32,7 @@ public class BallroomBrawlers extends Card {
                 anotherCreature, "Target must be another creature you control");
 
         target(targetFilter, 0, 1)
-                .addEffect(EffectSlot.ON_ATTACK, new ChooseOneForTargetPermanentEffect(List.of(
+                .addTrigger(Triggers.attacks(), new ChooseOneForTargetPermanentEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "First strike", grantToBoth(Keyword.FIRST_STRIKE), targetFilter),
                         new ChooseOneEffect.ChooseOneOption(

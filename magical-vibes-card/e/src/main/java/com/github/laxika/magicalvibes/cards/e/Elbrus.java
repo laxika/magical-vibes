@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.w.WithengarUnbound;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DKA", collectorNumber = "147")
 @CardRegistration(set = "V17", collectorNumber = "8")
@@ -22,7 +22,7 @@ public class Elbrus extends Card {
         // When equipped creature deals combat damage to a player, unattach Elbrus, then transform it.
         // (The unattach is handled in AnimationResolutionService.resolveTransformSelf: an attached
         // Equipment transforming into a non-Equipment becomes unattached.)
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new TransformSelfEffect());
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new TransformSelfEffect());
 
         // Equip {1}
         addActivatedAbility(new EquipActivatedAbility("{1}"));

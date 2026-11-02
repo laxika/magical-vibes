@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -20,7 +19,7 @@ public class SidisiBroodTyrant extends Card {
 
     public SidisiBroodTyrant() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(3, MillRecipient.CONTROLLER));
-        addEffect(EffectSlot.ON_ATTACK, new MillEffect(3, MillRecipient.CONTROLLER));
+        addTrigger(Triggers.attacks(), new MillEffect(3, MillRecipient.CONTROLLER));
         addTrigger(new TriggerCondition(Triggers.putIntoGraveyardFrom(Zone.LIBRARY, Triggers.NONTOKEN_CREATURE,
                 ObjectRelation.YOU_OWN)),
                 TriggerOptions.ONE_OR_MORE,

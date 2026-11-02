@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -42,6 +41,6 @@ public class BardsCompany extends Card {
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
                         false, null, null, DiscardRecipient.CONTROLLER, true));
         addTrigger(Triggers.enters(ObjectRelation.THIS), recruit);
-        addEffect(EffectSlot.ON_ATTACK, recruit);
+        addTrigger(Triggers.attacks(), recruit);
     }
 }

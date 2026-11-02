@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * resolves correctly. Used to model equipment-granted triggered abilities that give the equipped
  * creature a (possibly dynamic) temporary boost, e.g. Veteran's Armaments' "Whenever this creature
  * attacks or blocks, it gets +1/+1 until end of turn for each attacking creature" (placed in the
- * {@code ON_ATTACK} and {@code ON_BLOCK} slots on the equipment). For a fixed boost that also grants
- * a keyword see {@link BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect}.
+ * {@code Triggers.attacks()} and {@code Triggers.blocks()} triggers on the equipment). For a fixed boost that also
+ * grants a keyword see {@link BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect}.
  *
  * <p>When {@code orControlledCreatureMatching} is set the effect reads "equipped creature or a
  * creature you control matching ... gets ...": at resolution the candidates are the equipped

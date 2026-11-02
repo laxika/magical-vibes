@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -33,7 +32,7 @@ public class LumberingWorldwagon extends Card {
                         LibrarySearchDestination.BATTLEFIELD_TAPPED),
                 "Search your library for a basic land card?");
         addTrigger(Triggers.enters(ObjectRelation.THIS), searchBasicLand);
-        addEffect(EffectSlot.ON_ATTACK, searchBasicLand);
+        addTrigger(Triggers.attacks(), searchBasicLand);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

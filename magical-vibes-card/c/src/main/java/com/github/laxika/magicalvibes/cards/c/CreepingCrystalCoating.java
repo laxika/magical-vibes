@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,7 +26,7 @@ public class CreepingCrystalCoating extends Card {
                 .addStaticEffect(new StaticBoostEffect(0, 3, GrantScope.ENCHANTED_CREATURE))
                 // Whenever enchanted creature attacks, create a Food token.
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_ATTACK, foodToken(), GrantScope.ENCHANTED_CREATURE));
+                        new TriggeredAbility(Triggers.attacks(), foodToken()), GrantScope.ENCHANTED_CREATURE));
     }
 
     private static CreateTokenEffect foodToken() {

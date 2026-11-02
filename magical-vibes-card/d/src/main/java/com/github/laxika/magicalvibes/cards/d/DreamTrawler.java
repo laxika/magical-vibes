@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,7 +22,7 @@ public class DreamTrawler extends Card {
 
     public DreamTrawler() {
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new BoostSelfEffect(1, 0));
-        addEffect(EffectSlot.ON_ATTACK, new DrawCardEffect());
+        addTrigger(Triggers.attacks(), new DrawCardEffect());
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,

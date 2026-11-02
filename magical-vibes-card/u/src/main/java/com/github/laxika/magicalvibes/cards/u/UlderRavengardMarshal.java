@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfTargetCreatureIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -40,6 +39,6 @@ public class UlderRavengardMarshal extends Card {
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()),
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))),
                 "Target must be another nontoken attacking creature"))
-                .addEffect(EffectSlot.ON_ATTACK, new ConjureDuplicateOfTargetCreatureIntoHandEffect());
+                .addTrigger(Triggers.attacks(), new ConjureDuplicateOfTargetCreatureIntoHandEffect());
     }
 }

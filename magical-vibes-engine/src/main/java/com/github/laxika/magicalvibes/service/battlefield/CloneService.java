@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -975,13 +974,12 @@ public class CloneService {
         }
         if (additionalKeywords != null && !additionalKeywords.isEmpty()) {
             if (additionalKeywords.contains(Keyword.DETHRONE) && copy.getKeywords().contains(Keyword.DETHRONE)) {
-                copy.addEffect(EffectSlot.ON_ATTACK,
+                copy.addTrigger(Triggers.attacks(), com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT,
                         new com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect(
                                 new com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate(List.of(
                                         new com.github.laxika.magicalvibes.model.filter.PermanentAttacksPlayerWithMostLifePredicate(),
                                         new com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate(Keyword.DETHRONE))),
-                                new com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect(1, 1, 1)),
-                        com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT);
+                                new com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect(1, 1, 1)));
             }
             EnumSet<Keyword> keywords = EnumSet.noneOf(Keyword.class);
             keywords.addAll(copy.getKeywords());

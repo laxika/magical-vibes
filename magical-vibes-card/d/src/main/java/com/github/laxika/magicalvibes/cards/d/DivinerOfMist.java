@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CastCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,7 +29,7 @@ public class DivinerOfMist extends Card {
                 instantOrSorcery,
                 new CardMaxManaValuePredicate(4)));
 
-        addEffect(EffectSlot.ON_ATTACK, SequenceEffect.of(
+        addTrigger(Triggers.attacks(), SequenceEffect.of(
                 new MillEffect(4, MillRecipient.CONTROLLER),
                 new CastCardFromGraveyardEffect(eligibleSpell,
                         GraveyardSearchScope.CONTROLLERS_GRAVEYARD,

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -31,7 +30,7 @@ public class KioraTheRisingTide extends Card {
                 new DrawCardEffect(2),
                 new DiscardEffect(2, DiscardRecipient.CONTROLLER)));
 
-        addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
+        addTrigger(Triggers.attacks(), new ConditionalEffect(
                 new GraveyardCardThreshold(7, null),
                 new MayEffect(new CreateTokenEffect(
                         CardType.CREATURE, 1, "Scion of the Deep", 8, 8,

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -20,8 +19,8 @@ public class SyrVondamTheLucent extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostAllOwnCreaturesEffect(1, 0, otherCreatures));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.OWN_CREATURES, otherCreatures));
-        addEffect(EffectSlot.ON_ATTACK, new BoostAllOwnCreaturesEffect(1, 0, otherCreatures));
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(), new BoostAllOwnCreaturesEffect(1, 0, otherCreatures));
+        addTrigger(Triggers.attacks(),
                 new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.OWN_CREATURES, otherCreatures));
     }
 }

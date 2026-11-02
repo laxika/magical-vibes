@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect
 import com.github.laxika.magicalvibes.model.effect.ConjureRandomCardFromSpellbookToExileMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +20,7 @@ public class DazzlingFlameweaver extends Card {
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysLifeEffect(new Fixed(3)));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                 new AllyCombatDamageTriggerEffect(
                         new PermanentIsCreaturePredicate(),
                         new ConjureRandomCardFromSpellbookToExileMayPlayUntilNextTurnEffect(

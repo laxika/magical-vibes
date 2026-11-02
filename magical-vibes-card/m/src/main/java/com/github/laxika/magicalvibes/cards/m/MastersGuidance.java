@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -31,7 +30,7 @@ public class MastersGuidance extends Card {
         ));
 
         target(TargetFilters.attackingCreature(), 0, 2)
-                .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+                .addTrigger(Triggers.youAttack(),
                         new ConditionalEffect(
                                 new MinimumMatchingAttackers(2, legendaryCreature),
                                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)));

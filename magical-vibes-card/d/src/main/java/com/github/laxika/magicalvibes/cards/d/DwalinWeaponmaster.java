@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -18,6 +17,6 @@ public class DwalinWeaponmaster extends Card {
                 new PutCounterOnEachControlledPermanentEffect(
                         CounterType.HONE, 1, new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT));
         addTrigger(Triggers.enters(ObjectRelation.THIS), honeEquipment);
-        addEffect(EffectSlot.ON_ATTACK, honeEquipment);
+        addTrigger(Triggers.attacks(), honeEquipment);
     }
 }

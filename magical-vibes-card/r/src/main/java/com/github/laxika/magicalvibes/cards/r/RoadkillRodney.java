@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
@@ -29,7 +28,7 @@ public class RoadkillRodney extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new RepeatedAdditionalCostPaid("{3}"),
                 new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{3}"))));
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, mutagenToken());
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), mutagenToken());
     }
 
     private static CreateTokenEffect mutagenToken() {

@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class WeiAmbushForceTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Attacking puts ON_ATTACK trigger on the stack")
+    @DisplayName("Attacking puts the attack trigger on the stack")
     void attackPutsTriggerOnStack() {
         Permanent force = addCreatureReady(player1, new WeiAmbushForce());
 

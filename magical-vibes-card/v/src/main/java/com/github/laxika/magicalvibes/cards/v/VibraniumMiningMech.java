@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
@@ -54,7 +53,7 @@ public class VibraniumMiningMech extends Card {
 
     public VibraniumMiningMech() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), VIBRANIUM_TOKEN);
-        addEffect(EffectSlot.ON_ATTACK, VIBRANIUM_TOKEN);
+        addTrigger(Triggers.attacks(), VIBRANIUM_TOKEN);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

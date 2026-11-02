@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BlightEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -19,6 +18,6 @@ public class BlightedBlackthorn extends Card {
                 new BlightEffect(2, SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1))),
                 "Blight 2?");
         addTrigger(Triggers.enters(ObjectRelation.THIS), blight);
-        addEffect(EffectSlot.ON_ATTACK, blight);
+        addTrigger(Triggers.attacks(), blight);
     }
 }

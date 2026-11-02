@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateT
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -36,8 +37,8 @@ public class DuelistsFlame extends Card {
                 .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
                 .addSpellEffect(new GrantStaticEffectToTargetUntilEndOfTurnEffect(
                         new GrantTriggeredAbilityEffect(
-                                EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                                new LookAtTopCardsMayCastExiledNonlandCardEffect(new EventValue()),
+                                new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
+                                new LookAtTopCardsMayCastExiledNonlandCardEffect(new EventValue())),
                                 GrantScope.SELF)));
     }
 }

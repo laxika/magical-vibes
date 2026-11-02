@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetToSourcePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,8 +27,8 @@ public class OgreGeargrabber extends Card {
                 )),
                 "Target must be an Equipment an opponent controls"
         ))
-                .addEffect(EffectSlot.ON_ATTACK, new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
-                .addEffect(EffectSlot.ON_ATTACK, new RegisterControlLossUnattachTriggerEffect())
-                .addEffect(EffectSlot.ON_ATTACK, new AttachTargetToSourcePermanentEffect());
+                .addTrigger(Triggers.attacks(), new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
+                .addTrigger(Triggers.attacks(), new RegisterControlLossUnattachTriggerEffect())
+                .addTrigger(Triggers.attacks(), new AttachTargetToSourcePermanentEffect());
     }
 }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -60,13 +59,12 @@ public class GossipsTalent extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsAttackingPredicate(),
                         new PermanentPowerAtMostPredicate(3))),
-                "Target must be an attacking creature with power 3 or less")).addEffect(
-                EffectSlot.ON_ALLY_CREATURES_ATTACK,
+                "Target must be an attacking creature with power 3 or less")).addTrigger(Triggers.youAttack(),
                 new ConditionalEffect(
                         new SourceClassLevelAtLeast(2),
                         new MakeCreatureUnblockableEffect()));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                 new AllyCombatDamageTriggerEffect(
                         null,
                         new ConditionalEffect(

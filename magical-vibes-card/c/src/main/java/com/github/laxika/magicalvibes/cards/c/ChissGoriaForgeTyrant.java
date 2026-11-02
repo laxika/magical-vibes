@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,7 +25,7 @@ public class ChissGoriaForgeTyrant extends Card {
         PermanentCount artifactsYouControl = new PermanentCount(
                 new PermanentIsArtifactPredicate(), CountScope.CONTROLLER);
         addStaticEffect(new ReduceOwnCastCostEffect(artifactsYouControl));
-        addEffect(EffectSlot.ON_ATTACK, SequenceEffect.of(
+        addTrigger(Triggers.attacks(), SequenceEffect.of(
                 new ExileTopCardsToSourceEffect(5, false),
                 MayCastCardExiledWithSourceEffect.normalCost(
                         new CardAllOfPredicate(List.of(

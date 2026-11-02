@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 /**
  * "Whenever a creature becomes blocked by a creature with lesser power, destroy the blocking
  * creature" ({@code BLOCKER}) / "Whenever a creature blocks a creature with lesser power, destroy the
- * attacking creature" ({@code ATTACKER}). Registered in {@code ON_ANY_CREATURE_BECOMES_BLOCKED}; the
+ * attacking creature" ({@code ATTACKER}). Registered in {@code Triggers.creatureBecomesBlocked()}; the
  * power comparison is a trigger condition, checked once when blockers are declared, so later power
  * changes don't stop the destruction. Used by No Quarter.
  */

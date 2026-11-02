@@ -215,7 +215,7 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
     }
 
     /**
-     * On an {@code ON_COMBAT_DAMAGE_TO_PLAYER} slot the sequence resolves as one stack entry, so it
+     * On an {@code Triggers.dealsCombatDamageToPlayer()} ability the sequence resolves as one stack entry, so it
      * must request the richest stack-entry shape any step needs. {@code DAMAGED_PLAYER} binds both
      * the damaged player and the source (a superset of {@code SOURCE_SELF}); a step that only needs
      * the source ("…and sacrifice this creature") still resolves correctly under it. Steps combining

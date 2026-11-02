@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -27,7 +27,7 @@ import java.util.Set;
 public class SarkhanTheMasterless extends Card {
 
     public SarkhanTheMasterless() {
-        addEffect(EffectSlot.ON_CREATURE_ATTACKS_YOU,
+        addTrigger(Triggers.creatureAttacksYouOrYourPlaneswalker(),
                 new ControlledCreaturesDealDamageToTargetEffect(1,
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

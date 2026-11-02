@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.ControllerExperienceCounters;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -23,7 +22,7 @@ public class KataraWaterbendingMaster extends Card {
         addTrigger(Triggers.youCastSpell(),
                 new SpellCastTriggerEffect(null, List.of(new ExperienceCountersEffect(1)), true));
 
-        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        addTrigger(Triggers.attacks(), new MayEffect(
                 SequenceEffect.of(
                         new DrawCardEffect(new ControllerExperienceCounters()),
                         new DiscardEffect(1, DiscardRecipient.CONTROLLER)),

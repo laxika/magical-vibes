@@ -4,13 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -27,7 +27,7 @@ public class BasaltGolem extends Card {
         // token with defender.
         CreateTokenEffect wallToken = new CreateTokenEffect("Wall", 0, 2, null,
                 List.of(CardSubtype.WALL), Set.of(Keyword.DEFENDER), Set.of(CardType.ARTIFACT));
-        addEffect(EffectSlot.ON_BECOMES_BLOCKED, new SacrificeCombatOpponentAtEndOfCombatEffect(wallToken),
-                TriggerMode.PER_BLOCKER);
+        addTrigger(Triggers.becomesBlocked(), TriggerMode.PER_BLOCKER,
+                new SacrificeCombatOpponentAtEndOfCombatEffect(wallToken));
     }
 }

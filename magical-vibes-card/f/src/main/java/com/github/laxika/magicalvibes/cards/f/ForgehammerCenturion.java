@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -34,7 +33,7 @@ public class ForgehammerCenturion extends Card {
                         )),
                         new PutCountersOnSelfEffect(CounterType.OIL)));
 
-        target(TargetFilters.creature()).addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        target(TargetFilters.creature()).addTrigger(Triggers.attacks(), new MayEffect(
                 ConditionalEffect.unless(new SourceCounterThreshold(2, CounterType.OIL),
                         SequenceEffect.of(
                                 new RemoveCounterFromSourceEffect(CounterType.OIL, 2),

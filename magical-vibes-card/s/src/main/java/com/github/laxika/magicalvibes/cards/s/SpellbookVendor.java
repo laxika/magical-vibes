@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -52,8 +52,8 @@ public class SpellbookVendor extends Card {
                         StaticAbility.of(SequenceEffect.of(
                         new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE),
                         new GrantTriggeredAbilityEffect(
-                                EffectSlot.ON_ATTACK,
-                                new ScryEffect(1),
+                                new TriggeredAbility(Triggers.attacks(),
+                                new ScryEffect(1)),
                                 GrantScope.ENCHANTED_CREATURE)))),
                 List.of(),
                 false,

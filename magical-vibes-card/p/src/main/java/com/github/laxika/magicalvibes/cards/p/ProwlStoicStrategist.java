@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceAndAllowPlayEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayedCardExiledWithSourceDrawAndTransformTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -37,7 +36,7 @@ public class ProwlStoicStrategist extends Card {
         target(new PermanentPredicateTargetFilter(
                 tappedCreatureOrVehicle,
                 "Target must be another tapped creature or Vehicle"), 0, 1)
-                .addEffect(EffectSlot.ON_ATTACK,
+                .addTrigger(Triggers.attacks(),
                         new ExileTargetPermanentAndTrackWithSourceAndAllowPlayEffect());
 
         addTrigger(Triggers.playerCastsSpell(),

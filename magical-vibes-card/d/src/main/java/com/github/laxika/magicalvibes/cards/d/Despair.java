@@ -1,14 +1,15 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * Despair — back half of Driven // Despair.
@@ -25,8 +26,8 @@ public class Despair extends Card {
         // "Whenever this creature deals combat damage to a player, that player discards a card."
         addSpellEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.OWN_CREATURES));
         addSpellEffect(new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
-                EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER)));
+                new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
+                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER))));
         // Aftermath cost equals this half's mana cost; exile after leaving the stack.
         addCastingOption(new FlashbackCast("{1}{B}"));
     }

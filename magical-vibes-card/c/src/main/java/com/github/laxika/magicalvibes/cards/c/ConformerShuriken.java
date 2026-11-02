@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,7 +29,7 @@ import java.util.List;
 public class ConformerShuriken extends Card {
 
     public ConformerShuriken() {
-        addStaticEffect(new GrantTriggeredAbilityEffect(EffectSlot.ON_ATTACK,
+        addStaticEffect(new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.attacks(),
                 SequenceEffect.of(
                         new TapPermanentsEffect(TapUntapScope.TARGET,
                                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
@@ -36,7 +37,7 @@ public class ConformerShuriken extends Card {
                         new PutCountersOnSelfEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE,
                                 new Max(new Fixed(0),
-                                        new Sum(new TargetPower(true), new Scaled(new SourcePower(true), -1))))),
+                                        new Sum(new TargetPower(true), new Scaled(new SourcePower(true), -1)))))),
                 GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

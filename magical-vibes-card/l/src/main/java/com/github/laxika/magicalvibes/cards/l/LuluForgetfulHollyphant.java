@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -88,7 +87,7 @@ public class LuluForgetfulHollyphant extends Card {
                 new PermanentHasKeywordPredicate(Keyword.FLYING),
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())));
         if (color == CardColor.GREEN) {
-            card.addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+            card.addTrigger(Triggers.youAttack(),
                     new BoostTriggeringAttackersEffect(otherFlyers, 2, 2));
             return;
         }
@@ -105,7 +104,7 @@ public class LuluForgetfulHollyphant extends Card {
                     true, false, List.of(), List.of(), false, false, false, 0, Set.of());
             default -> throw new IllegalStateException("Unsupported Lulu specialization color: " + color);
         };
-        card.addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+        card.addTrigger(Triggers.youAttack(),
                 new ConditionalEffect(new MinimumMatchingAttackers(1, otherFlyers), effect));
     }
 

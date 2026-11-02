@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -61,8 +60,7 @@ public class TheMotherlodeExcavator extends Card {
                         NONBASIC_LAND,
                         new PermanentControlledByDefendingPlayerPredicate()
                 )),
-                "Target must be a nonbasic land defending player controls")).addEffect(
-                EffectSlot.ON_ATTACK,
+                "Target must be a nonbasic land defending player controls")).addTrigger(Triggers.attacks(),
                 new ForcedCostOrElseEffect(
                         new PayEnergyCost(4),
                         List.of(),

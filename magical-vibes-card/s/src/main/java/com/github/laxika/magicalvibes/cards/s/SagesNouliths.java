@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
@@ -30,8 +30,8 @@ public class SagesNouliths extends Card {
                         List.of(CardSubtype.HERO), Set.of(), Set.of())));
         addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_ATTACK,
-                new UntapPermanentsEffect(TapUntapScope.TARGET, new PermanentIsAttackingPredicate()),
+                new TriggeredAbility(Triggers.attacks(),
+                new UntapPermanentsEffect(TapUntapScope.TARGET, new PermanentIsAttackingPredicate())),
                 GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantSubtypeEffect(CardSubtype.CLERIC, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{3}"));

@@ -6,8 +6,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * Vanishing Touch's "Whenever this creature blocks a creature, return that creature to its owner's
  * hand at end of combat."
  * <p>
- * Placed on {@link com.github.laxika.magicalvibes.model.EffectSlot#ON_BLOCK} (auto-targeting the
- * blocked attacker) and/or on {@link com.github.laxika.magicalvibes.model.EffectSlot#ON_BECOMES_BLOCKED}
+ * Placed on {@code Triggers.blocks()} ability (auto-targeting the
+ * blocked attacker) and/or on {@code Triggers.becomesBlocked()}
  * with {@link com.github.laxika.magicalvibes.model.TriggerMode#PER_BLOCKER}. The referenced creature
  * is carried as the stack entry's non-targeting target, so the trigger can't fizzle. Resolution
  * queues a {@link com.github.laxika.magicalvibes.model.action.DelayedPermanentAction} of kind

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -28,7 +27,7 @@ public class LaraCroftTombRaider extends Card {
                         new CardTypePredicate(CardType.ARTIFACT),
                         new CardTypePredicate(CardType.LAND))
         )));
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new ExileTargetCardFromGraveyardWithDiscoveryCounterMayPlayThisTurnEffect(
                         legendaryArtifactOrLand));
         addTrigger(Triggers.endOfCombat(),

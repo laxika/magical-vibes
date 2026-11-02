@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,7 +26,7 @@ public class IronManArmoredAvenger extends Card {
         target(TargetFilters.creature()).addEffect(EffectSlot.ON_CONTROLLER_DRAWS,
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
-        addEffect(EffectSlot.ON_ATTACK, new GrantKeywordEffect(
+        addTrigger(Triggers.attacks(), new GrantKeywordEffect(
                 Keyword.FLYING,
                 GrantScope.ALL_CREATURES,
                 new PermanentAllOfPredicate(List.of(

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OnceOnlyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -17,7 +18,7 @@ import java.util.List;
 public class EmeraldCollector extends Card {
 
     public EmeraldCollector() {
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DrawCardEffect(1));
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new DrawCardEffect(1));
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS,
                 new OnceOnlyTriggerEffect(new NthCardDrawTriggerEffect(3,
                         new ConjureCardNamedIntoHandEffect("LEA", "261", false))));

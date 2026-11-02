@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AttacksEnchantedPlayer;
 import com.github.laxika.magicalvibes.model.condition.AttackingPlayerIsOpponent;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
@@ -10,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "C21", collectorNumber = "138")
 @CardRegistration(set = "C17", collectorNumber = "16")
@@ -18,7 +18,7 @@ public class CurseOfDisturbance extends Card {
 
     public CurseOfDisturbance() {
         CreateTokenEffect zombie = CreateTokenEffect.blackZombie(1);
-        addEffect(EffectSlot.ON_ANY_PLAYER_ATTACKS,
+        addTrigger(Triggers.playerAttacks(),
                 new ConditionalEffect(
                         new AttacksEnchantedPlayer(),
                         SequenceEffect.of(

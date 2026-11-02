@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureWithHitCounterEffect;
@@ -32,12 +32,12 @@ public class MariTheKillingQuill extends Card {
                 new ExileTriggeringCreatureWithHitCounterEffect());
         addStaticEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_OWN_CREATURES, outlaw));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+                        new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                         new MayEffect(
                                 new RemoveHitCounterFromExiledCardEffect(
                                         SequenceEffect.of(new DrawCardEffect(1),
                                                 CreateTokenEffect.ofTreasureToken(2))),
-                                "Remove a hit counter from a card that player owns in exile?"),
+                                "Remove a hit counter from a card that player owns in exile?")),
                         GrantScope.ALL_OWN_CREATURES, outlaw));
     }
 }

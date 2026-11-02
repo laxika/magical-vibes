@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CirdanTheShipwrightEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -14,6 +13,6 @@ public class CirdanTheShipwright extends Card {
 
     public CirdanTheShipwright() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new CirdanTheShipwrightEffect());
-        addEffect(EffectSlot.ON_ATTACK, new CirdanTheShipwrightEffect());
+        addTrigger(Triggers.attacks(), new CirdanTheShipwrightEffect());
     }
 }

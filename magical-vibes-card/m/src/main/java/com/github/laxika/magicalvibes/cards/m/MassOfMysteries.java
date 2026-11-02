@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -30,7 +30,7 @@ public class MassOfMysteries extends Card {
                 "Target must be another Elemental creature you control"
         )).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new GrantEffectToTargetUntilEndOfTurnEffect(
-                        EffectSlot.ON_ATTACK,
-                        new CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(true)));
+                        new TriggeredAbility(Triggers.attacks(),
+                        new CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(true))));
     }
 }

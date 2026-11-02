@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,7 +29,7 @@ public class Glorybringer extends Card {
         // Exert: "You may exert this creature as it attacks. When you do, it deals 4 damage to
         // target non-Dragon creature an opponent controls." Exerting is chosen as it attacks; the
         // "when you do" reflexive trigger then picks its target (matching Ahn-Crop Crasher).
-        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        addTrigger(Triggers.attacks(), new MayEffect(
                 SequenceEffect.of(
                         new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true),
                         new QueueReflexiveAbilityEffect(new DealDamageToTargetCreatureEffect(4,

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -10,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendin
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ public class SkymarkRoc extends Card {
                         new PermanentControlledByDefendingPlayerPredicate(),
                         new PermanentToughnessAtMostPredicate(2))),
                 "Target must be a creature defending player controls with toughness 2 or less"))
-                .addEffect(EffectSlot.ON_ATTACK,
+                .addTrigger(Triggers.attacks(),
                         new MayEffect(ReturnToHandEffect.target(),
                                 "Return target creature to its owner's hand?"));
     }

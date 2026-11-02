@@ -18,7 +18,7 @@ public class GraveyardTrespasser extends Card {
         setBackFaceCard(new GraveyardGlutton());
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), exileFromGraveyard(1, false));
-        addEffect(EffectSlot.ON_ATTACK, exileFromGraveyard(1, false));
+        addTrigger(Triggers.attacks(), exileFromGraveyard(1, false));
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessDiscardsEffect());
     }
 

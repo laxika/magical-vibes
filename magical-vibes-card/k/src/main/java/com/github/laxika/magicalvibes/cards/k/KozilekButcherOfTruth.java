@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
@@ -20,7 +19,7 @@ public class KozilekButcherOfTruth extends Card {
     public KozilekButcherOfTruth() {
         addTrigger(Triggers.youCastThisSpell(), new DrawCardEffect(4));
 
-        addEffect(EffectSlot.ON_ATTACK, new SacrificePermanentsEffect(
+        addTrigger(Triggers.attacks(), new SacrificePermanentsEffect(
                 4, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER));
 
         addTrigger(Triggers.putIntoGraveyardFromAnywhere(ObjectRelation.THIS),

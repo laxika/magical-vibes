@@ -2,13 +2,13 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.ExchangePowerWithTargetUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentInCombatWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ public class SereneMaster extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentInCombatWithSourcePredicate())),
                 "Target must be a creature this creature is blocking"))
-                .addEffect(EffectSlot.ON_BLOCK, new ExchangePowerWithTargetUntilEndOfCombatEffect(),
-                        TriggerMode.ONCE_PER_BLOCK);
+                .addTrigger(Triggers.blocks(), TriggerMode.ONCE_PER_BLOCK,
+                        new ExchangePowerWithTargetUntilEndOfCombatEffect());
     }
 }

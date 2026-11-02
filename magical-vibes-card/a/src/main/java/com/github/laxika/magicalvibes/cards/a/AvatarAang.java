@@ -10,13 +10,14 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
 import com.github.laxika.magicalvibes.model.condition.AllBendingTypesCompletedThisTurn;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TLA", collectorNumber = "207")
 public class AvatarAang extends Card {
 
     public AvatarAang() {
         setBackFaceCard(new AangMasterOfElements());
-        addEffect(EffectSlot.ON_ATTACK, new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 2));
+        addTrigger(Triggers.attacks(), new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 2));
         addEffect(EffectSlot.ON_CONTROLLER_BENDS, SequenceEffect.of(
                 new DrawCardEffect(1),
                 ConditionalEffect.unless(new AllBendingTypesCompletedThisTurn(),

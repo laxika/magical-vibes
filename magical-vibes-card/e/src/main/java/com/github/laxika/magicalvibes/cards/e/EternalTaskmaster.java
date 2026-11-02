@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WAR", collectorNumber = "90")
 @CardRegistration(set = "FDC", collectorNumber = "98")
@@ -16,7 +16,7 @@ public class EternalTaskmaster extends Card {
 
     public EternalTaskmaster() {
         addStaticEffect(new EntersTappedEffect());
-        addEffect(EffectSlot.ON_ATTACK, new MayPayManaEffect(
+        addTrigger(Triggers.attacks(), new MayPayManaEffect(
                 "{2}{B}",
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)

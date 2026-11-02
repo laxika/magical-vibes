@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "GRN", collectorNumber = "48")
 @CardRegistration(set = "RVR", collectorNumber = "52")
@@ -13,6 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 public class NightveilSprite extends Card {
 
     public NightveilSprite() {
-        addEffect(EffectSlot.ON_ATTACK, new SurveilEffect(1));
+        addTrigger(Triggers.attacks(), new SurveilEffect(1));
     }
 }

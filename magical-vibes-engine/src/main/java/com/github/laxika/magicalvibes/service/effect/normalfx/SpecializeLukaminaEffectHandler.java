@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.cards.l.LukaminaMoonDruid;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -74,7 +73,7 @@ public class SpecializeLukaminaEffectHandler implements NormalEffectHandlerBean 
             case BLACK -> specialized.addStaticEffect(new MustBeBlockedIfAbleEffect());
             case RED -> {
                 CardEffect wolfTokenEffect = wolfTokenEffect();
-                specialized.addEffect(EffectSlot.ON_ATTACK, wolfTokenEffect);
+                specialized.addTrigger(Triggers.attacks(), wolfTokenEffect);
                 specializationTrigger = List.of(wolfTokenEffect);
             }
             case GREEN -> specialized.addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.TRAMPLE), GrantScope.OWN_CREATURES));

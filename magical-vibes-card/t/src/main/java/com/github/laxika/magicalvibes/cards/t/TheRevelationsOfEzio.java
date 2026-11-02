@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
@@ -24,6 +25,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -44,11 +46,11 @@ public class TheRevelationsOfEzio extends Card {
                         "Target must be a tapped creature an opponent controls")));
 
         addEffect(EffectSlot.SAGA_CHAPTER_II, new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
-                EffectSlot.ON_ANY_CREATURE_ATTACKS,
+                new TriggeredAbility(Triggers.creatureAttacks(),
                 new TriggeringPermanentControllerConditionalEffect(
                         new TriggeringPermanentConditionalEffect(
                                 new PermanentHasSubtypePredicate(CardSubtype.ASSASSIN),
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)))));
+                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))))));
 
         addEffect(EffectSlot.SAGA_CHAPTER_III, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)

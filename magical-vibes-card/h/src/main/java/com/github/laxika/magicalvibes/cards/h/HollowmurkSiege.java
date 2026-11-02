@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,10 +29,10 @@ public class HollowmurkSiege extends Card {
                 new OncePerTurnTriggerEffect(new DrawCardEffect(1))));
 
         target(TargetFilters.attackingCreature())
-                .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ConditionalEffect(
+                .addTrigger(Triggers.youAttack(), new ConditionalEffect(
                         new SourceHasChosenMode("Abzan"),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)))
-                .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ConditionalEffect(
+                .addTrigger(Triggers.youAttack(), new ConditionalEffect(
                         new SourceHasChosenMode("Abzan"),
                         new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET)));
     }

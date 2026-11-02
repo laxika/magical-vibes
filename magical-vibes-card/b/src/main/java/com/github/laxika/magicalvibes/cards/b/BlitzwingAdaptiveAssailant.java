@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
@@ -29,6 +28,6 @@ public class BlitzwingAdaptiveAssailant extends Card {
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 ConditionalEffect.atTriggerTime(new ControllerTurn(),
                         new GrantRandomKeywordEffect(List.of(Keyword.FLYING, Keyword.INDESTRUCTIBLE), GrantScope.SELF)));
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new TransformToFrontFaceEffect());
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new TransformToFrontFaceEffect());
     }
 }

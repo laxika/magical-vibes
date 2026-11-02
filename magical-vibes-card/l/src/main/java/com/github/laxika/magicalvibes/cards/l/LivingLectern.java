@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -78,8 +79,8 @@ public class LivingLectern extends Card {
                         StaticAbility.of(SequenceEffect.of(
                         new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE),
                         new GrantTriggeredAbilityEffect(
-                                EffectSlot.ON_ATTACK,
-                                new ScryEffect(1),
+                                new TriggeredAbility(Triggers.attacks(),
+                                new ScryEffect(1)),
                                 GrantScope.ENCHANTED_CREATURE
                         )
                 ))),

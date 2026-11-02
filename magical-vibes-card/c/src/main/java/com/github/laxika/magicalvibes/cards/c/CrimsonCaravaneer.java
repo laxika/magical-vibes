@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -17,7 +17,7 @@ import java.util.List;
 public class CrimsonCaravaneer extends Card {
 
     public CrimsonCaravaneer() {
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, junkToken());
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), junkToken());
     }
 
     private static CreateTokenEffect junkToken() {

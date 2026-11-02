@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongCardsInGraveyard;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PlayLandAndCastSpellFromCardsPutIntoGraveyardsFromLibrariesThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M3C", collectorNumber = "7")
 @CardRegistration(set = "M3C", collectorNumber = "11")
@@ -29,8 +29,8 @@ public class CoramTheUndertaker extends Card {
                         new CardTypePredicate(CardType.CREATURE), CountScope.ANY_PLAYER),
                 new Fixed(0), GrantScope.SELF));
 
-        addEffect(EffectSlot.ON_ATTACK, new MillEffect(1, MillRecipient.CONTROLLER));
-        addEffect(EffectSlot.ON_ATTACK, new MillEffect(1, MillRecipient.EACH_OPPONENT));
+        addTrigger(Triggers.attacks(), new MillEffect(1, MillRecipient.CONTROLLER));
+        addTrigger(Triggers.attacks(), new MillEffect(1, MillRecipient.EACH_OPPONENT));
 
         addStaticEffect(new PlayLandAndCastSpellFromCardsPutIntoGraveyardsFromLibrariesThisTurnEffect());
     }

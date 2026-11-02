@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
@@ -33,7 +32,7 @@ public class RangerClass extends Card {
                 new CreateTokenEffect("Wolf", 2, 2, CardColor.GREEN,
                         List.of(CardSubtype.WOLF), Set.of(), Set.of()));
 
-        target(TargetFilters.attackingCreature()).addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+        target(TargetFilters.attackingCreature()).addTrigger(Triggers.youAttack(),
                 new ConditionalEffect(
                         new SourceCounterThreshold(1, CounterType.LEVEL),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)));

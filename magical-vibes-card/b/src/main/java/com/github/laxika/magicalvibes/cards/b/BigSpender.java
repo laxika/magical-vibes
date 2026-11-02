@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -33,7 +33,7 @@ public class BigSpender extends Card {
             new DraftFromSpellbookEffect.SpellbookCard("M19", "231"));
 
     public BigSpender() {
-        addEffect(EffectSlot.ON_ALLY_CREATURES_BECOME_BLOCKED, CreateTokenEffect.ofTreasureToken(1));
+        addTrigger(Triggers.creaturesYouControlBecomeBlocked(), CreateTokenEffect.ofTreasureToken(1));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,

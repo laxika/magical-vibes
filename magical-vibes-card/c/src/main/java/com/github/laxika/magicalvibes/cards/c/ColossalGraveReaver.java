@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -23,7 +22,7 @@ public class ColossalGraveReaver extends Card {
     public ColossalGraveReaver() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MillEffect(3, MillRecipient.CONTROLLER));
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new MillEffect(3, MillRecipient.CONTROLLER));
         addTrigger(new TriggerCondition(Triggers.putIntoGraveyardFrom(Zone.LIBRARY, Triggers.NONTOKEN,
                 ObjectRelation.YOU_OWN)),

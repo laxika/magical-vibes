@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendin
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +24,7 @@ public class HunterSliver extends Card {
 
     public HunterSliver() {
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_ATTACK,
+                new TriggeredAbility(Triggers.attacks(),
                 new MayEffect(
                         SequenceEffect.of(
                                 new UntapPermanentsEffect(TapUntapScope.TARGET,
@@ -32,7 +33,7 @@ public class HunterSliver extends Card {
                                                 new PermanentControlledByDefendingPlayerPredicate()))),
                                 new MustBlockSourceEffect(null,
                                         new PermanentControlledByDefendingPlayerPredicate(), true)),
-                        "Have target creature defending player controls untap and block it if able?"),
+                        "Have target creature defending player controls untap and block it if able?")),
                 GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));
     }

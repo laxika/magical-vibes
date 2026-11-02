@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
@@ -42,7 +41,7 @@ public class KoglaTheTitanApe extends Card {
         target(new PermanentPredicateTargetFilter(
                 artifactOrEnchantmentDefendingPlayerControls,
                 "Target must be an artifact or enchantment defending player controls"))
-                .addEffect(EffectSlot.ON_ATTACK, new DestroyTargetPermanentEffect());
+                .addTrigger(Triggers.attacks(), new DestroyTargetPermanentEffect());
 
         PermanentPredicate humanYouControl = new PermanentAllOfPredicate(List.of(
                 new PermanentHasSubtypePredicate(CardSubtype.HUMAN),

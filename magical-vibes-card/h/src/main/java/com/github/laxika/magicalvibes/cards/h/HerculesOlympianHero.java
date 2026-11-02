@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MSC", collectorNumber = "16")
 @CardRegistration(set = "MSC", collectorNumber = "308")
@@ -19,7 +20,7 @@ public class HerculesOlympianHero extends Card {
     public HerculesOlympianHero() {
         // Whenever Hercules attacks, put a +1/+1 counter on him. He gains indestructible until
         // end of turn.
-        addEffect(EffectSlot.ON_ATTACK, SequenceEffect.of(
+        addTrigger(Triggers.attacks(), SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
 

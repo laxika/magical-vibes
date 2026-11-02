@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnTargetPermanentEffect;
@@ -31,7 +30,7 @@ public class TheThing extends Card {
         // of each kind of counter on any number of target permanents you control.
         // The "when you do" ability is a reflexive trigger, so its targets are chosen after payment.
         target(TargetFilters.permanentYouControl(), 0, 99)
-                .addEffect(EffectSlot.ON_ATTACK, new MayPayManaEffect(
+                .addTrigger(Triggers.attacks(), new MayPayManaEffect(
                         "{R}{G}{W}{U}",
                         new QueueReflexiveAbilityEffect(new DoubleCountersOnTargetPermanentEffect()),
                         "Pay {R}{G}{W}{U} to double the counters on your permanents?"));

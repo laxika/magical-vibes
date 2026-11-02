@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.NoMonarch;
@@ -31,7 +30,7 @@ public class MBakuJabariChieftain extends Card {
         )).addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ConditionalEffect(new NoMonarch(), new TargetPlayerBecomesMonarchEffect()));
 
-        addEffect(EffectSlot.ON_ANY_CREATURE_ATTACKS,
+        addTrigger(Triggers.creatureAttacks(),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsAttackingOpponentOfSourceControllerPredicate(),
                         new ConditionalEffect(

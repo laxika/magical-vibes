@@ -2,15 +2,16 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SLD", collectorNumber = "2095")
 @CardRegistration(set = "HOC", collectorNumber = "94")
@@ -27,8 +28,8 @@ public class TheReaverCleaver extends Card {
         // The equipped creature has "Whenever this creature deals combat damage to a player or
         // planeswalker, create that many Treasure tokens", so its controller creates them.
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER,
-                CreateTokenEffect.ofTreasureToken(new EventValue()),
+                new TriggeredAbility(Triggers.dealsCombatDamageToPlayerOrPlaneswalker(),
+                CreateTokenEffect.ofTreasureToken(new EventValue())),
                 GrantScope.EQUIPPED_CREATURE));
 
         // Equip {3}

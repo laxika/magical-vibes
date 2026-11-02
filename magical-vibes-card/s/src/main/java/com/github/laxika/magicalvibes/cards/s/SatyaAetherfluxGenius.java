@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentUnlessPayEnergyEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -37,9 +37,9 @@ public class SatyaAetherfluxGenius extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 targetFilter,
                 "Target must be another nontoken creature you control"
-        ), 0, 1).addEffect(EffectSlot.ON_ATTACK,
+        ), 0, 1).addTrigger(Triggers.attacks(),
                 new CreateTokenCopyOfTargetPermanentUnlessPayEnergyEqualToManaValueEffect(
                         new CreateTokenCopyOfTargetPermanentEffect(false, false, false, true)));
-        addEffect(EffectSlot.ON_ATTACK, new EnergyCountersEffect(2));
+        addTrigger(Triggers.attacks(), new EnergyCountersEffect(2));
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -36,6 +36,6 @@ public class MageRingResponder extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentControlledByDefendingPlayerPredicate())),
                 "Target must be a creature defending player controls"))
-                .addEffect(EffectSlot.ON_ATTACK, new DealDamageToTargetCreatureEffect(7));
+                .addTrigger(Triggers.attacks(), new DealDamageToTargetCreatureEffect(7));
     }
 }

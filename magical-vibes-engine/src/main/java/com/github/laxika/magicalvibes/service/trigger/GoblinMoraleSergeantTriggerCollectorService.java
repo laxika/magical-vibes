@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,8 +25,8 @@ public class GoblinMoraleSergeantTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsTrigger(value = ConjureDuplicateOfEnlistedNontokenCreatureEffect.class,
-            slot = EffectSlot.ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS)
+    @CollectsCombatTrigger(value = ConjureDuplicateOfEnlistedNontokenCreatureEffect.class,
+            watch = CombatWatch.ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS)
     private boolean handleConjureTrigger(TriggerMatchContext match,
                                          ConjureDuplicateOfEnlistedNontokenCreatureEffect effect,
                                          TriggerContext context) {

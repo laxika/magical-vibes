@@ -2,13 +2,13 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOC", collectorNumber = "222")
 @CardRegistration(set = "C21", collectorNumber = "150")
@@ -23,7 +23,7 @@ public class ParasiticImpetus extends Card {
                 .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
                 .addStaticEffect(new GoadEquippedCreatureEffect());
 
-        addEffect(EffectSlot.ON_ATTACK, new EnchantedCreatureControllerLosesLifeEffect(2));
-        addEffect(EffectSlot.ON_ATTACK, new GainLifeEffect(2));
+        addTrigger(Triggers.attacks(), new EnchantedCreatureControllerLosesLifeEffect(2));
+        addTrigger(Triggers.attacks(), new GainLifeEffect(2));
     }
 }

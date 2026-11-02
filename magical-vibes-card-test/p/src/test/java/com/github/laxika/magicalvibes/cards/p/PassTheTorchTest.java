@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -38,8 +39,8 @@ class PassTheTorchTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         var selected = gd.playerHands.get(player1.getId()).get(0);
-        assertThat(gd.perpetualAbilityEffects(selected.getId(), EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).isNotEmpty();
-        assertThat(gd.perpetualAbilityEffects(selected.getId(), EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER))
+        assertThat(gd.perpetualTriggerEffects(selected.getId(), Triggers.dealsCombatDamageToPlayer(), Zone.BATTLEFIELD)).isNotEmpty();
+        assertThat(gd.perpetualTriggerEffects(selected.getId(), Triggers.dealsCombatDamageToPlayer(), Zone.BATTLEFIELD))
                 .anyMatch(CastTargetInstantOrSorceryFromGraveyardEffect.class::isInstance);
     }
 }

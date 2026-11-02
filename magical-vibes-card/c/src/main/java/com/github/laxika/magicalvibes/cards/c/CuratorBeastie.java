@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentsEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ManifestDreadEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -24,6 +23,6 @@ public class CuratorBeastie extends Card {
                         new PermanentIsColorlessPredicate())),
                 2));
         addTrigger(Triggers.enters(ObjectRelation.THIS), ManifestDreadEffect.forController());
-        addEffect(EffectSlot.ON_ATTACK, ManifestDreadEffect.forController());
+        addTrigger(Triggers.attacks(), ManifestDreadEffect.forController());
     }
 }

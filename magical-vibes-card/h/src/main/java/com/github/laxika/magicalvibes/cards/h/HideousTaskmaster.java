@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
@@ -26,7 +26,7 @@ public class HideousTaskmaster extends Card {
 
     public HideousTaskmaster() {
         // Annihilator 1 (printed).
-        addEffect(EffectSlot.ON_ATTACK, new SacrificePermanentsEffect(
+        addTrigger(Triggers.attacks(), new SacrificePermanentsEffect(
                 1, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER));
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
         target(TargetFilters.creatureAnOpponentControls(), 0, 99)
@@ -38,8 +38,8 @@ public class HideousTaskmaster extends Card {
                         new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.HASTE), GrantScope.TARGET))
                 .addTrigger(Triggers.youCastThisSpell(),
                         new GrantEffectToTargetUntilEndOfTurnEffect(
-                                EffectSlot.ON_ATTACK,
+                                new TriggeredAbility(Triggers.attacks(),
                                 new SacrificePermanentsEffect(
-                                        1, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER)));
+                                        1, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER))));
     }
 }

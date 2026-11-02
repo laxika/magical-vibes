@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesLandAndPutCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.TurfWarCombatDamageEffect;
@@ -29,10 +28,10 @@ public class TurfWar extends Card {
     public TurfWar() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new EachPlayerChoosesLandAndPutCounterEffect(CounterType.CONTESTED));
-        addEffect(EffectSlot.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU,
+        addTrigger(Triggers.creatureDealsCombatDamageToYou(),
                 new ConditionalEffect(new ControlsPermanent(CONTESTED_LAND),
                         new TurfWarCombatDamageEffect(true), true));
-        addEffect(EffectSlot.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT,
+        addTrigger(Triggers.creatureDealsCombatDamageToOpponent(),
                 new ConditionalEffect(new TargetPlayerControlsPermanent(CONTESTED_LAND),
                         new TurfWarCombatDamageEffect(false), true));
     }

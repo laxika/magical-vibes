@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -41,7 +40,7 @@ public class StrefanMaurerProgenitor extends Card {
                 CreateTokenEffect.ofBloodToken(new Sum(
                         new OpponentsWhoLostLifeThisTurn(),
                         new FixedIfCondition(new ControllerLostLifeThisTurn(1), 1, 0))));
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new MayEffect(
                         new SacrificePermanentsThenEffect(
                                 2,

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeNightEffect;
@@ -31,7 +30,7 @@ public class TovolarDireOverlord extends Card {
 
         PermanentPredicate wolfOrWerewolf = new PermanentHasAnySubtypePredicate(
                 Set.of(CardSubtype.WOLF, CardSubtype.WEREWOLF));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                 new AllyCombatDamageTriggerEffect(wolfOrWerewolf, new DrawCardEffect(1)));
 
         PermanentPredicate humanWerewolf = new PermanentAllOfPredicate(List.of(

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.m.MetzaliTowerOfTriumph;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -49,7 +48,7 @@ public class PathOfMettle extends Card {
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new DealDamageToEachMatchingPermanentEffect(1, CREATURE_WITHOUT_SPEED, EachPermanentScope.ALL_PLAYERS));
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+        addTrigger(Triggers.youAttack(),
                 new ConditionalEffect(new MinimumMatchingAttackers(2, FAST_CREATURE), new TransformSelfEffect()));
     }
 

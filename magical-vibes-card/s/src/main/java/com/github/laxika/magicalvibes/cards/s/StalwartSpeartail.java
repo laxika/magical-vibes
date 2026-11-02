@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostOtherControlledCreaturesAndCardsInHandAndLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YLCI", collectorNumber = "29")
 public class StalwartSpeartail extends Card {
@@ -20,6 +21,6 @@ public class StalwartSpeartail extends Card {
 
         // Whenever this creature attacks, Stalwart Speartail deals 1 damage to each creature and each
         // planeswalker.
-        addEffect(EffectSlot.ON_ATTACK, new MassDamageEffect(1, false, false, true, null));
+        addTrigger(Triggers.attacks(), new MassDamageEffect(1, false, false, true, null));
     }
 }

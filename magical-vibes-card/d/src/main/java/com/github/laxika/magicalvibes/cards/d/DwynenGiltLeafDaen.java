@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -29,7 +29,7 @@ public class DwynenGiltLeafDaen extends Card {
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ELF))));
 
         // Whenever Dwynen attacks, you gain 1 life for each attacking Elf you control.
-        addEffect(EffectSlot.ON_ATTACK, new GainLifeEffect(
+        addTrigger(Triggers.attacks(), new GainLifeEffect(
                 new PermanentCount(new PermanentAllOfPredicate(List.of(
                         new PermanentIsAttackingPredicate(),
                         new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ELF)))), CountScope.CONTROLLER),

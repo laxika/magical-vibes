@@ -25,7 +25,7 @@ public class SetzerWanderingGambler extends Card {
 
     public SetzerWanderingGambler() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), blackjackToken());
-        addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                 new AllyCombatDamageTriggerEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.VEHICLE),
                         new FlipCoinWinEffect(null)));

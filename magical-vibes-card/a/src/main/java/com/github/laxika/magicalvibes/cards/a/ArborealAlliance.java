@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -25,7 +24,7 @@ public class ArborealAlliance extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
                 "Treefolk", new XValue(), new XValue(), CardColor.GREEN,
                 List.of(CardSubtype.TREEFOLK), Set.of(), Set.of()));
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ConditionalEffect(
+        addTrigger(Triggers.youAttack(), new ConditionalEffect(
                 new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.ELF)),
                 new PopulateEffect()));
     }

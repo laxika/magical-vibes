@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForYouAndDamagedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExceptFirstDrawStepTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -22,7 +23,7 @@ public class XyrisTheWrithingStorm extends Card {
                 new ExceptFirstDrawStepTriggerEffect(new CreateTokenEffect(
                         "Snake", 1, 1, CardColor.GREEN, List.of(CardSubtype.SNAKE), Set.of(), Set.of())));
         EventValue damage = new EventValue();
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new DrawCardForYouAndDamagedPlayerEffect(damage));
     }
 }

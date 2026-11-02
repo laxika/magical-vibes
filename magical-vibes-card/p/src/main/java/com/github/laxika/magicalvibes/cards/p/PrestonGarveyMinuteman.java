@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
@@ -34,7 +33,7 @@ public class PrestonGarveyMinuteman extends Card {
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new CreateTokenAttachedToTargetEffect(settlementToken(), new PermanentIsLandPredicate()));
 
-        addEffect(EffectSlot.ON_ATTACK, new UntapPermanentsEffect(
+        addTrigger(Triggers.attacks(), new UntapPermanentsEffect(
                 TapUntapScope.CONTROLLED, new PermanentIsEnchantedPredicate()));
     }
 

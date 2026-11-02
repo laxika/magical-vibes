@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -31,7 +30,7 @@ public class EchoOfDeathsWail extends Card {
     public EchoOfDeathsWail() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new GainControlOfAllPermanentsMatchingEffect(RAT_TOKEN));
-        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        addTrigger(Triggers.attacks(), new MayEffect(
                 new SacrificePermanentThenEffect(ANOTHER_CREATURE, new DrawCardEffect(1),
                         "another creature"),
                 "Sacrifice another creature?"));

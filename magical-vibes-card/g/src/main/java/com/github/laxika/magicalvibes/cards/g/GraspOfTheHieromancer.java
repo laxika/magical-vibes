@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,10 +24,10 @@ public class GraspOfTheHieromancer extends Card {
                 // Enchanted creature gets +1/+1
                 .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
                 // ... and has "Whenever this creature attacks, tap target creature defending player
-                // controls." The aura's ON_ATTACK slot is scanned for the attacking creature by
+                // controls." The aura's Triggers.attacks() slot is scanned for the attacking creature by
                 // CombatTriggerService.checkAuraTriggersForCreature; the effect's own target
                 // predicate narrows the choice to the defending player's creatures.
-                .addEffect(EffectSlot.ON_ATTACK, new TapPermanentsEffect(
+                .addTrigger(Triggers.attacks(), new TapPermanentsEffect(
                         TapUntapScope.TARGET,
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

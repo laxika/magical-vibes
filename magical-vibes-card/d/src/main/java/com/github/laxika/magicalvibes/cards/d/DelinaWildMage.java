@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
@@ -25,7 +24,7 @@ public class DelinaWildMage extends Card {
                         List.of(new TriggeredAbility(Triggers.endOfCombat(), new ExileSelfEffect())),
                         List.of(), false, true, new Fixed(1), false, Set.of(), true);
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.ON_ATTACK,
+                .addTrigger(Triggers.attacks(),
                         RollD20Effect.withRepeatOnHighBranch(tokenCopy, tokenCopy, 14));
     }
 }

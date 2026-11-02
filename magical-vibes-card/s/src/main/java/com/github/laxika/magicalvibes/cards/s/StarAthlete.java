@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -23,7 +22,7 @@ public class StarAthlete extends Card {
         addCastingOption(AlternateHandCast.blitz("{3}{R}"));
 
         target(TargetFilters.nonlandPermanent(), 0, 1)
-                .addEffect(EffectSlot.ON_ATTACK,
+                .addTrigger(Triggers.attacks(),
                         new TargetPermanentControllerMaySacrificeOrDamageEffect(5));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new CastForAlternateCost(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));

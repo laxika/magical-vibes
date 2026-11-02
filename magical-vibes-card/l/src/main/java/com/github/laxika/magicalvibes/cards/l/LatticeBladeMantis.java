@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ONE", collectorNumber = "173")
 public class LatticeBladeMantis extends Card {
@@ -21,7 +21,7 @@ public class LatticeBladeMantis extends Card {
     public LatticeBladeMantis() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.OIL, new Fixed(2)));
 
-        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        addTrigger(Triggers.attacks(), new MayEffect(
                 ConditionalEffect.unless(
                         new SourceCounterThreshold(1, CounterType.OIL),
                         SequenceEffect.of(

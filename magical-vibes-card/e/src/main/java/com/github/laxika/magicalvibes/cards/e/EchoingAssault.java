@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Map;
@@ -35,7 +35,7 @@ public class EchoingAssault extends Card {
                         new PermanentIsAttackingDefendingPlayerPredicate()
                 )),
                 "Target must be a nontoken creature attacking that player"
-        )).addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER,
+        )).addTrigger(Triggers.youAttackPlayer(),
                 new CreateTokenCopyOfTargetPermanentEffect(
                         List.of(), Set.of(), 1, 1, Map.of(),
                         false, false, true, true));

@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -27,8 +27,8 @@ public class KaldraCompleat extends Card {
                 Set.of(Keyword.FIRST_STRIKE, Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE, Keyword.HASTE),
                 GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_COMBAT_DAMAGE_TO_CREATURE,
-                new ExileTargetPermanentEffect(), GrantScope.EQUIPPED_CREATURE));
+                new TriggeredAbility(Triggers.dealsCombatDamageToCreature(),
+                new ExileTargetPermanentEffect()), GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{7}"));
     }
 }

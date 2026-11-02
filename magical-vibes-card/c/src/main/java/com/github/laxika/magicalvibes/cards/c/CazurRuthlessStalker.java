@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -26,7 +25,7 @@ public class CazurRuthlessStalker extends Card {
                 MayChoicePlayer.TARGET_PLAYER));
 
         // Whenever a creature you control deals combat damage to a player, put a +1/+1 counter on that creature.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                 new AllyCombatDamageTriggerEffect(
                         new PermanentIsCreaturePredicate(),
                         new PutCountersOnSourceEffect(1, 1, 1),

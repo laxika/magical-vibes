@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseAllLandTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,9 +25,9 @@ public class UltimaOriginOfOblivion extends Card {
 
     public UltimaOriginOfOblivion() {
         var blightedLand = target(TargetFilters.land());
-        blightedLand.addEffect(EffectSlot.ON_ATTACK,
+        blightedLand.addTrigger(Triggers.attacks(),
                 new PutCounterOnTargetPermanentEffect(CounterType.BLIGHT));
-        blightedLand.addEffect(EffectSlot.ON_ATTACK,
+        blightedLand.addTrigger(Triggers.attacks(),
                 new GrantEffectsToCounterBearersEffect(CounterType.BLIGHT, List.of(
                         new LoseAllLandTypesEffect(GrantScope.ALL_LANDS, null),
                         new LosesAllAbilitiesEffect(GrantScope.ALL_LANDS),

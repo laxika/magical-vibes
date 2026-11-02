@@ -53,7 +53,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.CreatureDeathTriggerWatcher;
 import com.github.laxika.magicalvibes.model.CreatureEntersTriggerWatcher;
 import com.github.laxika.magicalvibes.model.DamagedCreatureDeathTriggerWatcher;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LifeGainOpponentLifeLossWatcher;
 import com.github.laxika.magicalvibes.model.OpponentGraveyardLifeLossWatcher;
@@ -63,6 +62,7 @@ import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedControllerDamageMultiplication;
@@ -74,6 +74,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -1463,7 +1464,7 @@ class RunedTerrorTest extends BaseCardTest {
         var effect = new GainLifeEffect(1);
         gd.opponentGraveyardLifeLossWatchers.add(new OpponentGraveyardLifeLossWatcher(player1.getId(), source));
         gd.temporaryGlobalTriggeredAbilities.add(new TemporaryGlobalTriggeredAbility(
-                player1.getId(), source, EffectSlot.ON_ANY_CREATURE_BLOCKS, effect));
+                player1.getId(), source, new TriggeredAbility(Triggers.creatureBlocks(), effect)));
         gs.advanceStep(gd);
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
         var graveyardWatcher = new OpponentGraveyardLifeLossWatcher(player2.getId(), source);
@@ -1473,7 +1474,7 @@ class RunedTerrorTest extends BaseCardTest {
                 UUID.randomUUID(), player2.getId(), source, effect, false);
         var entersWatcher = new CreatureEntersTriggerWatcher(player2.getId(), source, effect);
         var globalTrigger = new TemporaryGlobalTriggeredAbility(
-                player2.getId(), source, EffectSlot.ON_ANY_CREATURE_BLOCKS, effect);
+                player2.getId(), source, new TriggeredAbility(Triggers.creatureBlocks(), effect));
         gd.opponentGraveyardLifeLossWatchers.add(graveyardWatcher);
         gd.lifeGainOpponentLifeLossWatchers.add(lifeGainWatcher);
         gd.creatureDeathTriggerWatchers.add(deathWatcher);

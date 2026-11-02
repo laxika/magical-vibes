@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,14 +22,14 @@ import java.util.List;
 public class SmugglersCopter extends Card {
 
     public SmugglersCopter() {
-        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        addTrigger(Triggers.attacks(), new MayEffect(
                 SequenceEffect.of(
                         new DrawCardEffect(1),
                         new DiscardEffect(1, DiscardRecipient.CONTROLLER)
                 ),
                 "Draw a card, then discard a card?"
         ));
-        addEffect(EffectSlot.ON_BLOCK, new MayEffect(
+        addTrigger(Triggers.blocks(), new MayEffect(
                 SequenceEffect.of(
                         new DrawCardEffect(1),
                         new DiscardEffect(1, DiscardRecipient.CONTROLLER)

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AKH", collectorNumber = "203")
 @CardRegistration(set = "AKR", collectorNumber = "246")
@@ -30,6 +30,6 @@ public class NehebTheWorthy extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.MINOTAUR))));
 
         // Whenever Neheb deals combat damage to a player, each player discards a card.
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DiscardEffect(1, DiscardRecipient.EACH_PLAYER));
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new DiscardEffect(1, DiscardRecipient.EACH_PLAYER));
     }
 }

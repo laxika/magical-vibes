@@ -42,7 +42,7 @@ public class RoxanneStarfallSavant extends Card {
 
     public RoxanneStarfallSavant() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), METEORITE);
-        addEffect(EffectSlot.ON_ATTACK, METEORITE);
+        addTrigger(Triggers.attacks(), METEORITE);
         addEffect(EffectSlot.ON_CONTROLLER_TAPS_ARTIFACT_TOKEN_FOR_MANA,
                 new AddManaOfTypeProducedByTappedPermanentEffect());
     }

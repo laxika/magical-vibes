@@ -5,10 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
-import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.StaticAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -36,7 +35,7 @@ public class IcingdeathFrostTyrant extends Card {
                 List.of(CardSubtype.EQUIPMENT), Set.of(), Set.of(), false, false,
                 List.of(
                         StaticAbility.of(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE)),
-                        LegacySlots.triggered(EffectSlot.ON_ATTACK, new TapPermanentsEffect(
+                        new TriggeredAbility(Triggers.attacks(), new TapPermanentsEffect(
                                 TapUntapScope.TARGET,
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),

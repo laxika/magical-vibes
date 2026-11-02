@@ -2452,11 +2452,11 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE)
-    @CollectsTrigger(value = CardEffect.class,
-            slot = EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER)
-    @CollectsTrigger(value = CardEffect.class,
-            slot = EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE)
+    @CollectsCombatTrigger(value = CardEffect.class, watch = CombatWatch.ON_SELF_DEALS_COMBAT_DAMAGE)
+    @CollectsCombatTrigger(value = CardEffect.class,
+            watch = CombatWatch.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER)
+    @CollectsCombatTrigger(value = CardEffect.class,
+            watch = CombatWatch.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE)
     private boolean handleSelfDealsCombatDamage(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.SourceDealsCombatDamage sd = (TriggerContext.SourceDealsCombatDamage) ctx;
         if (sd.totalDamage() <= 0) return false;
@@ -2502,8 +2502,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ChooseOneAtTriggerTimeEffect.class,
-            slot = EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE)
+    @CollectsCombatTrigger(value = ChooseOneAtTriggerTimeEffect.class,
+            watch = CombatWatch.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE)
     private boolean handleSelfDealsCombatDamageModalAtTriggerTime(TriggerMatchContext match,
             ChooseOneAtTriggerTimeEffect effect, TriggerContext ctx) {
         TriggerContext.SourceDealsCombatDamage sd = (TriggerContext.SourceDealsCombatDamage) ctx;
@@ -2517,7 +2517,7 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE)
+    @CollectsCombatTrigger(value = CardEffect.class, watch = CombatWatch.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE)
     private boolean handleAllyCreatureDealsCombatDamage(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.SourceDealsCombatDamage sd = (TriggerContext.SourceDealsCombatDamage) ctx;
         if (sd.totalDamage() <= 0 || match.permanent() == null) return false;
@@ -2550,9 +2550,9 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE)
-    @CollectsTrigger(value = CardEffect.class,
-            slot = EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE)
+    @CollectsCombatTrigger(value = CardEffect.class, watch = CombatWatch.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE)
+    @CollectsCombatTrigger(value = CardEffect.class,
+            watch = CombatWatch.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE)
     private boolean handleEquippedCreatureDealsCombatDamage(TriggerMatchContext match, CardEffect effect,
                                                               TriggerContext ctx) {
         TriggerContext.SourceDealsCombatDamage sd = (TriggerContext.SourceDealsCombatDamage) ctx;
@@ -2563,7 +2563,7 @@ public class DamageTriggerCollectorService {
      * "Whenever equipped creature deals combat damage to a player, ... that much" counts only the
      * damage dealt to players, not what the same creature assigned to blockers.
      */
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER)
+    @CollectsCombatTrigger(value = CardEffect.class, watch = CombatWatch.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER)
     private boolean handleEquippedCreatureDealsCombatDamageToPlayer(TriggerMatchContext match, CardEffect effect,
                                                                       TriggerContext ctx) {
         TriggerContext.SourceDealsCombatDamage sd = (TriggerContext.SourceDealsCombatDamage) ctx;
@@ -2629,8 +2629,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ConditionalEffect.class,
-            slot = EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE)
+    @CollectsCombatTrigger(value = ConditionalEffect.class,
+            watch = CombatWatch.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE)
     private boolean handleConditionalEquippedCreatureDealsCombatDamage(TriggerMatchContext match,
                                                                          ConditionalEffect conditional,
                                                                          TriggerContext ctx) {

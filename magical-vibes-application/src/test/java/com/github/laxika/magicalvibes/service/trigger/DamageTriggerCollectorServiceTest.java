@@ -145,7 +145,7 @@ class DamageTriggerCollectorServiceTest {
         DrawCardEffect effect = new DrawCardEffect(1);
 
         registry.dispatch(match(equipment, player1Id, effect),
-                EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER, effect,
+                CombatWatch.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER, effect,
                 new TriggerContext.SourceDealsCombatDamage(attacker.getCard(), player2Id,
                         attacker.getId(), 3, 3));
 
@@ -452,7 +452,7 @@ class DamageTriggerCollectorServiceTest {
 
         boolean result = registry.dispatch(
                 match(source, player1Id, effect),
-                EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE,
+                CombatWatch.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE,
                 effect, ctx);
 
         assertThat(result).isTrue();

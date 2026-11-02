@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -16,7 +15,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SalvageDrone extends Card {
 
     public SalvageDrone() {
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new ExileTopCardsOfDefendingPlayerLibraryEffect(1));
         addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(
                 SequenceEffect.of(

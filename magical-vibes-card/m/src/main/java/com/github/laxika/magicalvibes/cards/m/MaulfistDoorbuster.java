@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -20,7 +19,7 @@ public class MaulfistDoorbuster extends Card {
     public MaulfistDoorbuster() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new EnergyCountersEffect(2));
 
-        target(TargetFilters.creature()).addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        target(TargetFilters.creature()).addTrigger(Triggers.attacks(), new MayEffect(
                 ConditionalEffect.unless(new ControllerEnergyAtLeast(1),
                         SequenceEffect.of(
                                 new EnergyCountersEffect(-1),

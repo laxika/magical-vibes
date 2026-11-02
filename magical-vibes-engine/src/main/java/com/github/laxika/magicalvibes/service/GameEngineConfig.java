@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.service.trigger.CollectsEmblemTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsEmblemTriggers;
 import com.github.laxika.magicalvibes.service.trigger.CollectsWatchTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsWatchTriggers;
+import com.github.laxika.magicalvibes.service.trigger.CollectsCombatTrigger;
+import com.github.laxika.magicalvibes.service.trigger.CollectsCombatTriggers;
 import com.github.laxika.magicalvibes.service.trigger.CollectsSpellAbilityTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsSpellAbilityTriggers;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectorRegistry;
@@ -211,6 +213,20 @@ public class GameEngineConfig implements SmartInitializingSingleton {
                     }
                 }
 
+                CollectsCombatTrigger combatSingle = method.getAnnotation(CollectsCombatTrigger.class);
+                if (combatSingle != null) {
+                    registerTriggerHandler(bean, method, combatSingle.watch(), combatSingle.value());
+                    count++;
+                }
+
+                CollectsCombatTriggers combatContainer = method.getAnnotation(CollectsCombatTriggers.class);
+                if (combatContainer != null) {
+                    for (CollectsCombatTrigger cct : combatContainer.value()) {
+                        registerTriggerHandler(bean, method, cct.watch(), cct.value());
+                        count++;
+                    }
+                }
+
                 CollectsEmblemTrigger emblemSingle = method.getAnnotation(CollectsEmblemTrigger.class);
                 if (emblemSingle != null) {
                     registerEmblemTriggerHandler(bean, method, emblemSingle);
@@ -234,7 +250,10 @@ public class GameEngineConfig implements SmartInitializingSingleton {
         registerTriggerHandler(bean, method, annotation.slot(), annotation.value());
     }
 
-    /** Registers a handler for {@code key}, an {@code EffectSlot}, a {@code ZoneChangeWatch} or a {@code SpellAbilityWatch}. */
+    /**
+     * Registers a handler for {@code key}, an {@code EffectSlot}, a {@code ZoneChangeWatch}, a {@code SpellAbilityWatch}
+     * or a {@code CombatWatch}.
+     */
     @SuppressWarnings("unchecked")
     private void registerTriggerHandler(Object bean, Method method, Object key, Class<? extends CardEffect> effectClass) {
         method.setAccessible(true);

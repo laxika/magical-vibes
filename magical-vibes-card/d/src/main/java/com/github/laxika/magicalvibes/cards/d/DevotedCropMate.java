@@ -1,9 +1,10 @@
-package com.github.laxika.magicalvibes.cards.d;
-
+package com.github.laxika.magicalvibes.cards.d;
+
+
+
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
@@ -14,14 +15,16 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
-@CardRegistration(set = "AKH", collectorNumber = "10")
+@CardRegistration(set = "AKH", collectorNumber = "10")
+
 public class DevotedCropMate extends Card {
 
     public DevotedCropMate() {
-        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        addTrigger(Triggers.attacks(), new MayEffect(
                 SequenceEffect.of(
                         new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true),
                         new QueueReflexiveAbilityEffect(ReturnCardFromGraveyardEffect.builder()

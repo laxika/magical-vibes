@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerSacrificedPermanentsAtLeastThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -39,14 +38,14 @@ public class ObsessivePursuit extends Card {
                 new PermanentIsAttackingPredicate()));
         target(new PermanentPredicateTargetFilter(attackingCreature,
                 "Target must be an attacking creature"))
-                .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new PutCounterOnTargetPermanentEffect(
+                .addTrigger(Triggers.youAttack(), new PutCounterOnTargetPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE,
                         new PermanentsSacrificedThisTurn(),
                         null,
                         attackingCreature,
                         false,
                         null))
-                .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, ConditionalEffect.unless(
+                .addTrigger(Triggers.youAttack(), ConditionalEffect.unless(
                         new ControllerSacrificedPermanentsAtLeastThisTurn(3),
                         new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET)));
     }

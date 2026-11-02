@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -24,6 +23,6 @@ public class HeraldOfAmity extends Card {
 
         PermanentCount aurasYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.AURA), CountScope.CONTROLLER);
-        addEffect(EffectSlot.ON_ATTACK, new BoostSelfEffect(aurasYouControl, aurasYouControl));
+        addTrigger(Triggers.attacks(), new BoostSelfEffect(aurasYouControl, aurasYouControl));
     }
 }

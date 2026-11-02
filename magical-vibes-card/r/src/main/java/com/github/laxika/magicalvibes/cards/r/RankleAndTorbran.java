@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersAndBattlesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ import java.util.List;
 public class RankleAndTorbran extends Card {
 
     public RankleAndTorbran() {
-        addEffect(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE,
+        addTrigger(Triggers.dealsCombatDamageToPlayerOrBattle(),
                 new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption("Each player creates a Treasure token.",
                                 new EachPlayerCreatesTokenEffect(CreateTokenEffect.ofTreasureToken(1))),

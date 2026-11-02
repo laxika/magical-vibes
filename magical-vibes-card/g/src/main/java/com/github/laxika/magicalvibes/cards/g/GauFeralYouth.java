@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.condition.CardsLeftGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -18,7 +17,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class GauFeralYouth extends Card {
 
     public GauFeralYouth() {
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         addTrigger(Triggers.endStep(ActivePlayer.ANY),

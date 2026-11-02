@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -26,8 +27,8 @@ public class MyChampionStandsSupreme extends Card {
 
         // Whenever your commander attacks, put two +1/+1 counters on it.
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_ATTACK,
-                new PutCountersOnSourceEffect(1, 1, 2), GrantScope.ALL_CREATURES, commander));
+                new TriggeredAbility(Triggers.attacks(),
+                new PutCountersOnSourceEffect(1, 1, 2)), GrantScope.ALL_CREATURES, commander));
 
         // When your commander leaves the battlefield, abandon this scheme.
         addTrigger(Triggers.leavesBattlefield(null, ObjectRelation.ANOTHER),

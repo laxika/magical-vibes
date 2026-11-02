@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -51,6 +50,6 @@ public class SanctuaryWarden extends Card {
                         ConditionalEffect.unless(new EventValueAtLeast(1), drawAndCreateCitizen)),
                 "Remove a counter from a creature or planeswalker you control?");
         addTrigger(Triggers.enters(ObjectRelation.THIS), removeCounterAndReward);
-        addEffect(EffectSlot.ON_ATTACK, removeCounterAndReward);
+        addTrigger(Triggers.attacks(), removeCounterAndReward);
     }
 }

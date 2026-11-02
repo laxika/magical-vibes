@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsAttacking;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -28,7 +28,7 @@ public class ValorsReachTagTeam extends Card {
                 Set.of(CardColor.RED, CardColor.WHITE), List.of(CardSubtype.WARRIOR), Set.of(), Set.of(),
                 false, false,
                 List.of(
-                        LegacySlots.triggered(EffectSlot.ON_ALLY_CREATURES_ATTACK, ConditionalEffect.atTriggerTime(
+                        new TriggeredAbility(Triggers.youAttack(), ConditionalEffect.atTriggerTime(
                                 new AllConditions(List.of(
                                         new SourceIsAttacking(),
                                         new MinimumMatchingAttackers(2, new PermanentAllOfPredicate(List.of(

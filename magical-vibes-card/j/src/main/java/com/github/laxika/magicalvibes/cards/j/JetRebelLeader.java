@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.UUID;
@@ -45,7 +45,7 @@ public class JetRebelLeader extends Card {
     };
 
     public JetRebelLeader() {
-        addEffect(EffectSlot.ON_ATTACK, new LookAtTopCardsEffect(
+        addTrigger(Triggers.attacks(), new LookAtTopCardsEffect(
                 new Fixed(5),
                 new Fixed(1),
                 ELIGIBLE_CREATURE,

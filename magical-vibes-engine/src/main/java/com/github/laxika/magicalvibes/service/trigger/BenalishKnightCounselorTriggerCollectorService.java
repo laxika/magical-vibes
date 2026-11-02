@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -23,8 +22,8 @@ public class BenalishKnightCounselorTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsTrigger(value = GrantAdditionalPlusOnePlusOneCounterToNextCreatureSpellEffect.class,
-            slot = EffectSlot.ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS)
+    @CollectsCombatTrigger(value = GrantAdditionalPlusOnePlusOneCounterToNextCreatureSpellEffect.class,
+            watch = CombatWatch.ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS)
     private boolean handleBoonTrigger(TriggerMatchContext match,
                                       GrantAdditionalPlusOnePlusOneCounterToNextCreatureSpellEffect effect,
                                       TriggerContext context) {

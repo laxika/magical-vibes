@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
@@ -24,7 +23,7 @@ public class AetherwindBasker extends Card {
         PermanentCount creaturesYouControl =
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
         addTrigger(Triggers.enters(ObjectRelation.THIS), new EnergyCountersEffect(creaturesYouControl));
-        addEffect(EffectSlot.ON_ATTACK, new EnergyCountersEffect(creaturesYouControl));
+        addTrigger(Triggers.attacks(), new EnergyCountersEffect(creaturesYouControl));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

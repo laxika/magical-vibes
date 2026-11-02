@@ -48,7 +48,7 @@ class HollowDogsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Attacking puts ON_ATTACK trigger on the stack")
+    @DisplayName("Attacking puts the attack trigger on the stack")
     void attackPutsTriggerOnStack() {
         addCreatureReady(player1, new HollowDogs());
 
@@ -60,7 +60,7 @@ class HollowDogsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Attacking puts ON_ATTACK trigger on the stack")
+    @DisplayName("Attacking puts the attack trigger on the stack")
     void attackPutsTriggerOnStackUpstreamReview() {
         Permanent dogs = addCreatureReady(player1, new HollowDogs());
 

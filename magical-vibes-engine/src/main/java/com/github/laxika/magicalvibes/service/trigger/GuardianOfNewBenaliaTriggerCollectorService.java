@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryWhenThisCreatureEnlistsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -24,7 +23,7 @@ public class GuardianOfNewBenaliaTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsTrigger(value = ScryWhenThisCreatureEnlistsEffect.class, slot = EffectSlot.ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS)
+    @CollectsCombatTrigger(value = ScryWhenThisCreatureEnlistsEffect.class, watch = CombatWatch.ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS)
     private boolean handleScryTrigger(TriggerMatchContext match, ScryWhenThisCreatureEnlistsEffect effect,
                                       TriggerContext context) {
         if (!(context instanceof TriggerContext.AttackingCreatureTriggeredAbility attack)

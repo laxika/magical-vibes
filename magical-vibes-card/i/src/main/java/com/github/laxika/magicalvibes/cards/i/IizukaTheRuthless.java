@@ -4,13 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BushidoEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -18,8 +18,8 @@ import java.util.List;
 public class IizukaTheRuthless extends Card {
 
     public IizukaTheRuthless() {
-        addEffect(EffectSlot.ON_BLOCK, new BushidoEffect(2));
-        addEffect(EffectSlot.ON_BECOMES_BLOCKED, new BushidoEffect(2));
+        addTrigger(Triggers.blocks(), new BushidoEffect(2));
+        addTrigger(Triggers.becomesBlocked(), new BushidoEffect(2));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

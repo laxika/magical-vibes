@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromHandWithManaValueLessThanTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
@@ -24,7 +23,7 @@ public class ArniMetalbrow extends Card {
                 "Put a creature card from your hand onto the battlefield tapped and attacking?",
                 true
         );
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS, ability);
+        addTrigger(Triggers.creatureYouControlAttacks(), ability);
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(new PermanentIsAttackingPredicate(), ability));
     }

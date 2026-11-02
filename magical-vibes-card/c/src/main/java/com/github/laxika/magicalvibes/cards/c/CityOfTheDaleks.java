@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -30,7 +31,7 @@ public class CityOfTheDaleks extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"))
-                .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+                .addTrigger(Triggers.youAttack(),
                         new LoseLifeEffect(
                                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER),
                                 LoseLifeRecipient.TARGET_PLAYER));

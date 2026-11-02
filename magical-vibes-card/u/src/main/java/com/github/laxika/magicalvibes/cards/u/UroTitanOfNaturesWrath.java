@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileNCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.TriggerMode;
@@ -30,7 +29,7 @@ public class UroTitanOfNaturesWrath extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
                 new SacrificeSelfUnlessEscapedEffect());
         addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT, triggerEffect());
-        addEffect(EffectSlot.ON_ATTACK, triggerEffect());
+        addTrigger(Triggers.attacks(), triggerEffect());
 
         addCastingOption(new GraveyardCast(null, "{G}{G}{U}{U}", List.of(
                 new ExileNCardsFromGraveyardCastingCost(null, "other cards", 5)),

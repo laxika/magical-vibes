@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -23,7 +23,7 @@ public class RestlessPrairie extends Card {
 
     public RestlessPrairie() {
         addStaticEffect(new EntersTappedEffect());
-        addEffect(EffectSlot.ON_ATTACK, new BoostAllOwnCreaturesEffect(
+        addTrigger(Triggers.attacks(), new BoostAllOwnCreaturesEffect(
                 1, 1, new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
         addActivatedAbility(new ActivatedAbility(
                 true,

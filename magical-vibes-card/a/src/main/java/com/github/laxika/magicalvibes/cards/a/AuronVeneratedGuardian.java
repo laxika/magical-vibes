@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfThenReflexiveEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendin
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,7 +24,7 @@ public class AuronVeneratedGuardian extends Card {
                 new PermanentControlledByDefendingPlayerPredicate(),
                 new PermanentPowerLessThanSourcePowerPredicate()));
 
-        addEffect(EffectSlot.ON_ATTACK, new PutCountersOnSelfThenReflexiveEffect(
+        addTrigger(Triggers.attacks(), new PutCountersOnSelfThenReflexiveEffect(
                 CounterType.PLUS_ONE_PLUS_ONE,
                 new ExileTargetPermanentUntilSourceLeavesEffect(false, targetFilter)));
     }

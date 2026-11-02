@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -54,9 +53,9 @@ public class ElugeTheShorelessSea extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new GrantSubtypeToTargetWhileHasCounterEffect(CardSubtype.ISLAND, CounterType.FLOOD));
         target(TargetFilters.land())
-                .addEffect(EffectSlot.ON_ATTACK,
+                .addTrigger(Triggers.attacks(),
                         new PutCounterOnTargetPermanentEffect(CounterType.FLOOD))
-                .addEffect(EffectSlot.ON_ATTACK,
+                .addTrigger(Triggers.attacks(),
                         new GrantSubtypeToTargetWhileHasCounterEffect(CardSubtype.ISLAND, CounterType.FLOOD));
 
         addStaticEffect(new ConditionalEffect(

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -30,7 +29,7 @@ public class FirebenderAscensionTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsTrigger(value = FirebenderAscensionEffect.class, slot = EffectSlot.ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS)
+    @CollectsCombatTrigger(value = FirebenderAscensionEffect.class, watch = CombatWatch.ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS)
     private boolean handleFirebenderAscensionTrigger(TriggerMatchContext match,
                                                       FirebenderAscensionEffect effect,
                                                       TriggerContext context) {

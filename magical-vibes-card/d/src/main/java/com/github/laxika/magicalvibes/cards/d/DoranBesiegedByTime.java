@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardToughnessGreaterThanPowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -37,8 +37,8 @@ public class DoranBesiegedByTime extends Card {
                 new Sum(new TargetPower(true), new Scaled(new TargetToughness(), -1)),
                 new Sum(new TargetToughness(), new Scaled(new TargetPower(true), -1)));
         BoostTargetCreatureEffect boost = new BoostTargetCreatureEffect(difference, difference);
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS, boost);
-        addEffect(EffectSlot.ON_ANY_CREATURE_BLOCKS, new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.creatureYouControlAttacks(), boost);
+        addTrigger(Triggers.creatureBlocks(), new TriggeringPermanentConditionalEffect(
                 new PermanentControlledBySourceControllerPredicate(), boost));
     }
 }

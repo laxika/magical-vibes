@@ -38,6 +38,6 @@ public class StorvaldFrostGiantJarl extends Card {
                                 new Fixed(1), new Fixed(1)), TargetFilters.creature())
         ));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(modes));
-        addEffect(EffectSlot.ON_ATTACK, new ChooseOneAtTriggerTimeEffect(modes));
+        addTrigger(Triggers.attacks(), new ChooseOneAtTriggerTimeEffect(modes));
     }
 }

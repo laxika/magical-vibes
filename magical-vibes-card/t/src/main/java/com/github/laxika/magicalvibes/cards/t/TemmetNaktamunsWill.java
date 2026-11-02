@@ -10,12 +10,13 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DRC", collectorNumber = "4")
 public class TemmetNaktamunsWill extends Card {
 
     public TemmetNaktamunsWill() {
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+        addTrigger(Triggers.youAttack(),
                 SequenceEffect.of(
                         new DrawCardEffect(),
                         new DiscardEffect(1, DiscardRecipient.CONTROLLER)));

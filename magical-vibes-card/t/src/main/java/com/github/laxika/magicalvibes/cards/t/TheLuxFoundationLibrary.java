@@ -10,13 +10,14 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersHaveNoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "588")
 public class TheLuxFoundationLibrary extends Card {
 
     public TheLuxFoundationLibrary() {
         addStaticEffect(new PlayersHaveNoMaximumHandSizeEffect());
-        addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                 new AllyCombatDamageTriggerEffect(null,
                         new MayEffect(new DrawCardEffect(1), "Draw a card?")));
         target(TargetFilters.creature()).addEffect(EffectSlot.CHAOS_TRIGGERED,

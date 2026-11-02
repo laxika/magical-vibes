@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "10E", collectorNumber = "206")
 @CardRegistration(set = "7ED", collectorNumber = "187")
@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class GoblinEliteInfantry extends Card {
 
     public GoblinEliteInfantry() {
-        addEffect(EffectSlot.ON_BLOCK, new BoostSelfEffect(-1, -1), TriggerMode.ONCE_PER_BLOCK);
-        addEffect(EffectSlot.ON_BECOMES_BLOCKED, new BoostSelfEffect(-1, -1));
+        addTrigger(Triggers.blocks(), TriggerMode.ONCE_PER_BLOCK, new BoostSelfEffect(-1, -1));
+        addTrigger(Triggers.becomesBlocked(), new BoostSelfEffect(-1, -1));
     }
 }

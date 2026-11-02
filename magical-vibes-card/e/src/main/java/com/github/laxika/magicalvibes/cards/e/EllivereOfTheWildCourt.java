@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
@@ -47,7 +47,7 @@ public class EllivereOfTheWildCourt extends Card {
         ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new CreateTokenAttachedToTargetEffect(virtuousRoleToken()))
-                .addEffect(EffectSlot.ON_ATTACK,
+                .addTrigger(Triggers.attacks(),
                         new CreateTokenAttachedToTargetEffect(virtuousRoleToken()));
     }
 
@@ -74,8 +74,8 @@ public class EllivereOfTheWildCourt extends Card {
                                 enchantmentsYouControl,
                                 GrantScope.ENCHANTED_CREATURE),
                         new GrantTriggeredAbilityEffect(
-                                EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                                new DrawCardEffect(1),
+                                new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
+                                new DrawCardEffect(1)),
                                 GrantScope.ENCHANTED_CREATURE)))),
                 List.of(),
                 false,

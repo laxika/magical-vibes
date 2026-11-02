@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,7 +27,7 @@ import java.util.List;
 public class VeronicaDissidentScribe extends Card {
 
     public VeronicaDissidentScribe() {
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new MayEffect(new DiscardAndDrawCardEffect(), "Discard a card?"));
         addEffect(EffectSlot.ON_CONTROLLER_DISCARDS,
                 new TriggeringCardConditionalEffect(

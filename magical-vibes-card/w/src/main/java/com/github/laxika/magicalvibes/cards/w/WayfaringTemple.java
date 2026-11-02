@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.PopulateEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "RTR", collectorNumber = "209")
 @CardRegistration(set = "MM3", collectorNumber = "202")
@@ -19,6 +19,6 @@ public class WayfaringTemple extends Card {
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
         addStaticEffect(new SetPowerToughnessToAmountEffect(creaturesControlled, creaturesControlled));
 
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new PopulateEffect());
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new PopulateEffect());
     }
 }

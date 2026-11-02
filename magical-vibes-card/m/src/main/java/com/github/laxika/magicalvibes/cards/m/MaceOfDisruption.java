@@ -3,13 +3,13 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostEquippedCreatureIfNameSharedEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromSubtypesEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -21,7 +21,7 @@ public class MaceOfDisruption extends Card {
         addStaticEffect(new GrantEffectEffect(
                 new ProtectionFromSubtypesEffect(Set.of(CardSubtype.DEMON, CardSubtype.DEVIL)),
                 GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.ON_ATTACK, new PerpetuallyBoostEquippedCreatureIfNameSharedEffect(1, 0));
+        addTrigger(Triggers.attacks(), new PerpetuallyBoostEquippedCreatureIfNameSharedEffect(1, 0));
         addActivatedAbility(new EquipActivatedAbility("{1}"));
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "HOB", collectorNumber = "92")
 public class DesertWereWorm extends Card {
@@ -28,7 +28,7 @@ public class DesertWereWorm extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN), CountScope.CONTROLLER), 2),
                 new Fixed(0)));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ConditionalEffect(
+        addTrigger(Triggers.youAttack(), new ConditionalEffect(
                 new AttackingCreaturesTotalPowerAtLeast(12),
                 new OncePerTurnTriggerEffect(SequenceEffect.of(
                         new UntapPermanentsEffect(TapUntapScope.ALL_CREATURES,

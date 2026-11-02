@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ public class KrosanVorine extends Card {
                         new PermanentControlledByDefendingPlayerPredicate()
                 )),
                 "Target must be a creature defending player controls"
-        )).addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        )).addTrigger(Triggers.attacks(), new MayEffect(
                 SequenceEffect.of(
                         new UntapPermanentsEffect(TapUntapScope.TARGET),
                         new MustBlockSourceEffect(null, null, true)

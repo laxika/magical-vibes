@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
- * Effect in the {@code ON_ANY_CREATURE_BECOMES_BLOCKED} slot that only fires for some attacker/blocker
+ * Effect in the {@code Triggers.creatureBecomesBlocked()} ability that only fires for some attacker/blocker
  * pairs and acts on one named side of the pair. The combat code evaluates the pair condition and
  * optional {@link #attackerPredicate()} at trigger creation time, then bakes the
  * {@link #actsOn()} participant into the stack entry's non-targeting {@code targetId}, so the

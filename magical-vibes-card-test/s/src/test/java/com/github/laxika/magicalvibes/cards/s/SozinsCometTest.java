@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.e.EarthVillageRuffians;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -57,9 +57,9 @@ class SozinsCometTest extends BaseCardTest {
 
         assertThat(earlyCreature.hasKeyword(Keyword.FIREBENDING)).isTrue();
         assertThat(lateCreature.hasKeyword(Keyword.FIREBENDING)).isFalse();
-        assertThat(earlyCreature.getTemporaryTriggeredEffects(EffectSlot.ON_ATTACK))
+        assertThat(earlyCreature.getTemporaryTriggerEffects(Triggers.attacks()))
                 .hasSize(1);
-        assertThat(lateCreature.getTemporaryTriggeredEffects(EffectSlot.ON_ATTACK))
+        assertThat(lateCreature.getTemporaryTriggerEffects(Triggers.attacks()))
                 .isEmpty();
     }
 
@@ -77,7 +77,7 @@ class SozinsCometTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.hasKeyword(Keyword.FIREBENDING)).isFalse();
-        assertThat(creature.getTemporaryTriggeredEffects(EffectSlot.ON_ATTACK))
+        assertThat(creature.getTemporaryTriggerEffects(Triggers.attacks()))
                 .isEmpty();
     }
 

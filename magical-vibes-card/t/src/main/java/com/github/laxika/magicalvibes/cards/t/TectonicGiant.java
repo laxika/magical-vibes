@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsChooseOneMayPlayUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ import java.util.List;
 public class TectonicGiant extends Card {
 
     public TectonicGiant() {
-        addEffect(EffectSlot.ON_ATTACK, chooseMode());
+        addTrigger(Triggers.attacks(), chooseMode());
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL_ONLY, chooseMode());
     }
 

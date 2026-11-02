@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.service.combat.CombatHelper;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
+import com.github.laxika.magicalvibes.service.trigger.CombatWatch;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -218,25 +218,25 @@ public class CombatSimulator {
 
     private boolean hasPerAttackerAllyTrigger(GameData gameData, UUID playerId, List<Permanent> battlefield) {
         for (Permanent perm : battlefield) {
-            if (!perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS).isEmpty()) return true;
+            if (!CombatWatch.ON_ALLY_CREATURE_ATTACKS.effectsOf(perm.getCard()).isEmpty()) return true;
         }
         for (var card : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
-            if (!card.getEffects(EffectSlot.GRAVEYARD_ON_ALLY_CREATURES_ATTACK).isEmpty()) return true;
+            if (!CombatWatch.GRAVEYARD_ON_ALLY_CREATURES_ATTACK.effectsOf(card).isEmpty()) return true;
         }
         return false;
     }
 
     private boolean hasOwnAttackTrigger(GameData gameData, Permanent perm) {
-        if (!perm.getCard().getEffects(EffectSlot.ON_ATTACK).isEmpty()
-                || !perm.getCard().getEffects(EffectSlot.ON_ATTACKS_UNBLOCKED).isEmpty()
-                || !perm.getTemporaryTriggeredEffects(EffectSlot.ON_ATTACK).isEmpty()) {
+        if (!CombatWatch.ON_ATTACK.effectsOf(perm.getCard()).isEmpty()
+                || !CombatWatch.ON_ATTACKS_UNBLOCKED.effectsOf(perm.getCard()).isEmpty()
+                || !perm.getTemporaryTriggerEffects(CombatWatch.ON_ATTACK.trigger()).isEmpty()) {
             return true;
         }
         // Aura-granted attack triggers (e.g. an aura with an ON_ATTACK registration)
         boolean[] found = {false};
         gameData.forEachPermanent((ownerId, p) -> {
             if (p.isAttached() && p.getAttachedTo().equals(perm.getId())
-                    && !p.getCard().getEffects(EffectSlot.ON_ATTACK).isEmpty()) {
+                    && !CombatWatch.ON_ATTACK.effectsOf(p.getCard()).isEmpty()) {
                 found[0] = true;
             }
         });

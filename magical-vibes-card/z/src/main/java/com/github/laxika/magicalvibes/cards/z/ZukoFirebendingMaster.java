@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.ControllerExperienceCounters;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
@@ -17,7 +16,7 @@ import java.util.List;
 public class ZukoFirebendingMaster extends Card {
 
     public ZukoFirebendingMaster() {
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new AwardManaUntilEndOfCombatEffect(ManaColor.RED, new ControllerExperienceCounters()));
         addTrigger(Triggers.youCastSpell(),
                 SpellCastTriggerEffect.duringCombat(null, List.of(new ExperienceCountersEffect(1))));

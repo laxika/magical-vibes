@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.BolsterEffect;
@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureU
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformGrantingPermanentEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /** Back face of Optimus Prime, Hero. */
 public class OptimusPrimeAutobotLeader extends Card {
@@ -23,11 +24,11 @@ public class OptimusPrimeAutobotLeader extends Card {
                 new NotCondition(new NotControllerTurn()),
                 new GrantCardTypeEffect(CardType.CREATURE, GrantScope.SELF)));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, SequenceEffect.of(
+        addTrigger(Triggers.youAttack(), SequenceEffect.of(
                 new BolsterEffect(2, true),
                 new GrantKeywordToChosenCreatureUntilEndOfTurnEffect(Keyword.TRAMPLE, null),
                 new GrantEffectToChosenCreatureUntilEndOfTurnEffect(
-                        EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                        new TransformGrantingPermanentEffect())));
+                        new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
+                        new TransformGrantingPermanentEffect()))));
     }
 }

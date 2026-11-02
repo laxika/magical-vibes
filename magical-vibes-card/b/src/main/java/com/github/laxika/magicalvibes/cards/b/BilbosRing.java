@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "HOC", collectorNumber = "41")
 @CardRegistration(set = "HOC", collectorNumber = "81")
@@ -26,7 +26,7 @@ public class BilbosRing extends Card {
                 new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.EQUIPPED_CREATURE)));
         addStaticEffect(new ConditionalEffect(new ControllerTurn(), new CantBeBlockedEffect()));
 
-        addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(new AttacksAlone(),
+        addTrigger(Triggers.attacks(), new ConditionalEffect(new AttacksAlone(),
                 SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1))));
 
         PermanentHasSubtypePredicate halfling = new PermanentHasSubtypePredicate(CardSubtype.HALFLING);

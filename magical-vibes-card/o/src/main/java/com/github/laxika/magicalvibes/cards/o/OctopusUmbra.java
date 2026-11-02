@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,10 +30,10 @@ public class OctopusUmbra extends Card {
                 .addStaticEffect(new SetBasePowerToughnessEffect(8, 8, GrantScope.ENCHANTED_CREATURE))
                 .addStaticEffect(new TotemArmorEffect())
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_ATTACK,
+                        new TriggeredAbility(Triggers.attacks(),
                         new MayEffect(
                                 new TapPermanentsEffect(TapUntapScope.TARGET, creatureWithPowerAtMostEight),
-                                "Tap target creature with power 8 or less?"),
+                                "Tap target creature with power 8 or less?")),
                         GrantScope.ENCHANTED_CREATURE));
     }
 }

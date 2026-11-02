@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -34,7 +33,7 @@ public class EdwardKenway extends Card {
                                         CardSubtype.VEHICLE)))),
                         CountScope.CONTROLLER)));
 
-        addEffect(EffectSlot.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT,
+        addTrigger(Triggers.creatureDealsCombatDamageToOpponent(),
                 new TriggeringPermanentControllerConditionalEffect(
                         new TriggeringPermanentConditionalEffect(
                                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.VEHICLE)),

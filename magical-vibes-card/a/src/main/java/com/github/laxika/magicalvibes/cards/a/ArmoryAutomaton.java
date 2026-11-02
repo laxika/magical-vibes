@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -21,7 +20,7 @@ public class ArmoryAutomaton extends Card {
                 "Target must be an Equipment"), 0, Integer.MAX_VALUE)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new MayEffect(new AttachTargetEquipmentToTriggeringPermanentEffect(), "Attach the chosen Equipment?"))
-                .addEffect(EffectSlot.ON_ATTACK,
+                .addTrigger(Triggers.attacks(),
                         new MayEffect(new AttachTargetEquipmentToTriggeringPermanentEffect(), "Attach the chosen Equipment?"));
     }
 }

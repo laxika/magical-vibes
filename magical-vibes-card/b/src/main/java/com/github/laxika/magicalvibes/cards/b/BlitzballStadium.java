@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.DistinctCountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -32,8 +32,8 @@ public class BlitzballStadium extends Card {
                 List.of(
                         new MakeCreatureUnblockableEffect(),
                         new GrantEffectToTargetUntilEndOfTurnEffect(
-                                EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                                new DrawCardEffect(new DistinctCountersOnSource()))
+                                new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
+                                new DrawCardEffect(new DistinctCountersOnSource())))
                 ),
                 "Go for the Goal! — {3}, {T}: Until end of turn, target creature gains "
                         + "\"Whenever this creature deals combat damage to a player, draw a card "

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -39,8 +39,8 @@ public class ClockworkHydra extends Card {
                 TargetPredicates.anyTarget().permanentRestriction().orElseThrow(),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a creature, planeswalker, battle, or player"))
-                .addEffect(EffectSlot.ON_ATTACK, attackOrBlockEffect);
-        addEffect(EffectSlot.ON_BLOCK, attackOrBlockEffect);
+                .addTrigger(Triggers.attacks(), attackOrBlockEffect);
+        addTrigger(Triggers.blocks(), attackOrBlockEffect);
 
         addActivatedAbility(new ActivatedAbility(true, null,
                 List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),

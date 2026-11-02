@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.CardTypesAmongCardsInGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -29,6 +28,6 @@ public class OmnivorousFlytrap extends Card {
 
         target(TargetFilters.creature(), 1, 2)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), deliriumAbility)
-                .addEffect(EffectSlot.ON_ATTACK, deliriumAbility);
+                .addTrigger(Triggers.attacks(), deliriumAbility);
     }
 }

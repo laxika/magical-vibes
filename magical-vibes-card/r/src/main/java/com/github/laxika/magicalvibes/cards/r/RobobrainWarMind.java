@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -39,7 +38,7 @@ public class RobobrainWarMind extends Card {
         );
         addTrigger(Triggers.enters(ObjectRelation.THIS), new EnergyCountersEffect(artifactCreaturesYouControl));
 
-        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        addTrigger(Triggers.attacks(), new MayEffect(
                 ConditionalEffect.unless(new ControllerEnergyAtLeast(3),
                         SequenceEffect.of(
                                 new EnergyCountersEffect(-3),

@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CennsHeirTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Attacking puts ON_ATTACK trigger on the stack")
+    @DisplayName("Attacking puts the attack trigger on the stack")
     void attackPutsTriggerOnStack() {
         Permanent heir = addCreatureReady(player1, new CennsHeir());
 

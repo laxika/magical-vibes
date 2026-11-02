@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -20,7 +21,7 @@ public class ConstableOfTheRealm extends Card {
 
     public ConstableOfTheRealm() {
         // Renown 2
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new RenownEffect(2));
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new RenownEffect(2));
 
         // Whenever one or more +1/+1 counters are put on this creature, exile up to one other
         // target nonland permanent until this creature leaves the battlefield.

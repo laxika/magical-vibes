@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
@@ -25,7 +24,7 @@ public class KillianDecisiveMentor extends Card {
                         new TapPermanentsEffect(TapUntapScope.TARGET),
                         new GoadTargetCreatureUntilNextTurnEffect()));
 
-        addEffect(EffectSlot.ON_ANY_PLAYER_ATTACKS,
+        addTrigger(Triggers.playerAttacks(),
                 new ConditionalEffect(
                         new MinimumMatchingAttackers(1,
                                 new PermanentIsEnchantedBySourceControllerAuraPredicate()),

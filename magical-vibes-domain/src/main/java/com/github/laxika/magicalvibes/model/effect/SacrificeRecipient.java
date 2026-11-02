@@ -17,7 +17,7 @@ package com.github.laxika.magicalvibes.model.effect;
  *   <li>{@link #PLAYERS_WITH_MOST_LANDS} — each player tied for controlling the most lands
  *       sacrifices, in APNAP order.</li>
  *   <li>{@link #DEFENDING_PLAYER} — the player being attacked (or the controller of the attacked
- *       planeswalker) sacrifices; the effect does not target (it reads the {@code ON_ATTACK}
+ *       planeswalker) sacrifices; the effect does not target (it reads the {@code Triggers.attacks()}
  *       trigger's {@code attackedTargetId}). Used by "Whenever this creature attacks, defending
  *       player sacrifices a creature of their choice" (Thraximundar).</li>
  * </ul>

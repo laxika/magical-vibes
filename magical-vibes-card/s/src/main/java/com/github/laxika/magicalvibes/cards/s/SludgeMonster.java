@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -34,7 +33,7 @@ public class SludgeMonster extends Card {
         target(new PermanentPredicateTargetFilter(anotherCreature, "Target must be another creature"), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new PutCounterOnTargetPermanentEffect(CounterType.SLIME, 1))
-                .addEffect(EffectSlot.ON_ATTACK,
+                .addTrigger(Triggers.attacks(),
                         new PutCounterOnTargetPermanentEffect(CounterType.SLIME, 1));
 
         PermanentPredicate affectedCreature = new PermanentAllOfPredicate(List.of(

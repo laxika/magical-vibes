@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.z;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.effect.CopyCardsExiledWithSourceAndMayCastCopiesEffect;
@@ -29,7 +28,7 @@ public class ZethiArcaneBlademaster extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         ExileGraveyardCardsEffect.upToControllerGraveyardWithKickCounters(instant));
 
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 CopyCardsExiledWithSourceAndMayCastCopiesEffect.allOwnedKickCounterCardsForNormalCost());
     }
 }

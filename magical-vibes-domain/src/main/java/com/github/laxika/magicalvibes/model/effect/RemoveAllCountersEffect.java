@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * +1/+1 counters from it, and it deals that much damage to each creature and each player").
  *
  * <p>{@link CounterRemovalSubject#SOURCE} is non-targeting and is the shape that fires as an
- * {@code ON_COMBAT_DAMAGE_TO_PLAYER} trigger (Ammit Eternal), hence
+ * {@code Triggers.dealsCombatDamageToPlayer()} ability (Ammit Eternal), hence
  * {@link CombatDamageTriggerContextEffect.TriggerContext#SOURCE_SELF}.
  * {@link CounterRemovalSubject#TARGET} targets a creature (Hapatra's Mark) and needs no combat
  * context, so it reports {@code null}.</p>

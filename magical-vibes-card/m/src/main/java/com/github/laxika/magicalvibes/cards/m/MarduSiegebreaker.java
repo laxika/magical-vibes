@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopiesOfExiledCardAttackingOpponentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -31,6 +30,6 @@ public class MarduSiegebreaker extends Card {
         ), 0, 1).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ExileTargetPermanentUntilSourceLeavesEffect(false, targetFilter));
 
-        addEffect(EffectSlot.ON_ATTACK, new CreateTokenCopiesOfExiledCardAttackingOpponentsEffect());
+        addTrigger(Triggers.attacks(), new CreateTokenCopiesOfExiledCardAttackingOpponentsEffect());
     }
 }

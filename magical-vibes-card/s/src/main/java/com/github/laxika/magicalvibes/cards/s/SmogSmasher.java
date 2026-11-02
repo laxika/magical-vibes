@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
@@ -29,8 +28,7 @@ public class SmogSmasher extends Card {
                 new PermanentNotPredicate(new PermanentIsTokenPredicate())));
 
         target(new PermanentPredicateTargetFilter(nontokenCreature,
-                "Target must be a nontoken creature")).addEffect(
-                EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+                "Target must be a nontoken creature")).addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                 new AllyCombatDamageTriggerEffect(null,
                         new ConjureDuplicateOfTargetCreatureIntoExileEffect(), false, true));
 

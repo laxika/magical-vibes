@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttacksPlayerWithMostLifePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "VMA", collectorNumber = "184")
 @CardRegistration(set = "SLD", collectorNumber = "1033")
@@ -24,7 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 public class ScourgeOfTheThrone extends Card {
 
     public ScourgeOfTheThrone() {
-        addEffect(EffectSlot.ON_ATTACK, new OncePerTurnTriggerEffect(
+        addTrigger(Triggers.attacks(), new OncePerTurnTriggerEffect(
                 new ConditionalEffect(
                         new SourceMatchesPermanentPredicate(new PermanentAttacksPlayerWithMostLifePredicate()),
                         SequenceEffect.of(

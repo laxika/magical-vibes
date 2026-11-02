@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -50,7 +50,7 @@ public class RestlessCottage extends Card {
                 "{2}{B}{G}: This land becomes a 4/4 black and green Horror creature until end of turn. "
                         + "It's still a land."
         ));
-        addEffect(EffectSlot.ON_ATTACK, FOOD_TOKEN);
-        addEffect(EffectSlot.ON_ATTACK, new ExileCardsFromGraveyardEffect(1, 0));
+        addTrigger(Triggers.attacks(), FOOD_TOKEN);
+        addTrigger(Triggers.attacks(), new ExileCardsFromGraveyardEffect(1, 0));
     }
 }

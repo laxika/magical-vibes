@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -26,7 +25,7 @@ public class NamazuTrader extends Card {
     public NamazuTrader() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 SequenceEffect.of(new LoseLifeEffect(1), CreateTokenEffect.ofTreasureToken(1)));
-        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        addTrigger(Triggers.attacks(), new MayEffect(
                 new SacrificePermanentThenEffect(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentAnyOfPredicate(List.of(

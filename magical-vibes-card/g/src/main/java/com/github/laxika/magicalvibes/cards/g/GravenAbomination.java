@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "HOU", collectorNumber = "162")
 public class GravenAbomination extends Card {
@@ -13,7 +13,7 @@ public class GravenAbomination extends Card {
         // Attack-trigger analogue of Disposal Mummy's ETB / Ruin Rat's death exile. The defending
         // player's graveyard card is chosen as the trigger goes on the stack
         // (CombatAttackService → GraveyardTargetingService.handleAttackGraveyardTargeting).
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 ExileGraveyardCardsEffect.fromDefendingPlayerGraveyard());
     }
 }

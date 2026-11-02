@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -2089,7 +2088,7 @@ class TargetLegalityServiceTest {
             aura.setType(CardType.ENCHANTMENT);
             aura.setSubtypes(List.of(CardSubtype.AURA));
             aura.target(enchantFilter);
-            aura.target(triggerFilter).addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, triggerEffect);
+            aura.target(triggerFilter).addTrigger(Triggers.dealsCombatDamageToPlayer(), triggerEffect);
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     aura,

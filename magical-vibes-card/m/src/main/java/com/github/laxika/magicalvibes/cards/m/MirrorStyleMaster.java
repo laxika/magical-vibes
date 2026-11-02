@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -28,7 +28,7 @@ public class MirrorStyleMaster extends Card {
 
     public MirrorStyleMaster() {
         CardEffect attackTrigger = new CreateTokenCopiesOfAttackingModifiedCreaturesEffect();
-        addEffect(EffectSlot.ON_ATTACK, attackTrigger);
+        addTrigger(Triggers.attacks(), attackTrigger);
 
         PermanentPredicate anotherCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
@@ -38,7 +38,8 @@ public class MirrorStyleMaster extends Card {
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                 new ConditionalEffect(
                         new TargetPermanentMatches(anotherCreature),
-                        new GrantEffectToTargetUntilEndOfTurnEffect(EffectSlot.ON_ATTACK, attackTrigger)
+                        new GrantEffectToTargetUntilEndOfTurnEffect(new TriggeredAbility(Triggers.attacks(),
+                                attackTrigger))
                 )
         ));
     }

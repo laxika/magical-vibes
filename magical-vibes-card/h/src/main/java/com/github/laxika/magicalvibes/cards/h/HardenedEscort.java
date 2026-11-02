@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -31,8 +31,8 @@ public class HardenedEscort extends Card {
                 targetFilter,
                 "Target must be another creature you control"
         ))
-                .addEffect(EffectSlot.ON_ATTACK, new BoostTargetCreatureEffect(1, 0, targetFilter))
-                .addEffect(EffectSlot.ON_ATTACK,
+                .addTrigger(Triggers.attacks(), new BoostTargetCreatureEffect(1, 0, targetFilter))
+                .addTrigger(Triggers.attacks(),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET, targetFilter));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileDyingCreatureCardAndCreateTokenEffect;
@@ -49,7 +49,7 @@ public class TimotharBaronOfBats extends Card {
                 Set.of(Keyword.FLYING),
                 Set.<CardType>of(),
                 List.of(
-                        LegacySlots.triggered(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, SequenceEffect.of(
+                        new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(), SequenceEffect.of(
                                 new SacrificeSelfEffect(),
                                 new ReturnExiledCardToBattlefieldUnderOwnerControlEffect(null, true, true)))));
     }

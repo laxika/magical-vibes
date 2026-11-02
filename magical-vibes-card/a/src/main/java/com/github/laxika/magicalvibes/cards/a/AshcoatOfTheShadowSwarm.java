@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -36,8 +35,8 @@ public class AshcoatOfTheShadowSwarm extends Card {
                 rat,
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())));
         var attackOrBlockBoost = new BoostAllOwnCreaturesEffect(ratsYouControl, ratsYouControl, otherRats);
-        addEffect(EffectSlot.ON_ATTACK, attackOrBlockBoost);
-        addEffect(EffectSlot.ON_BLOCK, attackOrBlockBoost);
+        addTrigger(Triggers.attacks(), attackOrBlockBoost);
+        addTrigger(Triggers.blocks(), attackOrBlockBoost);
 
         var ratCreatureCard = new CardAllOfPredicate(List.of(
                 new CardTypePredicate(CardType.CREATURE),

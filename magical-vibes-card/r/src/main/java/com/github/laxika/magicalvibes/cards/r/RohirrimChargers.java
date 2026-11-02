@@ -10,13 +10,14 @@ import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LTC", collectorNumber = "496")
 @CardRegistration(set = "LTC", collectorNumber = "540")
 public class RohirrimChargers extends Card {
 
     public RohirrimChargers() {
-        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        addTrigger(Triggers.attacks(), new MayEffect(
                 new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true),
                 "Exert Rohirrim Chargers as it attacks?"));
 

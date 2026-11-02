@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -53,7 +52,7 @@ public class SephirothFabledSoldier extends Card {
         setBackFaceCard(new SephirothOneWingedAngel());
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), SACRIFICE_ANOTHER_AND_DRAW);
-        addEffect(EffectSlot.ON_ATTACK, SACRIFICE_ANOTHER_AND_DRAW);
+        addTrigger(Triggers.attacks(), SACRIFICE_ANOTHER_AND_DRAW);
 
         target(OPPONENT_TARGET).addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER),
                 SequenceEffect.of(

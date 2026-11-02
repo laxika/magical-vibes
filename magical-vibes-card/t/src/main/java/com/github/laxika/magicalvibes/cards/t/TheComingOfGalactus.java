@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -32,7 +33,8 @@ public class TheComingOfGalactus extends Card {
                 CardType.CREATURE, 1, "Galactus", 16, 16,
                 CardColor.BLACK, Set.of(), List.of(CardSubtype.ELDER, CardSubtype.ALIEN),
                 Set.of(Keyword.FLYING, Keyword.TRAMPLE), Set.of(), false, false,
-                List.of(LegacySlots.triggered(EffectSlot.ON_ATTACK, new DestroyTargetPermanentEffect(new PermanentIsLandPredicate()))),
+                List.of(new TriggeredAbility(Triggers.attacks(),
+                        new DestroyTargetPermanentEffect(new PermanentIsLandPredicate()))),
                 List.of(), false, false, true, 0, Set.of())
                 .withTokenTargetFilter(TargetFilters.land());
         addEffect(EffectSlot.SAGA_CHAPTER_IV, galactus);

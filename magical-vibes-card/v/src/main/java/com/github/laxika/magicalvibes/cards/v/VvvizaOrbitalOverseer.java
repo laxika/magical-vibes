@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -54,7 +53,7 @@ public class VvvizaOrbitalOverseer extends Card {
                 KavaronMemorialWorld::new,
                 SusurSecundiVoidAltar::new,
                 UthrosTitanicGodcore::new)));
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, LANDER);
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, ANIMATE_LANDER);
+        addTrigger(Triggers.youAttack(), LANDER);
+        addTrigger(Triggers.youAttack(), ANIMATE_LANDER);
     }
 }

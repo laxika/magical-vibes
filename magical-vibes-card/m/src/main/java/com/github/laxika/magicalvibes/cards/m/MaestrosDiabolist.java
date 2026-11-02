@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -27,7 +26,7 @@ public class MaestrosDiabolist extends Card {
     public MaestrosDiabolist() {
         List<Ability> devilTokenEffects =
                 List.of(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(1)));
-        addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
+        addTrigger(Triggers.attacks(), new ConditionalEffect(
                 new ControlsPermanentCountAtMost(0, new PermanentAllOfPredicate(List.of(
                         new PermanentHasSubtypePredicate(CardSubtype.DEVIL),
                         new PermanentIsTokenPredicate()))),

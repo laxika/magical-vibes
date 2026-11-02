@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploreEachControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -31,7 +30,7 @@ public class HakbalOfTheSurgingSoul extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.MERFOLK)))));
 
         CardTypePredicate land = new CardTypePredicate(CardType.LAND);
-        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        addTrigger(Triggers.attacks(), new MayEffect(
                 new PutCardToBattlefieldOrElseEffect(land, "land", new DrawCardEffect()),
                 "Put a land card from your hand onto the battlefield?",
                 new DrawCardEffect()));

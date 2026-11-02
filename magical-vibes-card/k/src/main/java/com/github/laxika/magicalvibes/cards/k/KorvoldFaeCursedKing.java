@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
@@ -29,7 +28,7 @@ public class KorvoldFaeCursedKing extends Card {
 
     public KorvoldFaeCursedKing() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), SACRIFICE_ANOTHER_PERMANENT);
-        addEffect(EffectSlot.ON_ATTACK, SACRIFICE_ANOTHER_PERMANENT);
+        addTrigger(Triggers.attacks(), SACRIFICE_ANOTHER_PERMANENT);
 
         addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL), SACRIFICE_TRIGGER);
     }

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -23,7 +24,7 @@ public class HapatraVizierOfPoisons extends Card {
     public HapatraVizierOfPoisons() {
         // Whenever Hapatra deals combat damage to a player, you may put a -1/-1 counter on target
         // creature. The target (any creature) is chosen at resolution via the combat-damage may flow.
-        target(TargetFilters.creature()).addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+        target(TargetFilters.creature()).addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new MayEffect(
                         new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1),
                         "Put a -1/-1 counter on target creature?"

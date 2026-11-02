@@ -2,14 +2,14 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.TimeTravelEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "58")
 @CardRegistration(set = "WHO", collectorNumber = "663")
 public class TimeBeetle extends Card {
 
     public TimeBeetle() {
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new TimeTravelEffect(1));
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new TimeTravelEffect(1));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -24,7 +23,7 @@ import java.util.Set;
 public class PoeticIngenuity extends Card {
 
     public PoeticIngenuity() {
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+        addTrigger(Triggers.youAttack(),
                 new ConditionalEffect(
                         new MinimumMatchingAttackers(1, new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR)),
                         CreateTokenEffect.ofTreasureToken(new EventValue())));

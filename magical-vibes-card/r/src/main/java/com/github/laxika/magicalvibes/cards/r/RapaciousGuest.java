@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -24,7 +23,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class RapaciousGuest extends Card {
 
     public RapaciousGuest() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                 new AllyCombatDamageTriggerEffect(null, CreateTokenEffect.ofFoodToken(1), false, true));
         addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(

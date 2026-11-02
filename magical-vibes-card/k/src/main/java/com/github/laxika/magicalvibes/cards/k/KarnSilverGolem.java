@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 import java.util.Set;
 import com.github.laxika.magicalvibes.model.TriggerMode;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "USG", collectorNumber = "298")
 @CardRegistration(set = "V10", collectorNumber = "6")
@@ -25,8 +25,8 @@ import com.github.laxika.magicalvibes.model.TriggerMode;
 public class KarnSilverGolem extends Card {
 
     public KarnSilverGolem() {
-        addEffect(EffectSlot.ON_BLOCK, new BoostSelfEffect(-4, 4), TriggerMode.ONCE_PER_BLOCK);
-        addEffect(EffectSlot.ON_BECOMES_BLOCKED, new BoostSelfEffect(-4, 4));
+        addTrigger(Triggers.blocks(), TriggerMode.ONCE_PER_BLOCK, new BoostSelfEffect(-4, 4));
+        addTrigger(Triggers.becomesBlocked(), new BoostSelfEffect(-4, 4));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

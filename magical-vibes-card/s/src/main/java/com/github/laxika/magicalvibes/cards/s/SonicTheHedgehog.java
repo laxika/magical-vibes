@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class SonicTheHedgehog extends Card {
         var creatureWithFlashOrHaste = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(), flashOrHaste));
 
-        addEffect(EffectSlot.ON_ATTACK, new PutCounterOnEachControlledPermanentEffect(
+        addTrigger(Triggers.attacks(), new PutCounterOnEachControlledPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, 1, creatureWithFlashOrHaste));
         addEffect(EffectSlot.ON_ANY_CREATURE_DEALT_DAMAGE, new TriggeringPermanentConditionalEffect(
                 new PermanentAllOfPredicate(List.of(

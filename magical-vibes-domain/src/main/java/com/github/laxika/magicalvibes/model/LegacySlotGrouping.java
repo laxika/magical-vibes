@@ -15,16 +15,10 @@ enum LegacySlotGrouping {
     /** One triggered ability for each registration, or for each group of simultaneous registrations. */
     EACH,
     /** One triggered ability for every registration in the slot. */
-    ALL,
-    /**
-     * One triggered ability for the registrations whose {@link TriggerMode} isn't
-     * {@link TriggerMode#INDEPENDENT}, and one for each that is.
-     */
-    ALL_BUT_INDEPENDENT;
+    ALL;
 
     private static final Set<EffectSlot> ALL_SLOTS = EnumSet.of(
             EffectSlot.ON_SELF_TAPPED_FOR_MANA,
-            EffectSlot.ON_BLOCK,
             EffectSlot.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE,
             EffectSlot.ON_SELF_CYCLED,
             EffectSlot.ON_CONTROLLER_SEARCHES_LIBRARY,
@@ -38,9 +32,6 @@ enum LegacySlotGrouping {
             EffectSlot.ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_CREATURE,
             EffectSlot.ON_OPPONENT_SEARCHES_LIBRARY,
             EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
-            EffectSlot.COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK,
-            EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER,
-            EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER_OR_PLANESWALKER,
             EffectSlot.SAGA_CHAPTER_I,
             EffectSlot.SAGA_CHAPTER_II,
             EffectSlot.SAGA_CHAPTER_III,
@@ -49,9 +40,6 @@ enum LegacySlotGrouping {
             EffectSlot.SAGA_CHAPTER_VI,
             EffectSlot.ON_YOU_PUT_COUNTERS_ON_CREATURE_YOU_DONT_CONTROL,
             EffectSlot.ON_YOU_PUT_COUNTERS_ON_CREATURE,
-            EffectSlot.EXILE_ON_ALLY_CREATURE_ATTACKS_UNBLOCKED,
-            EffectSlot.EXILE_ON_ALLY_CREATURES_ATTACK,
-            EffectSlot.GRAVEYARD_ON_COMBAT_DAMAGE_TO_YOU_OR_YOUR_PLANESWALKER,
             EffectSlot.ON_SELF_TRAINS,
             EffectSlot.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_HUMAN,
             EffectSlot.ON_SELF_REACHES_LEVEL_TWO,
@@ -78,8 +66,6 @@ enum LegacySlotGrouping {
             EffectSlot.ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTERS_ON_CREATURE,
             EffectSlot.ON_ALLY_CREATURE_EXPLORES,
             EffectSlot.ON_EXPLOIT,
-            EffectSlot.ON_ALLY_CREATURE_ATTACKS_UNBLOCKED,
-            EffectSlot.ON_OPPONENT_CREATURES_ATTACK_YOU_UNBLOCKED,
             EffectSlot.ON_ANOTHER_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
             EffectSlot.ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL,
             EffectSlot.ON_ALLY_CREATURE_OR_CREATURE_SPELL_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
@@ -89,30 +75,14 @@ enum LegacySlotGrouping {
             EffectSlot.ON_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL,
             EffectSlot.ON_ALLY_CREATURE_BECOMES_TARGET_OF_BACKUP_ABILITY,
             EffectSlot.ON_ALLY_CREATURE_BECOMES_TARGET_OF_INSTANT_OR_SORCERY,
-            EffectSlot.ON_CREATURES_ATTACK_YOU,
-            EffectSlot.ON_OPPONENT_ATTACKS_PLANESWALKER_YOU_CONTROL,
-            EffectSlot.ON_ANY_CREATURE_ATTACKS,
             EffectSlot.ON_CONTROLLER_CLASHES,
             EffectSlot.ON_PLAYER_LOSES_GAME,
-            EffectSlot.ON_BLOCKS_MULTIPLE_CREATURES,
-            EffectSlot.ON_ANY_CREATURE_BLOCKS,
             EffectSlot.ON_CHAMPIONED,
-            EffectSlot.ON_ALLY_CREATURES_BECOME_BLOCKED,
-            EffectSlot.ON_ANY_CREATURES_BLOCK,
             EffectSlot.ON_SELF_BECOMES_PLOTTED);
-
-    private static final Set<EffectSlot> ALL_BUT_INDEPENDENT_SLOTS = EnumSet.of(
-            EffectSlot.ON_ALLY_CREATURES_ATTACK,
-            EffectSlot.ON_CREATURE_ATTACKS_YOU,
-            EffectSlot.ON_CREATURE_ATTACKS_YOU_DIRECTLY,
-            EffectSlot.ON_CREATURE_ATTACKS_DEFENDING_PLAYER);
 
     static LegacySlotGrouping of(EffectSlot slot) {
         if (ALL_SLOTS.contains(slot)) {
             return ALL;
-        }
-        if (ALL_BUT_INDEPENDENT_SLOTS.contains(slot)) {
-            return ALL_BUT_INDEPENDENT;
         }
         return EACH;
     }

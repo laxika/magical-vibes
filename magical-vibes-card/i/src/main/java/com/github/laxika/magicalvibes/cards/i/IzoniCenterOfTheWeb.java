@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -40,7 +39,7 @@ public class IzoniCenterOfTheWeb extends Card {
                         new ConditionalEffect(new EventValueAtLeast(4), spiderTokens)),
                 "Collect evidence 4?");
         addTrigger(Triggers.enters(ObjectRelation.THIS), collectEvidenceAndCreateSpiders);
-        addEffect(EffectSlot.ON_ATTACK, collectEvidenceAndCreateSpiders);
+        addTrigger(Triggers.attacks(), collectEvidenceAndCreateSpiders);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

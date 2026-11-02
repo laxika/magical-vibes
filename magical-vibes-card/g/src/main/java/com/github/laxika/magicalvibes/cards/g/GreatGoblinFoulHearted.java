@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AmassGoblinsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -17,7 +16,7 @@ public class GreatGoblinFoulHearted extends Card {
 
     public GreatGoblinFoulHearted() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new AmassGoblinsEffect(3));
-        addEffect(EffectSlot.ON_ATTACK, new AmassGoblinsEffect(3));
+        addTrigger(Triggers.attacks(), new AmassGoblinsEffect(3));
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.TRAMPLE,
                 GrantScope.ALL_OWN_CREATURES,

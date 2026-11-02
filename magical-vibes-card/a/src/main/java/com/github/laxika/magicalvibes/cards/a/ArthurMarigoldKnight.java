@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.MakeChosenPermanentAttackingE
 import com.github.laxika.magicalvibes.model.effect.ReturnSelectedPermanentToHandAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.UUID;
@@ -65,7 +65,7 @@ public class ArthurMarigoldKnight extends Card {
                 false,
                 0,
                 CREATURE_ATTACK_AND_RETURN_FOLLOW_UP);
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new ConditionalEffect(new MinimumAttackers(2), ability));
     }
 }

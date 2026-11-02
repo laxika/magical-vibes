@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -35,11 +35,11 @@ public class NinjasBlades extends Card {
         addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantSubtypeEffect(CardSubtype.NINJA, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+                new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                 SequenceEffect.of(
                         new DrawCardEffect(1),
                         new DiscardEffect(1, DiscardRecipient.CONTROLLER),
-                        new LoseLifeEffect(new LastDiscardedCardManaValue(), LoseLifeRecipient.TARGET_PLAYER)),
+                        new LoseLifeEffect(new LastDiscardedCardManaValue(), LoseLifeRecipient.TARGET_PLAYER))),
                 GrantScope.EQUIPPED_CREATURE));
 
         addActivatedAbility(new EquipActivatedAbility("{2}"));

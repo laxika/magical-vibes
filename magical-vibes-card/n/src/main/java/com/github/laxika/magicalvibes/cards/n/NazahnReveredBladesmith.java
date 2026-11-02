@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChosenCardFromHandOntoBattlefieldEffect;
@@ -39,7 +38,7 @@ public class NazahnReveredBladesmith extends Card {
         target(new PermanentPredicateTargetFilter(
                 defendingCreature,
                 "Target must be a creature defending player controls"
-        )).addEffect(EffectSlot.ON_ATTACK,
+        )).addTrigger(Triggers.attacks(),
                 new MayEffect(
                         new TapPermanentsEffect(TapUntapScope.TARGET, defendingCreature),
                         "Tap target creature defending player controls?"));

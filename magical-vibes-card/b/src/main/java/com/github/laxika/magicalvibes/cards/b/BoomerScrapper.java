@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -30,7 +29,7 @@ public class BoomerScrapper extends Card {
         SequenceEffect loseLifeAndCreateJunk = SequenceEffect.of(
                 new LoseLifeEffect(1), junkToken());
         addTrigger(Triggers.enters(ObjectRelation.THIS), loseLifeAndCreateJunk);
-        addEffect(EffectSlot.ON_ATTACK, loseLifeAndCreateJunk);
+        addTrigger(Triggers.attacks(), loseLifeAndCreateJunk);
         addTrigger(Triggers.leavesBattlefield(null, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsTokenPredicate(),

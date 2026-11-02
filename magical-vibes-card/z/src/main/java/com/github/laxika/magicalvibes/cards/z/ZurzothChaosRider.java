@@ -39,7 +39,7 @@ public class ZurzothChaosRider extends Card {
                 new NthCardDrawTriggerEffect(1,
                         new ConditionalEffect(new NotCondition(new TargetPlayerIsActive()), devilToken)));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER,
+        addTrigger(Triggers.youAttackPlayer(),
                 new ConditionalEffect(
                         new MinimumMatchingAttackers(1, new PermanentHasSubtypePredicate(CardSubtype.DEVIL)),
                         SequenceEffect.of(

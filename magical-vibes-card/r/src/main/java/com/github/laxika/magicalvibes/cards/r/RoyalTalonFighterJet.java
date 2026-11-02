@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
@@ -25,7 +24,7 @@ public class RoyalTalonFighterJet extends Card {
 
         CountersOnSource plusOnePlusOneCounters = new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE);
         addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.whiteSoldier(plusOnePlusOneCounters));
-        addEffect(EffectSlot.ON_ATTACK, CreateTokenEffect.whiteSoldier(plusOnePlusOneCounters));
+        addTrigger(Triggers.attacks(), CreateTokenEffect.whiteSoldier(plusOnePlusOneCounters));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

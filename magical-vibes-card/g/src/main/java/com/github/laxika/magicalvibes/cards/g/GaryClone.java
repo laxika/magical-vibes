@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
@@ -21,7 +20,7 @@ public class GaryClone extends Card {
         addCastingCost(new RepeatableAdditionalManaCost(List.of("{2}")));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{2}")));
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new BoostAllOwnCreaturesEffect(1, 0, new PermanentNamedPredicate("Gary Clone")));
     }
 }

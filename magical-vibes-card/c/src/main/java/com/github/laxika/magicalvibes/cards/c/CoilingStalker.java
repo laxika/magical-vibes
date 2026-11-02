@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,7 +29,7 @@ public class CoilingStalker extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 targetFilter,
                 "Target must be a creature you control without a +1/+1 counter on it"
-        )).addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+        )).addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 PutCounterOnTargetPermanentEffect.withTargetRestriction(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, targetFilter));
     }

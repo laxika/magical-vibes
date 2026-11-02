@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -14,7 +13,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class JawsRelentlessPredator extends Card {
 
     public JawsRelentlessPredator() {
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 CreateTokenEffect.ofBloodToken(new EventValue()));
         addTrigger(Triggers.sacrificedOrDestroyed(Triggers.NONCREATURE_ARTIFACT, ObjectRelation.ANY),
                 new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));

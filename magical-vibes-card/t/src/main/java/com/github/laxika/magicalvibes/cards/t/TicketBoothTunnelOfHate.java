@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -15,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditional
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -40,8 +42,8 @@ public class TicketBoothTunnelOfHate extends Card {
         addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(1),
                 new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_ALLY_CREATURES_ATTACK,
-                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET, attackingCreature),
+                        new TriggeredAbility(Triggers.youAttack(),
+                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET, attackingCreature)),
                         GrantScope.SELF)));
     }
 }

@@ -482,7 +482,7 @@ view, no serialization. Turn-engine consumers were untouched.
   targets (none of the eight cards is one).
 - **`combatDamageTriggerContext()` is now `null` except for `DAMAGED_PLAYER`.** The absorbed record
   returned `DAMAGED_PLAYER` unconditionally, including for its targeted form, which never sits in
-  the `ON_COMBAT_DAMAGE_TO_PLAYER` slot. The merged record implements the interface for *every*
+  the `Triggers.dealsCombatDamageToPlayer()` slot. The merged record implements the interface for *every*
   kind, so this was checked against all four readers — `CombatDamageService:1219`,
   `TriggerCollectionService:801`, `SequenceEffect:77`, `SacrificeSelfThenEffect:38` — and every one
   calls the method rather than using `instanceof` as a bare marker, with `null` documented as "no
@@ -1537,7 +1537,7 @@ Four corrections:
   `CONTROLLER`/`EACH_PLAYER` cards are unaffected.
 - The `@CollectsTrigger` / `@ValidatesTarget` class-keying worry does not bite: **no** collector or
   validator is keyed on any of these three classes, despite Grimoire Thief
-  (`ON_ALLY_PERMANENT_BECOMES_TAPPED`), Nightveil Specter (`ON_COMBAT_DAMAGE_TO_PLAYER`) and three
+  (`ON_ALLY_PERMANENT_BECOMES_TAPPED`), Nightveil Specter (`Triggers.dealsCombatDamageToPlayer()`) and three
   ETB cards using trigger slots.
 - The fizzle log is **not** shared: the opponent handler said *"opponent-exile fizzles"*. Unified on
   *"exile-top-cards fizzles"* (`log.info` only, not player-visible). The opponent handler also

@@ -2,18 +2,19 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileDyingCreatureCardAndCreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToBattlefieldUnderOwnerControlEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -94,11 +95,12 @@ public class ExileDyingCreatureCardAndCreateTokenEffectHandler implements Normal
         List<Ability> boundTokenEffects = new ArrayList<>(tokenEffects.size());
         boolean changed = false;
         for (Ability ability : tokenEffects) {
-            if (LegacySlots.slotOf(ability) == EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER) {
+            if (ability instanceof TriggeredAbility triggered
+                    && triggered.hasTrigger(Triggers.dealsCombatDamageToPlayer())) {
                 CardEffect combatDamageEffect = LegacySlots.effectsOf(ability).getFirst();
                 CardEffect bound = bindReturn(combatDamageEffect, exiledCardId);
                 if (bound != combatDamageEffect) {
-                    boundTokenEffects.add(LegacySlots.triggered(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, bound));
+                    boundTokenEffects.add(LegacySlots.withEffect(ability, bound));
                     changed = true;
                     continue;
                 }

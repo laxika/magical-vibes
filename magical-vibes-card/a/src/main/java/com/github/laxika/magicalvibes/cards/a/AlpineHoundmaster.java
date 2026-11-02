@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -34,7 +33,7 @@ public class AlpineHoundmaster extends Card {
                 "Search your library for a card named Alpine Watchdog and/or a card named Igneous Cur?"
         ));
 
-        addEffect(EffectSlot.ON_ATTACK, new BoostSelfEffect(
+        addTrigger(Triggers.attacks(), new BoostSelfEffect(
                 new PermanentCount(new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER, true),
                 new Fixed(0)));
     }

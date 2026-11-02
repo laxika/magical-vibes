@@ -466,7 +466,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardHasKickerPredicate` | `()` | a card with a kicker or multikicker ability, detected from `KickerEffect` or a multikicker `RepeatableAdditionalManaCost`; use for filters such as “card with a kicker ability” |
 | `CardHasMorphAbilityPredicate` | `()` | a card with a morph ability; use with `CardTypePredicate(CREATURE)` for Dermoplasm's hand-to-battlefield ability |
 | `CardTruePredicate` | `()` | always matches (no restriction). Card counterpart of `PermanentTruePredicate`; use for unrestricted "spells" wordings (Helm of Awakening) |
-| `CardIsTokenPredicate` | `()` | token cards. Wrap in `CardNotPredicate` for "nontoken" (e.g. Militia's Pride: nontoken attacker filter on `ON_ALLY_CREATURE_ATTACKS` via `TriggeringCardConditionalEffect`) |
+| `CardIsTokenPredicate` | `()` | token cards. Wrap in `CardNotPredicate` for "nontoken" (e.g. Militia's Pride: nontoken attacker filter on `Triggers.creatureYouControlAttacks()` via `TriggeringCardConditionalEffect`) |
 | `CardIsMulticoloredPredicate` | `()` | a card with two or more colours (`Card.getColors().size() >= 2`); monocoloured and colourless cards never match. Card-in-any-zone counterpart of `PermanentIsMonocoloredPredicate`; used as a graveyard filter for "target multicolored card from your graveyard" (Reborn Hope) |
 | `CardHasExactlyTwoColorsPredicate` | `()` | a card with exactly two colors; used for Invasion of Ravnica's cast trigger and library selection |
 | `CardHasExactlyNColorsPredicate` | `(int colorCount)` | a card with exactly `colorCount` colors; used for dynamic-color-count library searches such as Evolving Door |

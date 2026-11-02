@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareLandTypeWithControlledLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -29,7 +29,7 @@ public class HiveheartShaman extends Card {
         CardAllOfPredicate basicLandWithUniqueType = new CardAllOfPredicate(List.of(
                 CardPredicateUtils.basicLand(),
                 new CardDoesNotShareLandTypeWithControlledLandPredicate()));
-        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        addTrigger(Triggers.attacks(), new MayEffect(
                 new SearchLibraryEffect(basicLandWithUniqueType, LibrarySearchDestination.BATTLEFIELD),
                 "Search your library for a basic land card that doesn't share a land type with a land you control?"));
 

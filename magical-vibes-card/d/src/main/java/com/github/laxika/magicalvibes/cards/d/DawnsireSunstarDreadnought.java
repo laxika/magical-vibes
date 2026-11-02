@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
@@ -24,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -61,7 +61,7 @@ public class DawnsireSunstarDreadnought extends Card {
         target(new PermanentPredicateTargetFilter(
                 creatureOrPlaneswalker,
                 "Target must be a creature or planeswalker"
-        ), 0, 1).addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, ConditionalEffect.atTriggerTime(
+        ), 0, 1).addTrigger(Triggers.youAttack(), ConditionalEffect.atTriggerTime(
                 new SourceCounterThreshold(10, CounterType.CHARGE),
                 new DealDamageToTargetCreatureOrPlaneswalkerEffect(100, creatureOrPlaneswalker)
         ));

@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PC2", collectorNumber = "50")
 @CardRegistration(set = "PCA", collectorNumber = "50")
@@ -19,7 +19,7 @@ public class PreyseizerDragon extends Card {
 
         // Whenever this creature attacks, it deals damage to any target equal to the number
         // of +1/+1 counters on it.
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new DealDamageToAnyTargetEffect(new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE)));
     }
 }

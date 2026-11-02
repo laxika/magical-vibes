@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringSpellControllerConditionalEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -17,7 +18,7 @@ import java.util.Set;
 public class RecruitInstructor extends Card {
 
     public RecruitInstructor() {
-        addEffect(EffectSlot.ON_ATTACK, new DraftCardFromSpellbookToHandEffect(List.of(
+        addTrigger(Triggers.attacks(), new DraftCardFromSpellbookToHandEffect(List.of(
                 new DraftCardFromSpellbookToHandEffect.CardPrintingReference("INR", "229"),
                 new DraftCardFromSpellbookToHandEffect.CardPrintingReference("ELD", "112"),
                 new DraftCardFromSpellbookToHandEffect.CardPrintingReference("WOE", "317"),

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,8 +24,8 @@ public class CybermenSquadron extends Card {
 
     public CybermenSquadron() {
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_ATTACK,
-                CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect.myriad(),
+                new TriggeredAbility(Triggers.attacks(),
+                CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect.myriad()),
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

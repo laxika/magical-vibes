@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M20", collectorNumber = "136")
 @CardRegistration(set = "FDN", collectorNumber = "193")
@@ -18,9 +18,9 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 public class DrakusethMawOfFlames extends Card {
 
     public DrakusethMawOfFlames() {
-        target(1, 1).addEffect(EffectSlot.ON_ATTACK,
+        target(1, 1).addTrigger(Triggers.attacks(),
                 DealDamageToAnyTargetEffect.forTargetGroup(4, 0));
-        target(0, 2).addEffect(EffectSlot.ON_ATTACK,
+        target(0, 2).addTrigger(Triggers.attacks(),
                 new DealDamageToEachTargetEffect(new Fixed(3)));
     }
 }

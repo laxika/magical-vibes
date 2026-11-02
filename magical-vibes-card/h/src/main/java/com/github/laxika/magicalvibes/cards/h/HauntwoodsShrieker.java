@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ManifestDreadEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTargetFaceDownPermanentAndMayTurnFaceUpEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -13,7 +13,7 @@ import java.util.List;
 public class HauntwoodsShrieker extends Card {
 
     public HauntwoodsShrieker() {
-        addEffect(EffectSlot.ON_ATTACK, ManifestDreadEffect.forController());
+        addTrigger(Triggers.attacks(), ManifestDreadEffect.forController());
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{G}",

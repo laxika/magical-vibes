@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FIN", collectorNumber = "151")
 @CardRegistration(set = "FIN", collectorNumber = "388")
@@ -25,6 +26,6 @@ public class RaubahnBullOfAlaMhigo extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),
                 "Target must be an Equipment you control"), 0, 1);
         target(TargetFilters.attackingCreature());
-        addEffect(EffectSlot.ON_ATTACK, new AttachTargetEquipmentToTargetCreatureEffect());
+        addTrigger(Triggers.attacks(), new AttachTargetEquipmentToTargetCreatureEffect());
     }
 }

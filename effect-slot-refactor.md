@@ -28,7 +28,7 @@ re-check them with a grep before acting on them.
 | 11 | Creature-death triggers and self-inclusion | done |
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
-| 13 | Remaining event families (repeatable) | open (runs 1 and 2: families 1 and 2 done) |
+| 13 | Remaining event families (repeatable) | open (runs 1 to 3: families 1 to 3 done) |
 | 14 | Trigger options replace trigger-only wrapper effects | open |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
@@ -3146,7 +3146,7 @@ and checks the "plain wording" cards 12a listed whose "another" relation exclude
 
 ### Step 13
 
-Step 13 is repeatable: each run moves one family of its table. Run 1 moved family 1, run 2 family 2.
+Step 13 is repeatable: each run moves one family of its table. Run 1 moved family 1, run 2 family 2, run 3 family 3.
 
 #### Run 1: steps and phases
 
@@ -3391,6 +3391,117 @@ agent-docs (583 lines; "slot" after a converted trigger reads "ability"); the im
   `SpellCastTriggerCollectorServiceTest` (4, mock wiring), `PlanechaseServiceTest` (2), and the known ones in
   `CardImmutabilityArchTest`, `SimulationCopyCompletenessTest` and `CardEffectTargetingConsistencyTest`.
 - AI: the whole module (1,620 tests), the same 10 failures as steps 7 to 13 run 1.
+- The full suite was not run here.
+
+#### Run 3: combat
+
+The 52 combat constants are gone: `ON_ATTACK`, the ally, any, "attacks you" and "attacks while you defend" attack
+slots, `ON_ALLY_CREATURES_ATTACK` and its graveyard, exile and command-zone forms, the attack-a-player slots,
+`ON_ANY_PLAYER_ATTACKS`, the planeswalker-attacked and attacking-creature-ability slots; the four unblocked slots;
+`ON_BLOCK`, `ON_BLOCKS_MULTIPLE_CREATURES` and the any-creature block slots; the four becomes-blocked slots; and the
+combat damage slots (to a player, opponent, owner, creature, blocking creature, player or planeswalker, player or
+battle, you; by this, equipped, ally, any, same-name and goaded creatures; dealt to this, to you, to you or your
+planeswalker from the graveyard). Family 4 (damage) is next; families 4 to 11 are left.
+
+**Authoring.**
+
+- `model.trigger.CombatTrigger(CombatEvent event, ObjectRelation relation, PermanentPredicate filter)`: creatures attack
+  (**CR 508.1**, checked), block (**CR 509.1**, checked), become blocked (**CR 509.1h**, checked) or deal combat damage
+  (**CR 510.2**, checked). `CombatEvent` has one value per event and recipient (`ATTACKS`, `ATTACKS_YOU`,
+  `ONE_OR_MORE_ATTACK`, `ATTACKS_UNBLOCKED`, `BLOCKS`, `BECOMES_BLOCKED`, `COMBAT_DAMAGE_TO_PLAYER`, …); the relation
+  names whose creature (`THIS`, `YOU_CONTROL`, `ANY`, `EQUIPPED`, `ENCHANTED`, `OPPONENT_CONTROLS`); the filter is only
+  set for "a creature with the same name" and "one or more goaded creatures", whose collectors check it as before.
+- One named `Triggers` factory per slot reading (47; the graveyard, exile and command-zone forms reuse the battlefield
+  one with a `TriggerCondition` zone): `attacks()`, `creatureYouControlAttacks()`, `creatureAttacks()`, `youAttack()`,
+  `playerAttacks()`, `creatureAttacksYou()`, `creatureAttacksYouOrYourPlaneswalker()`, `blocks()`, `becomesBlocked()`,
+  `attacksUnblocked()`, `dealsCombatDamageToPlayer()`, `creatureYouControlDealsCombatDamageToPlayer()`,
+  `equippedCreatureDealsCombatDamageToPlayer()`, `dealsCombatDamage()`, `dealtCombatDamage()`, …
+  (`scripts/step13-combat-slots.tsv` maps each slot to its factory and zone).
+- **Kept as the slots were:** on an Aura or Equipment the `THIS` forms of attacks, blocks, becomes blocked and deals
+  combat damage to a player are the attached creature's ("whenever enchanted creature attacks", or the ability the
+  attachment grants it, still told apart by `attackTriggerOwnedByAura` / `attackTriggerGrantedByEquipment`), and on a
+  Curse `dealsCombatDamageToPlayer()` is "a creature deals combat damage to enchanted player". The enum's Javadoc says
+  so. Step 14 or the step that moves combat onto rules events splits them into `ENCHANTED` / `EQUIPPED` relations.
+- `TriggerMode` stays on the registration (`ONCE_PER_BLOCK`, `PER_BLOCKER`, `ONCE_PER_BATCH`, `INDEPENDENT`), as 12b
+  kept `INDEPENDENT`: `Card.addTrigger(trigger, mode, effects)`, new `Card.addSimultaneousTrigger(trigger, mode,
+  effects)` (Assembled Alphas' per-blocker pair). Step 14 turns the multiplicity modes into `TriggerOptions`.
+- New readers and constructors: `GrantedTriggeredAbilitySupport.grantedTriggerEffects(game, permanent, controllerId,
+  trigger)` (the snapshot form), `TemporaryGlobalTriggeredAbility(controllerId, sourceCard, ability)`,
+  `GrantEffectToTargetEffect.toSource(Ability, duration)`, `ChooseCardFromHandToPerpetuallyGrantTriggeredAbilityEffect
+  (Trigger, effects, filter)`. `BecomeCopyOfTargetCreaturePermanentlyEffect.additionalRetainedEffectSlots` is
+  `additionalRetainedTriggers` (Aurora Shifter keeps its combat damage ability by trigger).
+- `LegacySlotGrouping.ALL_BUT_INDEPENDENT` is gone: its four slots were all combat ones. `LegacySlotTrigger` no longer
+  knows the `COMMAND_ZONE_` and `EXILE_` prefixes (no slot has one).
+
+**No rules event, no index.** As in runs 1 and 2, the attack, block and combat damage collectors in
+`CombatAttackService`, `CombatBlockService`, `CombatDamageService`, `CombatTriggerService` and `TriggerCollectionService`
+still run where the slots were collected. `service/trigger/CombatWatch` has one constant per old slot, naming its
+trigger and the zone the collector reads; it and `SpellAbilityWatch` implement the new `TriggerWatch` (`trigger()`,
+`zone()`, `effectsOf`, `registrationsOf`), so `dispatchWatch` takes either. Methods that took a combat slot take a
+`CombatWatch` (`checkAuraTriggersForCreature`, the source-deals-combat-damage dispatcher, the graveyard ally-damage
+check, the attack-trigger source record); `collectTemporaryGlobalTriggers` takes an `EffectSlot` or a `TriggerWatch`.
+The 11 handler registrations moved to `@CollectsCombatTrigger(watch = …)`, scanned by `TriggerCollectorRegistry` and
+`GameEngineConfig`. The engine and AI readers were converted by `scripts/step13-combat-readers.py`
+(`getEffects`/`getEffectRegistrations` → `watch.effectsOf/registrationsOf`, the temporary, persistent, granted and
+graveyard readers, watcher slot checks) and the rest by hand. Grouping, target routing, wrapper checks, face-down and
+ability-loss checks are unchanged, so the run makes no rules change. Shadow mode was not run, for run 1's reason.
+
+**Writers.** Specialize (Lukamina, Imoen, Ambergris), the Protean War Engine conjure, the dethrone copy keyword
+(`CloneService`), cipher, the suspect-and-perpetually-grant handler, the Imoen token binding
+(`ExileDyingCreatureCardAndCreateTokenEffectHandler`), `TokenCardFactory`'s Aura attack check, the rampage
+"already has it" check, the until-next-turn global registration (Tasha) and the chosen-color grant (Zombie Boa, which
+rebuilt its ability from the slot) add or read the trigger.
+
+**Cards.** `scripts/step13-combat-triggers.py` (run 2's script reading the TSV, with this family's grant heads:
+the until-end-of-turn/end-of-combat grants, the chosen-color, chosen-creature, source and cast-spell grants, the
+until-next-turn registration and the perpetual source-card grant) converted 3,103 card classes and 24 card tests, one
+ability per registration in the old order, any `TriggerMode` kept. `MANUAL`: Sunfrill Imitator and Aurora Shifter (the
+copy's retained triggers), `RunedTerrorTest` (a hand-made temporary global ability). Card comments and Javadoc naming a
+slot name its factory; 17 test display names said "ON_ATTACK trigger" and say "attack trigger". The application and
+AI tests were converted by the same two scripts plus hand edits (below). `scripts/step13-combat-docs.py` rewrote
+agent-docs (1,220 lines); the skills and `ARCHITECTURE.md` were written by hand.
+
+**For later runs.**
+
+- Step 14: the combat collectors still read their wrappers (`AllyCombatDamageTriggerEffect`'s dealer filter and
+  once-per-step flags, `TriggeringPermanentConditionalEffect`, `BlockPairConditionalEffect`, `BlockedCreatureTriggerEffect`,
+  `BatchedCombatDamageToYouTriggerEffect`, `OncePerTurnTriggerEffect` for "attacks for the first time each turn", …)
+  and the registration modes above.
+- 70 card classes have both an `attacks()` and a `blocks()` ability, many of them for one "whenever this creature
+  attacks or blocks" ability (Takenuma Bleeder). They stay two abilities, as the two slots were; only one of the two
+  events can happen to a creature in a combat, so it behaves the same. Step 14 merges such pairs into one ability with
+  two trigger conditions.
+- The Aura/Equipment and Curse readings of the `THIS` forms (above).
+
+**Tests changed.**
+
+- New `CombatTriggerTest` (`model/trigger/`): default zone, the factories' events and relations, the same-name and
+  goaded filters, null rejection, a card's attack abilities read by zone, and registrations keeping their trigger modes
+  (`addSimultaneousTrigger` with `PER_BLOCKER` included).
+- New `CombatWatchTest`: every watch has its own (trigger, zone) pair, so the collectors tell them apart, and a watch
+  reads only the abilities of its zone.
+- `CardAbilitiesTest`: the all-grouped slot test uses `ON_SELF_CYCLED` instead of `ON_BLOCK`; the
+  independent-registrations test is deleted with the all-but-independent grouping it tested.
+- `CombatDamageServiceTest` (mock-wired): its attacker helper takes a trigger, its granted-trigger stub stubs
+  `grantedTriggerEffects` with the trigger; the slot registrations by script.
+- `DamageTriggerCollectorServiceTest` and `TargetLegalityServiceTest`: dispatch to the watches / add the trigger.
+- `GrantedAbilitiesTest`, `TriggeredAbilityTest` and `GameDataDeepCopyTest` used `ON_ATTACK` as an arbitrary legacy
+  slot: they use `ON_SELF_CYCLED`. `TriggerConditionTest` uses `Triggers.youCastThisSpell()` (stack default) instead of
+  the command-zone slot; `LegacySlotTriggerTest`'s command-zone and exile rows are gone, and its per-slot case runs 52
+  fewer times.
+- By script: the 24 card tests (17 display names, `PassTheTorchTest`, `StormTheCitadelTest`, `RunedTerrorTest`, …).
+
+**Test runs.**
+
+- Card: every test class of a converted card and every card test that uses one (4,699 classes, 38,842 tests): all
+  passing.
+- Application: the combat, trigger-collector, registry, pipeline, trigger-model, copy, layer, freeze, architecture,
+  simulation-copy, step, turn-cleanup, targeting and setup classes (40 classes; 1,470 tests, 1,517 at HEAD: the 55
+  deleted cases above, and 8 new): 107 failures, exactly the
+  tests that fail at HEAD (`3b511e8f46`, same classes run in a worktree): mock wiring (`StoriedEffectHandler` not
+  injected in `CombatDamageServiceTest`, …) and the known ones in `CardImmutabilityArchTest`,
+  `SimulationCopyCompletenessTest` and `CardEffectTargetingConsistencyTest`.
+- AI: the whole module (1,620 tests), the same 10 failures as steps 7 to 13 run 2.
 - The full suite was not run here.
 
 ## Prompt

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DistinctPermanentNamesAmongControlled;
 import com.github.laxika.magicalvibes.model.condition.AttackedWithCommanderThisTurn;
@@ -25,7 +24,7 @@ public class NerivCracklingVanguard extends Card {
                 new CreateTokenEffect(2, "Goblin", 1, 1, CardColor.RED,
                         null, java.util.List.of(CardSubtype.GOBLIN)));
 
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new ExileTopCardsToSourceEffect(
                         new DistinctPermanentNamesAmongControlled(
                                 new PermanentIsTokenPredicate(), CountScope.CONTROLLER),

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackingCreaturesOfSubtype;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -29,7 +28,7 @@ public class HermesOverseerOfElpis extends Card {
                 List.of(new CreateTokenEffect("Bird", 1, 1, CardColor.BLUE,
                         List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING, Keyword.VIGILANCE), Set.of()))));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ConditionalEffect(
+        addTrigger(Triggers.youAttack(), new ConditionalEffect(
                 new MinimumAttackingCreaturesOfSubtype(1, CardSubtype.BIRD), new ScryEffect(2)));
     }
 }

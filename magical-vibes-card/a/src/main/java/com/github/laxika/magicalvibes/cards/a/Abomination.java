@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -19,8 +19,8 @@ public class Abomination extends Card {
         // destroy that creature at end of combat.
         PermanentColorInPredicate greenOrWhite =
                 new PermanentColorInPredicate(Set.of(CardColor.GREEN, CardColor.WHITE));
-        addEffect(EffectSlot.ON_BLOCK, new DestroyCombatOpponentAtEndOfCombatEffect(greenOrWhite, false));
-        addEffect(EffectSlot.ON_BECOMES_BLOCKED, new DestroyCombatOpponentAtEndOfCombatEffect(greenOrWhite, false),
-                TriggerMode.PER_BLOCKER);
+        addTrigger(Triggers.blocks(), new DestroyCombatOpponentAtEndOfCombatEffect(greenOrWhite, false));
+        addTrigger(Triggers.becomesBlocked(), TriggerMode.PER_BLOCKER,
+                new DestroyCombatOpponentAtEndOfCombatEffect(greenOrWhite, false));
     }
 }

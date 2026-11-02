@@ -8,7 +8,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * "Whenever this creature becomes blocked by a creature, gain control of that creature at end of
  * combat" ({@link ControlDuration#PERMANENT}).
  * <p>
- * Placed on {@link com.github.laxika.magicalvibes.model.EffectSlot#ON_BECOMES_BLOCKED} with
+ * Placed on {@code Triggers.becomesBlocked()} ability with
  * {@link com.github.laxika.magicalvibes.model.TriggerMode#PER_BLOCKER} (one trigger per blocker). The
  * referenced creature is carried as the stack entry's target and the source is the entry's source
  * permanent; the trigger does not target (it can't fizzle). Resolution creates a

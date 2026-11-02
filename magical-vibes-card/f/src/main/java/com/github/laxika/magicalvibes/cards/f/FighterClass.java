@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
@@ -40,7 +39,7 @@ public class FighterClass extends Card {
                 new SourceCounterThreshold(1, CounterType.LEVEL),
                 new ReduceEquipCostEffect(2)));
 
-        target(TargetFilters.creature(), 0, 1).addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
+        target(TargetFilters.creature(), 0, 1).addTrigger(Triggers.creatureYouControlAttacks(),
                 new ConditionalEffect(
                         new SourceCounterThreshold(2, CounterType.LEVEL),
                         new MustBlockTriggeringAttackerEffect()));

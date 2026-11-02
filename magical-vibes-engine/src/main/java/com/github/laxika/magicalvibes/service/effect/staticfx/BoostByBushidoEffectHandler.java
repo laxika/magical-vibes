@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.BoostByBushidoEffect;
 import com.github.laxika.magicalvibes.model.effect.BushidoEffect;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
+import com.github.laxika.magicalvibes.service.trigger.CombatWatch;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -48,9 +48,9 @@ public class BoostByBushidoEffectHandler implements StaticEffectHandlerBean {
         if (gameQueryService.hasLostPrintedAbilities(context.gameData(), permanent)) {
             return 0;
         }
-        List<CardEffect> effects = new ArrayList<>(permanent.getCard().getEffects(EffectSlot.ON_BLOCK));
-        effects.addAll(permanent.getPersistentTriggeredEffects(EffectSlot.ON_BLOCK));
-        effects.addAll(permanent.getTemporaryTriggeredEffects(EffectSlot.ON_BLOCK));
+        List<CardEffect> effects = new ArrayList<>(CombatWatch.ON_BLOCK.effectsOf(permanent.getCard()));
+        effects.addAll(permanent.getPersistentTriggerEffects(CombatWatch.ON_BLOCK.trigger()));
+        effects.addAll(permanent.getTemporaryTriggerEffects(CombatWatch.ON_BLOCK.trigger()));
         AmountContext amountContext = AmountContext.forStaticEffect(
                 permanent, context.gameData().findControllerOf(permanent));
         return effects.stream()

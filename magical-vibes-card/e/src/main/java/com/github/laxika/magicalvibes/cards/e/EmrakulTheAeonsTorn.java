@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColoredSpellsEffect;
@@ -27,7 +26,7 @@ public class EmrakulTheAeonsTorn extends Card {
 
         addStaticEffect(new ProtectionFromColoredSpellsEffect());
 
-        addEffect(EffectSlot.ON_ATTACK, new SacrificePermanentsEffect(
+        addTrigger(Triggers.attacks(), new SacrificePermanentsEffect(
                 6, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER));
 
         addTrigger(Triggers.putIntoGraveyardFromAnywhere(ObjectRelation.THIS),

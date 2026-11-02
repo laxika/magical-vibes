@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -21,6 +20,6 @@ public class DeathgorgeScavenger extends Card {
                 "Exile target card from a graveyard?"
         );
         addTrigger(Triggers.enters(ObjectRelation.THIS), mayExile);
-        addEffect(EffectSlot.ON_ATTACK, mayExile);
+        addTrigger(Triggers.attacks(), mayExile);
     }
 }

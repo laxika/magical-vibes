@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -36,7 +35,7 @@ public class SiegeDragon extends Card {
 
         // Whenever this creature attacks, if defending player controls no Walls, it deals 2 damage
         // to each creature without flying that player controls.
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new ConditionalEffect(
                         new NotCondition(new DefendingPlayerControlsPermanent(
                                 new PermanentHasSubtypePredicate(CardSubtype.WALL))),

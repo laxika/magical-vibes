@@ -21,10 +21,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * restriction for each opponent's next untap step so permanents arriving later are held too
  * (Pollen Lullaby, CR 611.2c).
  *
- * <p>Also a {@link CombatOpponentReferencingEffect}: when placed on the {@code ON_BLOCK} slot of an
+ * <p>Also a {@link CombatOpponentReferencingEffect}: when placed on the {@code Triggers.blocks()} ability of an
  * attached permanent (aura/equipment) with {@link TapUntapScope#TARGET}, {@code CombatTriggerService}
  * auto-targets the equipped/enchanted creature's combat opponent (the blocked attacker) — e.g. Shield
- * of the Righteous. On a creature's own {@code ON_BLOCK} trigger (Wall of Frost) the same auto-target
+ * of the Righteous. On a creature's own {@code Triggers.blocks()} ability (Wall of Frost) the same auto-target
  * is applied by {@code CombatBlockService}. Other scopes ignore the referenced target.
  *
  * @param scope      which permanent(s) to keep tapped through their next untap step

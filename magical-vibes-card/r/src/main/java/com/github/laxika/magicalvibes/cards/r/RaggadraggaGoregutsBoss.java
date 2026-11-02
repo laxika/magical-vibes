@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -34,7 +33,7 @@ public class RaggadraggaGoregutsBoss extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasManaAbilityPredicate()))));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
+        addTrigger(Triggers.creatureYouControlAttacks(),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasManaAbilityPredicate(),
                         new UntapTriggeringPermanentEffect()));

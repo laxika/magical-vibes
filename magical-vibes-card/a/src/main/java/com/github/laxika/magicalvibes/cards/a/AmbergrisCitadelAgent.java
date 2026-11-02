@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CardsDiscardedOrCycledThisTurn;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -36,6 +35,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -46,7 +46,7 @@ import java.util.Set;
 public class AmbergrisCitadelAgent extends Card {
 
     public AmbergrisCitadelAgent() {
-        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        addTrigger(Triggers.attacks(), new MayEffect(
                 new DiscardOwnHandThenDrawEffect(new Fixed(2)),
                 "Discard your hand and draw two cards?"));
 

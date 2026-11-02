@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateMayPutOntoBattlefieldElseToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOC", collectorNumber = "174")
 @CardRegistration(set = "WOC", collectorNumber = "7")
@@ -18,7 +18,7 @@ public class SongbirdsBlessing extends Card {
         setAttackTriggerOwnedByAura(true);
 
         target(TargetFilters.creature());
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new RevealUntilCardPredicateMayPutOntoBattlefieldElseToHandEffect(
                         new CardIsAuraPredicate()));
     }

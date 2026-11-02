@@ -2,15 +2,15 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DKA", collectorNumber = "49")
 @CardRegistration(set = "IMA", collectorNumber = "72")
 public class Shriekgeist extends Card {
 
     public Shriekgeist() {
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MillEffect(2, MillRecipient.TARGET_PLAYER));
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new MillEffect(2, MillRecipient.TARGET_PLAYER));
     }
 }

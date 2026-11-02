@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.Coven;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -31,6 +30,6 @@ public class RedemptionChoir extends Card {
                 .build();
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new Coven(), returnPermanent));
-        addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(new Coven(), returnPermanent));
+        addTrigger(Triggers.attacks(), new ConditionalEffect(new Coven(), returnPermanent));
     }
 }

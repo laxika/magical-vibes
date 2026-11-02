@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -30,7 +29,7 @@ public class AradeshTheFounderTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsTrigger(value = AradeshTheFounderEffect.class, slot = EffectSlot.ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS)
+    @CollectsCombatTrigger(value = AradeshTheFounderEffect.class, watch = CombatWatch.ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS)
     private boolean handleEnlistedCreature(TriggerMatchContext match, AradeshTheFounderEffect effect,
                                             TriggerContext context) {
         if (!(context instanceof TriggerContext.AttackingCreatureTriggeredAbility attack)

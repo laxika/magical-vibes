@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpel
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,12 +30,12 @@ public class SmolderingStagecoach extends Card {
                 CountScope.CONTROLLER);
         addStaticEffect(new SetPowerToughnessToAmountEffect(instantsAndSorceries, new Fixed(5)));
 
-        addEffect(EffectSlot.ON_ATTACK, new RegisterDelayedControllerSpellCastTriggerEffect(
+        addTrigger(Triggers.attacks(), new RegisterDelayedControllerSpellCastTriggerEffect(
                 new CardTypePredicate(CardType.INSTANT),
                 List.of(new CascadeEffect()),
                 true,
                 false));
-        addEffect(EffectSlot.ON_ATTACK, new RegisterDelayedControllerSpellCastTriggerEffect(
+        addTrigger(Triggers.attacks(), new RegisterDelayedControllerSpellCastTriggerEffect(
                 new CardTypePredicate(CardType.SORCERY),
                 List.of(new CascadeEffect()),
                 true,

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
@@ -25,6 +24,6 @@ public class ChompingMastasaur extends Card {
                 new SeekLibraryToHandEffect(nonlandCard));
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), discardThenSeekAndDamage);
-        addEffect(EffectSlot.ON_ATTACK, discardThenSeekAndDamage);
+        addTrigger(Triggers.attacks(), discardThenSeekAndDamage);
     }
 }

@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ONS", collectorNumber = "51")
 @CardRegistration(set = "DDC", collectorNumber = "22")
@@ -13,6 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 public class RighteousCause extends Card {
 
     public RighteousCause() {
-        addEffect(EffectSlot.ON_ANY_CREATURE_ATTACKS, new GainLifeEffect(1));
+        addTrigger(Triggers.creatureAttacks(), new GainLifeEffect(1));
     }
 }

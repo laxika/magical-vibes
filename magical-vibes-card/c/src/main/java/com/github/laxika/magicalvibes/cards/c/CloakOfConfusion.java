@@ -2,13 +2,13 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageAndDefendingPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,7 +28,7 @@ public class CloakOfConfusion extends Card {
         ))
                 // Whenever enchanted creature attacks and isn't blocked, you may have it assign no
                 // combat damage this turn. If you do, defending player discards a card at random.
-                .addEffect(EffectSlot.ON_ENCHANTED_CREATURE_ATTACKS_UNBLOCKED,
+                .addTrigger(Triggers.enchantedCreatureAttacksUnblocked(),
                         new MayEffect(new AssignNoCombatDamageAndDefendingPlayerDiscardsEffect(),
                                 "have it assign no combat damage this turn?"));
     }

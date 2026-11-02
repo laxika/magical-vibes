@@ -81,7 +81,7 @@ class TriggeredAbilityTest {
     void aLegacySlotTriggerIsTheOnlyConditionOfItsAbility() {
         List<TriggerCondition> twoSlots = List.of(
                 new TriggerCondition(new LegacySlotTrigger(EffectSlot.ON_SELF_BECOMES_UNTAPPED)),
-                new TriggerCondition(new LegacySlotTrigger(EffectSlot.ON_ATTACK)));
+                new TriggerCondition(new LegacySlotTrigger(EffectSlot.ON_SELF_CYCLED)));
 
         assertThatThrownBy(() -> new TriggeredAbility(twoSlots, TriggerOptions.DEFAULT, ZOMBIE))
                 .isInstanceOf(IllegalArgumentException.class);

@@ -76,7 +76,7 @@ class MortisDogsTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        // Simulate the attack boost (+2/+0) that would have been applied by the ON_ATTACK trigger
+        // Simulate the attack boost (+2/+0) that would have been applied by the Triggers.attacks() trigger
         Permanent dogsPerm = findPermanent(player1, "Mortis Dogs");
         dogsPerm.setPowerModifier(2);
 

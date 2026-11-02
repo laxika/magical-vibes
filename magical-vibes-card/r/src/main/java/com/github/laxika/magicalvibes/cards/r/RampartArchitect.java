@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -27,7 +26,7 @@ public class RampartArchitect extends Card {
         CreateTokenEffect wallToken = new CreateTokenEffect(
                 "Wall", 1, 3, CardColor.WHITE, List.of(CardSubtype.WALL), Set.of(Keyword.DEFENDER), Set.of());
         addTrigger(Triggers.enters(ObjectRelation.THIS), wallToken);
-        addEffect(EffectSlot.ON_ATTACK, wallToken);
+        addTrigger(Triggers.attacks(), wallToken);
         var defenderDeathSearch = new TriggeringPermanentConditionalEffect(
                 new PermanentHasKeywordPredicate(Keyword.DEFENDER),
                 new MayEffect(new SearchLibraryEffect(

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -59,8 +60,8 @@ public class VraskaGolgariQueen extends Card {
                 -9,
                 List.of(new CreateEmblemEffect(
                         List.of(new GrantTriggeredAbilityEffect(
-                                EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                                new TargetPlayerLosesGameEffect(null),
+                                new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
+                                new TargetPlayerLosesGameEffect(null)),
                                 GrantScope.ALL_OWN_CREATURES)),
                         EMBLEM_TEXT)),
                 "−9: You get an emblem with \"" + EMBLEM_TEXT + "\"."

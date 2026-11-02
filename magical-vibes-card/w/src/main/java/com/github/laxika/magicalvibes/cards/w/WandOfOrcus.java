@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -22,9 +22,9 @@ import java.util.Set;
 public class WandOfOrcus extends Card {
 
     public WandOfOrcus() {
-        addEffect(EffectSlot.ON_ATTACK, deathtouchGrant());
-        addEffect(EffectSlot.ON_BLOCK, deathtouchGrant());
-        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.attacks(), deathtouchGrant());
+        addTrigger(Triggers.blocks(), deathtouchGrant());
+        addTrigger(Triggers.equippedCreatureDealsCombatDamageToPlayer(),
                 new CreateTokenEffect(new EventValue(), "Zombie", 2, 2, CardColor.BLACK,
                         List.of(CardSubtype.ZOMBIE), Set.of(), Set.of()));
         addActivatedAbility(new EquipActivatedAbility("{3}"));

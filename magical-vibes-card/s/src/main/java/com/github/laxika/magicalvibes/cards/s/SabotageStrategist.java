@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ import java.util.List;
 public class SabotageStrategist extends Card {
 
     public SabotageStrategist() {
-        addEffect(EffectSlot.ON_CREATURES_ATTACK_YOU,
+        addTrigger(Triggers.creaturesAttackYou(),
                 new BoostAllOwnCreaturesEffect(-1, 0).forDeclaredAttackers());
 
         addActivatedAbility(new ActivatedAbility(

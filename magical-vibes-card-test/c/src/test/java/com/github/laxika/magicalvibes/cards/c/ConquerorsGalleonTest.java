@@ -36,7 +36,7 @@ class ConquerorsGalleonTest extends BaseCardTest {
             animateAsCreature(galleon);
 
             declareAttackers(List.of(0));
-            // Resolve the ON_ATTACK trigger (schedules exile at end of combat)
+            // Resolve the Triggers.attacks() trigger (schedules exile at end of combat)
             harness.passBothPriorities();
 
             // Advance to END_OF_COMBAT
@@ -60,7 +60,7 @@ class ConquerorsGalleonTest extends BaseCardTest {
             animateAsCreature(galleon);
 
             declareAttackers(List.of(0));
-            // Resolve the ON_ATTACK trigger
+            // Resolve the Triggers.attacks() trigger
             harness.passBothPriorities();
 
             // Remove the Galleon before end of combat (e.g. destroyed in combat)

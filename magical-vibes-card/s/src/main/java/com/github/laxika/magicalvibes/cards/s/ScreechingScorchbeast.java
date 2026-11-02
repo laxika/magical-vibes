@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensForNonlandCardsMilledEffect;
@@ -26,7 +25,7 @@ import java.util.Set;
 public class ScreechingScorchbeast extends Card {
 
     public ScreechingScorchbeast() {
-        addEffect(EffectSlot.ON_ATTACK, new GiveEachPlayerRadCounterEffect(2));
+        addTrigger(Triggers.attacks(), new GiveEachPlayerRadCounterEffect(2));
 
         CreateTokenEffect zombieMutant = new CreateTokenEffect(
                 new EventValue(), "Zombie Mutant", 2, 2, CardColor.BLACK,

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Equipped;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackingCreaturesOfSubtype;
@@ -27,7 +26,7 @@ public class EnkiraHostileScavenger extends Card {
                 2, "Walker", 2, 2, CardColor.BLACK, List.of(CardSubtype.ZOMBIE), Set.of(), Set.of()));
         addStaticEffect(new ConditionalEffect(new Equipped(),
                 new MustBeBlockedIfAbleEffect()));
-        addEffect(EffectSlot.ON_ATTACK, ConditionalEffect.atTriggerTime(
+        addTrigger(Triggers.attacks(), ConditionalEffect.atTriggerTime(
                 new MinimumAttackingCreaturesOfSubtype(2, CardSubtype.ZOMBIE),
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
     }

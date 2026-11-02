@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ public class CattiBrieOfMithralHall extends Card {
 
     public CattiBrieOfMithralHall() {
         // Whenever Catti-brie attacks, put a +1/+1 counter on it for each Equipment attached to it.
-        addEffect(EffectSlot.ON_ATTACK, new PutCountersOnSelfEffect(
+        addTrigger(Triggers.attacks(), new PutCountersOnSelfEffect(
                 CounterType.PLUS_ONE_PLUS_ONE,
                 new AttachmentsOnSource(false, true)
         ));

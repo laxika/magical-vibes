@@ -7,13 +7,14 @@ import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AKH", collectorNumber = "118")
 @CardRegistration(set = "AKR", collectorNumber = "139")
 public class BattlefieldScavenger extends Card {
 
     public BattlefieldScavenger() {
-        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        addTrigger(Triggers.attacks(), new MayEffect(
                 new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true),
                 "Exert Battlefield Scavenger as it attacks?"
         ));

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -42,8 +43,9 @@ public class GrantEffectToSourceOfChosenColorUntilEndOfTurnEffectHandler impleme
             return;
         }
 
-        source.addTemporaryTriggeredEffect(grant.slot(), new TriggeringPermanentConditionalEffect(
-                new PermanentColorInPredicate(Set.of(chosenColor)), grant.grantedEffect(), false, true));
+        source.addTemporaryAbility(LegacySlots.withEffect(grant.grantedAbility(),
+                new TriggeringPermanentConditionalEffect(
+                        new PermanentColorInPredicate(Set.of(chosenColor)), grant.grantedEffect(), false, true)));
         gameLogService.append(gameData, GameLog.builder()
                 .card(source.getCard())
                 .text(" gains a temporary ability until end of turn.")

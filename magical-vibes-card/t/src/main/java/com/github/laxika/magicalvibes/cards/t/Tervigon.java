@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
@@ -26,7 +25,7 @@ public class Tervigon extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ConditionalEffect(new SpellXAtLeast(5), new DrawCardEffect(1)));
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new CreateTokenEffect(new EventValue(), "Tyranid", 1, 1, CardColor.GREEN,
                         List.of(CardSubtype.TYRANID), Set.of(), Set.of()));
     }

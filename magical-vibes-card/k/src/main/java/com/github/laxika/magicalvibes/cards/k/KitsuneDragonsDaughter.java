@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
@@ -33,7 +32,7 @@ public class KitsuneDragonsDaughter extends Card {
         targets.addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 ExchangeControlOfTargetPermanentsEffect.forTwoTargetsInOneGroup(otherCreature),
                 "Exchange control of the two target creatures?"));
-        targets.addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MayEffect(
+        targets.addTrigger(Triggers.dealsCombatDamageToPlayer(), new MayEffect(
                 ExchangeControlOfTargetPermanentsEffect.forTwoTargetsInOneGroup(otherCreature),
                 "Exchange control of the two target creatures?"));
     }

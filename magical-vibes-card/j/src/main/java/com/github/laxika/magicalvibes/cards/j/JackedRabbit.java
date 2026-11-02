@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
@@ -27,7 +26,7 @@ public class JackedRabbit extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ConditionalEffect(new SpellXAtLeast(5), new DrawCardEffect(1)));
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new CreateTokenEffect(new SourcePower(), "Rabbit", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.RABBIT), Set.of(), Set.of()));
     }

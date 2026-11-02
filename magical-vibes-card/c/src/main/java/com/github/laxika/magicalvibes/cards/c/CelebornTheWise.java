@@ -10,12 +10,13 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "HOC", collectorNumber = "203")
 public class CelebornTheWise extends Card {
 
     public CelebornTheWise() {
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ConditionalEffect(
+        addTrigger(Triggers.youAttack(), new ConditionalEffect(
                 new MinimumMatchingAttackers(1, new PermanentHasSubtypePredicate(CardSubtype.ELF)),
                 new ScryEffect(1)));
         addEffect(EffectSlot.ON_CONTROLLER_SCRIES, new BoostSelfEffect(

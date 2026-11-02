@@ -4,9 +4,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostRedu
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -29,7 +29,8 @@ public class AwakenTheBloodAvatar extends Card {
                 CardColor.BLACK, Set.of(CardColor.BLACK, CardColor.RED),
                 List.of(CardSubtype.AVATAR), Set.of(Keyword.HASTE), Set.of(),
                 false, false,
-                List.of(LegacySlots.triggered(EffectSlot.ON_ATTACK, new DealDamageToPlayersEffect(3, DamageRecipient.EACH_OPPONENT))),
+                List.of(new TriggeredAbility(Triggers.attacks(),
+                        new DealDamageToPlayersEffect(3, DamageRecipient.EACH_OPPONENT))),
                 List.of(), false, false, false, 0, Set.of()));
     }
 }

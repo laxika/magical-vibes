@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -35,6 +34,6 @@ public class AangAndKatara extends Card {
                 List.of(CardSubtype.ALLY), Set.of(), Set.of());
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), allyToken);
-        addEffect(EffectSlot.ON_ATTACK, allyToken);
+        addTrigger(Triggers.attacks(), allyToken);
     }
 }

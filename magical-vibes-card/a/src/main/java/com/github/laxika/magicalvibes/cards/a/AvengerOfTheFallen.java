@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -19,7 +19,8 @@ import java.util.Set;
 public class AvengerOfTheFallen extends Card {
 
     public AvengerOfTheFallen() {
-        addEffect(EffectSlot.ON_ATTACK, com.github.laxika.magicalvibes.model.effect.SequenceEffect.of(new CreateTokenEffect(
+        addTrigger(Triggers.attacks(),
+                com.github.laxika.magicalvibes.model.effect.SequenceEffect.of(new CreateTokenEffect(
                 CardType.CREATURE,
                 new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER),
                 "Warrior", 1, 1, CardColor.RED, null, List.of(CardSubtype.WARRIOR),

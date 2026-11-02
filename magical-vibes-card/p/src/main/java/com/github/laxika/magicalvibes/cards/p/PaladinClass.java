@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -27,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -52,10 +52,10 @@ public class PaladinClass extends Card {
                 new PermanentCount(new PermanentIsAttackingPredicate(), CountScope.CONTROLLER),
                 new Fixed(-1));
         target(TargetFilters.attackingCreature())
-                .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ConditionalEffect(
+                .addTrigger(Triggers.youAttack(), new ConditionalEffect(
                         new SourceCounterThreshold(2, CounterType.LEVEL),
                         new BoostTargetCreatureEffect(otherAttackingCreatures, otherAttackingCreatures)))
-                .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ConditionalEffect(
+                .addTrigger(Triggers.youAttack(), new ConditionalEffect(
                         new SourceCounterThreshold(2, CounterType.LEVEL),
                         new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET)));
 

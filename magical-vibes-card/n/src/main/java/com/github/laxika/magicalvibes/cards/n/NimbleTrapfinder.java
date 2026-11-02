@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.AnotherPermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.FullParty;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
@@ -34,7 +34,7 @@ public class NimbleTrapfinder extends Card {
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
                 new FullParty(),
                 new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
-                        EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                        new DrawCardEffect(1))));
+                        new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
+                        new DrawCardEffect(1)))));
     }
 }

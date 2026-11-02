@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -38,7 +37,7 @@ public class SoulOfWindgrace extends Card {
                 "Put a land card from a graveyard onto the battlefield tapped under your control?"
         );
         addTrigger(Triggers.enters(ObjectRelation.THIS), returnLand);
-        addEffect(EffectSlot.ON_ATTACK, returnLand);
+        addTrigger(Triggers.attacks(), returnLand);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

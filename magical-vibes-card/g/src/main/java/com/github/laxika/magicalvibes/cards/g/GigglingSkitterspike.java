@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -17,11 +18,10 @@ import java.util.List;
 public class GigglingSkitterspike extends Card {
 
     public GigglingSkitterspike() {
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new DealDamageToPlayersEffect(new SourcePower(), DamageRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.ON_BLOCK,
-                new DealDamageToPlayersEffect(new SourcePower(), DamageRecipient.EACH_OPPONENT),
-                TriggerMode.ONCE_PER_BLOCK);
+        addTrigger(Triggers.blocks(), TriggerMode.ONCE_PER_BLOCK,
+                new DealDamageToPlayersEffect(new SourcePower(), DamageRecipient.EACH_OPPONENT));
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL,
                 new DealDamageToPlayersEffect(new SourcePower(), DamageRecipient.EACH_OPPONENT));
 

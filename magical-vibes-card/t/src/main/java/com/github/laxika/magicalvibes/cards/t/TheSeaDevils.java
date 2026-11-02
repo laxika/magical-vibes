@@ -6,12 +6,14 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -30,9 +32,9 @@ public class TheSeaDevils extends Card {
         // Chapter III: until end of turn, whenever a Salamander (any controller's) deals combat damage
         // to a player, it deals that much damage to target creature that player controls.
         addEffect(EffectSlot.SAGA_CHAPTER_III, new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
-                EffectSlot.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+                new TriggeredAbility(Triggers.creatureDealsCombatDamageToPlayer(),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.SALAMANDER),
-                        new DealDamageToTargetCreatureDamagedPlayerControlsEffect(new EventValue()))));
+                        new DealDamageToTargetCreatureDamagedPlayerControlsEffect(new EventValue())))));
     }
 }

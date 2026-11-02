@@ -3,11 +3,12 @@ package com.github.laxika.magicalvibes.cards.z;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToSourceOfChosenColorUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,8 +22,8 @@ public class ZombieBoa extends Card {
                 List.of(
                         new ChooseColorAtResolutionEffect(),
                         new GrantEffectToSourceOfChosenColorUntilEndOfTurnEffect(
-                                EffectSlot.ON_BECOMES_BLOCKED,
-                                new DestroyCreatureBlockingThisEffect())
+                                new TriggeredAbility(Triggers.becomesBlocked(),
+                                new DestroyCreatureBlockingThisEffect()))
                 ),
                 "{1}{B}: Choose a color. Whenever Zombie Boa becomes blocked by a creature of that color this turn, destroy that creature.",
                 ActivationTimingRestriction.SORCERY_SPEED

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ManifestTopCardEffect;
@@ -28,7 +27,7 @@ public class UginsMastery extends Card {
                         new CardIsColorlessPredicate(),
                         new CardTypePredicate(CardType.CREATURE))),
                 List.of(new ManifestTopCardEffect())));
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+        addTrigger(Triggers.youAttack(),
                 new ConditionalEffect(
                         new AttackingCreaturesTotalPowerAtLeast(6),
                         new MayEffect(new TurnOwnCreatureFaceUpEffect(),

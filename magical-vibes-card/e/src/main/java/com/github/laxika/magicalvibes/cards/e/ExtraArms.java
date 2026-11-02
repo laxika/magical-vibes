@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SCG", collectorNumber = "92")
 public class ExtraArms extends Card {
@@ -17,7 +17,7 @@ public class ExtraArms extends Card {
         // Whenever enchanted creature attacks, it deals 2 damage to any target. The ability is the Aura's own,
         // so its controller is the Aura's controller even when the enchanted creature is an opponent's.
         setAttackTriggerOwnedByAura(true);
-        addEffect(EffectSlot.ON_ATTACK, new DealDamageToAnyTargetEffect(
+        addTrigger(Triggers.attacks(), new DealDamageToAnyTargetEffect(
                 new Fixed(2), false, false, -1, null, false, false, false, true));
     }
 }

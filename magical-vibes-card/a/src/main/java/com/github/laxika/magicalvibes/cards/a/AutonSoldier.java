@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -32,7 +32,8 @@ public class AutonSoldier extends Card {
                 false,
                 null,
                 Set.of(),
-                List.of(LegacySlots.triggered(EffectSlot.ON_ATTACK, List.of(CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect.myriad()))),
+                List.of(new TriggeredAbility(Triggers.attacks(),
+                        CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect.myriad())),
                 false,
                 false,
                 null,

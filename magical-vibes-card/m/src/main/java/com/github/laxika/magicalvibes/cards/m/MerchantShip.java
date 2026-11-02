@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,7 +25,7 @@ public class MerchantShip extends Card {
                 "an Island"
         ));
 
-        addEffect(EffectSlot.ON_ATTACKS_UNBLOCKED, new GainLifeEffect(2));
+        addTrigger(Triggers.attacksUnblocked(), new GainLifeEffect(2));
 
         addEffect(EffectSlot.STATE_TRIGGERED, StateTriggerEffect.whenBattlefieldHasAtMost(0,
                 new PermanentAllOfPredicate(List.of(

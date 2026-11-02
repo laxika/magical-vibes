@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
@@ -22,13 +21,13 @@ import java.util.List;
 public class ZukoSeekingHonor extends Card {
 
     public ZukoSeekingHonor() {
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 1));
         addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                 List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF))
         ));
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

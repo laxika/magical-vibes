@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
@@ -20,7 +19,7 @@ import java.util.Set;
 public class LeoriSparktouchedHunter extends Card {
 
     public LeoriSparktouchedHunter() {
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new ChooseSubtypeForSourceEffect(
                         CardSubtype.planeswalkerTypes(), true, "Choose a planeswalker type."));
 

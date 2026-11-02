@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AKH", collectorNumber = "193")
 @CardRegistration(set = "AKR", collectorNumber = "225")
@@ -17,7 +17,7 @@ public class WatchfulNaga extends Card {
         // Exert: "You may exert this creature as it attacks. When you do, draw a card."
         // Modeled as an optional attack trigger (matching Hooded Brawler / Nef-Crop Entangler). Choosing to
         // exert also keeps the creature tapped through its next untap step.
-        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        addTrigger(Triggers.attacks(), new MayEffect(
                 SequenceEffect.of(
                         new DrawCardEffect(1),
                         new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)

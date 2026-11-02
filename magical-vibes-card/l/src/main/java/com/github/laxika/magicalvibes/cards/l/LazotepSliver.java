@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AmassGoblinsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -23,8 +23,8 @@ public class LazotepSliver extends Card {
     public LazotepSliver() {
         // Sliver creatures you control have afflict 2.
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_BECOMES_BLOCKED,
-                new LoseLifeEffect(2, LoseLifeRecipient.DEFENDING_PLAYER),
+                new TriggeredAbility(Triggers.becomesBlocked(),
+                new LoseLifeEffect(2, LoseLifeRecipient.DEFENDING_PLAYER)),
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));
 

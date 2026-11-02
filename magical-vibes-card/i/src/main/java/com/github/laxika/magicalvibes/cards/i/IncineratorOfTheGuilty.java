@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachCreatureAndPlaneswalkerDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MKM", collectorNumber = "132")
 @CardRegistration(set = "MKM", collectorNumber = "349")
@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class IncineratorOfTheGuilty extends Card {
 
     public IncineratorOfTheGuilty() {
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MayEffect(
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new MayEffect(
                 SequenceEffect.of(
                         CollectEvidenceEffect.withChosenX(),
                         new QueueReflexiveAbilityEffect(

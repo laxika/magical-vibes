@@ -120,7 +120,7 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/c/src/main/java/com/github/laxika/magicalvibes/cards/c/ClachanFestival.java`
 
 - Per-blocker trigger ("becomes blocked by a creature"):
-  - `addEffect(EffectSlot.ON_BECOMES_BLOCKED, effect, TriggerMode.PER_BLOCKER)` — fires once per blocking creature
+  - `addTrigger(Triggers.becomesBlocked(), TriggerMode.PER_BLOCKER, effect)` — fires once per blocking creature
   - TriggerMode is on the registration, not the effect — keeps effects pure and reusable
   - Example: `magical-vibes-card/i/src/main/java/com/github/laxika/magicalvibes/cards/i/InfiltrationLens.java`
 

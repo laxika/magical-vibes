@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
 import com.github.laxika.magicalvibes.model.condition.BlockedByMinCreatures;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,10 +26,10 @@ public class SeiferBalambRival extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentControlledByDefendingPlayerPredicate())),
                 "Target must be a creature defending player controls"))
-                .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER,
+                .addTrigger(Triggers.youAttackPlayer(),
                         new GoadTargetCreatureUntilNextTurnEffect());
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_BECOMES_BLOCKED,
+        addTrigger(Triggers.creatureYouControlBecomesBlocked(),
                 new ConditionalEffect(new AttackedTargetIsOpponent(),
                         new ConditionalEffect(new BlockedByMinCreatures(2),
                                 new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF))));

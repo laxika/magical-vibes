@@ -11,9 +11,9 @@ class TriggerConditionTest {
 
     @Test
     void functionsFromItsTriggersDefaultZonesUnlessGivenOthers() {
-        LegacySlotTrigger trigger = new LegacySlotTrigger(EffectSlot.COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK);
+        Trigger trigger = Triggers.youCastThisSpell();
 
-        assertThat(new TriggerCondition(trigger).zones()).isEqualTo(AbilityZones.COMMAND);
+        assertThat(new TriggerCondition(trigger).zones()).isEqualTo(AbilityZones.STACK);
         assertThat(new TriggerCondition(trigger, AbilityZones.EXILE).zones()).isEqualTo(AbilityZones.EXILE);
     }
 

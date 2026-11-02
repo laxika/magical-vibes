@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.PutCounterOnSourceThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyPermanentDamagedPlayerControlsEffect;
@@ -28,7 +27,7 @@ public class WakkaDevotedGuardian extends Card {
     public WakkaDevotedGuardian() {
         // Whenever Wakka deals combat damage to a player, destroy up to one target artifact that
         // player controls and put a +1/+1 counter on Wakka.
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, SequenceEffect.upToOneTarget(
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), SequenceEffect.upToOneTarget(
                 new DestroyPermanentDamagedPlayerControlsEffect(new PermanentIsArtifactPredicate(), 0),
                 new PutCountersOnSourceEffect(1, 1, 1)));
 

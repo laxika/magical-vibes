@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
@@ -41,7 +40,7 @@ public class Imprison extends Card {
                         new RemoveReferencedPermanentFromCombatEffect(PermanentReference.TRIGGERING, true)),
                 "Pay {1} to tap and remove the creature from combat?",
                 new DestroyReferencedPermanentEffect(PermanentReference.SOURCE));
-        addEffect(EffectSlot.ON_ATTACK, combatTrigger);
-        addEffect(EffectSlot.ON_BLOCK, combatTrigger);
+        addTrigger(Triggers.attacks(), combatTrigger);
+        addTrigger(Triggers.blocks(), combatTrigger);
     }
 }

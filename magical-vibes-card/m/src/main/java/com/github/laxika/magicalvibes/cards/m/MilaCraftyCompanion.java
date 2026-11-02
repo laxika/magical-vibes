@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksPlaneswalker;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +24,7 @@ public class MilaCraftyCompanion extends Card {
         setBackFaceCard(backFace);
         setModalDoubleFaced(true);
 
-        addEffect(EffectSlot.ON_ANY_PLAYER_ATTACKS,
+        addTrigger(Triggers.playerAttacks(),
                 new ConditionalEffect(new OpponentAttacksPlaneswalker(),
                         new PutCounterOnEachControlledPermanentEffect(
                                 CounterType.LOYALTY, 1, new PermanentIsPlaneswalkerPredicate())));

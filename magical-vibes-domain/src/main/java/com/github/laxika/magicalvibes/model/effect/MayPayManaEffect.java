@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * player carried on the stack entry's {@code targetId} by an
  * {@code Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER)} trigger (Paralyze) — and
  * {@link MayPayPayer#DEFENDING_PLAYER} prompts the player being attacked, read from an
- * {@code ON_ATTACK} trigger's {@code attackedTargetId} (Mtenda Lion).
+ * {@code Triggers.attacks()} ability's {@code attackedTargetId} (Mtenda Lion).
  *
  * <p>{@code elseEffect} models the "If you don't, [effect]" half of a punisher-style choice — it
  * resolves instead of {@code wrapped} when the payment is declined or cannot be made (Preferred

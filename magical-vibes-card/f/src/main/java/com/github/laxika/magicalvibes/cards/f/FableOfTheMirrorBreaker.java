@@ -6,10 +6,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -23,7 +24,7 @@ public class FableOfTheMirrorBreaker extends Card {
         addEffect(EffectSlot.SAGA_CHAPTER_I, new CreateTokenEffect(
                 1, "Goblin Shaman", 2, 2, CardColor.RED,
                 List.of(CardSubtype.GOBLIN, CardSubtype.SHAMAN), Set.of(), Set.of(),
-                List.of(LegacySlots.triggered(EffectSlot.ON_ATTACK, CreateTokenEffect.ofTreasureToken(1)))));
+                List.of(new TriggeredAbility(Triggers.attacks(), CreateTokenEffect.ofTreasureToken(1)))));
         addEffect(EffectSlot.SAGA_CHAPTER_II, new DiscardUpToThenDrawThatManyEffect(2));
         addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileSelfAndReturnTransformedEffect(true));
     }

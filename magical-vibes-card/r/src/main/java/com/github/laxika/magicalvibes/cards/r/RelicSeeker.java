@@ -8,13 +8,14 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RenownEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ORI", collectorNumber = "29")
 public class RelicSeeker extends Card {
 
     public RelicSeeker() {
         // Renown 1
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new RenownEffect(1));
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new RenownEffect(1));
 
         // When Relic Seeker becomes renowned, you may search your library for an Equipment card,
         // reveal it, put it into your hand, then shuffle.

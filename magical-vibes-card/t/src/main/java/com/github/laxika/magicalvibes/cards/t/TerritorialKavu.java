@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -10,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ public class TerritorialKavu extends Card {
         BasicLandTypesAmongControlledLands domain = new BasicLandTypesAmongControlledLands();
         addStaticEffect(new SetPowerToughnessToAmountEffect(domain, domain));
 
-        addEffect(EffectSlot.ON_ATTACK, new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
+        addTrigger(Triggers.attacks(), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Discard a card. If you do, draw a card.",
                         DiscardCardThenEffect.continuing(null, new DrawCardEffect(), "a card")),

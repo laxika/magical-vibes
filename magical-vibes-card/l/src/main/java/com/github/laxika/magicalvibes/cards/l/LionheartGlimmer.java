@@ -5,12 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DSK", collectorNumber = "19")
 public class LionheartGlimmer extends Card {
 
     public LionheartGlimmer() {
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new BoostAllOwnCreaturesEffect(1, 1));
+        addTrigger(Triggers.youAttack(), new BoostAllOwnCreaturesEffect(1, 1));
     }
 }

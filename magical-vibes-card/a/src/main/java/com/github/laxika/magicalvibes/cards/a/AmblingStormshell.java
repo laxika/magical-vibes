@@ -21,8 +21,8 @@ public class AmblingStormshell extends Card {
 
     public AmblingStormshell() {
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
-        addEffect(EffectSlot.ON_ATTACK, new PutCountersOnSelfEffect(CounterType.STUN, 3));
-        addEffect(EffectSlot.ON_ATTACK, new DrawCardEffect(3));
+        addTrigger(Triggers.attacks(), new PutCountersOnSelfEffect(CounterType.STUN, 3));
+        addTrigger(Triggers.attacks(), new DrawCardEffect(3));
 
         addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 new CardSubtypePredicate(CardSubtype.TURTLE),

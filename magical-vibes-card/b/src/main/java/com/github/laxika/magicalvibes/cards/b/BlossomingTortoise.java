@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -28,7 +27,8 @@ public class BlossomingTortoise extends Card {
     public BlossomingTortoise() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 SequenceEffect.of(new MillEffect(3, MillRecipient.CONTROLLER), returnLandEffect()));
-        addEffect(EffectSlot.ON_ATTACK, SequenceEffect.of(new MillEffect(3, MillRecipient.CONTROLLER), returnLandEffect()));
+        addTrigger(Triggers.attacks(),
+                SequenceEffect.of(new MillEffect(3, MillRecipient.CONTROLLER), returnLandEffect()));
         addStaticEffect(new ReduceActivatedAbilityCostEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsLandPredicate(),

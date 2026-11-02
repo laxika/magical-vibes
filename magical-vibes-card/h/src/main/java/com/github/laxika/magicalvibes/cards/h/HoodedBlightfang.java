@@ -10,17 +10,18 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M21", collectorNumber = "104")
 @CardRegistration(set = "M21", collectorNumber = "357")
 public class HoodedBlightfang extends Card {
 
     public HoodedBlightfang() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
+        addTrigger(Triggers.creatureYouControlAttacks(),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH),
                         new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT)));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
+        addTrigger(Triggers.creatureYouControlAttacks(),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH),
                         new GainLifeEffect(1)));

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -31,7 +31,7 @@ public class ButchDeLoriaTunnelSnake extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.ROGUE),
                 new PermanentHasSubtypePredicate(CardSubtype.SNAKE)));
         PermanentCount otherRoguesAndSnakes = new PermanentCount(rogueOrSnake, CountScope.CONTROLLER, true);
-        addEffect(EffectSlot.ON_ATTACK, new BoostSelfEffect(otherRoguesAndSnakes, otherRoguesAndSnakes));
+        addTrigger(Triggers.attacks(), new BoostSelfEffect(otherRoguesAndSnakes, otherRoguesAndSnakes));
 
         PermanentPredicate anotherCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

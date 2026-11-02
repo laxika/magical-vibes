@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -43,7 +42,7 @@ public class Themberchaud extends Card {
                 new MassDamageEffect(mountains, true, false, otherNonflyingCreature));
 
         // Exert: "You may exert this creature as it attacks. When you do, it gains flying until end of turn."
-        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        addTrigger(Triggers.attacks(), new MayEffect(
                 SequenceEffect.of(
                         new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF),
                         new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)

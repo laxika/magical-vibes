@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.y;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandThenEachOpponentLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FCA", collectorNumber = "60")
 @CardRegistration(set = "CMM", collectorNumber = "364")
@@ -18,7 +18,7 @@ public class YurikoTheTigersShadow extends Card {
     public YurikoTheTigersShadow() {
         addNinjutsu("{U}{B}");
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                 new AllyCombatDamageTriggerEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.NINJA),
                         new RevealTopCardPutIntoHandThenEachOpponentLosesLifeEffect()));

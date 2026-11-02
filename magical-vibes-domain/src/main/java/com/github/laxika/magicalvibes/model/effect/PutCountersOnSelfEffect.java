@@ -51,7 +51,7 @@ public record PutCountersOnSelfEffect(CounterType counterType, int count, Dynami
     }
 
     /**
-     * Always binds the source permanent so an {@code ON_COMBAT_DAMAGE_TO_PLAYER} trigger places the
+     * Always binds the source permanent so an {@code Triggers.dealsCombatDamageToPlayer()} ability places the
      * counters on the damage-dealing creature itself (e.g. Lightning Reaver's charge counter).
      */
     @Override

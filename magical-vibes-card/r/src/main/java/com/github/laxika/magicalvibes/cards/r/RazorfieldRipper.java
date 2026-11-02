@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.ControllerEnergyCounters;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -22,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,8 +34,8 @@ public class RazorfieldRipper extends Card {
     public RazorfieldRipper() {
         addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF,
                 EffectDuration.WHILE_ATTACHED));
-        addEffect(EffectSlot.ON_ATTACK, new EnergyCountersEffect(1));
-        addEffect(EffectSlot.ON_ATTACK, new BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect(
+        addTrigger(Triggers.attacks(), new EnergyCountersEffect(1));
+        addTrigger(Triggers.attacks(), new BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect(
                 new ControllerEnergyCounters(), new ControllerEnergyCounters()));
 
         var reconfigureTarget = TargetPredicates.permanents(new PermanentAllOfPredicate(List.of(

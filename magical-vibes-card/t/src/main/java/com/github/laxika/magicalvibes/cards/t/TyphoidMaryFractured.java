@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerDiscardedCardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.RandomChoiceEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -43,9 +43,9 @@ public class TyphoidMaryFractured extends Card {
                         new GainLifeEffect(2))
         ));
 
-        addEffect(EffectSlot.ON_ATTACK, ConditionalEffect.atTriggerTime(
+        addTrigger(Triggers.attacks(), ConditionalEffect.atTriggerTime(
                 new ControllerDiscardedCardThisTurn(), controllerChoice));
-        addEffect(EffectSlot.ON_ATTACK, ConditionalEffect.atTriggerTime(
+        addTrigger(Triggers.attacks(), ConditionalEffect.atTriggerTime(
                 new NotCondition(new ControllerDiscardedCardThisTurn()), randomChoice));
     }
 }

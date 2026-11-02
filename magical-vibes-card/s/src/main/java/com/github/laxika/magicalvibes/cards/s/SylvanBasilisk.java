@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "10E", collectorNumber = "301")
 @CardRegistration(set = "P02", collectorNumber = "146")
@@ -12,6 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEf
 public class SylvanBasilisk extends Card {
 
     public SylvanBasilisk() {
-        addEffect(EffectSlot.ON_BECOMES_BLOCKED, new DestroyCreatureBlockingThisEffect(), TriggerMode.PER_BLOCKER);
+        addTrigger(Triggers.becomesBlocked(), TriggerMode.PER_BLOCKER, new DestroyCreatureBlockingThisEffect());
     }
 }

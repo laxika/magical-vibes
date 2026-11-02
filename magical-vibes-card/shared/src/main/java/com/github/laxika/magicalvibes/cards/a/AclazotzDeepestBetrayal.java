@@ -26,7 +26,7 @@ public class AclazotzDeepestBetrayal extends Card {
     public AclazotzDeepestBetrayal() {
         setBackFaceCard(new TempleOfTheDead());
 
-        addEffect(EffectSlot.ON_ATTACK, new EachOpponentDiscardsOrControllerDrawsEffect());
+        addTrigger(Triggers.attacks(), new EachOpponentDiscardsOrControllerDrawsEffect());
         addEffect(EffectSlot.ON_OPPONENT_DISCARDS, new TriggeringCardConditionalEffect(
                 new CardTypePredicate(CardType.LAND),
                 new CreateTokenEffect("Bat", 1, 1, CardColor.BLACK,

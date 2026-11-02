@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantSpellCastingAbilityToFirstMatchingSpellEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayReturnMilledPermanentToHandEffect;
@@ -22,7 +21,7 @@ public class TheFifteenthDoctor extends Card {
 
     public TheFifteenthDoctor() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), millAndReturnArtifact());
-        addEffect(EffectSlot.ON_ATTACK, millAndReturnArtifact());
+        addTrigger(Triggers.attacks(), millAndReturnArtifact());
         addStaticEffect(new GrantSpellCastingAbilityToFirstMatchingSpellEachTurnEffect(
                 Keyword.IMPROVISE, new CardNotPredicate(new CardTypePredicate(CardType.ARTIFACT))));
     }

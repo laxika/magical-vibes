@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendin
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTriggeringPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ public class StrategicIntervention extends Card {
 
     public StrategicIntervention() {
         // Whenever a creature you control attacks alone, it gets +1/+1 until end of turn.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
+        addTrigger(Triggers.creatureYouControlAttacks(),
                 new ConditionalEffect(new AttacksAlone(), new BoostAllOwnCreaturesEffect(1, 1,
                         new PermanentIsTriggeringPermanentPredicate())));
 
@@ -31,7 +31,7 @@ public class StrategicIntervention extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentControlledByDefendingPlayerPredicate())),
                 "Target must be a creature defending player controls"), 0, 1)
-                .addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
+                .addTrigger(Triggers.creatureYouControlAttacks(),
                         new ConditionalEffect(new AttacksAlone(),
                                 new TapPermanentsEffect(TapUntapScope.TARGET)));
     }

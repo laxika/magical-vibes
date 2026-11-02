@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.SeekCardsToHandEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YMID", collectorNumber = "19")
 public class ObsessiveCollector extends Card {
@@ -19,7 +20,7 @@ public class ObsessiveCollector extends Card {
 
         // Whenever Obsessive Collector deals combat damage to a player, seek a card with mana
         // value equal to the number of cards in your hand.
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new SeekCardsToHandEffect(
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new SeekCardsToHandEffect(
                 new Fixed(1), null,
                 new ManaValueBound(new CardsInHand(CountScope.CONTROLLER), true, 0)));
     }

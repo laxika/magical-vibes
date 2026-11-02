@@ -52,7 +52,7 @@ public record GivePoisonCountersEffect(DynamicAmount amount, PoisonRecipient rec
 
     @Override
     public TriggerContext combatDamageTriggerContext() {
-        // On an ON_COMBAT_DAMAGE_TO_PLAYER trigger (Pit Scorpion) the TARGET_PLAYER recipient must
+        // On an Triggers.dealsCombatDamageToPlayer() trigger (Pit Scorpion) the TARGET_PLAYER recipient must
         // bind to the damaged player so the poison counter lands on them.
         return recipient == PoisonRecipient.TARGET_PLAYER ? TriggerContext.DAMAGED_PLAYER : null;
     }

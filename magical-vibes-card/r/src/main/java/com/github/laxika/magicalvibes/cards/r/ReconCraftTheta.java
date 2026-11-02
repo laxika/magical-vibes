@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -32,7 +31,7 @@ public class ReconCraftTheta extends Card {
                         Set.of(), List.of(CardSubtype.ALIEN)),
                 new PutCountersOnCreatedPermanentsEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))));
 
-        addEffect(EffectSlot.ON_ATTACK, new ProliferateEffect());
+        addTrigger(Triggers.attacks(), new ProliferateEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -35,7 +35,7 @@ public class BrightPalmSoulAwakener extends Card {
                 new MakeCreatureBlockableOnlyByFilterThisTurnEffect(
                         new PermanentPowerAtLeastPredicate(3),
                         "creatures with power 3 or greater"));
-        addEffect(EffectSlot.ON_ATTACK, attackTrigger);
+        addTrigger(Triggers.attacks(), attackTrigger);
 
         PermanentPredicate anotherCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
@@ -45,7 +45,8 @@ public class BrightPalmSoulAwakener extends Card {
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                 new ConditionalEffect(
                         new TargetPermanentMatches(anotherCreature),
-                        new GrantEffectToTargetUntilEndOfTurnEffect(EffectSlot.ON_ATTACK, attackTrigger)
+                        new GrantEffectToTargetUntilEndOfTurnEffect(new TriggeredAbility(Triggers.attacks(),
+                                attackTrigger))
                 )
         ));
     }

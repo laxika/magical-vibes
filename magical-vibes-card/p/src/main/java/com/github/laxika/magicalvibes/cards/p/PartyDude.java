@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
@@ -59,7 +58,7 @@ public class PartyDude extends Card {
                         new DrawCardEffect()));
 
         target(TargetFilters.attackingCreature(), 0, 1)
-                .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER,
+                .addTrigger(Triggers.youAttackPlayer(),
                         new ConditionalEffect(
                                 new SourceClassLevelAtLeast(3),
                                 new BoostTargetCreatureEffect(

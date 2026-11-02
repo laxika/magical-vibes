@@ -3,19 +3,19 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DelayedEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CSP", collectorNumber = "109")
 public class FrostwebSpider extends Card {
 
     public FrostwebSpider() {
         // Whenever this creature blocks a creature with flying, put a +1/+1 counter on it at end of combat.
-        addEffect(EffectSlot.ON_BLOCK, new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.blocks(), new TriggeringPermanentConditionalEffect(
                 new PermanentHasKeywordPredicate(Keyword.FLYING),
                 new DelayedEndOfCombatEffect(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))));
     }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LearnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -30,7 +29,7 @@ public class SparringRegimen extends Card {
                         new PermanentIsAttackingPredicate()
                 )),
                 "Target must be an attacking creature"
-        )).addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, SequenceEffect.of(
+        )).addTrigger(Triggers.youAttack(), SequenceEffect.of(
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                 new UntapPermanentsEffect(TapUntapScope.TARGET)
         ));

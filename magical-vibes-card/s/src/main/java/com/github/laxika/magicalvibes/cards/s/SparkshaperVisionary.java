@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
@@ -47,8 +47,8 @@ public class SparkshaperVisionary extends Card {
                         new SetCardTypesUntilEndOfTurnEffect(Set.of(CardType.CREATURE), GrantScope.TARGET))
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new GrantEffectToTargetEffect(
-                                EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                                new ScryEffect(1),
+                                new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
+                                new ScryEffect(1)),
                                 EffectDuration.UNTIL_END_OF_TURN
                         ));
     }

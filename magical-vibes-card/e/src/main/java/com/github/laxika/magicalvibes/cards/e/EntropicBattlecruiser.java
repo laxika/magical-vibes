@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 import java.util.Set;
 
@@ -55,7 +56,7 @@ public class EntropicBattlecruiser extends Card {
                 new SourceCounterThreshold(8, CounterType.CHARGE),
                 new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.DEATHTOUCH), GrantScope.SELF)));
 
-        addEffect(EffectSlot.ON_ATTACK, ConditionalEffect.atTriggerTime(
+        addTrigger(Triggers.attacks(), ConditionalEffect.atTriggerTime(
                 new SourceCounterThreshold(8, CounterType.CHARGE),
                 new EachOpponentDiscardsOrLosesLifeEffect(3)));
     }

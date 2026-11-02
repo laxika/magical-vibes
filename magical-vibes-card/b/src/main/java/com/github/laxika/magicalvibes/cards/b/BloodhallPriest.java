@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MadnessCast;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -25,6 +24,6 @@ public class BloodhallPriest extends Card {
         ConditionalEffect emptyHandDamage = new ConditionalEffect(
                 new ControllerHandEmpty(), new DealDamageToAnyTargetEffect(2));
         addTrigger(Triggers.enters(ObjectRelation.THIS), emptyHandDamage);
-        addEffect(EffectSlot.ON_ATTACK, emptyHandDamage);
+        addTrigger(Triggers.attacks(), emptyHandDamage);
     }
 }

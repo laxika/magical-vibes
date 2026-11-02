@@ -8,13 +8,14 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayCastOneWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MSH", collectorNumber = "245")
 public class CosmicCube extends Card {
 
     public CosmicCube() {
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+        addTrigger(Triggers.youAttack(),
                 new LookAtTopCardsMayCastOneWithoutPayingManaCostEffect(
                         new Fixed(6),
                         GreatestPowerAmongControlled.includingNegative(new PermanentIsAttackingPredicate())));

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -27,20 +27,20 @@ public class ToriDAvenantFuryRider extends Card {
                 new PermanentIsAttackingPredicate(),
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
         ));
-        addEffect(EffectSlot.ON_ATTACK, new BoostAllOwnCreaturesEffect(1, 1, otherAttackingCreatures));
+        addTrigger(Triggers.attacks(), new BoostAllOwnCreaturesEffect(1, 1, otherAttackingCreatures));
 
         var otherRedAttackingCreatures = new PermanentAllOfPredicate(List.of(
                 otherAttackingCreatures,
                 new PermanentColorInPredicate(Set.of(CardColor.RED))
         ));
-        addEffect(EffectSlot.ON_ATTACK, new GrantKeywordEffect(
+        addTrigger(Triggers.attacks(), new GrantKeywordEffect(
                 Keyword.TRAMPLE, GrantScope.OWN_CREATURES, otherRedAttackingCreatures));
 
         var otherWhiteAttackingCreatures = new PermanentAllOfPredicate(List.of(
                 new PermanentIsAttackingPredicate(),
                 new PermanentColorInPredicate(Set.of(CardColor.WHITE))
         ));
-        addEffect(EffectSlot.ON_ATTACK, new UntapPermanentsEffect(
+        addTrigger(Triggers.attacks(), new UntapPermanentsEffect(
                 TapUntapScope.OTHER_CONTROLLED_CREATURES, otherWhiteAttackingCreatures));
     }
 }

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -20,7 +21,7 @@ import java.util.Set;
 public class AntManColonyCommander extends Card {
 
     public AntManColonyCommander() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.ON_ATTACK,
+        target(TargetFilters.creature()).addTrigger(Triggers.attacks(),
                 new MayPayManaEffect(
                         "{1}",
                         new QueueReflexiveAbilityEffect(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)),

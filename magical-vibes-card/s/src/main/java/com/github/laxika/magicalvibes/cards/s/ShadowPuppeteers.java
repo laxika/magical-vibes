@@ -37,7 +37,7 @@ public class ShadowPuppeteers extends Card {
                         List.of(CardSubtype.FAERIE, CardSubtype.ROGUE),
                         Set.of(Keyword.FLYING), Set.of()));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
+        addTrigger(Triggers.creatureYouControlAttacks(),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

@@ -2,12 +2,13 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AKH", collectorNumber = "64")
 @CardRegistration(set = "ZNC", collectorNumber = "34")
@@ -24,6 +25,6 @@ public class OpenIntoWonder extends Card {
         ), 100)
                 .addSpellEffect(new MakeCreatureUnblockableEffect())
                 .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
-                        EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DrawCardEffect(1)));
+                        new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(), new DrawCardEffect(1))));
     }
 }

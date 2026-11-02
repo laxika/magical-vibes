@@ -83,7 +83,7 @@ class TowerAboveTest extends BaseCardTest {
         grantTowerAbove(bear);
 
         declareAttackers(player1, List.of(0));
-        // The granted ON_ATTACK trigger requires a target creature to force into blocking.
+        // The granted Triggers.attacks() trigger requires a target creature to force into blocking.
         harness.handlePermanentChosen(player1, blocker.getId());
         harness.passBothPriorities();
 

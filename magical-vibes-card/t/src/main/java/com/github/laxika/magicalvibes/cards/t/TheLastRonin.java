@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
@@ -19,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -37,13 +39,13 @@ public class TheLastRonin extends Card {
                         .build()));
 
         addEffect(EffectSlot.SAGA_CHAPTER_III, new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
-                EffectSlot.ON_ANY_CREATURE_ATTACKS,
+                new TriggeredAbility(Triggers.creatureAttacks(),
                 new TriggeringPermanentControllerConditionalEffect(
                         new ConditionalEffect(new AttacksAlone(), SequenceEffect.of(
                                 new PutCountersOnSourceEffect(1, 1, 3),
                                 new GrantKeywordEffect(Set.of(
                                         Keyword.TRAMPLE,
                                         Keyword.LIFELINK,
-                                        Keyword.INDESTRUCTIBLE), GrantScope.SELF))))));
+                                        Keyword.INDESTRUCTIBLE), GrantScope.SELF)))))));
     }
 }

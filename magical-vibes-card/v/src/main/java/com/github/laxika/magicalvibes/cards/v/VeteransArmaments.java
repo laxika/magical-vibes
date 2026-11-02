@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -25,9 +24,9 @@ public class VeteransArmaments extends Card {
         setAttackTriggerGrantedByEquipment(true);
         PermanentCount attackingCreatures = new PermanentCount(
                 new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER);
-        addEffect(EffectSlot.ON_ATTACK,
+        addTrigger(Triggers.attacks(),
                 new BoostEquippedCreatureUntilEndOfTurnEffect(attackingCreatures, attackingCreatures));
-        addEffect(EffectSlot.ON_BLOCK,
+        addTrigger(Triggers.blocks(),
                 new BoostEquippedCreatureUntilEndOfTurnEffect(attackingCreatures, attackingCreatures));
 
         // Whenever a Soldier creature enters, you may attach this Equipment to it.

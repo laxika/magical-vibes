@@ -4,13 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithCounterAttackTogetherEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithCounterMustBlockTriggeringAttackerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,7 +24,7 @@ public class MagneticWeb extends Card {
 
         // Whenever a creature with a magnet counter on it attacks, all creatures with magnet
         // counters on them block that creature this turn if able.
-        addEffect(EffectSlot.ON_ANY_CREATURE_ATTACKS, new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.creatureAttacks(), new TriggeringPermanentConditionalEffect(
                 new PermanentHasCountersPredicate(CounterType.MAGNET),
                 new CreaturesWithCounterMustBlockTriggeringAttackerEffect(CounterType.MAGNET)));
 

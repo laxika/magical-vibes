@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,7 +30,7 @@ public class SvyelunOfSeaAndSky extends Card {
                 new ControlsOtherPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.MERFOLK)),
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
 
-        addEffect(EffectSlot.ON_ATTACK, new DrawCardEffect());
+        addTrigger(Triggers.attacks(), new DrawCardEffect());
 
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,

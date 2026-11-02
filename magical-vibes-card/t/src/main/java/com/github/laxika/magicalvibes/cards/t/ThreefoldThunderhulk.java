@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -38,7 +37,7 @@ public class ThreefoldThunderhulk extends Card {
                 Set.of(),
                 Set.of(CardType.ARTIFACT));
         addTrigger(Triggers.enters(ObjectRelation.THIS), gnomeTokens);
-        addEffect(EffectSlot.ON_ATTACK, gnomeTokens);
+        addTrigger(Triggers.attacks(), gnomeTokens);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

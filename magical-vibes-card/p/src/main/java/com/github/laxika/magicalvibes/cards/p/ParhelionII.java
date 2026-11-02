@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatedPermanentsAttackingEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -22,7 +22,7 @@ import java.util.Set;
 public class ParhelionII extends Card {
 
     public ParhelionII() {
-        addEffect(EffectSlot.ON_ATTACK, new CreateTokenEffect(
+        addTrigger(Triggers.attacks(), new CreateTokenEffect(
                 CardType.CREATURE,
                 2,
                 "Angel",
@@ -42,7 +42,7 @@ public class ParhelionII extends Card {
                 false,
                 0,
                 Set.of()));
-        addEffect(EffectSlot.ON_ATTACK, new MakeCreatedPermanentsAttackingEffect());
+        addTrigger(Triggers.attacks(), new MakeCreatedPermanentsAttackingEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

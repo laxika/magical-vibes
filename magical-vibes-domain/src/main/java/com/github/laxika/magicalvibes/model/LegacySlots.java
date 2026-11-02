@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.trigger.AbilityTrigger;
+import com.github.laxika.magicalvibes.model.trigger.CombatTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LandPlayTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger;
@@ -115,6 +116,7 @@ public final class LegacySlots {
                 case SpellTrigger ignored -> null;
                 case LandPlayTrigger ignored -> null;
                 case AbilityTrigger ignored -> null;
+                case CombatTrigger ignored -> null;
             };
             case ActivatedAbility activated -> throw new IllegalArgumentException(
                     "Activated abilities aren't kept in a slot");

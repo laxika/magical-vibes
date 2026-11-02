@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksAnotherOpponent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -31,12 +31,12 @@ public class KarazikarTheEyeTyrant extends Card {
                         new PermanentControlledByDefendingPlayerPredicate()
                 )),
                 "Target must be a creature the attacked player controls"))
-                .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER,
+                .addTrigger(Triggers.youAttackPlayer(),
                         new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER,
+                .addTrigger(Triggers.youAttackPlayer(),
                         new GoadTargetCreatureUntilNextTurnEffect());
 
-        addEffect(EffectSlot.ON_ANY_PLAYER_ATTACKS,
+        addTrigger(Triggers.playerAttacks(),
                 new ConditionalEffect(
                         new OpponentAttacksAnotherOpponent(),
                         SequenceEffect.of(

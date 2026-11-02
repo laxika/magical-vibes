@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesWithLessPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -22,7 +22,7 @@ public class HowlingChorus extends Card {
 
         // Whenever this creature deals combat damage to a player, create a 3/2 colorless Eldrazi Horror
         // creature token.
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new CreateTokenEffect(
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new CreateTokenEffect(
                 "Eldrazi Horror", 3, 2, null,
                 List.of(CardSubtype.ELDRAZI, CardSubtype.HORROR), Set.of(), Set.of()));
     }

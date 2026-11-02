@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.OracleData;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -66,8 +67,8 @@ public class HishOfTheSnakeCult extends Card {
                 GrantScope.ALL_OWN_CREATURES,
                 snakes));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                new GivePoisonCountersEffect(2, PoisonRecipient.TARGET_PLAYER),
+                new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
+                new GivePoisonCountersEffect(2, PoisonRecipient.TARGET_PLAYER)),
                 GrantScope.ALL_OWN_CREATURES,
                 snakes));
     }

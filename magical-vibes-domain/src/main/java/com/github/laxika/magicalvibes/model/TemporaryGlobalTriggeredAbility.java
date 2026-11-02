@@ -44,6 +44,11 @@ public record TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard
         this(controllerId, sourceCard, slot, effect, null, false, false, -1, null);
     }
 
+    /** {@code ability} until end of turn, with no target filter and no watched permanent. */
+    public TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, TriggeredAbility ability) {
+        this(controllerId, sourceCard, ability, null, false, false, -1, null, null);
+    }
+
     public TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, EffectSlot slot,
                                            CardEffect effect, TargetFilter targetFilter,
                                            boolean untilEndOfNextTurn, int registrationTurnNumber) {

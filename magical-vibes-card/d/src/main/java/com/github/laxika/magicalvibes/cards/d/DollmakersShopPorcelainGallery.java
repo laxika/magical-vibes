@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -46,8 +47,8 @@ public class DollmakersShopPorcelainGallery extends Card {
         addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(0),
                 new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER,
-                        new ConditionalEffect(new MinimumMatchingAttackers(1, nonToyCreature), toyToken),
+                        new TriggeredAbility(Triggers.youAttackPlayer(),
+                        new ConditionalEffect(new MinimumMatchingAttackers(1, nonToyCreature), toyToken)),
                         GrantScope.SELF)));
 
         PermanentCount creaturesYouControl = new PermanentCount(

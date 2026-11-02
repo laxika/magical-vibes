@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -17,11 +17,11 @@ import java.util.Set;
 public class AgrusKosWojekVeteran extends Card {
 
     public AgrusKosWojekVeteran() {
-        addEffect(EffectSlot.ON_ATTACK, new BoostAllCreaturesEffect(2, 0,
+        addTrigger(Triggers.attacks(), new BoostAllCreaturesEffect(2, 0,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsAttackingPredicate(),
                         new PermanentColorInPredicate(Set.of(CardColor.RED))))));
-        addEffect(EffectSlot.ON_ATTACK, new BoostAllCreaturesEffect(0, 2,
+        addTrigger(Triggers.attacks(), new BoostAllCreaturesEffect(0, 2,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsAttackingPredicate(),
                         new PermanentColorInPredicate(Set.of(CardColor.WHITE))))));

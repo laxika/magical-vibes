@@ -93,6 +93,11 @@ public record GrantEffectToTargetEffect(
         return new GrantEffectToTargetEffect(slot, grantedEffect, duration, true, GrantScope.SELF);
     }
 
+    /** Grants {@code grantedAbility} to the resolving source permanent without targeting it. */
+    public static GrantEffectToTargetEffect toSource(Ability grantedAbility, EffectDuration duration) {
+        return new GrantEffectToTargetEffect(grantedAbility, duration, true, GrantScope.SELF);
+    }
+
     @Override
     public TargetSpec targetSpec() {
         return scope == GrantScope.TARGET ? TargetSpec.benign(TargetPredicates.permanent()) : TargetSpec.NONE;
