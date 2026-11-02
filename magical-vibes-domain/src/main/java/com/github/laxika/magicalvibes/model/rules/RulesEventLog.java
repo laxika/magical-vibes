@@ -157,6 +157,20 @@ public final class RulesEventLog {
         openDepth = suspendedDepths.removeLast();
     }
 
+    /**
+     * Runs {@code move} as an occurrence of its own, even inside an open scope. Cards an effect exiles "until" it
+     * exiles a certain card (cascade, discover, "exile cards from the top of your library until …") are exiled one at
+     * a time, so a "whenever one or more cards are put into exile" ability triggers for each of them.
+     */
+    public void separately(Runnable move) {
+        beginIsolatedBatch();
+        try {
+            move.run();
+        } finally {
+            endIsolatedBatch();
+        }
+    }
+
     /** Whether a batch scope is open. */
     public boolean isBatchOpen() {
         return openDepth > 0;

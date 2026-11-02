@@ -123,8 +123,9 @@ class BloodAgeMusterTest extends BaseCardTest {
 
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        // A conjured creature that can attack would otherwise stop the pass at declare attackers.
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.setGraveyard(player1, List.of(new SummonedDromedary()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.activateGraveyardAbility(player1, 0);

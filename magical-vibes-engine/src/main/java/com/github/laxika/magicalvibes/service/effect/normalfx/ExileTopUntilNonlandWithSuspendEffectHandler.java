@@ -41,7 +41,7 @@ public class ExileTopUntilNonlandWithSuspendEffectHandler implements NormalEffec
         Card nonland = null;
         while (!deck.isEmpty()) {
             Card topCard = deck.removeFirst();
-            exileService.exileCard(gameData, controllerId, topCard);
+            gameData.rulesEvents.separately(() -> exileService.exileCard(gameData, controllerId, topCard));
             if (!topCard.hasType(CardType.LAND)) {
                 nonland = topCard;
                 break;

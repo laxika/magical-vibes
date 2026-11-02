@@ -54,7 +54,7 @@ public class ExileTopCardsUntilPermanentCountToBattlefieldEffectHandler
         int exiledCount = 0;
         while (!library.isEmpty() && permanentCards.size() < permanentCount) {
             Card card = library.removeFirst();
-            exileService.exileCard(gameData, controllerId, card);
+            gameData.rulesEvents.separately(() -> exileService.exileCard(gameData, controllerId, card));
             exiledCount++;
             if (card.getType().isPermanentType()) {
                 permanentCards.add(card);

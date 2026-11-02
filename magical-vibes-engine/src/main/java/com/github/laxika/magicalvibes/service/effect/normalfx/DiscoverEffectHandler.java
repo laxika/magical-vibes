@@ -63,7 +63,7 @@ public class DiscoverEffectHandler implements NormalEffectHandlerBean {
         Card hit = null;
         while (!deck.isEmpty()) {
             Card top = deck.removeFirst();
-            exileService.exileCard(gameData, controllerId, top);
+            gameData.rulesEvents.separately(() -> exileService.exileCard(gameData, controllerId, top));
             revealed.add(top);
             if (!top.hasType(CardType.LAND) && top.getManaValue() <= discoverValue) {
                 hit = top;

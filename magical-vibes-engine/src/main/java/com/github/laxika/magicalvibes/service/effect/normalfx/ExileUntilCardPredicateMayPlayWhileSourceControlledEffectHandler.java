@@ -58,7 +58,7 @@ public class ExileUntilCardPredicateMayPlayWhileSourceControlledEffectHandler
         while (!deck.isEmpty()) {
             Card card = deck.removeFirst();
             exiledCards.add(card);
-            exileService.exileCard(gameData, controllerId, card, sourcePermanentId);
+            gameData.rulesEvents.separately(() -> exileService.exileCard(gameData, controllerId, card, sourcePermanentId));
             if (predicateEvaluationService.matchesCardPredicate(
                     card, typedEffect.predicate(), entry.getCard().getId(), gameData, controllerId)) {
                 foundCard = card;

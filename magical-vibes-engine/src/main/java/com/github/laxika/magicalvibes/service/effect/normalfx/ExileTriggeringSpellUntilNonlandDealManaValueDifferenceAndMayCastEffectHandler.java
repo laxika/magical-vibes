@@ -68,7 +68,8 @@ public class ExileTriggeringSpellUntilNonlandDealManaValueDifferenceAndMayCastEf
         Card hit = null;
         while (!deck.isEmpty()) {
             Card topCard = deck.removeFirst();
-            exileService.exileCard(gameData, castingPlayerId, topCard);
+            UUID exilingPlayerId = castingPlayerId;
+            gameData.rulesEvents.separately(() -> exileService.exileCard(gameData, exilingPlayerId, topCard));
             if (!topCard.hasType(CardType.LAND)) {
                 hit = topCard;
                 break;

@@ -81,7 +81,7 @@ public class ShuffleTargetPermanentsThenEachControllerMayCastEffectHandler
         String playerName = gameData.playerIdToName.get(playerId);
         while (library != null && !library.isEmpty()) {
             Card card = library.removeFirst();
-            exileService.exileCard(gameData, playerId, card);
+            gameData.rulesEvents.separately(() -> exileService.exileCard(gameData, playerId, card));
             gameLogService.append(gameData, GameLog.builder()
                     .text(playerName + " exiles ")
                     .card(card)

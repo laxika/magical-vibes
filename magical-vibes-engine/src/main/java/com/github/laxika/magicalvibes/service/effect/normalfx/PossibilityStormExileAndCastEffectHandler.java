@@ -104,7 +104,7 @@ public class PossibilityStormExileAndCastEffectHandler implements NormalEffectHa
         while (!deck.isEmpty()) {
             Card card = deck.removeFirst();
             exiled.add(card);
-            exileService.exileCard(gameData, playerId, card, sourcePermanentId);
+            gameData.rulesEvents.separately(() -> exileService.exileCard(gameData, playerId, card, sourcePermanentId));
             if (sharesType(card, spellTypes)) {
                 match = card;
                 break;

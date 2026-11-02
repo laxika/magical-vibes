@@ -48,7 +48,7 @@ public class ExileTopUntilNonlandDealManaValueDamageToAnyTargetEffectHandler
         int exiledCount = 0;
         while (!deck.isEmpty()) {
             Card topCard = deck.removeFirst();
-            exileService.exileCard(gameData, controllerId, topCard);
+            gameData.rulesEvents.separately(() -> exileService.exileCard(gameData, controllerId, topCard));
             exiledCount++;
             if (!topCard.hasType(CardType.LAND)) {
                 nonland = topCard;

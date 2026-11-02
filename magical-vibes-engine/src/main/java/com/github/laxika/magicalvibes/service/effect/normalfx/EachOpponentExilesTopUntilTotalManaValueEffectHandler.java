@@ -51,7 +51,7 @@ public class EachOpponentExilesTopUntilTotalManaValueEffectHandler implements No
         int totalManaValue = 0;
         while (totalManaValue < threshold && !deck.isEmpty()) {
             Card topCard = deck.removeFirst();
-            exileService.exileCard(gameData, playerId, topCard);
+            gameData.rulesEvents.separately(() -> exileService.exileCard(gameData, playerId, topCard));
             exiled.add(topCard);
             totalManaValue += topCard.getManaValue();
         }

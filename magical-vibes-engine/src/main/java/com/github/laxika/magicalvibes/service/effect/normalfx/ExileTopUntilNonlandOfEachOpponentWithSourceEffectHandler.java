@@ -27,10 +27,8 @@ public class ExileTopUntilNonlandOfEachOpponentWithSourceEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID sourcePermanentId = entry.getSourcePermanentId();
-        if (sourcePermanentId == null) {
-            sourcePermanentId = findSourcePermanentId(gameData, entry);
-        }
+        UUID sourcePermanentId = entry.getSourcePermanentId() != null
+                ? entry.getSourcePermanentId() : findSourcePermanentId(gameData, entry);
         if (sourcePermanentId == null) {
             return;
         }
@@ -42,7 +40,8 @@ public class ExileTopUntilNonlandOfEachOpponentWithSourceEffectHandler
             var library = gameData.playerDecks.get(opponentId);
             while (library != null && !library.isEmpty()) {
                 Card card = library.removeFirst();
-                exileService.exileCard(gameData, opponentId, card, sourcePermanentId);
+                gameData.rulesEvents.separately(
+                        () -> exileService.exileCard(gameData, opponentId, card, sourcePermanentId));
                 if (!card.hasType(CardType.LAND)) {
                     break;
                 }

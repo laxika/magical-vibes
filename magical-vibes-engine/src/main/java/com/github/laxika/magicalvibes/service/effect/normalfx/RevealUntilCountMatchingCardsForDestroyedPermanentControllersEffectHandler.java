@@ -86,7 +86,7 @@ public class RevealUntilCountMatchingCardsForDestroyedPermanentControllersEffect
             revealedCards.add(card);
             if (cardSpecificSupport.cardMatchesAnyType(card, cardTypes)) {
                 foundCards.add(card);
-                gameData.addToExile(ownerId(controllerId, card), card);
+                gameData.rulesEvents.separately(() -> gameData.addToExile(ownerId(controllerId, card), card));
             } else {
                 cardsToReturn.add(card);
             }

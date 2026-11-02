@@ -48,7 +48,7 @@ public class EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffectHandler
             List<Card> library = gameData.playerDecks.get(playerId);
             while (library != null && !library.isEmpty()) {
                 Card card = library.removeFirst();
-                gameData.addToExile(playerId, card);
+                gameData.rulesEvents.separately(() -> gameData.addToExile(playerId, card));
                 gameLogService.append(gameData, GameLog.builder()
                         .text(gameData.playerIdToName.get(playerId) + " exiles ")
                         .card(card)

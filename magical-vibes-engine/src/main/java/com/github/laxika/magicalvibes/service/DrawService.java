@@ -1054,7 +1054,7 @@ public class DrawService {
         if (deck != null) {
             while (!deck.isEmpty()) {
                 Card card = deck.removeFirst();
-                exileService.exileCard(gameData, playerId, card, source.getId());
+                gameData.rulesEvents.separately(() -> exileService.exileCard(gameData, playerId, card, source.getId()));
                 exiledCount++;
                 if (sharesCardType(card, cycledTypes)) {
                     match = card;

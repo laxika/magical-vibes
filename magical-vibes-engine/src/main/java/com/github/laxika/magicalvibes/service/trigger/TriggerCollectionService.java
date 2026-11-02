@@ -4949,13 +4949,28 @@ public class TriggerCollectionService {
      *
      * @return whether anything was put on the stack or queued for it
      */
+    /**
+     * The source permanent an old collector body puts on the stack. A permanent that left in the same event is its
+     * last-known copy, whose card is a layered copy; the body names the card the candidate names instead, as the
+     * pipeline's own stack entries do, so effects that act on "this card" find it.
+     */
+    private static Permanent namedSourcePermanent(TriggerCandidate candidate) {
+        Permanent perm = candidate.sourceAsPermanent();
+        if (candidate.sourcePermanent() == null || perm.getCard() == candidate.sourceCard()) {
+            return perm;
+        }
+        Permanent named = new Permanent(perm);
+        named.setCard(candidate.sourceCard());
+        return named;
+    }
+
     public boolean triggerZoneChange(GameData gameData, ZoneChangeWatch watch, TriggerCandidate candidate,
                                      List<CardEffect> effects, List<ZoneChangeEvent> events) {
         if (watch.entering()) {
             return triggerEntry(gameData, watch, candidate, effects, events);
         }
         ZoneChangeEvent event = events.getFirst();
-        Permanent perm = candidate.sourceAsPermanent();
+        Permanent perm = namedSourcePermanent(candidate);
         UUID controllerId = candidate.controllerId();
         Card movedCard = lastKnownCard(event);
         boolean triggered = false;
@@ -6660,7 +6675,7 @@ public class TriggerCollectionService {
      */
     private boolean dispatchWatchEffects(GameData gameData, TriggerCandidate candidate, ZoneChangeWatch watch,
                                          List<CardEffect> effects, TriggerContext ctx) {
-        Permanent perm = candidate.sourceAsPermanent();
+        Permanent perm = namedSourcePermanent(candidate);
         List<TextReplacement> globalWordChange = TextChangeTransformer.globalColorWordReplacements(gameData);
         boolean triggered = false;
         for (CardEffect effect : effects) {

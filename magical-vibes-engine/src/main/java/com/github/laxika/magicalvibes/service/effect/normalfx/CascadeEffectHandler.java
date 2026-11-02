@@ -70,8 +70,8 @@ public class CascadeEffectHandler implements NormalEffectHandlerBean {
         while (!deck.isEmpty()) {
             Card top = deck.removeFirst();
             exiled.add(top);
-            gameData.addToExile(controllerId, top,
-                    cascade.deferCastUntilEndOfTurn() ? entry.getSourcePermanentId() : null);
+            gameData.rulesEvents.separately(() -> gameData.addToExile(controllerId, top,
+                    cascade.deferCastUntilEndOfTurn() ? entry.getSourcePermanentId() : null));
             boolean qualifyingType = cascade.instantOrSorceryOnly()
                     ? top.hasType(CardType.INSTANT) || top.hasType(CardType.SORCERY)
                     : !top.hasType(CardType.LAND);

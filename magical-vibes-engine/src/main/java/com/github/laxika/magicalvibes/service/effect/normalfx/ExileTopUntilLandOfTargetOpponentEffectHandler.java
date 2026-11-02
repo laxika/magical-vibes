@@ -39,7 +39,7 @@ public class ExileTopUntilLandOfTargetOpponentEffectHandler implements NormalEff
 
         while (!library.isEmpty()) {
             Card card = library.removeFirst();
-            exileService.exileCard(gameData, opponentId, card);
+            gameData.rulesEvents.separately(() -> exileService.exileCard(gameData, opponentId, card));
             if (card.hasType(CardType.LAND)) {
                 break;
             }

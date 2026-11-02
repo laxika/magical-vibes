@@ -101,7 +101,7 @@ public class EnsnaredByTheMaraVillainousChoiceEffectHandler implements NormalEff
         Card nonland = null;
         while (library != null && !library.isEmpty()) {
             Card card = library.removeFirst();
-            exileService.exileCard(gameData, opponentId, card);
+            gameData.rulesEvents.separately(() -> exileService.exileCard(gameData, opponentId, card));
             gameLogService.append(gameData, GameLog.builder()
                     .text(gameData.playerIdToName.get(opponentId) + " exiles ")
                     .card(card).text(" from the top of their library.").build());

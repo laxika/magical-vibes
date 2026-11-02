@@ -47,7 +47,7 @@ public class ExileTopUntilNonlandOfDamagedPlayerMayCounterOrCastEffectHandler
         int exiledCount = 0;
         while (library != null && !library.isEmpty()) {
             Card top = library.removeFirst();
-            exileService.exileCard(gameData, damagedPlayerId, top);
+            gameData.rulesEvents.separately(() -> exileService.exileCard(gameData, damagedPlayerId, top));
             exiledCount++;
             if (!top.hasType(CardType.LAND)) {
                 nonland = top;

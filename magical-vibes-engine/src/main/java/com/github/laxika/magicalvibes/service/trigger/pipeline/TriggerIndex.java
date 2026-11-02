@@ -181,18 +181,22 @@ public class TriggerIndex {
 
     private void lookBackCandidates(GameData gameData, ZoneChangeEvent departure, List<TriggerCandidate> into) {
         Permanent lastKnown = departure.permanent();
-        List<TriggeredAbility> abilities = new ArrayList<>();
+        Card card = lastKnown.getCard();
+        // As for the moving object's own abilities: the printed ones name the card the permanent was (found by
+        // identity when it is the moved card itself), the gained ones the card that moved.
+        Card printedSource = departure.card().getId().equals(card.getId()) ? departure.card() : card;
+        List<TriggeredAbility> printed = new ArrayList<>();
+        List<TriggeredAbility> gained = new ArrayList<>();
         if (!lastKnown.isLosesAllAbilitiesUntilEndOfTurn()) {
             if (!lastKnown.isFaceDown()) {
-                abilities.addAll(withoutLost(gameData, lastKnown.getCard().getId(),
-                        lastKnown.getCard().getTriggeredAbilities()));
+                printed.addAll(withoutLost(gameData, card.getId(), card.getTriggeredAbilities()));
             }
-            abilities.addAll(lastKnown.getPersistentTriggeredAbilities());
-            triggered(departure.grantedAbilities(), abilities);
+            gained.addAll(lastKnown.getPersistentTriggeredAbilities());
+            triggered(departure.grantedAbilities(), gained);
         }
-        abilities.addAll(lastKnown.getTemporaryTriggeredAbilities());
-        addZoneChangeCandidates(lastKnown.getCard(), lastKnown, departure.controllerId(), Zone.BATTLEFIELD,
-                abilities, into);
+        gained.addAll(lastKnown.getTemporaryTriggeredAbilities());
+        addZoneChangeCandidates(printedSource, lastKnown, departure.controllerId(), Zone.BATTLEFIELD, printed, into);
+        addZoneChangeCandidates(departure.card(), lastKnown, departure.controllerId(), Zone.BATTLEFIELD, gained, into);
     }
 
     /**

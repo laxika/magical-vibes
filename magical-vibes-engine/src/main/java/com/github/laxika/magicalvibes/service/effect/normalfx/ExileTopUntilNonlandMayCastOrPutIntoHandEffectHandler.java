@@ -52,7 +52,7 @@ public class ExileTopUntilNonlandMayCastOrPutIntoHandEffectHandler implements No
         int exiledCount = 0;
         while (!deck.isEmpty()) {
             Card top = deck.removeFirst();
-            exileService.exileCard(gameData, controllerId, top);
+            gameData.rulesEvents.separately(() -> exileService.exileCard(gameData, controllerId, top));
             exiledCount++;
             if (!top.hasType(CardType.LAND)) {
                 hit = top;

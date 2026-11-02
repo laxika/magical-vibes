@@ -54,7 +54,7 @@ public class ExileUntilCardPredicateMayCastWithoutPayingManaEffectHandler
         while (!deck.isEmpty()) {
             Card card = deck.removeFirst();
             exiledCards.add(card);
-            exileService.exileCard(gameData, controllerId, card);
+            gameData.rulesEvents.separately(() -> exileService.exileCard(gameData, controllerId, card));
             if (predicateEvaluationService.matchesCardPredicate(
                     card, typedEffect.predicate(), entry.getCard().getId(), gameData, controllerId)) {
                 foundCard = card;

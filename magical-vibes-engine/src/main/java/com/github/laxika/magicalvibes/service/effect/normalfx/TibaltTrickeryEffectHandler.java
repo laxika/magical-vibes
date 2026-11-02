@@ -70,7 +70,7 @@ public class TibaltTrickeryEffectHandler implements NormalEffectHandlerBean {
         int exiledCount = 0;
         while (!library.isEmpty()) {
             Card top = library.removeFirst();
-            exileService.exileCard(gameData, targetControllerId, top, sourceId);
+            gameData.rulesEvents.separately(() -> exileService.exileCard(gameData, targetControllerId, top, sourceId));
             exiledCount++;
             if (!top.hasType(CardType.LAND) && !Objects.equals(targetSpellName, top.getName())) {
                 found = top;

@@ -53,7 +53,7 @@ public class ExileUntilNonlandCardMayCastIfManaValueLessThanMountainsEffectHandl
         while (!library.isEmpty()) {
             Card card = library.removeFirst();
             revealed.add(card);
-            exileService.exileCard(gameData, controllerId, card);
+            gameData.rulesEvents.separately(() -> exileService.exileCard(gameData, controllerId, card));
             if (!card.hasType(CardType.LAND)) {
                 hit = card;
                 break;

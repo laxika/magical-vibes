@@ -54,7 +54,7 @@ public class ExileTopUntilNonlandOfTargetOpponentMayCastThisTurnEffectHandler im
         int exiledCount = 0;
         while (!deck.isEmpty()) {
             Card top = deck.removeFirst();
-            exileService.exileCard(gameData, opponentId, top);
+            gameData.rulesEvents.separately(() -> exileService.exileCard(gameData, opponentId, top));
             exiledCount++;
             if (!top.hasType(CardType.LAND)) {
                 nonland = top;

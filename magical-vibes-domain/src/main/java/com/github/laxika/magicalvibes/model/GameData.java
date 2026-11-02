@@ -7978,9 +7978,18 @@ public class GameData {
         }
         @Override public void putAll(Map<? extends UUID, ? extends List<Card>> values) { values.forEach(this::put); }
     }
-    /** The exile zone list, which reports its arrivals to {@link #rulesEvents}; replacing an entry moves nothing. */
+    /**
+     * The exile zone list, which reports its arrivals to {@link #rulesEvents}; replacing an entry moves nothing. An
+     * anted card it holds stands for the ante zone (CR 407.4), so its arrival is only tracked.
+     */
     private final class ExileZoneList extends ArrayList<ExiledCardEntry> {
-        private void arrived(ExiledCardEntry entry) { rulesEvents.arrived(entry.card(), entry.ownerId(), Zone.EXILE); }
+        private void arrived(ExiledCardEntry entry) {
+            if (antedCardIds.contains(entry.card().getId())) {
+                rulesEvents.track(entry.card(), entry.ownerId(), Zone.EXILE);
+            } else {
+                rulesEvents.arrived(entry.card(), entry.ownerId(), Zone.EXILE);
+            }
+        }
         @Override public boolean add(ExiledCardEntry entry) { boolean added = super.add(entry); arrived(entry); return added; }
         @Override public void add(int index, ExiledCardEntry entry) { super.add(index, entry); arrived(entry); }
         @Override public boolean addAll(java.util.Collection<? extends ExiledCardEntry> entries) { List<ExiledCardEntry> added = List.copyOf(entries); boolean changed = super.addAll(added); added.forEach(this::arrived); return changed; }
@@ -8549,10 +8558,13 @@ public class GameData {
         notifyCardsExiled(card, false);
     }
 
-    /** Adds a card to the ante zone, represented by an untracked exile entry. */
+    /**
+     * Adds a card to the ante zone, represented by an untracked exile entry. It is marked first, so the exile list
+     * doesn't report it as put into exile: anteing puts it into the ante zone (CR 407.4).
+     */
     public void addToAnte(UUID ownerId, Card card) {
-        exiledCards.add(new ExiledCardEntry(card, ownerId, null, false, turnNumber));
         markCardAsAnted(card);
+        exiledCards.add(new ExiledCardEntry(card, ownerId, null, false, turnNumber));
     }
 
     /** Marks an exiled card as being in the ante zone. */

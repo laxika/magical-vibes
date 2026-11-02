@@ -49,7 +49,7 @@ public class ExileTopUntilNonlandMayCastWithoutPayingManaCostEffectHandler
         int exiledCount = 0;
         while (!library.isEmpty()) {
             Card top = library.removeFirst();
-            exileService.exileCard(gameData, controllerId, top);
+            gameData.rulesEvents.separately(() -> exileService.exileCard(gameData, controllerId, top));
             exiledCount++;
             if (!top.hasType(CardType.LAND)) {
                 nonland = top;

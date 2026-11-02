@@ -3271,6 +3271,39 @@ cumulative upkeep, the Oath-style target check, the conspiracy marker in `GameSe
   `findLoadedPrintingByName`); unrelated.
 - The full suite was not run here.
 
+#### Follow-up: failing card tests after run 1
+
+The full card suite after run 1 had ten failing classes, most of them failing since step 12a or 12b. Fixed:
+
+- **Exiled "until".** 12a's one batch per resolving effect made the cards a cascade, discover or "exile cards from
+  the top of your library until …" loop exiles one occurrence, so a "one or more cards are put into exile" ability
+  (Laelia, the Blade Reforged; The War Doctor) triggered once. Such cards are exiled one at a time (Gatherer ruling of
+  2024-06-07). New `RulesEventLog.separately(Runnable)` runs a move as an isolated batch;
+  `scripts/step13-exile-until-separately.py` wraps the exile in the 34 "until" handlers' loops (cascade, discover,
+  Unpredictable Cyclone's draw replacement, the `ExileTopUntil…` / `ExileUntil…` / `RevealUntil…` family, Ensnared by
+  the Mara, Tibalt's Trickery, Possibility Storm, …). "Exile the top N cards" stays one event. Daring Discovery,
+  Contest of Claws, Ryan Sinclair, Ensnared by the Mara.
+- **Ante.** Anteing puts a card into the ante zone (**CR 407.4**, checked), which the engine keeps in the exile list.
+  `addToAnte` marks the card first and the exile list only tracks an anted card's arrival, so "put into exile"
+  abilities don't see it. Amulet of Quoz.
+- **Seek then exile / seek onto the battlefield.** Seek puts the card into its owner's hand first;
+  `SeekLibraryEffectHandler` now adds it to the hand before exiling it (Signature Spells) or putting it onto the
+  battlefield (Wildgrove Summoner), so "put into your hand from your library" abilities (Kithkin Brinefarer, Volatile
+  Rift) trigger. 12b recorded these two as failing at HEAD.
+- **A watcher that left in the same event names its card.** `TriggerIndex.lookBackCandidates` names the physical card
+  for a departed permanent's printed abilities, as `departedPermanentCandidates` does, and the zone-change bridge
+  (`TriggerCollectionService.namedSourcePermanent`) gives the old bodies a source permanent with that card, so their
+  stack entries no longer carry the last-known layered copy. Words of Wind with Warped Devotion.
+- **Test flakes.** `GlacialPlatingTest`'s insufficient-snow-mana case empties both hands (a playable card in the random
+  opening hand kept the upkeep open); `BloodAgeMusterTest#canTriggerAgainOnALaterTurn` passes with
+  `passUntilWithNoAttackers` (the random conjure can be Charging Strifeknight, which has haste). Each passed 60
+  repetitions.
+
+Runs: the ten classes (with `--rerun`), and every card test of a card with another object's zone-change trigger,
+seek, ante, cascade, discover or a changed handler, or using one (1,614 classes, 14,034 tests): all passing.
+Application: `TriggerPipelineTest`, `RulesEventLogTest`, `ZoneChangeRulesEventTest`, `GameDataExileTrackingTest`,
+`LegacyTriggerBindingsTest`: passing; `SimulationCopyCompletenessTest` fails as at HEAD.
+
 ## Prompt
 
 Replace `<N>` with the step number:

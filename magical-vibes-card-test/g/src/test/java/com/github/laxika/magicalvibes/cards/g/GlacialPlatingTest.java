@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -181,6 +183,9 @@ class GlacialPlatingTest extends BaseCardTest {
     @Test
     @DisplayName("One snow mana cannot pay upkeep for two age counters even with ordinary mana available")
     void insufficientSnowManaSacrificesWithoutPartialPayment() {
+        // A playable card in a random opening hand would keep the upkeep step open past the sacrifice.
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent creature = addCreatureReady(player1, new BorealDruid());
         Permanent plating = harness.addToBattlefieldAndReturn(player1, new GlacialPlating());
         plating.setAttachedTo(creature.getId());

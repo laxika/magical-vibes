@@ -50,7 +50,7 @@ public class RevealTopCardsOfTargetPlayerUntilInstantOrSorceryAndCastEffectHandl
         Card hit = null;
         while (!deck.isEmpty()) {
             Card card = deck.removeFirst();
-            gameData.addToExile(targetPlayerId, card, entry.getSourcePermanentId());
+            gameData.rulesEvents.separately(() -> gameData.addToExile(targetPlayerId, card, entry.getSourcePermanentId()));
             if (gameData.findExiledCard(card.getId()) == null) {
                 continue;
             }

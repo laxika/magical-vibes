@@ -60,7 +60,7 @@ public class EachOpponentExilesTopUntilTotalManaValueMayCastThisTurnEffectHandle
         int totalManaValue = 0;
         while (totalManaValue < threshold && !deck.isEmpty()) {
             Card topCard = deck.removeFirst();
-            exileService.exileCard(gameData, opponentId, topCard);
+            gameData.rulesEvents.separately(() -> exileService.exileCard(gameData, opponentId, topCard));
             exiled.add(topCard);
             totalManaValue += topCard.getManaValue();
 
