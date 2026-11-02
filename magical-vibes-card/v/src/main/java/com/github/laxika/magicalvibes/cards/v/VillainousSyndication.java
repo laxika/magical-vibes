@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -40,7 +40,7 @@ public class VillainousSyndication extends Card {
 
         // "When the fourth plan counter is put on this enchantment" is qualified by the counter placement
         // itself, so the threshold is checked only when the counter is put, not again on resolution.
-        addEffect(EffectSlot.ON_SELF_COUNTERS_PUT, ConditionalEffect.atTriggerTime(
+        addTrigger(Triggers.countersPutOnThis(), ConditionalEffect.atTriggerTime(
                 new SourceCounterThreshold(4, CounterType.PLAN),
                 SacrificeSelfThenEffect.reflexive(ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)

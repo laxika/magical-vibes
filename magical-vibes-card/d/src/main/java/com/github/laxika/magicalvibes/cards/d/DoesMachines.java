@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
@@ -66,7 +65,7 @@ public class DoesMachines extends Card {
                 "This Class must be level 2."));
 
         // When this Class becomes level 2, return up to two target artifact cards from your graveyard to your hand.
-        addEffect(EffectSlot.ON_SELF_REACHES_LEVEL_TWO, ReturnTargetCardsFromGraveyardToHandEffect.forTriggeredAbility(
+        addTrigger(Triggers.reachesLevelTwo(), ReturnTargetCardsFromGraveyardToHandEffect.forTriggeredAbility(
                 new CardTypePredicate(CardType.ARTIFACT), 2));
 
         target(new ControlledPermanentPredicateTargetFilter(

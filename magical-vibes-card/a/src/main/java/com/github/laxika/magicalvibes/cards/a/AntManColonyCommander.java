@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
@@ -27,9 +26,9 @@ public class AntManColonyCommander extends Card {
                         new QueueReflexiveAbilityEffect(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)),
                         "Pay {1} to put a +1/+1 counter on target creature?"));
 
-        addEffect(EffectSlot.ON_CONTROLLER_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE,
+        addTrigger(Triggers.youPutPlusOneCountersOnCreatureYouControlOnceEachTurn(),
                 new OncePerTurnTriggerEffect(insectToken()));
-        addEffect(EffectSlot.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_ANOTHER_CREATURE,
+        addTrigger(Triggers.youPutPlusOneCountersOnAnotherCreature(),
                 new OncePerTurnTriggerEffect(insectToken()));
     }
 

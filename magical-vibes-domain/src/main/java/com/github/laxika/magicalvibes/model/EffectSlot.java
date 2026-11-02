@@ -16,8 +16,6 @@ public enum EffectSlot {
     ON_SELF_BECOMES_CONTROLLED,
     /** Triggers when this permanent changes control away from its current controller. */
     ON_SELF_LOSES_CONTROL,
-    /** Triggers whenever a time counter is removed from this card while it is suspended in exile. */
-    ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE,
     /** Triggers when this permanent's controller sets a scheme in motion. */
     ON_CONTROLLER_SETS_SCHEME_IN_MOTION,
     ON_CONTROLLER_GIVES_GIFT,
@@ -178,22 +176,6 @@ public enum EffectSlot {
     /** Triggers whenever any permanent becomes untapped, regardless of its controller. The
      *  untapped permanent is recorded on the triggered entry as the non-targeting event permanent. */
     ON_ANY_PERMANENT_BECOMES_UNTAPPED,
-    /** Triggers whenever this creature becomes renowned (CR 702.112b) — i.e. when a {@code RenownEffect}
-     *  actually flips it from not-renowned to renowned. A creature that is already renowned never fires
-     *  this again (CR 702.112c). Driven from {@code RenownEffectHandler} via
-     *  {@code TriggerCollectionService.checkBecomesRenownedTriggers}; queued as a non-targeting triggered
-     *  ability whose {@code sourcePermanentId} is the newly renowned creature. Used by Relic Seeker
-     *  ({@code MayEffect(SearchLibraryEffect(Equipment))}). */
-    ON_SELF_BECOMES_RENOWNED,
-    /** Triggers whenever a creature the controller controls becomes renowned (CR 702.112b) — fires on
-     *  every permanent with this slot on the newly renowned creature's controller's battlefield,
-     *  including that creature itself. Wrap the effect in {@code TriggeringPermanentConditionalEffect}
-     *  to filter by the renowned creature. Driven from {@code RenownEffectHandler} via
-     *  {@code TriggerCollectionService.checkBecomesRenownedTriggers}, alongside
-     *  {@code ON_SELF_BECOMES_RENOWNED}. Used by Valeron Wardens ({@code DrawCardEffect(1)}). */
-    ON_ALLY_CREATURE_BECOMES_RENOWNED,
-    /** Triggers whenever this creature becomes monstrous for the first time. */
-    ON_SELF_BECOMES_MONSTROUS,
     /** Triggers whenever a permanent an <em>opponent</em> of the controller controls becomes tapped.
      *  Fires on every permanent with this slot controlled by a player other than the tapped
      *  permanent's controller. Wrap the effect in {@code TriggeringPermanentConditionalEffect} to
@@ -246,8 +228,6 @@ public enum EffectSlot {
     ON_RING_TEMPTS_YOU,
     /** Triggers whenever an opponent of this permanent's controller gains life. */
     ON_OPPONENT_GAINS_LIFE,
-    /** Triggers whenever this permanent's controller gets one or more energy counters. */
-    ON_CONTROLLER_GETS_ENERGY,
     /** Triggers whenever this permanent's controller wins a coin flip. */
     ON_CONTROLLER_WINS_COIN_FLIP,
     /** Triggers whenever any player wins a coin flip. */
@@ -291,126 +271,10 @@ public enum EffectSlot {
      *  Fires on the controller's own permanents. The amount is passed via TriggerContext.LifeLoss.
      *  Hooked into TriggerCollectionService.checkLifeLossTriggers(). Used by Lich's Mastery. */
     ON_CONTROLLER_LOSES_LIFE,
-    /** Triggers when this controller places counters on a creature they do not control. */
-    ON_YOU_PUT_COUNTERS_ON_CREATURE_YOU_DONT_CONTROL,
-    /** Triggers when this controller places one or more counters on any creature. */
-    ON_YOU_PUT_COUNTERS_ON_CREATURE,
     /** Triggers whenever this permanent's controller pays life. */
     ON_CONTROLLER_PAYS_LIFE,
     /** Triggers whenever an opponent pays a mana tax imposed by a spell or permanent controlled by this permanent. */
     ON_OPPONENT_PAYS_TAX,
-    /** Triggers whenever one or more +1/+1 counters are put on this permanent.
-     *  Fired from {@code PermanentCounterSupport} after each counter-placement event (once per
-     *  event regardless of count). Used by Berta, Wise Extrapolator. */
-    ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT,
-    /** Triggers when this permanent's training ability successfully puts a +1/+1 counter on it. */
-    ON_SELF_TRAINS,
-    /** Triggers whenever one or more +1/+1 counters are put on a Human the controller controls. */
-    ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_HUMAN,
-    ON_SELF_REACHES_LEVEL_TWO,
-    ON_SELF_REACHES_LEVEL_THREE,
-    /** Triggers whenever one or more counters are put on this permanent. */
-    ON_SELF_COUNTERS_PUT,
-    /** Triggers whenever one or more +1/+1 counters are put on another non-Hydra creature the
-     *  controller controls. Fired once per counter-placement event. */
-    ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_NON_HYDRA_CREATURE,
-    /** Triggers whenever one or more +1/+1 counters are put on another creature the controller
-     *  controls. Fired once per counter-placement event. */
-    ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ANOTHER_CREATURE,
-    /** Triggers whenever one or more +1/+1 counters are put on another permanent the controller
-     *  controls for the first time that turn. */
-    ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ANOTHER_PERMANENT_FIRST_TIME_EACH_TURN,
-    /** Triggers whenever one or more +1/+1 counters are put on a permanent the controller controls. */
-    ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_PERMANENT,
-    /** Triggers whenever one or more +1/+1 counters are put on a creature the controller controls. */
-    ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE,
-    /** Triggers whenever one or more +1/+1 counters are put on a creature the controller controls,
-     *  no matter which player puts them there. Fired once per counter-placement event with the
-     *  counter count as the event value. Used by Shalai and Hallar. */
-    ON_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ALLY_CREATURE,
-    /** Triggers whenever one or more +1/+1 counters are put on a creature, regardless of that
-     *  creature's controller, including the source itself. Fired once per counter-placement event. */
-    ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_ANY_CREATURE,
-    /** Triggers whenever one or more +1/+1 counters are put on another Hero the controller controls. */
-    ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_OTHER_HERO,
-    /** Triggers whenever the controller puts one or more +1/+1 counters on another creature. */
-    ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_ANOTHER_CREATURE,
-    /** Triggers whenever the controller puts one or more +1/+1 counters on a creature they control. */
-    ON_CONTROLLER_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE,
-    /** Triggers whenever the controller puts one or more counters on a permanent or player. */
-    ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER,
-    /** Triggers whenever the controller puts one or more time counters on a permanent they control. */
-    ON_YOU_PUT_TIME_COUNTERS_ON_CONTROLLED_PERMANENT,
-    /** Triggers once per counter-placement event whenever the controller puts one or more counters
-     *  of any kind on another creature, regardless of that creature's controller. */
-    ON_YOU_PUT_COUNTERS_ON_ANOTHER_CREATURE,
-    /** Triggers whenever an opponent puts one or more counters on a creature they control. */
-    ON_OPPONENT_PUT_COUNTERS_ON_CREATURE_THEY_CONTROL,
-    /** Triggers once for each lore counter put on a Saga the controller controls. */
-    ON_YOU_PUT_LORE_COUNTERS_ON_SAGA,
-    /** Triggers once for each counter put on a creature the controller controls. */
-    ON_ALLY_COUNTER_PUT_ON_CREATURE,
-    /** Triggers whenever this permanent evolves — i.e. its evolve trigger resolves and actually puts
-     *  a +1/+1 counter on it. Fired from {@code EvolveTriggerEffectHandler} only when the counter
-     *  lands (no counter, no trigger). Used by Renegade Krasis. */
-    ON_SELF_EVOLVES,
-    /** Triggers whenever one or more loyalty counters are removed from this permanent. */
-    ON_SELF_LOYALTY_COUNTERS_REMOVED,
-    /** Triggers whenever one or more time counters are removed from this permanent. */
-    ON_SELF_TIME_COUNTERS_REMOVED,
-    /** Triggers once for each +1/+1 counter removed from this permanent (Protean Hydra). */
-    ON_SELF_PLUS_ONE_PLUS_ONE_COUNTER_REMOVED,
-    /** Triggers whenever one or more counters are removed from a permanent the controller controls. */
-    ON_ALLY_COUNTERS_REMOVED_FROM_PERMANENT,
-    /** Triggers whenever one or more loyalty counters are put on planeswalkers the controller controls. */
-    ON_YOU_PUT_LOYALTY_COUNTERS_ON_PLANESWALKERS,
-    /** Triggers whenever the controller puts one or more -1/-1 counters on this permanent — the -1/-1
-     *  mirror of {@link #ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT}, restricted to the controller's own
-     *  placements ("Whenever you put one or more -1/-1 counters on this creature"). Fired once per
-     *  counter-placement event regardless of how many counters were placed, only when the placing
-     *  player is this permanent's controller. Fired from
-     *  {@code PermanentCounterSupport.fireSelfMinusOneMinusOneCountersPutTriggers}. A targeted effect
-     *  in this slot (its {@code targetSpec()} narrows the legal target) has its target chosen as the
-     *  ability goes on the stack via the {@code SpellTargetTriggerAnyTarget} interaction. Used by
-     *  Defiant Greatmaw ("… remove a -1/-1 counter from another target creature you control"). */
-    ON_SELF_MINUS_ONE_MINUS_ONE_COUNTERS_PUT,
-    /** Global watcher: triggers whenever a -1/-1 counter is put on a creature (any creature, on any
-     *  battlefield, from any source — counter placement, infect/wither damage, proliferate, or a
-     *  creature entering with -1/-1 counters incl. persist). Fired from
-     *  {@code PermanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers}. Per the
-     *  Gatherer ruling the ability triggers once for each individual -1/-1 counter, so the firing
-     *  pushes a separate trigger per counter. Used by Flourishing Defenses. */
-    ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE,
-    /** Global watcher: triggers once whenever one or more -1/-1 counters are put on a creature.
-     *  Unlike {@link #ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE}, this fires once per placement
-     *  event regardless of how many counters were placed. */
-    ON_MINUS_ONE_MINUS_ONE_COUNTERS_PUT_ON_CREATURE,
-    /** Controller-restricted watcher: triggers only when the permanent's controller is the player who
-     *  puts one or more -1/-1 counters on a creature (any creature, on any battlefield). Unlike the
-     *  global {@link #ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE}, a counter an opponent puts (e.g.
-     *  their wither/infect creature dealing damage, or their spell) does NOT fire this. The placing
-     *  player is {@code gameData.currentlyResolvingControllerId} for stack-resolution placements and the
-     *  damage source's / permanent's controller for combat placements. Fired per individual counter from
-     *  {@code PermanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers}. Used by
-     *  Nest of Scarabs ("Whenever you put one or more -1/-1 counters on a creature"). */
-    ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTER_ON_CREATURE,
-    /** Controller-restricted watcher that fires **once per creature per placement instance**,
-     *  regardless of how many -1/-1 counters were placed on that creature at once — the "one or more
-     *  counters, do it once" cadence. Contrast with {@link #ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTER_ON_CREATURE}
-     *  (Nest of Scarabs), which fires once per individual counter to produce "that many" of something.
-     *  Like that slot it triggers only when the permanent's controller is the player placing the counters.
-     *  Fired from {@code PermanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers}.
-     *  Non-targeting. Used by Hapatra, Vizier of Poisons ("Whenever you put one or more -1/-1 counters on
-     *  a creature, create a 1/1 green Snake creature token with deathtouch"). */
-    ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTERS_ON_CREATURE,
-    /** Triggers whenever this permanent's controller proliferates. */
-    ON_CONTROLLER_PROLIFERATES,
-    /** Triggers whenever the controller of this card proliferates while this card is in that
-     *  player's graveyard. */
-    GRAVEYARD_ON_CONTROLLER_PROLIFERATES,
-    /** Triggers whenever one or more +1/+1 counters are put on a creature controlled by this card's
-     *  owner while this card is in that player's graveyard. */
-    GRAVEYARD_ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_CREATURE,
     /** Triggers whenever a creature controlled by the same player explores.
      *  Fired from {@code ExploreEffectHandler} (land branch) and
      *  {@code MayMiscHandlerService} (non-land branch) after explore completes. */

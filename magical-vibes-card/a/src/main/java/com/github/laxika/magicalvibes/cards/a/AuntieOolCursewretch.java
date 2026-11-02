@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ECC", collectorNumber = "2")
 public class AuntieOolCursewretch extends Card {
@@ -21,9 +22,9 @@ public class AuntieOolCursewretch extends Card {
 
         TargetPermanentMatches controlsAffectedCreature = new TargetPermanentMatches(
                 new PermanentControlledBySourceControllerPredicate());
-        addEffect(EffectSlot.ON_MINUS_ONE_MINUS_ONE_COUNTERS_PUT_ON_CREATURE,
+        addTrigger(Triggers.minusOneCountersPutOnCreature(),
                 new ConditionalEffect(controlsAffectedCreature, new DrawCardEffect()));
-        addEffect(EffectSlot.ON_MINUS_ONE_MINUS_ONE_COUNTERS_PUT_ON_CREATURE,
+        addTrigger(Triggers.minusOneCountersPutOnCreature(),
                 new ConditionalEffect(new NotCondition(controlsAffectedCreature),
                         new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER)));
     }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -31,7 +30,7 @@ public class DoomReignsSupreme extends Card {
                                 new GainLifeEffect(1),
                                 new PutCountersOnSelfEffect(CounterType.PLAN))));
 
-        addEffect(EffectSlot.ON_SELF_COUNTERS_PUT, ConditionalEffect.atTriggerTime(
+        addTrigger(Triggers.countersPutOnThis(), ConditionalEffect.atTriggerTime(
                 new SourceCounterThreshold(5, CounterType.PLAN),
                 SacrificeSelfThenEffect.reflexive(
                         ExileTopCardsAndMayCastSpellsEffect.targetedOpponent(5, 2))));

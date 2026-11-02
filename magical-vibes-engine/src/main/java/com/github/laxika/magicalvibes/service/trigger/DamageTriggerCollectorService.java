@@ -989,8 +989,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DealDamageToAnyTargetEffect.class,
-            slot = EffectSlot.ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER)
+    @CollectsCounterTrigger(value = DealDamageToAnyTargetEffect.class,
+            watch = CounterWatch.ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER)
     private boolean handleCountersPlaced(TriggerMatchContext match,
             DealDamageToAnyTargetEffect trigger, TriggerContext ctx) {
         TriggerContext.CountersPlaced countersPlaced = (TriggerContext.CountersPlaced) ctx;

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
@@ -36,7 +35,7 @@ public class ContagionDispenser extends Card {
 
     public ContagionDispenser() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ProliferateEffect());
-        addEffect(EffectSlot.ON_CONTROLLER_PROLIFERATES,
+        addTrigger(Triggers.youProliferate(),
                 new OncePerTurnTriggerEffect(
                         new ConditionalEffect(new ControllerTurn(),
                                 new DraftCardFromSpellbookEffect(SPELLBOOK))));

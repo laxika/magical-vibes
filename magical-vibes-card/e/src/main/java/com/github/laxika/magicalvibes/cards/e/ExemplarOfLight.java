@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.YouPutCounterOnControlledCreatureTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FDN", collectorNumber = "11")
 @CardRegistration(set = "FDN", collectorNumber = "297")
@@ -22,7 +23,7 @@ public class ExemplarOfLight extends Card {
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         // Whenever you put one or more +1/+1 counters on this creature, draw a card.
-        addEffect(EffectSlot.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT,
+        addTrigger(Triggers.plusOneCountersPutOnThis(),
                 new YouPutCounterOnControlledCreatureTriggerEffect(
                         new OncePerTurnTriggerEffect(new DrawCardEffect())));
     }

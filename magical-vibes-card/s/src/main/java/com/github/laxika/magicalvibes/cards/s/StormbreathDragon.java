@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEqualToCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -25,7 +25,7 @@ public class StormbreathDragon extends Card {
                 List.of(new MonstrosityEffect(3)),
                 "{5}{R}{R}: Monstrosity 3."
         ));
-        addEffect(EffectSlot.ON_SELF_BECOMES_MONSTROUS,
+        addTrigger(Triggers.becomesMonstrous(),
                 new DealDamageToEachOpponentEqualToCardsInHandEffect());
     }
 }

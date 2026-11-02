@@ -1,0 +1,44 @@
+# slot	factory	zone (- for the trigger's default)	event	relation	filter	javadoc
+ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE	timeCounterRemovedFromThisInExile	-	TIME_COUNTER_REMOVED_IN_EXILE	THIS	-	"Whenever a time counter is removed from this card while it's exiled", from exile.
+ON_SELF_BECOMES_RENOWNED	becomesRenowned	-	BECOMES_RENOWNED	THIS	-	"When this creature becomes renowned".
+ON_ALLY_CREATURE_BECOMES_RENOWNED	creatureYouControlBecomesRenowned	-	BECOMES_RENOWNED	YOU_CONTROL	CREATURE	"Whenever a creature you control becomes renowned".
+ON_SELF_BECOMES_MONSTROUS	becomesMonstrous	-	BECOMES_MONSTROUS	THIS	-	"When this creature becomes monstrous".
+ON_CONTROLLER_GETS_ENERGY	youGetEnergy	-	YOU_GET_ENERGY	ANY	-	"Whenever you get one or more {E}".
+ON_YOU_PUT_COUNTERS_ON_CREATURE_YOU_DONT_CONTROL	youPutCountersOnCreatureYouDontControl	-	YOU_PUT_COUNTERS	OPPONENT_CONTROLS	CREATURE	"Whenever you put one or more counters on a creature you don't control".
+ON_YOU_PUT_COUNTERS_ON_CREATURE	youPutCountersOnCreature	-	YOU_PUT_COUNTERS	ANY	CREATURE	"Whenever you put one or more counters on a creature".
+ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT	plusOneCountersPutOnThis	-	PLUS_ONE_COUNTERS_PUT	THIS	-	"Whenever one or more +1/+1 counters are put on this permanent"; a TriggerMode.PER_COUNTER registration triggers once for each counter.
+ON_SELF_TRAINS	trains	-	TRAINS	THIS	-	"Whenever this creature trains".
+ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_HUMAN	plusOneCountersPutOnHumanYouControl	-	PLUS_ONE_COUNTERS_PUT	YOU_CONTROL	HUMAN_CREATURE	"Whenever one or more +1/+1 counters are put on a Human you control".
+ON_SELF_REACHES_LEVEL_TWO	reachesLevelTwo	-	REACHES_LEVEL_TWO	THIS	-	"When this Class becomes level 2".
+ON_SELF_REACHES_LEVEL_THREE	reachesLevelThree	-	REACHES_LEVEL_THREE	THIS	-	"When this Class becomes level 3".
+ON_SELF_COUNTERS_PUT	countersPutOnThis	-	COUNTERS_PUT	THIS	-	"Whenever one or more counters are put on this permanent".
+ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_NON_HYDRA_CREATURE	plusOneCountersPutOnAnotherNonHydraCreatureYouControl	-	PLUS_ONE_COUNTERS_PUT	ANOTHER_YOU_CONTROL	NON_HYDRA_CREATURE	"Whenever one or more +1/+1 counters are put on another non-Hydra creature you control".
+ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ANOTHER_CREATURE	plusOneCountersPutOnAnotherCreatureYouControl	-	PLUS_ONE_COUNTERS_PUT	ANOTHER_YOU_CONTROL	CREATURE	"Whenever one or more +1/+1 counters are put on another creature you control".
+ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ANOTHER_PERMANENT_FIRST_TIME_EACH_TURN	plusOneCountersPutOnAnotherPermanentYouControlFirstTimeEachTurn	-	FIRST_PLUS_ONE_COUNTERS_PUT_THIS_TURN	ANOTHER_YOU_CONTROL	-	"Whenever you put one or more +1/+1 counters on another permanent you control, if it's the first time +1/+1 counters have been put on that permanent this turn".
+ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_PERMANENT	youPutPlusOneCountersOnPermanentYouControl	-	YOU_PUT_PLUS_ONE_COUNTERS	YOU_CONTROL	-	"Whenever you put one or more +1/+1 counters on a permanent you control".
+ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE	youPutPlusOneCountersOnCreatureYouControl	-	YOU_PUT_PLUS_ONE_COUNTERS	YOU_CONTROL	CREATURE	"Whenever you put one or more +1/+1 counters on a creature you control".
+ON_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ALLY_CREATURE	plusOneCountersPutOnCreatureYouControl	-	PLUS_ONE_COUNTERS_PUT	YOU_CONTROL	CREATURE	"Whenever one or more +1/+1 counters are put on a creature you control".
+ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_ANY_CREATURE	youPutPlusOneCountersOnCreature	-	YOU_PUT_PLUS_ONE_COUNTERS	ANY	CREATURE	"Whenever you put one or more +1/+1 counters on a creature".
+ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_OTHER_HERO	youPutPlusOneCountersOnAnotherHeroYouControl	-	YOU_PUT_PLUS_ONE_COUNTERS	ANOTHER_YOU_CONTROL	HERO_CREATURE	"Whenever you put one or more +1/+1 counters on other Heroes you control".
+ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_ANOTHER_CREATURE	youPutPlusOneCountersOnAnotherCreature	-	YOU_PUT_PLUS_ONE_COUNTERS	ANOTHER	CREATURE	"Whenever you put one or more +1/+1 counters on another creature".
+ON_CONTROLLER_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE	youPutPlusOneCountersOnCreatureYouControlOnceEachTurn	-	YOU_PUT_PLUS_ONE_COUNTERS_ONCE_EACH_TURN	YOU_CONTROL	CREATURE	"Whenever you put one or more +1/+1 counters on a creature you control", for an ability that triggers or does this only once each turn.
+ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER	youPutCountersOnPermanentOrPlayer	-	YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER	ANY	-	"Whenever you put one or more counters on a permanent or player".
+ON_YOU_PUT_TIME_COUNTERS_ON_CONTROLLED_PERMANENT	youPutTimeCountersOnPermanentYouControl	-	YOU_PUT_TIME_COUNTERS	YOU_CONTROL	-	"Whenever you put one or more time counters on a permanent you control".
+ON_YOU_PUT_COUNTERS_ON_ANOTHER_CREATURE	youPutCountersOnAnotherCreature	-	YOU_PUT_COUNTERS	ANOTHER	CREATURE	"Whenever you put one or more counters on another creature".
+ON_OPPONENT_PUT_COUNTERS_ON_CREATURE_THEY_CONTROL	opponentPutsCountersOnCreatureTheyControl	-	OPPONENT_PUTS_COUNTERS_ON_OWN	OPPONENT_CONTROLS	CREATURE	"Whenever an opponent puts one or more counters on a creature they control".
+ON_YOU_PUT_LORE_COUNTERS_ON_SAGA	youPutLoreCounterOnSagaYouControl	-	YOU_PUT_EACH_LORE_COUNTER	YOU_CONTROL	SAGA	"Whenever you put a lore counter on a Saga you control", once for each counter.
+ON_ALLY_COUNTER_PUT_ON_CREATURE	countersPutOnCreatureYouControl	-	COUNTERS_PUT	YOU_CONTROL	CREATURE	"Whenever one or more counters are put on a creature you control".
+ON_SELF_EVOLVES	evolves	-	EVOLVES	THIS	-	"Whenever this creature evolves".
+ON_SELF_LOYALTY_COUNTERS_REMOVED	loyaltyCountersRemovedFromThis	-	LOYALTY_COUNTERS_REMOVED	THIS	-	"Whenever one or more loyalty counters are removed from this planeswalker".
+ON_SELF_TIME_COUNTERS_REMOVED	timeCountersRemovedFromThis	-	TIME_COUNTERS_REMOVED	THIS	-	"Whenever one or more time counters are removed from this permanent".
+ON_SELF_PLUS_ONE_PLUS_ONE_COUNTER_REMOVED	plusOneCounterRemovedFromThis	-	EACH_PLUS_ONE_COUNTER_REMOVED	THIS	-	"Whenever a +1/+1 counter is removed from this creature", once for each counter.
+ON_ALLY_COUNTERS_REMOVED_FROM_PERMANENT	countersRemovedFromPermanentYouControl	-	COUNTERS_REMOVED	YOU_CONTROL	-	"Whenever one or more counters are removed from a permanent you control".
+ON_YOU_PUT_LOYALTY_COUNTERS_ON_PLANESWALKERS	loyaltyCountersPutOnPlaneswalkersYouControl	-	LOYALTY_COUNTERS_PUT	YOU_CONTROL	PLANESWALKER	"Whenever one or more loyalty counters are put on planeswalkers you control".
+ON_SELF_MINUS_ONE_MINUS_ONE_COUNTERS_PUT	youPutMinusOneCountersOnThis	-	YOU_PUT_MINUS_ONE_COUNTERS	THIS	-	"Whenever you put one or more -1/-1 counters on this creature".
+ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE	minusOneCounterPutOnCreature	-	EACH_MINUS_ONE_COUNTER_PUT	ANY	CREATURE	"Whenever a -1/-1 counter is put on a creature", once for each counter.
+ON_MINUS_ONE_MINUS_ONE_COUNTERS_PUT_ON_CREATURE	minusOneCountersPutOnCreature	-	MINUS_ONE_COUNTERS_PUT	ANY	CREATURE	"Whenever one or more -1/-1 counters are put on a creature".
+ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTER_ON_CREATURE	youPutMinusOneCounterOnCreature	-	YOU_PUT_EACH_MINUS_ONE_COUNTER	ANY	CREATURE	"Whenever you put a -1/-1 counter on a creature", once for each counter.
+ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTERS_ON_CREATURE	youPutMinusOneCountersOnCreature	-	YOU_PUT_MINUS_ONE_COUNTERS	ANY	CREATURE	"Whenever you put one or more -1/-1 counters on a creature".
+ON_CONTROLLER_PROLIFERATES	youProliferate	-	YOU_PROLIFERATE	ANY	-	"Whenever you proliferate".
+GRAVEYARD_ON_CONTROLLER_PROLIFERATES	youProliferate	GRAVEYARD	YOU_PROLIFERATE	ANY	-	"Whenever you proliferate", from the graveyard.
+GRAVEYARD_ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_CREATURE	plusOneCountersPutOnCreatureYouControl	GRAVEYARD	PLUS_ONE_COUNTERS_PUT	YOU_CONTROL	CREATURE	"Whenever one or more +1/+1 counters are put on a creature you control", from the graveyard.

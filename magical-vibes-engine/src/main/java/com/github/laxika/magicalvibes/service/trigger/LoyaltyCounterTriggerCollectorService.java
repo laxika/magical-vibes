@@ -17,8 +17,8 @@ import java.util.List;
 @Service
 public class LoyaltyCounterTriggerCollectorService {
 
-    @CollectsTrigger(value = DealDamageToTargetPlayerOrPlaneswalkerEffect.class,
-            slot = EffectSlot.ON_SELF_LOYALTY_COUNTERS_REMOVED)
+    @CollectsCounterTrigger(value = DealDamageToTargetPlayerOrPlaneswalkerEffect.class,
+            watch = CounterWatch.ON_SELF_LOYALTY_COUNTERS_REMOVED)
     private boolean handleLoyaltyCountersRemoved(TriggerMatchContext match,
             DealDamageToTargetPlayerOrPlaneswalkerEffect effect, TriggerContext ctx) {
         TriggerContext.LoyaltyCountersRemoved removed = (TriggerContext.LoyaltyCountersRemoved) ctx;

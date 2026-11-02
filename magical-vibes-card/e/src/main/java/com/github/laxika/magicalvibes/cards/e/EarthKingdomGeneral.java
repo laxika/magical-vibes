@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -16,7 +15,7 @@ public class EarthKingdomGeneral extends Card {
 
     public EarthKingdomGeneral() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new EarthbendTargetLandEffect(2));
-        addEffect(EffectSlot.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_ANY_CREATURE,
+        addTrigger(Triggers.youPutPlusOneCountersOnCreature(),
                 OncePerTurnTriggerEffect.markOnAcceptance(
                         new MayEffect(new GainLifeEffect(new EventValue()), "Gain that much life?")));
     }

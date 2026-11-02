@@ -28,7 +28,7 @@ re-check them with a grep before acting on them.
 | 11 | Creature-death triggers and self-inclusion | done |
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
-| 13 | Remaining event families (repeatable) | open (runs 1 to 4: families 1 to 4 done) |
+| 13 | Remaining event families (repeatable) | open (runs 1 to 5: families 1 to 5 done) |
 | 14 | Trigger options replace trigger-only wrapper effects | open |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
@@ -3147,7 +3147,7 @@ and checks the "plain wording" cards 12a listed whose "another" relation exclude
 ### Step 13
 
 Step 13 is repeatable: each run moves one family of its table. Run 1 moved family 1, run 2 family 2, run 3 family 3,
-run 4 family 4.
+run 4 family 4, run 5 family 5.
 
 #### Run 1: steps and phases
 
@@ -3603,6 +3603,116 @@ factory (a one-off rewrite of `{@code SLOT}` / `{@link EffectSlot#SLOT}`); engin
   and `PlanechaseServiceTest`, and the known ones in `CardImmutabilityArchTest`, `SimulationCopyCompletenessTest` and
   `CardEffectTargetingConsistencyTest`.
 - AI: the whole module (1,620 tests), the same 10 failures as steps 7 to 13 run 3.
+- Rechecked during run 5 against a worktree baseline, both commits with the main tree's `card-data-cache` (run 5's
+  findings explain why): the application classes this run lists plus run 5's (39 classes; 1,110 tests at `88efd999a0`,
+  1,143 at `2138409bdd`: 40 deleted `LegacySlotTriggerTest` cases, 7 new) fail the same 145 tests at both commits, and
+  the AI module the same 10. No test hit a `cardRegistry` error at either commit.
+- The full suite was not run here.
+
+#### Run 5: counters
+
+The 43 counter constants are gone: `ON_SELF_COUNTERS_PUT`, `ON_ALLY_COUNTER_PUT_ON_CREATURE`, the four "you put
+counters" slots (on a creature, another creature, a creature you don't control, a permanent or player) and the
+opponent one; the eleven +1/+1-counter-put slots (on this, on a Human, a non-Hydra, another creature, another permanent
+for the first time this turn, a permanent or creature you control, by you or by anyone, any creature, other Heroes,
+`ON_CONTROLLER_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE`) and their graveyard form; the five -1/-1 slots; the time,
+lore and loyalty slots (put and removed, `ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE`); `ON_SELF_PLUS_ONE_PLUS_ONE_COUNTER_REMOVED`
+and `ON_ALLY_COUNTERS_REMOVED_FROM_PERMANENT`; renowned (this, a creature you control), monstrous, evolves, trains, the
+two Class level slots; `ON_CONTROLLER_GETS_ENERGY`, `ON_CONTROLLER_PROLIFERATES` and its graveyard form. Family 6
+(becomes the target) is next; families 6 to 11 are left.
+
+**Authoring.**
+
+- `model.trigger.CounterTrigger(CounterEvent event, ObjectRelation relation, PermanentPredicate filter)`: counters
+  (**CR 122.1**, checked; counters a permanent enters with count, **CR 122.6**, checked) are put on or removed from a
+  permanent, or a keyword action about counters happens: becomes renowned (**CR 702.112b**, checked) or monstrous
+  (**CR 701.37b**, checked), evolves (**CR 702.100b**, checked), trains (**CR 702.149c**, checked), a Class gains a level
+  (**CR 716.2a**, checked), you get energy (**CR 107.14**, checked), you proliferate (**CR 701.34a**, checked).
+  `CounterEvent` has one value per counter kind, who puts the counters and cadence (`COUNTERS_PUT`, `YOU_PUT_COUNTERS`,
+  `PLUS_ONE_COUNTERS_PUT`, `EACH_MINUS_ONE_COUNTER_PUT`, `YOU_PUT_EACH_LORE_COUNTER`, …: "each" is once per counter, the
+  rest once per permanent); the relation names the permanent the counters go on or come off (`ANY` for an event about
+  you alone); the filter is its type (`Triggers.CREATURE`, and the new `HUMAN_CREATURE`, `HERO_CREATURE`,
+  `NON_HYDRA_CREATURE`, `PLANESWALKER`, `SAGA`), which the collectors check in code as before.
+  `TIME_COUNTER_REMOVED_IN_EXILE` functions from exile by default (`defaultZones()`), so its cards need no condition.
+- One named `Triggers` factory per slot reading (41; the two graveyard forms reuse the battlefield factory with a
+  `TriggerCondition` zone): `countersPutOnThis()`, `plusOneCountersPutOnThis()`, `plusOneCountersPutOnCreatureYouControl()`,
+  `youPutPlusOneCountersOnCreatureYouControl()`, `youPutCountersOnCreature()`, `minusOneCountersPutOnCreature()`,
+  `minusOneCounterPutOnCreature()`, `timeCountersRemovedFromThis()`, `timeCounterRemovedFromThisInExile()`,
+  `becomesMonstrous()`, `evolves()`, `trains()`, `reachesLevelTwo()`, `youGetEnergy()`, `youProliferate()`, …
+  (`scripts/step13-counter-slots.tsv` maps each slot to its factory, event, relation, filter and zone).
+- **Kept as the slots were:** `ON_CONTROLLER_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE` (Terrasymbiosis, Ant-Man) and
+  `ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE` (Stocking the Pantry, Casey Jones) have the same Oracle wording
+  ("whenever you put one or more +1/+1 counters on a creature you control") but two collectors at the same choke point:
+  one puts a stack object per effect and queues a `MayEffect` through `queueMayAbility`, the other groups the effects,
+  supports targets and resolves a `MayEffect` on the stack. Giving both one trigger would run each collector over the
+  other's cards. The first is `YOU_PUT_PLUS_ONE_COUNTERS_ONCE_EACH_TURN` (`youPutPlusOneCountersOnCreatureYouControlOnceEachTurn()`,
+  named for its two cards, both limited to once each turn); step 14 turns the limit into `TriggerOptions` and merges
+  the two. `TriggerMode.PER_COUNTER` stays on its registrations (Fathom Mage, Bloodcrazed Hoplite).
+- `ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTER_ON_CREATURE` had no card; it is `youPutMinusOneCounterOnCreature()` and its
+  collector path is kept. Its agent-docs rows named Nest of Scarabs and the "one or more" wording, which is the other
+  factory's (Nest of Scarabs uses `youPutMinusOneCountersOnCreature()`); both rows were corrected by hand.
+- `LegacySlotGrouping.ALL` lost its 28 counter slots.
+
+**No rules event, no index.** As in runs 1 to 4, the counter collectors in `TriggerCollectionService`,
+`PermanentCounterSupport`, `TrainEffectHandler`, `EvolveTriggerEffectHandler`, `ClassLevelUpEffectHandler` and
+`PermanentRemovalService` (the training look-back) still run where the slots were collected.
+`service/trigger/CounterWatch` (a `TriggerWatch`) has one constant per old slot, naming its trigger and the zone the
+collector reads. The 15 handler registrations moved from `@CollectsTrigger(slot = …)` to
+`@CollectsCounterTrigger(watch = …)` (`scripts/step13-counter-rekey.py`), scanned by `TriggerCollectorRegistry` and
+`GameEngineConfig`. The readers were converted by `scripts/step13-counter-readers.py` (run 4's reader script on this
+family's TSV, which now also turns `dispatchSlot` of a family slot into `dispatchWatch`); by hand: the two methods that
+took a counter slot take a `CounterWatch` (`queueLevelReachedTriggers`, the +1/+1 "on a permanent you control"
+collector), `ClassLevelUpEffectHandler` picks its watch, and the counters-put-on-this collector finds a granted ability
+(Danny Pink) with `grant.grantedAbility() instanceof TriggeredAbility ability && ability.hasTrigger(…)`. Grouping,
+target routing, wrapper checks and ability-loss checks are unchanged, so the run makes no rules change. Shadow mode was
+not run, for run 1's reason.
+
+**Cards.** `scripts/step13-counter-triggers.py` (run 4's script reading the counter TSV) converted 116 card classes
+(the step 1 inventory's count) and no card test (none named a counter slot), one ability per registration in the old
+order, any `TriggerMode` kept. Nothing needed `MANUAL`; Danny Pink's grant argument was re-indented by hand. The domain
+effects' Javadoc that named a slot names its factory; engine Javadoc links point at the `CounterWatch` constant.
+`scripts/step13-counter-docs.py` rewrote agent-docs (103 lines); the skills and `ARCHITECTURE.md` were written by hand.
+`effect-slot-inventory.md` was re-rendered with `--keep-baseline`.
+
+**For later runs.**
+
+- Step 14: the counter collectors still read their wrappers (`OncePerTurnTriggerEffect` and its `markOnAcceptance`,
+  `OncePerTurnPerCreatureTriggerEffect`, `YouPutCounterOnControlledCreatureTriggerEffect`, `TriggeringPermanentConditionalEffect`
+  for "another colorless creature", `YouRemoveTimeCounterFromExiledCardTriggerEffect`, the `SourceCounterThreshold`
+  intervening "if"s of the plan-counter cards), `TriggerMode.PER_COUNTER`, and the two "you put +1/+1 counters on a
+  creature you control" events above.
+- Step 15: the counter count (`EventValue`), the triggering permanent of the "counters put on a creature" abilities and
+  `PutSameCountersOnSourceEffect`'s counters are still bound by the collectors.
+- Sagas (family 10) still use `SAGA_CHAPTER_*`; `youPutLoreCounterOnSagaYouControl()` (Sigurd) is a counter trigger.
+- Several collectors read only printed abilities (`source.getCard()`), not granted ones, as the slots did.
+
+**Tests changed.**
+
+- New `CounterTriggerTest` (`model/trigger/`): default zones (exile for the exiled time-counter trigger), the factories'
+  events, relations and filters, the once-each-turn form kept apart, null rejection, abilities read by zone, and a
+  registration keeping `TriggerMode.PER_COUNTER`.
+- New `CounterWatchTest`: every counter, damage, combat and spell-and-ability watch has its own (trigger, zone) pair, a
+  watch reads only the abilities of its zone, and the exiled time-counter watch reads the exiled card.
+- `MiscTriggerCollectorServiceTest`: dispatches to the energy and proliferate watches (by the reader script).
+- `LegacySlotTriggerTest`'s per-slot case runs 43 fewer times (it is parameterised over `EffectSlot.values()`).
+
+**Test runs.**
+
+- Card: every test class of a converted card and every card test that constructs one (173 classes, 1,794 tests): all
+  passing.
+- Application: the trigger-model, watch, registry, misc, damage and discard collector, combat, combat damage, placement,
+  timestamp, activation, stack resolution, library and graveyard handler, freeze, architecture, ratchet, pipeline and
+  simulation-copy classes (34 classes; 776 tests, 808 at HEAD: 43 deleted cases, 11 new): 119 failures, exactly the tests
+  that fail at HEAD (`88efd999a0`, same classes run in a worktree): mock wiring in `ActivatedAbilityExecutionServiceTest`,
+  `BattlefieldPlacementServiceTest`, `CombatDamageServiceTest`, `CombatServiceTest`, `DamageTriggerCollectorServiceTest`,
+  `PermanentTimestampTest` and `PutTargetCardsFromGraveyardOnBottomOfLibraryEffectHandlerTest`, and the known ones in
+  `CardImmutabilityArchTest`, `SimulationCopyCompletenessTest` and `CardEffectTargetingConsistencyTest`.
+- AI: the whole module (1,620 tests): 10 failures, exactly the tests that fail at HEAD (`88efd999a0`, run in a
+  worktree): the modal-mode, kicker and Reign of Chaos choices in the four AI decision engine tests and the two
+  `TargetPolarityGuardTest` cases, the same 10 as steps 7 to 13 run 4.
+- A fresh worktree fetches the sets its card-data cache lacks, and the provider's current `set-sld.json` maps SLD #921
+  to another card, so card registration rejects Goblin Matron and every Spring-context test fails (321 AI tests at
+  first). Both baselines above were run with the main tree's `card-data-cache` copied into the worktree.
 - The full suite was not run here.
 
 ## Prompt

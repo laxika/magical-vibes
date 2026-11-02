@@ -88,6 +88,20 @@ public final class Triggers {
             new PermanentIsCreaturePredicate(), new PermanentIsEnchantmentPredicate()));
     /** A permanent showing its transformed face. */
     public static final PermanentPredicate TRANSFORMED = new PermanentIsTransformedPredicate();
+    /** A planeswalker. */
+    public static final PermanentPredicate PLANESWALKER = new PermanentIsPlaneswalkerPredicate();
+    /** A Saga. */
+    public static final PermanentPredicate SAGA = new PermanentHasSubtypePredicate(CardSubtype.SAGA);
+    /** A Human creature. */
+    public static final PermanentPredicate HUMAN_CREATURE = new PermanentAllOfPredicate(List.of(
+            new PermanentIsCreaturePredicate(), new PermanentHasSubtypePredicate(CardSubtype.HUMAN)));
+    /** A Hero creature. */
+    public static final PermanentPredicate HERO_CREATURE = new PermanentAllOfPredicate(List.of(
+            new PermanentIsCreaturePredicate(), new PermanentHasSubtypePredicate(CardSubtype.HERO)));
+    /** A non-Hydra creature. */
+    public static final PermanentPredicate NON_HYDRA_CREATURE = new PermanentAllOfPredicate(List.of(
+            new PermanentIsCreaturePredicate(),
+            new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.HYDRA))));
 
     /** Every zone but the battlefield and the graveyard: "from anywhere other than the battlefield". */
     private static final Set<Zone> NOT_BATTLEFIELD = EnumSet.complementOf(EnumSet.of(Zone.BATTLEFIELD, Zone.GRAVEYARD));
@@ -945,5 +959,234 @@ public final class Triggers {
     public static DamageTrigger sourceYouControlDealsNoncombatDamageToCreature() {
         return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_NONCOMBAT_DAMAGE_TO_CREATURE,
                 ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever a time counter is removed from this card while it's exiled", from exile. */
+    public static CounterTrigger timeCounterRemovedFromThisInExile() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.TIME_COUNTER_REMOVED_IN_EXILE, ObjectRelation.THIS);
+    }
+
+    /** "When this creature becomes renowned" */
+    public static CounterTrigger becomesRenowned() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.BECOMES_RENOWNED, ObjectRelation.THIS);
+    }
+
+    /** "Whenever a creature you control becomes renowned" */
+    public static CounterTrigger creatureYouControlBecomesRenowned() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.BECOMES_RENOWNED, ObjectRelation.YOU_CONTROL, CREATURE);
+    }
+
+    /** "When this creature becomes monstrous" */
+    public static CounterTrigger becomesMonstrous() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.BECOMES_MONSTROUS, ObjectRelation.THIS);
+    }
+
+    /** "Whenever you get one or more {E}" */
+    public static CounterTrigger youGetEnergy() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.YOU_GET_ENERGY, ObjectRelation.ANY);
+    }
+
+    /** "Whenever you put one or more counters on a creature you don't control" */
+    public static CounterTrigger youPutCountersOnCreatureYouDontControl() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.YOU_PUT_COUNTERS,
+                ObjectRelation.OPPONENT_CONTROLS, CREATURE);
+    }
+
+    /** "Whenever you put one or more counters on a creature" */
+    public static CounterTrigger youPutCountersOnCreature() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.YOU_PUT_COUNTERS, ObjectRelation.ANY, CREATURE);
+    }
+
+    /**
+     * "Whenever one or more +1/+1 counters are put on this permanent"; a {@code TriggerMode.PER_COUNTER} registration
+     * triggers once for each counter.
+     */
+    public static CounterTrigger plusOneCountersPutOnThis() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.PLUS_ONE_COUNTERS_PUT, ObjectRelation.THIS);
+    }
+
+    /** "Whenever this creature trains" */
+    public static CounterTrigger trains() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.TRAINS, ObjectRelation.THIS);
+    }
+
+    /** "Whenever one or more +1/+1 counters are put on a Human you control" */
+    public static CounterTrigger plusOneCountersPutOnHumanYouControl() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.PLUS_ONE_COUNTERS_PUT,
+                ObjectRelation.YOU_CONTROL, HUMAN_CREATURE);
+    }
+
+    /** "When this Class becomes level 2" */
+    public static CounterTrigger reachesLevelTwo() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.REACHES_LEVEL_TWO, ObjectRelation.THIS);
+    }
+
+    /** "When this Class becomes level 3" */
+    public static CounterTrigger reachesLevelThree() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.REACHES_LEVEL_THREE, ObjectRelation.THIS);
+    }
+
+    /** "Whenever one or more counters are put on this permanent" */
+    public static CounterTrigger countersPutOnThis() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.COUNTERS_PUT, ObjectRelation.THIS);
+    }
+
+    /** "Whenever one or more +1/+1 counters are put on another non-Hydra creature you control" */
+    public static CounterTrigger plusOneCountersPutOnAnotherNonHydraCreatureYouControl() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.PLUS_ONE_COUNTERS_PUT,
+                ObjectRelation.ANOTHER_YOU_CONTROL, NON_HYDRA_CREATURE);
+    }
+
+    /** "Whenever one or more +1/+1 counters are put on another creature you control" */
+    public static CounterTrigger plusOneCountersPutOnAnotherCreatureYouControl() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.PLUS_ONE_COUNTERS_PUT,
+                ObjectRelation.ANOTHER_YOU_CONTROL, CREATURE);
+    }
+
+    /**
+     * "Whenever you put one or more +1/+1 counters on another permanent you control, if it's the first time +1/+1
+     * counters have been put on that permanent this turn"
+     */
+    public static CounterTrigger plusOneCountersPutOnAnotherPermanentYouControlFirstTimeEachTurn() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.FIRST_PLUS_ONE_COUNTERS_PUT_THIS_TURN,
+                ObjectRelation.ANOTHER_YOU_CONTROL);
+    }
+
+    /** "Whenever you put one or more +1/+1 counters on a permanent you control" */
+    public static CounterTrigger youPutPlusOneCountersOnPermanentYouControl() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.YOU_PUT_PLUS_ONE_COUNTERS, ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever you put one or more +1/+1 counters on a creature you control" */
+    public static CounterTrigger youPutPlusOneCountersOnCreatureYouControl() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.YOU_PUT_PLUS_ONE_COUNTERS,
+                ObjectRelation.YOU_CONTROL, CREATURE);
+    }
+
+    /** "Whenever one or more +1/+1 counters are put on a creature you control" */
+    public static CounterTrigger plusOneCountersPutOnCreatureYouControl() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.PLUS_ONE_COUNTERS_PUT,
+                ObjectRelation.YOU_CONTROL, CREATURE);
+    }
+
+    /** "Whenever you put one or more +1/+1 counters on a creature" */
+    public static CounterTrigger youPutPlusOneCountersOnCreature() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.YOU_PUT_PLUS_ONE_COUNTERS, ObjectRelation.ANY, CREATURE);
+    }
+
+    /** "Whenever you put one or more +1/+1 counters on other Heroes you control" */
+    public static CounterTrigger youPutPlusOneCountersOnAnotherHeroYouControl() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.YOU_PUT_PLUS_ONE_COUNTERS,
+                ObjectRelation.ANOTHER_YOU_CONTROL, HERO_CREATURE);
+    }
+
+    /** "Whenever you put one or more +1/+1 counters on another creature" */
+    public static CounterTrigger youPutPlusOneCountersOnAnotherCreature() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.YOU_PUT_PLUS_ONE_COUNTERS,
+                ObjectRelation.ANOTHER, CREATURE);
+    }
+
+    /**
+     * "Whenever you put one or more +1/+1 counters on a creature you control", for an ability that triggers or does
+     * this only once each turn.
+     */
+    public static CounterTrigger youPutPlusOneCountersOnCreatureYouControlOnceEachTurn() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.YOU_PUT_PLUS_ONE_COUNTERS_ONCE_EACH_TURN,
+                ObjectRelation.YOU_CONTROL, CREATURE);
+    }
+
+    /** "Whenever you put one or more counters on a permanent or player" */
+    public static CounterTrigger youPutCountersOnPermanentOrPlayer() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER,
+                ObjectRelation.ANY);
+    }
+
+    /** "Whenever you put one or more time counters on a permanent you control" */
+    public static CounterTrigger youPutTimeCountersOnPermanentYouControl() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.YOU_PUT_TIME_COUNTERS, ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever you put one or more counters on another creature" */
+    public static CounterTrigger youPutCountersOnAnotherCreature() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.YOU_PUT_COUNTERS, ObjectRelation.ANOTHER, CREATURE);
+    }
+
+    /** "Whenever an opponent puts one or more counters on a creature they control" */
+    public static CounterTrigger opponentPutsCountersOnCreatureTheyControl() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.OPPONENT_PUTS_COUNTERS_ON_OWN,
+                ObjectRelation.OPPONENT_CONTROLS, CREATURE);
+    }
+
+    /** "Whenever you put a lore counter on a Saga you control", once for each counter. */
+    public static CounterTrigger youPutLoreCounterOnSagaYouControl() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.YOU_PUT_EACH_LORE_COUNTER,
+                ObjectRelation.YOU_CONTROL, SAGA);
+    }
+
+    /** "Whenever one or more counters are put on a creature you control" */
+    public static CounterTrigger countersPutOnCreatureYouControl() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.COUNTERS_PUT, ObjectRelation.YOU_CONTROL, CREATURE);
+    }
+
+    /** "Whenever this creature evolves" */
+    public static CounterTrigger evolves() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.EVOLVES, ObjectRelation.THIS);
+    }
+
+    /** "Whenever one or more loyalty counters are removed from this planeswalker" */
+    public static CounterTrigger loyaltyCountersRemovedFromThis() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.LOYALTY_COUNTERS_REMOVED, ObjectRelation.THIS);
+    }
+
+    /** "Whenever one or more time counters are removed from this permanent" */
+    public static CounterTrigger timeCountersRemovedFromThis() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.TIME_COUNTERS_REMOVED, ObjectRelation.THIS);
+    }
+
+    /** "Whenever a +1/+1 counter is removed from this creature", once for each counter. */
+    public static CounterTrigger plusOneCounterRemovedFromThis() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.EACH_PLUS_ONE_COUNTER_REMOVED, ObjectRelation.THIS);
+    }
+
+    /** "Whenever one or more counters are removed from a permanent you control" */
+    public static CounterTrigger countersRemovedFromPermanentYouControl() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.COUNTERS_REMOVED, ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever one or more loyalty counters are put on planeswalkers you control" */
+    public static CounterTrigger loyaltyCountersPutOnPlaneswalkersYouControl() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.LOYALTY_COUNTERS_PUT,
+                ObjectRelation.YOU_CONTROL, PLANESWALKER);
+    }
+
+    /** "Whenever you put one or more -1/-1 counters on this creature" */
+    public static CounterTrigger youPutMinusOneCountersOnThis() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.YOU_PUT_MINUS_ONE_COUNTERS, ObjectRelation.THIS);
+    }
+
+    /** "Whenever a -1/-1 counter is put on a creature", once for each counter. */
+    public static CounterTrigger minusOneCounterPutOnCreature() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.EACH_MINUS_ONE_COUNTER_PUT, ObjectRelation.ANY, CREATURE);
+    }
+
+    /** "Whenever one or more -1/-1 counters are put on a creature" */
+    public static CounterTrigger minusOneCountersPutOnCreature() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.MINUS_ONE_COUNTERS_PUT, ObjectRelation.ANY, CREATURE);
+    }
+
+    /** "Whenever you put a -1/-1 counter on a creature", once for each counter. */
+    public static CounterTrigger youPutMinusOneCounterOnCreature() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.YOU_PUT_EACH_MINUS_ONE_COUNTER,
+                ObjectRelation.ANY, CREATURE);
+    }
+
+    /** "Whenever you put one or more -1/-1 counters on a creature" */
+    public static CounterTrigger youPutMinusOneCountersOnCreature() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.YOU_PUT_MINUS_ONE_COUNTERS, ObjectRelation.ANY, CREATURE);
+    }
+
+    /** "Whenever you proliferate" */
+    public static CounterTrigger youProliferate() {
+        return new CounterTrigger(CounterTrigger.CounterEvent.YOU_PROLIFERATE, ObjectRelation.ANY);
     }
 }

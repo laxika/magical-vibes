@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -34,7 +35,7 @@ public class ConstructACosmicCube extends Card {
                         Set.of()),
                 new PutCountersOnSelfEffect(CounterType.PLAN)));
 
-        addEffect(EffectSlot.ON_SELF_COUNTERS_PUT, ConditionalEffect.atTriggerTime(
+        addTrigger(Triggers.countersPutOnThis(), ConditionalEffect.atTriggerTime(
                 new SourceCounterThreshold(7, CounterType.PLAN),
                 SacrificeSelfThenEffect.reflexive(
                         new ControlTargetPlayerNextTurnEffect(PlayerRelation.OPPONENT))));

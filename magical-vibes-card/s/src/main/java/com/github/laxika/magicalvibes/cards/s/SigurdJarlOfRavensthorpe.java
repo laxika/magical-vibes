@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCountersFromTargetPerma
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -50,7 +50,7 @@ public class SigurdJarlOfRavensthorpe extends Card {
                 "Activate only if this creature attacked this turn."
         ).withBoast());
 
-        addEffect(EffectSlot.ON_YOU_PUT_LORE_COUNTERS_ON_SAGA,
+        addTrigger(Triggers.youPutLoreCounterOnSagaYouControl(),
                 PutCounterOnTargetPermanentEffect.withTargetRestriction(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()));
     }

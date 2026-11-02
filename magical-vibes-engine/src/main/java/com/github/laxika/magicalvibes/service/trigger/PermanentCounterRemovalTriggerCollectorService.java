@@ -22,7 +22,7 @@ import java.util.List;
 public class PermanentCounterRemovalTriggerCollectorService {
     private final ConditionEvaluationService conditionEvaluationService;
 
-    @CollectsTrigger(value = SeekEffect.class, slot = EffectSlot.ON_ALLY_COUNTERS_REMOVED_FROM_PERMANENT)
+    @CollectsCounterTrigger(value = SeekEffect.class, watch = CounterWatch.ON_ALLY_COUNTERS_REMOVED_FROM_PERMANENT)
     private boolean handleCountersRemoved(TriggerMatchContext match, SeekEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.CountersRemovedFromPermanent removed)
                 || removed.amount() <= 0 || match.permanent() == null) {
@@ -41,7 +41,7 @@ public class PermanentCounterRemovalTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTER_REMOVED)
+    @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTER_REMOVED)
     private boolean handleSelfPlusOnePlusOneCounterRemoved(TriggerMatchContext match, CardEffect effect,
                                                            TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.PlusOnePlusOneCountersRemoved removed)
@@ -66,7 +66,7 @@ public class PermanentCounterRemovalTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_TIME_COUNTERS_REMOVED)
+    @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_SELF_TIME_COUNTERS_REMOVED)
     private boolean handleSelfTimeCountersRemoved(TriggerMatchContext match, CardEffect effect,
                                                   TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.TimeCountersRemoved removed)

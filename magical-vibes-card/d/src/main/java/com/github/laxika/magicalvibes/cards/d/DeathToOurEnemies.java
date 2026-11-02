@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -51,7 +50,7 @@ public class DeathToOurEnemies extends Card {
                 new Fixed(7), null, DivisionMode.CHOSEN, anyTargetPermanent,
                 2, true, false, true);
 
-        target(anyTarget, 1, 2).addEffect(EffectSlot.ON_SELF_COUNTERS_PUT,
+        target(anyTarget, 1, 2).addTrigger(Triggers.countersPutOnThis(),
                 ConditionalEffect.atTriggerTime(
                         new SourceCounterThreshold(4, CounterType.PLAN),
                         SacrificeSelfThenEffect.reflexive(damage)));

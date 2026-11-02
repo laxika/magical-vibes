@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * <p>{@code alsoResolve}, when present, is resolved in the same resolution whenever the
  * power/toughness comparison still holds, even if the counter cannot be placed or the source has
  * left the battlefield ("put a +1/+1 counter on this creature and investigate", Sharp-Eyed
- * Rookie). It is distinct from {@code ON_SELF_EVOLVES}, which fires only when the counter lands.</p>
+ * Rookie). It is distinct from {@code Triggers.evolves()}, which fires only when the counter lands.</p>
  */
 public record EvolveTriggerEffect(CounterType counterType, CardEffect alsoResolve) implements CardEffect {
 

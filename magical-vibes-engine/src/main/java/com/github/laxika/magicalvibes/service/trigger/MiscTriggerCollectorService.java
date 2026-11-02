@@ -357,11 +357,11 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_BECOMES_MONSTROUS)
+    @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_SELF_BECOMES_MONSTROUS)
     private boolean handleSelfBecomesMonstrous(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.SelfBecomesMonstrous sm = (TriggerContext.SelfBecomesMonstrous) ctx;
         Card card = match.permanent().getCard();
-        List<CardEffect> triggeredEffects = card.getEffects(EffectSlot.ON_SELF_BECOMES_MONSTROUS);
+        List<CardEffect> triggeredEffects = CounterWatch.ON_SELF_BECOMES_MONSTROUS.effectsOf(card);
         if (triggeredEffects.isEmpty() || triggeredEffects.getFirst() != effect) {
             return true;
         }
@@ -1658,7 +1658,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_GETS_ENERGY)
+    @CollectsCounterTrigger(value = BoostSelfEffect.class, watch = CounterWatch.ON_CONTROLLER_GETS_ENERGY)
     private boolean handleEnergyGainBoostSelf(TriggerMatchContext match,
             BoostSelfEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -1702,7 +1702,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_GETS_ENERGY)
+    @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_CONTROLLER_GETS_ENERGY)
     private boolean handleEnergyGainDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         if (!conditionEvaluationService.isInterveningIfMet(match.gameData(), effect,
@@ -1755,7 +1755,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_PROLIFERATES)
+    @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_CONTROLLER_PROLIFERATES)
     private boolean handleProliferateDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -1773,7 +1773,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_CONTROLLER_PROLIFERATES)
+    @CollectsCounterTrigger(value = ConditionalEffect.class, watch = CounterWatch.ON_CONTROLLER_PROLIFERATES)
     private boolean handleConditionalProliferate(TriggerMatchContext match,
             ConditionalEffect effect, TriggerContext ctx) {
         if (effect.interveningIf()

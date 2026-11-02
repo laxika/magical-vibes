@@ -44,7 +44,7 @@ public class PutPlusOnePlusOneCounterOnEachCreatureTargetPlayerControlsEffectHan
                 .toList();
         for (Permanent p : creatures) {
             // Routes through the shared helper so cantHaveCounters is respected and
-            // ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT triggers fire (rules-correct placement).
+            // Triggers.plusOneCountersPutOnThis() abilities trigger (rules-correct placement).
             permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, entry, p, 1);
         }
 

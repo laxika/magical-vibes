@@ -29,8 +29,8 @@ public class SagaCounterTriggerCollectorService {
         this.gameLogService = gameLogService;
     }
 
-    @CollectsTrigger(value = PutCounterOnTargetPermanentEffect.class,
-            slot = EffectSlot.ON_YOU_PUT_LORE_COUNTERS_ON_SAGA)
+    @CollectsCounterTrigger(value = PutCounterOnTargetPermanentEffect.class,
+            watch = CounterWatch.ON_YOU_PUT_LORE_COUNTERS_ON_SAGA)
     private boolean handleLoreCounterPlaced(TriggerMatchContext match,
                                             PutCounterOnTargetPermanentEffect effect,
                                             TriggerContext ctx) {

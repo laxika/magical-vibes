@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -35,8 +35,8 @@ public class DannyPink extends Card {
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_SELF_COUNTERS_PUT,
-                new OncePerTurnTriggerEffect(new DrawCardEffect(1)),
+                new TriggeredAbility(Triggers.countersPutOnThis(),
+                        new OncePerTurnTriggerEffect(new DrawCardEffect(1))),
                 GrantScope.ALL_OWN_CREATURES));
     }
 }

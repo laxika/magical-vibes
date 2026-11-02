@@ -411,8 +411,8 @@ public class TriggerCollectionService {
 
         TriggerContext context = new TriggerContext.CountersPlaced(placingPlayerId, amount);
         for (Permanent permanent : new ArrayList<>(battlefield)) {
-            dispatchSlot(gameData, permanent, placingPlayerId,
-                    EffectSlot.ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER, context);
+            dispatchWatch(gameData, permanent, placingPlayerId,
+                    CounterWatch.ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER, context);
         }
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)
                 && !gameData.interaction.isAwaitingInput()) {
@@ -434,8 +434,8 @@ public class TriggerCollectionService {
 
         TriggerContext context = new TriggerContext.TimeCountersPlaced(target, placingPlayerId, amount);
         for (Permanent permanent : new ArrayList<>(battlefield)) {
-            dispatchSlot(gameData, permanent, placingPlayerId,
-                    EffectSlot.ON_YOU_PUT_TIME_COUNTERS_ON_CONTROLLED_PERMANENT, context);
+            dispatchWatch(gameData, permanent, placingPlayerId,
+                    CounterWatch.ON_YOU_PUT_TIME_COUNTERS_ON_CONTROLLED_PERMANENT, context);
         }
     }
 
@@ -454,8 +454,8 @@ public class TriggerCollectionService {
 
         TriggerContext context = new TriggerContext.LoreCounterPlaced(saga, placingPlayerId);
         for (Permanent permanent : new ArrayList<>(battlefield)) {
-            dispatchSlot(gameData, permanent, placingPlayerId,
-                    EffectSlot.ON_YOU_PUT_LORE_COUNTERS_ON_SAGA, context);
+            dispatchWatch(gameData, permanent, placingPlayerId,
+                    CounterWatch.ON_YOU_PUT_LORE_COUNTERS_ON_SAGA, context);
         }
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)
                 && !gameData.interaction.isAwaitingInput()) {
@@ -477,8 +477,9 @@ public class TriggerCollectionService {
         }
 
         for (Card card : new ArrayList<>(graveyard)) {
-            List<CardEffect> effects = gameQueryService.getEffectiveGraveyardEffects(
-                    gameData, card, EffectSlot.GRAVEYARD_ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_CREATURE);
+            List<CardEffect> effects = gameQueryService.getEffectiveGraveyardTriggerEffects(
+                    gameData, card,
+                    CounterWatch.GRAVEYARD_ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_CREATURE.trigger());
             if (effects == null || effects.isEmpty()) {
                 continue;
             }
@@ -512,30 +513,30 @@ public class TriggerCollectionService {
                         permanent, removedCounters);
                 for (Permanent watcher : new ArrayList<>(
                         gameData.playerBattlefields.getOrDefault(controllerId, List.of()))) {
-                    dispatchSlot(gameData, watcher, controllerId,
-                            EffectSlot.ON_ALLY_COUNTERS_REMOVED_FROM_PERMANENT, context);
+                    dispatchWatch(gameData, watcher, controllerId,
+                            CounterWatch.ON_ALLY_COUNTERS_REMOVED_FROM_PERMANENT, context);
                 }
             }
 
             int timeCountersRemoved = permanent.drainTimeCountersRemovedSinceTriggerCheck();
             if (timeCountersRemoved > 0) {
-                dispatchSlot(gameData, permanent, controllerId,
-                        EffectSlot.ON_SELF_TIME_COUNTERS_REMOVED,
+                dispatchWatch(gameData, permanent, controllerId,
+                        CounterWatch.ON_SELF_TIME_COUNTERS_REMOVED,
                         new TriggerContext.TimeCountersRemoved(permanent, timeCountersRemoved));
             }
 
             int plusOneRemoved = permanent.drainPlusOnePlusOneCountersRemovedSinceTriggerCheck();
             if (plusOneRemoved > 0) {
-                dispatchSlot(gameData, permanent, controllerId,
-                        EffectSlot.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTER_REMOVED,
+                dispatchWatch(gameData, permanent, controllerId,
+                        CounterWatch.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTER_REMOVED,
                         new TriggerContext.PlusOnePlusOneCountersRemoved(permanent, plusOneRemoved));
             }
 
             int amount = permanent.drainLoyaltyCountersRemovedSinceTriggerCheck();
             if (amount <= 0) return;
 
-            dispatchSlot(gameData, permanent, controllerId,
-                    EffectSlot.ON_SELF_LOYALTY_COUNTERS_REMOVED,
+            dispatchWatch(gameData, permanent, controllerId,
+                    CounterWatch.ON_SELF_LOYALTY_COUNTERS_REMOVED,
                     new TriggerContext.LoyaltyCountersRemoved(permanent, amount));
         });
     }
@@ -574,9 +575,9 @@ public class TriggerCollectionService {
         }
 
         TriggerContext context = new TriggerContext.TimeCounterRemovedFromExile(remainingCounters, removerId);
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE)) {
+        for (CardEffect effect : CounterWatch.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE.effectsOf(card)) {
             dispatch(new TriggerMatchContext(gameData, null, ownerId, effect, card),
-                    EffectSlot.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE, effect, context);
+                    CounterWatch.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE, effect, context);
         }
     }
 
@@ -10402,7 +10403,7 @@ public class TriggerCollectionService {
      * @param controllerId     the player controlling it
      */
     public void checkBecomesRenownedTriggers(GameData gameData, Permanent renownedCreature, UUID controllerId) {
-        for (CardEffect effect : renownedCreature.getCard().getEffects(EffectSlot.ON_SELF_BECOMES_RENOWNED)) {
+        for (CardEffect effect : CounterWatch.ON_SELF_BECOMES_RENOWNED.effectsOf(renownedCreature.getCard())) {
             gameData.enqueueTrigger(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     renownedCreature.getCard(),
@@ -10418,7 +10419,7 @@ public class TriggerCollectionService {
 
         gameData.forEachPermanent((ownerId, perm) -> {
             if (!ownerId.equals(controllerId)) return;
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_BECOMES_RENOWNED)) {
+            for (CardEffect effect : CounterWatch.ON_ALLY_CREATURE_BECOMES_RENOWNED.effectsOf(perm.getCard())) {
                 CardEffect resolved = effect;
                 if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
                     FilterContext filterContext = FilterContext.of(gameData)
@@ -10537,9 +10538,9 @@ public class TriggerCollectionService {
                                                UUID controllerId, int xValue) {
         TriggerContext.SelfBecomesMonstrous context =
                 new TriggerContext.SelfBecomesMonstrous(controllerId, xValue);
-        for (CardEffect effect : monstrousPermanent.getCard().getEffects(EffectSlot.ON_SELF_BECOMES_MONSTROUS)) {
+        for (CardEffect effect : CounterWatch.ON_SELF_BECOMES_MONSTROUS.effectsOf(monstrousPermanent.getCard())) {
             var match = new TriggerMatchContext(gameData, monstrousPermanent, controllerId, effect);
-            registry.dispatch(match, EffectSlot.ON_SELF_BECOMES_MONSTROUS, effect, context);
+            registry.dispatch(match, CounterWatch.ON_SELF_BECOMES_MONSTROUS, effect, context);
         }
     }
 
@@ -11677,7 +11678,7 @@ public class TriggerCollectionService {
         if (battlefield == null) return;
 
         for (Permanent perm : List.copyOf(battlefield)) {
-            dispatchSlot(gameData, perm, gainingPlayerId, EffectSlot.ON_CONTROLLER_GETS_ENERGY, ctx);
+            dispatchWatch(gameData, perm, gainingPlayerId, CounterWatch.ON_CONTROLLER_GETS_ENERGY, ctx);
         }
     }
 
@@ -11691,8 +11692,8 @@ public class TriggerCollectionService {
             TriggerContext.Proliferate ctx = new TriggerContext.Proliferate(proliferatingPlayerId);
             for (Permanent perm : List.copyOf(battlefield)) {
                 for (int i = 0; i < proliferateCount; i++) {
-                    dispatchSlot(gameData, perm, proliferatingPlayerId,
-                            EffectSlot.ON_CONTROLLER_PROLIFERATES, ctx);
+                    dispatchWatch(gameData, perm, proliferatingPlayerId,
+                            CounterWatch.ON_CONTROLLER_PROLIFERATES, ctx);
                 }
             }
         }
@@ -11701,8 +11702,8 @@ public class TriggerCollectionService {
         if (graveyard == null) return;
 
         for (Card card : new ArrayList<>(graveyard)) {
-            List<CardEffect> effects = gameQueryService.getEffectiveGraveyardEffects(
-                    gameData, card, EffectSlot.GRAVEYARD_ON_CONTROLLER_PROLIFERATES);
+            List<CardEffect> effects = gameQueryService.getEffectiveGraveyardTriggerEffects(
+                    gameData, card, CounterWatch.GRAVEYARD_ON_CONTROLLER_PROLIFERATES.trigger());
             if (effects == null || effects.isEmpty()) continue;
 
             for (int i = 0; i < proliferateCount; i++) {

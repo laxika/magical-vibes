@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MSC", collectorNumber = "31")
 @CardRegistration(set = "MSC", collectorNumber = "330")
@@ -23,7 +24,7 @@ public class GloriousPurpose extends Card {
 
         // "When the sixth plan counter is put on this enchantment" is qualified by the counter placement
         // itself, so the threshold is checked only when the counter is put, not again on resolution.
-        addEffect(EffectSlot.ON_SELF_COUNTERS_PUT, ConditionalEffect.atTriggerTime(
+        addTrigger(Triggers.countersPutOnThis(), ConditionalEffect.atTriggerTime(
                 new SourceCounterThreshold(6, CounterType.PLAN),
                 new SacrificeSelfThenEffect(
                         ExileTopCardsAndMayCastSpellsEffect.controllerWithRestToHand(4))));

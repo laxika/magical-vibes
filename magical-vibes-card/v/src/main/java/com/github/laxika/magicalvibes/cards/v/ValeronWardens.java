@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RenownEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -15,6 +14,6 @@ public class ValeronWardens extends Card {
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new RenownEffect(2));
 
         // Whenever a creature you control becomes renowned, draw a card.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_BECOMES_RENOWNED, new DrawCardEffect(1));
+        addTrigger(Triggers.creatureYouControlBecomesRenowned(), new DrawCardEffect(1));
     }
 }

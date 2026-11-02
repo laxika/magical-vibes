@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Wrapper for an {@code ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE} trigger that fires only when the
+ * Wrapper for an {@code Triggers.timeCounterRemovedFromThisInExile()} ability that fires only when the
  * card's controller is the player removing the time counter ("Whenever you remove a time counter
  * from this card while it's exiled" — Watcher of Hours).
  */

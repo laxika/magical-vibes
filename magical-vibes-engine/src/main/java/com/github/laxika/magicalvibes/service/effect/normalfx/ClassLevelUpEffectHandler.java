@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.trigger.CounterWatch;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -39,8 +39,8 @@ public class ClassLevelUpEffectHandler implements NormalEffectHandlerBean {
 
         source.setClassLevel(levelUp.level());
         List<CardEffect> levelEffects = levelUp.gainedEffects().isEmpty()
-                ? source.getCard().getEffects(levelUp.level() == 2
-                ? EffectSlot.ON_SELF_REACHES_LEVEL_TWO : EffectSlot.ON_SELF_REACHES_LEVEL_THREE)
+                ? (levelUp.level() == 2 ? CounterWatch.ON_SELF_REACHES_LEVEL_TWO
+                : CounterWatch.ON_SELF_REACHES_LEVEL_THREE).effectsOf(source.getCard())
                 : levelUp.gainedEffects();
         if (levelEffects.isEmpty()) {
             return;

@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ public class EmberSwallower extends Card {
                 "{5}{R}{R}: Monstrosity 3."
         ));
 
-        addEffect(EffectSlot.ON_SELF_BECOMES_MONSTROUS, new SacrificePermanentsEffect(
+        addTrigger(Triggers.becomesMonstrous(), new SacrificePermanentsEffect(
                 3, new PermanentIsLandPredicate(), SacrificeRecipient.EACH_PLAYER));
     }
 }

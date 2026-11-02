@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -29,7 +28,7 @@ public class DefiantGreatmaw extends Card {
         // "Whenever you put one or more -1/-1 counters on this creature, remove a -1/-1 counter from
         // another target creature you control." The target ("another creature you control") is carried
         // by the effect's own targetSpec predicate and chosen as the ability goes on the stack.
-        addEffect(EffectSlot.ON_SELF_MINUS_ONE_MINUS_ONE_COUNTERS_PUT,
+        addTrigger(Triggers.youPutMinusOneCountersOnThis(),
                 new RemoveCounterFromTargetPermanentEffect(
                         CounterType.MINUS_ONE_MINUS_ONE,
                         new PermanentAllOfPredicate(List.of(

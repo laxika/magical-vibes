@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
@@ -24,7 +23,7 @@ public class HollowmurkSiege extends Card {
     public HollowmurkSiege() {
         addStaticEffect(new ChooseModeOnEnterEffect(List.of("Sultai", "Abzan")));
 
-        addEffect(EffectSlot.ON_ALLY_COUNTER_PUT_ON_CREATURE, new ConditionalEffect(
+        addTrigger(Triggers.countersPutOnCreatureYouControl(), new ConditionalEffect(
                 new SourceHasChosenMode("Sultai"),
                 new OncePerTurnTriggerEffect(new DrawCardEffect(1))));
 

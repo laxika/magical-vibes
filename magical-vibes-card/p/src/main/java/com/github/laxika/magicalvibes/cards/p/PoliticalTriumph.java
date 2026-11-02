@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -25,7 +24,7 @@ public class PoliticalTriumph extends Card {
                         new ScryEffect(1),
                         new PutCountersOnSelfEffect(CounterType.PLAN)));
 
-        addEffect(EffectSlot.ON_SELF_COUNTERS_PUT, ConditionalEffect.atTriggerTime(
+        addTrigger(Triggers.countersPutOnThis(), ConditionalEffect.atTriggerTime(
                 new SourceCounterThreshold(4, CounterType.PLAN),
                 SequenceEffect.of(
                         new SacrificeSelfEffect(),

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -24,7 +23,7 @@ public class ClaimTheKingdom extends Card {
                         new PutCountersOnSelfEffect(CounterType.PLAN)));
 
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.ON_SELF_COUNTERS_PUT, ConditionalEffect.atTriggerTime(
+                .addTrigger(Triggers.countersPutOnThis(), ConditionalEffect.atTriggerTime(
                         new SourceCounterThreshold(4, CounterType.PLAN),
                         SacrificeSelfThenEffect.reflexive(
                                 new PutCounterOnTargetPermanentEffect(CounterType.INDESTRUCTIBLE))));

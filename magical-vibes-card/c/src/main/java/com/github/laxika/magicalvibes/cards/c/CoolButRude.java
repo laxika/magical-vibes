@@ -56,8 +56,8 @@ public class CoolButRude extends Card {
         addEffect(EffectSlot.ON_CONTROLLER_DISCARDS, new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.LEVEL),
                 new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT)));
-        addEffect(EffectSlot.ON_SELF_REACHES_LEVEL_THREE, new SearchLibraryEffect());
-        addEffect(EffectSlot.ON_SELF_REACHES_LEVEL_THREE,
+        addTrigger(Triggers.reachesLevelThree(), new SearchLibraryEffect());
+        addTrigger(Triggers.reachesLevelThree(),
                 new DiscardEffect(1, DiscardRecipient.CONTROLLER, true));
     }
 }

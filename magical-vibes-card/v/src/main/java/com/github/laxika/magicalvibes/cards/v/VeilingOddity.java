@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeAllCreaturesUnblockableEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ public class VeilingOddity extends Card {
     public VeilingOddity() {
         // When the last time counter is removed from this card while it's exiled, creatures can't
         // be blocked this turn. The negated suspend condition identifies the last counter event.
-        addEffect(EffectSlot.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE, new ConditionalEffect(
+        addTrigger(Triggers.timeCounterRemovedFromThisInExile(), new ConditionalEffect(
                 new NotCondition(new SourceCardSuspended()), new MakeAllCreaturesUnblockableEffect()));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(

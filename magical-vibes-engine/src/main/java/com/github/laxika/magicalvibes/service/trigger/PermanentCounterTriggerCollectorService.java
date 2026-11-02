@@ -20,8 +20,8 @@ public class PermanentCounterTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsTrigger(value = CardEffect.class,
-            slot = EffectSlot.ON_YOU_PUT_TIME_COUNTERS_ON_CONTROLLED_PERMANENT)
+    @CollectsCounterTrigger(value = CardEffect.class,
+            watch = CounterWatch.ON_YOU_PUT_TIME_COUNTERS_ON_CONTROLLED_PERMANENT)
     private boolean handleTimeCountersPlaced(TriggerMatchContext match, CardEffect effect,
                                              TriggerContext context) {
         TriggerContext.TimeCountersPlaced placed = (TriggerContext.TimeCountersPlaced) context;

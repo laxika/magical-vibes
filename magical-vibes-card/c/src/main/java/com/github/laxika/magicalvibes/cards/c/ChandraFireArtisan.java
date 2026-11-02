@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -16,7 +16,7 @@ import java.util.List;
 public class ChandraFireArtisan extends Card {
 
     public ChandraFireArtisan() {
-        addEffect(EffectSlot.ON_SELF_LOYALTY_COUNTERS_REMOVED,
+        addTrigger(Triggers.loyaltyCountersRemovedFromThis(),
                 new DealDamageToTargetPlayerOrPlaneswalkerEffect(new EventValue(), PlayerRelation.OPPONENT));
 
         addActivatedAbility(new ActivatedAbility(

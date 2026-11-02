@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEf
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,7 +33,8 @@ public class IchorAberration extends Card {
         CardEffect proliferateEffect = new ConditionalEffect(inGraveyardOrOnBattlefield, SequenceEffect.of(
                 new PerpetuallyBoostSourceEffect(1, 1),
                 new AllowCastSourceCardFromGraveyardThisTurnEffect()));
-        addEffect(EffectSlot.ON_CONTROLLER_PROLIFERATES, proliferateEffect);
-        addEffect(EffectSlot.GRAVEYARD_ON_CONTROLLER_PROLIFERATES, proliferateEffect);
+        addTrigger(Triggers.youProliferate(), proliferateEffect);
+        addTrigger(new TriggerCondition(Triggers.youProliferate(), AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT, proliferateEffect);
     }
 }

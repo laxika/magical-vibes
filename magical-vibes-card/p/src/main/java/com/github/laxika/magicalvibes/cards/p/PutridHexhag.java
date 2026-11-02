@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect;
@@ -20,7 +19,7 @@ public class PutridHexhag extends Card {
         PermanentPredicate opponentCreature = new PermanentNotPredicate(
                 new PermanentControlledBySourceControllerPredicate());
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.ON_SELF_COUNTERS_PUT,
+                .addTrigger(Triggers.countersPutOnThis(),
                         new PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect(
                                 new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
                                 new LoseLifeEffect(2)),

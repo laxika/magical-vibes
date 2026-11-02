@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RenownEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -19,7 +18,7 @@ public class RelicSeeker extends Card {
 
         // When Relic Seeker becomes renowned, you may search your library for an Equipment card,
         // reveal it, put it into your hand, then shuffle.
-        addEffect(EffectSlot.ON_SELF_BECOMES_RENOWNED,
+        addTrigger(Triggers.becomesRenowned(),
                 new MayEffect(new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.EQUIPMENT)),
                         "Search your library for an Equipment card?"));
     }

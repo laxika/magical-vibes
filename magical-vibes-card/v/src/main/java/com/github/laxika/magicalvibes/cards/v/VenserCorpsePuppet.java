@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -20,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -42,7 +42,7 @@ public class VenserCorpsePuppet extends Card {
                 List.of(CardSubtype.PHYREXIAN, CardSubtype.GOLEM), Set.of(), Set.of(CardType.ARTIFACT),
                 false, false, List.of(), List.of(), false, false, true, 0, Set.of());
 
-        addEffect(EffectSlot.ON_CONTROLLER_PROLIFERATES, new ChooseOneEffect(List.of(
+        addTrigger(Triggers.youProliferate(), new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "If you don't control a creature named The Hollow Sentinel, create The Hollow Sentinel",
                         new ConditionalEffect(new NotCondition(new ControlsPermanent(HOLLOW_SENTINEL)), hollowSentinel)),

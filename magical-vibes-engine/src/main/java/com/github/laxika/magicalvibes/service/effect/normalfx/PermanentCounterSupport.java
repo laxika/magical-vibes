@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -34,6 +35,7 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.trigger.CounterWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -128,7 +130,7 @@ public class PermanentCounterSupport {
         }
         for (Permanent source : new ArrayList<>(battlefield)) {
             Card card = source.getCard();
-            List<CardEffect> effects = card.getEffects(EffectSlot.ON_YOU_PUT_COUNTERS_ON_CREATURE);
+            List<CardEffect> effects = CounterWatch.ON_YOU_PUT_COUNTERS_ON_CREATURE.effectsOf(card);
             if (effects.isEmpty()
                     || source.isLosesAllAbilitiesUntilEndOfTurn()
                     || gameQueryService.hasLostPrintedAbilities(gameData, source)) {
@@ -177,7 +179,7 @@ public class PermanentCounterSupport {
                 continue;
             }
             Card card = source.getCard();
-            List<CardEffect> effects = card.getEffects(EffectSlot.ON_YOU_PUT_COUNTERS_ON_CREATURE_YOU_DONT_CONTROL);
+            List<CardEffect> effects = CounterWatch.ON_YOU_PUT_COUNTERS_ON_CREATURE_YOU_DONT_CONTROL.effectsOf(card);
             if (effects.isEmpty()) {
                 continue;
             }
@@ -255,8 +257,7 @@ public class PermanentCounterSupport {
                 continue;
             }
 
-            List<CardEffect> effects = source.getCard().getEffects(
-                    EffectSlot.ON_YOU_PUT_COUNTERS_ON_ANOTHER_CREATURE);
+            List<CardEffect> effects = CounterWatch.ON_YOU_PUT_COUNTERS_ON_ANOTHER_CREATURE.effectsOf(source.getCard());
             if (effects.isEmpty()) {
                 continue;
             }
@@ -328,8 +329,8 @@ public class PermanentCounterSupport {
                 return;
             }
             for (Permanent source : new ArrayList<>(battlefield)) {
-                List<CardEffect> effects = source.getCard().getEffects(
-                        EffectSlot.ON_OPPONENT_PUT_COUNTERS_ON_CREATURE_THEY_CONTROL);
+                List<CardEffect> effects =
+                        CounterWatch.ON_OPPONENT_PUT_COUNTERS_ON_CREATURE_THEY_CONTROL.effectsOf(source.getCard());
                 if (effects.isEmpty()) {
                     continue;
                 }
@@ -413,8 +414,8 @@ public class PermanentCounterSupport {
             if (heroTargets.stream().allMatch(target -> target.getId().equals(source.getId()))) {
                 continue;
             }
-            List<CardEffect> effects = source.getCard().getEffects(
-                    EffectSlot.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_OTHER_HERO);
+            List<CardEffect> effects =
+                    CounterWatch.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_OTHER_HERO.effectsOf(source.getCard());
             if (effects.isEmpty()) {
                 continue;
             }
@@ -478,8 +479,8 @@ public class PermanentCounterSupport {
                 // A face-down permanent has no abilities (CR 708.2).
                 continue;
             }
-            List<CardEffect> effects = source.getCard().getEffects(
-                    EffectSlot.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_ANOTHER_CREATURE);
+            List<CardEffect> effects =
+                    CounterWatch.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_ANOTHER_CREATURE.effectsOf(source.getCard());
             if (effects.isEmpty()) {
                 continue;
             }
@@ -1195,17 +1196,17 @@ public class PermanentCounterSupport {
     /**
      * Fires the "whenever a -1/-1 counter is put on a creature" watchers once for each of the
      * {@code count} -1/-1 counters just placed on {@code creature}. Every permanent on any battlefield
-     * carrying {@link EffectSlot#ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE} (the global watcher,
+     * carrying {@link CounterWatch#ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE} (the global watcher,
      * Flourishing Defenses) triggers under its own controller. Permanents carrying
-     * {@link EffectSlot#ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTER_ON_CREATURE} trigger
+     * {@link CounterWatch#ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTER_ON_CREATURE} trigger
      * only when their controller equals {@code placingPlayerId} — i.e. only when that player is the one
      * putting the counters. Wording that triggers once for each individual counter gets a separate
      * trigger pushed per counter.
      *
-     * <p>Permanents carrying {@link EffectSlot#ON_MINUS_ONE_MINUS_ONE_COUNTERS_PUT_ON_CREATURE}
+     * <p>Permanents carrying {@link CounterWatch#ON_MINUS_ONE_MINUS_ONE_COUNTERS_PUT_ON_CREATURE}
      * (Auntie Ool, Cursewretch) are the global "one or more counters, do it once" variant: they
      * trigger once for each affected creature and placement event, regardless of {@code count}.
-     * Permanents carrying {@link EffectSlot#ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTERS_ON_CREATURE}
+     * Permanents carrying {@link CounterWatch#ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTERS_ON_CREATURE}
      * (Hapatra, Vizier of Poisons) are the "one or more counters, do it once" variant: they also trigger
      * only when their controller equals {@code placingPlayerId}, but fire exactly once for this creature
      * regardless of {@code count}. No-op unless {@code creature} is a creature.</p>
@@ -1225,9 +1226,10 @@ public class PermanentCounterSupport {
                 Card card = source.getCard();
 
                 // Per-counter watchers: global (Flourishing Defenses) + you-put (Nest of Scarabs).
-                List<CardEffect> globalEffects = card.getEffects(EffectSlot.ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE);
+                List<CardEffect> globalEffects =
+                        CounterWatch.ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE.effectsOf(card);
                 List<CardEffect> youPutEffects = placedByThisController
-                        ? card.getEffects(EffectSlot.ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTER_ON_CREATURE)
+                        ? CounterWatch.ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTER_ON_CREATURE.effectsOf(card)
                         : List.of();
                 List<CardEffect> perCounterEffects = globalEffects.isEmpty() ? youPutEffects
                         : youPutEffects.isEmpty() ? globalEffects
@@ -1252,8 +1254,8 @@ public class PermanentCounterSupport {
                 // even when the placement put multiple -1/-1 counters on it. The affected creature
                 // is carried as the trigger target so the resolving ability can inspect its current
                 // controller, with its controller at trigger time retained for zone changes.
-                List<CardEffect> globalOnceEffects = card.getEffects(
-                        EffectSlot.ON_MINUS_ONE_MINUS_ONE_COUNTERS_PUT_ON_CREATURE);
+                List<CardEffect> globalOnceEffects =
+                        CounterWatch.ON_MINUS_ONE_MINUS_ONE_COUNTERS_PUT_ON_CREATURE.effectsOf(card);
                 if (!globalOnceEffects.isEmpty()) {
                     StackEntry triggerEntry = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
@@ -1275,7 +1277,7 @@ public class PermanentCounterSupport {
                 // Once-per-creature you-put watcher (Hapatra, Nest of Scarabs): fires a single trigger
                 // regardless of count; the count is carried as the event value for "that many" effects.
                 List<CardEffect> youPutOnceEffects = placedByThisController
-                        ? card.getEffects(EffectSlot.ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTERS_ON_CREATURE)
+                        ? CounterWatch.ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTERS_ON_CREATURE.effectsOf(card)
                         : List.of();
                 if (!youPutOnceEffects.isEmpty()) {
                     StackEntry youPutOnceTrigger = new StackEntry(
@@ -1301,7 +1303,7 @@ public class PermanentCounterSupport {
     }
 
     /**
-     * Fires {@link EffectSlot#ON_SELF_MINUS_ONE_MINUS_ONE_COUNTERS_PUT} on {@code creature} — the -1/-1
+     * Fires {@link CounterWatch#ON_SELF_MINUS_ONE_MINUS_ONE_COUNTERS_PUT} on {@code creature} — the -1/-1
      * mirror of {@link #firePlusOnePlusOneCountersPutOnSelfTriggers}. Fires once per placement event
      * (regardless of the counter count) and only when {@code placingPlayerId} is the creature's own
      * controller ("Whenever you put …"). A targeted effect in the slot has its target chosen as the
@@ -1310,7 +1312,7 @@ public class PermanentCounterSupport {
      */
     void fireSelfMinusOneMinusOneCountersPutTriggers(GameData gameData, Permanent creature, UUID placingPlayerId) {
         Card card = creature.getCard();
-        List<CardEffect> effects = card.getEffects(EffectSlot.ON_SELF_MINUS_ONE_MINUS_ONE_COUNTERS_PUT);
+        List<CardEffect> effects = CounterWatch.ON_SELF_MINUS_ONE_MINUS_ONE_COUNTERS_PUT.effectsOf(card);
         if (effects.isEmpty()) {
             return;
         }
@@ -1348,7 +1350,7 @@ public class PermanentCounterSupport {
             return;
         }
 
-        queueLevelReachedTriggers(gameData, permanent, EffectSlot.ON_SELF_REACHES_LEVEL_TWO,
+        queueLevelReachedTriggers(gameData, permanent, CounterWatch.ON_SELF_REACHES_LEVEL_TWO,
                 "reaches level 2");
     }
 
@@ -1366,14 +1368,14 @@ public class PermanentCounterSupport {
             return;
         }
 
-        queueLevelReachedTriggers(gameData, permanent, EffectSlot.ON_SELF_REACHES_LEVEL_THREE,
+        queueLevelReachedTriggers(gameData, permanent, CounterWatch.ON_SELF_REACHES_LEVEL_THREE,
                 "reaches level 3");
     }
 
-    private void queueLevelReachedTriggers(GameData gameData, Permanent permanent, EffectSlot slot,
+    private void queueLevelReachedTriggers(GameData gameData, Permanent permanent, CounterWatch watch,
                                            String eventDescription) {
         Card card = permanent.getCard();
-        List<CardEffect> effects = card.getEffects(slot);
+        List<CardEffect> effects = watch.effectsOf(card);
         if (effects.isEmpty()) {
             return;
         }
@@ -1466,8 +1468,8 @@ public class PermanentCounterSupport {
         }
 
         for (Permanent source : new ArrayList<>(battlefield)) {
-            for (CardEffect authoredEffect : source.getCard().getEffects(
-                    EffectSlot.ON_CONTROLLER_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE)) {
+            for (CardEffect authoredEffect :
+                    CounterWatch.ON_CONTROLLER_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE.effectsOf(source.getCard())) {
                 CardEffect effect = OncePerTurnTriggerSupport.unwrapIfAvailable(
                         gameData, source, authoredEffect);
                 if (effect == null) {
@@ -1503,7 +1505,7 @@ public class PermanentCounterSupport {
             return;
         }
         firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(gameData, placingPlayerId, count,
-                EffectSlot.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_ANY_CREATURE);
+                CounterWatch.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_ANY_CREATURE);
     }
 
     /** Fires Human-scoped +1/+1-counter watchers for the controller of the affected permanent. */
@@ -1526,8 +1528,8 @@ public class PermanentCounterSupport {
         }
 
         for (Permanent source : new ArrayList<>(battlefield)) {
-            List<CardEffect> effects = source.getCard().getEffects(
-                    EffectSlot.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_HUMAN);
+            List<CardEffect> effects =
+                    CounterWatch.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_HUMAN.effectsOf(source.getCard());
             if (effects.isEmpty()) {
                 continue;
             }
@@ -1586,7 +1588,7 @@ public class PermanentCounterSupport {
         boolean firstCountersThisTurn = gameData.creaturesThatReceivedCountersThisTurn.add(creature.getId());
         for (Permanent source : new ArrayList<>(battlefield)) {
             Card card = source.getCard();
-            List<CardEffect> effects = card.getEffects(EffectSlot.ON_ALLY_COUNTER_PUT_ON_CREATURE);
+            List<CardEffect> effects = CounterWatch.ON_ALLY_COUNTER_PUT_ON_CREATURE.effectsOf(card);
             if (effects.isEmpty()) {
                 continue;
             }
@@ -1717,8 +1719,7 @@ public class PermanentCounterSupport {
             return;
         }
         Card card = source.getCard();
-        List<CardEffect> effects = card.getEffects(
-                EffectSlot.ON_YOU_PUT_LOYALTY_COUNTERS_ON_PLANESWALKERS);
+        List<CardEffect> effects = CounterWatch.ON_YOU_PUT_LOYALTY_COUNTERS_ON_PLANESWALKERS.effectsOf(card);
         if (effects.isEmpty()) {
             return;
         }
@@ -1751,7 +1752,7 @@ public class PermanentCounterSupport {
                                                              UUID placingPlayerId, int count) {
         if (gameQueryService.hasLostPrintedAbilities(gameData, target)) return;
         Card card = target.getCard();
-        List<CardEffect> effects = card.getEffects(EffectSlot.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT);
+        List<CardEffect> effects = CounterWatch.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT.effectsOf(card);
         if (effects.isEmpty()) {
             return;
         }
@@ -1768,7 +1769,7 @@ public class PermanentCounterSupport {
             return;
         }
 
-        List<CardEffect> perCounter = card.getEffectRegistrations(EffectSlot.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT)
+        List<CardEffect> perCounter = CounterWatch.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT.registrationsOf(card)
                 .stream().filter(registration -> registration.triggerMode()
                         == com.github.laxika.magicalvibes.model.TriggerMode.PER_COUNTER)
                 .map(registration -> registration.effect()).toList();
@@ -1836,11 +1837,12 @@ public class PermanentCounterSupport {
                                               CounterType counterType, int previousCount,
                                               boolean firstPlacementThisTurn) {
         Card card = target.getCard();
-        List<CardEffect> effects = new ArrayList<>(card.getEffects(EffectSlot.ON_SELF_COUNTERS_PUT));
+        List<CardEffect> effects = new ArrayList<>(CounterWatch.ON_SELF_COUNTERS_PUT.effectsOf(card));
         gameQueryService.getGrantedEffects(gameData, target).stream()
                 .filter(GrantTriggeredAbilityEffect.class::isInstance)
                 .map(GrantTriggeredAbilityEffect.class::cast)
-                .filter(grant -> grant.slot() == EffectSlot.ON_SELF_COUNTERS_PUT)
+                .filter(grant -> grant.grantedAbility() instanceof TriggeredAbility ability
+                        && ability.hasTrigger(CounterWatch.ON_SELF_COUNTERS_PUT.trigger()))
                 .map(GrantTriggeredAbilityEffect::grantedEffect)
                 .filter(granted -> firstPlacementThisTurn || !(granted instanceof OncePerTurnTriggerEffect))
                 .forEach(effects::add);
@@ -1935,8 +1937,8 @@ public class PermanentCounterSupport {
                 continue;
             }
             Card card = watcher.getCard();
-            List<CardEffect> effects = card.getEffects(
-                    EffectSlot.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ANOTHER_CREATURE);
+            List<CardEffect> effects =
+                    CounterWatch.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ANOTHER_CREATURE.effectsOf(card);
             if (effects.isEmpty()) {
                 continue;
             }
@@ -1987,8 +1989,8 @@ public class PermanentCounterSupport {
                 .collect(java.util.stream.Collectors.toSet());
         for (Permanent watcher : new ArrayList<>(battlefield)) {
             Card card = watcher.getCard();
-            List<CardEffect> effects = card.getEffects(
-                    EffectSlot.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_NON_HYDRA_CREATURE);
+            List<CardEffect> effects =
+                    CounterWatch.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_NON_HYDRA_CREATURE.effectsOf(card);
             if (effects.isEmpty()
                     || watcher.getId().equals(target.getId()) || excludedSourceIds.contains(watcher.getId())
                     || gameQueryService.hasLostAllAbilities(gameData, watcher)) {
@@ -2128,7 +2130,7 @@ public class PermanentCounterSupport {
                     firePlusOnePlusOneCountersPutOnControlledCreatureTriggers(gameData, controllerId, count);
                 }
                 firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(gameData, controllerId, count,
-                        EffectSlot.ON_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ALLY_CREATURE);
+                        CounterWatch.ON_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ALLY_CREATURE);
                 fireControllerPutPlusOnePlusOneCountersOnCreatureTriggers(
                         gameData, target, count, placingPlayerId, controllerId);
                 fireYouPutPlusOnePlusOneCountersOnAnyCreatureTriggers(gameData, count, placingPlayerId);
@@ -2150,8 +2152,9 @@ public class PermanentCounterSupport {
             if (source.getId().equals(target.getId())) {
                 continue;
             }
-            List<CardEffect> effects = source.getCard().getEffects(
-                    EffectSlot.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ANOTHER_PERMANENT_FIRST_TIME_EACH_TURN);
+            List<CardEffect> effects =
+                    CounterWatch.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ANOTHER_PERMANENT_FIRST_TIME_EACH_TURN
+                            .effectsOf(source.getCard());
             if (effects.isEmpty()) {
                 continue;
             }
@@ -2171,24 +2174,24 @@ public class PermanentCounterSupport {
     private void firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(GameData gameData,
                                                                               UUID controllerId, int count) {
         firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(gameData, controllerId, count,
-                EffectSlot.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_PERMANENT);
+                CounterWatch.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_PERMANENT);
     }
 
     private void firePlusOnePlusOneCountersPutOnControlledCreatureTriggers(GameData gameData,
                                                                             UUID controllerId, int count) {
         firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(gameData, controllerId, count,
-                EffectSlot.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE);
+                CounterWatch.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE);
     }
 
     private void firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(GameData gameData,
                                                                               UUID controllerId, int count,
-                                                                              EffectSlot slot) {
+                                                                              CounterWatch watch) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) {
             return;
         }
         for (Permanent source : new ArrayList<>(battlefield)) {
-            List<CardEffect> effects = source.getCard().getEffects(slot);
+            List<CardEffect> effects = watch.effectsOf(source.getCard());
             if (effects.isEmpty()) {
                 continue;
             }

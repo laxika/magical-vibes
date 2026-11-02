@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -31,7 +30,7 @@ public class CloudsculptArmorer extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new PutCounterOnTargetPermanentEffect(CounterType.SHIELD, 1));
 
-        addEffect(EffectSlot.ON_ALLY_COUNTERS_REMOVED_FROM_PERMANENT,
+        addTrigger(Triggers.countersRemovedFromPermanentYouControl(),
                 new SeekEffect(new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
     }
 }

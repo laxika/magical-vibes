@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -20,7 +20,7 @@ public class BertaWiseExtrapolator extends Card {
         // Increment is driven automatically by the Scryfall-loaded INCREMENT keyword; no effect needed.
 
         // Whenever one or more +1/+1 counters are put on Berta, add one mana of any color.
-        addEffect(EffectSlot.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT, new AwardAnyColorManaEffect());
+        addTrigger(Triggers.plusOneCountersPutOnThis(), new AwardAnyColorManaEffect());
 
         // {X}, {T}: Create a 0/0 green and blue Fractal creature token and put X +1/+1 counters on it.
         addActivatedAbility(new ActivatedAbility(

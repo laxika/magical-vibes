@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ public class BrotherhoodScribe extends Card {
                 ActivationTimingRestriction.METALCRAFT
         ));
 
-        addEffect(EffectSlot.ON_CONTROLLER_GETS_ENERGY,
+        addTrigger(Triggers.youGetEnergy(),
                 new ConditionalEffect(new ControllerTurn(), new BoostAllOwnCreaturesEffect(1, 1)));
     }
 }

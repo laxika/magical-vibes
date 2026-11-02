@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
@@ -43,7 +42,7 @@ public class MidnightClock extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                 new PutCountersOnSelfEffect(CounterType.HOUR));
 
-        addEffect(EffectSlot.ON_SELF_COUNTERS_PUT, ConditionalEffect.atTriggerTime(
+        addTrigger(Triggers.countersPutOnThis(), ConditionalEffect.atTriggerTime(
                 new SourceCounterThreshold(12, CounterType.HOUR),
                 SequenceEffect.of(
                         new ShuffleControllerHandAndGraveyardIntoLibraryEffect(),

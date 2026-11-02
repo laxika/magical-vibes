@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * Evolve is keyword-driven; the self-evolve trigger creates a token copy of this creature.
@@ -15,6 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect
 public class WatchfulRadstag extends Card {
 
     public WatchfulRadstag() {
-        addEffect(EffectSlot.ON_SELF_EVOLVES, new CreateTokenCopyOfSourceEffect());
+        addTrigger(Triggers.evolves(), new CreateTokenCopyOfSourceEffect());
     }
 }

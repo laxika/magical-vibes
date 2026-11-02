@@ -1,6 +1,6 @@
 # Trigger Slot Targeting Reference
 
-`ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT` uses `TriggerMode.PER_COUNTER` for abilities that trigger for each individual counter, such as Bloodcrazed Hoplite. The counter-placement collector queues a separate ability and mandatory target choice for each counter actually placed; all targets are chosen before those abilities resolve. The default mode still fires once per placement event.
+`Triggers.plusOneCountersPutOnThis()` uses `TriggerMode.PER_COUNTER` for abilities that trigger for each individual counter, such as Bloodcrazed Hoplite. The counter-placement collector queues a separate ability and mandatory target choice for each counter actually placed; all targets are chosen before those abilities resolve. The default mode still fires once per placement event.
 
 `Triggers.enters(Triggers.TOKEN, ObjectRelation.YOU_CONTROL)` uses `TriggerMode.PER_TOKEN` for abilities that trigger for each token entering, such as Junk Winder's "whenever a token you control enters". The token-enter collector queues one dispatch per entering token, each seeing only that token. The default mode still fires once per token-creation event.
 
@@ -183,8 +183,8 @@ combat damage step is processed.
 | `Triggers.upkeep(ActivePlayer.ANY) from exile` | `StepTriggerService` scans suspended cards in exile on every player's upkeep; an active-player `MayEffect` preserves that player as the choice and effect context | Non-targeting; source card must remain suspended at resolution |
 | `Triggers.upkeep(ActivePlayer.YOU) from exile` | `StepTriggerService` scans cards in exile during their owners' upkeeps while they have positive scream-counter entries | Non-targeting; the counter-removal handler rechecks the card's exile and counter state |
 | `Triggers.upkeep(ActivePlayer.YOU) from exile` | `StepTriggerService` scans cards in exile during their owners' upkeeps | Non-targeting; the effect should recheck `SourceCardInExile` when resolution depends on the card remaining exiled |
-| `ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE` | `TriggerCollectionService.checkTimeCounterRemovedFromExiledCardTriggers` dispatches the slot when the source card loses a time counter in exile; targeted effects use the shared self-trigger target queue | Non-targeting unless an effect declares a player/permanent target; source card is the suspended exiled card; Benalish Commander (`PLC`), Roiling Horror (`PLC`) |
-| `ON_SELF_TIME_COUNTERS_REMOVED` | `TriggerCollectionService.checkLoyaltyCounterRemovalTriggers` dispatches the slot after a permanent's tracked time-counter removals are drained | Non-targeting; source permanent is carried on the triggered stack entry; Regenerations Restored (`WHO`) |
+| `Triggers.timeCounterRemovedFromThisInExile()` | `TriggerCollectionService.checkTimeCounterRemovedFromExiledCardTriggers` dispatches the slot when the source card loses a time counter in exile; targeted effects use the shared self-trigger target queue | Non-targeting unless an effect declares a player/permanent target; source card is the suspended exiled card; Benalish Commander (`PLC`), Roiling Horror (`PLC`) |
+| `Triggers.timeCountersRemovedFromThis()` | `TriggerCollectionService.checkLoyaltyCounterRemovalTriggers` dispatches the slot after a permanent's tracked time-counter removals are drained | Non-targeting; source permanent is carried on the triggered stack entry; Regenerations Restored (`WHO`) |
 | `Triggers.phasesIn(null, ObjectRelation.THIS)` (permanent-target effects) | `TriggerCollectionService.enqueuePhasingTriggers` → `PhasesInTriggerTarget` (queued during the untap-step phasing action when `targetSpec()` includes permanents, e.g. Shimmering Efreet's "target creature phases out"); drained at upkeep start via `StepTriggerService.processNextPhasesInTriggerTarget` (also AutoPass). Honours the card's `PermanentPredicateTargetFilter`. | End step (reuses `TriggerTargetCollector.Options.END_STEP`) |
 | `Triggers.phasesOut(null, ObjectRelation.ANOTHER)` | `TriggerCollectionService.checkOtherPermanentPhasesOutTriggers` dispatches before the phased-out permanent leaves the battlefield; the watcher that phased out is excluded. | Non-targeting; the phased-out permanent is carried only in `TriggerContext.PermanentPhasedOut` |
 | `Triggers.exiledFrom(Set.of(), Triggers.NONTOKEN, ObjectRelation.ANY)` | `GameData`'s non-token card-exile listener dispatches `TriggerCollectionService.checkAnyCardExiledTriggers` after a card enters exile, regardless of its previous zone. | Non-targeting |
@@ -201,7 +201,7 @@ combat damage step is processed.
 | `Triggers.leavesGraveyard(Triggers.ARTIFACT, ObjectRelation.YOU_OWN)` (targeting effects only) | `MiscTriggerCollectorService.handleControllerArtifactCardsLeaveGraveyard` → `SelfTriggeredAbilityTarget`; intervening-if conditions are checked when the trigger event occurs, then permanent/player targets are collected as the ability is put on the stack | End step (reuses `TriggerTargetCollector.Options.END_STEP`) |
 | `Triggers.leavesGraveyard(Triggers.NONTOKEN_CREATURE, ObjectRelation.YOU_OWN)` | `GraveyardService.notifyCardsLeftGraveyard` → `TriggerCollectionService.checkControllerCreatureCardLeavesGraveyardTriggers` (one trigger per nontoken creature card) | Non-targeting |
 | `Triggers.leavesGraveyard(null, ObjectRelation.YOU_OWN)` | `GraveyardService.notifyCardsLeftGraveyard` → `TriggerCollectionService.checkControllerInstantOrSorceryCardLeavesGraveyardTriggers` (one trigger per nontoken instant or sorcery card) | Non-targeting |
-| `ON_SELF_BECOMES_MONSTROUS` (targeting effects only) | `MonstrosityEffectHandler` → `TriggerCollectionService.checkBecomesMonstrousTriggers` → `SelfTriggeredAbilityTarget`; target selection uses the same permanent-targeting queue as other self-triggered abilities. | When monstrosity resolves |
+| `Triggers.becomesMonstrous()` (targeting effects only) | `MonstrosityEffectHandler` → `TriggerCollectionService.checkBecomesMonstrousTriggers` → `SelfTriggeredAbilityTarget`; target selection uses the same permanent-targeting queue as other self-triggered abilities. | When monstrosity resolves |
 | `ON_SELF_CYCLED` | `TriggerCollectionService.checkCycleTriggers` | Self-cycle (non-targeting → stack; targeted → `DiscardControllerTriggerTarget` with no source permanent) |
 | `ON_SELF_DISCARDED` | `TriggerCollectionService.checkDiscardTriggers` | Discard-self (any cause; non-targeting → stack, any-target → `DiscardTriggerAnyTarget`) |
 | `ON_SELF_DISCARDED_BY_OPPONENT` | `TriggerCollectionService.checkDiscardSelfTriggers` | Discard-self |
@@ -352,7 +352,7 @@ untapped permanent),
 tapped→untapped on any battlefield. Wrap in `TriggeringPermanentConditionalEffect` to filter by the
 untapped permanent. The untapped permanent and its controller are recorded on the non-targeting
 triggered entry so an effect can use that controller even if the permanent leaves before resolution),
-`ON_SELF_BECOMES_RENOWNED` / `ON_ALLY_CREATURE_BECOMES_RENOWNED` (Relic Seeker / Valeron Wardens; fired from
+`Triggers.becomesRenowned()` / `Triggers.creatureYouControlBecomesRenowned()` (Relic Seeker / Valeron Wardens; fired from
 `RenownEffectHandler` via `TriggerCollectionService.checkBecomesRenownedTriggers` on the flip to renowned
 only. The ally slot fires on every permanent with it on the renowned creature's controller's battlefield,
 including that creature itself; wrap in `TriggeringPermanentConditionalEffect` to filter by the renowned
@@ -414,61 +414,61 @@ Non-targeting: a "you may have target player mill two cards" is a `MayEffect`-wr
 `Triggers.beginningOfCombat(ActivePlayer.ANY)`, `Triggers.beginningOfCombat(ActivePlayer.OPPONENT)`,
 `Triggers.creatureOpponentControlsDealtDamage()`, `Triggers.youCastSpell() from the graveyard`,
 `ON_CONTROLLER_LOSES_LIFE`,
-`ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT`,
-`ON_SELF_TRAINS` (Savior of Ollenbock; fires only when training successfully puts its +1/+1 counter on the source),
-`ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_HUMAN` (Cloaked Cadet; fires when one or more +1/+1
+`Triggers.plusOneCountersPutOnThis()`,
+`Triggers.trains()` (Savior of Ollenbock; fires only when training successfully puts its +1/+1 counter on the source),
+`Triggers.plusOneCountersPutOnHumanYouControl()` (Cloaked Cadet; fires when one or more +1/+1
 counters are put on a Human the controller controls, including counters the Human enters with),
-`ON_SELF_COUNTERS_PUT` (fires when one or more counters are put on the source permanent; a
+`Triggers.countersPutOnThis()` (fires when one or more counters are put on the source permanent; a
 `SourceCounterThreshold` conditional in this slot can fire when the source crosses the threshold),
-`ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_NON_HYDRA_CREATURE` (Wildwood Scourge; fires once when
+`Triggers.plusOneCountersPutOnAnotherNonHydraCreatureYouControl()` (Wildwood Scourge; fires once when
 one or more +1/+1 counters are put on another non-Hydra creature the controller controls),
-`ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_ANOTHER_CREATURE` (Knight of Wundagore; fires once when
+`Triggers.youPutPlusOneCountersOnAnotherCreature()` (Knight of Wundagore; fires once when
 the controller puts one or more +1/+1 counters on a creature other than the watcher, regardless of
 that creature's controller; it also accepts a `TriggeringPermanentConditionalEffect` wrapper for
 event-subject restrictions such as "another colorless creature"),
-`ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_OTHER_HERO` (Invisible Woman, Sue Storm; fires once when
+`Triggers.youPutPlusOneCountersOnAnotherHeroYouControl()` (Invisible Woman, Sue Storm; fires once when
 the controller puts one or more +1/+1 counters on another Hero they control),
-`ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ANOTHER_CREATURE` (Enduring Scalelord; fires once when
+`Triggers.plusOneCountersPutOnAnotherCreatureYouControl()` (Enduring Scalelord; fires once when
 one or more +1/+1 counters are put on another creature the controller controls),
-`ON_CONTROLLER_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE` (Terrasymbiosis; fires once when the
+`Triggers.youPutPlusOneCountersOnCreatureYouControlOnceEachTurn()` (Terrasymbiosis; fires once when the
 controller puts one or more +1/+1 counters on a creature they control and carries the number of
 counters placed as the trigger event value),
-`GRAVEYARD_ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_CREATURE` (Moss-Pit Skeleton; fires once for
+`Triggers.plusOneCountersPutOnCreatureYouControl() from the graveyard` (Moss-Pit Skeleton; fires once for
 each +1/+1 counter-placement event on a creature controlled by the graveyard card's owner),
-`ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER` (All Will Be One; fires once for each counter-placement
+`Triggers.youPutCountersOnPermanentOrPlayer()` (All Will Be One; fires once for each counter-placement
 event caused by the controller, including poison counters, and uses the spell-target trigger pipeline),
-`ON_YOU_PUT_TIME_COUNTERS_ON_CONTROLLED_PERMANENT` (Kate Stewart; fires once when one or more time
+`Triggers.youPutTimeCountersOnPermanentYouControl()` (Kate Stewart; fires once when one or more time
 counters are put on a permanent controlled by the placing player, including entry counters; non-targeting),
-`ON_YOU_PUT_COUNTERS_ON_CREATURE` (Rikku, Resourceful Guardian; fires once per placement event for
+`Triggers.youPutCountersOnCreature()` (Rikku, Resourceful Guardian; fires once per placement event for
 one or more counters of any type put on any creature by the controller, carrying the affected creature
 as a non-targeting event subject),
-`ON_YOU_PUT_COUNTERS_ON_ANOTHER_CREATURE` (Captain Marvel, Apex Avenger; fires once per placement
+`Triggers.youPutCountersOnAnotherCreature()` (Captain Marvel, Apex Avenger; fires once per placement
 event when the controller puts one or more counters of any kind on another creature, regardless of
 that creature's controller; non-targeting and captures the counter kind, amount, and creature for
 resolution),
-`ON_OPPONENT_PUT_COUNTERS_ON_CREATURE_THEY_CONTROL` (Bold Plagiarist; fires once per placement
+`Triggers.opponentPutsCountersOnCreatureTheyControl()` (Bold Plagiarist; fires once per placement
 event when an opponent puts one or more counters on a creature they control; the trigger remains
 controlled by Bold Plagiarist's controller and captures the opponent who placed the counters so the
 same number and kind are placed by that opponent),
-`ON_ALLY_COUNTER_PUT_ON_CREATURE` (Hollowmurk Siege; fires for counters of any type put on a creature
+`Triggers.countersPutOnCreatureYouControl()` (Hollowmurk Siege; fires for counters of any type put on a creature
 the controller controls, including counters the creature enters with; a `OncePerTurnTriggerEffect`
 is marked only after its mode condition is met. `OncePerTurnPerCreatureTriggerEffect` uses the same
 slot for first-time-per-creature wording and keys the marker to the watcher and triggering creature),
-`ON_SELF_EVOLVES` (Renegade Krasis; fired by `EvolveTriggerEffectHandler` only when the evolve trigger
+`Triggers.evolves()` (Renegade Krasis; fired by `EvolveTriggerEffectHandler` only when the evolve trigger
 actually places the +1/+1 counter),
-`ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE` (Flourishing Defenses; global watcher — fires on
+`Triggers.minusOneCounterPutOnCreature()` (Flourishing Defenses; global watcher — fires on
 every permanent with this slot, under that permanent's controller, once per individual -1/-1 counter put
 on any creature from any source, via `PermanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers`;
 non-targeting — a "you may create …" is a `MayEffect` resolved on the stack),
-`ON_MINUS_ONE_MINUS_ONE_COUNTERS_PUT_ON_CREATURE` (Auntie Ool, Cursewretch; global watcher — fires
+`Triggers.minusOneCountersPutOnCreature()` (Auntie Ool, Cursewretch; global watcher — fires
 once per creature per -1/-1 counter-placement event regardless of the number of counters placed;
 the affected creature is carried as the trigger's target and its trigger-time controller is retained),
-`ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTER_ON_CREATURE` (Nest of Scarabs; controller-restricted variant of
+`Triggers.youPutMinusOneCounterOnCreature()` (no card uses it yet; controller-restricted variant of
 the above — same firing method and per-counter cadence, but a permanent only triggers when its controller
 is the player who put the counters. The placing player is `gameData.currentlyResolvingControllerId` for
 spell/ability resolution and the damage source's / permanent's controller for combat placements, passed via
 the 4-arg overload of `fireMinusOneMinusOneCounterPutOnCreatureTriggers`; non-targeting),
-`ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTERS_ON_CREATURE` (Hapatra, Vizier of Poisons; the "one or more
+`Triggers.youPutMinusOneCountersOnCreature()` (Hapatra, Vizier of Poisons; the "one or more
 counters, do it once" cadence — same controller restriction and firing method as the per-counter slot
 above, but fires exactly one trigger per creature per placement instance regardless of how many -1/-1
 counters were placed at once; non-targeting — the Snake creation is a plain `CreateTokenEffect`),

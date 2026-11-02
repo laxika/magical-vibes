@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentsEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -59,7 +58,8 @@ public class BlasterCombatDJ extends Card {
                         CounterType.PLUS_ONE_PLUS_ONE, true, artifactCreature)),
                 GrantScope.OWN_PERMANENTS,
                 modularTarget));
-        addEffect(EffectSlot.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT, new YouPutCounterOnControlledCreatureTriggerEffect(new TransformToBackFaceEffect()));
+        addTrigger(Triggers.plusOneCountersPutOnThis(),
+                new YouPutCounterOnControlledCreatureTriggerEffect(new TransformToBackFaceEffect()));
     }
 
     @Override

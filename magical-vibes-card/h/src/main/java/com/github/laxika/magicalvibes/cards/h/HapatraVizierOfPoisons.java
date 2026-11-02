@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -33,7 +32,7 @@ public class HapatraVizierOfPoisons extends Card {
         // Whenever you put one or more -1/-1 counters on a creature, create a 1/1 green Snake creature
         // token with deathtouch. Once-per-creature cadence (one Snake regardless of how many counters
         // were placed at once), controller-restricted (an opponent's counters do not trigger it).
-        addEffect(EffectSlot.ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTERS_ON_CREATURE,
+        addTrigger(Triggers.youPutMinusOneCountersOnCreature(),
                 new CreateTokenEffect("Snake", 1, 1, CardColor.GREEN,
                         List.of(CardSubtype.SNAKE), Set.of(Keyword.DEATHTOUCH), Set.of()));
     }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,7 +29,7 @@ public class StoneshockGiant extends Card {
                 "{6}{R}{R}: Monstrosity 3."
         ));
 
-        addEffect(EffectSlot.ON_SELF_BECOMES_MONSTROUS, new CantBlockThisTurnEffect(
+        addTrigger(Triggers.becomesMonstrous(), new CantBlockThisTurnEffect(
                 TapUntapScope.ALL_CREATURES,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),

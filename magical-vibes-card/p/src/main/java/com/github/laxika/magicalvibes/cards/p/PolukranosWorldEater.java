@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Min;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EachTargetCreatureDealsPowerDamageToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,9 +26,9 @@ public class PolukranosWorldEater extends Card {
 
         targetWithDynamicRange(new Min(List.of(new Fixed(1), new XValue())), new XValue(),
                 TargetFilters.creatureAnOpponentControls(), 99)
-                .addEffect(EffectSlot.ON_SELF_BECOMES_MONSTROUS,
+                .addTrigger(Triggers.becomesMonstrous(),
                         DealDividedDamageEffect.xAmongTargetCreaturesAtResolution())
-                .addEffect(EffectSlot.ON_SELF_BECOMES_MONSTROUS,
+                .addTrigger(Triggers.becomesMonstrous(),
                         new EachTargetCreatureDealsPowerDamageToSourceEffect());
     }
 }

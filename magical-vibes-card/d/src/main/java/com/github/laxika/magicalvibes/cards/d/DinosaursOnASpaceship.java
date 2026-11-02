@@ -8,12 +8,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -32,7 +32,7 @@ public class DinosaursOnASpaceship extends Card {
 
         // Whenever a time counter is removed from this card while it's exiled, create a 2/2 red
         // and white Dinosaur creature token with flying and haste.
-        addEffect(EffectSlot.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE,
+        addTrigger(Triggers.timeCounterRemovedFromThisInExile(),
                 new CreateTokenEffect(CardType.CREATURE, 1, "Dinosaur", 2, 2, CardColor.RED,
                         Set.of(CardColor.RED, CardColor.WHITE), List.of(CardSubtype.DINOSAUR),
                         Set.of(Keyword.FLYING, Keyword.HASTE), Set.of(), false, false,

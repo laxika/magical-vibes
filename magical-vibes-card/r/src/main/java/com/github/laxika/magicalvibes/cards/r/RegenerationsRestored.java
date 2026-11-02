@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
@@ -35,13 +34,13 @@ public class RegenerationsRestored extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new ConditionalEffect(new SourceCounterThreshold(1, CounterType.TIME),
                         new RemoveCounterFromSourceEffect(CounterType.TIME, 1)));
-        addEffect(EffectSlot.ON_SELF_TIME_COUNTERS_REMOVED,
+        addTrigger(Triggers.timeCountersRemovedFromThis(),
                 new ConditionalEffect(new NotCondition(new SourceCounterThreshold(1, CounterType.TIME)),
                         new SacrificeSelfEffect()));
 
         // Whenever one or more time counters are removed from this enchantment, scry 1 and gain 1
         // life. Then, if it has no time counters, exile it and take an extra turn.
-        addEffect(EffectSlot.ON_SELF_TIME_COUNTERS_REMOVED, SequenceEffect.of(
+        addTrigger(Triggers.timeCountersRemovedFromThis(), SequenceEffect.of(
                 new ScryEffect(1),
                 new GainLifeEffect(1),
                 ConditionalEffect.unless(

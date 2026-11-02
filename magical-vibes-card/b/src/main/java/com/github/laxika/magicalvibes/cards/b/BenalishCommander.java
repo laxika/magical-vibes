@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "2")
@@ -22,7 +22,7 @@ public class BenalishCommander extends Card {
         PermanentCount soldiersYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.SOLDIER), CountScope.CONTROLLER);
         addStaticEffect(new SetPowerToughnessToAmountEffect(soldiersYouControl, soldiersYouControl));
-        addEffect(EffectSlot.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE,
+        addTrigger(Triggers.timeCounterRemovedFromThisInExile(),
                 CreateTokenEffect.whiteSoldier(1));
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,

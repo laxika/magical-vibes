@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ public class AeonChronicler extends Card {
     public AeonChronicler() {
         CardsInHand cardsInHand = new CardsInHand(CountScope.CONTROLLER);
         addStaticEffect(new SetPowerToughnessToAmountEffect(cardsInHand, cardsInHand));
-        addEffect(EffectSlot.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE, new DrawCardEffect());
+        addTrigger(Triggers.timeCounterRemovedFromThisInExile(), new DrawCardEffect());
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{X}{3}{U}",

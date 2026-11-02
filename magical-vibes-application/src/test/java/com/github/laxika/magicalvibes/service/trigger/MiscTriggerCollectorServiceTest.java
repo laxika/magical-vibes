@@ -529,7 +529,7 @@ class MiscTriggerCollectorServiceTest {
         when(conditionEvaluationService.isInterveningIfMet(any(), any(), any(), any())).thenReturn(true);
 
         boolean result = registry.dispatch(
-                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_GETS_ENERGY, effect, ctx);
+                match(perm, player1Id, effect), CounterWatch.ON_CONTROLLER_GETS_ENERGY, effect, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).isEmpty();
@@ -551,7 +551,7 @@ class MiscTriggerCollectorServiceTest {
         var ctx = new TriggerContext.Proliferate(player1Id);
 
         boolean result = registry.dispatch(
-                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_PROLIFERATES, effect, ctx);
+                match(perm, player1Id, effect), CounterWatch.ON_CONTROLLER_PROLIFERATES, effect, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -567,7 +567,7 @@ class MiscTriggerCollectorServiceTest {
                 .thenReturn(false);
 
         boolean result = registry.dispatch(
-                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_PROLIFERATES, effect,
+                match(perm, player1Id, effect), CounterWatch.ON_CONTROLLER_PROLIFERATES, effect,
                 new TriggerContext.Proliferate(player1Id));
 
         assertThat(result).isFalse();
@@ -582,7 +582,7 @@ class MiscTriggerCollectorServiceTest {
                 .thenReturn(true);
 
         boolean result = registry.dispatch(
-                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_PROLIFERATES, effect,
+                match(perm, player1Id, effect), CounterWatch.ON_CONTROLLER_PROLIFERATES, effect,
                 new TriggerContext.Proliferate(player1Id));
 
         assertThat(result).isTrue();

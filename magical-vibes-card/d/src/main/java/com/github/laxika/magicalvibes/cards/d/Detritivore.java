@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -21,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -44,7 +44,7 @@ public class Detritivore extends Card {
                         new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.BASIC))
                 )),
                 "Target must be a nonbasic land"
-        )).addEffect(EffectSlot.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE,
+        )).addTrigger(Triggers.timeCounterRemovedFromThisInExile(),
                 new DestroyTargetPermanentEffect(false));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(

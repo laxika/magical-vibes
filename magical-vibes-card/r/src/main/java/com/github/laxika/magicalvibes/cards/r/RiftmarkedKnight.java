@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -25,7 +25,7 @@ public class RiftmarkedKnight extends Card {
 
     public RiftmarkedKnight() {
         addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
-        addEffect(EffectSlot.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE, new ConditionalEffect(
+        addTrigger(Triggers.timeCounterRemovedFromThisInExile(), new ConditionalEffect(
                 new NotCondition(new SourceCardSuspended()), new CreateTokenEffect(
                 1,
                 "Knight",

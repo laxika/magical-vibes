@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -31,7 +30,7 @@ public class SimicAscendancy extends Card {
                 "{1}{G}{U}: Put a +1/+1 counter on target creature you control.",
                 TargetFilters.creatureYouControl()));
 
-        addEffect(EffectSlot.ON_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ALLY_CREATURE,
+        addTrigger(Triggers.plusOneCountersPutOnCreatureYouControl(),
                 new PutCountersOnSelfEffect(CounterType.GROWTH, new EventValue()));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new ConditionalEffect(new SourceCounterThreshold(20, CounterType.GROWTH), new WinGameEffect()));

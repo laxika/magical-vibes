@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
@@ -35,6 +34,6 @@ public class ProtectorOfTheWastes extends Card {
         target(new PermanentPredicateTargetFilter(artifactOrEnchantment,
                 "Target must be an artifact or enchantment"), 0, 2);
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ExileTargetPermanentEffect());
-        addEffect(EffectSlot.ON_SELF_BECOMES_MONSTROUS, new ExileTargetPermanentEffect());
+        addTrigger(Triggers.becomesMonstrous(), new ExileTargetPermanentEffect());
     }
 }

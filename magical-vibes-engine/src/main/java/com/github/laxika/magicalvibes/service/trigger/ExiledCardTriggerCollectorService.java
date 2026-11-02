@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -32,7 +31,8 @@ public class ExiledCardTriggerCollectorService {
     private final GameLogService gameLogService;
     private final ConditionEvaluationService conditionEvaluationService;
 
-    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE)
+    @CollectsCounterTrigger(value = ConditionalEffect.class,
+            watch = CounterWatch.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE)
     private boolean handleConditionalTimeCounterRemoved(TriggerMatchContext match,
             ConditionalEffect conditional, TriggerContext ctx) {
         if (isLastCounterEventCondition(conditional)) {
@@ -47,8 +47,8 @@ public class ExiledCardTriggerCollectorService {
         return handleTimeCounterRemoved(match, conditional, ctx);
     }
 
-    @CollectsTrigger(value = YouRemoveTimeCounterFromExiledCardTriggerEffect.class,
-            slot = EffectSlot.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE)
+    @CollectsCounterTrigger(value = YouRemoveTimeCounterFromExiledCardTriggerEffect.class,
+            watch = CounterWatch.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE)
     private boolean handleYouRemovedTimeCounter(TriggerMatchContext match,
             YouRemoveTimeCounterFromExiledCardTriggerEffect youRemove, TriggerContext ctx) {
         UUID removerId = ((TriggerContext.TimeCounterRemovedFromExile) ctx).removerId();
@@ -56,7 +56,7 @@ public class ExiledCardTriggerCollectorService {
         return handleTimeCounterRemoved(match, youRemove, ctx);
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE)
+    @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE)
     private boolean handleTimeCounterRemoved(TriggerMatchContext match, CardEffect effect,
             TriggerContext ctx) {
         TriggerContext.TimeCounterRemovedFromExile removed =
@@ -66,7 +66,7 @@ public class ExiledCardTriggerCollectorService {
             return false;
         }
 
-        List<CardEffect> triggeredEffects = card.getEffects(EffectSlot.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE);
+        List<CardEffect> triggeredEffects = CounterWatch.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE.effectsOf(card);
         if (triggeredEffects.isEmpty() || triggeredEffects.getFirst() != effect) {
             return true;
         }
