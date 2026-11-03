@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,9 +22,8 @@ public class BrimstoneRoundup extends Card {
 
     public BrimstoneRoundup() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{2}{R}"))));
-        addTrigger(Triggers.youCastSpell(), new NthSpellCastTriggerEffect(
-                2,
-                List.of(new CreateTokenEffect(
+        addTrigger(Triggers.youCastSpell().nthThisTurn(2),
+                new CreateTokenEffect(
                         CardType.CREATURE, 1, "Mercenary", 1, 1, CardColor.RED, null,
                         List.of(CardSubtype.MERCENARY), Set.of(), Set.of(), false, false, List.of(),
                         List.of(new ActivatedAbility(
@@ -38,7 +36,6 @@ public class BrimstoneRoundup extends Card {
                                 null,
                                 ActivationTimingRestriction.SORCERY_SPEED
                         )),
-                        false, false, false, 0, Set.of()))
-        ));
+                        false, false, false, 0, Set.of()));
     }
 }

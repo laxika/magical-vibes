@@ -395,15 +395,7 @@ public final class TextChangeTransformer {
             }
             case SpellCastTriggerEffect trigger -> {
                 CardPredicate spellFilter = apply(trigger.spellFilter(), substitution);
-                yield spellFilter == trigger.spellFilter() ? trigger
-                        : new SpellCastTriggerEffect(spellFilter, trigger.resolvedEffects(), trigger.manaCost(),
-                        trigger.targetFilter(), trigger.castSpellTargetCondition(),
-                        trigger.onlyDuringOpponentTurn(), trigger.onlyDuringControllerTurn(),
-                        trigger.intervening(), trigger.nthSpellNumber(), trigger.minimumSpellNumber(),
-                        trigger.triggersOnAnyPlayer(), trigger.requiresManaProducedBySource(),
-                        trigger.expendThreshold(), trigger.requiresTreasureMana(),
-                        trigger.requiresTwoOrMoreCardTypes(), trigger.onlyWhenCasterNotActiveTurn(),
-                        trigger.onlyDuringCombat());
+                yield spellFilter == trigger.spellFilter() ? trigger : trigger.withSpellFilter(spellFilter);
             }
             case EnchantedPermanentConditionalEffect conditional -> {
                 PermanentPredicate filter = apply(conditional.filter(), substitution);

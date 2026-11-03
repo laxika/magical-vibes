@@ -14,14 +14,17 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LandPlayFromExileTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.OnceOnlyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayFromOutsideHandTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovePerpetualTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringNinjutsuAbilityConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
@@ -29,6 +32,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryKickedPredicate;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -205,7 +209,7 @@ class SpellAbilityTriggerTest {
         assertThat(Triggers.opponentCastsSpell().anySpell()).isNotEqualTo(Triggers.opponentCastsSpell());
         assertThat(Triggers.opponentCastsSpell().anySpell().filter()).isEqualTo(SpellFilter.ANY);
         assertThat(Triggers.opponentCastsSpell().anySpell().watchKey()).isEqualTo(Triggers.opponentCastsSpell());
-        assertThatThrownBy(() -> Triggers.youCopySpell().anySpell()).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> Triggers.youCounterSpell().anySpell()).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> Triggers.youCastSpell().nthThisTurn(0))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> Triggers.youCastSpell().withFilter(null)).isInstanceOf(NullPointerException.class);
@@ -276,5 +280,78 @@ class SpellAbilityTriggerTest {
         assertThat(ability.hasWatchedTrigger(Triggers.youCastSpell())).isTrue();
         assertThat(ability.hasTrigger(Triggers.youCastSpell())).isFalse();
         assertThat(ability.hasWatchedTrigger(Triggers.opponentCastsSpell())).isFalse();
+    }
+
+    @Test
+    void aCastTriggerNamesTheZoneTheSpellIsCastFromItsKickerAndWhoseSpellsItCounts() {
+        assertThat(Triggers.youCastSpell().castFrom(Zone.GRAVEYARD).filter())
+                .isEqualTo(SpellFilter.ANY.withCastFrom(Zone.GRAVEYARD));
+        assertThat(Triggers.youCastSpell().notCastFrom(Zone.HAND).filter())
+                .isEqualTo(SpellFilter.ANY.withNotCastFrom(Zone.HAND));
+        assertThat(Triggers.playerCastsSpell().kicked().filter().kicker()).isEqualTo(SpellFilter.Kicker.KICKED);
+        assertThat(Triggers.playerCastsSpell().eachKick().filter().kicker()).isEqualTo(SpellFilter.Kicker.EACH_KICK);
+        assertThat(Triggers.playerCastsSpell().nthThisTurn(1).countingEveryPlayersSpells().filter().everyPlayersSpells())
+                .isTrue();
+        assertThat(Triggers.youCastSpell().kicked().watchKey()).isEqualTo(Triggers.youCastSpell());
+        assertThatThrownBy(() -> Triggers.youCastSpell().castFrom(Zone.EXILE).notCastFrom(Zone.HAND))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void theLegacyViewGivesTheCastZoneKickerAndCountScopeToTheSpellCastTriggerEffect() {
+        var creature = new CardTypePredicate(CardType.CREATURE);
+        Card card = new Card();
+        card.addTrigger(Triggers.youCastSpell().withFilter(creature).castFrom(Zone.EXILE).nthThisTurn(1), DRAW);
+        card.addTrigger(Triggers.playerCastsSpell().eachKick(), GAIN);
+        card.addTrigger(Triggers.opponentCastsSpell().notCastFrom(Zone.HAND).nthThisTurn(2)
+                .countingEveryPlayersSpells(), LOSE);
+
+        assertThat(card.getLegacyTriggerEffects(Triggers.youCastSpell(), Zone.BATTLEFIELD)).containsExactly(
+                new SpellCastTriggerEffect(creature, List.of(DRAW), null, null, null, false, false, null, 1, 0, false,
+                        false, 0, false, false, false, false, Zone.EXILE, null, false, false, false));
+        assertThat(card.getLegacyTriggerEffects(Triggers.playerCastsSpell(), Zone.BATTLEFIELD)).containsExactly(
+                new SpellCastTriggerEffect(null, List.of(GAIN), null, null, null, false, false, null, 0, 0, false,
+                        false, 0, false, false, false, false, null, null, true, true, false));
+        assertThat(card.getLegacyTriggerEffects(Triggers.opponentCastsSpell(), Zone.BATTLEFIELD)).containsExactly(
+                new SpellCastTriggerEffect(null, List.of(LOSE), null, null, null, false, false, null, 2, 0, false,
+                        false, 0, false, false, false, false, null, Zone.HAND, false, false, true));
+    }
+
+    @Test
+    void aCopyTriggerTakesASpellFilterAndGivesOneSpellCopyTriggerEffectOfItsEffects() {
+        var instant = new CardTypePredicate(CardType.INSTANT);
+        Card card = new Card();
+        card.addTrigger(Triggers.youCopySpell().withFilter(instant), DRAW, GAIN);
+        card.addTrigger(Triggers.opponentCopiesSpell().withStackEntryFilter(new StackEntryKickedPredicate()), LOSE);
+
+        assertThat(Triggers.youCopySpell().withFilter(instant).watchKey()).isEqualTo(Triggers.youCopySpell());
+        assertThat(card.getLegacyTriggerEffects(Triggers.youCopySpell(), Zone.BATTLEFIELD)).containsExactly(
+                new SpellCopyTriggerEffect(instant, List.of(DRAW, GAIN), null, null, true, false));
+        assertThat(card.getLegacyTriggerEffects(Triggers.opponentCopiesSpell(), Zone.BATTLEFIELD)).containsExactly(
+                new SpellCopyTriggerEffect(null, List.of(LOSE), null, new StackEntryKickedPredicate(), true, false));
+        // A copy isn't cast: what the copied spell is is all a copy trigger can say.
+        assertThatThrownBy(() -> Triggers.youCopySpell().nthThisTurn(1)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> Triggers.youCopySpell().castFrom(Zone.HAND))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void aLandPlayTriggerWithAZoneGivesTheLandPlayRecordOfItsEffects() {
+        LandPlayTrigger fromExile = Triggers.youPlayLand().playedFrom(Zone.EXILE);
+        Card card = new Card();
+        card.addTrigger(fromExile, DRAW, GAIN);
+        card.addTrigger(Triggers.opponentPlaysLand().notPlayedFrom(Zone.HAND), LOSE);
+
+        assertThat(fromExile.watchKey()).isEqualTo(Triggers.youPlayLand());
+        assertThat(card.getLegacyTriggerEffects(Triggers.youPlayLand(), Zone.BATTLEFIELD)).containsExactly(
+                new LandPlayFromExileTriggerEffect(List.of(DRAW, GAIN)));
+        assertThat(card.getLegacyTriggerEffects(Triggers.opponentPlaysLand(), Zone.BATTLEFIELD)).containsExactly(
+                new PlayFromOutsideHandTriggerEffect(List.of(LOSE)));
+        assertThatThrownBy(() -> Triggers.youPlayLand().playedFrom(Zone.EXILE).notPlayedFrom(Zone.HAND))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new TriggeredAbility(fromExile,
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                List.of(new EffectRegistration(DRAW))).legacyEffects())
+                .isInstanceOf(IllegalStateException.class);
     }
 }

@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
-import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -35,8 +34,7 @@ public class ProfessorOnyx extends Card {
                 new GainLifeEffect(2));
 
         addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery), magecraft.toArray(CardEffect[]::new));
-        addTrigger(Triggers.youCopySpell(),
-                new SpellCopyTriggerEffect(instantOrSorcery, magecraft));
+        addTrigger(Triggers.youCopySpell().withFilter(instantOrSorcery), magecraft.toArray(CardEffect[]::new));
 
         addActivatedAbility(new ActivatedAbility(
                 +1,

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -36,10 +35,7 @@ public class HowlingMoon extends Card {
 
         // Whenever an opponent casts their second spell each turn, create a 2/2 green Wolf creature
         // token.
-        addTrigger(Triggers.opponentCastsSpell(), new NthSpellCastTriggerEffect(
-                2,
-                List.of(new CreateTokenEffect("Wolf", 2, 2, CardColor.GREEN,
-                        List.of(CardSubtype.WOLF), Set.of(), Set.of()))
-        ));
+        addTrigger(Triggers.opponentCastsSpell().nthThisTurn(2),
+                new CreateTokenEffect("Wolf", 2, 2, CardColor.GREEN, List.of(CardSubtype.WOLF), Set.of(), Set.of()));
     }
 }

@@ -4,10 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
-import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "38")
 public class IncursionSpecialist extends Card {
@@ -15,9 +12,8 @@ public class IncursionSpecialist extends Card {
     public IncursionSpecialist() {
         // Whenever you cast your second spell each turn, this creature gets +2/+0 until end of
         // turn and can't be blocked this turn.
-        addTrigger(Triggers.youCastSpell(), new NthSpellCastTriggerEffect(
-                2,
-                List.of(new BoostSelfEffect(2, 0), new MakeCreatureUnblockableEffect(true))
-        ));
+        addTrigger(Triggers.youCastSpell().nthThisTurn(2),
+                new BoostSelfEffect(2, 0),
+                new MakeCreatureUnblockableEffect(true));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -24,7 +23,6 @@ public class SilverquillApprentice extends Card {
 
         target(TargetFilters.creature()).addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery),
                 boost.toArray(CardEffect[]::new));
-        addTrigger(Triggers.youCopySpell(),
-                new SpellCopyTriggerEffect(instantOrSorcery, boost, TargetFilters.creature()));
+        addTrigger(Triggers.youCopySpell().withFilter(instantOrSorcery), boost.toArray(CardEffect[]::new));
     }
 }

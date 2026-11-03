@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
-import com.github.laxika.magicalvibes.model.effect.PlayFromOutsideHandTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -33,7 +33,6 @@ public class OsgoodOperationDouble extends Card {
         ));
 
         // Paradox — Whenever you cast a spell from anywhere other than your hand, investigate.
-        addTrigger(Triggers.youCastSpell(),
-                new PlayFromOutsideHandTriggerEffect(List.of(CreateTokenEffect.ofClueToken(1))));
+        addTrigger(Triggers.youCastSpell().notCastFrom(Zone.HAND), CreateTokenEffect.ofClueToken(1));
     }
 }

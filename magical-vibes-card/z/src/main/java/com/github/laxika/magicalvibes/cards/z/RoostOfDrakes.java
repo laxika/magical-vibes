@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.KickedSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -27,7 +26,6 @@ public class RoostOfDrakes extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
                 DRAKE_TOKEN);
-        addTrigger(Triggers.youCastSpell(),
-                new KickedSpellCastTriggerEffect(List.of(DRAKE_TOKEN)));
+        addTrigger(Triggers.youCastSpell().kicked(), DRAKE_TOKEN);
     }
 }

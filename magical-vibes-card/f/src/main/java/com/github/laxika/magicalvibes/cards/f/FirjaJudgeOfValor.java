@@ -3,10 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "209")
 @CardRegistration(set = "KHM", collectorNumber = "322")
@@ -16,9 +13,7 @@ import java.util.List;
 public class FirjaJudgeOfValor extends Card {
 
     public FirjaJudgeOfValor() {
-        addTrigger(Triggers.youCastSpell(), new NthSpellCastTriggerEffect(
-                2,
-                List.of(LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(3, 1))
-        ));
+        addTrigger(Triggers.youCastSpell().nthThisTurn(2),
+                LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(3, 1));
     }
 }

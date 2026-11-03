@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.LandPlayFromExileTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -31,8 +30,7 @@ public class PiaNalaarConsulOfRevival extends Card {
 
         CardEffect createThopter = new CreateTokenEffect("Thopter", 1, 1, null,
                 List.of(CardSubtype.THOPTER), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT));
-        addTrigger(Triggers.youPlayLand(),
-                new LandPlayFromExileTriggerEffect(List.of(createThopter)));
+        addTrigger(Triggers.youPlayLand().playedFrom(Zone.EXILE), createThopter);
         addTrigger(Triggers.youCastSpell().withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.EXILE)),
                 createThopter);
     }

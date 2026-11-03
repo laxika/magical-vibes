@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControllerPlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.LandPlayFromExileTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,8 +23,7 @@ public class KlawMasterOfSound extends Card {
 
         addTrigger(Triggers.youCastSpell().withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.EXILE)),
                 indestructible.toArray(CardEffect[]::new));
-        addTrigger(Triggers.youPlayLand(),
-                new LandPlayFromExileTriggerEffect(indestructible));
+        addTrigger(Triggers.youPlayLand().playedFrom(Zone.EXILE), indestructible.toArray(CardEffect[]::new));
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControllerPlayPermissionEffect());
     }

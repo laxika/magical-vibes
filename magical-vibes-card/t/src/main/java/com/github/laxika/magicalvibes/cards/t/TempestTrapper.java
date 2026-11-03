@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileRandomCardFromLibraryMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
-import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -28,11 +27,6 @@ public class TempestTrapper extends Card {
                 "{T}: Add two mana in any combination of colors. Spend this mana only to cast instant or sorcery spells."
         ));
 
-        addTrigger(Triggers.youCastSpell(), new NthSpellCastTriggerEffect(
-                3,
-                List.of(
-                        new ExileRandomCardFromLibraryMayPlayThisTurnEffect(true)
-                )
-        ));
+        addTrigger(Triggers.youCastSpell().nthThisTurn(3), new ExileRandomCardFromLibraryMayPlayThisTurnEffect(true));
     }
 }

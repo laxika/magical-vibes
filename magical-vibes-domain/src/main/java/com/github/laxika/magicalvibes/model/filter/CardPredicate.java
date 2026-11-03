@@ -30,6 +30,7 @@ public sealed interface CardPredicate permits
         CardHasForetellPredicate,
         CardHasFlashbackPredicate,
         CardHasKickerPredicate,
+        CardInStartingDeckPredicate,
         CardHasXInManaCostPredicate,
         CardHasManaAbilityPredicate,
         CardHasNonManaActivatedAbilityPredicate,

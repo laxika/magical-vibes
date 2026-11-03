@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
@@ -25,8 +24,7 @@ public class KalamaxTheStormsire extends Card {
                         instant, null, null, null, null, null,
                         new SourceIsTapped(), false, null, false, true,
                         false, false, null, List.of(instant), null));
-        addTrigger(Triggers.youCopySpell(),
-                new SpellCopyTriggerEffect(instant,
-                        List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))));
+        addTrigger(Triggers.youCopySpell().withFilter(instant),
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

@@ -70,6 +70,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenCardTypePr
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasAllCardNamesPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenNamePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardInStartingDeckPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIdSetPredicate;
@@ -372,6 +373,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentEnteredOrCastFromZon
 import com.github.laxika.magicalvibes.model.filter.PermanentWasCastPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastWithAdventurePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryCastWithTeamworkPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastWithWarpCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByChosenPlayerPredicate;
@@ -778,6 +780,8 @@ public class PredicateEvaluationService {
                     (gameData != null
                             ? gameQueryService.getEffectiveCardColors(gameData, card).size()
                             : card.getColors().size()) == p.colorCount();
+            case CardInStartingDeckPredicate ignored -> gameData != null
+                    && gameData.startingDeckCardIds.values().stream().anyMatch(ids -> ids.contains(card.getId()));
             case CardIsMulticoloredPredicate ignored ->
                     (gameData != null ? gameQueryService.getEffectiveCardColors(gameData, card)
                             : card.getColors()).size() >= 2;
@@ -5182,6 +5186,7 @@ public class PredicateEvaluationService {
             case StackEntryCardIdPredicate cardId ->
                     entry.getCard() != null && cardId.cardId().equals(entry.getCard().getId());
             case StackEntryCastWithWarpCostPredicate ignored -> entry.isCastWithWarp();
+            case StackEntryCastWithTeamworkPredicate ignored -> entry.isTeamworkCostPaid();
             case StackEntryIsCopyPredicate copyPredicate -> copyPredicate.castCopy()
                     ? entry.isCopy() && entry.isCastCopy()
                     : entry.isCopy() && !entry.isCastCopy();

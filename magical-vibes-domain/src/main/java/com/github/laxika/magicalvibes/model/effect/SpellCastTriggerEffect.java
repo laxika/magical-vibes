@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
@@ -52,6 +53,13 @@ import java.util.List;
  * @param requiresTwoOrMoreCardTypes only fire when the cast spell has at least two card types
  * @param onlyWhenCasterNotActiveTurn only fire when the casting player is not the active player
  * @param onlyDuringCombat           only fire when the spell is cast during combat
+ * @param castFrom                   only fire for a spell cast from this zone (null = any); the spell counts
+ *                                   count only the spells cast from it
+ * @param notCastFrom                only fire for a spell not cast from this zone (null = any)
+ * @param kicked                     only fire for a kicked spell; the number of times it was kicked is the
+ *                                   ability's event value
+ * @param triggerPerKick             with {@code kicked}, fire once for each time the spell was kicked
+ * @param countEveryPlayersSpells    the spell counts count every player's spells this turn, not the caster's
  */
 public record SpellCastTriggerEffect(
         CardPredicate spellFilter,
@@ -70,8 +78,29 @@ public record SpellCastTriggerEffect(
         boolean requiresTreasureMana,
         boolean requiresTwoOrMoreCardTypes,
         boolean onlyWhenCasterNotActiveTurn,
-        boolean onlyDuringCombat
+        boolean onlyDuringCombat,
+        Zone castFrom,
+        Zone notCastFrom,
+        boolean kicked,
+        boolean triggerPerKick,
+        boolean countEveryPlayersSpells
 ) implements CardEffect {
+
+    public SpellCastTriggerEffect(
+            CardPredicate spellFilter, List<CardEffect> resolvedEffects, String manaCost,
+            TargetFilter targetFilter, StackEntryPredicate castSpellTargetCondition,
+            boolean onlyDuringOpponentTurn, boolean onlyDuringControllerTurn,
+            Condition intervening, int nthSpellNumber, int minimumSpellNumber,
+            boolean triggersOnAnyPlayer, boolean requiresManaProducedBySource,
+            int expendThreshold, boolean requiresTreasureMana,
+            boolean requiresTwoOrMoreCardTypes, boolean onlyWhenCasterNotActiveTurn,
+            boolean onlyDuringCombat) {
+        this(spellFilter, resolvedEffects, manaCost, targetFilter, castSpellTargetCondition,
+                onlyDuringOpponentTurn, onlyDuringControllerTurn, intervening, nthSpellNumber,
+                minimumSpellNumber, triggersOnAnyPlayer, requiresManaProducedBySource,
+                expendThreshold, requiresTreasureMana, requiresTwoOrMoreCardTypes,
+                onlyWhenCasterNotActiveTurn, onlyDuringCombat, null, null, false, false, false);
+    }
 
     public SpellCastTriggerEffect(
             CardPredicate spellFilter, List<CardEffect> resolvedEffects, String manaCost,
@@ -294,5 +323,23 @@ public record SpellCastTriggerEffect(
     public static SpellCastTriggerEffect withAtLeastTwoCardTypes(List<CardEffect> resolvedEffects) {
         return new SpellCastTriggerEffect(null, resolvedEffects, null, null, null,
                 false, false, null, 0, 0, false, false, 0, false, true);
+    }
+
+    /** This trigger with {@code spellFilter} in place of its spell filter. */
+    public SpellCastTriggerEffect withSpellFilter(CardPredicate spellFilter) {
+        return new SpellCastTriggerEffect(spellFilter, resolvedEffects, manaCost, targetFilter,
+                castSpellTargetCondition, onlyDuringOpponentTurn, onlyDuringControllerTurn, intervening,
+                nthSpellNumber, minimumSpellNumber, triggersOnAnyPlayer, requiresManaProducedBySource,
+                expendThreshold, requiresTreasureMana, requiresTwoOrMoreCardTypes, onlyWhenCasterNotActiveTurn,
+                onlyDuringCombat, castFrom, notCastFrom, kicked, triggerPerKick, countEveryPlayersSpells);
+    }
+
+    /** This trigger with {@code resolvedEffects} in place of its effects. */
+    public SpellCastTriggerEffect withResolvedEffects(List<CardEffect> resolvedEffects) {
+        return new SpellCastTriggerEffect(spellFilter, resolvedEffects, manaCost, targetFilter,
+                castSpellTargetCondition, onlyDuringOpponentTurn, onlyDuringControllerTurn, intervening,
+                nthSpellNumber, minimumSpellNumber, triggersOnAnyPlayer, requiresManaProducedBySource,
+                expendThreshold, requiresTreasureMana, requiresTwoOrMoreCardTypes, onlyWhenCasterNotActiveTurn,
+                onlyDuringCombat, castFrom, notCastFrom, kicked, triggerPerKick, countEveryPlayersSpells);
     }
 }

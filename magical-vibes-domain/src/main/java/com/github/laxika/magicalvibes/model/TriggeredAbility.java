@@ -3,12 +3,15 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.LandPlayFromExileTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.OnceOnlyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayFromOutsideHandTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringBoastAbilityConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringLoyaltyAbilityConditionalEffect;
@@ -158,17 +161,30 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * {@link TriggeringPermanentConditionalEffect} there and its ability kind the matching
      * {@code Triggering…AbilityConditionalEffect} outside everything, as the spell, land-play and activation cards
      * wrote them. A cast trigger's {@link SpellFilter} makes the ability one {@link SpellCastTriggerEffect} of all its
-     * effects, as {@link #legacySpellCastEffects} says. An ability without options or such filters returns its
-     * registrations as they are.
+     * effects, as {@link #legacySpellCastEffects} says, and a copy trigger's one {@link SpellCopyTriggerEffect}, as
+     * {@link #legacySpellCopyEffects} says. A land-play trigger's zone makes the ability one
+     * {@link LandPlayFromExileTriggerEffect} ("a land from exile") or {@link PlayFromOutsideHandTriggerEffect} ("from
+     * anywhere other than your hand") of all its effects, the records the land-play collectors judge. An ability
+     * without options or such filters returns its registrations as they are.
      */
     public List<EffectRegistration> legacyEffects() {
-        SpellTrigger spellCast = filteredTrigger(SpellTrigger.class);
-        if (spellCast != null) {
-            return legacySpellCastEffects(spellCast.filter());
+        SpellTrigger spell = filteredTrigger(SpellTrigger.class);
+        if (spell != null) {
+            if (conditions.stream().anyMatch(condition -> condition.trigger() instanceof SpellTrigger other
+                    && other.event() != spell.event())) {
+                throw new IllegalStateException("The legacy view takes the spell conditions of one ability of one "
+                        + "event: " + conditions);
+            }
+            return spell.event() == SpellTrigger.SpellEvent.COPIED
+                    ? legacySpellCopyEffects(spell.filter())
+                    : legacySpellCastEffects(spell.filter());
         }
         Condition interveningIf = options.interveningIf();
         TriggerLimit limit = options.limit();
         LandPlayTrigger landPlay = filteredTrigger(LandPlayTrigger.class);
+        if (landPlay != null && (landPlay.playedFrom() != null || landPlay.notPlayedFrom() != null)) {
+            return legacyLandPlayZoneEffects(landPlay);
+        }
         AbilityTrigger activation = filteredTrigger(AbilityTrigger.class);
         if (interveningIf == null && limit == TriggerLimit.NONE && landPlay == null && activation == null) {
             return effects;
@@ -221,7 +237,8 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
 
     private static List<Object> filters(Trigger trigger) {
         return switch (trigger) {
-            case LandPlayTrigger landPlay -> Arrays.asList(landPlay.filter());
+            case LandPlayTrigger landPlay -> Arrays.asList(landPlay.filter(), landPlay.playedFrom(),
+                    landPlay.notPlayedFrom());
             case AbilityTrigger activation -> Arrays.asList(activation.source(), activation.kind());
             case SpellTrigger spell -> Arrays.asList(spell.filter());
             default -> List.of();
@@ -270,7 +287,9 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
                 filter.turn() == SpellFilter.Turn.OPPONENTS, filter.turn() == SpellFilter.Turn.YOURS,
                 options.interveningIf(), filter.nthThisTurn(), filter.nthOrLaterThisTurn(), false,
                 filter.paidWithManaFromThis(), filter.expend(), filter.paidWithTreasureMana(),
-                filter.twoOrMoreCardTypes(), filter.turn() == SpellFilter.Turn.NOT_CASTERS, filter.duringCombat());
+                filter.twoOrMoreCardTypes(), filter.turn() == SpellFilter.Turn.NOT_CASTERS, filter.duringCombat(),
+                filter.castFrom(), filter.notCastFrom(), filter.kicker() != SpellFilter.Kicker.ANY,
+                filter.kicker() == SpellFilter.Kicker.EACH_KICK, filter.everyPlayersSpells());
         if (optionalPrompt != null) {
             effect = new MayEffect(effect, optionalPrompt);
         }
@@ -280,6 +299,49 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             effect = OncePerTurnTriggerEffect.markOnAcceptance(effect);
         }
         return List.of(new EffectRegistration(effect, effects.getFirst().triggerMode(), false));
+    }
+
+    /**
+     * The ability in the form the spell-copy collector judges a "whenever [a player] copies a [quality] spell" ability
+     * in: one {@link SpellCopyTriggerEffect} of all its effects, one stack object (CR 603.3), with the filter's spell
+     * and stack-object conditions. The filter alone says which copied spells count, so the record takes every spell
+     * type; its target is the target group the effects are bound to, which the collector reads.
+     */
+    private List<EffectRegistration> legacySpellCopyEffects(SpellFilter filter) {
+        requireNoOptions("copy");
+        List<CardEffect> resolved = effects.stream().map(EffectRegistration::effect).toList();
+        return List.of(new EffectRegistration(new SpellCopyTriggerEffect(filter.spell(), resolved, null,
+                filter.stackEntry(), true, false), effects.getFirst().triggerMode(), false));
+    }
+
+    /**
+     * The ability in the form the land-play collectors judge a "whenever [a player] plays a land from [zone]" ability
+     * in: one {@link LandPlayFromExileTriggerEffect} ("from exile") or {@link PlayFromOutsideHandTriggerEffect} ("from
+     * anywhere other than your hand") of all its effects, one stack object (CR 603.3). Its target is the target group
+     * the effects are bound to, which the collector reads.
+     */
+    private List<EffectRegistration> legacyLandPlayZoneEffects(LandPlayTrigger landPlay) {
+        requireNoOptions("zone-filtered land-play");
+        if (landPlay.filter() != null) {
+            throw new IllegalStateException("The legacy view has no land-play record for a land filter with a zone: "
+                    + landPlay);
+        }
+        List<CardEffect> resolved = effects.stream().map(EffectRegistration::effect).toList();
+        CardEffect effect;
+        if (landPlay.playedFrom() == Zone.EXILE) {
+            effect = new LandPlayFromExileTriggerEffect(resolved);
+        } else if (landPlay.notPlayedFrom() == Zone.HAND) {
+            effect = new PlayFromOutsideHandTriggerEffect(resolved);
+        } else {
+            throw new IllegalStateException("The legacy view has no land-play record for " + landPlay);
+        }
+        return List.of(new EffectRegistration(effect, effects.getFirst().triggerMode(), false));
+    }
+
+    private void requireNoOptions(String what) {
+        if (!options.equals(TriggerOptions.DEFAULT)) {
+            throw new IllegalStateException("The legacy view has no " + what + " record with options: " + options);
+        }
     }
 
     private static boolean isPlainManaPayment(MayPayManaEffect pay) {

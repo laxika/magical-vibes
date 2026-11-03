@@ -4,11 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.ChosenSubtypeSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "251")
 @CardRegistration(set = "TSR", collectorNumber = "402")
@@ -26,8 +24,7 @@ public class VanquishersBanner extends Card {
         addStaticEffect(new BoostCreaturesOfChosenSubtypeEffect(1, 1));
 
         // Whenever you cast a creature spell of the chosen type, draw a card.
-        addTrigger(Triggers.youCastSpell(), new ChosenSubtypeSpellCastTriggerEffect(
-                List.of(new DrawCardEffect())
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardHasSourceChosenSubtypePredicate(true)),
+                new DrawCardEffect());
     }
 }

@@ -5,10 +5,9 @@ import com.github.laxika.magicalvibes.cards.r.RangersMerit;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastFromOutsideStartingDeckTriggerEffect;
+import com.github.laxika.magicalvibes.model.filter.CardInStartingDeckPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 /** Ursine Guide // Ranger's Merit (YSOS 11). */
 @CardRegistration(set = "YSOS", collectorNumber = "11")
@@ -18,10 +17,9 @@ public class UrsineGuideRangersMerit extends Card {
         setBackFaceCard(new RangersMerit());
 
         addStaticEffect(new BecomePreparedEffect());
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastFromOutsideStartingDeckTriggerEffect(List.of(
-                        new ConjureCardToBattlefieldEffect("FDN", "552"),
-                        new BecomePreparedEffect())));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardInStartingDeckPredicate())),
+                new ConjureCardToBattlefieldEffect("FDN", "552"),
+                new BecomePreparedEffect());
     }
 
     @Override

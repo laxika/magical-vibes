@@ -21,7 +21,11 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
@@ -31,7 +35,6 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CastFromGraveyardTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchSameNameCardToBattlefieldOnArtifactSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchZonesForCardNamedToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -59,8 +62,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
-import com.github.laxika.magicalvibes.model.effect.FirstMulticoloredSpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.FirstNoncreatureSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeForSameNameCardsInGraveyardsOnSpellCastEffect;
@@ -125,6 +126,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -198,6 +200,21 @@ class SpellCastTriggerCollectorServiceTest {
 
     private TriggerMatchContext match(Permanent perm, UUID controllerId, CardEffect effect) {
         return new TriggerMatchContext(gd, perm, controllerId, effect);
+    }
+
+    /** The effect the spell-cast collectors read for the ability of {@code trigger} and {@code effects}. */
+    private static CardEffect legacy(Trigger trigger, CardEffect... effects) {
+        return new TriggeredAbility(trigger, effects).legacyEffects().getFirst().effect();
+    }
+
+    /** Every spell matches every spell filter the collector checks, as cast and in the turn's spell history. */
+    private void everySpellMatches() {
+        lenient().when(predicateEvaluationService.matchesCardPredicate(
+                any(Card.class), any(), any(), eq(gd), any(UUID.class), isNull(), isNull(), any()))
+                .thenReturn(true);
+        lenient().when(predicateEvaluationService.matchesCardPredicate(
+                any(Card.class), any(), isNull(), eq(gd), any(UUID.class)))
+                .thenReturn(true);
     }
 
     @Nested
@@ -382,8 +399,8 @@ class SpellCastTriggerCollectorServiceTest {
         Card spell = createInstant("Spell");
         gd.recordSpellCast(player1Id, spell);
         gd.recordSpellCast(player1Id, spell);
-        var effect = new com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect(
-                2, List.of(new DealDamageToAnyTargetEffect(2)));
+        everySpellMatches();
+        var effect = legacy(Triggers.youCastSpell().nthThisTurn(2), new DealDamageToAnyTargetEffect(2));
 
         boolean result = registry.dispatch(match(perm, player1Id, effect),
                 SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect,
@@ -2028,10 +2045,8 @@ class SpellCastTriggerCollectorServiceTest {
         }
     }
 
-    // ===== ON_CONTROLLER_CASTS_SPELL — CastFromGraveyardTriggerEffect =====
-
     @Nested
-    @DisplayName("ON_CONTROLLER_CASTS_SPELL — CastFromGraveyardTriggerEffect")
+    @DisplayName("ON_CONTROLLER_CASTS_SPELL — a spell cast from your graveyard")
     class ControllerCastFromGraveyard {
 
         @Test
@@ -2039,7 +2054,7 @@ class SpellCastTriggerCollectorServiceTest {
         void returnsFalseWhenCastFromHand() {
             Permanent perm = createPermanent("Snapcaster Mage");
             var innerEffect = new BoostSelfEffect(1, 1);
-            var effect = new CastFromGraveyardTriggerEffect(List.of(innerEffect));
+            var effect = legacy(Triggers.youCastSpell().castFrom(Zone.GRAVEYARD), innerEffect);
             Card spellCard = createInstant("Lightning Bolt");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
@@ -2055,9 +2070,10 @@ class SpellCastTriggerCollectorServiceTest {
         void putsOnStackWhenNoTargetingNeeded() {
             Permanent perm = createPermanent("Some Card");
             var innerEffect = new BoostSelfEffect(1, 1);
-            var effect = new CastFromGraveyardTriggerEffect(List.of(innerEffect));
+            var effect = legacy(Triggers.youCastSpell().castFrom(Zone.GRAVEYARD), innerEffect);
             Card spellCard = createInstant("Lightning Bolt");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, false);
+            everySpellMatches();
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -2075,9 +2091,10 @@ class SpellCastTriggerCollectorServiceTest {
         void addsToPendingTargetTriggersWhenTargeting() {
             Permanent perm = createPermanent("Some Card");
             var innerEffect = new DealDamageToAnyTargetEffect(3);
-            var effect = new CastFromGraveyardTriggerEffect(List.of(innerEffect));
+            var effect = legacy(Triggers.youCastSpell().castFrom(Zone.GRAVEYARD), innerEffect);
             Card spellCard = createInstant("Lightning Bolt");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, false);
+            everySpellMatches();
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -2093,9 +2110,10 @@ class SpellCastTriggerCollectorServiceTest {
         void broadcastsLogWhenTargeting() {
             Permanent perm = createPermanent("Some Card");
             var innerEffect = new DealDamageToAnyTargetEffect(3);
-            var effect = new CastFromGraveyardTriggerEffect(List.of(innerEffect));
+            var effect = legacy(Triggers.youCastSpell().castFrom(Zone.GRAVEYARD), innerEffect);
             Card spellCard = createInstant("Lightning Bolt");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, false);
+            everySpellMatches();
 
             registry.dispatch(
                     match(perm, player1Id, effect),
@@ -2619,21 +2637,20 @@ class SpellCastTriggerCollectorServiceTest {
     }
 
     @Nested
-    @DisplayName("ON_ANY_PLAYER_CASTS_SPELL — FirstMulticoloredSpellCastTriggerEffect")
+    @DisplayName("ON_ANY_PLAYER_CASTS_SPELL — a player's first multicolored spell each turn")
     class FirstMulticoloredSpellCastTrigger {
 
         @Test
         @DisplayName("tracks the first multicolored spell independently for each player")
         void tracksEachPlayerIndependently() {
             Permanent perm = createPermanent("Zenith Chronicler");
-            var effect = new FirstMulticoloredSpellCastTriggerEffect(List.of(new BoostSelfEffect(1, 1)));
+            var effect = legacy(Triggers.playerCastsSpell().withFilter(new CardIsMulticoloredPredicate()).nthThisTurn(1),
+                    new BoostSelfEffect(1, 1));
             Card player1Spell = createCard("Player 1 Spell");
             player1Spell.setColors(List.of(CardColor.RED, CardColor.BLUE));
             Card player2Spell = createCard("Player 2 Spell");
             player2Spell.setColors(List.of(CardColor.GREEN, CardColor.WHITE));
-            when(predicateEvaluationService.matchesCardPredicate(
-                    any(Card.class), isNull(), any(UUID.class), eq(gd), any(UUID.class), isNull(), isNull(), any()))
-                    .thenReturn(true);
+            everySpellMatches();
 
             gd.recordSpellCast(player1Id, player1Spell);
             boolean player1Result = registry.dispatch(
@@ -2654,14 +2671,13 @@ class SpellCastTriggerCollectorServiceTest {
         @DisplayName("does not trigger for a player's later multicolored spell")
         void ignoresLaterMulticoloredSpell() {
             Permanent perm = createPermanent("Zenith Chronicler");
-            var effect = new FirstMulticoloredSpellCastTriggerEffect(List.of(new BoostSelfEffect(1, 1)));
+            var effect = legacy(Triggers.playerCastsSpell().withFilter(new CardIsMulticoloredPredicate()).nthThisTurn(1),
+                    new BoostSelfEffect(1, 1));
             Card firstSpell = createCard("First Spell");
             firstSpell.setColors(List.of(CardColor.RED, CardColor.BLUE));
             Card secondSpell = createCard("Second Spell");
             secondSpell.setColors(List.of(CardColor.GREEN, CardColor.WHITE));
-            when(predicateEvaluationService.matchesCardPredicate(
-                    any(Card.class), isNull(), any(UUID.class), eq(gd), any(UUID.class), isNull(), isNull(), any()))
-                    .thenReturn(true);
+            everySpellMatches();
 
             gd.recordSpellCast(player1Id, firstSpell);
             registry.dispatch(match(perm, player1Id, effect), SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect,
@@ -2678,20 +2694,27 @@ class SpellCastTriggerCollectorServiceTest {
     }
 
     @Nested
-    @DisplayName("ON_ANY_PLAYER_CASTS_SPELL — FirstNoncreatureSpellCastTriggerEffect")
+    @DisplayName("ON_ANY_PLAYER_CASTS_SPELL — the first noncreature spell of a turn")
     class FirstNoncreatureSpellCastTrigger {
 
         @Test
         @DisplayName("tracks the first noncreature spell globally across all players")
         void tracksFirstNoncreatureSpellGlobally() {
             Permanent perm = createPermanent("Nullstone Gargoyle");
-            var effect = new FirstNoncreatureSpellCastTriggerEffect(List.of(new CounterSpellEffect()));
+            var effect = legacy(Triggers.playerCastsSpell()
+                            .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)))
+                            .nthThisTurn(1)
+                            .countingEveryPlayersSpells(),
+                    new CounterSpellEffect());
             Card creatureSpell = createCard("Creature Spell");
             Card firstNoncreatureSpell = createInstant("First Noncreature Spell");
             Card laterNoncreatureSpell = createInstant("Later Noncreature Spell");
             when(predicateEvaluationService.matchesCardPredicate(
-                    any(Card.class), isNull(), any(UUID.class), eq(gd), any(UUID.class), isNull(), isNull(), any()))
-                    .thenReturn(true);
+                    any(Card.class), any(), any(), eq(gd), any(UUID.class), isNull(), isNull(), any()))
+                    .thenAnswer(call -> !call.<Card>getArgument(0).hasType(CardType.CREATURE));
+            when(predicateEvaluationService.matchesCardPredicate(any(Card.class), any(), isNull(), eq(gd),
+                    any(UUID.class)))
+                    .thenAnswer(call -> !call.<Card>getArgument(0).hasType(CardType.CREATURE));
 
             gd.recordSpellCast(player1Id, creatureSpell);
             boolean creatureResult = registry.dispatch(

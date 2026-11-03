@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -4533,7 +4533,8 @@ the creature-death family, run 3a the other zone and permanent changes but "anot
 object enters", run 4a the reading of the own enters abilities' options and the "this or another" enters merges, run 4b
 the own enters abilities' intervening "if"s, run 4c the rules fixes: every own enters intervening "if" checked
 as the ability triggers, run 5 the steps and phases, run 6a the spell, land-play and activation abilities' generic
-wrappers, and run 6b `SpellCastTriggerEffect`, as the cast trigger's filter, the ability's options and its effects.
+wrappers, run 6b `SpellCastTriggerEffect`, as the cast trigger's filter, the ability's options and its effects, and run
+6c the other spell, copy and land-play condition-as-effect classes, as the trigger's filter.
 
 #### Run 1: the source's own zone changes
 
@@ -5630,6 +5631,137 @@ the pattern files carry a note on the rows still written in the old shorthand, a
   same-name artifact search; checked in a worktree at `0f5aadba57`, where the test rewritten above fails too), and the
   known ones in `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and `CardEffectTargetingConsistencyTest`.
 - AI: `GameDataDeepCopyTest` passes (no new state).
+- The full suite was not run here.
+
+#### Run 6c: the other condition-as-effect classes of family 2 become filters
+
+Every spell, copy and land-play ability that wrote one of the condition-as-effect classes below is authored as its
+trigger's filter and the ability's effects, but for the cards kept below. 120 abilities in 117 card classes.
+
+**Authoring.**
+
+- `SpellFilter` gained `castFrom` / `notCastFrom` (a `Zone`: `Triggers.youCastSpell().castFrom(Zone.GRAVEYARD)`,
+  `.notCastFrom(Zone.HAND)`, judged from the cast event's zone; the spell counts `nthThisTurn` / `nthOrLaterThisTurn`
+  then count only the spells cast from `castFrom`), `kicker` (`.kicked()`, "whenever you cast a kicked spell", once;
+  `.eachKick()`, "whenever a player kicks a spell", once for each kick, CR 702.33d checked) and `everyPlayersSpells`
+  (`.countingEveryPlayersSpells()`: the counts count every player's spells, "the first noncreature spell of a turn").
+  The classes map to:
+
+  | Class | Filter |
+  |---|---|
+  | `NthSpellCastTriggerEffect(n, effects[, scope[, zone]])` | `[.castFrom(zone)].nthThisTurn(n)[.countingEveryPlayersSpells()]` |
+  | `KickedSpellCastTriggerEffect(effects[, perKick])` | `.kicked()` / `.eachKick()` |
+  | `FirstMatchingSpellCastTriggerEffect(filter, effects)` | `.withFilter(filter).nthThisTurn(1)` |
+  | `FirstMulticoloredSpellCastTriggerEffect` | `.withFilter(new CardIsMulticoloredPredicate()).nthThisTurn(1)` |
+  | `FirstNoncreatureSpellCastTriggerEffect` | a noncreature filter, `.nthThisTurn(1).countingEveryPlayersSpells()` |
+  | `SpellCastFromHandTriggerEffect` / `CastFromGraveyardTriggerEffect` | `.castFrom(Zone.HAND)` / `.castFrom(Zone.GRAVEYARD)` |
+  | `CastFromLibraryTriggerEffect` | a creature filter, `.castFrom(Zone.LIBRARY)` |
+  | `TeamworkSpellCastTriggerEffect` | `.withStackEntryFilter(new StackEntryCastWithTeamworkPredicate())` (new) |
+  | `ChosenSubtypeSpellCastTriggerEffect(effects[, creatureOnly])` | `.withFilter(new CardHasSourceChosenSubtypePredicate(creatureOnly))` |
+  | `SpellCastFromOutsideStartingDeckTriggerEffect` | `.withFilter(new CardNotPredicate(new CardInStartingDeckPredicate()))` (new predicate) |
+  | `PlayFromOutsideHandTriggerEffect` | `.notCastFrom(Zone.HAND)`; on a land play `.notPlayedFrom(Zone.HAND)` |
+  | `LandPlayFromExileTriggerEffect` | `Triggers.youPlayLand().playedFrom(Zone.EXILE)` |
+  | `SpellCopyTriggerEffect(spell, effects, …)` | `Triggers.youCopySpell().withFilter(spell)` / `.anySpell()`, `.withStackEntryFilter(condition)` |
+
+- A copy trigger (`SpellEvent.COPIED`) takes a `SpellFilter` too, of the spell and its stack object only (a copy isn't
+  cast, CR 707.10 checked; `SpellFilter.spellAndStackEntryOnly()`). Its filter alone decides which copied spells count:
+  every converted ability that didn't take every spell type already filtered on "instant or sorcery" (or "instant").
+- `LandPlayTrigger` gained `playedFrom` / `notPlayedFrom` (CR 116.2a checked: a land is played from the zone it was in).
+- A target filter is a target group, as in run 6b: a magecraft card's copy half reuses the effects its cast half already
+  bound to `target(filter)` (so it is just `addTrigger(...)`), any other is put on `target(filter[, 0, 1])` (Parnesse's
+  "up to one target opponent").
+
+**The engine.**
+
+- `TriggeredAbility.legacyEffects()` gives the new cast filters to the `SpellCastTriggerEffect` it builds (new fields
+  `castFrom`, `notCastFrom`, `kicked`, `triggerPerKick`, `countEveryPlayersSpells`; `withSpellFilter` and
+  `withResolvedEffects` replace two full constructor calls), a filtered copy ability as one `SpellCopyTriggerEffect` of
+  all its effects taking every spell type, and a land-play ability with a zone as one `LandPlayFromExileTriggerEffect` /
+  `PlayFromOutsideHandTriggerEffect` of its effects (an ability with options, or a land filter with a zone, throws: none
+  exists). The spell conditions of one ability must be of one event in the legacy view.
+- The generic spell-cast collector takes the cast zone from the event (`TriggerContext.SpellCast.castZone()`), judges
+  `castFrom` / `notCastFrom`, counts a kicked spell's kicks (the old handler's `kickedCount`: multikicker payments
+  counted, bargain and non-kicker additional costs not) and gives the count as the event value (on the stack entry and
+  in the targeted interactions), puts one more copy of the entry on the stack for each further kick of an `eachKick()`
+  ability, and counts the spells this turn by `castFrom` and `everyPlayersSpells`.
+- The spell-copy collector and the land-from-exile collector take a missing target filter (and the copy collector an
+  "up to one" minimum) from the target group the ability's effects are bound to.
+- Deleted: the classes `NthSpellCastTriggerEffect`, `KickedSpellCastTriggerEffect`, `FirstMatchingSpellCastTriggerEffect`,
+  `FirstMulticoloredSpellCastTriggerEffect`, `FirstNoncreatureSpellCastTriggerEffect`, `SpellCastFromHandTriggerEffect`,
+  `CastFromGraveyardTriggerEffect`, `CastFromLibraryTriggerEffect`, `TeamworkSpellCastTriggerEffect`,
+  `ChosenSubtypeSpellCastTriggerEffect`, `SpellCastFromOutsideStartingDeckTriggerEffect`, their ten
+  `SpellCastTriggerCollectorService` handlers and `SpellCastFromOutsideStartingDeckTriggerCollectorService`.
+  `SpellCopyTriggerEffect`, `LandPlayFromExileTriggerEffect` and `PlayFromOutsideHandTriggerEffect` stay as the legacy
+  view's records (the last also for Apple of Eden, below); run 16 deletes what is left.
+
+**Cards.** `scripts/step14-spell-condition-options.py` (per letter module; `--dry-run`, `--report`) converted 116
+abilities in 115 card classes; Curse of Shaken Faith (one copy-trigger variable shared by two abilities) and Rocco,
+Street Chef (one land-trigger variable with a target filter shared by two abilities) were done by hand.
+`scripts/step14-spell-condition-converted.txt` lists all 120. `scripts/step14-spell-condition-docs.py` rewrote the
+agent-docs spans of the converted cards; the class entries of `EFFECTS_INDEX.md` and `EFFECTS_QUICK_REFERENCE.md` say
+"removed" (with the filter to author) or "don't author", and `ARCHITECTURE.md`, `PREDICATES_REFERENCE.md` (the two new
+predicates), `TRIGGER_SLOT_TARGETING.md`, three pattern rows and the implement-card skill were edited by hand.
+
+**Kept, with their reason.**
+
+- Apple of Eden, Isu Relic: its two `PlayFromOutsideHandTriggerEffect` abilities are registered global abilities bound
+  to the cards exiled with the source ("whenever you play a land or cast a spell this way",
+  `TemporaryGlobalTriggerEffect.bindTo`), not a zone filter.
+- The Lord of Pain (`FirstSpellCastTriggerEffect`): its target, "another target player", is relative to the caster;
+  step 15 (the event's player).
+- `CopyControllerActivatedAbilityTriggerEffect` (14 cards): its effect is "copy that ability" and its conditions (life
+  paid, sacrificed, X in the cost) read the activation; step 15.
+- `ModalSpellCastTriggerEffect` (Riku of Many Paths): the number of modes chosen is the spell's; step 15.
+  `CardAdvantageSpellCastTriggerEffect` (Toofer) triggers on the spell's resolution, not its cast.
+  `TargetPlayerSpellCastTriggerEffect` (Nuka-Nuke Launcher) is a registered "that player" ability.
+  `ChosenNameSpellCastTriggerEffect` (Medomai's Prophecy) is a chapter effect, not a family 2 ability.
+- The bespoke condition-and-effect classes whose handlers bind the spell (`EyeOfTheStorm…`, `KnowledgePool…`,
+  `PossibilityStorm…`, `DiscordCopy…`, `Rashmi…`, `SunbirdsInvocation…`, `KioraSovereignOfTheDeep…`,
+  `HullbreakerHorror…`, `SpellweaverHelix…` / `Volute…`, `FlurryCopyOrDraw…`, `DuelistsConvocationInternational…`,
+  `JodahTheUnifier…`, the `PlayedCard…ExiledWith…` classes): step 15.
+
+**For later runs.**
+
+- The magecraft cards ("whenever you cast or copy an instant or sorcery spell") are still two abilities, a filtered cast
+  and a filtered copy trigger sharing their effects; one ability of two conditions needs a legacy view per watched
+  trigger (`legacyEffects()` gives one record for an ability). So do Cemetery Gatekeeper's and Cemetery Protector's
+  land and cast halves, Shadow of the Goblin's and the exile cast and land halves (Urianger Augurelt, Pia Nalaar, Gwen
+  Stacy, Klaw, Prosper, Scalesoul Gnome, Rocco).
+- A cast trigger without a filter is now collected only by the event-binding effects' handlers (step 15's); the
+  "a filtered trigger" marker (`anySpell()`) can go once those are event references.
+- Saproling Infestation ("whenever a player kicks a spell") still puts one ability on the stack for each multikicker
+  payment, as before; no official ruling on multikicker was found, so the behaviour is unchanged.
+
+**Behaviour changes.** None intended. The converted abilities reach the stack through the generic collector instead of
+their own handlers, which differ only in what the generic path always did: the entry carries the caster as its
+non-targeting player and the triggering spell's id, and "the first multicolored spell" reads the spell's effective
+colors. No converted ability asked a "you may" before it was on the stack (the Nth handler's cast-time prompt had no
+user).
+
+**Tests changed.**
+
+- `SpellCastTriggerCollectorServiceTest`: the tests of the deleted classes (an Nth-spell target request, the four
+  cast-from-graveyard tests, the first-multicolored and first-noncreature tests) build the ability with its filter and
+  take its legacy view (`legacy(trigger, effects…)`), stubbing the spell filters through `everySpellMatches()`.
+- `SpellAbilityTriggerTest`: "a filtered cast trigger is watched by its unfiltered trigger" now expects a counter
+  trigger, not a copy trigger, to reject a filter; four new tests: the cast-zone, kicker and count-scope filters; their
+  legacy `SpellCastTriggerEffect`; a filtered copy trigger and its `SpellCopyTriggerEffect` (and a cast-only filter
+  rejected on it); a land-play zone and its records (and the options and conflicting-zone errors).
+- No card test changed.
+
+**Test runs.**
+
+- Card: the test class of every changed card and every card test that constructs one (196 classes, 1,696 tests): all
+  passing.
+- Application: the `service.trigger` package, `SpellAbilityTriggerTest`, `TextChangeTransformerTest`, `CardFreezeTest`,
+  `TriggeredAbilityTest`, `StepTriggerServiceTest`, `TriggerPipelineTest`, `TargetLegalityServiceTest`,
+  `PredicateEvaluationServiceTest`, `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest`,
+  `CardEffectTargetingConsistencyTest` (1,139 tests): 50 failures, all failing at HEAD: `StepTriggerServiceTest` 16,
+  `TargetLegalityServiceTest` 14, `SpellCastTriggerCollectorServiceTest` 3 (the run 6b ones), the known one each in
+  `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and `CardEffectTargetingConsistencyTest`, and
+  `DamageTriggerCollectorServiceTest` 6, `DeathTriggerCollectorServiceTest` 6 and `LandTapTriggerCollectorServiceTest`
+  2 (mock wiring; the same names fail at HEAD `2410096d0b`, checked in a worktree).
+- AI: not run (no new `GameData`, `StackEntry` or `Permanent` state).
 - The full suite was not run here.
 
 ## Prompt

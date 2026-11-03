@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToRandomOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -37,6 +36,6 @@ public class ZaffaiThunderConductor extends Card {
                 new ConditionalEffect(new EventValueAtLeast(10), new DealDamageToRandomOpponentEffect(10)));
 
         addTrigger(Triggers.youCastSpell().withFilter(INSTANT_OR_SORCERY), magecraft.toArray(CardEffect[]::new));
-        addTrigger(Triggers.youCopySpell(), new SpellCopyTriggerEffect(INSTANT_OR_SORCERY, magecraft));
+        addTrigger(Triggers.youCopySpell().withFilter(INSTANT_OR_SORCERY), magecraft.toArray(CardEffect[]::new));
     }
 }

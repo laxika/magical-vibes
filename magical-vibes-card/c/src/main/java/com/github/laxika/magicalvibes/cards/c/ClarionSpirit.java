@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -17,10 +16,8 @@ public class ClarionSpirit extends Card {
 
     public ClarionSpirit() {
         // Whenever you cast your second spell each turn, create a 1/1 white Spirit creature token with flying.
-        addTrigger(Triggers.youCastSpell(), new NthSpellCastTriggerEffect(
-                2,
-                List.of(new CreateTokenEffect("Spirit", 1, 1, CardColor.WHITE,
-                        List.of(CardSubtype.SPIRIT), Set.of(Keyword.FLYING), Set.of()))
-        ));
+        addTrigger(Triggers.youCastSpell().nthThisTurn(2),
+                new CreateTokenEffect("Spirit", 1, 1, CardColor.WHITE,
+                        List.of(CardSubtype.SPIRIT), Set.of(Keyword.FLYING), Set.of()));
     }
 }

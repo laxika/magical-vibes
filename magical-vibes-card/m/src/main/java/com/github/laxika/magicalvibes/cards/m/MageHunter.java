@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CasterLosesLifeOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,8 +22,7 @@ public class MageHunter extends Card {
 
         addTrigger(Triggers.opponentCastsSpell(),
                 new CasterLosesLifeOnSpellCastEffect(instantOrSorcery, 1));
-        addTrigger(Triggers.opponentCopiesSpell(),
-                new SpellCopyTriggerEffect(instantOrSorcery,
-                        List.of(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER))));
+        addTrigger(Triggers.opponentCopiesSpell().withFilter(instantOrSorcery),
+                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
     }
 }

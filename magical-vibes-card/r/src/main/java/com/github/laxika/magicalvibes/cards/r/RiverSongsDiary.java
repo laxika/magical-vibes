@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.SourceExiledCardsThreshold;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringSpellWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastRandomCardExiledWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastFromHandTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -24,9 +24,8 @@ public class RiverSongsDiary extends Card {
         CardAnyOfPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
-        addTrigger(Triggers.playerCastsSpell(),
-                new SpellCastFromHandTriggerEffect(instantOrSorcery,
-                        List.of(new ExileTriggeringSpellWithSourceEffect())));
+        addTrigger(Triggers.playerCastsSpell().withFilter(instantOrSorcery).castFrom(Zone.HAND),
+                new ExileTriggeringSpellWithSourceEffect());
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceExiledCardsThreshold(4)),
                 new MayCastRandomCardExiledWithSourceEffect());

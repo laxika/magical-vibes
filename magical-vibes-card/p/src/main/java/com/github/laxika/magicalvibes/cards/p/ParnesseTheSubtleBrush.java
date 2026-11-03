@@ -7,13 +7,10 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CopyCopiedSpellForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "NCC", collectorNumber = "8")
 @CardRegistration(set = "NCC", collectorNumber = "106")
@@ -26,9 +23,8 @@ public class ParnesseTheSubtleBrush extends Card {
         var targetOpponent = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent");
-        addTrigger(Triggers.youCopySpell(),
-                new SpellCopyTriggerEffect(null,
-                        List.of(new MayEffect(new CopyCopiedSpellForTargetPlayerEffect(),
-                                "Copy that spell?", null, MayChoicePlayer.TARGET_PLAYER)), targetOpponent, null, true, true));
+        target(targetOpponent, 0, 1).addTrigger(Triggers.youCopySpell().anySpell(),
+                new MayEffect(new CopyCopiedSpellForTargetPlayerEffect(),
+                        "Copy that spell?", null, MayChoicePlayer.TARGET_PLAYER));
     }
 }

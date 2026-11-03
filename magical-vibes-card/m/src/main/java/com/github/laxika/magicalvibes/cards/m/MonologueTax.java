@@ -3,10 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "MSC", collectorNumber = "139")
 @CardRegistration(set = "MSC", collectorNumber = "317")
@@ -17,7 +14,6 @@ import java.util.List;
 public class MonologueTax extends Card {
 
     public MonologueTax() {
-        addTrigger(Triggers.opponentCastsSpell(),
-                new NthSpellCastTriggerEffect(2, List.of(CreateTokenEffect.ofTreasureToken(1))));
+        addTrigger(Triggers.opponentCastsSpell().nthThisTurn(2), CreateTokenEffect.ofTreasureToken(1));
     }
 }

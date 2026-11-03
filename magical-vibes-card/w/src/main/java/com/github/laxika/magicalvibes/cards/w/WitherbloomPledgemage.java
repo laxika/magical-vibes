@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,7 +21,6 @@ public class WitherbloomPledgemage extends Card {
         List<CardEffect> gainLife = List.of(new GainLifeEffect(1));
 
         addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery), gainLife.toArray(CardEffect[]::new));
-        addTrigger(Triggers.youCopySpell(),
-                new SpellCopyTriggerEffect(instantOrSorcery, gainLife));
+        addTrigger(Triggers.youCopySpell().withFilter(instantOrSorcery), gainLife.toArray(CardEffect[]::new));
     }
 }

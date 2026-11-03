@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -310,12 +311,26 @@ public class PlayedCardNameTriggerCollectorService {
                     match.permanent().getCard(), match.controllerId(),
                     new ArrayList<>(trigger.resolvedEffects()),
                     needsPlayerTarget && !needsPermanentTarget,
-                    trigger.targetFilter(), 0, match.permanent().getId()));
+                    trigger.targetFilter() != null ? trigger.targetFilter()
+                            : boundTargetFilter(match.permanent().getCard(), trigger.resolvedEffects()),
+                    0, match.permanent().getId()));
             gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                     "'s triggered ability triggers — choose a target."));
             return true;
         }
         return enqueueLandPlayTrigger(match, trigger.resolvedEffects(), playingPlayerId, triggeringCardId);
+    }
+
+    /**
+     * The filter of the target group the ability's effects are bound to, or {@code null} for none: a "whenever you
+     * play a land from exile" ability declares its target as a target group of the card.
+     */
+    private static TargetFilter boundTargetFilter(Card sourceCard, List<CardEffect> effects) {
+        return effects.stream()
+                .mapToInt(sourceCard::getEffectTargetIndex)
+                .filter(index -> index >= 0 && index < sourceCard.getTargetGroups().size())
+                .mapToObj(index -> sourceCard.getTargetGroups().get(index).getFilter())
+                .findFirst().orElse(null);
     }
 
     private boolean enqueueLandPlayTrigger(TriggerMatchContext match, List<CardEffect> effects, UUID playingPlayerId) {

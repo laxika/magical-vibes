@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -24,7 +23,6 @@ public class SymmetrySage extends Card {
 
         target(TargetFilters.creatureYouControl()).addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery),
                 setPower.toArray(CardEffect[]::new));
-        addTrigger(Triggers.youCopySpell(),
-                new SpellCopyTriggerEffect(instantOrSorcery, setPower, TargetFilters.creatureYouControl()));
+        addTrigger(Triggers.youCopySpell().withFilter(instantOrSorcery), setPower.toArray(CardEffect[]::new));
     }
 }

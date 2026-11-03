@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayFromOutsideHandTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,7 +25,7 @@ public class ShadowOfTheGoblin extends Card {
         // enchantment deals 1 damage to each opponent.
         List<CardEffect> damage = List.of(
                 new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.youCastSpell(), new PlayFromOutsideHandTriggerEffect(damage));
-        addTrigger(Triggers.youPlayLand(), new PlayFromOutsideHandTriggerEffect(damage));
+        addTrigger(Triggers.youCastSpell().notCastFrom(Zone.HAND), damage.toArray(CardEffect[]::new));
+        addTrigger(Triggers.youPlayLand().notPlayedFrom(Zone.HAND), damage.toArray(CardEffect[]::new));
     }
 }

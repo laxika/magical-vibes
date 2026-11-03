@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TeamworkSpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.filter.StackEntryCastWithTeamworkPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -16,9 +16,9 @@ import java.util.Set;
 public class VirtualAssistant extends Card {
 
     public VirtualAssistant() {
-        addTrigger(Triggers.youCastSpell(), new TeamworkSpellCastTriggerEffect(List.of(
+        addTrigger(Triggers.youCastSpell().withStackEntryFilter(new StackEntryCastWithTeamworkPredicate()),
                 new CreateTokenEffect("Robot Hero Token", 1, 1, null,
                         List.of(CardSubtype.ROBOT, CardSubtype.HERO),
-                        Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT)))));
+                        Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT)));
     }
 }

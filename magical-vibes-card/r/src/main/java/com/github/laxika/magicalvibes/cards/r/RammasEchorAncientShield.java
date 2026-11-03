@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,10 +27,7 @@ public class RammasEchorAncientShield extends Card {
     public RammasEchorAncientShield() {
         // Whenever you cast your second spell each turn, draw a card, then create a 0/3 white
         // Wall creature token with defender.
-        addTrigger(Triggers.youCastSpell(), new NthSpellCastTriggerEffect(
-                2,
-                List.of(new DrawCardEffect(), WALL_TOKEN)
-        ));
+        addTrigger(Triggers.youCastSpell().nthThisTurn(2), new DrawCardEffect(), WALL_TOKEN);
 
         // At the beginning of combat on your turn, creatures you control with defender gain
         // exalted until end of turn.

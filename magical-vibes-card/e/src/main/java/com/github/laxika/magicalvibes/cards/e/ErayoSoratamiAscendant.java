@@ -2,12 +2,8 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "SOK", collectorNumber = "35")
 public class ErayoSoratamiAscendant extends Card {
@@ -17,8 +13,8 @@ public class ErayoSoratamiAscendant extends Card {
 
         // Flipping is not transforming (CR 701.27a, CR 710), so the flip uses the flip form of
         // TransformToBackFaceEffect: no transform triggers fire and transform prevention does not apply.
-        addTrigger(Triggers.playerCastsSpell(),
-                new NthSpellCastTriggerEffect(4, List.of(new TransformToBackFaceEffect(true)), CountScope.ANY_PLAYER));
+        addTrigger(Triggers.playerCastsSpell().nthThisTurn(4).countingEveryPlayersSpells(),
+                new TransformToBackFaceEffect(true));
     }
 
     @Override

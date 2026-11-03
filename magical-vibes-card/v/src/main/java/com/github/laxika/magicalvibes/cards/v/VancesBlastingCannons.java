@@ -6,14 +6,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayCastMatchingThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 /**
  * Vance's Blasting Cannons — front face of Vance's Blasting Cannons // Spitfire Bastion.
@@ -36,10 +33,8 @@ public class VancesBlastingCannons extends Card {
 
         // Whenever you cast your third spell in a turn, you may transform
         // Vance's Blasting Cannons.
-        addTrigger(Triggers.youCastSpell(),
-                new NthSpellCastTriggerEffect(3, List.of(
-                        new MayEffect(new TransformSelfEffect(),
-                                "Transform Vance's Blasting Cannons?"))));
+        addTrigger(Triggers.youCastSpell().nthThisTurn(3),
+                new MayEffect(new TransformSelfEffect(), "Transform Vance's Blasting Cannons?"));
     }
 
     @Override

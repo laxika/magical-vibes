@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsExiledWithSourceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LandPlayFromExileTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,8 +20,7 @@ public class UriangerAugurelt extends Card {
     public UriangerAugurelt() {
         addTrigger(Triggers.youCastSpell().withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.EXILE)),
                 new GainLifeEffect(2));
-        addTrigger(Triggers.youPlayLand(),
-                new LandPlayFromExileTriggerEffect(List.of(new GainLifeEffect(2))));
+        addTrigger(Triggers.youPlayLand().playedFrom(Zone.EXILE), new GainLifeEffect(2));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,8 +26,7 @@ public class VeyranVoiceOfDuality extends Card {
     public VeyranVoiceOfDuality() {
         List<CardEffect> boost = List.of(new BoostSelfEffect(1, 1));
         addTrigger(Triggers.youCastSpell().withFilter(INSTANT_OR_SORCERY), boost.toArray(CardEffect[]::new));
-        addTrigger(Triggers.youCopySpell(),
-                new SpellCopyTriggerEffect(INSTANT_OR_SORCERY, boost));
+        addTrigger(Triggers.youCopySpell().withFilter(INSTANT_OR_SORCERY), boost.toArray(CardEffect[]::new));
         addStaticEffect(AdditionalTriggeredAbilityEffect.forInstantOrSorceryCastOrCopy());
     }
 }

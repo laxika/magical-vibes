@@ -88,6 +88,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryCardIdPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCardTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastWithAdventurePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryCastWithTeamworkPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastWithWarpCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByChosenPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredicate;
@@ -5827,6 +5828,9 @@ public class TargetLegalityService {
         }
         if (predicate instanceof StackEntryCastWithWarpCostPredicate) {
             return stackEntry.isCastWithWarp();
+        }
+        if (predicate instanceof StackEntryCastWithTeamworkPredicate) {
+            return stackEntry.isTeamworkCostPaid();
         }
         if (predicate instanceof StackEntryIsCopyPredicate copyPredicate) {
             return copyPredicate.castCopy()

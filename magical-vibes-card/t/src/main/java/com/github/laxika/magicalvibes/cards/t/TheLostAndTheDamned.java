@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayFromOutsideHandTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredOrCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -28,7 +27,6 @@ public class TheLostAndTheDamned extends Card {
                                 new PermanentNotPredicate(new PermanentEnteredOrCastFromZonePredicate(Zone.HAND)))),
                         ObjectRelation.YOU_CONTROL),
                 spawn);
-        addTrigger(Triggers.youCastSpell(),
-                new PlayFromOutsideHandTriggerEffect(List.of(spawn)));
+        addTrigger(Triggers.youCastSpell().notCastFrom(Zone.HAND), spawn);
     }
 }

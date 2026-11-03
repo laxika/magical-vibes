@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -37,8 +36,7 @@ public class OctaviaLivingThesis extends Card {
         List<CardEffect> setBasePowerToughness = List.of(new SetBasePowerToughnessEffect(8, 8));
         target(TargetFilters.creature()).addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery),
                 setBasePowerToughness.toArray(CardEffect[]::new));
-        addTrigger(Triggers.youCopySpell(),
-                new SpellCopyTriggerEffect(instantOrSorcery, setBasePowerToughness,
-                        TargetFilters.creature()));
+        addTrigger(Triggers.youCopySpell().withFilter(instantOrSorcery),
+                setBasePowerToughness.toArray(CardEffect[]::new));
     }
 }

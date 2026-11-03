@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerExilesTopCardMayPlayUntilNextEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LandPlayFromExileTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -42,10 +41,8 @@ public class RoccoStreetChef extends Card {
                         .withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.EXILE)),
                 reward);
 
-        LandPlayFromExileTriggerEffect landTrigger = new LandPlayFromExileTriggerEffect(
-                List.of(reward), TargetFilters.creature());
-        addTrigger(Triggers.youPlayLand(), landTrigger);
-        addTrigger(Triggers.opponentPlaysLand(), landTrigger);
+        addTrigger(Triggers.youPlayLand().playedFrom(Zone.EXILE), reward);
+        addTrigger(Triggers.opponentPlaysLand().playedFrom(Zone.EXILE), reward);
     }
 
     private static CreateTokenEffect foodToken() {

@@ -3,19 +3,14 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
-import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "2494")
 @CardRegistration(set = "AFC", collectorNumber = "36")
 public class WildMagicSorcerer extends Card {
 
     public WildMagicSorcerer() {
-        addTrigger(Triggers.youCastSpell(), new NthSpellCastTriggerEffect(
-                1, List.of(new CascadeEffect()), CountScope.CONTROLLER, Zone.EXILE));
+        addTrigger(Triggers.youCastSpell().castFrom(Zone.EXILE).nthThisTurn(1), new CascadeEffect());
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,7 +21,6 @@ public class CleverLumimancer extends Card {
         List<CardEffect> boost = List.of(new BoostSelfEffect(2, 2));
 
         addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery), boost.toArray(CardEffect[]::new));
-        addTrigger(Triggers.youCopySpell(),
-                new SpellCopyTriggerEffect(instantOrSorcery, boost));
+        addTrigger(Triggers.youCopySpell().withFilter(instantOrSorcery), boost.toArray(CardEffect[]::new));
     }
 }

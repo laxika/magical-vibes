@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.trigger;
 
 import com.github.laxika.magicalvibes.model.AbilityZones;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 
@@ -13,22 +14,24 @@ import java.util.function.UnaryOperator;
  * A cast trigger with a {@link SpellFilter} ("whenever you cast a creature spell", built with {@link #withFilter},
  * {@link #anySpell} and the other filter methods) is collected by the generic spell-cast collector, which judges the
  * filter and puts the ability's effects on the stack. A cast trigger without one is still collected by its effect's
- * class, as the condition-as-effect abilities ({@code NthSpellCastTriggerEffect}, {@code KickedSpellCastTriggerEffect},
- * …) and the abilities whose effect binds the spell or its caster are, until steps 14 (run 6c) and 15 of
- * effect-slot-refactor.md make them filters and event references too.
+ * class, as the abilities whose effect binds the spell or its caster are, until step 15 of effect-slot-refactor.md
+ * makes them event references. A copy trigger with a filter ("whenever you copy an instant or sorcery spell") is
+ * collected by the spell-copy collector; its filter can say only what the copied spell and its stack object must be.
  *
  * @param event  what happens to the spell
  * @param player the player who casts or copies the spell, counters it, or controls the countered spell
- * @param filter what a cast spell must be, or {@code null} for a trigger its effect's class collects; only a
- *               {@link SpellEvent#CAST} trigger has one
+ * @param filter what a cast or copied spell must be, or {@code null} for a trigger its effect's class collects; only
+ *               a {@link SpellEvent#CAST} or {@link SpellEvent#COPIED} trigger has one
  */
 public record SpellTrigger(SpellEvent event, PlayerRelation player, SpellFilter filter) implements Trigger {
 
     public SpellTrigger {
         Objects.requireNonNull(event, "event");
         Objects.requireNonNull(player, "player");
-        if (filter != null && event != SpellEvent.CAST) {
-            throw new IllegalArgumentException("Only a cast trigger has a spell filter: " + event);
+        if (filter != null && event != SpellEvent.CAST
+                && !(event == SpellEvent.COPIED && filter.spellAndStackEntryOnly())) {
+            throw new IllegalArgumentException("Only a cast trigger has a spell filter, and a copy trigger one of the "
+                    + "spell and its stack object: " + event + " " + filter);
         }
     }
 
@@ -67,15 +70,19 @@ public record SpellTrigger(SpellEvent event, PlayerRelation player, SpellFilter 
     }
 
     /**
-     * The spell-cast collectors read every cast ability by the event and player; the filter is judged by the generic
-     * collector, from the {@code SpellCastTriggerEffect} the legacy view gives.
+     * The spell-cast and spell-copy collectors read every such ability by the event and player; the filter is judged
+     * by the generic collector, from the {@code SpellCastTriggerEffect} or {@code SpellCopyTriggerEffect} the legacy
+     * view gives.
      */
     @Override
     public Trigger watchKey() {
         return filter == null ? this : new SpellTrigger(event, player);
     }
 
-    /** This trigger for any spell, collected by the generic spell-cast collector: "whenever you cast a spell". */
+    /**
+     * This trigger for any spell, collected by the generic spell-cast or spell-copy collector: "whenever you cast a
+     * spell", "whenever you copy a spell".
+     */
     public SpellTrigger anySpell() {
         return filtered(filter -> filter);
     }
@@ -143,9 +150,40 @@ public record SpellTrigger(SpellEvent event, PlayerRelation player, SpellFilter 
         return filtered(filter -> filter.withExpend(threshold));
     }
 
+    /** This trigger for a spell cast from {@code zone} only: "whenever you cast a spell from your graveyard". */
+    public SpellTrigger castFrom(Zone zone) {
+        return filtered(filter -> filter.withCastFrom(zone));
+    }
+
+    /**
+     * This trigger for a spell not cast from {@code zone} only: "whenever you cast a spell from anywhere other than
+     * your hand".
+     */
+    public SpellTrigger notCastFrom(Zone zone) {
+        return filtered(filter -> filter.withNotCastFrom(zone));
+    }
+
+    /** This trigger for a kicked spell only (CR 702.33d), once: "whenever you cast a kicked spell". */
+    public SpellTrigger kicked() {
+        return filtered(filter -> filter.withKicker(SpellFilter.Kicker.KICKED));
+    }
+
+    /** This trigger for a kicked spell, once for each time it was kicked: "whenever a player kicks a spell". */
+    public SpellTrigger eachKick() {
+        return filtered(filter -> filter.withKicker(SpellFilter.Kicker.EACH_KICK));
+    }
+
+    /**
+     * This trigger's spell counts ({@link #nthThisTurn}, {@link #nthOrLaterThisTurn}) count every player's spells this
+     * turn, not the casting player's: "whenever the first noncreature spell of a turn is cast".
+     */
+    public SpellTrigger countingEveryPlayersSpells() {
+        return filtered(SpellFilter::withEveryPlayersSpells);
+    }
+
     private SpellTrigger filtered(UnaryOperator<SpellFilter> change) {
-        if (event != SpellEvent.CAST) {
-            throw new IllegalStateException("Only a cast trigger has a spell filter: " + event);
+        if (event != SpellEvent.CAST && event != SpellEvent.COPIED) {
+            throw new IllegalStateException("Only a cast or copy trigger has a spell filter: " + event);
         }
         return new SpellTrigger(event, player, change.apply(filter == null ? SpellFilter.ANY : filter));
     }

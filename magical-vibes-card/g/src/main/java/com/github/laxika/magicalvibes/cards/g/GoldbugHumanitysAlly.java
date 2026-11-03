@@ -4,13 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageToAttackingCreaturesYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "BOT", collectorNumber = "11")
 @CardRegistration(set = "BOT", collectorNumber = "25")
@@ -22,8 +19,7 @@ public class GoldbugHumanitysAlly extends Card {
 
         addStaticEffect(new PreventCombatDamageToAttackingCreaturesYouControlEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.HUMAN)));
-        addTrigger(Triggers.youCastSpell(),
-                new NthSpellCastTriggerEffect(2, List.of(new TransformSelfEffect())));
+        addTrigger(Triggers.youCastSpell().nthThisTurn(2), new TransformSelfEffect());
     }
 
     @Override

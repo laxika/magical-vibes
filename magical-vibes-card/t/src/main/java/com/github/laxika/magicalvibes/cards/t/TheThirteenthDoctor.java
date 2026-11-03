@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PlayFromOutsideHandTriggerEffect;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -26,10 +26,8 @@ import java.util.List;
 public class TheThirteenthDoctor extends Card {
 
     public TheThirteenthDoctor() {
-        addTrigger(Triggers.youCastSpell(),
-                new PlayFromOutsideHandTriggerEffect(
-                        List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)),
-                        TargetFilters.creature()));
+        target(TargetFilters.creature()).addTrigger(Triggers.youCastSpell().notCastFrom(Zone.HAND),
+                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new UntapPermanentsEffect(TapUntapScope.CONTROLLED,

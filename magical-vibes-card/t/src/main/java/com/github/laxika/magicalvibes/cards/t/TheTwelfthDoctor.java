@@ -7,11 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantCastTriggerToSpellsEffec
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerGrant;
-import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
-import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "164")
 @CardRegistration(set = "WHO", collectorNumber = "449")
@@ -25,8 +21,6 @@ public class TheTwelfthDoctor extends Card {
         addStaticEffect(new GrantCastTriggerToSpellsEffect(
                 SpellCastTriggerGrant.DEMONSTRATE_TO_FIRST_SPELL_FROM_OUTSIDE_HAND,
                 new MayEffect(new DemonstrateEffect(), "Copy this spell for an opponent?")));
-        addTrigger(Triggers.youCopySpell(),
-                new SpellCopyTriggerEffect(null, List.of(new PutCountersOnSourceEffect(1, 1, 1)),
-                        (StackEntryPredicate) null, true));
+        addTrigger(Triggers.youCopySpell().anySpell(), new PutCountersOnSourceEffect(1, 1, 1));
     }
 }

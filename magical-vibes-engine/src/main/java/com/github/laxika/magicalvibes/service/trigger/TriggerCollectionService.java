@@ -274,7 +274,6 @@ import com.github.laxika.magicalvibes.model.effect.SearchBlueOrBlackCreatureToBa
 import com.github.laxika.magicalvibes.model.effect.SearchCreatureToBattlefieldOnControllerCastsCreatureSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
@@ -15798,8 +15797,6 @@ public class TriggerCollectionService {
         }
         List<CardEffect> grantedSpellEffects = effect instanceof SpellCastTriggerEffect spellCastTrigger
                 ? spellCastTrigger.resolvedEffects()
-                : effect instanceof NthSpellCastTriggerEffect nthSpellCastTrigger
-                ? nthSpellCastTrigger.resolvedEffects()
                 : List.of();
         boolean grantedSpellCascade = !grantedSpellEffects.isEmpty()
                 && grantedSpellEffects.stream().allMatch(CascadeEffect.class::isInstance);

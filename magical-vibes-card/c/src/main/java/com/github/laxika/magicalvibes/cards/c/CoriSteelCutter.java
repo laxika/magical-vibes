@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -42,14 +41,12 @@ public class CoriSteelCutter extends Card {
                 List.of(CardSubtype.MONK), Set.of(), Set.of(), false, false,
                 monkTokenEffects, List.of(), false, false, false, 0, Set.of());
 
-        addTrigger(Triggers.youCastSpell(), new NthSpellCastTriggerEffect(
-                2,
-                List.of(
-                        monkToken,
-                        new MayEffect(
-                                new AttachMatchingEquipmentToCreatedPermanentEffect(
-                                        new PermanentIsSourceCardPredicate(), true),
-                                "Attach Cori-Steel Cutter to the Monk token?"))));
+        addTrigger(Triggers.youCastSpell().nthThisTurn(2),
+                monkToken,
+                new MayEffect(
+                        new AttachMatchingEquipmentToCreatedPermanentEffect(
+                                new PermanentIsSourceCardPredicate(), true),
+                        "Attach Cori-Steel Cutter to the Monk token?"));
         addActivatedAbility(new EquipActivatedAbility("{1}{R}"));
     }
 }
