@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
@@ -16,15 +15,9 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LandPlayFromExileTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.OnceOnlyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayFromOutsideHandTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovePerpetualTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringNinjutsuAbilityConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
@@ -199,16 +192,19 @@ class SpellAbilityTriggerTest {
     }
 
     @Test
-    void aCastTriggerWithASpellFilterIsWatchedByItsUnfilteredTrigger() {
+    void aCastTriggerWithASpellFilterIsItsOwnWatchKeyAndNarrowsItsUnfilteredTrigger() {
         var creature = new CardTypePredicate(CardType.CREATURE);
         SpellTrigger creatureSpell = Triggers.youCastSpell().withFilter(creature).duringYourTurn().nthThisTurn(2);
 
         assertThat(creatureSpell.filter()).isEqualTo(SpellFilter.ANY.withSpell(creature)
                 .withTurn(SpellFilter.Turn.YOURS).withNthThisTurn(2));
-        assertThat(creatureSpell.watchKey()).isEqualTo(Triggers.youCastSpell());
+        assertThat(creatureSpell.watchKey()).isEqualTo(creatureSpell);
+        assertThat(creatureSpell.unfiltered()).isEqualTo(Triggers.youCastSpell());
         assertThat(Triggers.opponentCastsSpell().anySpell()).isNotEqualTo(Triggers.opponentCastsSpell());
         assertThat(Triggers.opponentCastsSpell().anySpell().filter()).isEqualTo(SpellFilter.ANY);
-        assertThat(Triggers.opponentCastsSpell().anySpell().watchKey()).isEqualTo(Triggers.opponentCastsSpell());
+        assertThat(Triggers.opponentCastsSpell().anySpell().unfiltered()).isEqualTo(Triggers.opponentCastsSpell());
+        SpellTrigger unfiltered = Triggers.opponentCastsSpell();
+        assertThat(unfiltered.unfiltered()).isSameAs(unfiltered);
         assertThatThrownBy(() -> Triggers.youCounterSpell().anySpell()).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> Triggers.youCastSpell().nthThisTurn(0))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -216,70 +212,19 @@ class SpellAbilityTriggerTest {
     }
 
     @Test
-    void theLegacyViewGivesAFilteredCastAbilityAsOneSpellCastTriggerEffectOfItsEffects() {
+    void theLegacyViewOfTheUnfilteredTriggerLeavesOutFilteredCastAbilities() {
         var creature = new CardTypePredicate(CardType.CREATURE);
         Card card = new Card();
         card.addTrigger(Triggers.youCastSpell().withFilter(creature).duringOpponentsTurn().paidWithTreasureMana(),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceIsEnchantment()), DRAW, GAIN);
         card.addTrigger(Triggers.youCastSpell(), LOSE);
+        TriggeredAbility granted = new TriggeredAbility(Triggers.youCastSpell().anySpell(), DRAW);
 
+        // The spell-cast collector reads a filtered ability itself; only the effect-keyed one is in the legacy view.
         assertThat(card.getTriggerEffects(Triggers.youCastSpell(), Zone.BATTLEFIELD)).containsExactly(LOSE);
-        assertThat(card.getLegacyTriggerEffects(Triggers.youCastSpell(), Zone.BATTLEFIELD)).containsExactly(
-                new SpellCastTriggerEffect(creature, List.of(DRAW, GAIN), null, null, null, true, false,
-                        new SourceIsEnchantment(), 0, 0, false, false, 0, true, false, false, false),
-                LOSE);
-        assertThat(card.getLegacyTriggerEffects(Triggers.youCastSpell(), Zone.BATTLEFIELD).getFirst())
-                .isSameAs(card.getLegacyTriggerEffects(Triggers.youCastSpell(), Zone.BATTLEFIELD).getFirst());
-    }
-
-    @Test
-    void theLegacyViewGivesAnOptionalCastAbilityAsTheCollectorsReadIt() {
-        Card card = new Card();
-        card.addTrigger(Triggers.youCastSpell().anySpell(), new MayEffect(SequenceEffect.of(DRAW, GAIN), "Draw?"));
-        card.addTrigger(Triggers.opponentCastsSpell().anySpell(), new MayPayManaEffect("{1}", DRAW, "Pay {1}?"));
-        card.addTrigger(Triggers.playerCastsSpell().anySpell(),
-                new MayEffect(DRAW, "Draw?", null, MayChoicePlayer.TRIGGERING_SPELL_CONTROLLER));
-        card.addTrigger(new TriggerCondition(Triggers.youCastSpell().anySpell(), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT, new MayEffect(DRAW, "Draw?"));
-        card.addTrigger(new TriggerCondition(Triggers.opponentCastsSpell().anySpell(), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT, new MayPayManaEffect("{1}", DRAW, "Pay {1}?"));
-
-        assertThat(card.getLegacyTriggerEffects(Triggers.youCastSpell(), Zone.BATTLEFIELD)).containsExactly(
-                new MayEffect(new SpellCastTriggerEffect(null, List.of(SequenceEffect.of(DRAW, GAIN))), "Draw?"));
-        assertThat(card.getLegacyTriggerEffects(Triggers.opponentCastsSpell(), Zone.BATTLEFIELD)).containsExactly(
-                new MayEffect(new SpellCastTriggerEffect(null, List.of(DRAW), "{1}"), "Pay {1}?"));
-        assertThat(card.getLegacyTriggerEffects(Triggers.playerCastsSpell(), Zone.BATTLEFIELD)).containsExactly(
-                new SpellCastTriggerEffect(null, List.of(
-                        new MayEffect(DRAW, "Draw?", null, MayChoicePlayer.TRIGGERING_SPELL_CONTROLLER))));
-        assertThat(card.getLegacyTriggerEffects(Triggers.youCastSpell(), Zone.GRAVEYARD)).containsExactly(
-                new SpellCastTriggerEffect(null, List.of(new MayEffect(DRAW, "Draw?"))));
-        assertThat(card.getLegacyTriggerEffects(Triggers.opponentCastsSpell(), Zone.GRAVEYARD)).containsExactly(
-                new SpellCastTriggerEffect(null, List.of(DRAW), "{1}"));
-    }
-
-    @Test
-    void theLegacyViewGivesACastAbilitysLimitsAroundItsSpellCastTriggerEffect() {
-        Card card = new Card();
-        card.addTrigger(Triggers.youCastSpell().anySpell(),
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), new MayEffect(DRAW, "Draw?"));
-        card.addTrigger(Triggers.opponentCastsSpell().nthThisTurn(1),
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE), DRAW);
-        String key = card.getTriggeredAbilities().getFirst().limitKey();
-
-        assertThat(card.getLegacyTriggerEffects(Triggers.youCastSpell(), Zone.BATTLEFIELD)).containsExactly(
-                OncePerTurnTriggerEffect.keyed(
-                        new MayEffect(new SpellCastTriggerEffect(null, List.of(DRAW)), "Draw?"), key));
-        assertThat(card.getLegacyTriggerEffects(Triggers.opponentCastsSpell(), Zone.BATTLEFIELD)).containsExactly(
-                SpellCastTriggerEffect.nth(1, null, List.of(new OnceOnlyTriggerEffect(DRAW))));
-    }
-
-    @Test
-    void aGrantedFilteredCastAbilityIsFoundByItsUnfilteredTrigger() {
-        TriggeredAbility ability = new TriggeredAbility(Triggers.youCastSpell().anySpell(), DRAW);
-
-        assertThat(ability.hasWatchedTrigger(Triggers.youCastSpell())).isTrue();
-        assertThat(ability.hasTrigger(Triggers.youCastSpell())).isFalse();
-        assertThat(ability.hasWatchedTrigger(Triggers.opponentCastsSpell())).isFalse();
+        assertThat(card.getLegacyTriggerEffects(Triggers.youCastSpell(), Zone.BATTLEFIELD)).containsExactly(LOSE);
+        assertThat(granted.hasWatchedTrigger(Triggers.youCastSpell())).isFalse();
+        assertThat(granted.hasTrigger(Triggers.youCastSpell())).isFalse();
     }
 
     @Test
@@ -292,43 +237,24 @@ class SpellAbilityTriggerTest {
         assertThat(Triggers.playerCastsSpell().eachKick().filter().kicker()).isEqualTo(SpellFilter.Kicker.EACH_KICK);
         assertThat(Triggers.playerCastsSpell().nthThisTurn(1).countingEveryPlayersSpells().filter().everyPlayersSpells())
                 .isTrue();
-        assertThat(Triggers.youCastSpell().kicked().watchKey()).isEqualTo(Triggers.youCastSpell());
+        assertThat(Triggers.youCastSpell().kicked().unfiltered()).isEqualTo(Triggers.youCastSpell());
         assertThatThrownBy(() -> Triggers.youCastSpell().castFrom(Zone.EXILE).notCastFrom(Zone.HAND))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    void theLegacyViewGivesTheCastZoneKickerAndCountScopeToTheSpellCastTriggerEffect() {
-        var creature = new CardTypePredicate(CardType.CREATURE);
-        Card card = new Card();
-        card.addTrigger(Triggers.youCastSpell().withFilter(creature).castFrom(Zone.EXILE).nthThisTurn(1), DRAW);
-        card.addTrigger(Triggers.playerCastsSpell().eachKick(), GAIN);
-        card.addTrigger(Triggers.opponentCastsSpell().notCastFrom(Zone.HAND).nthThisTurn(2)
-                .countingEveryPlayersSpells(), LOSE);
-
-        assertThat(card.getLegacyTriggerEffects(Triggers.youCastSpell(), Zone.BATTLEFIELD)).containsExactly(
-                new SpellCastTriggerEffect(creature, List.of(DRAW), null, null, null, false, false, null, 1, 0, false,
-                        false, 0, false, false, false, false, Zone.EXILE, null, false, false, false));
-        assertThat(card.getLegacyTriggerEffects(Triggers.playerCastsSpell(), Zone.BATTLEFIELD)).containsExactly(
-                new SpellCastTriggerEffect(null, List.of(GAIN), null, null, null, false, false, null, 0, 0, false,
-                        false, 0, false, false, false, false, null, null, true, true, false));
-        assertThat(card.getLegacyTriggerEffects(Triggers.opponentCastsSpell(), Zone.BATTLEFIELD)).containsExactly(
-                new SpellCastTriggerEffect(null, List.of(LOSE), null, null, null, false, false, null, 2, 0, false,
-                        false, 0, false, false, false, false, null, Zone.HAND, false, false, true));
-    }
-
-    @Test
-    void aCopyTriggerTakesASpellFilterAndGivesOneSpellCopyTriggerEffectOfItsEffects() {
+    void aCopyTriggerTakesTheFilterOfTheCopiedSpellAndItsStackObjectOnly() {
         var instant = new CardTypePredicate(CardType.INSTANT);
         Card card = new Card();
         card.addTrigger(Triggers.youCopySpell().withFilter(instant), DRAW, GAIN);
         card.addTrigger(Triggers.opponentCopiesSpell().withStackEntryFilter(new StackEntryKickedPredicate()), LOSE);
 
-        assertThat(Triggers.youCopySpell().withFilter(instant).watchKey()).isEqualTo(Triggers.youCopySpell());
-        assertThat(card.getLegacyTriggerEffects(Triggers.youCopySpell(), Zone.BATTLEFIELD)).containsExactly(
-                new SpellCopyTriggerEffect(instant, List.of(DRAW, GAIN), null, null, true, false));
-        assertThat(card.getLegacyTriggerEffects(Triggers.opponentCopiesSpell(), Zone.BATTLEFIELD)).containsExactly(
-                new SpellCopyTriggerEffect(null, List.of(LOSE), null, new StackEntryKickedPredicate(), true, false));
+        assertThat(Triggers.youCopySpell().withFilter(instant).unfiltered()).isEqualTo(Triggers.youCopySpell());
+        assertThat(Triggers.opponentCopiesSpell().withStackEntryFilter(new StackEntryKickedPredicate()).filter())
+                .isEqualTo(SpellFilter.ANY.withStackEntry(new StackEntryKickedPredicate()));
+        // The spell-copy collector reads a filtered copy ability itself, not through the legacy view.
+        assertThat(card.getLegacyTriggerEffects(Triggers.youCopySpell(), Zone.BATTLEFIELD)).isEmpty();
+        assertThat(card.getLegacyTriggerEffects(Triggers.opponentCopiesSpell(), Zone.BATTLEFIELD)).isEmpty();
         // A copy isn't cast: what the copied spell is is all a copy trigger can say.
         assertThatThrownBy(() -> Triggers.youCopySpell().nthThisTurn(1)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> Triggers.youCopySpell().castFrom(Zone.HAND))

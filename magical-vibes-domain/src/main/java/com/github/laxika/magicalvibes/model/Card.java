@@ -2072,11 +2072,20 @@ public class Card {
         List<EffectRegistration> registrations = new ArrayList<>();
         for (TriggeredAbility ability : getTriggeredAbilities()) {
             if (ability.hasWatchedTrigger(trigger, zone)) {
-                List<EffectRegistration> legacy = index.legacyByAbility().get(ability);
-                registrations.addAll(legacy != null ? legacy : ability.legacyEffects());
+                registrations.addAll(getLegacyTriggerEffectRegistrations(ability));
             }
         }
         return registrations;
+    }
+
+    /**
+     * The registrations of {@code ability}, one of this card's triggered abilities, each wrapped in its options as
+     * {@link #getLegacyTriggerEffects(Trigger)} says, with the identity those keep across calls: for a collector that
+     * reads a card's abilities one at a time, some itself and the others in this form.
+     */
+    public List<EffectRegistration> getLegacyTriggerEffectRegistrations(TriggeredAbility ability) {
+        List<EffectRegistration> legacy = slotIndex().legacyByAbility().get(ability);
+        return legacy != null ? legacy : ability.legacyEffects();
     }
 
     /** Whether {@code effect} is registered as happening at the same time as the effect before it. */

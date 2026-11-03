@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.SpellFilter;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -185,5 +186,32 @@ class TextChangeTransformerTest {
         assertThat(result).isEqualTo(new MayEffect(new SpellCastTriggerEffect(
                 new CardColorPredicate(CardColor.BLUE), List.of()), "Gain 1 life?"));
         assertThat(TextChangeTransformer.transform(trigger, List.of(MOUNTAIN_TO_ISLAND))).isSameAs(trigger);
+    }
+
+    @Test
+    @DisplayName("A cast trigger's spell filter is rewritten by the own replacements, then the global ones")
+    void colorReplacementRewritesACastTriggersSpellFilter() {
+        SpellFilter filter = SpellFilter.ANY.withSpell(new CardColorPredicate(CardColor.BLACK)).withNthThisTurn(2);
+        TextReplacement blueToRed = new TextReplacement("blue", "red", false, 0L);
+
+        assertThat(TextChangeTransformer.transformSpellFilter(filter, List.of(BLACK_TO_BLUE), List.of(blueToRed)))
+                .isEqualTo(SpellFilter.ANY.withSpell(new CardColorPredicate(CardColor.RED)).withNthThisTurn(2));
+        // A timestamped own change made after the global rewrite applies after it (CR 613.7).
+        TextReplacement laterRedToGreen = new TextReplacement("red", "green", false, 2L);
+        TextReplacement globalBlackToRed = new TextReplacement("black", "red", false, 1L);
+        assertThat(TextChangeTransformer.transformSpellFilter(filter, List.of(laterRedToGreen),
+                List.of(globalBlackToRed)))
+                .isEqualTo(SpellFilter.ANY.withSpell(new CardColorPredicate(CardColor.GREEN)).withNthThisTurn(2));
+    }
+
+    @Test
+    @DisplayName("A cast trigger's spell filter without the replaced word, or without a spell, is returned unchanged")
+    void untouchedSpellFilterKeepsIdentity() {
+        SpellFilter red = SpellFilter.ANY.withSpell(new CardColorPredicate(CardColor.RED));
+
+        assertThat(TextChangeTransformer.transformSpellFilter(red, List.of(BLACK_TO_BLUE, MOUNTAIN_TO_ISLAND),
+                List.of())).isSameAs(red);
+        assertThat(TextChangeTransformer.transformSpellFilter(SpellFilter.ANY, List.of(BLACK_TO_BLUE), List.of()))
+                .isSameAs(SpellFilter.ANY);
     }
 }

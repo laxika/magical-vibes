@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.trigger.SpellFilter;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -177,16 +178,44 @@ public final class TextChangeTransformer {
      */
     public static CardEffect transform(CardEffect effect, List<TextReplacement> own,
                                        List<TextReplacement> global) {
-        if (own.stream().noneMatch(replacement -> replacement.timestamp() > 0) || global.isEmpty()) {
-            return transform(transform(effect, own), global);
+        return transform(effect, inOrder(own, global));
+    }
+
+    /**
+     * Applies an object's own text replacements and any global color-word change, in the order
+     * {@link #transform(CardEffect, List, List)} applies them, to the spell a cast trigger's filter asks for ("whenever
+     * you cast a blue spell"), returning the same instance when no replacement changes it.
+     */
+    public static SpellFilter transformSpellFilter(SpellFilter filter, List<TextReplacement> own,
+                                                   List<TextReplacement> global) {
+        if (filter.spell() == null) {
+            return filter;
         }
-        // A timestamped change is newer than the global rewrite only if it was made later, so the two
-        // lists are applied together in timestamp order (CR 613.7); the sort is stable, so untimed
-        // own replacements stay ahead of the global ones.
+        CardPredicate spell = filter.spell();
+        for (TextReplacement replacement : inOrder(own, global)) {
+            Substitution substitution = resolve(replacement);
+            if (substitution != null) {
+                spell = apply(spell, substitution);
+            }
+        }
+        return spell == filter.spell() ? filter : filter.withSpell(spell);
+    }
+
+    /**
+     * The object's own replacements, then the global ones; a timestamped own change is newer than the global rewrite
+     * only if it was made later, so then the two lists are applied together in timestamp order (CR 613.7). The sort is
+     * stable, so untimed own replacements stay ahead of the global ones.
+     */
+    private static List<TextReplacement> inOrder(List<TextReplacement> own, List<TextReplacement> global) {
+        if (global.isEmpty()) {
+            return own;
+        }
         List<TextReplacement> inOrder = new ArrayList<>(own);
         inOrder.addAll(global);
-        inOrder.sort(Comparator.comparingLong(TextReplacement::timestamp));
-        return transform(effect, inOrder);
+        if (own.stream().anyMatch(replacement -> replacement.timestamp() > 0)) {
+            inOrder.sort(Comparator.comparingLong(TextReplacement::timestamp));
+        }
+        return inOrder;
     }
 
     /**
@@ -387,7 +416,7 @@ public final class TextChangeTransformer {
                 yield condition == conditional.condition() && wrapped == conditional.wrapped() ? conditional
                         : new ConditionalEffect(condition, wrapped);
             }
-            // A "you may" spell-cast ability: the legacy view gives its trigger's spell filter inside the may.
+            // An authored "you may" spell-cast ability (Pontiff of Blight's granted extort): its spell filter is inside.
             case MayEffect may -> {
                 CardEffect wrapped = apply(may.wrapped(), substitution);
                 yield wrapped == may.wrapped() ? may

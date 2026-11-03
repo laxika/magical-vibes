@@ -12,9 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.FirstDrawStepDrawOnlyTriggerE
 import com.github.laxika.magicalvibes.model.effect.FirstOpponentLifeLossEachTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstOrSecondCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.LandPlayFromExileTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OnceOnlyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnPerCreatureTriggerEffect;
@@ -23,8 +20,6 @@ import com.github.laxika.magicalvibes.model.effect.OpponentCausedDiscardTriggerE
 import com.github.laxika.magicalvibes.model.effect.PerDamageSourceTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayFromOutsideHandTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SchemeSetInMotionTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringBoastAbilityConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
@@ -59,7 +54,6 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectActionTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.PlayerActionTrigger;
 import com.github.laxika.magicalvibes.model.trigger.PlayerRelation;
-import com.github.laxika.magicalvibes.model.trigger.SpellFilter;
 import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
 import com.github.laxika.magicalvibes.model.trigger.StateTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TapTrigger;
@@ -220,9 +214,9 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * is a {@link TriggeringCardConditionalEffect} inside the limit, an activation trigger's source filter a
      * {@link TriggeringPermanentConditionalEffect} there and its ability kind the matching
      * {@code Triggering…AbilityConditionalEffect} outside everything, as the spell, land-play and activation cards
-     * wrote them. A cast trigger's {@link SpellFilter} makes the ability one {@link SpellCastTriggerEffect} of all its
-     * effects, as {@link #legacySpellCastEffects} says, and a copy trigger's one {@link SpellCopyTriggerEffect}, as
-     * {@link #legacySpellCopyEffects} says. A land-play trigger's zone makes the ability one
+     * wrote them. A filtered cast or copy trigger ({@link SpellTrigger#filter()})
+     * is its own watch key: the spell-cast and spell-copy collectors read such an ability itself, not this view, which
+     * gives it as any other. A land-play trigger's zone makes the ability one
      * {@link LandPlayFromExileTriggerEffect} ("a land from exile") or {@link PlayFromOutsideHandTriggerEffect} ("from
      * anywhere other than your hand") of all its effects, the records the land-play collectors judge. A combat
      * trigger's filter is a {@link TriggeringPermanentConditionalEffect} inside the limit, as the combat cards wrote
@@ -266,17 +260,6 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * returns its registrations as they are.
      */
     public List<EffectRegistration> legacyEffects() {
-        SpellTrigger spell = filteredTrigger(SpellTrigger.class);
-        if (spell != null) {
-            if (conditions.stream().anyMatch(condition -> condition.trigger() instanceof SpellTrigger other
-                    && other.event() != spell.event())) {
-                throw new IllegalStateException("The legacy view takes the spell conditions of one ability of one "
-                        + "event: " + conditions);
-            }
-            return spell.event() == SpellTrigger.SpellEvent.COPIED
-                    ? legacySpellCopyEffects(spell.filter())
-                    : legacySpellCastEffects(spell.filter());
-        }
         if (conditions.stream().anyMatch(condition -> condition.trigger() instanceof LibraryTrigger library
                 && !library.watchKey().equals(library))) {
             return legacyLibraryEffects();
@@ -1115,79 +1098,9 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             case LandPlayTrigger landPlay -> Arrays.asList(landPlay.filter(), landPlay.playedFrom(),
                     landPlay.notPlayedFrom());
             case AbilityTrigger activation -> Arrays.asList(activation.source(), activation.kind());
-            case SpellTrigger spell -> Arrays.asList(spell.filter());
             case ObjectActionTrigger object -> Arrays.asList(object.action(), object.filter(), object.door());
             default -> List.of();
         };
-    }
-
-    /**
-     * The ability in the form the spell-cast collectors judge a "whenever [a player] casts a [quality] spell"
-     * ability in (until steps 14 and 15 of effect-slot-refactor.md replace them): one {@link SpellCastTriggerEffect}
-     * of all the ability's effects, one stack object (CR 603.3), with the cast trigger's {@link SpellFilter} as its
-     * spell filter and conditions and the intervening "if" as its {@code intervening} condition (CR 603.4), which the
-     * collector checks as the ability triggers and wraps around the effects for resolution. "This ability triggers
-     * only once" wraps each effect in an {@link OnceOnlyTriggerEffect}; the other limits wrap the whole as
-     * {@link #legacyEffects()} says.
-     * <p>
-     * An ability whose only effect is a plain "you may pay {N}. If you do, …" ({@link MayPayManaEffect} with a mana
-     * cost and nothing else) or, functioning on the battlefield or in exile, a plain "you may …" ({@link MayEffect}
-     * with a prompt and nothing else) is given as the collectors read an optional ability: the cost is the
-     * {@code SpellCastTriggerEffect}'s mana cost and, on the battlefield or in exile, the effect (a written {@code SequenceEffect} stays one effect) is wrapped in a
-     * {@code MayEffect} of the prompt, which the collector asks as the ability resolves (CR 603.5) after choosing its
-     * targets (CR 603.3d). The graveyard, hand and command-zone readers take the cost from the
-     * {@code SpellCastTriggerEffect} and a "you may" as an effect inside it, as those cards wrote them.
-     */
-    private List<EffectRegistration> legacySpellCastEffects(SpellFilter filter) {
-        TriggerLimit limit = options.limit();
-        boolean onStackPath = conditions.stream().anyMatch(condition -> condition.trigger() instanceof SpellTrigger
-                && (condition.zones().functionsIn(Zone.BATTLEFIELD) || condition.zones().functionsIn(Zone.EXILE)));
-        List<CardEffect> resolved = legacyBaseEffects().stream().map(EffectRegistration::effect).toList();
-        String manaCost = null;
-        String optionalPrompt = null;
-        if (resolved.size() == 1 && limit != TriggerLimit.ONCE) {
-            CardEffect only = resolved.getFirst();
-            if (only instanceof MayPayManaEffect pay && isPlainManaPayment(pay)) {
-                manaCost = pay.manaCost();
-                resolved = List.of(pay.wrapped());
-                optionalPrompt = onStackPath ? pay.prompt() : null;
-            } else if (onStackPath && only instanceof MayEffect may && isPlainMay(may)) {
-                resolved = List.of(may.wrapped());
-                optionalPrompt = may.prompt();
-            }
-        }
-        if (limit == TriggerLimit.ONCE) {
-            resolved = resolved.stream().map(effect -> (CardEffect) new OnceOnlyTriggerEffect(effect)).toList();
-        }
-        CardEffect effect = new SpellCastTriggerEffect(filter.spell(), resolved, manaCost, null, filter.stackEntry(),
-                filter.turn() == SpellFilter.Turn.OPPONENTS, filter.turn() == SpellFilter.Turn.YOURS,
-                options.interveningIf(), filter.nthThisTurn(), filter.nthOrLaterThisTurn(), false,
-                filter.paidWithManaFromThis(), filter.expend(), filter.paidWithTreasureMana(),
-                filter.twoOrMoreCardTypes(), filter.turn() == SpellFilter.Turn.NOT_CASTERS, filter.duringCombat(),
-                filter.castFrom(), filter.notCastFrom(), filter.kicker() != SpellFilter.Kicker.ANY,
-                filter.kicker() == SpellFilter.Kicker.EACH_KICK, filter.everyPlayersSpells());
-        if (optionalPrompt != null) {
-            effect = new MayEffect(effect, optionalPrompt);
-        }
-        if (limit == TriggerLimit.ONCE_EACH_TURN) {
-            effect = OncePerTurnTriggerEffect.keyed(effect, limitKey());
-        } else if (limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN) {
-            effect = OncePerTurnTriggerEffect.markOnAcceptance(effect);
-        }
-        return List.of(new EffectRegistration(effect, effects.getFirst().triggerMode(), false));
-    }
-
-    /**
-     * The ability in the form the spell-copy collector judges a "whenever [a player] copies a [quality] spell" ability
-     * in: one {@link SpellCopyTriggerEffect} of all its effects, one stack object (CR 603.3), with the filter's spell
-     * and stack-object conditions. The filter alone says which copied spells count, so the record takes every spell
-     * type; its target is the target group the effects are bound to, which the collector reads.
-     */
-    private List<EffectRegistration> legacySpellCopyEffects(SpellFilter filter) {
-        requireNoOptions("copy");
-        List<CardEffect> resolved = legacyBaseEffects().stream().map(EffectRegistration::effect).toList();
-        return List.of(new EffectRegistration(new SpellCopyTriggerEffect(filter.spell(), resolved, null,
-                filter.stackEntry(), true, false), effects.getFirst().triggerMode(), false));
     }
 
     /**
@@ -1218,17 +1131,6 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         if (!options.equals(TriggerOptions.DEFAULT)) {
             throw new IllegalStateException("The legacy view has no " + what + " record with options: " + options);
         }
-    }
-
-    private static boolean isPlainManaPayment(MayPayManaEffect pay) {
-        return pay.manaCost() != null && pay.dynamicManaCost() == null && pay.wrapped() != null
-                && pay.payer() == MayPayPayer.CONTROLLER
-                && pay.elseEffect() == null && pay.lifeCost() == 0 && !pay.sourceIsTriggeringPermanent();
-    }
-
-    private static boolean isPlainMay(MayEffect may) {
-        return may.elseEffect() == null && may.choicePlayerId() == null
-                && may.choicePlayer() == MayChoicePlayer.CONTROLLER;
     }
 
     private static CardEffect legacyKindWrapper(AbilityTrigger.AbilityKind kind, CardEffect effect) {

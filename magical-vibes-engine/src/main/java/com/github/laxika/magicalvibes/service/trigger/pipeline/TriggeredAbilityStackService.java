@@ -309,7 +309,12 @@ public class TriggeredAbilityStackService {
         return candidate.ability().limitKey();
     }
 
-    private static boolean limitReached(GameData gameData, TriggerLimit limit, UUID sourceId, String key) {
+    /**
+     * Whether {@code limit} stops the ability keyed {@code key} of the source {@code sourceId} from triggering again:
+     * it triggered already this turn ("triggers only once each turn") or ever ("triggers only once"), or the source's
+     * "do this only once each turn" action was taken this turn (CR 603.2h).
+     */
+    public static boolean limitReached(GameData gameData, TriggerLimit limit, UUID sourceId, String key) {
         return switch (limit) {
             case NONE -> false;
             case ONCE_EACH_TURN -> gameData.keyedOncePerTurnTriggersFiredThisTurn
@@ -322,7 +327,11 @@ public class TriggeredAbilityStackService {
         };
     }
 
-    private static void markLimit(GameData gameData, TriggerLimit limit, UUID sourceId, String key) {
+    /**
+     * Marks the ability keyed {@code key} of the source {@code sourceId} as having triggered, for {@code limit}; "do
+     * this only once each turn" is marked as the action is taken instead.
+     */
+    public static void markLimit(GameData gameData, TriggerLimit limit, UUID sourceId, String key) {
         switch (limit) {
             case ONCE_EACH_TURN -> gameData.keyedOncePerTurnTriggersFiredThisTurn
                     .computeIfAbsent(sourceId, ignored -> ConcurrentHashMap.newKeySet()).add(key);

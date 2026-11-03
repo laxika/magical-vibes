@@ -12,11 +12,12 @@ import java.util.function.UnaryOperator;
  * A spell is cast (CR 601.2i), copied (CR 707.10) or countered (CR 701.6a). Build it through {@link Triggers}.
  * <p>
  * A cast trigger with a {@link SpellFilter} ("whenever you cast a creature spell", built with {@link #withFilter},
- * {@link #anySpell} and the other filter methods) is collected by the generic spell-cast collector, which judges the
- * filter and puts the ability's effects on the stack. A cast trigger without one is still collected by its effect's
- * class, as the abilities whose effect binds the spell or its caster are, until step 15 of effect-slot-refactor.md
- * makes them event references. A copy trigger with a filter ("whenever you copy an instant or sorcery spell") is
- * collected by the spell-copy collector; its filter can say only what the copied spell and its stack object must be.
+ * {@link #anySpell} and the other filter methods) is collected by the generic spell-cast collector, which reads the
+ * ability itself: the filter, the ability's options and its effects. A cast trigger without one is still collected by
+ * its effect's class, as the abilities whose effect binds the spell or its caster are, until step 15 of
+ * effect-slot-refactor.md makes them event references. A copy trigger with a filter ("whenever you copy an instant or
+ * sorcery spell") is collected by the spell-copy collector, which reads it the same way; its filter can say only what
+ * the copied spell and its stack object must be.
  *
  * @param event  what happens to the spell
  * @param player the player who casts or copies the spell, counters it, or controls the countered spell
@@ -69,13 +70,8 @@ public record SpellTrigger(SpellEvent event, PlayerRelation player, SpellFilter 
         return thisSpell() ? AbilityZones.STACK : AbilityZones.BATTLEFIELD;
     }
 
-    /**
-     * The spell-cast and spell-copy collectors read every such ability by the event and player; the filter is judged
-     * by the generic collector, from the {@code SpellCastTriggerEffect} or {@code SpellCopyTriggerEffect} the legacy
-     * view gives.
-     */
-    @Override
-    public Trigger watchKey() {
+    /** This trigger without its filter: the trigger a spell filter narrows. */
+    public SpellTrigger unfiltered() {
         return filter == null ? this : new SpellTrigger(event, player);
     }
 

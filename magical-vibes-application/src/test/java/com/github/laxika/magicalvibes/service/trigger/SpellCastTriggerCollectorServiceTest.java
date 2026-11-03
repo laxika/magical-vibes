@@ -21,7 +21,8 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
-import com.github.laxika.magicalvibes.model.trigger.Trigger;
+import com.github.laxika.magicalvibes.model.trigger.SpellFilter;
+import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
@@ -90,7 +91,6 @@ import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCa
 import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterWhenOpponentCastsSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSameNameCardsFromGraveyardsToBattlefieldOnCreatureSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.StormCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -202,9 +202,9 @@ class SpellCastTriggerCollectorServiceTest {
         return new TriggerMatchContext(gd, perm, controllerId, effect);
     }
 
-    /** The effect the spell-cast collectors read for the ability of {@code trigger} and {@code effects}. */
-    private static CardEffect legacy(Trigger trigger, CardEffect... effects) {
-        return new TriggeredAbility(trigger, effects).legacyEffects().getFirst().effect();
+    /** The ability of {@code trigger}, a filtered cast trigger, and {@code effects}, as the spell-cast collector judges it. */
+    private static CastAbility castAbility(SpellTrigger trigger, CardEffect... effects) {
+        return CastAbility.of(new TriggeredAbility(trigger, effects), trigger.filter(), true);
     }
 
     /** Every spell matches every spell filter the collector checks, as cast and in the turn's spell history. */
@@ -400,11 +400,10 @@ class SpellCastTriggerCollectorServiceTest {
         gd.recordSpellCast(player1Id, spell);
         gd.recordSpellCast(player1Id, spell);
         everySpellMatches();
-        var effect = legacy(Triggers.youCastSpell().nthThisTurn(2), new DealDamageToAnyTargetEffect(2));
+        var effect = castAbility(Triggers.youCastSpell().nthThisTurn(2), new DealDamageToAnyTargetEffect(2));
 
-        boolean result = registry.dispatch(match(perm, player1Id, effect),
-                SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect,
-                new TriggerContext.SpellCast(spell, player1Id, true));
+        boolean result = sut.collectCastAbility(match(perm, player1Id, effect.effects().getFirst()),
+                effect, new TriggerContext.SpellCast(spell, player1Id, true), true);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).isEmpty();
@@ -738,15 +737,16 @@ class SpellCastTriggerCollectorServiceTest {
             source.target(TargetFilters.creatureYouControl())
                     .addTrigger(Triggers.youCastSpell().anySpell(), new BoostTargetCreatureEffect(1, 1));
             Permanent perm = new Permanent(source);
-            CardEffect effect = source.getLegacyTriggerEffects(Triggers.youCastSpell(), Zone.BATTLEFIELD).getFirst();
+            TriggeredAbility ability = source.getTriggeredAbilities().get(1);
+            CastAbility effect = CastAbility.of(ability, SpellFilter.ANY, true);
             Card spellCard = createCard("Grizzly Bears", CardColor.GREEN);
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect), SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect.effects().getFirst()), effect, ctx,
+                    true);
 
             // The ability's own group takes one target, so it is not the card's "up to one" multi-target choice.
             assertThat(result).isTrue();
@@ -1832,22 +1832,28 @@ class SpellCastTriggerCollectorServiceTest {
     }
 
     @Nested
-    @DisplayName("ON_CONTROLLER_COPIES_SPELL — SpellCopyTriggerEffect")
-    class ControllerSpellCopyTrigger {
+    @DisplayName("Whenever [a player] copies a spell — collectCopyAbility")
+    class SpellCopyAbility {
+
+        private boolean collectCopy(Permanent perm, SpellFilter filter, StackEntry copiedSpell, UUID copyingPlayerId,
+                                    CardEffect... effects) {
+            return sut.collectCopyAbility(match(perm, player1Id, effects[0]), filter, List.of(effects),
+                    new TriggerContext.SpellCopy(copiedSpell, copyingPlayerId));
+        }
+
+        private StackEntry copyOf(Card spellCard, UUID controllerId) {
+            StackEntry copiedSpell = new StackEntry(spellCard, controllerId);
+            copiedSpell.setCopy(true);
+            return copiedSpell;
+        }
 
         @Test
         @DisplayName("puts triggered ability on stack for a matching copied spell")
         void putsTriggeredAbilityOnStack() {
             Permanent perm = createPermanent("Clever Lumimancer");
-            var effect = new SpellCopyTriggerEffect(null, List.of(new BoostSelfEffect(2, 2)));
-            Card spellCard = createInstant("Lightning Bolt");
-            StackEntry copiedSpell = new StackEntry(spellCard, player1Id);
-            copiedSpell.setCopy(true);
-            var ctx = new TriggerContext.SpellCopy(copiedSpell, player1Id);
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_COPIES_SPELL, effect, ctx);
+            boolean result = collectCopy(perm, SpellFilter.ANY, copyOf(createInstant("Lightning Bolt"), player1Id),
+                    player1Id, new BoostSelfEffect(2, 2));
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1861,70 +1867,50 @@ class SpellCastTriggerCollectorServiceTest {
         void filtersCopiedSpellsByEnchantedPlayer() {
             Permanent perm = createPermanent("Curse of Shaken Faith");
             perm.setAttachedTo(player2Id);
-            var effect = new SpellCopyTriggerEffect(null,
-                    List.of(new BoostSelfEffect(2, 2)),
-                    new StackEntryControlledByEnchantedPlayerPredicate(),
-                    true);
-            Card spellCard = createInstant("Lightning Bolt");
-            StackEntry copiedSpell = new StackEntry(spellCard, player1Id);
-            copiedSpell.setCopy(true);
-            var ctx = new TriggerContext.SpellCopy(copiedSpell, player1Id);
-
+            StackEntry copiedSpell = copyOf(createInstant("Lightning Bolt"), player1Id);
             when(predicateEvaluationService.matchesStackEntryPredicate(
                     eq(copiedSpell), any(), eq(player2Id))).thenReturn(false);
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_COPIES_SPELL, effect, ctx);
+            boolean result = collectCopy(perm,
+                    SpellFilter.ANY.withStackEntry(new StackEntryControlledByEnchantedPlayerPredicate()),
+                    copiedSpell, player1Id, new BoostSelfEffect(2, 2));
 
             assertThat(result).isFalse();
             assertThat(gd.stack).isEmpty();
         }
 
         @Test
-        @DisplayName("allows copied permanent spells when requested")
-        void allowsCopiedPermanentSpellsWhenRequested() {
+        @DisplayName("a copied permanent spell triggers it too")
+        void copiedPermanentSpellTriggersIt() {
             Permanent perm = createPermanent("Curse of Shaken Faith");
             perm.setAttachedTo(player1Id);
-            var effect = new SpellCopyTriggerEffect(null,
-                    List.of(new BoostSelfEffect(2, 2)),
-                    new StackEntryControlledByEnchantedPlayerPredicate(),
-                    true);
-            Card spellCard = createCard("Grizzly Bears");
-            StackEntry copiedSpell = new StackEntry(spellCard, player1Id);
-            copiedSpell.setCopy(true);
-            var ctx = new TriggerContext.SpellCopy(copiedSpell, player1Id);
-
+            StackEntry copiedSpell = copyOf(createCard("Grizzly Bears"), player1Id);
             when(predicateEvaluationService.matchesStackEntryPredicate(
                     eq(copiedSpell), any(), eq(player1Id))).thenReturn(true);
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_COPIES_SPELL, effect, ctx);
+            boolean result = collectCopy(perm,
+                    SpellFilter.ANY.withStackEntry(new StackEntryControlledByEnchantedPlayerPredicate()),
+                    copiedSpell, player1Id, new BoostSelfEffect(2, 2));
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
         }
 
         @Test
-        @DisplayName("queues target selection for a targeted copied spell trigger")
+        @DisplayName("queues target selection from the target group a targeted copy ability's effect is bound to")
         void queuesTargetSelectionForTargetedCopiedSpell() {
-            Permanent perm = createPermanent("Symmetry Sage");
-            var effect = new SpellCopyTriggerEffect(
-                    null,
-                    List.of(SetBasePowerToughnessEffect.powerOnly(2)),
-                    TargetFilters.creatureYouControl());
-            Card spellCard = createInstant("Lightning Bolt");
-            StackEntry copiedSpell = new StackEntry(spellCard, player1Id);
-            copiedSpell.setCopy(true);
-            var ctx = new TriggerContext.SpellCopy(copiedSpell, player1Id);
+            Card source = createCard("Symmetry Sage");
+            var setPower = SetBasePowerToughnessEffect.powerOnly(2);
+            source.target(TargetFilters.creatureYouControl()).addTrigger(Triggers.youCopySpell().anySpell(), setPower);
+            Permanent perm = new Permanent(source);
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_COPIES_SPELL, effect, ctx);
+            boolean result = collectCopy(perm, SpellFilter.ANY, copyOf(createInstant("Lightning Bolt"), player1Id),
+                    player1Id, setPower);
 
             assertThat(result).isTrue();
-            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)).isTrue();
+            assertThat(gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class))
+                    .satisfies(queued -> assertThat(queued.targetFilter())
+                            .isSameAs(source.getTargetGroups().getFirst().getFilter()));
             assertThat(gd.stack).isEmpty();
         }
 
@@ -1936,15 +1922,9 @@ class SpellCastTriggerCollectorServiceTest {
                     .destination(GraveyardChoiceDestination.HAND)
                     .targetGraveyard(true)
                     .build();
-            var effect = new SpellCopyTriggerEffect(null, List.of(returnCreature));
-            Card spellCard = createInstant("Lightning Bolt");
-            StackEntry copiedSpell = new StackEntry(spellCard, player1Id);
-            copiedSpell.setCopy(true);
-            var ctx = new TriggerContext.SpellCopy(copiedSpell, player1Id);
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_COPIES_SPELL, effect, ctx);
+            boolean result = collectCopy(perm, SpellFilter.ANY, copyOf(createInstant("Lightning Bolt"), player1Id),
+                    player1Id, returnCreature);
 
             assertThat(result).isTrue();
             assertThat(gd.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)).isTrue();
@@ -1955,16 +1935,9 @@ class SpellCastTriggerCollectorServiceTest {
         @DisplayName("puts triggered ability on stack for a matching copied spell controlled by an opponent")
         void putsTriggeredAbilityOnStackForOpponentCopy() {
             Permanent perm = createPermanent("Mage Hunter");
-            var effect = new SpellCopyTriggerEffect(null,
-                    List.of(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER)));
-            Card spellCard = createInstant("Lightning Bolt");
-            StackEntry copiedSpell = new StackEntry(spellCard, player2Id);
-            copiedSpell.setCopy(true);
-            var ctx = new TriggerContext.SpellCopy(copiedSpell, player2Id);
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_OPPONENT_COPIES_SPELL, effect, ctx);
+            boolean result = collectCopy(perm, SpellFilter.ANY, copyOf(createInstant("Lightning Bolt"), player2Id),
+                    player2Id, new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -2056,13 +2029,12 @@ class SpellCastTriggerCollectorServiceTest {
         void returnsFalseWhenCastFromHand() {
             Permanent perm = createPermanent("Snapcaster Mage");
             var innerEffect = new BoostSelfEffect(1, 1);
-            var effect = legacy(Triggers.youCastSpell().castFrom(Zone.GRAVEYARD), innerEffect);
+            var effect = castAbility(Triggers.youCastSpell().castFrom(Zone.GRAVEYARD), innerEffect);
             Card spellCard = createInstant("Lightning Bolt");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect.effects().getFirst()),
+                    effect, ctx, true);
 
             assertThat(result).isFalse();
         }
@@ -2072,14 +2044,13 @@ class SpellCastTriggerCollectorServiceTest {
         void putsOnStackWhenNoTargetingNeeded() {
             Permanent perm = createPermanent("Some Card");
             var innerEffect = new BoostSelfEffect(1, 1);
-            var effect = legacy(Triggers.youCastSpell().castFrom(Zone.GRAVEYARD), innerEffect);
+            var effect = castAbility(Triggers.youCastSpell().castFrom(Zone.GRAVEYARD), innerEffect);
             Card spellCard = createInstant("Lightning Bolt");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, false);
             everySpellMatches();
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect.effects().getFirst()),
+                    effect, ctx, true);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -2093,14 +2064,13 @@ class SpellCastTriggerCollectorServiceTest {
         void addsToPendingTargetTriggersWhenTargeting() {
             Permanent perm = createPermanent("Some Card");
             var innerEffect = new DealDamageToAnyTargetEffect(3);
-            var effect = legacy(Triggers.youCastSpell().castFrom(Zone.GRAVEYARD), innerEffect);
+            var effect = castAbility(Triggers.youCastSpell().castFrom(Zone.GRAVEYARD), innerEffect);
             Card spellCard = createInstant("Lightning Bolt");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, false);
             everySpellMatches();
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect.effects().getFirst()),
+                    effect, ctx, true);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).isEmpty();
@@ -2112,14 +2082,12 @@ class SpellCastTriggerCollectorServiceTest {
         void broadcastsLogWhenTargeting() {
             Permanent perm = createPermanent("Some Card");
             var innerEffect = new DealDamageToAnyTargetEffect(3);
-            var effect = legacy(Triggers.youCastSpell().castFrom(Zone.GRAVEYARD), innerEffect);
+            var effect = castAbility(Triggers.youCastSpell().castFrom(Zone.GRAVEYARD), innerEffect);
             Card spellCard = createInstant("Lightning Bolt");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, false);
             everySpellMatches();
 
-            registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+            sut.collectCastAbility(match(perm, player1Id, effect.effects().getFirst()), effect, ctx, true);
 
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
@@ -2646,7 +2614,7 @@ class SpellCastTriggerCollectorServiceTest {
         @DisplayName("tracks the first multicolored spell independently for each player")
         void tracksEachPlayerIndependently() {
             Permanent perm = createPermanent("Zenith Chronicler");
-            var effect = legacy(Triggers.playerCastsSpell().withFilter(new CardIsMulticoloredPredicate()).nthThisTurn(1),
+            var effect = castAbility(Triggers.playerCastsSpell().withFilter(new CardIsMulticoloredPredicate()).nthThisTurn(1),
                     new BoostSelfEffect(1, 1));
             Card player1Spell = createCard("Player 1 Spell");
             player1Spell.setColors(List.of(CardColor.RED, CardColor.BLUE));
@@ -2655,14 +2623,12 @@ class SpellCastTriggerCollectorServiceTest {
             everySpellMatches();
 
             gd.recordSpellCast(player1Id, player1Spell);
-            boolean player1Result = registry.dispatch(
-                    match(perm, player1Id, effect), SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect,
-                    new TriggerContext.SpellCast(player1Spell, player1Id, true));
+            boolean player1Result = sut.collectCastAbility(match(perm, player1Id, effect.effects().getFirst()),
+                    effect, new TriggerContext.SpellCast(player1Spell, player1Id, true), true);
 
             gd.recordSpellCast(player2Id, player2Spell);
-            boolean player2Result = registry.dispatch(
-                    match(perm, player1Id, effect), SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect,
-                    new TriggerContext.SpellCast(player2Spell, player2Id, true));
+            boolean player2Result = sut.collectCastAbility(match(perm, player1Id, effect.effects().getFirst()),
+                    effect, new TriggerContext.SpellCast(player2Spell, player2Id, true), true);
 
             assertThat(player1Result).isTrue();
             assertThat(player2Result).isTrue();
@@ -2673,7 +2639,7 @@ class SpellCastTriggerCollectorServiceTest {
         @DisplayName("does not trigger for a player's later multicolored spell")
         void ignoresLaterMulticoloredSpell() {
             Permanent perm = createPermanent("Zenith Chronicler");
-            var effect = legacy(Triggers.playerCastsSpell().withFilter(new CardIsMulticoloredPredicate()).nthThisTurn(1),
+            var effect = castAbility(Triggers.playerCastsSpell().withFilter(new CardIsMulticoloredPredicate()).nthThisTurn(1),
                     new BoostSelfEffect(1, 1));
             Card firstSpell = createCard("First Spell");
             firstSpell.setColors(List.of(CardColor.RED, CardColor.BLUE));
@@ -2682,13 +2648,12 @@ class SpellCastTriggerCollectorServiceTest {
             everySpellMatches();
 
             gd.recordSpellCast(player1Id, firstSpell);
-            registry.dispatch(match(perm, player1Id, effect), SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect,
-                    new TriggerContext.SpellCast(firstSpell, player1Id, true));
+            sut.collectCastAbility(match(perm, player1Id, effect.effects().getFirst()),
+                    effect, new TriggerContext.SpellCast(firstSpell, player1Id, true), true);
             gd.recordSpellCast(player1Id, secondSpell);
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect), SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect,
-                    new TriggerContext.SpellCast(secondSpell, player1Id, true));
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect.effects().getFirst()),
+                    effect, new TriggerContext.SpellCast(secondSpell, player1Id, true), true);
 
             assertThat(result).isFalse();
             assertThat(gd.stack).hasSize(1);
@@ -2703,7 +2668,7 @@ class SpellCastTriggerCollectorServiceTest {
         @DisplayName("tracks the first noncreature spell globally across all players")
         void tracksFirstNoncreatureSpellGlobally() {
             Permanent perm = createPermanent("Nullstone Gargoyle");
-            var effect = legacy(Triggers.playerCastsSpell()
+            var effect = castAbility(Triggers.playerCastsSpell()
                             .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)))
                             .nthThisTurn(1)
                             .countingEveryPlayersSpells(),
@@ -2719,19 +2684,16 @@ class SpellCastTriggerCollectorServiceTest {
                     .thenAnswer(call -> !call.<Card>getArgument(0).hasType(CardType.CREATURE));
 
             gd.recordSpellCast(player1Id, creatureSpell);
-            boolean creatureResult = registry.dispatch(
-                    match(perm, player1Id, effect), SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect,
-                    new TriggerContext.SpellCast(creatureSpell, player1Id, true));
+            boolean creatureResult = sut.collectCastAbility(match(perm, player1Id, effect.effects().getFirst()),
+                    effect, new TriggerContext.SpellCast(creatureSpell, player1Id, true), true);
 
             gd.recordSpellCast(player2Id, firstNoncreatureSpell);
-            boolean firstResult = registry.dispatch(
-                    match(perm, player1Id, effect), SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect,
-                    new TriggerContext.SpellCast(firstNoncreatureSpell, player2Id, true));
+            boolean firstResult = sut.collectCastAbility(match(perm, player1Id, effect.effects().getFirst()),
+                    effect, new TriggerContext.SpellCast(firstNoncreatureSpell, player2Id, true), true);
 
             gd.recordSpellCast(player1Id, laterNoncreatureSpell);
-            boolean laterResult = registry.dispatch(
-                    match(perm, player1Id, effect), SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect,
-                    new TriggerContext.SpellCast(laterNoncreatureSpell, player1Id, true));
+            boolean laterResult = sut.collectCastAbility(match(perm, player1Id, effect.effects().getFirst()),
+                    effect, new TriggerContext.SpellCast(laterNoncreatureSpell, player1Id, true), true);
 
             assertThat(creatureResult).isFalse();
             assertThat(firstResult).isTrue();

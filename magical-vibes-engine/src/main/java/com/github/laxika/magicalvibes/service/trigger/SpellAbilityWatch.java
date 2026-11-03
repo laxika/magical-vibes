@@ -20,7 +20,9 @@ import java.util.List;
  * The collectors read the abilities in the form the cards wrote them before step 14
  * ({@link Card#getLegacyTriggerEffects(com.github.laxika.magicalvibes.model.trigger.Trigger, Zone)}): an intervening
  * "if" and a limit wrapped around each effect, and a land-play or activation trigger's filters as the
- * {@code Triggering…ConditionalEffect} wrappers they judge.
+ * {@code Triggering…ConditionalEffect} wrappers they judge. A cast or copy ability with a spell filter is no part of
+ * that view: the spell-cast and spell-copy collectors read it itself (its filter, options and effects), found by the
+ * filter's {@link com.github.laxika.magicalvibes.model.trigger.SpellTrigger#unfiltered()} trigger.
  */
 public enum SpellAbilityWatch implements TriggerWatch {
     /** "Whenever a mana ability of this creature resolves" (granted only: Tyvar the Bellicose). */

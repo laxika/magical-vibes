@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.CardPowerToughnessModifier;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -2739,6 +2741,23 @@ public class GameQueryService {
         List<CardEffect> effects = new ArrayList<>(card.getLegacyTriggerEffects(trigger, Zone.GRAVEYARD));
         effects.addAll(gameData.perpetualLegacyTriggerEffects(card.getId(), trigger, Zone.GRAVEYARD));
         return List.copyOf(effects);
+    }
+
+    /**
+     * The triggered abilities of a card in a graveyard, its own and those perpetually granted to it, in that order,
+     * or none while cards in graveyards have lost all abilities: for a reader that reads abilities themselves.
+     */
+    public List<TriggeredAbility> getEffectiveGraveyardTriggeredAbilities(GameData gameData, Card card) {
+        if (graveyardCardsHaveLostAllAbilities(gameData)) {
+            return List.of();
+        }
+        List<TriggeredAbility> abilities = new ArrayList<>(card.getTriggeredAbilities());
+        for (Ability ability : gameData.perpetualAbilities(card.getId())) {
+            if (ability instanceof TriggeredAbility triggered) {
+                abilities.add(triggered);
+            }
+        }
+        return List.copyOf(abilities);
     }
 
     /** Like {@link #getEffectiveGraveyardEffects}, for the static abilities of a card in a graveyard. */

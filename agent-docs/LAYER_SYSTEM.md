@@ -361,10 +361,11 @@ setter simply overwrites the entry; (d) both handler loops in
 `GameQueryService.assembleStaticBonus` pass the transformed view to the legacy handlers (managed
 suppression still checks the original), so unmanaged outputs (7c boosts behind text-changed
 filters, self CDAs counting a text-changed land word) follow the rewritten text too;
-(e) `TriggerCollectionService.dispatchSlot` transforms each battlefield trigger with the
-permanent's own and global replacements before matching, so a cast trigger's spell filter (the
-`SpellCastTriggerEffect` the legacy view builds from `Triggers.youCastSpell().withFilter(...)`; `CardColorPredicate`/`CardSubtypePredicate`, recursing through card
-AllOf/AnyOf/Not) follows the rewritten words (Glamerdye on Riverfall Mimic); (f)
+(e) `TriggerCollectionService` transforms each battlefield trigger with the permanent's own and
+global replacements before matching, and `dispatchSpellWatch` a cast trigger's `SpellFilter`
+(`TextChangeTransformer.transformSpellFilter`, on `Triggers.youCastSpell().withFilter(...)`'s
+`CardColorPredicate`/`CardSubtypePredicate`, recursing through card AllOf/AnyOf/Not), so it
+follows the rewritten words (Glamerdye on Riverfall Mimic); (f)
 `TargetLegalityService`'s resolution-time target checks read a spell's target restriction
 through its own `GameData.spellTextReplacements` (then the global change), so a text change
 made to a spell on the stack can make its target illegal (Glamerdye on Soul Reap). Those

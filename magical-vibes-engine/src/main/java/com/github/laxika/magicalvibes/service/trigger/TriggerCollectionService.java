@@ -32,13 +32,16 @@ import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesObserver;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
-import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
-import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
+import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
+import com.github.laxika.magicalvibes.model.trigger.SpellFilter;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LegacySlots;
@@ -260,6 +263,7 @@ import com.github.laxika.magicalvibes.model.effect.IncrementTriggerEffect;
 import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggerCandidate;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetRedirectionSupport;
 import com.github.laxika.magicalvibes.model.effect.MayFightTargetCreatureOnAllyCreatureEntersEffect;
@@ -368,6 +372,9 @@ public class TriggerCollectionService {
     @Autowired
     @Lazy
     private DeathTriggerCollectorService deathTriggerCollectorService;
+    @Autowired
+    @Lazy
+    private SpellCastTriggerCollectorService spellCastTriggerCollectorService;
     @Autowired
     @Lazy
     private TurnFaceUpCopyService turnFaceUpCopyService;
@@ -883,8 +890,8 @@ public class TriggerCollectionService {
      * Intervening-if (CR 603.4) for a zone-resident spell-cast trigger gated on the mana spent to cast the
      * spell: the trigger only goes on the stack when the spell's mana spent meets the threshold.
      */
-    private static boolean spellManaSpentGatesMet(SpellCastTriggerEffect trigger, int spellManaSpent) {
-        return trigger.resolvedEffects().stream().noneMatch(effect ->
+    private static boolean spellManaSpentGatesMet(List<CardEffect> effects, int spellManaSpent) {
+        return effects.stream().noneMatch(effect ->
                 effect instanceof ConditionalEffect conditional
                         && conditional.condition() instanceof SpellManaSpentAtLeast spent
                         && spellManaSpent < spent.minMana());
@@ -1012,12 +1019,8 @@ public class TriggerCollectionService {
 
         if (gameData.planechase != null && gameData.planechase.controllerId != null) {
             for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-                for (CardEffect effect : SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL.effectsOf(object.getCard())) {
-                    registry.dispatch(new TriggerMatchContext(gameData, null,
-                                    gameData.planechase.controllerId, effect,
-                                    object.getCard(), object.copy()),
-                            SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
-                }
+                dispatchCardSpellAbilities(gameData, object.getCard(), gameData.planechase.controllerId,
+                        SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, ctx, object);
             }
         }
 
@@ -1031,11 +1034,8 @@ public class TriggerCollectionService {
 
         if (gameData.planechase != null && castingPlayerId.equals(gameData.planechase.controllerId)) {
             for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-                for (CardEffect effect : SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL.effectsOf(object.getCard())) {
-                    registry.dispatch(new TriggerMatchContext(gameData, null, castingPlayerId, effect,
-                                    object.getCard(), object.copy()),
-                            SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
-                }
+                dispatchCardSpellAbilities(gameData, object.getCard(), castingPlayerId,
+                        SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, ctx, object);
             }
         }
 
@@ -1343,78 +1343,83 @@ public class TriggerCollectionService {
         gameData.clearSpellCastTreasureMana(spellCard.getId());
         gameData.clearSpellCastCreatureManaSpent(spellCard.getId());
 
-        // GRAVEYARD_ON_CONTROLLER_CASTS_SPELL — graveyard-resident spell-cast triggers
-        // (e.g. Lingering Phantom: "Whenever you cast a historic spell, you may pay {B}. If you do, return ~ to hand.")
+        // "Whenever you cast a spell" abilities of cards in the caster's graveyard (Lingering Phantom: "Whenever you
+        // cast a historic spell, you may pay {B}. If you do, return this card from your graveyard to your hand.").
         List<Card> castingPlayerGraveyard = gameData.playerGraveyards.get(castingPlayerId);
         if (castingPlayerGraveyard != null) {
             for (Card card : new ArrayList<>(castingPlayerGraveyard)) {
-                List<CardEffect> graveyardEffects = gameQueryService.getEffectiveGraveyardLegacyTriggerEffects(
-                        gameData, card, SpellAbilityWatch.GRAVEYARD_ON_CONTROLLER_CASTS_SPELL.trigger());
-                if (graveyardEffects == null || graveyardEffects.isEmpty()) continue;
-
-                for (CardEffect effect : graveyardEffects) {
-                    if (effect instanceof SpellCastTriggerEffect trigger) {
-                        if (!predicateEvaluationService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)) continue;
-                        if (trigger.castSpellTargetCondition() != null) {
-                            StackEntry spellEntry = gameData.stack.stream()
-                                    .filter(entry -> entry.getTargetableId().equals(spellCard.getId()))
-                                    .findFirst()
-                                    .orElse(null);
-                            if (spellEntry == null || !targetLegalityService.matchesStackEntryPredicate(
-                                    gameData, spellEntry, trigger.castSpellTargetCondition(), castingPlayerId)) {
-                                continue;
-                            }
-                        }
-                        if (trigger.nthSpellNumber() > 0 && !isNthMatchingSpell(gameData, trigger, castingPlayerId)) {
+                for (TriggeredAbility ability : gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData, card)) {
+                    SpellFilter filter = watchedSpellFilter(ability,
+                            SpellAbilityWatch.GRAVEYARD_ON_CONTROLLER_CASTS_SPELL, false);
+                    if (filter == null) continue;
+                    requireOnlyInterveningIf(ability, card);
+                    CastAbility trigger = CastAbility.of(ability, filter, false);
+                    if (!predicateEvaluationService.matchesCardPredicate(spellCard, filter.spell(), null)) continue;
+                    if (filter.stackEntry() != null) {
+                        StackEntry spellEntry = gameData.stack.stream()
+                                .filter(entry -> entry.getTargetableId().equals(spellCard.getId()))
+                                .findFirst()
+                                .orElse(null);
+                        if (spellEntry == null || !targetLegalityService.matchesStackEntryPredicate(
+                                gameData, spellEntry, filter.stackEntry(), castingPlayerId)) {
                             continue;
                         }
-                        if (!spellManaSpentGatesMet(trigger, spellManaSpent)) {
-                            continue;
-                        }
-
-                        // Bind "source card in graveyard" to this graveyard incarnation (CR 400.7) so the
-                        // ability does nothing if the card has left and returned to the graveyard.
-                        List<CardEffect> boundEffects = trigger.resolvedEffects().stream()
-                                .map(e -> bindSourceCardInGraveyardVersion(gameData, e, card.getId()))
-                                .toList();
-                        if (trigger.manaCost() != null) {
-                            // "you may pay {X}" pattern — queue MayPayManaEffect on the stack
-                            CardEffect resolvedEffect = boundEffects.getFirst();
-                            MayPayManaEffect mayPay = new MayPayManaEffect(
-                                    trigger.manaCost(),
-                                    resolvedEffect,
-                                    "Pay " + trigger.manaCost() + " to return " + card.getName()
-                                            + " from your graveyard to your hand?"
-                            );
-                            StackEntry mayPayEntry = new StackEntry(
-                                    StackEntryType.TRIGGERED_ABILITY,
-                                    card,
-                                    castingPlayerId,
-                                    card.getName() + "'s ability",
-                                    new ArrayList<>(List.of(mayPay)),
-                                    (UUID) null,
-                                    (UUID) null);
-                            mayPayEntry.setTriggeringCardId(card.getId());
-                            mayPayEntry.setTriggeringCardGraveyardEntryVersion(
-                                    gameData.graveyardEntryVersion(card.getId()));
-                            gameData.stack.add(mayPayEntry);
-                        } else {
-                            StackEntry entry = new StackEntry(
-                                    StackEntryType.TRIGGERED_ABILITY,
-                                    card,
-                                    castingPlayerId,
-                                    card.getName() + "'s ability",
-                                    new ArrayList<>(boundEffects)
-                            );
-                            entry.setTriggeringCardId(spellCard.getId());
-                            entry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
-                            entry.setXValue(spellManaSpent);
-                            gameData.stack.add(entry);
-                        }
-
-                        log.info("Game {} - {} graveyard spell-cast trigger queued",
-                                gameData.id, card.getName());
                     }
+                    if (filter.nthThisTurn() > 0 && !isNthMatchingSpell(gameData, filter, castingPlayerId)) {
+                        continue;
+                    }
+                    if (!spellManaSpentGatesMet(trigger.effects(), spellManaSpent)) {
+                        continue;
+                    }
+                    if (trigger.interveningIf() != null && !conditionEvaluationService.isMet(gameData,
+                            trigger.interveningIf(), ConditionContext.forCard(card, castingPlayerId))) {
+                        continue;
+                    }
+
+                    // Bind "source card in graveyard" to this graveyard incarnation (CR 400.7) so the
+                    // ability does nothing if the card has left and returned to the graveyard.
+                    List<CardEffect> boundEffects = trigger.effects().stream()
+                            .map(e -> bindSourceCardInGraveyardVersion(gameData, e, card.getId()))
+                            .map(e -> trigger.interveningIf() == null ? e
+                                    : (CardEffect) new ConditionalEffect(trigger.interveningIf(), e, true))
+                            .toList();
+                    if (trigger.manaCost() != null) {
+                        // "you may pay {X}" pattern — queue MayPayManaEffect on the stack
+                        CardEffect resolvedEffect = boundEffects.getFirst();
+                        MayPayManaEffect mayPay = new MayPayManaEffect(
+                                trigger.manaCost(),
+                                resolvedEffect,
+                                "Pay " + trigger.manaCost() + " to return " + card.getName()
+                                        + " from your graveyard to your hand?"
+                        );
+                        StackEntry mayPayEntry = new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                card,
+                                castingPlayerId,
+                                card.getName() + "'s ability",
+                                new ArrayList<>(List.of(mayPay)),
+                                (UUID) null,
+                                (UUID) null);
+                        mayPayEntry.setTriggeringCardId(card.getId());
+                        mayPayEntry.setTriggeringCardGraveyardEntryVersion(
+                                gameData.graveyardEntryVersion(card.getId()));
+                        gameData.stack.add(mayPayEntry);
+                    } else {
+                        StackEntry entry = new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                card,
+                                castingPlayerId,
+                                card.getName() + "'s ability",
+                                new ArrayList<>(boundEffects)
+                        );
+                        entry.setTriggeringCardId(spellCard.getId());
+                        entry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
+                        entry.setXValue(spellManaSpent);
+                        gameData.stack.add(entry);
+                    }
+
+                    log.info("Game {} - {} graveyard spell-cast trigger queued",
+                            gameData.id, card.getName());
                 }
             }
         }
@@ -1425,10 +1430,14 @@ public class TriggerCollectionService {
         if (castingPlayerHand != null) {
             for (Card card : new ArrayList<>(castingPlayerHand)) {
                 if (card.getId().equals(spellCard.getId())) continue;
-                for (CardEffect effect : SpellAbilityWatch.HAND_ON_CONTROLLER_CASTS_SPELL.effectsOf(card)) {
-                    if (!(effect instanceof SpellCastTriggerEffect trigger)
-                            || !predicateEvaluationService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)
-                            || !spellManaSpentGatesMet(trigger, spellManaSpent)) {
+                for (TriggeredAbility ability : card.getTriggeredAbilities()) {
+                    SpellFilter filter = watchedSpellFilter(ability, SpellAbilityWatch.HAND_ON_CONTROLLER_CASTS_SPELL,
+                            false);
+                    if (filter == null) continue;
+                    requireNoOptions(ability, card);
+                    List<CardEffect> effects = ability.effects().stream().map(EffectRegistration::effect).toList();
+                    if (!predicateEvaluationService.matchesCardPredicate(spellCard, filter.spell(), null)
+                            || !spellManaSpentGatesMet(effects, spellManaSpent)) {
                         continue;
                     }
                     StackEntry entry = new StackEntry(
@@ -1436,7 +1445,7 @@ public class TriggerCollectionService {
                             card,
                             castingPlayerId,
                             card.getName() + "'s ability",
-                            new ArrayList<>(trigger.resolvedEffects())
+                            new ArrayList<>(effects)
                     );
                     entry.setTriggeringCardId(spellCard.getId());
                     entry.setXValue(spellManaSpent);
@@ -1451,11 +1460,8 @@ public class TriggerCollectionService {
             if (exiledEntry.faceDown() || !castingPlayerId.equals(exiledEntry.ownerId())) {
                 continue;
             }
-            Card card = exiledEntry.card();
-            for (CardEffect effect : SpellAbilityWatch.EXILE_ON_CONTROLLER_CASTS_SPELL.effectsOf(card)) {
-                registry.dispatch(new TriggerMatchContext(gameData, null, castingPlayerId, effect, card),
-                        SpellAbilityWatch.EXILE_ON_CONTROLLER_CASTS_SPELL, effect, ctx);
-            }
+            dispatchCardSpellAbilities(gameData, exiledEntry.card(), castingPlayerId,
+                    SpellAbilityWatch.EXILE_ON_CONTROLLER_CASTS_SPELL, ctx, null);
         }
 
         // Abaddon the Despoiler: during your turn, hand-cast spells with mana value at most the
@@ -1539,24 +1545,23 @@ public class TriggerCollectionService {
         List<Card> castingPlayerCommandZone = gameData.playerCommandZones.get(castingPlayerId);
         if (castingPlayerCommandZone != null) {
             for (Card card : new ArrayList<>(castingPlayerCommandZone)) {
-                List<CardEffect> commandEffects = SpellAbilityWatch.COMMAND_ZONE_ON_CONTROLLER_CASTS_SPELL.effectsOf(card);
-                if (commandEffects == null || commandEffects.isEmpty()) continue;
-
-                for (CardEffect effect : commandEffects) {
-                    if (effect instanceof SpellCastTriggerEffect trigger) {
-                        if (!predicateEvaluationService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)) {
-                            continue;
-                        }
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                card,
-                                castingPlayerId,
-                                card.getName() + "'s ability",
-                                new ArrayList<>(trigger.resolvedEffects())
-                        ));
-                        log.info("Game {} - {} command-zone spell-cast trigger queued",
-                                gameData.id, card.getName());
+                for (TriggeredAbility ability : card.getTriggeredAbilities()) {
+                    SpellFilter filter = watchedSpellFilter(ability,
+                            SpellAbilityWatch.COMMAND_ZONE_ON_CONTROLLER_CASTS_SPELL, false);
+                    if (filter == null) continue;
+                    requireNoOptions(ability, card);
+                    if (!predicateEvaluationService.matchesCardPredicate(spellCard, filter.spell(), null)) {
+                        continue;
                     }
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            castingPlayerId,
+                            card.getName() + "'s ability",
+                            new ArrayList<>(ability.effects().stream().map(EffectRegistration::effect).toList())
+                    ));
+                    log.info("Game {} - {} command-zone spell-cast trigger queued",
+                            gameData.id, card.getName());
                 }
             }
         }
@@ -2509,11 +2514,32 @@ public class TriggerCollectionService {
         }
     }
 
-    private boolean isNthMatchingSpell(GameData gameData, SpellCastTriggerEffect trigger, UUID playerId) {
+    private boolean isNthMatchingSpell(GameData gameData, SpellFilter filter, UUID playerId) {
         long matchingSpells = gameData.getSpellsCastThisTurn(playerId).stream()
-                .filter(spell -> predicateEvaluationService.matchesCardPredicate(spell, trigger.spellFilter(), null))
+                .filter(spell -> predicateEvaluationService.matchesCardPredicate(spell, filter.spell(), null))
                 .count();
-        return matchingSpells == trigger.nthSpellNumber();
+        return matchingSpells == filter.nthThisTurn();
+    }
+
+    /**
+     * The graveyard, hand and command-zone cast readers judge no limit, and the hand and command-zone readers no
+     * intervening "if" either; a card with one there fails loudly instead of triggering wrongly.
+     */
+    private static void requireNoOptions(TriggeredAbility ability, Card card) {
+        if (!ability.options().equals(TriggerOptions.DEFAULT)) {
+            throw new IllegalStateException(card.getName() + "'s cast ability has options its zone's reader doesn't "
+                    + "judge: " + ability.options());
+        }
+    }
+
+    /** As {@link #requireNoOptions}, for the graveyard reader, which judges an intervening "if" (CR 603.4). */
+    private static void requireOnlyInterveningIf(TriggeredAbility ability, Card card) {
+        TriggerOptions options = ability.options();
+        if (options.limit() != TriggerLimit.NONE || options.multiplicity() != TriggerMultiplicity.EACH
+                || options.eventCondition() != null) {
+            throw new IllegalStateException(card.getName() + "'s cast ability has options the graveyard reader "
+                    + "doesn't judge: " + options);
+        }
     }
 
     private boolean isUnconditionalNonTargetingEmblemTrigger(SpellCastTriggerEffect trigger) {
@@ -15795,6 +15821,15 @@ public class TriggerCollectionService {
 
     private boolean dispatch(TriggerMatchContext match, Object slot, CardEffect effect,
                              TriggerContext context, java.util.function.BooleanSupplier handler) {
+        return dispatch(match, slot, effect, context, handler, false);
+    }
+
+    /**
+     * {@link #dispatch(TriggerMatchContext, Object, CardEffect, TriggerContext, java.util.function.BooleanSupplier)},
+     * where {@code singleCopy} says that nothing makes the ability trigger additional times (a granted cascade).
+     */
+    private boolean dispatch(TriggerMatchContext match, Object slot, CardEffect effect,
+                             TriggerContext context, java.util.function.BooleanSupplier handler, boolean singleCopy) {
         EffectSlot effectSlot = slot instanceof EffectSlot named ? named : null;
         if (context instanceof TriggerContext.PermanentEnters
                 && gameQueryService.areOpponentPermanentETBTriggersSuppressed(
@@ -15804,7 +15839,7 @@ public class TriggerCollectionService {
         List<CardEffect> grantedSpellEffects = effect instanceof SpellCastTriggerEffect spellCastTrigger
                 ? spellCastTrigger.resolvedEffects()
                 : List.of();
-        boolean grantedSpellCascade = !grantedSpellEffects.isEmpty()
+        boolean grantedSpellCascade = singleCopy || !grantedSpellEffects.isEmpty()
                 && grantedSpellEffects.stream().allMatch(CascadeEffect.class::isInstance);
         // "This ability triggers only once each turn" caps the ability at one trigger a turn, so an
         // effect that makes it trigger additional times (Clara Oswald) cannot add a second copy.
@@ -16073,12 +16108,11 @@ public class TriggerCollectionService {
             Permanent departed = gameData.departedPermanentSnapshots.values().stream()
                     .filter(snapshot -> snapshot.getId().equals(sourceId)).findFirst().orElse(null);
             if (departed == null) continue;
-            for (EffectRegistration registration : SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL.registrationsOf(departed.getCard())) {
-                CardEffect rider = registration.effect() instanceof MayEffect may ? may.wrapped() : registration.effect();
-                if (rider instanceof SpellCastTriggerEffect trigger
-                        && trigger.requiresManaProducedBySource()) {
-                    dispatchSlotEffect(gameData, departed, castingPlayerId,
-                            SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, ctx, registration.effect());
+            for (TriggeredAbility ability : departed.getCard().getTriggeredAbilities()) {
+                SpellFilter filter = watchedSpellFilter(ability, SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, false);
+                if (filter != null && filter.paidWithManaFromThis()) {
+                    collectSpellAbility(gameData, departed, departed.getCard(), castingPlayerId,
+                            SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, ctx, ability, filter, null, true);
                 }
             }
         }
@@ -16090,12 +16124,175 @@ public class TriggerCollectionService {
      */
     private boolean dispatchWatch(GameData gameData, Permanent perm, UUID controllerId, TriggerWatch watch,
                                   TriggerContext ctx) {
+        if (watch instanceof SpellAbilityWatch spellWatch && readsFilteredSpellAbilities(spellWatch)) {
+            return dispatchSpellWatch(gameData, perm, controllerId, spellWatch, ctx);
+        }
         return dispatchRegistrations(gameData, perm, controllerId, watch, ctx, null,
                 watch.registrationsOf(perm.getCard()),
                 staticBonus -> staticBonus == null
                         ? grantedTriggeredAbilitySupport.grantedTriggerEffects(gameData, perm, watch.trigger())
                         : grantedTriggeredAbilitySupport.grantedTriggerEffects(gameData, perm, staticBonus,
                                 watch.trigger()));
+    }
+
+    /**
+     * Whether {@code watch} is a cast or copy watch on the battlefield, whose filtered abilities
+     * ({@link SpellTrigger#filter()}) the spell-cast and spell-copy collectors read themselves.
+     */
+    private static boolean readsFilteredSpellAbilities(SpellAbilityWatch watch) {
+        return watch.zone() == Zone.BATTLEFIELD && watch.trigger() instanceof SpellTrigger spell
+                && (spell.event() == SpellTrigger.SpellEvent.CAST || spell.event() == SpellTrigger.SpellEvent.COPIED);
+    }
+
+    /**
+     * The filter of {@code ability}'s cast or copy trigger condition that narrows {@code watch}'s trigger, functioning
+     * in {@code watch}'s zone (or in any zone when {@code anyZone}, as a granted ability is read), or {@code null} when
+     * the ability has none: then {@code watch}'s collectors read it by its effects, if it has {@code watch}'s trigger.
+     */
+    private static SpellFilter watchedSpellFilter(TriggeredAbility ability, SpellAbilityWatch watch, boolean anyZone) {
+        for (TriggerCondition condition : ability.conditions()) {
+            if (condition.trigger() instanceof SpellTrigger spell && spell.filter() != null
+                    && spell.unfiltered().equals(watch.trigger())
+                    && (anyZone || condition.zones().functionsIn(watch.zone()))) {
+                return spell.filter();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Dispatches the abilities a cast or copy watch on the battlefield reads on {@code perm}, its own and those other
+     * permanents grant it, in order: an ability whose trigger has a spell filter goes to the spell-cast or spell-copy
+     * collector, which reads its filter, options and effects; any other with the watch's trigger to the watch's
+     * handlers, by its effects. The printed abilities' spell filters are read through the permanent's text changes
+     * (CR 612).
+     */
+    private boolean dispatchSpellWatch(GameData gameData, Permanent perm, UUID controllerId, SpellAbilityWatch watch,
+                                       TriggerContext ctx) {
+        if (perm.isLosesAllAbilitiesUntilEndOfTurn()) return false;
+        GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, perm);
+        if (staticBonus.losesAllAbilities() || staticBonus.losesAllNonManaAbilities()) return false;
+        boolean triggered = false;
+        // Reused for the granted-ability lookup below unless a printed ability was processed in between and may have
+        // changed the game state.
+        boolean staticBonusCurrent = true;
+        Card card = perm.getCard();
+        List<TriggeredAbility> printed = card.getTriggeredAbilities().stream()
+                .filter(ability -> watchedSpellFilter(ability, watch, false) != null
+                        || ability.hasWatchedTrigger(watch.trigger(), watch.zone()))
+                .toList();
+        if (!printed.isEmpty() && !gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
+            staticBonusCurrent = false;
+            List<TextReplacement> globalWordChange = TextChangeTransformer.globalColorWordReplacements(gameData);
+            for (TriggeredAbility ability : printed) {
+                SpellFilter filter = watchedSpellFilter(ability, watch, false);
+                if (filter != null) {
+                    filter = TextChangeTransformer.transformSpellFilter(filter, perm.getTextReplacements(),
+                            globalWordChange);
+                    triggered |= collectSpellAbility(gameData, perm, card, controllerId, watch, ctx, ability, filter,
+                            null, true);
+                    continue;
+                }
+                for (EffectRegistration registration : card.getLegacyTriggerEffectRegistrations(ability)) {
+                    // Layer 3 (CR 612.1): the trigger condition is read from the permanent's text-changed words.
+                    CardEffect effect = TextChangeTransformer.transform(
+                            registration.effect(), perm.getTextReplacements(), globalWordChange);
+                    triggered |= dispatchSlotEffect(gameData, perm, controllerId, watch, ctx, effect);
+                }
+            }
+        }
+        // Triggered abilities granted continuously by another permanent (e.g. Pontiff of Blight giving other
+        // creatures you control extort) trigger off the permanent that has them.
+        for (TriggeredAbility ability : grantedTriggeredAbilitySupport.grantedTriggeredAbilities(gameData, perm,
+                staticBonusCurrent ? staticBonus : null,
+                candidate -> watchedSpellFilter(candidate, watch, true) != null
+                        || candidate.hasWatchedTrigger(watch.trigger()))) {
+            SpellFilter filter = watchedSpellFilter(ability, watch, true);
+            if (filter != null) {
+                triggered |= collectSpellAbility(gameData, perm, card, controllerId, watch, ctx, ability, filter,
+                        null, true);
+                continue;
+            }
+            for (EffectRegistration registration : ability.legacyEffects()) {
+                triggered |= dispatchSlotEffect(gameData, perm, controllerId, watch, ctx, registration.effect());
+            }
+        }
+        return triggered;
+    }
+
+    /**
+     * Dispatches the abilities of {@code card}, which has no permanent (a card in exile, a face-up plane or phenomenon,
+     * {@code planarObject}), that {@code watch} reads in its zone, in order: a filtered cast ability goes to the
+     * spell-cast collector, any other with the watch's trigger to the watch's handlers, by its effects. Each is
+     * collected once (no effect makes these trigger additional times).
+     */
+    private void dispatchCardSpellAbilities(GameData gameData, Card card, UUID controllerId, SpellAbilityWatch watch,
+                                            TriggerContext ctx, PlanarObject planarObject) {
+        for (TriggeredAbility ability : card.getTriggeredAbilities()) {
+            SpellFilter filter = watchedSpellFilter(ability, watch, false);
+            if (filter != null) {
+                collectSpellAbility(gameData, null, card, controllerId, watch, ctx, ability, filter,
+                        planarObject == null ? null : planarObject.copy(), false);
+                continue;
+            }
+            if (!ability.hasWatchedTrigger(watch.trigger(), watch.zone())) {
+                continue;
+            }
+            for (EffectRegistration registration : card.getLegacyTriggerEffectRegistrations(ability)) {
+                CardEffect effect = registration.effect();
+                registry.dispatch(new TriggerMatchContext(gameData, null, controllerId, effect, card,
+                        planarObject == null ? null : planarObject.copy()), watch, effect, ctx);
+            }
+        }
+    }
+
+    /**
+     * Collects {@code ability}, whose cast or copy trigger has {@code filter}, for the spell-cast or spell-copy event
+     * {@code ctx}: the ability's limit (CR 603.2h) is judged and marked on {@code perm}, its source on the battlefield,
+     * and the collector judges the filter and the intervening "if" (CR 603.4) and puts the ability on the stack as one
+     * object (CR 603.3). An ability with a limit triggers only from a permanent. {@code throughDispatch} says whether it
+     * is collected as the battlefield collectors collect, with the effects that make abilities trigger additional
+     * times (Clara Oswald); the exile and planar readers collect it once. {@code planarObject} is the face-up plane or
+     * phenomenon whose ability it is, or {@code null}.
+     *
+     * @return whether the ability triggered
+     */
+    private boolean collectSpellAbility(GameData gameData, Permanent perm, Card sourceCard, UUID controllerId,
+                                        SpellAbilityWatch watch, TriggerContext ctx, TriggeredAbility ability,
+                                        SpellFilter filter, PlanarObject planarObject, boolean throughDispatch) {
+        TriggerLimit limit = ability.options().limit();
+        UUID sourceId = perm == null ? null : perm.getId();
+        String limitKey = ability.limitKey();
+        if (limit != TriggerLimit.NONE
+                && (sourceId == null || TriggeredAbilityStackService.limitReached(gameData, limit, sourceId, limitKey))) {
+            return false;
+        }
+        CardEffect first = ability.effects().getFirst().effect();
+        TriggerMatchContext match = new TriggerMatchContext(gameData, perm, controllerId, first, sourceCard,
+                planarObject, limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN,
+                limit == TriggerLimit.ONCE_EACH_TURN || limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN);
+        java.util.function.BooleanSupplier collector;
+        boolean singleCopy;
+        if (ctx instanceof TriggerContext.SpellCast spellCast) {
+            CastAbility cast = CastAbility.of(ability, filter, true);
+            // A granted cascade is one ability nothing makes trigger additional times.
+            singleCopy = !cast.effects().isEmpty() && cast.effects().stream().allMatch(CascadeEffect.class::isInstance);
+            boolean perManaFromSource = watch == SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL;
+            collector = () -> spellCastTriggerCollectorService.collectCastAbility(match, cast, spellCast,
+                    perManaFromSource);
+        } else {
+            List<CardEffect> effects = ability.effects().stream().map(EffectRegistration::effect).toList();
+            singleCopy = false;
+            collector = () -> spellCastTriggerCollectorService.collectCopyAbility(match, filter, effects,
+                    (TriggerContext.SpellCopy) ctx);
+        }
+        boolean collected = throughDispatch
+                ? dispatch(match, watch, first, ctx, collector, singleCopy)
+                : collector.getAsBoolean();
+        if (collected && sourceId != null) {
+            TriggeredAbilityStackService.markLimit(gameData, limit, sourceId, limitKey);
+        }
+        return collected;
     }
 
     /**

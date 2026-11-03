@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; runs 16b onward left: the legacy view's retirement, with the may-unwrapping, `TriggerMode`, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; runs 16c onward left: the rest of the legacy view's retirement, family by family, with the may-unwrapping, `TriggerMode`, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -603,7 +603,8 @@ no other family still uses. The order:
 | 6c | Family 2: the other condition-as-effect classes (`NthSpellCastTriggerEffect`, `SpellCopyTriggerEffect`, `KickedSpellCastTriggerEffect`, the `First…SpellCastTriggerEffect`s, `SpellCastFromHandTriggerEffect`, `PlayFromOutsideHandTriggerEffect`, …) |
 | 7 to 15 | Step 13's families 3 to 11, in its order |
 | 16a | What no family owns and needs no collector rewritten: the `onlyIfSacrificed` flags, the `atTriggerTime` and die-result conditions as the trigger's event condition, the may questions asked before the stack (CR 603.5), the Eerie merges |
-| 16b onward | The legacy view's retirement, family by family: each family's collectors read the ability's options, filters and grouping (no `TriggerMode`), then the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
+| 16b | The legacy view's retirement begins: the spell-cast and spell-copy collectors read the filtered abilities themselves |
+| 16c onward | The rest of the legacy view's retirement, family by family: each family's collectors read the ability's options, filters and grouping (no `TriggerMode`), then the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
 
 Mark the step `done` only after the last run of 16.
 
@@ -4545,7 +4546,7 @@ run 11 the library, draw and discard abilities (family 7), run 12 the tap and un
 life abilities (family 9), run 14 the Saga abilities (family 10) and run 15 everything else (family 11: actions,
 control change, attaching, crew, saddle and station, day and night, Rooms, Planechase, state triggers) the same way.
 Run 16, what no family owns, is the last; it was split, with the user, into 16a (the leftovers that need no collector
-rewritten) and 16b onward (the legacy view's retirement).
+rewritten) and 16b onward (the legacy view's retirement, family by family: 16b the spell-cast and spell-copy collectors).
 
 #### Run 1: the source's own zone changes
 
@@ -7102,6 +7103,112 @@ against the `TriggerCollectorRegistry`, `DeathTriggerCollectorService` and `Lega
   `LandTapTriggerCollectorServiceTest` 2, `CounterSpellEffectHandlerTest` 1 and the known one each in
   `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and `CardEffectTargetingConsistencyTest`).
 - AI: the whole module (1,620 tests), with the same 10 failures as before (two each in the four AI decision engine tests and `TargetPolarityGuardTest`).
+- The full suite was not run here.
+
+#### Run 16b: the spell-cast and spell-copy collectors read the ability
+
+The first family of the legacy view's retirement (16b onward), as 16a's findings planned: the "whenever [a player]
+casts / copies a [quality] spell" abilities with a `SpellFilter` (step 13's family 2, the cast and copy part; 1,205
+abilities, 1,170 cast and 35 copy, in 1,120 card classes, by a temporary reflection scan of every registered
+card). Their collectors read the ability itself (its filter, options and effects) and the legacy view no longer
+builds a record for them. The land-play and activation abilities of family 2 still read the legacy view (16c onward).
+
+**What the scan found.** Every filtered spell ability's effects are `TriggerMode.NORMAL`, its multiplicity `EACH` and
+none has an event condition; the options are intervening "if"s (46) and, all on the battlefield, 13 "triggers only
+once each turn", 3 "do this only once each turn" and 1 "triggers only once" (Sapphire Collector). Off the battlefield:
+17 in a graveyard, 3 in exile (Hex, Kellan's Companion's two with intervening "if"s), 2 in the command zone, 1 in a
+hand (Summitfest Closing Ceremony, also in the graveyard).
+
+**The engine.**
+
+- A filtered `SpellTrigger` is its own `watchKey()` (new `SpellTrigger.unfiltered()` names the trigger it narrows),
+  so `Card.getLegacyTriggerEffects(youCastSpell(), zone)`, the granted, perpetual and temporary legacy getters no
+  longer give filtered spell abilities. `TriggeredAbility.legacyEffects()` lost its cast and copy branches
+  (`legacySpellCastEffects`, `legacySpellCopyEffects`); a filtered spell ability's view is the generic one, which no
+  collector reads.
+- New `CastAbility` (`service/trigger`): what the generic spell-cast collector judges, the `SpellFilter`, the
+  effects (one stack object, **CR 603.3**), the intervening "if" (**CR 603.4**), a lone plain "you may [pay {N}]" as
+  the optional part on the battlefield and in exile (targets chosen as it triggers, **CR 603.3d**, the choice made as
+  it resolves, **CR 603.5**), and a target filter only an authored record names. `CastAbility.of(TriggeredAbility,
+  SpellFilter, onStackPath)` builds it from an ability, `CastAbility.of(SpellCastTriggerEffect, MayEffect)` from the
+  kept authored records. `SpellCastTriggerCollectorService.handleGenericSpellCastTrigger` judges a `CastAbility`;
+  `collectCastAbility(match, castAbility, spellCast, perManaFromSource)` (the per-mana copies of "when you spend this
+  mana", **CR 106.6**) and `collectCopyAbility(match, filter, effects, spellCopy)` are the new entry points. The
+  `SpellCastTriggerEffect` handlers convert the authored record. The once-only unwrap and mark inside the handler are
+  gone: the dispatch judges limits.
+- `TriggerCollectionService.dispatchWatch` hands a battlefield cast or copy watch to the new `dispatchSpellWatch`,
+  which walks the permanent's abilities in order (a filtered one to the collector, any other through its legacy
+  registrations, new `Card.getLegacyTriggerEffectRegistrations(TriggeredAbility)` keeping their identity), then the
+  granted ones the same way (`GrantedTriggeredAbilitySupport.grantedTriggeredAbilities`, now public). Face-up schemes
+  go through it too. `collectSpellAbility` judges and marks the limit (`TriggeredAbilityStackService.limitReached` /
+  `markLimit`, now public, keyed by `TriggeredAbility.limitKey()`), says "triggers only once each turn" and "do this
+  only once each turn" to the `dispatch` wrapper (no Clara Oswald copies, as the `OncePerTurnTriggerEffect` said)
+  and marks "do this only once each turn" on acceptance (**CR 603.2h**), and a granted cascade is one copy (new
+  `dispatch(…, singleCopy)`). The printed filter is read through the permanent's text changes (new
+  `TextChangeTransformer.transformSpellFilter`, the own replacements then the global ones, in timestamp order when an
+  own one is timestamped, **CR 612.1**, **CR 613.7**).
+- The exile and planar readers (`dispatchCardSpellAbilities`), the graveyard reader (new
+  `GameQueryService.getEffectiveGraveyardTriggeredAbilities`), the hand and command-zone readers and the departed
+  mana-source rider read the abilities. The graveyard reader also checks an intervening "if" (none is written); the
+  graveyard, hand and command-zone readers throw on options they don't judge, where the legacy view's wrapped form
+  made them skip the ability silently (none is written). The hand and command-zone readers put the ability's effects
+  on the stack as written (a lone "you may pay" kept its payment, where the record dropped it; none is written).
+- `TriggeredAbilityQueueService.triggerOrderLabel` and `BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler`'s
+  retained ability (Hulkling, Young Avenger) read the ability's spell trigger.
+- `SpellCopyTriggerEffect` is deleted (only the legacy view built it). `SpellCastTriggerEffect` stays for emblems and
+  the kept authored abilities (Pontiff of Blight, Leshrac's Sigil, Gale, Conduit of the Arcane, Passionate
+  Archaeologist, Folk Hero), which reach the collector through the registry, Pontiff's through its may-unwrapping.
+
+**The may-unwrapping is not removed.** The 169 spell-cast abilities that reached a handler only by it
+(`MayEffect(SpellCastTriggerEffect)`) no longer exist; the 31 event bindings 16a listed and Pontiff of Blight's
+authored extort still need it (step 15).
+
+**Behaviour changes.**
+
+- "Triggers only once" (Sapphire Collector) is keyed by the ability (`keyedOnceOnlyTriggersFired`), as the pipeline
+  keys it, where the unwrapped `OnceOnlyTriggerEffect` used the source's unkeyed mark; the card has no other such
+  ability.
+- A filtered cast ability that functions on the battlefield no longer triggers from a suspended card in exile (the
+  time-counter reader read the battlefield watch); no card with suspend has one, but a card exiled with time counters
+  by another effect would have triggered there (**CR 113.6**).
+- Nothing else changed: the scan found no options, zones or effect shapes the old readers judged differently.
+
+**For 16c onward.**
+
+- The rest of family 2 (land-play and activation abilities, `TriggeringCardConditionalEffect`,
+  `TriggeringPermanentConditionalEffect`, the `Triggering…AbilityConditionalEffect`s, the land-play zone records),
+  then the other families, as 16a planned.
+- The kept authored `SpellCastTriggerEffect`s (Pontiff's extort could be a filtered granted ability now; Leshrac's
+  Sigil and Passionate Archaeologist need step 15's event player) and the emblem collector.
+- The cast readers off the battlefield still judge only part of the filter (spell, stack object, nth,
+  mana-spent gates); a later run can send them through the generic collector.
+
+**Tests changed.**
+
+- `SpellAbilityTriggerTest`: a filtered cast trigger is its own watch key and narrows `unfiltered()`; the legacy view
+  of the unfiltered trigger leaves filtered abilities out (granted ones too); a copy trigger's filter; the three tests
+  of the deleted cast records and limits removed.
+- `SpellCastTriggerCollectorServiceTest`: the tests built on the legacy record (`legacy(…)`) collect a `CastAbility`
+  through `collectCastAbility`; the copy tests use `collectCopyAbility` (the target filter from the bound target
+  group, permanent spells always counted).
+- New `CastAbilityTest` (an ability's filter, effects and intervening "if"; the optional part per path; an authored
+  record's fields as a filter). `TextChangeTransformerTest`: two tests for `transformSpellFilter`.
+
+**Test runs.**
+
+- Card: the test class of every card with a filtered cast or copy ability, every card test that constructs one, and
+  the text-change, retained-copy, authored-record and 16a cards (1,834 classes, 16,336 tests): all passing. Sapphire
+  Collector's again after the last `CastAbility` change.
+- Application: the `service.trigger` and `model.trigger` packages and the pipeline, step-trigger, stack-resolution,
+  text-change, trigger-queue, spell-casting, planechase, ETB resolver, freeze, architecture, legacy-slot,
+  granted-ability, simulation-copy and targeting-consistency classes (1,071 tests): 50 failures, all known from HEAD
+  (`StepTriggerServiceTest` 16, `SpellCastingServiceTest` 10, `DeathTriggerCollectorServiceTest` 6,
+  `DamageTriggerCollectorServiceTest` 6, `EtbEffectResolverTest` 3, `SpellCastTriggerCollectorServiceTest` 2,
+  `LandTapTriggerCollectorServiceTest` 2, `PlanechaseServiceTest` 2 and the known one each in
+  `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and `CardEffectTargetingConsistencyTest`).
+- AI: the whole module (1,620 tests), with the same 10 failures as before.
+- `magical-vibes-webservice`'s test sources don't compile (`CardBrowserServiceTest`'s anonymous `CardCatalog` lacks
+  `findLoadedPrintingByName`); this run doesn't touch them.
 - The full suite was not run here.
 
 ## Prompt

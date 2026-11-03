@@ -119,9 +119,17 @@ public class GrantedTriggeredAbilitySupport {
                         condition.trigger() instanceof PermanentChangeTrigger));
     }
 
-    private List<TriggeredAbility> grantedTriggeredAbilities(GameData gameData, Permanent permanent,
-                                                             GameQueryService.StaticBonus staticBonus,
-                                                             Predicate<TriggeredAbility> wanted) {
+    /**
+     * The triggered abilities other permanents' static abilities grant {@code permanent} that {@code wanted} accepts,
+     * as {@code staticBonus} (the permanent's static bonus for the current game state, or {@code null} to compute it)
+     * leaves them: for a collector that reads granted abilities themselves rather than their effects.
+     */
+    public List<TriggeredAbility> grantedTriggeredAbilities(GameData gameData, Permanent permanent,
+                                                            GameQueryService.StaticBonus staticBonus,
+                                                            Predicate<TriggeredAbility> wanted) {
+        if (staticBonus == null) {
+            staticBonus = gameQueryService.computeStaticBonus(gameData, permanent, (UUID) null);
+        }
         List<TriggeredAbility> result = new ArrayList<>();
         for (CardEffect granted : staticBonus.grantedEffects()) {
             if (granted instanceof GrantTriggeredAbilityEffect grant

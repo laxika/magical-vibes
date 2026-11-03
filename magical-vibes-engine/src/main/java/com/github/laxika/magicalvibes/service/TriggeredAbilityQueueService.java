@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
@@ -15,6 +17,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
+import com.github.laxika.magicalvibes.service.trigger.CastAbility;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -32,6 +35,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
@@ -2045,13 +2049,21 @@ public class TriggeredAbilityQueueService {
         List<CardEffect> resolving = entry.getEffectsToResolve().size() == 1
                 && entry.getEffectsToResolve().getFirst() instanceof MayEffect may
                 ? List.of(may.wrapped()) : entry.getEffectsToResolve();
-        for (CardEffect legacy : entry.getCard().getLegacyTriggerEffects(Triggers.youCastSpell(), Zone.BATTLEFIELD)) {
-            CardEffect effect = legacy instanceof MayEffect may ? may.wrapped() : legacy;
-            if (effect instanceof com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect trigger
-                    && (trigger.resolvedEffects().equals(entry.getEffectsToResolve())
-                    || trigger.resolvedEffects().equals(resolving))
-                    && trigger.spellFilter() instanceof com.github.laxika.magicalvibes.model.filter.CardColorPredicate color) {
-                return entry.getDescription() + " — cast a " + color.color().name().toLowerCase(java.util.Locale.ROOT) + " spell";
+        // A "whenever you cast a [color] spell" ability, told apart by its color: the effects its collector put on the
+        // stack, its "you may" taken off (CastAbility).
+        for (TriggeredAbility ability : entry.getCard().getTriggeredAbilities()) {
+            for (TriggerCondition condition : ability.conditions()) {
+                if (!(condition.trigger() instanceof SpellTrigger spell) || spell.filter() == null
+                        || !spell.unfiltered().equals(Triggers.youCastSpell())
+                        || !condition.zones().functionsIn(Zone.BATTLEFIELD)
+                        || !(spell.filter().spell() instanceof com.github.laxika.magicalvibes.model.filter.CardColorPredicate color)) {
+                    continue;
+                }
+                List<CardEffect> effects = CastAbility.of(ability, spell.filter(), true).effects();
+                if (effects.equals(entry.getEffectsToResolve()) || effects.equals(resolving)) {
+                    return entry.getDescription() + " — cast a "
+                            + color.color().name().toLowerCase(java.util.Locale.ROOT) + " spell";
+                }
             }
         }
         return entry.getDescription();

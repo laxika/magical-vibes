@@ -4,14 +4,15 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
+import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -133,8 +134,8 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
     }
 
     /**
-     * The source's triggered ability whose trigger is (or, with its filters, is found by) the copy effect's retained
-     * trigger and whose effects are the copy effect itself, or {@code null}.
+     * The source's triggered ability whose trigger is (or, with its filters, is found by, or narrows with a spell
+     * filter) the copy effect's retained trigger and whose effects are the copy effect itself, or {@code null}.
      */
     private TriggeredAbility findRetainedAbility(Card sourceCard,
                                                  BecomeCopyOfTargetCreatureUntilEndOfTurnEffect copyEffect) {
@@ -142,7 +143,10 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
             return null;
         }
         return sourceCard.getTriggeredAbilities().stream()
-                .filter(ability -> ability.hasWatchedTrigger(copyEffect.retainedTrigger()))
+                .filter(ability -> ability.hasWatchedTrigger(copyEffect.retainedTrigger())
+                        || ability.conditions().stream().anyMatch(condition ->
+                        condition.trigger() instanceof SpellTrigger spell
+                                && spell.unfiltered().equals(copyEffect.retainedTrigger())))
                 .filter(ability -> ability.effects().stream()
                         .anyMatch(registration -> containsEffect(registration.effect(), copyEffect)))
                 .findFirst()
