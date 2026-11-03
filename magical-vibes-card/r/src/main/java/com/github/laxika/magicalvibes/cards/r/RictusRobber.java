@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -19,11 +19,11 @@ import java.util.Set;
 public class RictusRobber extends Card {
 
     public RictusRobber() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                new Morbid(),
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new Morbid()),
                 new CreateTokenEffect("Zombie Rogue", 2, 2, CardColor.BLUE,
                         Set.of(CardColor.BLUE, CardColor.BLACK),
-                        List.of(CardSubtype.ZOMBIE, CardSubtype.ROGUE))));
+                        List.of(CardSubtype.ZOMBIE, CardSubtype.ROGUE)));
 
         // Plot {2}{B}
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{2}{B}"))));

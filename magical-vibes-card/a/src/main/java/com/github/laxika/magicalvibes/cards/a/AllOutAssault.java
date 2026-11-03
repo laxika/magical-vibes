@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedAttackUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
@@ -20,8 +20,10 @@ public class AllOutAssault extends Card {
     public AllOutAssault() {
         addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.DEATHTOUCH), GrantScope.ALL_OWN_CREATURES));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new ControllerMainPhase(), new AdditionalCombatMainPhaseEffect(1)));
+                TriggerOptions.DEFAULT.withInterveningIf(new ControllerMainPhase()),
+                new AdditionalCombatMainPhaseEffect(1));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new ControllerMainPhase(), new RegisterDelayedAttackUntapEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(new ControllerMainPhase()),
+                new RegisterDelayedAttackUntapEffect());
     }
 }

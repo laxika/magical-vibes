@@ -9,12 +9,12 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -30,9 +30,8 @@ public class DwarvenMine extends Card {
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.RED));
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                new SourceUntapped(),
-                new CreateTokenEffect("Dwarf", 1, 1, CardColor.RED,
-                        List.of(CardSubtype.DWARF), Set.of(), Set.of())));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceUntapped()),
+                new CreateTokenEffect("Dwarf", 1, 1, CardColor.RED, List.of(CardSubtype.DWARF), Set.of(), Set.of()));
     }
 }

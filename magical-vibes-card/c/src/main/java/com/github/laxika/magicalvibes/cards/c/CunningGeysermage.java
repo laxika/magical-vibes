@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,6 +26,7 @@ public class CunningGeysermage extends Card {
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))),
                         "Target must be another creature"), 0, 0, 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new ConditionalEffect(new Kicked(), ReturnToHandEffect.target()));
+                        TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
+                        ReturnToHandEffect.target());
     }
 }

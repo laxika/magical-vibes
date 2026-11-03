@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -38,8 +38,9 @@ public class MysticSanctuary extends Card {
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLUE));
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                new SourceUntapped(), new MayEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceUntapped()),
+                new MayEffect(
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY)
                                 .filter(new CardAnyOfPredicate(List.of(
@@ -48,6 +49,6 @@ public class MysticSanctuary extends Card {
                                 )))
                                 .targetGraveyard(true)
                                 .build(),
-                        "Put the targeted instant or sorcery card from your graveyard on top of your library?")));
+                        "Put the targeted instant or sorcery card from your graveyard on top of your library?"));
     }
 }

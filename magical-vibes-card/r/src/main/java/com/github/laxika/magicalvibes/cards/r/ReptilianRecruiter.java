@@ -31,7 +31,7 @@ public class ReptilianRecruiter extends Card {
         // or if you control another Lizard, gain control of that creature until end of turn, untap
         // it, and it gains haste until end of turn.
         target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(
+                ConditionalEffect.unless(
                         new AnyOf(List.of(
                                 new TargetPermanentMatches(new PermanentPowerAtMostPredicate(2)),
                                 new ControlsAnotherPermanent(new PermanentHasSubtypePredicate(CardSubtype.LIZARD))

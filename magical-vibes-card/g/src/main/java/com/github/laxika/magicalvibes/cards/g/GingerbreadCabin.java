@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -30,7 +30,8 @@ public class GingerbreadCabin extends Card {
                 new EntersTappedEffect()));
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new SourceUntapped(), foodToken()));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceUntapped()),
+                foodToken());
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));
     }

@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,10 +24,10 @@ public class JosuVessLichKnight extends Card {
 
     public JosuVessLichKnight() {
         addStaticEffect(new KickerEffect("{5}{B}"));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new Kicked(), 
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
                 new CreateTokenEffect(8, "Zombie Knight", 2, 2,
                         CardColor.BLACK, List.of(CardSubtype.ZOMBIE, CardSubtype.KNIGHT),
-                        Set.of(Keyword.MENACE), Set.of())
-        ));
+                        Set.of(Keyword.MENACE), Set.of()));
     }
 }

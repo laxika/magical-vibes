@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -578,8 +578,9 @@ classes, `TriggerMode` and `LegacyTriggerOptions`.
 `TriggerMode` are gone, and the converted cards' tests fail exactly as at the baseline.
 
 This step was split, with the user, by family, as step 13 was; run 3 was split again into 3a and 3b, with the user,
-because of its size (690 abilities), and run 4 into 4a and 4b, with the user, for the same reason (about 600 wrapped
-abilities in 941 card classes, and about 60 engine and AI readers that inspect the own enters effects). Each run converts every wrapper kind of one
+because of its size (690 abilities), run 4 into 4a and 4b, with the user, for the same reason (about 600 wrapped
+abilities in 941 card classes, and about 60 engine and AI readers that inspect the own enters effects), and 4b again
+into 4b and 4c, as the user allowed, so that 4b stays a conversion that keeps behaviour and 4c holds the rules fixes. Each run converts every wrapper kind of one
 family's abilities, makes that family's collectors read options and filters instead, and deletes the wrapper classes
 no other family still uses. The order:
 
@@ -590,7 +591,8 @@ no other family still uses. The order:
 | 3a | The other zone changes and the permanent changes (step 12a's `ZoneChangeWatch`) but "another object enters", with their split "this or another" cards merged |
 | 3b | "Another object enters" (step 12a part 2's entering watches) |
 | 4a | The source's own enters abilities (step 12b's `EtbTriggerService`): the collector and every reader of them read the abilities' options, the 60 "this or another" enters cards merged, the cards 3b left for run 4 |
-| 4b | The rest of the own enters abilities' wrappers: the intervening-if `ConditionalEffect`s (about 520), by script |
+| 4b | The rest of the own enters abilities' wrappers: the intervening-if `ConditionalEffect`s (about 520), by script; the Oracle wording decides which are intervening "if"s |
+| 4c | The own enters intervening "if"s the collector checks only as they resolve (CR 603.4): the collector checks every option condition as the ability triggers, with what it needs to know then (the sacrificed card), and the run 4b `KEEP` cards |
 | 5 to 15 | Step 13's families 1 to 11, in its order |
 | 16 | What no family owns: the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags, the `onlyIfSacrificed` flags, and the wrapper classes left |
 
@@ -4523,7 +4525,8 @@ was re-rendered with `--keep-baseline`.
 
 Step 14 is repeatable by family (its section has the order). Run 1 converted the source's own zone changes, run 2
 the creature-death family, run 3a the other zone and permanent changes but "another object enters", run 3b "another
-object enters", run 4a the reading of the own enters abilities' options and the "this or another" enters merges.
+object enters", run 4a the reading of the own enters abilities' options and the "this or another" enters merges, run 4b
+the own enters abilities' intervening "if"s.
 
 #### Run 1: the source's own zone changes
 
@@ -5095,6 +5098,98 @@ enters collector instead of the "enters from a graveyard" watch.
   `SimulationCopyCompletenessTest` 1 each as recorded; `TargetLegalityServiceTest` 14, `ValidTargetServiceTest` 2 and
   `ETBTokenTargetServiceTest` 4 checked in a HEAD worktree).
 - AI: the whole module (1,620 tests), the same 10 failures as before.
+- The full suite was not run here.
+
+#### Run 4b: the own enters abilities' intervening "if"s are options
+
+Run 4b was split again, as the user allowed, into 4b (this run: the conversion, which keeps behaviour) and 4c (the
+rules fixes it found). Every "when this enters, if …" ability (CR 603.4, checked) is authored with
+`TriggerOptions.DEFAULT.withInterveningIf(condition)`, and an "If …" sentence inside an own enters ability's effect text
+that the collector doesn't read as it triggers is `ConditionalEffect.unless`.
+
+**Authoring.**
+
+- "When this enters, if …" is `addTrigger(Triggers.enters(ObjectRelation.THIS)[, TriggerMode.INDEPENDENT],
+  TriggerOptions.DEFAULT.withInterveningIf(condition), effect…)`, on the card or its target group. So are the
+  intervening "if"s keywords define: ravenous (CR 702.156a, checked: "if X is 5 or more"), offspring (CR 702.175a,
+  checked), squad (CR 702.157a, checked), gift (CR 702.174b, checked), and the trigger conditions on how the permanent
+  entered that the collector can't read as a filter: "when this land enters untapped", escape's "when it enters this
+  way", "when this enters during the declare attackers step". Blitz's two own enters markers (CR 702.152a, checked: no
+  triggered ability) carry the option `CastForAlternateCost` as they carried the wrapper; the collector still drops
+  them.
+- Which wrappers are intervening "if"s was decided by the Oracle text: the card has a "When … enters …, if" ability, or a
+  keyword above. Ten cards' wrappers are the effect text's own "If …" sentence, on a condition the collector doesn't
+  read as it triggers, and became `ConditionalEffect.unless` (the collector and the resolution treat both forms alike
+  for such a condition): Celestial Regulator, Dream Thief, Fear of Immobility, Hotshot Investigators, Invasion of
+  Pyrulea, Kraul Harpooner, Reptilian Recruiter, Ainok Guide, Forsaken Crossroads, Rasaad, Monk of Selûne (CR 610.3b,
+  checked).
+
+**The engine.** No reader changed: run 4a's legacy view gives the collector, the targeting code and the AI the same
+`ConditionalEffect(condition, effect, true)` for an option as the card wrote before, so `EtbEffectResolver` unwraps,
+gates or keeps it as before. The engine's own writers of own enters wrappers author the option too:
+`CardChoiceHandlerService` (offspring granted to a card in hand, and a granted blitz's two markers) and
+`HandCastCardCharacteristicsService` (the offspring copy of a hand-cast card). The offspring payment count still reads
+the legacy view.
+
+**Cards.** `scripts/step14-own-enters-options.py` (per letter module; `--dry-run` prints the diffs) converted 389
+abilities in 351 card classes and flipped 11 abilities in the 10 cards above; it stops on any wrapped own enters
+ability it has no decision for, so none is decided silently. An effect passed as a local variable is followed to its
+one definition (its type becomes `CardEffect`). `scripts/step14-own-enters-options-docs.py` rewrote 38 agent-docs rows
+of converted cards (`ORACLE_TEXT_EFFECT_MAP.md`, three `CARD_PATTERNS_*` files, `CARD_IMPLEMENTATION_PLAYBOOK.md`),
+leaving a condition's own reference entries, which cover its resolution-time use too.
+The implement-card skill says when to use the option, `unless`, and the plain wrapper.
+
+**Kept, with their reason (the script's `KEEP` and `SKIP`).**
+
+- An "… instead" or "Then if …" sentence on a cast-time fact, which the collector reads as the ability triggers (no
+  intervening "if", but the same result whenever it's checked): Adipose Offspring, All-Star Kicker, Berg Strider,
+  Desolation Angel, Desolation Giant, Dunbarrow Revivalist, Fblthp, the Lost, Grim Reaper's Sprint, Kinetic Ooze,
+  Kitnap, Rix Maadi Reveler, Sea Gate Stormcaller, Sphinx of Lost Truths, Turncoat Kunoichi. `unless` would move the
+  check to resolution, where the kicker and cost flags of an enters trigger's stack entry haven't been checked; run 16
+  decides them with the `interveningIf` flag.
+- Armored Kincaller: "If you do or if you control another Dinosaur" is no intervening "if", but
+  `ControlsAnotherPermanent` is an ETB gate the collector checks as the ability triggers: a rules fix, run 4c.
+- Bloodhall Priest, Naomi, Pillar of Order, Omnivorous Flytrap: "whenever this enters or attacks, if …" share the
+  wrapped effect with an attacks ability, whose collector doesn't read options yet; step 13 family 3's run (run 7) makes
+  each one ability with both conditions.
+- Mythos of Illuna: its "if it's a creature" ability is also granted to a token copy through a `TriggeredAbility` the
+  script doesn't follow. Aether Flash, Carnival of Souls, Path of Discovery, Weldfast Wingsmith (and Death Match, run
+  4a): the own half's "if it's a [creature]" is a filter on the source's own entry, which `EtbTriggerService` can't read
+  yet.
+- Nested `ConditionalEffect`s (64 abilities: inside a `SequenceEffect`, `MayEffect`, modal option and so on) are
+  conditions of the effect text, not of the ability, and stay; so does Thieving Skydiver's inner "If that artifact is an
+  Equipment" under its converted option.
+- Evoke, tribute and Phage's keyword effects, as run 4a listed.
+
+**For run 4c.** `EtbEffectResolver` checks an intervening "if" as the ability triggers only for the condition types its
+switch names and the `isEtbTriggerGate()` ones; any other is checked only as it resolves. Among the converted
+abilities that leaves Acererak the Archlich (`NotCondition(ControllerHasCompletedDungeon)`), Deathbringer Regent
+(`AllOf(CastFromZone, AnyPlayerControlsPermanentCount)`), Inquisitor Captain and Ran and Shaw (`AllOf(WasCast, …)`)
+and Graven Archfiend (`SacrificedCardMatches`, which reads the sacrificed card that `StackResolutionService` attaches
+to the trigger's stack entry only after it's collected). A blanket check of every option condition at trigger time
+needs that card in the resolver's `ConditionContext` first; the ten `unless` flips above keep the blanket check from
+reaching the effect-text conditions. Run 4c also fixes Armored Kincaller (its gate as an `unless`) and decides the
+`KEEP` cards, with card tests through the engine.
+
+**Behaviour changes.** None: the collector and every reader see the wrappers they saw before.
+
+**Tests changed.** None. Two card tests' comments still say "resolve ConditionalEffect", which the stack entry still
+holds (Gwyllion Hedge-Mage, Selkie Hedge-Mage).
+
+**Test runs.**
+
+- Card: the test class of every changed card and every card test that constructs one (570 classes, 4,800 tests), plus
+  Cottontail Caretaker and Zinnia, Valley's Voice (the offspring writers): no failure.
+- Application: `TriggerPipelineTest`, `CardAbilitiesTest`, `LegacyTriggerBindingsTest`, `ZoneChangeTriggerTest`,
+  `TriggeredAbilityTest`, `TriggerOptionsTest`, `TriggerConditionTest`, `CardFreezeTest`, `EtbTriggerServiceTest`,
+  `EnterTriggerCollectorServiceTest`, `GrantedAbilitiesTest`, `BattlefieldPlacementServiceTest`,
+  `SpellCastingServiceTest`, `TargetLegalityServiceTest`, `ValidTargetServiceTest`, `CardViewFactoryTest`,
+  `ETBTokenTargetServiceTest`, `StackEntryTargetGroupsTest`, `CreatureControlServiceTest`, `MiscTriggerTest`,
+  `ActionTriggerTest`, `RulesEventLogTest`, `ZoneChangeRulesEventTest` (715 tests): 55 failures, per class the ones
+  run 4a recorded as failing at HEAD (`BattlefieldPlacementServiceTest` 24, `SpellCastingServiceTest` 10,
+  `TargetLegalityServiceTest` 14, `ETBTokenTargetServiceTest` 4, `ValidTargetServiceTest` 2,
+  `CreatureControlServiceTest` 1).
+- AI: `TargetPolarityGuardTest`: its 2 known failures (no converted card among them).
 - The full suite was not run here.
 
 ## Prompt

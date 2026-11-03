@@ -4,12 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -20,8 +20,8 @@ public class UltramarinesHonourGuard extends Card {
     public UltramarinesHonourGuard() {
         addCastingCost(new RepeatableAdditionalManaCost(List.of("{2}")));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new RepeatedAdditionalCostPaid("{2}"),
-                        new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{2}"))));
+                TriggerOptions.DEFAULT.withInterveningIf(new RepeatedAdditionalCostPaid("{2}")),
+                new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{2}")));
         addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
     }
 }

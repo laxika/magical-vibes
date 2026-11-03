@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.GiftPromised;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GiftEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -30,13 +30,15 @@ public class StarforgedSword extends Card {
         addStaticEffect(new GiftEffect(0));
         addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new RemoveKeywordEffect(Keyword.FLYING, GrantScope.EQUIPPED_CREATURE));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
-                new ConditionalEffect(new GiftPromised(),
-                TargetOpponentCreatesTokenEffect.gift(fishToken())));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerMode.INDEPENDENT,
+                TriggerOptions.DEFAULT.withInterveningIf(new GiftPromised()),
+                TargetOpponentCreatesTokenEffect.gift(fishToken()));
 
         targetWhenGiftPromised(TargetFilters.creatureYouControl(), 0, 1, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new ConditionalEffect(new GiftPromised(), new AttachSourceEquipmentToTargetCreatureEffect()));
+                        TriggerOptions.DEFAULT.withInterveningIf(new GiftPromised()),
+                        new AttachSourceEquipmentToTargetCreatureEffect());
 
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }

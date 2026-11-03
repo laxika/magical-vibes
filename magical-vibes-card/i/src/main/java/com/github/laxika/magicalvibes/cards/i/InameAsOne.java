@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -28,11 +28,11 @@ public class InameAsOne extends Card {
                 new CardIsPermanentPredicate(),
                 new CardSubtypePredicate(CardSubtype.SPIRIT)));
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                new CastFromZone(Zone.HAND),
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new CastFromZone(Zone.HAND)),
                 new MayEffect(
                         new SearchLibraryEffect(spiritPermanent, LibrarySearchDestination.BATTLEFIELD),
-                        "Search your library for a Spirit permanent card?")));
+                        "Search your library for a Spirit permanent card?"));
 
         // The target is chosen as the trigger goes on the stack; the exile is the resolution-time
         // "you may" that gates the return.

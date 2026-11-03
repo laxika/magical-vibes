@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -35,10 +35,14 @@ public class SunscapeBattlemage extends Card {
                 )),
                 "Target must be a creature with flying"),
                 0, 0, 1, 1
-        ).addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
-                new ConditionalEffect(new Kicked(), new DestroyTargetPermanentEffect()));
+        ).addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerMode.INDEPENDENT,
+                TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
+                new DestroyTargetPermanentEffect());
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT, new ConditionalEffect(
-                new RepeatedAdditionalCostPaid("{2}{U}"), new DrawCardEffect(2)));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerMode.INDEPENDENT,
+                TriggerOptions.DEFAULT.withInterveningIf(new RepeatedAdditionalCostPaid("{2}{U}")),
+                new DrawCardEffect(2));
     }
 }

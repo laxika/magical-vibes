@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "INV", collectorNumber = "214")
@@ -21,13 +21,14 @@ public class ThicketElemental extends Card {
 
     public ThicketElemental() {
         addStaticEffect(new KickerEffect("{1}{G}"));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new Kicked(),
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
                 new MayEffect(
                         SequenceEffect.of(
                                 new RevealUntilCardPredicateRestOnBottomRandomEffect(
                                         new CardTypePredicate(CardType.CREATURE),
                                         LibrarySearchDestination.BATTLEFIELD),
                                 new ShuffleLibraryEffect(false)),
-                        "Reveal cards until you reveal a creature card?")));
+                        "Reveal cards until you reveal a creature card?"));
     }
 }

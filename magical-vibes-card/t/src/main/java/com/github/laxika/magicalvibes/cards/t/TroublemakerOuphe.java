@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -44,6 +44,7 @@ public class TroublemakerOuphe extends Card {
                 artifactOrEnchantmentOpponentControls,
                 "Target must be an artifact or enchantment an opponent controls"
         ), 0, 0, 1, 1).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new Kicked(), new ExileTargetPermanentEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
+                new ExileTargetPermanentEffect());
     }
 }

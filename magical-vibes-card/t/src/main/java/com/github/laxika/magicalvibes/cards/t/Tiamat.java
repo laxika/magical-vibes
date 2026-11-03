@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,7 +22,8 @@ import java.util.List;
 public class Tiamat extends Card {
 
     public Tiamat() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new WasCast(true),
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new WasCast(true)),
                 new SearchLibraryEffect(
                         new Fixed(5),
                         new CardAllOfPredicate(List.of(
@@ -30,6 +31,6 @@ public class Tiamat extends Card {
                                 new CardNotPredicate(new CardNamedPredicate("Tiamat")))),
                         LibrarySearchDestination.HAND,
                         null,
-                        true)));
+                        true));
     }
 }

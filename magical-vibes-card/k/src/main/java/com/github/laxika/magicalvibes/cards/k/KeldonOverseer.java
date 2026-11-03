@@ -11,10 +11,10 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DOM", collectorNumber = "134")
@@ -27,11 +27,14 @@ public class KeldonOverseer extends Card {
         // When this creature enters, if it was kicked, gain control of target creature
         // until end of turn. Untap that creature. It gains haste until end of turn.
         target(TargetFilters.creature())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new Kicked(),
-                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN)))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new Kicked(),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET)))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new Kicked(),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
+                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
+                        new UntapPermanentsEffect(TapUntapScope.TARGET))
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
+                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
     }
 }

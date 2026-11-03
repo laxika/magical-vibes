@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeLukaminaEffect;
@@ -24,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.EnumSet;
@@ -39,8 +39,8 @@ public class LukaminaMoonDruid extends Card {
 
     public static void addBaseAbilities(Card card) {
         card.addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new WasCast(),
-                        new SeekLibraryEffect(1, landWithBasicLandType())));
+                TriggerOptions.DEFAULT.withInterveningIf(new WasCast()),
+                new SeekLibraryEffect(1, landWithBasicLandType()));
 
         addSpecializeAbility(card, CardColor.WHITE);
         addSpecializeAbility(card, CardColor.BLUE);

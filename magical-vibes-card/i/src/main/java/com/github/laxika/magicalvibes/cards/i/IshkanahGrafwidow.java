@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -30,10 +30,10 @@ import java.util.Set;
 public class IshkanahGrafwidow extends Card {
 
     public IshkanahGrafwidow() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                new Delirium(),
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new Delirium()),
                 new CreateTokenEffect(3, "Spider", 1, 2, CardColor.GREEN,
-                        List.of(CardSubtype.SPIDER), Set.of(Keyword.REACH), Set.of())));
+                        List.of(CardSubtype.SPIDER), Set.of(Keyword.REACH), Set.of()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

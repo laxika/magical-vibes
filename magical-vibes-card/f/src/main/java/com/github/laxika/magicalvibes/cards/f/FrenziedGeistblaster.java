@@ -5,13 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandGraveyardAndLibraryMatchingAtLeast;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekCardsToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,13 +24,14 @@ public class FrenziedGeistblaster extends Card {
             new CardTypePredicate(CardType.SORCERY)));
 
     public FrenziedGeistblaster() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                new CardsInHandGraveyardAndLibraryMatchingAtLeast(20, INSTANT_OR_SORCERY),
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new CardsInHandGraveyardAndLibraryMatchingAtLeast(20, INSTANT_OR_SORCERY)),
                 new MayEffect(
                         DiscardCardThenEffect.continuing(
                                 null,
                                 new SeekCardsToHandEffect(new Fixed(1), INSTANT_OR_SORCERY),
                                 "a card"),
-                        "Discard a card to seek an instant or sorcery card?")));
+                        "Discard a card to seek an instant or sorcery card?"));
     }
 }

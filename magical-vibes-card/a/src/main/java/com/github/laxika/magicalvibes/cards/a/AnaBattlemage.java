@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
@@ -24,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -38,17 +38,20 @@ public class AnaBattlemage extends Card {
         targetWhenKicked(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        ), 0, 0, 1, 1).addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
-                new ConditionalEffect(new Kicked(), new DiscardEffect(3, DiscardRecipient.TARGET_PLAYER)));
+        ), 0, 0, 1, 1).addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerMode.INDEPENDENT,
+                TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
+                new DiscardEffect(3, DiscardRecipient.TARGET_PLAYER));
 
         targetWithDynamicCount(new RepeatedAdditionalCostCount("{1}{B}"), new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsTappedPredicate())
                 )), "Target must be an untapped creature"), 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
-                        new ConditionalEffect(new RepeatedAdditionalCostPaid("{1}{B}"),
-                                SequenceEffect.of(new TapPermanentsEffect(TapUntapScope.TARGET),
-                                        new TargetCreatureDealsPowerDamageToControllerEffect())));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        TriggerMode.INDEPENDENT,
+                        TriggerOptions.DEFAULT.withInterveningIf(new RepeatedAdditionalCostPaid("{1}{B}")),
+                        SequenceEffect.of(new TapPermanentsEffect(TapUntapScope.TARGET),
+                                new TargetCreatureDealsPowerDamageToControllerEffect()));
     }
 }

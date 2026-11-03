@@ -24,10 +24,10 @@ public class AinokGuide extends Card {
         addStaticEffect(new ChooseModeOnEnterEffect(List.of(COUNTER_MODE, LAND_MODE)));
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new SourceHasChosenMode(COUNTER_MODE),
+                ConditionalEffect.unless(new SourceHasChosenMode(COUNTER_MODE),
                         new PutCountersOnSourceEffect(1, 1, 1)));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new SourceHasChosenMode(LAND_MODE),
+                ConditionalEffect.unless(new SourceHasChosenMode(LAND_MODE),
                         new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.TOP_OF_LIBRARY)));
     }
 }

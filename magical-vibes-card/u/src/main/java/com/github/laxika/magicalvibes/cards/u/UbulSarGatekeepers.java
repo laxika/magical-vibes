@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DGM", collectorNumber = "30")
@@ -21,8 +21,8 @@ public class UbulSarGatekeepers extends Card {
         // checked as the trigger goes on the stack and again at resolution, so the target is chosen
         // at trigger time rather than at cast time.
         target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(
-                        new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.GATE)),
-                        new BoostTargetCreatureEffect(-2, -2)));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.GATE))),
+                new BoostTargetCreatureEffect(-2, -2));
     }
 }

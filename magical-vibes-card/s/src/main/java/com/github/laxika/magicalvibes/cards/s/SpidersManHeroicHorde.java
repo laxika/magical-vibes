@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -34,11 +34,11 @@ public class SpidersManHeroicHorde extends Card {
                 new ManaCastingCost("{4}{G}{G}"),
                 new ReturnPermanentsCost(1, tappedCreature))));
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                new CastForAlternateCost(),
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()),
                 SequenceEffect.of(
                         new GainLifeEffect(3),
                         new CreateTokenEffect(2, "Spider", 2, 1, CardColor.GREEN,
-                                List.of(CardSubtype.SPIDER), Set.of(Keyword.REACH), Set.of()))));
+                                List.of(CardSubtype.SPIDER), Set.of(Keyword.REACH), Set.of())));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.condition.VoidCondition;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -36,6 +36,7 @@ public class RovingActuator extends Card {
                 instantOrSorceryWithManaValueAtMostTwo,
                 GraveyardSearchScope.CONTROLLERS_GRAVEYARD), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new ConditionalEffect(new VoidCondition(), exileAndCopy));
+                        TriggerOptions.DEFAULT.withInterveningIf(new VoidCondition()),
+                        exileAndCopy);
     }
 }

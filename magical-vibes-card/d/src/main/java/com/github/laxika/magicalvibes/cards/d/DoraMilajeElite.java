@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreLands;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -57,7 +57,8 @@ public class DoraMilajeElite extends Card {
 
     public DoraMilajeElite() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new OpponentControlsMoreLands(), VIBRANIUM_TOKEN));
+                TriggerOptions.DEFAULT.withInterveningIf(new OpponentControlsMoreLands()),
+                VIBRANIUM_TOKEN);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

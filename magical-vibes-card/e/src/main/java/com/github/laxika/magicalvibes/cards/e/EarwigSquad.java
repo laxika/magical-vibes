@@ -7,12 +7,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.CastForProwlCost;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -34,7 +34,7 @@ public class EarwigSquad extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new CastForProwlCost(),
-                        new SearchTargetLibraryEffect(3, null, LibrarySearchDestination.EXILE, false)));
+                TriggerOptions.DEFAULT.withInterveningIf(new CastForProwlCost()),
+                new SearchTargetLibraryEffect(3, null, LibrarySearchDestination.EXILE, false));
     }
 }

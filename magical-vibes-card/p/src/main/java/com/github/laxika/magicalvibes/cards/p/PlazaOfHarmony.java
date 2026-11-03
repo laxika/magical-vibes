@@ -8,11 +8,11 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfTypeLandsCouldProduceEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaColorLandScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -21,9 +21,10 @@ import java.util.List;
 public class PlazaOfHarmony extends Card {
 
     public PlazaOfHarmony() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.GATE)),
-                new GainLifeEffect(3)));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.GATE))),
+                new GainLifeEffect(3));
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
         addActivatedAbility(new ActivatedAbility(

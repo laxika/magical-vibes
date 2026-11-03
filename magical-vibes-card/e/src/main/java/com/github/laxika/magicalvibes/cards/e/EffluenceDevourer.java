@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.SourceCardPower;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
@@ -46,10 +45,12 @@ public class EffluenceDevourer extends Card {
 
         addTrigger(Triggers.sacrificed(new PermanentIsCreaturePredicate(), ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
                 new PerpetuallyGrantGraveyardAbilityToSourceCardEffect(oozeAbility));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                new CastForAlternateCost(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                new CastForAlternateCost(), new SacrificeSelfAtEndStepEffect()));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()),
+                new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()),
+                new SacrificeSelfAtEndStepEffect());
         addTrigger(Triggers.dies(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()),
                 new DrawCardEffect(1));

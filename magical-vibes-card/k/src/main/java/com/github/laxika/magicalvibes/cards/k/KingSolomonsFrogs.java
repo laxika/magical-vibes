@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentsAndControllersDrawEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -33,8 +33,9 @@ public class KingSolomonsFrogs extends Card {
         target(new PermanentPredicateTargetFilter(
                 targetFilter,
                 "Target must be a permanent an opponent controls with mana value 3 or greater"), 0, 99)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                        new WasCast(true), new ExileTargetPermanentsAndControllersDrawEffect()));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        TriggerOptions.DEFAULT.withInterveningIf(new WasCast(true)),
+                        new ExileTargetPermanentsAndControllersDrawEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

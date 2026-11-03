@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -35,11 +36,12 @@ public class ThievingSkydiver extends Card {
                 )),
                 "Target must be an artifact with mana value X or less"
         ), 0, 0, 1, 1).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new Kicked(),
-                        new GainControlOfTargetEffect(ControlDuration.PERMANENT)))
+                TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
+                new GainControlOfTargetEffect(ControlDuration.PERMANENT))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new ConditionalEffect(new Kicked(), new ConditionalEffect(new TargetPermanentMatches(
+                        TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
+                        new ConditionalEffect(new TargetPermanentMatches(
                                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT)),
-                                new AttachTargetToSourcePermanentEffect())));
+                                new AttachTargetToSourcePermanentEffect()));
     }
 }

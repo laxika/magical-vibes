@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
@@ -23,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -44,14 +44,15 @@ public class Deceit extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )),
                 "Target must be another nonland permanent"), 0, 1);
-        bounceTarget.addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT, new ConditionalEffect(
-                new ColorSpentToCast(ManaColor.BLUE, 2), ReturnToHandEffect.target()));
+        bounceTarget.addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerMode.INDEPENDENT,
+                TriggerOptions.DEFAULT.withInterveningIf(new ColorSpentToCast(ManaColor.BLUE, 2)),
+                ReturnToHandEffect.target());
 
-        playerTarget.addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
-                new ConditionalEffect(
-                        new ColorSpentToCast(ManaColor.BLACK, 2),
-                        new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND),
-                                HandChoiceDestination.DISCARD)));
+        playerTarget.addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerMode.INDEPENDENT,
+                TriggerOptions.DEFAULT.withInterveningIf(new ColorSpentToCast(ManaColor.BLACK, 2)),
+                new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND), HandChoiceDestination.DISCARD));
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
     }

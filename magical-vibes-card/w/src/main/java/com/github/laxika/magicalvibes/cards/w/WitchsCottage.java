@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ELD", collectorNumber = "249")
@@ -30,13 +30,14 @@ public class WitchsCottage extends Card {
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLACK));
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                new SourceUntapped(), new MayEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceUntapped()),
+                new MayEffect(
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY)
                                 .filter(new CardTypePredicate(CardType.CREATURE))
                                 .targetGraveyard(true)
                                 .build(),
-                        "Put target creature card from your graveyard on top of your library?")));
+                        "Put target creature card from your graveyard on top of your library?"));
     }
 }

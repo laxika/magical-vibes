@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -27,12 +27,13 @@ public class DesertsHold extends Card {
         target(TargetFilters.creature())
                 // When this Aura enters, if you control a Desert or there is a Desert card in
                 // your graveyard, you gain 3 life.
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                        new AnyOf(List.of(
-                                new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DESERT)),
-                                new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.DESERT))
-                        )),
-                        new GainLifeEffect(3)));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        TriggerOptions.DEFAULT.withInterveningIf(
+                                new AnyOf(List.of(
+                                        new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DESERT)),
+                                        new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.DESERT))
+                                ))),
+                        new GainLifeEffect(3));
 
         // Enchanted creature can't attack or block, and its activated abilities can't be activated.
         addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect());

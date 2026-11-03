@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MH1", collectorNumber = "192")
@@ -17,8 +17,9 @@ public class WebweaverChangeling extends Card {
     public WebweaverChangeling() {
         // When this creature enters, if there are three or more creature cards in your graveyard,
         // you gain 5 life.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                new GraveyardCardThreshold(3, new CardTypePredicate(CardType.CREATURE)),
-                new GainLifeEffect(5)));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new GraveyardCardThreshold(3, new CardTypePredicate(CardType.CREATURE))),
+                new GainLifeEffect(5));
     }
 }

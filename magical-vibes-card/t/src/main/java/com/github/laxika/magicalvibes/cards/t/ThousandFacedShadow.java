@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.EnteredFromZone;
 import com.github.laxika.magicalvibes.model.condition.SourceIsAttacking;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -33,11 +33,8 @@ public class ThousandFacedShadow extends Card {
                 )),
                 "Target must be another attacking creature"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(
-                        new AllOf(List.of(
-                                new EnteredFromZone(Zone.HAND),
-                                new SourceIsAttacking()
-                        )),
-                        CreateTokenCopyOfTargetPermanentEffect.tappedAndAttackingWithTargetChoice()));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AllOf(List.of(new EnteredFromZone(Zone.HAND), new SourceIsAttacking()))),
+                CreateTokenCopyOfTargetPermanentEffect.tappedAndAttackingWithTargetChoice());
     }
 }

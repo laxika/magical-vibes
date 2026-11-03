@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -40,8 +40,8 @@ public class SproutingGoblin extends Card {
 
         addStaticEffect(new KickerEffect("{G}"));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new Kicked(),
-                        new SearchLibraryEffect(landWithBasicLandType, LibrarySearchDestination.HAND)));
+                TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
+                new SearchLibraryEffect(landWithBasicLandType, LibrarySearchDestination.HAND));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

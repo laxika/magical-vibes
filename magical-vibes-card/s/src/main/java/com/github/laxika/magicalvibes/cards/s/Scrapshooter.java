@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.GiftPromised;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOtherPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GiftEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,8 +26,10 @@ public class Scrapshooter extends Card {
 
     public Scrapshooter() {
         addStaticEffect(new GiftEffect(0));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
-                new ConditionalEffect(new GiftPromised(), new EachOtherPlayerDrawsCardEffect(1)));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerMode.INDEPENDENT,
+                TriggerOptions.DEFAULT.withInterveningIf(new GiftPromised()),
+                new EachOtherPlayerDrawsCardEffect(1));
 
         PermanentPredicateTargetFilter targetArtifactOrEnchantmentAnOpponentControls =
                 new PermanentPredicateTargetFilter(
@@ -41,6 +43,7 @@ public class Scrapshooter extends Card {
                         "Target must be an artifact or enchantment an opponent controls");
         targetWhenGiftPromised(targetArtifactOrEnchantmentAnOpponentControls, 0, 1, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new ConditionalEffect(new GiftPromised(), new DestroyTargetPermanentEffect()));
+                        TriggerOptions.DEFAULT.withInterveningIf(new GiftPromised()),
+                        new DestroyTargetPermanentEffect());
     }
 }

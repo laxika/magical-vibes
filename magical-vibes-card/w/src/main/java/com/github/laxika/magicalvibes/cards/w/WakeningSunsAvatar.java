@@ -5,13 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -25,12 +25,12 @@ public class WakeningSunsAvatar extends Card {
     public WakeningSunsAvatar() {
         // When this creature enters, if you cast it from your hand, destroy all non-Dinosaur creatures.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new CastFromZone(Zone.HAND), new DestroyAllPermanentsEffect(
-                        new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR))
-                        ))
-                )
-        ));
+                TriggerOptions.DEFAULT.withInterveningIf(new CastFromZone(Zone.HAND)),
+                new DestroyAllPermanentsEffect(
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR))
+                                ))
+                        ));
     }
 }

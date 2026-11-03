@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DMU", collectorNumber = "136")
@@ -19,7 +20,8 @@ public class KeldonStrikeTeam extends Card {
     public KeldonStrikeTeam() {
         addStaticEffect(new KickerEffect("{1}{W}"));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new Kicked(), CreateTokenEffect.whiteSoldier(2)));
+                TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
+                CreateTokenEffect.whiteSoldier(2));
         addStaticEffect(new ConditionalEffect(
                 new SourceEnteredBattlefieldThisTurn(),
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES)));

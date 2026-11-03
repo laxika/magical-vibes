@@ -5,13 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithSameName;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -21,11 +21,12 @@ import java.util.Set;
 public class ChromeReplicator extends Card {
 
     public ChromeReplicator() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                new ControlsPermanentsWithSameName(2, new PermanentAllOfPredicate(List.of(
-                        new PermanentNotPredicate(new PermanentIsLandPredicate()),
-                        new PermanentNotPredicate(new PermanentIsTokenPredicate())))),
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new ControlsPermanentsWithSameName(2, new PermanentAllOfPredicate(List.of(
+                                new PermanentNotPredicate(new PermanentIsLandPredicate()),
+                                new PermanentNotPredicate(new PermanentIsTokenPredicate()))))),
                 new CreateTokenEffect("Construct", 4, 4, null,
-                        List.of(CardSubtype.CONSTRUCT), Set.of(), Set.of(CardType.ARTIFACT))));
+                        List.of(CardSubtype.CONSTRUCT), Set.of(), Set.of(CardType.ARTIFACT)));
     }
 }

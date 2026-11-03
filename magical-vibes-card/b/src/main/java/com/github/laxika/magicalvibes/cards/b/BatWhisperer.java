@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -20,9 +20,9 @@ public class BatWhisperer extends Card {
 
     public BatWhisperer() {
         // When this creature enters, if an opponent lost life this turn, create a 1/1 black Bat creature token with flying.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                new OpponentLostLifeThisTurn(1),
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new OpponentLostLifeThisTurn(1)),
                 new CreateTokenEffect("Bat", 1, 1, CardColor.BLACK,
-                        List.of(CardSubtype.BAT), Set.of(Keyword.FLYING), Set.of())));
+                        List.of(CardSubtype.BAT), Set.of(Keyword.FLYING), Set.of()));
     }
 }

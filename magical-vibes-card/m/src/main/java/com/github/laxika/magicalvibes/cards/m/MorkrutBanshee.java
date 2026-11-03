@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ISD", collectorNumber = "110")
@@ -19,8 +19,7 @@ public class MorkrutBanshee extends Card {
         // Morbid — When Morkrut Banshee enters the battlefield,
         // if a creature died this turn, target creature gets -4/-4 until end of turn.
         target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new Morbid(), 
-                new BoostTargetCreatureEffect(-4, -4)
-        ));
+                TriggerOptions.DEFAULT.withInterveningIf(new Morbid()),
+                new BoostTargetCreatureEffect(-4, -4));
     }
 }

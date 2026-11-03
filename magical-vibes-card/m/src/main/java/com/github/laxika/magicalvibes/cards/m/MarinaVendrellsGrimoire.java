@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToLifeGainedEff
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DSK", collectorNumber = "64")
@@ -22,7 +23,8 @@ public class MarinaVendrellsGrimoire extends Card {
 
     public MarinaVendrellsGrimoire() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new WasCast(), new DrawCardEffect(5)));
+                TriggerOptions.DEFAULT.withInterveningIf(new WasCast()),
+                new DrawCardEffect(5));
 
         addStaticEffect(new NoMaximumHandSizeEffect());
         addStaticEffect(new CantLoseGameFromLifeEffect());

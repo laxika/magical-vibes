@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -31,9 +31,8 @@ public class ArcaneProxy extends Card {
                 new CardManaValueAtMostSourcePowerPredicate()));
         target(new GraveyardCardPredicateTargetFilter(
                 instantOrSorceryWithManaValue, GraveyardSearchScope.CONTROLLERS_GRAVEYARD
-        ), 1, 1).addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                new WasCast(),
-                new ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect(true)
-        ));
+        ), 1, 1).addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new WasCast()),
+                new ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect(true));
     }
 }

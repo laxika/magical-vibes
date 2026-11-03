@@ -9,13 +9,13 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -25,9 +25,9 @@ public class RoadkillRodney extends Card {
 
     public RoadkillRodney() {
         addCastingCost(new RepeatableAdditionalManaCost(List.of("{3}")));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                new RepeatedAdditionalCostPaid("{3}"),
-                new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{3}"))));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new RepeatedAdditionalCostPaid("{3}")),
+                new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{3}")));
         addTrigger(Triggers.dealsCombatDamageToPlayer(), mutagenToken());
     }
 

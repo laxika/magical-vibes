@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -37,9 +37,12 @@ public class StormscapeBattlemage extends Card {
                 )),
                 "Target must be a nonblack creature"
         ), 0, 0, 1, 1).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new Kicked(), new DestroyTargetPermanentEffect(true)));
+                TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
+                new DestroyTargetPermanentEffect(true));
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT, new ConditionalEffect(
-                new RepeatedAdditionalCostPaid("{W}"), new GainLifeEffect(3)));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerMode.INDEPENDENT,
+                TriggerOptions.DEFAULT.withInterveningIf(new RepeatedAdditionalCostPaid("{W}")),
+                new GainLifeEffect(3));
     }
 }

@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.condition.Raid;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "XLN", collectorNumber = "76")
@@ -18,7 +18,8 @@ public class ShipwreckLooter extends Card {
     public ShipwreckLooter() {
         // Raid — When this creature enters, if you attacked this turn,
         // you may draw a card. If you do, discard a card.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new Raid(), 
-                new MayEffect(SequenceEffect.of(new DrawCardEffect(1), new DiscardEffect(1, DiscardRecipient.CONTROLLER)), "Draw a card and discard a card?")));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new Raid()),
+                new MayEffect(SequenceEffect.of(new DrawCardEffect(1), new DiscardEffect(1, DiscardRecipient.CONTROLLER)), "Draw a card and discard a card?"));
     }
 }

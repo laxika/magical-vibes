@@ -5,22 +5,23 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SNC", collectorNumber = "218")
 public class RoccoCabarettiCaterer extends Card {
 
     public RoccoCabarettiCaterer() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new WasCast(true),
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new WasCast(true)),
                 new MayEffect(
                         new SearchLibraryEffect(new CardTypePredicate(CardType.CREATURE),
                                 LibrarySearchDestination.BATTLEFIELD, new ManaValueBound(false, 0)),
-                        "Search your library for a creature card with mana value X or less?")));
+                        "Search your library for a creature card with mana value X or less?"));
     }
 }

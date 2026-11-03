@@ -5,13 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,12 +22,13 @@ import java.util.Set;
 public class CycloneSummoner extends Card {
 
     public CycloneSummoner() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new CastFromZone(Zone.HAND),
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new CastFromZone(Zone.HAND)),
                 ReturnToHandEffect.allPermanentsMatching(new PermanentAllOfPredicate(List.of(
-                        new PermanentNotPredicate(new PermanentIsLandPredicate()),
-                        new PermanentNotPredicate(new PermanentHasAnySubtypePredicate(Set.of(
-                                CardSubtype.GIANT, CardSubtype.WIZARD
-                        )))
-                )))));
+                                new PermanentNotPredicate(new PermanentIsLandPredicate()),
+                                new PermanentNotPredicate(new PermanentHasAnySubtypePredicate(Set.of(
+                                        CardSubtype.GIANT, CardSubtype.WIZARD
+                                )))
+                        ))));
     }
 }

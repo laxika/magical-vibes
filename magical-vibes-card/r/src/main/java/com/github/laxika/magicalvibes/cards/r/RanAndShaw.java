@@ -10,12 +10,12 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -29,9 +29,10 @@ public class RanAndShaw extends Card {
                 new CardSubtypePredicate(CardSubtype.LESSON)));
         // "When Ran and Shaw enter, if you cast them and there are three or more Dragon and/or Lesson
         // cards in your graveyard, create a token that's a copy of Ran and Shaw, except it's not legendary."
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                new AllOf(List.of(new WasCast(), new GraveyardCardThreshold(3, dragonOrLesson))),
-                new CreateTokenCopyOfSourceEffect(true, 1), true));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AllOf(List.of(new WasCast(), new GraveyardCardThreshold(3, dragonOrLesson)))),
+                new CreateTokenCopyOfSourceEffect(true, 1));
 
         // Firebending 2.
         addTrigger(Triggers.attacks(), new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 2));

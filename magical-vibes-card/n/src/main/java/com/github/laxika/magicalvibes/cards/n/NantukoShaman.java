@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,13 +24,13 @@ public class NantukoShaman extends Card {
 
     public NantukoShaman() {
         // When this creature enters, if you control no tapped lands, draw a card.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                new ControlsPermanentCountAtMost(0, new PermanentAllOfPredicate(List.of(
-                        new PermanentIsLandPredicate(),
-                        new PermanentIsTappedPredicate()
-                ))),
-                new DrawCardEffect(1)
-        ));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new ControlsPermanentCountAtMost(0, new PermanentAllOfPredicate(List.of(
+                                new PermanentIsLandPredicate(),
+                                new PermanentIsTappedPredicate()
+                        )))),
+                new DrawCardEffect(1));
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{2}{G}{G}",

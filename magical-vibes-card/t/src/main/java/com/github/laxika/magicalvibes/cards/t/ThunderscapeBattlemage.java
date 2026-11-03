@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggerMode;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -35,12 +35,14 @@ public class ThunderscapeBattlemage extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         ), 0, 0, 1, 1).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new Kicked(), new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER)));
+                TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
+                new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER));
 
         targetWithDynamicCount(new RepeatedAdditionalCostCount("{G}"), new PermanentPredicateTargetFilter(
                 new PermanentIsEnchantmentPredicate(), "Target must be an enchantment"), 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
-                        new ConditionalEffect(new RepeatedAdditionalCostPaid("{G}"),
-                                new DestroyTargetPermanentEffect()));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        TriggerMode.INDEPENDENT,
+                        TriggerOptions.DEFAULT.withInterveningIf(new RepeatedAdditionalCostPaid("{G}")),
+                        new DestroyTargetPermanentEffect());
     }
 }

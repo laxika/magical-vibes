@@ -8,11 +8,11 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.Raid;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -23,11 +23,11 @@ import java.util.Set;
 public class WingmateRoc extends Card {
 
     public WingmateRoc() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                new Raid(),
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new Raid()),
                 new CreateTokenEffect(
                         "Bird", 3, 4, CardColor.WHITE,
-                        List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of())));
+                        List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of()));
 
         addTrigger(Triggers.attacks(), new GainLifeEffect(
                 new PermanentCount(new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER)));

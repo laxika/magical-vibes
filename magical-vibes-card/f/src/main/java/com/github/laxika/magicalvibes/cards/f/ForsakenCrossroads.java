@@ -31,7 +31,7 @@ public class ForsakenCrossroads extends Card {
 
         // When Forsaken Crossroads enters the battlefield, scry 1. If you weren't the starting
         // player, you may untap Forsaken Crossroads instead.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), ConditionalEffect.unless(
                 new ControllerIsStartingPlayer(), new ScryEffect(1)));
         addTrigger(Triggers.enters(ObjectRelation.THIS), ConditionalEffect.unless(
                 new NotCondition(new ControllerIsStartingPlayer()),

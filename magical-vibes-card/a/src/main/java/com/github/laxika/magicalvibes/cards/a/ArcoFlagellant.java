@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,7 +24,8 @@ public class ArcoFlagellant extends Card {
     public ArcoFlagellant() {
         addCastingCost(new RepeatableAdditionalManaCost(List.of("{2}")));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new RepeatedAdditionalCostPaid("{2}"), new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{2}"))));
+                TriggerOptions.DEFAULT.withInterveningIf(new RepeatedAdditionalCostPaid("{2}")),
+                new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{2}")));
         addStaticEffect(new CantBlockEffect());
 
         addActivatedAbility(new ActivatedAbility(

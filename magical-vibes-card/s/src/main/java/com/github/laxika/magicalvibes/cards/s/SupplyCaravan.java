@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,11 +24,12 @@ public class SupplyCaravan extends Card {
     public SupplyCaravan() {
         // When this creature enters, if you control a tapped creature,
         // create a 1/1 white Warrior creature token with vigilance.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                new ControlsPermanent(new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentIsTappedPredicate()))),
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new ControlsPermanent(new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentIsTappedPredicate())))),
                 new CreateTokenEffect("Warrior", 1, 1, CardColor.WHITE,
-                        List.of(CardSubtype.WARRIOR), Set.of(Keyword.VIGILANCE), Set.of())));
+                        List.of(CardSubtype.WARRIOR), Set.of(Keyword.VIGILANCE), Set.of()));
     }
 }

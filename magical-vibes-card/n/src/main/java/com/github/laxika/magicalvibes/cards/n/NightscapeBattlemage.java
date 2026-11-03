@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
@@ -20,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -34,8 +34,10 @@ public class NightscapeBattlemage extends Card {
 
         targetWhenKicked(new PermanentPredicateTargetFilter(
                 new PermanentIsLandPredicate(), "Target must be a land"),
-                0, 0, 1, 1).addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
-                new ConditionalEffect(new Kicked(), new DestroyTargetPermanentEffect()));
+                0, 0, 1, 1).addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        TriggerMode.INDEPENDENT,
+                        TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
+                        new DestroyTargetPermanentEffect());
 
         targetUpTo(new Scaled(new RepeatedAdditionalCostCount("{2}{U}"), 2), new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
@@ -43,6 +45,7 @@ public class NightscapeBattlemage extends Card {
                         new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK)))
                 )), "Target must be a nonblack creature"), 2).addTrigger(Triggers.enters(ObjectRelation.THIS),
                         TriggerMode.INDEPENDENT,
-                new ConditionalEffect(new RepeatedAdditionalCostPaid("{2}{U}"), ReturnToHandEffect.target()));
+                        TriggerOptions.DEFAULT.withInterveningIf(new RepeatedAdditionalCostPaid("{2}{U}")),
+                        ReturnToHandEffect.target());
     }
 }

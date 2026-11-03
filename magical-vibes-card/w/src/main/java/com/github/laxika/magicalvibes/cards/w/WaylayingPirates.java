@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -36,10 +36,9 @@ public class WaylayingPirates extends Card {
                 )),
                 "Target must be an artifact or creature an opponent controls"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(
-                        new ControlsPermanent(new PermanentIsArtifactPredicate()),
-                        SequenceEffect.of(
-                                new TapPermanentsEffect(TapUntapScope.TARGET),
-                                new PutCounterOnTargetPermanentEffect(CounterType.STUN))));
+                TriggerOptions.DEFAULT.withInterveningIf(new ControlsPermanent(new PermanentIsArtifactPredicate())),
+                SequenceEffect.of(
+                        new TapPermanentsEffect(TapUntapScope.TARGET),
+                        new PutCounterOnTargetPermanentEffect(CounterType.STUN)));
     }
 }

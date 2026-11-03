@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -29,7 +30,8 @@ public class TheSpearOfBashenga extends Card {
 
     public TheSpearOfBashenga() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new NoMonarch(), new BecomeMonarchEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(new NoMonarch()),
+                new BecomeMonarchEffect());
 
         addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.EQUIPPED_CREATURE));

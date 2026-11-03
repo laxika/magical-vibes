@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OTJ", collectorNumber = "8")
@@ -33,9 +34,10 @@ public class ClaimJumper extends Card {
                         "Search your library for another Plains card?"));
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new OpponentControlsMoreLands(), new MayEffect(
+                TriggerOptions.DEFAULT.withInterveningIf(new OpponentControlsMoreLands()),
+                new MayEffect(
                         SequenceEffect.of(searchPlains, moreLands, new ShuffleLibraryEffect(false)),
                         "Search your library for a Plains card?",
-                        moreLandsAfterDecline)));
+                        moreLandsAfterDecline));
     }
 }

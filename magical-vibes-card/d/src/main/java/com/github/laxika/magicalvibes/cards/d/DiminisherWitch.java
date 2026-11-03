@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -20,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -38,8 +38,9 @@ public class DiminisherWitch extends Card {
                 "an artifact, enchantment, or token"
         ));
         targetWhenKicked(TargetFilters.creatureAnOpponentControls(), 0, 0, 1, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new Kicked(),
-                        new CreateTokenAttachedToTargetEffect(cursedRoleToken(), PlayerRelation.OPPONENT)));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
+                        new CreateTokenAttachedToTargetEffect(cursedRoleToken(), PlayerRelation.OPPONENT));
     }
 
     private static CreateTokenEffect cursedRoleToken() {

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreLands;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -26,9 +25,9 @@ public class SandScout extends Card {
         // When this creature enters, if an opponent controls more lands than you, search your
         // library for a Desert card, put it onto the battlefield tapped, then shuffle.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new OpponentControlsMoreLands(),
-                        new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.DESERT),
-                                LibrarySearchDestination.BATTLEFIELD_TAPPED)));
+                TriggerOptions.DEFAULT.withInterveningIf(new OpponentControlsMoreLands()),
+                new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.DESERT),
+                        LibrarySearchDestination.BATTLEFIELD_TAPPED));
 
         // Whenever one or more land cards are put into your graveyard from anywhere, create a 1/1
         // red, green, and white Sand Warrior creature token. This ability triggers only once each turn.

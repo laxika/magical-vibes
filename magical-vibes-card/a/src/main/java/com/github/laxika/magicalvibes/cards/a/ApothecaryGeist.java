@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "INR", collectorNumber = "10")
@@ -18,6 +18,8 @@ public class ApothecaryGeist extends Card {
     public ApothecaryGeist() {
         // When this creature enters, if you control another Spirit, you gain 3 life.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new ControlsAnotherPermanent(new PermanentHasSubtypePredicate(CardSubtype.SPIRIT)), new GainLifeEffect(3)));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new ControlsAnotherPermanent(new PermanentHasSubtypePredicate(CardSubtype.SPIRIT))),
+                new GainLifeEffect(3));
     }
 }

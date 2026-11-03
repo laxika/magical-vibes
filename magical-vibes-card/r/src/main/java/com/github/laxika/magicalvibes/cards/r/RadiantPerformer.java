@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPermanentOrPlayerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsAnyPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -33,7 +33,7 @@ public class RadiantPerformer extends Card {
                 )),
                 "Target must be a spell or ability that targets only one permanent or player."
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new CastFromZone(Zone.HAND),
-                        CopySpellForEachOtherPermanentOrPlayerEffect.permanentsAndPlayersOnly()));
+                TriggerOptions.DEFAULT.withInterveningIf(new CastFromZone(Zone.HAND)),
+                CopySpellForEachOtherPermanentOrPlayerEffect.permanentsAndPlayersOnly());
     }
 }

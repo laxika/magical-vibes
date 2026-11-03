@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "EVE", collectorNumber = "108")
@@ -28,10 +28,11 @@ public class NoggleHedgeMage extends Card {
         // again at resolution. Per the ruling, exactly two legal targets are chosen when the ability
         // goes on the stack (group 0, min=max=2); the "you may" only decides whether to tap them.
         target(TargetFilters.permanent(), 2, 2)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT, new ConditionalEffect(
-                        new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
-                        new MayEffect(new TapPermanentsEffect(TapUntapScope.TARGET),
-                                "Tap two target permanents?")));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        TriggerMode.INDEPENDENT,
+                        TriggerOptions.DEFAULT.withInterveningIf(
+                                new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.ISLAND))),
+                        new MayEffect(new TapPermanentsEffect(TapUntapScope.TARGET), "Tap two target permanents?"));
 
         // When this creature enters, if you control two or more Mountains, you may have this creature
         // deal 2 damage to target player or planeswalker. Independent intervening-if gate; targets a
@@ -39,9 +40,11 @@ public class NoggleHedgeMage extends Card {
         // pipeline skips whichever group's effect was gated out.
         target(new AnyTargetPredicateTargetFilter(new PermanentIsPlaneswalkerPredicate(), new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player or planeswalker"), 1, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT, new ConditionalEffect(
-                        new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN)),
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        TriggerMode.INDEPENDENT,
+                        TriggerOptions.DEFAULT.withInterveningIf(
+                                new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN))),
                         new MayEffect(new DealDamageToTargetPlayerOrPlaneswalkerEffect(2),
-                                "Deal 2 damage to target player or planeswalker?")));
+                                "Deal 2 damage to target player or planeswalker?"));
     }
 }

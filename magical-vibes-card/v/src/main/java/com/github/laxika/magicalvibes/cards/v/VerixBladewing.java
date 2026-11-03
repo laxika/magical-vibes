@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -27,11 +27,11 @@ public class VerixBladewing extends Card {
 
         // When Verix Bladewing enters, if it was kicked, create Karox Bladewing,
         // a legendary 4/4 red Dragon creature token with flying.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new Kicked(), 
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
                 new CreateTokenEffect(CardType.CREATURE, 1, "Karox Bladewing", 4, 4,
                         CardColor.RED, null, List.of(CardSubtype.DRAGON),
                         Set.of(Keyword.FLYING), Set.of(),
-                        false, false, List.of(), List.of(), false, false, true, 0, Set.of())
-        ));
+                        false, false, List.of(), List.of(), false, false, true, 0, Set.of()));
     }
 }

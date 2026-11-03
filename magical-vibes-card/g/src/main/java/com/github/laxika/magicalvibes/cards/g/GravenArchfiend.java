@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.SacrificedCardMatches;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -30,11 +30,12 @@ public class GravenArchfiend extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.DEMON))
                 )), "a non-Demon creature"));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                new SacrificedCardMatches(new CardAllOfPredicate(List.of(
-                        new CardTypePredicate(CardType.CREATURE),
-                        new CardNotPredicate(new CardSubtypePredicate(CardSubtype.DEMON))
-                )), "a non-Demon creature"),
-                new ConjureCardToBattlefieldEffect("ORI", "92")));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new SacrificedCardMatches(new CardAllOfPredicate(List.of(
+                                new CardTypePredicate(CardType.CREATURE),
+                                new CardNotPredicate(new CardSubtypePredicate(CardSubtype.DEMON))
+                        )), "a non-Demon creature")),
+                new ConjureCardToBattlefieldEffect("ORI", "92"));
     }
 }

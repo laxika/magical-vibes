@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MH2", collectorNumber = "72")
@@ -25,8 +26,8 @@ public class TideShaper extends Card {
                 new StaticBoostEffect(1, 1, GrantScope.SELF)));
 
         targetWhenKicked(TargetFilters.land(), 0, 0, 1, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                        new Kicked(),
-                        new TargetLandBecomesBasicLandTypeUntilSourceLeavesEffect(CardSubtype.ISLAND)));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
+                        new TargetLandBecomesBasicLandTypeUntilSourceLeavesEffect(CardSubtype.ISLAND));
     }
 }

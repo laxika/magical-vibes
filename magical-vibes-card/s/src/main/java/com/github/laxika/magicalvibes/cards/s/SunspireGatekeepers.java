@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,9 +22,10 @@ public class SunspireGatekeepers extends Card {
         // When this creature enters, if you control two or more Gates, create a 2/2 white Knight
         // creature token with vigilance. Intervening-if gate (CR 603.4): checked as the trigger
         // goes on the stack and again at resolution.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.GATE)),
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.GATE))),
                 new CreateTokenEffect("Knight", 2, 2, CardColor.WHITE,
-                        List.of(CardSubtype.KNIGHT), Set.of(Keyword.VIGILANCE), Set.of())));
+                        List.of(CardSubtype.KNIGHT), Set.of(Keyword.VIGILANCE), Set.of()));
     }
 }

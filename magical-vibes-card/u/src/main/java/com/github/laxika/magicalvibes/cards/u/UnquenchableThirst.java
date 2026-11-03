@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -27,12 +27,13 @@ public class UnquenchableThirst extends Card {
         target(TargetFilters.creature())
                 // When this Aura enters, if you control a Desert or there is a Desert card in
                 // your graveyard, tap enchanted creature.
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                        new AnyOf(List.of(
-                                new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DESERT)),
-                                new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.DESERT))
-                        )),
-                        new TapPermanentsEffect(TapUntapScope.ENCHANTED)));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        TriggerOptions.DEFAULT.withInterveningIf(
+                                new AnyOf(List.of(
+                                        new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DESERT)),
+                                        new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.DESERT))
+                                ))),
+                        new TapPermanentsEffect(TapUntapScope.ENCHANTED));
 
         // Enchanted creature doesn't untap during its controller's untap step.
         addStaticEffect(DoesntUntapEffect.enchanted());

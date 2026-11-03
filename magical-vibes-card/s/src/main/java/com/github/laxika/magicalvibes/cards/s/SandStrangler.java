@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,12 +27,12 @@ public class SandStrangler extends Card {
         // graveyard, you may have this creature deal 3 damage to target creature. Intervening-if
         // (CR 603.4) via ConditionalEffect(AnyOf(...)); the may only decides whether to deal the
         // damage after the creature target is chosen as the trigger goes on the stack.
-        target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                new AnyOf(List.of(
-                        new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DESERT)),
-                        new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.DESERT))
-                )),
-                new MayEffect(new DealDamageToTargetCreatureEffect(3),
-                        "Deal 3 damage to target creature?")));
+        target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AnyOf(List.of(
+                                new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DESERT)),
+                                new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.DESERT))
+                        ))),
+                new MayEffect(new DealDamageToTargetCreatureEffect(3), "Deal 3 damage to target creature?"));
     }
 }

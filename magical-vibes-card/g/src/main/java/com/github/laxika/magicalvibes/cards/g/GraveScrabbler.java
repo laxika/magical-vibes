@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.MadnessCast;
 import com.github.laxika.magicalvibes.model.condition.CastForMadnessCost;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FUT", collectorNumber = "86")
@@ -23,8 +23,8 @@ public class GraveScrabbler extends Card {
     public GraveScrabbler() {
         addCastingOption(new MadnessCast("{1}{B}"));
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                new CastForMadnessCost(),
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new CastForMadnessCost()),
                 new MayEffect(
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.HAND)
@@ -32,6 +32,6 @@ public class GraveScrabbler extends Card {
                                 .filter(new CardTypePredicate(CardType.CREATURE))
                                 .targetGraveyard(true)
                                 .build(),
-                        "Return target creature card from a graveyard to its owner's hand?")));
+                        "Return target creature card from a graveyard to its owner's hand?"));
     }
 }

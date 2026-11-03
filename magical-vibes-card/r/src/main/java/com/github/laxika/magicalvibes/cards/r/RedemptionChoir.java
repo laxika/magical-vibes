@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -29,7 +30,9 @@ public class RedemptionChoir extends Card {
                 .chooseAuraAttachment(true)
                 .build();
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new Coven(), returnPermanent));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new Coven()),
+                returnPermanent);
         addTrigger(Triggers.attacks(), new ConditionalEffect(new Coven(), returnPermanent));
     }
 }

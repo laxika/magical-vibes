@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PopulateEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,10 +22,12 @@ public class ScionOfVituGhazi extends Card {
     public ScionOfVituGhazi() {
         // When this creature enters, if you cast it from your hand, create a 1/1 white Bird
         // creature token with flying, then populate.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new CastFromZone(Zone.HAND),
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new CastFromZone(Zone.HAND)),
                 new CreateTokenEffect("Bird", 1, 1, CardColor.WHITE,
-                        List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of())));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new CastFromZone(Zone.HAND),
-                new PopulateEffect()));
+                        List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of()));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new CastFromZone(Zone.HAND)),
+                new PopulateEffect());
     }
 }

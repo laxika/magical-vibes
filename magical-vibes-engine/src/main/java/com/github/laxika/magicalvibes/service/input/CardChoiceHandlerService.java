@@ -200,8 +200,8 @@ public class CardChoiceHandlerService {
                     choice.offspringCost(), paymentOrdinal);
         }
         modifiedCard.addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(offspringPaid,
-                        new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)));
+                TriggerOptions.DEFAULT.withInterveningIf(offspringPaid),
+                new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1));
 
         gameData.interaction.clearAwaitingInput();
         hand.set(cardIndex, modifiedCard);
@@ -292,10 +292,12 @@ public class CardChoiceHandlerService {
                         .map(AlternateHandCast::blitz)
                         .orElse(false) == false) {
             copy.addCastingOption(AlternateHandCast.blitz(copy.getManaCost()));
-            copy.addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                    new CastForAlternateCost(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
-            copy.addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                    new CastForAlternateCost(), new SacrificeSelfAtEndStepEffect()));
+            copy.addTrigger(Triggers.enters(ObjectRelation.THIS),
+                    TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()),
+                    new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF));
+            copy.addTrigger(Triggers.enters(ObjectRelation.THIS),
+                    TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()),
+                    new SacrificeSelfAtEndStepEffect());
             copy.addTrigger(Triggers.dies(ObjectRelation.THIS),
                     TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()), new DrawCardEffect(1));
         }

@@ -6,11 +6,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControlledDragonAsCast;
 import com.github.laxika.magicalvibes.model.condition.RevealCardFromHandCostPaid;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardFromHandCost;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,8 +22,9 @@ public class OratorOfOjutai extends Card {
     public OratorOfOjutai() {
         addCastingCost(RevealCardFromHandCost.optional(
                 new CardSubtypePredicate(CardSubtype.DRAGON), "Dragon"));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                new AnyOf(List.of(new RevealCardFromHandCostPaid(), new ControlledDragonAsCast())),
-                new DrawCardEffect()));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AnyOf(List.of(new RevealCardFromHandCostPaid(), new ControlledDragonAsCast()))),
+                new DrawCardEffect());
     }
 }

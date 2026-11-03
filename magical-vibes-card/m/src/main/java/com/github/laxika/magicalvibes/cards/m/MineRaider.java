@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
@@ -24,8 +24,8 @@ public class MineRaider extends Card {
 
     public MineRaider() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(
-                        new ControlsAnotherPermanent(new PermanentHasAnySubtypePredicate(OUTLAW_SUBTYPES)),
-                        CreateTokenEffect.ofTreasureToken(1)));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new ControlsAnotherPermanent(new PermanentHasAnySubtypePredicate(OUTLAW_SUBTYPES))),
+                CreateTokenEffect.ofTreasureToken(1));
     }
 }

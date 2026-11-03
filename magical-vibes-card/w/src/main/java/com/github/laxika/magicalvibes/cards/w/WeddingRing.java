@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
@@ -47,8 +48,8 @@ public class WeddingRing extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new WasCast(),
-                        new CreateTokenCopyOfSourceForTargetPlayerEffect(PlayerRelation.OPPONENT)));
+                TriggerOptions.DEFAULT.withInterveningIf(new WasCast()),
+                new CreateTokenCopyOfSourceForTargetPlayerEffect(PlayerRelation.OPPONENT));
         addTrigger(Triggers.opponentDrawsCard(),
                 ConditionalEffect.atTriggerTime(opponentRingDuringTheirTurn, new DrawCardEffect()));
         addTrigger(Triggers.opponentGainsLife(),

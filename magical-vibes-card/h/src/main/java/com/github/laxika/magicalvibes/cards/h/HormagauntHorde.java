@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -26,7 +25,8 @@ public class HormagauntHorde extends Card {
         // draw a card when it enters.
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new SpellXAtLeast(5), new DrawCardEffect(1)));
+                TriggerOptions.DEFAULT.withInterveningIf(new SpellXAtLeast(5)),
+                new DrawCardEffect(1));
 
         // Whenever a land you control enters, you may pay {2}{G}. If you do, return this card
         // from your graveyard to your hand.

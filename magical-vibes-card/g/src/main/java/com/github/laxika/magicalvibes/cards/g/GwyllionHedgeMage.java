@@ -7,13 +7,13 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -28,16 +28,19 @@ public class GwyllionHedgeMage extends Card {
         // Two separate "When this creature enters" abilities, so each is its own triggered ability
         // (TriggerMode.INDEPENDENT). Each intervening-if gate (CR 603.4) is checked as the trigger
         // goes on the stack and again at resolution.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT, new ConditionalEffect(
-                new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.PLAINS)),
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerMode.INDEPENDENT,
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.PLAINS))),
                 new MayEffect(new CreateTokenEffect("Kithkin Soldier", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.KITHKIN, CardSubtype.SOLDIER), Set.of(), Set.of()),
-                        "Create a 1/1 white Kithkin Soldier creature token?")));
+                        "Create a 1/1 white Kithkin Soldier creature token?"));
 
-        target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
-                new ConditionalEffect(
-                new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.SWAMP)),
+        target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerMode.INDEPENDENT,
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.SWAMP))),
                 new MayEffect(new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1),
-                        "Put a -1/-1 counter on target creature?")));
+                        "Put a -1/-1 counter on target creature?"));
     }
 }

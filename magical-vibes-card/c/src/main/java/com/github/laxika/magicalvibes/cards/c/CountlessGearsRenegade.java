@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.PermanentLeftBattlefieldUnderYourControlThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -19,8 +19,8 @@ public class CountlessGearsRenegade extends Card {
 
     public CountlessGearsRenegade() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new PermanentLeftBattlefieldUnderYourControlThisTurn(),
-                        new CreateTokenEffect(1, "Servo", 1, 1, null,
-                                List.of(CardSubtype.SERVO), Set.of(), Set.of(CardType.ARTIFACT))));
+                TriggerOptions.DEFAULT.withInterveningIf(new PermanentLeftBattlefieldUnderYourControlThisTurn()),
+                new CreateTokenEffect(1, "Servo", 1, 1, null,
+                        List.of(CardSubtype.SERVO), Set.of(), Set.of(CardType.ARTIFACT)));
     }
 }

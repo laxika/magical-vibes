@@ -26,7 +26,7 @@ public class InvasionOfPyrulea extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(3));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new RevealTopCardOfLibraryEffect(LibraryOwner.CONTROLLER));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), ConditionalEffect.unless(
                 new TopCardOfLibraryMatchesPredicate(new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.LAND),
                         new CardIsDoubleFacedPredicate()))),

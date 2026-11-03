@@ -34,7 +34,7 @@ public class RasaadMonkOfSelNe extends Card {
 
     public RasaadMonkOfSelNe() {
         target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new SourceIsOnBattlefield(), new ExileTargetPermanentAndTrackWithSourceEffect()));
+                ConditionalEffect.unless(new SourceIsOnBattlefield(), new ExileTargetPermanentAndTrackWithSourceEffect()));
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new ReturnAllCardsExiledWithSourceEffect());
 
