@@ -9628,9 +9628,9 @@ public class TriggerCollectionService {
                     || gameQueryService.hasLostPrintedAbilities(gameData, perm)
                     ? new ArrayList<>()
                     : new ArrayList<>(printed);
-            perm.getTemporaryTriggerEffects(TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED.trigger()).stream()
+            perm.getLegacyTemporaryTriggerEffects(TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED.trigger()).stream()
                     .map(EffectRegistration::new).forEach(registrations::add);
-            perm.getPersistentTriggerEffects(TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED.trigger()).stream()
+            perm.getLegacyPersistentTriggerEffects(TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED.trigger()).stream()
                     .map(EffectRegistration::new).forEach(registrations::add);
             grantedTriggeredAbilitySupport.grantedTriggerEffects(
                             gameData, perm, TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED.trigger()).stream()
@@ -9678,7 +9678,7 @@ public class TriggerCollectionService {
                 // Bake the tapped permanent's controller only when damage needs
                 // TRIGGERING_PERMANENT_CONTROLLER (Royal Decree). triggeringPermanentId always
                 // carries "it" (Freyalise's Winds).
-                boolean oncePerTurn = resolved instanceof OncePerTurnTriggerEffect;
+                CardEffect limited = resolved;
                 resolved = unwrapOncePerTurnTrigger(gameData, perm, resolved);
                 if (resolved == null) continue;
                 if (resolved instanceof ConditionalEffect conditional && conditional.interveningIf()
@@ -9698,9 +9698,7 @@ public class TriggerCollectionService {
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                     log.info("Game {} - {} triggers on ally permanent tap ({}, awaiting target)",
                             gameData.id, perm.getCard().getName(), tappedPermanent.getCard().getName());
-                    if (oncePerTurn) {
-                        gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
-                    }
+                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, limited);
                     markBatchedTapTrigger(gameData, perm, registration);
                     continue;
                 }
@@ -9720,9 +9718,7 @@ public class TriggerCollectionService {
                     entry.setAttachedPermanentSnapshot(new Permanent(tappedPermanent));
                 }
                 gameData.enqueueTrigger(entry);
-                if (oncePerTurn) {
-                    gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
-                }
+                OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, limited);
                 markBatchedTapTrigger(gameData, perm, registration);
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                 log.info("Game {} - {} triggers on ally permanent tap ({})",
@@ -9748,7 +9744,7 @@ public class TriggerCollectionService {
                     }
                     resolved = conditional.wrapped();
                 }
-                boolean oncePerTurn = resolved instanceof OncePerTurnTriggerEffect;
+                CardEffect limited = resolved;
                 resolved = unwrapOncePerTurnTrigger(gameData, perm, resolved);
                 if (resolved == null) continue;
                   if (resolved instanceof ConditionalEffect conditional && conditional.interveningIf()
@@ -9777,9 +9773,7 @@ public class TriggerCollectionService {
                 );
                 entry.setTriggeringPermanentId(tappedPermanent.getId());
                 gameData.enqueueTrigger(entry);
-                if (oncePerTurn) {
-                    gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
-                }
+                OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, limited);
                 markBatchedTapTrigger(gameData, perm, registration);
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                 log.info("Game {} - {} triggers on opponent permanent tap ({})",
@@ -9803,9 +9797,9 @@ public class TriggerCollectionService {
             if (gameQueryService.hasLostAllAbilities(gameData, perm)) return;
             List<EffectRegistration> registrations = new ArrayList<>(
                     TapWatch.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT.registrationsOf(perm.getCard()));
-            perm.getTemporaryTriggerEffects(TapWatch.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT.trigger()).stream()
+            perm.getLegacyTemporaryTriggerEffects(TapWatch.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT.trigger()).stream()
                     .map(EffectRegistration::new).forEach(registrations::add);
-            perm.getPersistentTriggerEffects(TapWatch.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT.trigger()).stream()
+            perm.getLegacyPersistentTriggerEffects(TapWatch.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT.trigger()).stream()
                     .map(EffectRegistration::new).forEach(registrations::add);
             grantedTriggeredAbilitySupport.grantedTriggerEffects(
                             gameData, perm, TapWatch.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT.trigger()).stream()
@@ -9823,7 +9817,7 @@ public class TriggerCollectionService {
                     }
                     resolved = conditional.wrapped();
                 }
-                boolean oncePerTurn = resolved instanceof OncePerTurnTriggerEffect;
+                CardEffect limited = resolved;
                 resolved = unwrapOncePerTurnTrigger(gameData, perm, resolved);
                 if (resolved == null) continue;
                 if (resolved instanceof ConditionalEffect conditional && conditional.interveningIf()
@@ -9844,9 +9838,7 @@ public class TriggerCollectionService {
                             perm.getCard(), ownerId, new ArrayList<>(List.of(resolved)), perm.getId(),
                             tappedPermanent.getId()));
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                    if (oncePerTurn) {
-                        gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
-                    }
+                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, limited);
                     markBatchedTapTrigger(gameData, perm, registration);
                     continue;
                 }
@@ -9862,9 +9854,7 @@ public class TriggerCollectionService {
                 );
                 entry.setTriggeringPermanentId(tappedPermanent.getId());
                 gameData.enqueueTrigger(entry);
-                if (oncePerTurn) {
-                    gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
-                }
+                OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, limited);
                 markBatchedTapTrigger(gameData, perm, registration);
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
             }

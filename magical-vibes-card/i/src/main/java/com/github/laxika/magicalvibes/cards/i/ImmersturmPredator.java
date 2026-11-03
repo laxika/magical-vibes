@@ -12,9 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,12 +22,10 @@ import java.util.List;
 public class ImmersturmPredator extends Card {
 
     public ImmersturmPredator() {
-        addTrigger(Triggers.permanentYouControlBecomesTapped(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsSourceCardPredicate(),
-                        SequenceEffect.of(
-                                ExileGraveyardCardsEffect.upToOneTargetFromAnyGraveyard(),
-                                new PutCountersOnSourceEffect(1, 1, 1))));
+        addTrigger(Triggers.becomesTapped(),
+                SequenceEffect.of(
+                        ExileGraveyardCardsEffect.upToOneTargetFromAnyGraveyard(),
+                        new PutCountersOnSourceEffect(1, 1, 1)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

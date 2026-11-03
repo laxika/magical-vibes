@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnGrantingEquipmen
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapGrantingEquipmentCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -38,18 +37,16 @@ public class FishingPole extends Card {
                 GrantScope.EQUIPPED_CREATURE
         ));
 
-        addTrigger(Triggers.permanentBecomesUntapped(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsHostOfSourceAuraPredicate(),
-                        new ConditionalEffect(
-                                new SourceCounterThreshold(1, CounterType.BAIT),
-                                SequenceEffect.of(
-                                        new RemoveCounterFromSourceEffect(CounterType.BAIT, 1),
-                                        new CreateTokenEffect("Fish", 1, 1, CardColor.BLUE,
-                                                List.of(CardSubtype.FISH), Set.of(), Set.of())
-                                ),
-                                false
-                        )
+        addTrigger(Triggers.permanentBecomesUntapped()
+                        .withFilter(new PermanentIsHostOfSourceAuraPredicate()),
+                new ConditionalEffect(
+                        new SourceCounterThreshold(1, CounterType.BAIT),
+                        SequenceEffect.of(
+                                new RemoveCounterFromSourceEffect(CounterType.BAIT, 1),
+                                new CreateTokenEffect("Fish", 1, 1, CardColor.BLUE,
+                                        List.of(CardSubtype.FISH), Set.of(), Set.of())
+                        ),
+                        false
                 ));
 
         addActivatedAbility(new EquipActivatedAbility("{2}"));

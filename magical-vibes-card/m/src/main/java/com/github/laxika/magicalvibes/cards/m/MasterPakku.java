@@ -7,21 +7,17 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TLA", collectorNumber = "63")
 public class MasterPakku extends Card {
 
     public MasterPakku() {
-        addTrigger(Triggers.permanentYouControlBecomesTapped(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsSourceCardPredicate(),
-                        new MillEffect(
-                                new CardsInGraveyard(
-                                        new CardSubtypePredicate(CardSubtype.LESSON), CountScope.CONTROLLER),
-                                MillRecipient.TARGET_PLAYER)));
+        addTrigger(Triggers.becomesTapped(),
+                new MillEffect(
+                        new CardsInGraveyard(
+                                new CardSubtypePredicate(CardSubtype.LESSON), CountScope.CONTROLLER),
+                        MillRecipient.TARGET_PLAYER));
     }
 }

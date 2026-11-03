@@ -12,22 +12,18 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TLA", collectorNumber = "54")
 public class GranGran extends Card {
 
     public GranGran() {
-        addTrigger(Triggers.permanentYouControlBecomesTapped(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsSourceCardPredicate(),
-                        SequenceEffect.of(new DrawCardEffect(1),
-                                new DiscardEffect(1, DiscardRecipient.CONTROLLER))));
+        addTrigger(Triggers.becomesTapped(),
+                SequenceEffect.of(new DrawCardEffect(1),
+                        new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
 
         addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(3, new CardSubtypePredicate(CardSubtype.LESSON)),

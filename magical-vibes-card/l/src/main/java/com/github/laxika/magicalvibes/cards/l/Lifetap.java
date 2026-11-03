@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,8 +20,8 @@ public class Lifetap extends Card {
     public Lifetap() {
         // Whenever a Forest an opponent controls becomes tapped, you gain 1 life.
         // Fires on any tap of an opponent's Forest (for mana or forced), not just taps for mana.
-        addTrigger(Triggers.permanentOpponentControlsBecomesTapped(), new TriggeringPermanentConditionalEffect(
-                new PermanentHasSubtypePredicate(CardSubtype.FOREST),
-                new GainLifeEffect(1)));
+        addTrigger(Triggers.permanentOpponentControlsBecomesTapped()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.FOREST)),
+                new GainLifeEffect(1));
     }
 }

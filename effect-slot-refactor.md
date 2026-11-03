@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -4536,8 +4536,9 @@ as the ability triggers, run 5 the steps and phases, run 6a the spell, land-play
 wrappers, run 6b `SpellCastTriggerEffect`, as the cast trigger's filter, the ability's options and its effects, run
 6c the other spell, copy and land-play condition-as-effect classes, as the trigger's filter, run 7 the combat
 abilities (step 13's family 3), all of their wrapper kinds in one run, with the user; run 8 the damage abilities
-(step 13's family 4), run 9 the counter abilities (family 5) and run 10 the becomes-the-target abilities (family 6)
-the same way.
+(step 13's family 4), run 9 the counter abilities (family 5), run 10 the becomes-the-target abilities (family 6),
+run 11 the library, draw and discard abilities (family 7) and run 12 the tap and untap abilities (family 8) the same
+way.
 
 #### Run 1: the source's own zone changes
 
@@ -6463,6 +6464,130 @@ ability each, and Lady Octopus's "first or second card" is one ability with two 
   `ShuffleHandIntoLibraryAndDrawEffectHandlerTest` 3 and `DrawServiceTest`'s additional-trigger copy (step 13 run 7's
   HEAD failures), and the known one each in `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and
   `CardEffectTargetingConsistencyTest`.
+- AI: the whole module (1,620 tests), with the same 10 failures as before.
+- The full suite was not run here.
+
+#### Run 12: tap and untap
+
+Step 13 family 8, every wrapper kind in one run: every tap and untap ability that the `TapWatch` collectors read is
+authored without trigger-only wrappers, but the abilities kept below. 89 card classes were converted by script (88 by
+the peeling pass, Mine Layer by its `MANUAL` entry); five cards' "a [quality] permanent becomes tapped" pairs were
+merged into one ability each.
+
+**Authoring.**
+
+- `TapTrigger` has a new `qualifier` component, the tapped or untapped permanent's restriction:
+  `TapTrigger.withFilter(PermanentPredicate)`, as in `Triggers.permanentYouControlBecomesTapped().withFilter(merfolk)`
+  (Judge of Currents, Magda, Deeproot Pilgrimage), `permanentOpponentControlsBecomesTapped().withFilter(…)` (Lifetap,
+  Thoughtleech, Verity Circle, Roots of Life, …), `youTapPermanentOpponentControls().withFilter(creature)` (Solitary
+  Sanctuary, Icewrought Sentry, Hylda, Sharae) and `permanentBecomesUntapped().withFilter(…)` (Fishing Pole). A second
+  filter is rejected, and a filter on a trigger whose collector doesn't judge one (the mana, enchanted, creature-tap,
+  teamwork and untap-step triggers) throws in the legacy view.
+- "Whenever this permanent becomes tapped" is the new `Triggers.becomesTapped()` (`BECOMES_TAPPED` with `THIS`), where
+  the cards wrote `permanentYouControlBecomesTapped()` with a `PermanentIsSourceCardPredicate` filter: 62 card classes
+  (the grants of Haunted One, Legolas's Quick Reflexes and Hangar Scrounger among them) and the perpetual land grant
+  (`PerpetuallyGrantTapDrawToRandomLandInLibraryEffectHandler`, by hand). "While it has a -1/-1 counter" / "if it's enchanted or equipped" are
+  its filter (Encumbered Reejerey, Warchanter Skald).
+- "For the first time during your turn" is a new event, `TapEvent.BECOMES_TAPPED_FOR_FIRST_TIME_DURING_YOUR_TURN` (a
+  creature, counting its taps of the turn before the source arrived): `becomesTappedForFirstTimeDuringYourTurn()` (Tale
+  of Katara and Toph's grant) and `creatureYouControlBecomesTappedForFirstTimeDuringYourTurn()` (Captain America,
+  Living Legend). It is not a limit: it counts the creature's taps, not the ability's triggers.
+- "One or more … become tapped" is `TriggerOptions.ONE_OR_MORE` (Deeproot Pilgrimage, Rewrite History, Sharae), only on
+  the "you control / an opponent controls becomes tapped" and "you tap" triggers whose collectors batch. "This ability
+  triggers only once each turn" is `ONCE_EACH_TURN` (Interface Ace, Nanoform Sentinel, Sharae), an intervening "if"
+  (**CR 603.4**, checked) `withInterveningIf` (Barbflare Gremlin, Interface Ace's "during your turn", Encumbered
+  Reejerey, Warchanter Skald).
+- "Whenever a [quality] permanent becomes tapped", which the cards wrote as a "you control" and an "opponent controls"
+  ability sharing one effect, is one ability with both conditions, each filtered: Royal Decree, Temporal Distortion,
+  Haunting Wind, Hawkeye's Bow, Mine Layer. An event matches exactly one of the two, so it triggers as the two did.
+
+**The engine.**
+
+- `TapTrigger.watchKey()` drops the qualifier, and gives the `narrowed()` triggers ("this permanent becomes tapped" and
+  the first-time event) the "a permanent you control becomes tapped" trigger, whose collector reads them.
+- `TriggeredAbility.legacyEffects()` gains a tap view (`tapView()`): outermost first, the filter as a
+  `TriggeringPermanentConditionalEffect` ("this permanent", the narrowed trigger's type and the qualifier, joined in a
+  `PermanentAllOfPredicate` when there are several), the global `OncePerTurnPerCreatureTriggerEffect` for the
+  first-time event, then the generic limit and intervening "if"; "one or more" is the registrations'
+  `TriggerMode.ONCE_PER_BATCH`. Conditions with different filters or events, a multiplicity other than `EACH` /
+  `ONE_OR_MORE`, "one or more" off the batching collectors, a limit next to the first-time event and an authored
+  trigger mode next to `ONE_OR_MORE` throw.
+- `TapWatch.effectsOf` and `registrationsOf` read the legacy view. By hand: the "a permanent you control becomes tapped"
+  and "you tap a permanent an opponent controls" collectors read the temporary and persistent grants through
+  `getLegacyTemporaryTriggerEffects` / `getLegacyPersistentTriggerEffects` (Hangar Scrounger's backup grant); the ally,
+  opponent and you-tap collectors marked the unkeyed once-each-turn mark whatever the wrapper's key, so the keyed
+  limit of the legacy view never stopped them (Interface Ace, Nanoform Sentinel, Sharae): they mark through
+  `OncePerTurnTriggerSupport.markIfNeeded` now.
+- No wrapper class is deleted: the legacy view still builds them, and other families still author some. Run 16 deletes
+  what is left.
+
+**Cards.**
+
+- `scripts/step14-tap-scan.py` (run 10's scan on the tap factories, the new ones included) lists the family's wrapped
+  abilities.
+- `scripts/step14-tap-options.py` (`--dry-run`, `--report`) did the conversion: it peels each family ability's wrappers,
+  outermost first, into the trigger, filter and options, re-indents what is left and stops on a wrapper it can't
+  place. Only a two-argument `new ConditionalEffect(c, e)` directly under the trigger and its filter, on a card of its
+  `INTERVENING` table, is taken as the intervening "if"; any other `ConditionalEffect` stays an effect (Fishing Pole's
+  "if you do", Saint Traft's resolution counts). Its `MANUAL` table holds the five merges and Hangar Scrounger's shared
+  effect; its `COMMENTS` table two card comments that named the removed wrappers (City of Brass, Encumbered Reejerey).
+  Running it again changes nothing. The scan's variable check misses an effect held in a constant: Mine Layer's was
+  found by hand and added to `MANUAL`.
+- `scripts/step14-tap-docs.py` rewrote 33 agent-docs passages (exact replacements), among them the stale Don't Move row
+  that still showed two controller-relative registrations. The Javadoc of `TriggeringPermanentConditionalEffect` and
+  `OncePerTurnPerCreatureTriggerEffect`, `ARCHITECTURE.md` and the implement-card and review-card skills were edited by
+  hand.
+
+**Kept, with their reason.**
+
+- Well Rested: `OncePerTurnTriggerEffect.perGrant` gives each granting Aura its own limit on the creature, which
+  `ONCE_EACH_TURN` (keyed by the ability, and two Well Rested grant equal abilities) can't say. Folk Hero and Tyvar
+  use it in other families.
+- The Ninth Doctor: `ConditionalEffect.atTriggerTime(new DuringYourUntapStep(), …)`, a condition of the event (run 16,
+  with the `triggerTimeOnly` flag, or an untap-step untap event).
+- Freyalise's Winds: "whenever a permanent becomes tapped" is still two abilities without a filter (it had no wrapper,
+  so the scan didn't list it); merging it is a later cleanup. Champions of the Shoal's "enters or becomes tapped" is
+  still an enters ability and a tap ability.
+- Disciple of Deceit only names a predicate in a local; nothing to convert.
+
+**Behaviour changes.**
+
+- The once-each-turn limit of Interface Ace, Nanoform Sentinel and Sharae of Numbing Depths is keyed by the ability,
+  where the unkeyed wrapper shared the source's mark. None of them has another unkeyed once-each-turn ability.
+- Royal Decree, Temporal Distortion, Haunting Wind, Hawkeye's Bow and Mine Layer have one tap ability where they had
+  two; each tap triggers one of its conditions, as it triggered one of the two abilities.
+- Nothing else changed: the legacy view hands every collector the wrappers it read before. No may question moved.
+
+**For later runs.**
+
+- Interface Ace's "during your turn" is an intervening "if" (as the card wrote it), a condition of the event really;
+  a "during your turn" event qualifier would say it directly.
+- The first-time event only counts creatures (the collector's `creatureTapCountsThisTurn`), and is read only by the
+  "you control" collector.
+- Step 15: as step 13 run 8 listed.
+
+**Tests changed.**
+
+- `TapTriggerTest`, nine new tests: a filter is dropped from the watch key and a second one rejected; "this permanent"
+  and the first-time event are watched by "a permanent you control becomes tapped"; the legacy view gives "this
+  permanent" outside the keyed limit and the intervening "if" inside it, with a stable identity; it joins "this
+  permanent" and a filter; it gives the first-time wrapper inside the filter; "one or more" is `ONCE_PER_BATCH`; one
+  ability with a "you control" and an "opponent controls" condition is read by both watches; what the collectors can't
+  read is rejected; granted abilities are read in the legacy form. The factory list covers the three new factories.
+- No card test changed.
+
+**Test runs.**
+
+- Card: the test class of every card that uses a tap factory (converted or not), Ambassador of Evendo (the perpetual
+  land grant) and every card test that constructs one of them (336 classes, 3,029 tests): all passing. Mine Layer was
+  converted after that run; its test class passed on its own (9 tests).
+- Application: the `service.trigger` and `model.trigger` packages and the freeze, triggered-ability, card-ability,
+  granted-ability, simulation-copy, architecture, targeting-consistency, untap-step, legacy-slot, mana-ability trigger
+  deferral and permanent-removal classes (835 tests): 78 failures, all known from HEAD: `DamageTriggerCollectorServiceTest`
+  6, `DeathTriggerCollectorServiceTest` 6, `SpellCastTriggerCollectorServiceTest` 3, `LandTapTriggerCollectorServiceTest`
+  2, `UntapStepServiceTest` 1, the known one each in `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and
+  `CardEffectTargetingConsistencyTest`, and `PermanentRemovalServiceTest` 46 and `ManaAbilityTriggerDeferralTest` 11:
+  the same 57 cases fail at HEAD (`e73987ca4c`, run in a worktree with the main tree's `card-data-cache`).
 - AI: the whole module (1,620 tests), with the same 10 failures as before.
 - The full suite was not run here.
 

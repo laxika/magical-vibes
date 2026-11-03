@@ -11,8 +11,6 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,10 +23,8 @@ public class WildfireAwakener extends Card {
 
     public WildfireAwakener() {
         List<Ability> elementalTokenEffects = List.of(
-                new TriggeredAbility(Triggers.permanentYouControlBecomesTapped(),
-                        new TriggeringPermanentConditionalEffect(
-                        new PermanentIsSourceCardPredicate(),
-                        new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER))));
+                new TriggeredAbility(Triggers.becomesTapped(),
+                        new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER)));
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
                 CardType.CREATURE, new XValue(), "Elemental", 1, 1,

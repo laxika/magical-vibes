@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsDoesntUntap
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,10 +27,10 @@ public class TemporalDistortion extends Card {
     public TemporalDistortion() {
         var hourglassCounter = new PutCounterOnReferencedPermanentEffect(
                 PermanentReference.TRIGGERING, CounterType.HOURGLASS);
-        addTrigger(Triggers.permanentYouControlBecomesTapped(),
-                new TriggeringPermanentConditionalEffect(CREATURE_OR_LAND, hourglassCounter));
-        addTrigger(Triggers.permanentOpponentControlsBecomesTapped(),
-                new TriggeringPermanentConditionalEffect(CREATURE_OR_LAND, hourglassCounter));
+        addTrigger(List.of(
+                        Triggers.permanentYouControlBecomesTapped().withFilter(CREATURE_OR_LAND),
+                        Triggers.permanentOpponentControlsBecomesTapped().withFilter(CREATURE_OR_LAND)),
+                hourglassCounter);
 
         addStaticEffect(new MatchingPermanentsDoesntUntapEffect(
                 new PermanentHasCountersPredicate(CounterType.HOURGLASS)));

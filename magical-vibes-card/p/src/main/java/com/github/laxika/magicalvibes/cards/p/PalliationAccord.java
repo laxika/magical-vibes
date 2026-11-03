@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,9 +17,9 @@ public class PalliationAccord extends Card {
 
     public PalliationAccord() {
         // Whenever a creature an opponent controls becomes tapped, put a palliation counter on this enchantment.
-        addTrigger(Triggers.permanentOpponentControlsBecomesTapped(), new TriggeringPermanentConditionalEffect(
-                new PermanentIsCreaturePredicate(),
-                new PutCountersOnSelfEffect(CounterType.PALLIATION)));
+        addTrigger(Triggers.permanentOpponentControlsBecomesTapped()
+                        .withFilter(new PermanentIsCreaturePredicate()),
+                new PutCountersOnSelfEffect(CounterType.PALLIATION));
 
         // Remove a palliation counter from this enchantment: Prevent the next 1 damage that would
         // be dealt to you this turn.

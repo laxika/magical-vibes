@@ -9,6 +9,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * {@code ON_ANY_PERMANENT_ENTERS_BATTLEFIELD} abilities that watch permanents entering under any
  * player's control. {@code combatDamageOnly} restricts the damage-to-planeswalker trigger to
  * combat damage when enabled.
+ * <p>
+ * Don't author it on a tap or untap trigger: the trigger's filter says it ({@code
+ * Triggers.permanentYouControlBecomesTapped().withFilter(p)}, and "this permanent becomes tapped" is {@code
+ * Triggers.becomesTapped()}), and the legacy view ({@code TriggeredAbility.legacyEffects()}) gives it to the tap
+ * collectors in this form.
  */
 public record TriggeringPermanentConditionalEffect(
         PermanentPredicate predicate,

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,8 +13,8 @@ public class JudgeOfCurrents extends Card {
 
     public JudgeOfCurrents() {
         // Whenever a Merfolk you control becomes tapped, you may gain 1 life.
-        addTrigger(Triggers.permanentYouControlBecomesTapped(), new TriggeringPermanentConditionalEffect(
-                new PermanentHasSubtypePredicate(CardSubtype.MERFOLK),
-                new MayEffect(new GainLifeEffect(1), "Gain 1 life?")));
+        addTrigger(Triggers.permanentYouControlBecomesTapped()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.MERFOLK)),
+                new MayEffect(new GainLifeEffect(1), "Gain 1 life?"));
     }
 }

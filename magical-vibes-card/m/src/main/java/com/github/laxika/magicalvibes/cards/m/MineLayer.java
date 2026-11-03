@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEff
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromMatchingPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,12 +21,9 @@ import java.util.List;
 @CardRegistration(set = "ODY", collectorNumber = "205")
 public class MineLayer extends Card {
 
-    private static final TriggeringPermanentConditionalEffect DESTROY_MINED_LAND =
-            new TriggeringPermanentConditionalEffect(
-                    new PermanentAllOfPredicate(List.of(
-                            new PermanentIsLandPredicate(),
-                            new PermanentHasCountersPredicate(CounterType.MINE))),
-                    new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING));
+    private static final PermanentPredicate MINED_LAND = new PermanentAllOfPredicate(List.of(
+            new PermanentIsLandPredicate(),
+            new PermanentHasCountersPredicate(CounterType.MINE)));
 
     public MineLayer() {
         addActivatedAbility(new ActivatedAbility(
@@ -36,8 +33,10 @@ public class MineLayer extends Card {
                 "{1}{R}, {T}: Put a mine counter on target land.",
                 TargetFilters.land()));
 
-        addTrigger(Triggers.permanentYouControlBecomesTapped(), DESTROY_MINED_LAND);
-        addTrigger(Triggers.permanentOpponentControlsBecomesTapped(), DESTROY_MINED_LAND);
+        addTrigger(List.of(
+                        Triggers.permanentYouControlBecomesTapped().withFilter(MINED_LAND),
+                        Triggers.permanentOpponentControlsBecomesTapped().withFilter(MINED_LAND)),
+                new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING));
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new RemoveAllCountersFromMatchingPermanentsEffect(
                         CounterType.MINE, new PermanentIsLandPredicate()));

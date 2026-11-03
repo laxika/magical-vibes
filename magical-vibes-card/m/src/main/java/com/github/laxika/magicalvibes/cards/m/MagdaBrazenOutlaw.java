@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -28,9 +27,9 @@ public class MagdaBrazenOutlaw extends Card {
     public MagdaBrazenOutlaw() {
         addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.DWARF)));
-        addTrigger(Triggers.permanentYouControlBecomesTapped(), new TriggeringPermanentConditionalEffect(
-                new PermanentHasSubtypePredicate(CardSubtype.DWARF),
-                CreateTokenEffect.ofTreasureToken(1)));
+        addTrigger(Triggers.permanentYouControlBecomesTapped()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.DWARF)),
+                CreateTokenEffect.ofTreasureToken(1));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,

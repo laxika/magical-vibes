@@ -9,9 +9,10 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageT
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "MSH", collectorNumber = "132")
 public class HawkeyesBow extends Card {
@@ -20,11 +21,12 @@ public class HawkeyesBow extends Card {
         addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantKeywordEffect(Keyword.REACH, GrantScope.EQUIPPED_CREATURE));
 
-        TriggeringPermanentConditionalEffect damageTrigger = new TriggeringPermanentConditionalEffect(
-                new PermanentIsHostOfSourceAuraPredicate(),
+        addTrigger(List.of(
+                        Triggers.permanentYouControlBecomesTapped()
+                                .withFilter(new PermanentIsHostOfSourceAuraPredicate()),
+                        Triggers.permanentOpponentControlsBecomesTapped()
+                                .withFilter(new PermanentIsHostOfSourceAuraPredicate())),
                 new EnchantedCreatureDealsDamageToEachOpponentEffect(new Fixed(1)));
-        addTrigger(Triggers.permanentYouControlBecomesTapped(), damageTrigger);
-        addTrigger(Triggers.permanentOpponentControlsBecomesTapped(), damageTrigger);
 
         addActivatedAbility(new EquipActivatedAbility("{1}"));
     }

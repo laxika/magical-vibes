@@ -5,8 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 
@@ -25,12 +23,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class CityOfBrass extends Card {
 
     public CityOfBrass() {
-        // Whenever this land becomes tapped, it deals 1 damage to you. The conditional restricts the
-        // shared tap trigger to the source itself. When it taps for mana the trigger is deferred until
-        // a player next receives priority (CR 603.3).
-        addTrigger(Triggers.permanentYouControlBecomesTapped(), new TriggeringPermanentConditionalEffect(
-                new PermanentIsSourceCardPredicate(),
-                new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)));
+        // Whenever this land becomes tapped, it deals 1 damage to you. When it taps for mana the
+        // trigger is deferred until a player next receives priority (CR 603.3).
+        addTrigger(Triggers.becomesTapped(), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
 
         // {T}: Add one mana of any color.
         addActivatedAbility(ManaAbilities.tapForAnyColor());

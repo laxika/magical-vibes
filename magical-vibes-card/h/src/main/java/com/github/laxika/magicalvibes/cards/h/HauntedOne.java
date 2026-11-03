@@ -7,11 +7,9 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostAndGrantKeywordToTriggeringAndSharingCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,10 +27,9 @@ public class HauntedOne extends Card {
                 new PermanentOwnedBySourceControllerPredicate()));
 
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                new TriggeredAbility(Triggers.permanentYouControlBecomesTapped(),
-                new TriggeringPermanentConditionalEffect(new PermanentIsSourceCardPredicate(),
+                new TriggeredAbility(Triggers.becomesTapped(),
                         new BoostAndGrantKeywordToTriggeringAndSharingCreaturesUntilEndOfTurnEffect(
-                                2, 0, Set.of(Keyword.UNDYING)))),
+                                2, 0, Set.of(Keyword.UNDYING))),
                 GrantScope.ALL_CREATURES,
                 commanderCreatureYouOwn));
     }

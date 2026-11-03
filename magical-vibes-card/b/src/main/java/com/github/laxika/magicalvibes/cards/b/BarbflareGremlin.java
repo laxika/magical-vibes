@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DSC", collectorNumber = "26")
@@ -17,8 +17,9 @@ public class BarbflareGremlin extends Card {
         // Whenever a player taps a land for mana, if this creature is tapped, that player adds
         // one mana of any type that land produced. Then that land deals 1 damage to that player.
         addTrigger(Triggers.playerTapsLandForMana(),
-                new ConditionalEffect(new SourceIsTapped(), SequenceEffect.of(
-                        new AddOneOfEachManaTypeProducedByLandEffect(false),
-                        new DealDamageOnLandTapEffect(1, null, true))));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped()),
+                SequenceEffect.of(
+new AddOneOfEachManaTypeProducedByLandEffect(false),
+new DealDamageOnLandTapEffect(1, null, true)));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -20,22 +19,20 @@ import java.util.List;
 public class SwarmCuller extends Card {
 
     public SwarmCuller() {
-        addTrigger(Triggers.permanentYouControlBecomesTapped(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsSourceCardPredicate(),
-                        new MayEffect(
-                                new SacrificePermanentThenEffect(
-                                        new PermanentAllOfPredicate(List.of(
-                                                new PermanentAnyOfPredicate(List.of(
-                                                        new PermanentIsCreaturePredicate(),
-                                                        new PermanentIsArtifactPredicate()
-                                                )),
-                                                new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
+        addTrigger(Triggers.becomesTapped(),
+                new MayEffect(
+                        new SacrificePermanentThenEffect(
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentAnyOfPredicate(List.of(
+                                                new PermanentIsCreaturePredicate(),
+                                                new PermanentIsArtifactPredicate()
                                         )),
-                                        new DrawCardEffect(1),
-                                        "another creature or artifact",
-                                        false,
-                                        false),
-                                "Sacrifice another creature or artifact?")));
+                                        new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
+                                )),
+                                new DrawCardEffect(1),
+                                "another creature or artifact",
+                                false,
+                                false),
+                        "Sacrifice another creature or artifact?"));
     }
 }

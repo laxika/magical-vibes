@@ -5,8 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentWithPoisonCountersLosesLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,9 +20,6 @@ public class PhyrexianAtlas extends Card {
                 "{T}: Add one mana of any color."
         ));
 
-        addTrigger(Triggers.permanentYouControlBecomesTapped(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsSourceCardPredicate(),
-                        new EachOpponentWithPoisonCountersLosesLifeEffect(1, 3)));
+        addTrigger(Triggers.becomesTapped(), new EachOpponentWithPoisonCountersLosesLifeEffect(1, 3));
     }
 }

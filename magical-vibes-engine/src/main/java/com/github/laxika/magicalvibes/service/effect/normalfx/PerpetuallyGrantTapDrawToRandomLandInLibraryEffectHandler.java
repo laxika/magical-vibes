@@ -8,8 +8,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTapDrawToRandomLandInLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
@@ -45,9 +43,7 @@ public class PerpetuallyGrantTapDrawToRandomLandInLibraryEffectHandler implement
 
         Card selected = landCards.get(ThreadLocalRandom.current().nextInt(landCards.size()));
         Card modified = selected.createRuntimeCopy();
-        modified.addTrigger(Triggers.permanentYouControlBecomesTapped(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsSourceCardPredicate(), new DrawCardEffect()));
+        modified.addTrigger(Triggers.becomesTapped(), new DrawCardEffect());
         String cardText = modified.getCardText();
         modified.setCardText((cardText == null || cardText.isBlank() ? "" : cardText + "\n") + GAINED_ABILITY);
         modified.freeze();

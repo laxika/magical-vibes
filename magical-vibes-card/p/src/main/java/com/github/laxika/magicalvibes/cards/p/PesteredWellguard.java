@@ -6,8 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -17,11 +15,9 @@ import java.util.Set;
 public class PesteredWellguard extends Card {
 
     public PesteredWellguard() {
-        addTrigger(Triggers.permanentYouControlBecomesTapped(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsSourceCardPredicate(),
-                        new CreateTokenEffect(1, "Faerie", 1, 1,
-                                CardColor.BLUE, Set.of(CardColor.BLUE, CardColor.BLACK),
-                                List.of(CardSubtype.FAERIE), Set.of(Keyword.FLYING), Set.of())));
+        addTrigger(Triggers.becomesTapped(),
+                new CreateTokenEffect(1, "Faerie", 1, 1,
+                        CardColor.BLUE, Set.of(CardColor.BLUE, CardColor.BLACK),
+                        List.of(CardSubtype.FAERIE), Set.of(Keyword.FLYING), Set.of()));
     }
 }

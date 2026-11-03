@@ -9,26 +9,77 @@ import java.util.Objects;
  * triggers only when a permanent already on the battlefield changes from one state to the other, not when it enters
  * in that state (CR 603.2e). Build it through {@link Triggers}.
  *
- * @param event    what happens to the permanent: it is tapped for mana, becomes tapped or untapped, is tapped by you,
- *                 is tapped to pay a teamwork cost (CR 702.194a), or you untap permanents during your untap step
- * @param relation how the tapped or untapped permanent relates to the ability's source: {@link ObjectRelation#THIS}
- *                 for "this permanent", {@link ObjectRelation#YOU_CONTROL} for "a permanent you control" (the source
- *                 included), {@link ObjectRelation#OPPONENT_CONTROLS} for "a permanent an opponent controls",
- *                 {@link ObjectRelation#ANY} for "a permanent", {@link ObjectRelation#ENCHANTED} for the permanent
- *                 the source is attached to (enchanted, equipped or fortified)
- * @param filter   what the permanent must be, or {@code null} for any permanent: a land, a creature, a nonland
- *                 permanent, an artifact token. The engine's tap collectors check it in code
+ * @param event     what happens to the permanent: it is tapped for mana, becomes tapped (for the first time during
+ *                  your turn) or untapped, is tapped by you, is tapped to pay a teamwork cost (CR 702.194a), or you
+ *                  untap permanents during your untap step
+ * @param relation  how the tapped or untapped permanent relates to the ability's source: {@link ObjectRelation#THIS}
+ *                  for "this permanent", {@link ObjectRelation#YOU_CONTROL} for "a permanent you control" (the source
+ *                  included), {@link ObjectRelation#OPPONENT_CONTROLS} for "a permanent an opponent controls",
+ *                  {@link ObjectRelation#ANY} for "a permanent", {@link ObjectRelation#ENCHANTED} for the permanent
+ *                  the source is attached to (enchanted, equipped or fortified)
+ * @param filter    what the permanent must be, or {@code null} for any permanent: a land, a creature, a nonland
+ *                  permanent, an artifact token. The engine's tap collectors check it in code
+ * @param qualifier what the permanent must also be, or {@code null}: "whenever a Merfolk you control becomes tapped"
+ *                  is {@code Triggers.permanentYouControlBecomesTapped().withFilter(merfolk)}, "whenever this
+ *                  creature becomes tapped while it has a -1/-1 counter on it" {@code
+ *                  Triggers.becomesTapped().withFilter(hasMinusOneCounter)}. The collectors read it from the legacy
+ *                  view ({@code TriggeredAbility.legacyEffects()}) as the {@code TriggeringPermanentConditionalEffect}
+ *                  they judge, so {@link #watchKey()} drops it
  */
-public record TapTrigger(TapEvent event, ObjectRelation relation, PermanentPredicate filter) implements Trigger {
+public record TapTrigger(TapEvent event, ObjectRelation relation, PermanentPredicate filter,
+                         PermanentPredicate qualifier) implements Trigger {
 
     public TapTrigger {
         Objects.requireNonNull(event, "event");
         Objects.requireNonNull(relation, "relation");
     }
 
+    /** A trigger on any permanent of {@code filter}'s type that relates to the source as {@code relation} says. */
+    public TapTrigger(TapEvent event, ObjectRelation relation, PermanentPredicate filter) {
+        this(event, relation, filter, null);
+    }
+
     /** A trigger on any permanent that relates to the source as {@code relation} says. */
     public TapTrigger(TapEvent event, ObjectRelation relation) {
-        this(event, relation, null);
+        this(event, relation, null, null);
+    }
+
+    /**
+     * This trigger narrowed to a permanent that also matches {@code filter}, as {@link #qualifier} says: "whenever an
+     * artifact you control becomes tapped".
+     */
+    public TapTrigger withFilter(PermanentPredicate filter) {
+        Objects.requireNonNull(filter, "filter");
+        if (qualifier != null) {
+            throw new IllegalStateException("This tap trigger already has a filter: " + this);
+        }
+        return new TapTrigger(event, relation, this.filter, filter);
+    }
+
+    /**
+     * Whether the {@code TapWatch} collectors read this trigger's abilities by another trigger, the one of
+     * "a permanent you control becomes tapped", whose collector judges the rest in a wrapper: "this permanent becomes
+     * tapped" ({@link ObjectRelation#THIS} with {@link TapEvent#BECOMES_TAPPED}) and every
+     * {@link TapEvent#BECOMES_TAPPED_FOR_FIRST_TIME_DURING_YOUR_TURN}.
+     */
+    public boolean narrowed() {
+        return event == TapEvent.BECOMES_TAPPED_FOR_FIRST_TIME_DURING_YOUR_TURN
+                || (event == TapEvent.BECOMES_TAPPED && relation == ObjectRelation.THIS);
+    }
+
+    /**
+     * The trigger the {@code TapWatch} collectors read this one's abilities by: without its {@link #qualifier}, and,
+     * for a {@link #narrowed()} trigger, "a permanent you control becomes tapped" (its {@link #filter} dropped too).
+     * The legacy view ({@code TriggeredAbility.legacyEffects()}) gives those abilities the wrappers that collector
+     * judges: "this permanent" and the filter as a {@code TriggeringPermanentConditionalEffect}, "for the first time
+     * during your turn" as the global {@code OncePerTurnPerCreatureTriggerEffect}.
+     */
+    @Override
+    public Trigger watchKey() {
+        if (narrowed()) {
+            return new TapTrigger(TapEvent.BECOMES_TAPPED, ObjectRelation.YOU_CONTROL);
+        }
+        return qualifier == null ? this : new TapTrigger(event, relation, filter);
     }
 
     /**
@@ -40,6 +91,12 @@ public record TapTrigger(TapEvent event, ObjectRelation relation, PermanentPredi
         TAPPED_FOR_MANA,
         /** The permanent becomes tapped, whatever taps it. */
         BECOMES_TAPPED,
+        /**
+         * A creature becomes tapped during its controller's turn for the first time that turn, counting the times it
+         * became tapped before the source was on the battlefield: "whenever this creature becomes tapped for the
+         * first time during each of your turns".
+         */
+        BECOMES_TAPPED_FOR_FIRST_TIME_DURING_YOUR_TURN,
         /** The ability's controller taps the permanent, as a spell or ability they control instructs. */
         YOU_TAP,
         /** The permanent becomes tapped to pay a spell's teamwork cost (CR 702.194a). */

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -31,13 +30,12 @@ public class RoyalDecree extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new CumulativeUpkeepEffect("{W}"));
 
         // Whenever a Swamp, Mountain, black permanent, or red permanent becomes tapped, this
-        // enchantment deals 1 damage to that permanent's controller. Both ally- and opponent-
-        // scoped tap slots are needed; the conditional filters the tapped permanent. One trigger
-        // per tap even if the permanent matches multiple criteria (e.g. Badlands).
-        var damage = new TriggeringPermanentConditionalEffect(
-                SWAMP_MOUNTAIN_BLACK_OR_RED,
+        // enchantment deals 1 damage to that permanent's controller. One ability with a "you
+        // control" and an "opponent controls" condition, each filtered to the tapped permanent.
+        // One trigger per tap even if the permanent matches multiple criteria (e.g. Badlands).
+        addTrigger(List.of(
+                        Triggers.permanentYouControlBecomesTapped().withFilter(SWAMP_MOUNTAIN_BLACK_OR_RED),
+                        Triggers.permanentOpponentControlsBecomesTapped().withFilter(SWAMP_MOUNTAIN_BLACK_OR_RED)),
                 new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER));
-        addTrigger(Triggers.permanentYouControlBecomesTapped(), damage);
-        addTrigger(Triggers.permanentOpponentControlsBecomesTapped(), damage);
     }
 }

@@ -10,10 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -33,8 +31,7 @@ public class Scaretiller extends Card {
                 .enterTapped(true)
                 .build();
 
-        addTrigger(Triggers.permanentYouControlBecomesTapped(), new TriggeringPermanentConditionalEffect(
-                new PermanentIsSourceCardPredicate(),
+        addTrigger(Triggers.becomesTapped(),
                 new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "You may put a land card from your hand onto the battlefield tapped",
@@ -46,6 +43,6 @@ public class Scaretiller extends Card {
                                 returnLand,
                                 new GraveyardCardPredicateTargetFilter(
                                         land, GraveyardSearchScope.CONTROLLERS_GRAVEYARD))
-                )))));
+                ))));
     }
 }

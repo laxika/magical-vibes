@@ -12,8 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ONE", collectorNumber = "158")
@@ -22,12 +20,10 @@ public class ArmoredScrapgorger extends Card {
     public ArmoredScrapgorger() {
         addActivatedAbility(ManaAbilities.tapForAnyColor());
 
-        addTrigger(Triggers.permanentYouControlBecomesTapped(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsSourceCardPredicate(),
-                        SequenceEffect.of(
-                                new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD),
-                                new PutCountersOnSelfEffect(CounterType.OIL))));
+        addTrigger(Triggers.becomesTapped(),
+                SequenceEffect.of(
+                        new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD),
+                        new PutCountersOnSelfEffect(CounterType.OIL)));
 
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.OIL),

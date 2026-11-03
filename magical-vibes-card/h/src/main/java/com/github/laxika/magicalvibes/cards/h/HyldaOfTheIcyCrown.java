@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPer
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,24 +24,22 @@ import java.util.Set;
 public class HyldaOfTheIcyCrown extends Card {
 
     public HyldaOfTheIcyCrown() {
-        addTrigger(Triggers.youTapPermanentOpponentControls(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsCreaturePredicate(),
-                        new MayPayManaEffect("{1}", new QueueReflexiveAbilityEffect(new ChooseOneEffect(List.of(
-                                new ChooseOneEffect.ChooseOneOption(
-                                        "Create a 4/4 white and blue Elemental creature token",
-                                        new CreateTokenEffect("Elemental", 4, 4, CardColor.WHITE,
-                                                Set.of(CardColor.WHITE, CardColor.BLUE),
-                                                List.of(CardSubtype.ELEMENTAL))),
-                                new ChooseOneEffect.ChooseOneOption(
-                                        "Put a +1/+1 counter on each creature you control",
-                                        new PutCounterOnEachControlledPermanentEffect(
-                                                CounterType.PLUS_ONE_PLUS_ONE, 1,
-                                                new PermanentIsCreaturePredicate())),
-                                new ChooseOneEffect.ChooseOneOption(
-                                        "Scry 2, then draw a card",
-                                        SequenceEffect.of(new ScryEffect(2), new DrawCardEffect(1)))
-                        ))), "Pay {1}?")
-                ));
+        addTrigger(Triggers.youTapPermanentOpponentControls()
+                        .withFilter(new PermanentIsCreaturePredicate()),
+                new MayPayManaEffect("{1}", new QueueReflexiveAbilityEffect(new ChooseOneEffect(List.of(
+                        new ChooseOneEffect.ChooseOneOption(
+                                "Create a 4/4 white and blue Elemental creature token",
+                                new CreateTokenEffect("Elemental", 4, 4, CardColor.WHITE,
+                                        Set.of(CardColor.WHITE, CardColor.BLUE),
+                                        List.of(CardSubtype.ELEMENTAL))),
+                        new ChooseOneEffect.ChooseOneOption(
+                                "Put a +1/+1 counter on each creature you control",
+                                new PutCounterOnEachControlledPermanentEffect(
+                                        CounterType.PLUS_ONE_PLUS_ONE, 1,
+                                        new PermanentIsCreaturePredicate())),
+                        new ChooseOneEffect.ChooseOneOption(
+                                "Scry 2, then draw a card",
+                                SequenceEffect.of(new ScryEffect(2), new DrawCardEffect(1)))
+                ))), "Pay {1}?"));
     }
 }

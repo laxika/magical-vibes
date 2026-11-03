@@ -125,7 +125,7 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/i/src/main/java/com/github/laxika/magicalvibes/cards/i/InfiltrationLens.java`
 
 - One trigger for several permanents tapped as one event:
-  - `addTrigger(Triggers.permanentYouControlBecomesTapped(), TriggerMode.ONCE_PER_BATCH, effect)`
+  - `addTrigger(Triggers.permanentYouControlBecomesTapped(), TriggerOptions.ONE_OR_MORE, effect)` ("whenever one or more creatures you control become tapped": `.withFilter(creature)`)
   - The tap-payment path brackets multi-permanent tap events so the registration fires once
 
 - "Whenever one or more creature cards are put into your graveyard from anywhere":

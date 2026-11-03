@@ -9,9 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SourcePermanentDealsPowerDamageToUpToOneTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -27,9 +25,7 @@ public class LegolassQuickReflexes extends Card {
                 .addSpellEffect(new GrantKeywordEffect(
                         Set.of(Keyword.REACH, Keyword.HEXPROOF), GrantScope.TARGET))
                 .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
-                        new TriggeredAbility(Triggers.permanentYouControlBecomesTapped(),
-                        new TriggeringPermanentConditionalEffect(
-                                new PermanentIsSourceCardPredicate(),
-                                new SourcePermanentDealsPowerDamageToUpToOneTargetCreatureEffect()))));
+                        new TriggeredAbility(Triggers.becomesTapped(),
+                                new SourcePermanentDealsPowerDamageToUpToOneTargetCreatureEffect())));
     }
 }

@@ -7,14 +7,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.Enchanted;
 import com.github.laxika.magicalvibes.model.condition.Equipped;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -27,14 +24,11 @@ public class WarchanterSkald extends Card {
         CreateTokenEffect dwarfBerserker = new CreateTokenEffect(
                 "Dwarf Berserker", 2, 1, CardColor.RED,
                 List.of(CardSubtype.DWARF, CardSubtype.BERSERKER), Set.of(), Set.of());
-        addTrigger(Triggers.permanentYouControlBecomesTapped(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentAllOfPredicate(List.of(
-                                new PermanentIsSourceCardPredicate(),
-                                new PermanentAnyOfPredicate(List.of(
-                                        new PermanentIsEnchantedPredicate(),
-                                        new PermanentIsEquippedPredicate())))),
-                        new ConditionalEffect(
-                                new AnyOf(List.of(new Enchanted(), new Equipped())), dwarfBerserker)));
+        addTrigger(Triggers.becomesTapped()
+                        .withFilter(new PermanentAnyOfPredicate(List.of(
+                                new PermanentIsEnchantedPredicate(),
+                                new PermanentIsEquippedPredicate()))),
+                TriggerOptions.DEFAULT.withInterveningIf(new AnyOf(List.of(new Enchanted(), new Equipped()))),
+                dwarfBerserker);
     }
 }

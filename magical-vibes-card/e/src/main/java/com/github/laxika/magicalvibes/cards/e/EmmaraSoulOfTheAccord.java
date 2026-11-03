@@ -6,8 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -18,9 +16,8 @@ import java.util.Set;
 public class EmmaraSoulOfTheAccord extends Card {
 
     public EmmaraSoulOfTheAccord() {
-        addTrigger(Triggers.permanentYouControlBecomesTapped(), new TriggeringPermanentConditionalEffect(
-                new PermanentIsSourceCardPredicate(),
+        addTrigger(Triggers.becomesTapped(),
                 new CreateTokenEffect("Soldier", 1, 1, CardColor.WHITE,
-                        List.of(CardSubtype.SOLDIER), Set.of(Keyword.LIFELINK), Set.of())));
+                        List.of(CardSubtype.SOLDIER), Set.of(Keyword.LIFELINK), Set.of()));
     }
 }

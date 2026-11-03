@@ -1,8 +1,13 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 /**
  * Which of the old tap and untap slot collectors reads a triggered ability, now that the ability has a real trigger
@@ -11,6 +16,12 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
  * {@code TriggerCollectionService} still decide when the ability triggers, how its effects group into stack objects,
  * which wrappers filter it and which event data it is bound to, as the slot's did, until steps 14 and 15 of the
  * refactor replace them with trigger options and effects that read the event.
+ * <p>
+ * The collectors read the abilities in the form the cards wrote them before step 14
+ * ({@link Card#getLegacyTriggerEffects(Trigger, Zone)}): a limit or intervening "if" wrapped around each effect, the
+ * tapped or untapped permanent's filter as the {@code TriggeringPermanentConditionalEffect} they judge, "this
+ * permanent becomes tapped" and "for the first time during your turn" as the wrappers the "a permanent you control
+ * becomes tapped" collector judges, and "one or more" as {@code TriggerMode.ONCE_PER_BATCH}.
  */
 public enum TapWatch implements TriggerWatch {
     /** "Whenever you tap this permanent for mana", from the mana-ability tap path only. */
@@ -62,5 +73,15 @@ public enum TapWatch implements TriggerWatch {
     @Override
     public Zone zone() {
         return zone;
+    }
+
+    @Override
+    public List<CardEffect> effectsOf(Card card) {
+        return card.getLegacyTriggerEffects(trigger, zone);
+    }
+
+    @Override
+    public List<EffectRegistration> registrationsOf(Card card) {
+        return card.getLegacyTriggerEffectRegistrations(trigger, zone);
     }
 }

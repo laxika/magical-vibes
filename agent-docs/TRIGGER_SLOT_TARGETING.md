@@ -334,7 +334,9 @@ an opponent of the graveyard owner whenever a black card enters that graveyard f
 `Triggers.permanentYouControlBecomesTapped()`, `Triggers.permanentOpponentControlsBecomesTapped()`, and
 `Triggers.youTapPermanentOpponentControls()` (non-targeting effects use the direct
 stack path; graveyard-card targets use the shared `SpellGraveyardTargetTrigger` flow). The tap collector
-also supports global per-creature first-event wrappers: it checks the tapped creature's controller against
+also reads "for the first time during your turn" (`Triggers.becomesTappedForFirstTimeDuringYourTurn()`,
+`creatureYouControlBecomesTappedForFirstTimeDuringYourTurn()`, the global per-creature first-event wrapper of the
+legacy view): it checks the tapped creature's controller against
 the active player, records its turn-wide tap count, and preserves the event permanent in
 `StackEntry.triggeringPermanentId` for effects such as `UntapPermanentsEffect(TapUntapScope.TRIGGERING)`;
 the effect rechecks the first-event condition when it resolves.
@@ -346,11 +348,9 @@ whose "may" and target are resolved on the stack via the pending-may-ability flo
 `Triggers.permanentYouControlBecomesUntapped()` (Wake Thrasher; the untapped-ally counterpart of
 `Triggers.permanentYouControlBecomesTapped()` — fires once per untapped permanent on every permanent with the ability on
 the untapped permanent's controller's battlefield, including the source untapping itself; same
-`checkBecomesUntappedTriggers` call sites. Wrap in `TriggeringPermanentConditionalEffect` to filter by the
-untapped permanent),
+`checkBecomesUntappedTriggers` call sites. Filter the untapped permanent with the trigger's `.withFilter(p)`),
 `Triggers.permanentBecomesUntapped()` (Mesmeric Orb; fires once for every permanent that transitions
-tapped→untapped on any battlefield. Wrap in `TriggeringPermanentConditionalEffect` to filter by the
-untapped permanent. The untapped permanent and its controller are recorded on the non-targeting
+tapped→untapped on any battlefield. Filter the untapped permanent with the trigger's `.withFilter(p)`. The untapped permanent and its controller are recorded on the non-targeting
 triggered entry so an effect can use that controller even if the permanent leaves before resolution),
 `Triggers.becomesRenowned()` / `Triggers.creatureYouControlBecomesRenowned()` (Relic Seeker / Valeron Wardens; fired from
 `RenownEffectHandler` via `TriggerCollectionService.checkBecomesRenownedTriggers` on the flip to renowned

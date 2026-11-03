@@ -11,8 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaUpToNTimesEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -45,9 +43,6 @@ public class HawkeyeMasterMarksman extends Card {
                 new ChooseOneEffect.ChooseOneOption("Boomerang", boomerang)
         ), false, 0, 3, false);
 
-        addTrigger(Triggers.permanentYouControlBecomesTapped(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsSourceCardPredicate(),
-                        new PayManaUpToNTimesEffect("{1}", 3, arrowModes)));
+        addTrigger(Triggers.becomesTapped(), new PayManaUpToNTimesEffect("{1}", 3, arrowModes));
     }
 }

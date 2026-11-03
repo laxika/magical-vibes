@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -30,12 +29,10 @@ public class RadhaCoalitionWarlord extends Card {
 
         // Domain — Whenever Radha becomes tapped, another target creature you control gets +X/+X
         // until end of turn, where X is the number of basic land types among lands you control.
-        addTrigger(Triggers.permanentYouControlBecomesTapped(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsSourceCardPredicate(),
-                        new BoostTargetCreatureEffect(
-                                new BasicLandTypesAmongControlledLands(),
-                                new BasicLandTypesAmongControlledLands(),
-                                anotherCreatureYouControl)));
+        addTrigger(Triggers.becomesTapped(),
+                new BoostTargetCreatureEffect(
+                        new BasicLandTypesAmongControlledLands(),
+                        new BasicLandTypesAmongControlledLands(),
+                        anotherCreatureYouControl));
     }
 }

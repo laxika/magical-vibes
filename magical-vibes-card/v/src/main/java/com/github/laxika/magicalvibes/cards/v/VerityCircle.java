@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -24,12 +23,12 @@ import java.util.List;
 public class VerityCircle extends Card {
 
     public VerityCircle() {
-        addTrigger(Triggers.permanentOpponentControlsBecomesTapped(), new TriggeringPermanentConditionalEffect(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentNotPredicate(new PermanentIsAttackingPredicate())
-                )),
-                new MayEffect(new DrawCardEffect(1), "Draw a card?")));
+        addTrigger(Triggers.permanentOpponentControlsBecomesTapped()
+                        .withFilter(new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentNotPredicate(new PermanentIsAttackingPredicate())
+                                ))),
+                new MayEffect(new DrawCardEffect(1), "Draw a card?"));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

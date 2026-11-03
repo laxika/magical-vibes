@@ -1515,6 +1515,25 @@ public final class Triggers {
         return new TapTrigger(TapTrigger.TapEvent.BECOMES_TAPPED, ObjectRelation.ENCHANTED);
     }
 
+    /** "Whenever this permanent becomes tapped" */
+    public static TapTrigger becomesTapped() {
+        return new TapTrigger(TapTrigger.TapEvent.BECOMES_TAPPED, ObjectRelation.THIS);
+    }
+
+    /** "Whenever this creature becomes tapped for the first time during each of your turns" */
+    public static TapTrigger becomesTappedForFirstTimeDuringYourTurn() {
+        return new TapTrigger(TapTrigger.TapEvent.BECOMES_TAPPED_FOR_FIRST_TIME_DURING_YOUR_TURN, ObjectRelation.THIS);
+    }
+
+    /**
+     * "Whenever a creature you control becomes tapped during your turn, if it's the first time that creature has
+     * become tapped this turn"
+     */
+    public static TapTrigger creatureYouControlBecomesTappedForFirstTimeDuringYourTurn() {
+        return new TapTrigger(TapTrigger.TapEvent.BECOMES_TAPPED_FOR_FIRST_TIME_DURING_YOUR_TURN,
+                ObjectRelation.YOU_CONTROL, CREATURE);
+    }
+
     /** "Whenever a permanent you control becomes tapped" */
     public static TapTrigger permanentYouControlBecomesTapped() {
         return new TapTrigger(TapTrigger.TapEvent.BECOMES_TAPPED, ObjectRelation.YOU_CONTROL);
