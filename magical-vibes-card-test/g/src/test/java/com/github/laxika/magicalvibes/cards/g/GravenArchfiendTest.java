@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GravenArchfiend.class, DemonicPact.class, GrizzlyBears.class, Island.class})
@@ -24,6 +25,29 @@ class GravenArchfiendTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Graven Archfiend");
+        harness.assertNotOnBattlefield(player1, "Demonic Pact");
+    }
+
+    @Test
+    void enterAbilityIsNotPutOnTheStackWhenAdditionalCostIsNotPaid() {
+        castGravenArchfiend();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void enterAbilityIsPutOnTheStackWhenNonDemonCreatureIsSacrificed() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GravenArchfiend()));
+        addGravenArchfiendMana();
+
+        castGravenArchfiendWithSacrifice(bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getCard().getName()).isEqualTo("Graven Archfiend"));
         harness.assertNotOnBattlefield(player1, "Demonic Pact");
     }
 

@@ -40,6 +40,7 @@ class AcererakTheArchlichTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() instanceof AcererakTheArchlich);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

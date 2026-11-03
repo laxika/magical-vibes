@@ -767,6 +767,11 @@ public class Permanent {
     @Setter private boolean spectacle;
     /** Whether this permanent's optional collect-evidence additional cost was paid. */
     @Setter private boolean collectEvidenceCostPaid;
+    /**
+     * Card of the permanent sacrificed to pay this permanent's spell's sacrifice cost, so an enters ability's
+     * "if the sacrificed creature was …" is checked as the ability triggers (Graven Archfiend).
+     */
+    @Setter private Card castSacrificedCard;
     /** Whether this permanent's spell had its waterbend additional cost paid. */
     @Setter private boolean waterbendCostPaid;
     /** Whether the spell's optional reveal-a-card-from-hand additional cost was paid. */
@@ -1277,6 +1282,7 @@ public class Permanent {
         this.webSlingingReturnedCreatureManaValue = source.webSlingingReturnedCreatureManaValue;
         this.spectacle = source.spectacle;
         this.collectEvidenceCostPaid = source.collectEvidenceCostPaid;
+        this.castSacrificedCard = source.castSacrificedCard;
         this.waterbendCostPaid = source.waterbendCostPaid;
         this.revealCardFromHandCostPaid = source.revealCardFromHandCostPaid;
         this.controlledDragonAsCast = source.controlledDragonAsCast;

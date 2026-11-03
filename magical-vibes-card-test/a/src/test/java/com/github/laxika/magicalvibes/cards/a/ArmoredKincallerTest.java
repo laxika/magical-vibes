@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.m.MineshaftSpider;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -133,6 +134,36 @@ class ArmoredKincallerTest extends BaseCardTest {
         assertThat(harness.getConn2().getSentMessages())
                 .anyMatch(message -> message.contains(second.getId().toString()))
                 .allSatisfy(message -> assertThat(message).doesNotContain(first.getId().toString()));
+    }
+
+    @Test
+    void gainsLifeWhenAnotherDinosaurArrivesBeforeTheAbilityResolves() {
+        putAbilityOnStackWithHand(new MineshaftSpider());
+        harness.addToBattlefield(player1, new AncientBrontodon());
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    void doesNotGainLifeWhenTheOtherDinosaurLeavesBeforeTheAbilityResolves() {
+        Permanent otherDinosaur = harness.addToBattlefieldAndReturn(player1, new AncientBrontodon());
+        putAbilityOnStackWithHand(new MineshaftSpider());
+        gd.playerBattlefields.get(player1.getId()).remove(otherDinosaur);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+    }
+
+    private void putAbilityOnStackWithHand(com.github.laxika.magicalvibes.model.Card cardInHand) {
+        harness.setHand(player1, List.of(new ArmoredKincaller(), cardInHand));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
     }
 
     private void castWithHand(com.github.laxika.magicalvibes.model.Card cardInHand) {

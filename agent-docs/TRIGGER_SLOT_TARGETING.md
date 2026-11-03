@@ -538,11 +538,12 @@ Coven Vampires, Morkrut Banshee, Storm Fleet Pyromancer, Dreamcaller Siren, Para
 cast time: whether the ability triggers at all depends on game state as the permanent enters
 (intervening-if, CR 603.4), so `EffectResolution.computeAllowedTargets` excludes them from the
 spell's cast-time target requirement and `EtbEffectResolver` drops the trigger entirely when the
-gate isn't met. When it is met, the same `ETBTokenTargetTrigger` / `ETBTokenMultiTargetTrigger`
+gate isn't met (it checks every "when this enters, if …" option as the ability triggers, gate or
+not; the gate flag only decides when the target is chosen). When it is met, the same `ETBTokenTargetTrigger` / `ETBTokenMultiTargetTrigger`
 deferred path prompts for the target as the trigger goes on the stack (CR 603.3d); the wrapped
 `ConditionalEffect` stays on the stack entry and the gate is re-checked at resolution. When adding
 a new intervening-if condition that gates a **targeted** ETB, override `isEtbTriggerGate()` on the
-condition — both the cast-time exclusion and the `EtbEffectResolver` gate key off it.
+condition — the cast-time exclusion keys off it.
 
 **Graveyard-targeting ETBs** ("When ~ enters, return/exile/… target card from a graveyard") never
 target at cast time. `BattlefieldEntryService.queueMandatoryETBEffects` partitions these by kind and

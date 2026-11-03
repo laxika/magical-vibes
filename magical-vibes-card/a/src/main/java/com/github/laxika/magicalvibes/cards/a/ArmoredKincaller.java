@@ -19,11 +19,11 @@ public class ArmoredKincaller extends Card {
         PermanentHasSubtypePredicate dinosaur = new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR);
         ControlsAnotherPermanent controlsAnotherDinosaur = new ControlsAnotherPermanent(dinosaur);
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayRevealSubtypeFromHandEffect(
-                CardSubtype.DINOSAUR,
-                new ConditionalEffect(new NotCondition(controlsAnotherDinosaur), new GainLifeEffect(3)),
-                "Reveal a Dinosaur card from your hand?"));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(controlsAnotherDinosaur, new GainLifeEffect(3)));
+                new MayRevealSubtypeFromHandEffect(
+                        CardSubtype.DINOSAUR,
+                        ConditionalEffect.unless(new NotCondition(controlsAnotherDinosaur), new GainLifeEffect(3)),
+                        "Reveal a Dinosaur card from your hand?"),
+                ConditionalEffect.unless(controlsAnotherDinosaur, new GainLifeEffect(3)));
     }
 }

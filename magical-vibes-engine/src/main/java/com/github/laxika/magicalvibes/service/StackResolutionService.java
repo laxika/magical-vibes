@@ -447,6 +447,8 @@ public class StackResolutionService {
         perm.setCastWithWarp(entry.isCastWithWarp());
         perm.setMadness(entry.isMadness());
         perm.setCollectEvidenceCostPaid(entry.isCollectEvidenceCostPaid());
+        perm.setCastSacrificedCard(entry.getSacrificedCard() != null
+                ? entry.getSacrificedCard() : entry.getSacrificedCardSnapshot());
         if (entry.isAlternateCost() && card.getKeywords().contains(Keyword.DASH)) {
             perm.getGrantedKeywords().add(Keyword.HASTE);
         }

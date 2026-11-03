@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield.etb;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
@@ -24,15 +25,12 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
 import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.condition.SourceEntryCostPaid;
-import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.EnteredFromZone;
 import com.github.laxika.magicalvibes.model.condition.GiftPromised;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.condition.NoMonarch;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
-import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.amount.ColorManaPairsSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -72,13 +70,16 @@ import java.util.Map;
  * matches exactly one branch — a raw effect is either an unwrap type, a gate type, or neither, but
  * never both (no card nests a gate conditional inside a modal/kicked wrapper).
  *
- * <p><b>Gate vs. unwrap asymmetry (preserved deliberately):</b> trigger-time gates
- * ({@link Condition#isEtbTriggerGate()} — Metalcraft / Morbid / Raid / ControlsAnother / OpponentControlsMoreLands) return the
- * <em>conditional effect unchanged</em> when met (it stays wrapped and is re-evaluated at stack
- * resolution by {@code EffectResolutionService}), whereas Kicked / CastFromZone <em>unwrap</em> to
- * their inner effect. {@code SourceUntapped} is also unwrapped after being sampled at entry;
- * conditions with no other ETB policy pass through unchanged. Dropping ({@code null})
- * applies the intervening-if rule (CR 603.4): the ability never goes on the stack.
+ * <p><b>Gate vs. unwrap asymmetry (preserved deliberately):</b> every intervening "if" (CR 603.4) is
+ * checked as the ability triggers. A condition on the game state (Metalcraft, Morbid, Raid, "if you
+ * control another …", "if the sacrificed creature was …") returns the <em>conditional effect
+ * unchanged</em> when met (it stays wrapped and is checked again at stack resolution by
+ * {@code EffectResolutionService}), whereas Kicked / CastFromZone and the other facts fixed as the
+ * permanent enters <em>unwrap</em> to their inner effect. {@code SourceUntapped} is also unwrapped after
+ * being sampled at entry. Only a condition on the ability's target, which isn't chosen yet, passes
+ * through unchecked. Dropping ({@code null}) applies the intervening-if rule: the ability never goes
+ * on the stack. A conditional that isn't an intervening "if" ({@link ConditionalEffect#unless}) passes
+ * through unchanged.
  */
 @Component
 public class EtbEffectResolver {
@@ -149,10 +150,11 @@ public class EtbEffectResolver {
                     : (ctx.sourcePermanent().isCast() ? ctx.sourcePermanent().getCastFromZone() : null);
             boolean collectEvidenceCostPaid = ctx.sourcePermanent() != null
                     && ctx.sourcePermanent().isCollectEvidenceCostPaid();
+            Card sacrificedCard = ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getCastSacrificedCard();
             ConditionContext conditionContext = new ConditionContext(ctx.controllerId(),
                     ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getId(),
                     ctx.sourcePermanent(), ctx.card(), ctx.kicked(), false, ctx.prowl(), ctx.madness(), false, false,
-                    sourceZone, ctx.xValue(), ctx.targetId(), null, false, false, false, null, null, null,
+                    sourceZone, ctx.xValue(), ctx.targetId(), null, false, false, false, null, null, sacrificedCard,
                     ctx.repeatedAdditionalCosts(), ctx.alternateCost(),
                     ctx.sourcePermanent() != null && ctx.sourcePermanent().isSpectacle(),
                     false, collectEvidenceCostPaid, false, 0, false);
@@ -259,23 +261,6 @@ public class EtbEffectResolver {
                                 conditionContext) ? conditional.wrapped() : null)
                                 : (ctx.wasCastFromHand() && !wasCastCondition.byController()
                                 ? conditional.wrapped() : null);
-                // Intervening-if gates (CR 603.4) — Metalcraft, Morbid, Raid, ControlsAnother: keep
-                // the conditional effect when met (re-checked at stack resolution), drop it when not.
-                case Condition gate when gate.isEtbTriggerGate() && conditional.interveningIf() ->
-                        conditionEvaluationService.isMet(ctx.gameData(), gate, conditionContext)
-                                ? effect : null;
-                // Ravenous (CR 702.156a): "if X is 5 or more" is an intervening-if on the cast X, so the
-                // draw trigger is never put on the stack when X is smaller. The conditional is kept so
-                // it is rechecked on resolution.
-                case SpellXAtLeast xAtLeast ->
-                        conditionEvaluationService.isMet(ctx.gameData(), xAtLeast, conditionContext)
-                                ? effect : null;
-                // "When this enters, if there is no monarch" (CR 603.4): the monarch is checked as the
-                // trigger event occurs, so the ability is never put on the stack when a monarch exists.
-                // The conditional is kept so the condition is rechecked on resolution.
-                case NoMonarch noMonarch ->
-                        conditionEvaluationService.isMet(ctx.gameData(), noMonarch, conditionContext)
-                                ? effect : null;
                 // "if you revealed a Dragon card or controlled a Dragon as you cast this spell" (CR 603.4):
                 // both halves are cast-time facts recorded on the entering permanent, so the trigger is
                 // never put on the stack when neither was true.
@@ -291,7 +276,15 @@ public class EtbEffectResolver {
                         inner instanceof WasCast || inner instanceof ControllerMainPhase) ->
                         conditionEvaluationService.isMet(ctx.gameData(), allOf, conditionContext)
                                 ? conditional.wrapped() : null;
-                default -> effect;
+                // No target is chosen yet as the ability triggers (CR 603.3d), so a condition on it is
+                // checked only as the ability resolves.
+                case TargetPermanentMatches ignored -> effect;
+                // Any other intervening "if" (CR 603.4) — Metalcraft, Morbid, Raid, ravenous's "if X is 5 or
+                // more", "if there is no monarch", "if the sacrificed creature was …": the ability triggers
+                // only if the condition is true now, and the conditional is kept so it is checked again
+                // as the ability resolves.
+                default -> conditionEvaluationService.isMet(ctx.gameData(), conditional.condition(), conditionContext)
+                        ? effect : null;
             };
         });
     }

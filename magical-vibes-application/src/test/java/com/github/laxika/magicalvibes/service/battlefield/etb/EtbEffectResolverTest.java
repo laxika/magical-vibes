@@ -1,6 +1,11 @@
 package com.github.laxika.magicalvibes.service.battlefield.etb;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
+import com.github.laxika.magicalvibes.model.condition.SacrificedCardMatches;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -306,5 +311,37 @@ class EtbEffectResolverTest {
 
         source.setCollectEvidenceCostPaid(false);
         assertThat(resolver.resolve(sourceContext, effect)).isNull();
+    }
+
+    @Test
+    @DisplayName("Sacrificed-card intervening if is checked as the ability triggers, with the card sacrificed to cast it")
+    void sacrificedCardInterveningIf() {
+        CardPredicate filter = new CardTypePredicate(CardType.CREATURE);
+        ConditionalEffect effect = new ConditionalEffect(
+                new SacrificedCardMatches(filter, "a creature"), new DrawCardEffect(1));
+        Permanent source = new Permanent(card);
+        EtbEffectContext sourceContext = new EtbEffectContext(gameData, card, controllerId,
+                true, 0, false, false, false, source);
+
+        assertThat(resolver.resolve(sourceContext, effect)).isNull();
+
+        Card sacrificed = new Card();
+        source.setCastSacrificedCard(sacrificed);
+        when(predicateEvaluationService.matchesCardPredicate(eq(sacrificed), eq(filter), any(), eq(gameData), any()))
+                .thenReturn(true);
+        assertThat(resolver.resolve(sourceContext, effect)).isSameAs(effect);
+
+        when(predicateEvaluationService.matchesCardPredicate(eq(sacrificed), eq(filter), any(), eq(gameData), any()))
+                .thenReturn(false);
+        assertThat(resolver.resolve(sourceContext, effect)).isNull();
+    }
+
+    @Test
+    @DisplayName("An intervening if on the ability's target passes through, since no target is chosen yet")
+    void targetConditionPassesThrough() {
+        ConditionalEffect effect = new ConditionalEffect(
+                new TargetPermanentMatches(new PermanentIsCreaturePredicate()), new DrawCardEffect(1));
+
+        assertThat(resolver.resolve(ctx(true, 0, false), effect)).isSameAs(effect);
     }
 }

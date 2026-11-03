@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BLB", collectorNumber = "53")
@@ -23,7 +24,8 @@ public class Kitnap extends Card {
     public Kitnap() {
         addStaticEffect(new GiftEffect());
         addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
-                new ConditionalEffect(new GiftPromised(), new EachOtherPlayerDrawsCardEffect(1)));
+                TriggerOptions.DEFAULT.withInterveningIf(new GiftPromised()),
+                new EachOtherPlayerDrawsCardEffect(1));
         target(TargetFilters.creature())
                 .addStaticEffect(new ControlEnchantedCreatureEffect())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),

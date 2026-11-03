@@ -36,6 +36,19 @@ class PharikasSpawnTest extends BaseCardTest {
     }
 
     @Test
+    void normalCastDoesNotPutTheSacrificeAbilityOnTheStack() {
+        harness.setHand(player1, List.of(new PharikasSpawn()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addToBattlefield(player2, new NyxbornCourser());
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     void escapeExilesThreeCardsAddsCountersAndMakesEachOpponentSacrificeNonGorgonCreature() {
         PharikasSpawn spawn = new PharikasSpawn();
         NyxbornCourser first = new NyxbornCourser();

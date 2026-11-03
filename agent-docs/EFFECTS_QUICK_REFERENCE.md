@@ -2399,7 +2399,8 @@ Metalcraft / Morbid / Raid / ControlsAnotherPermanent / OpponentControlsMoreLand
 (`Condition.isEtbTriggerGate()`): a targeted ETB wrapped in one never asks for its target at cast
 time — the target is chosen as the trigger goes on the stack (see TRIGGER_SLOT_TARGETING.md,
 "Triggers.enters(ObjectRelation.THIS) targeted triggers"). Override `isEtbTriggerGate()` when adding a new
-intervening-if condition used to gate a targeted ETB.
+intervening-if condition used to gate a targeted ETB. Whether the ability triggers doesn't depend on the flag:
+`EtbEffectResolver` checks every `withInterveningIf` condition of a "when this enters" ability as it triggers.
 - `ConditionalEffect(new ControllerDealtDamageThisTurn(n), CardEffect)` — the controller was dealt at least `n` damage this turn (any source, combat or not; `GameData.damageDealtToPlayersThisTurn`). Controller-relative counterpart of `OpponentDealtDamageThisTurn`; a real intervening-if on `Triggers.endStep(ActivePlayer.ANY)` (Boarded Window with 4)
 - `ConditionalEffect(new AnyPlayerDealtCombatDamageAtLeastThisTurn(n), CardEffect)` — some player was dealt at least `n` combat damage this turn; reads `GameData.combatDamageDealtToPlayersThisTurn` and excludes noncombat damage (Sidequest: Play Blitzball)
 - `ConditionalEffect(new AnyPlayerDealtCombatDamageBySubtypeThisTurn(subtype), CardEffect)` — some player was dealt combat damage this turn by a source with the given creature subtype; uses combat-time subtype snapshots and counts Changeling as every subtype (Lost Monarch of Ifnir)

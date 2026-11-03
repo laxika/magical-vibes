@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -4526,7 +4526,8 @@ was re-rendered with `--keep-baseline`.
 Step 14 is repeatable by family (its section has the order). Run 1 converted the source's own zone changes, run 2
 the creature-death family, run 3a the other zone and permanent changes but "another object enters", run 3b "another
 object enters", run 4a the reading of the own enters abilities' options and the "this or another" enters merges, run 4b
-the own enters abilities' intervening "if"s.
+the own enters abilities' intervening "if"s, and run 4c the rules fixes: every own enters intervening "if" checked
+as the ability triggers.
 
 #### Run 1: the source's own zone changes
 
@@ -5190,6 +5191,91 @@ holds (Gwyllion Hedge-Mage, Selkie Hedge-Mage).
   `TargetLegalityServiceTest` 14, `ETBTokenTargetServiceTest` 4, `ValidTargetServiceTest` 2,
   `CreatureControlServiceTest` 1).
 - AI: `TargetPolarityGuardTest`: its 2 known failures (no converted card among them).
+- The full suite was not run here.
+
+#### Run 4c: every own enters intervening "if" is checked as the ability triggers
+
+The rules fixes run 4b found (CR 603.4, checked): the "when this enters" collector checks every intervening "if" as the
+ability triggers, with the card sacrificed to cast the permanent known by then, and the cards 4b kept are decided.
+
+**The engine.**
+
+- `EtbEffectResolver`: an intervening-if `ConditionalEffect` (an option, through run 4a's legacy view, or a card's own
+  wrapper) whose condition its switch doesn't name is checked as the ability triggers and kept, so it is checked again
+  as it resolves; before, only `isEtbTriggerGate()` conditions, ravenous's `SpellXAtLeast` and `NoMonarch` were, and
+  every other condition only as the ability resolved. Those three cases are now the default case. The one exception is
+  `TargetPermanentMatches` without an Aura's target, whose target isn't chosen as the ability triggers (CR 603.3d,
+  checked): it passes through, as before. `isEtbTriggerGate()` now decides only that a targeted gated ability chooses
+  its target as it goes on the stack.
+- `Permanent.castSacrificedCard` (copied by `Permanent(Permanent)`; `Permanent` has no `CardFreezeTest` or
+  `simulationCopy` ratchet of its own): the card sacrificed to pay the permanent's spell's sacrifice cost, set by
+  `StackResolutionService.createEnteringPermanent` from the spell's stack entry. The resolver's `ConditionContext`
+  gives it as the sacrificed card, so `SacrificedCardMatches` (Graven Archfiend) is checked as the ability triggers;
+  `carrySacrificedCardToEtbEntries` still gives it to the trigger's stack entry for the resolution check.
+- The abilities this changes: Acererak the Archlich (`NotCondition(ControllerHasCompletedDungeon)`), Graven Archfiend
+  (`SacrificedCardMatches`) and Pharika's Spawn (`SourceWasCastWithEscape`) aren't put on the stack when their
+  condition is false. Run 4b's list also named Deathbringer Regent, Inquisitor Captain and Ran and Shaw, but their
+  `AllOf`s were gates already (`AllOf.isEtbTriggerGate()` admits `WasCast`, and every other part is a gate), so they
+  were checked as they triggered. A scan of every own enters option and top-level intervening-if wrapper found no
+  other condition the switch didn't name.
+
+**Cards.** `scripts/step14-own-enters-fixes.py` (exact replacements, `--dry-run` prints the diffs):
+
+- Armored Kincaller: "you may reveal a Dinosaur card from your hand. If you do or if you control another Dinosaur,
+  you gain 3 life" has no intervening "if" (CR 603.4: the "if" doesn't follow the trigger condition). Its two
+  abilities, the second gated on controlling another Dinosaur as it triggered, are one ability whose two
+  `ConditionalEffect.unless` are checked as it resolves, so a Dinosaur that arrives while the ability is on the stack
+  counts.
+- Kitnap: gift's "when this permanent enters, if its gift cost was paid" (CR 702.174b, checked) is the option, as on
+  the other gift cards 4b converted (its script kept the card for its stun sentence). No behaviour change.
+
+**Decided: the run 4b `KEEP` cards stay.** Adipose Offspring, All-Star Kicker, Berg Strider, Desolation Angel,
+Desolation Giant, Dunbarrow Revivalist, Fblthp, the Lost, Grim Reaper's Sprint, Kinetic Ooze, Kitnap (its stun
+sentence), Rix Maadi Reveler, Sea Gate Stormcaller, Sphinx of Lost Truths and Turncoat Kunoichi write an "… instead" or
+"Then if …" sentence as an intervening-if wrapper, which isn't one, but the result is the same whenever the condition is
+checked: each condition is a fact fixed as the permanent enters (kicked, bargained, emerge, sneak or spectacle paid, the
+gift, X, snow mana, entered or cast from a library), or "if it's your main phase", which can't change while the ability
+is on the stack (CR 500.2, checked: a phase ends only with an empty stack). The collector pools the halves of one Oracle
+ability into one stack entry, as their own enters effects aren't `INDEPENDENT`. Each card's test class covers both
+branches through the engine. Run 16, which removes the `interveningIf` flag, gives them their final form; the wrappers
+should then be `unless` with a resolution check of the enters trigger's stack entry flags (kicked, spectacle, gift,
+alternate cost), which still has to be verified for each flag.
+
+**Still kept** (unchanged from 4a and 4b, for the runs named there): Death Match, Weldfast Wingsmith, Path of Discovery,
+Aether Flash, Carnival of Souls and the other "if it is [the type]" own halves; Phyrexian Dragon Engine; MACH-1;
+Bloodhall Priest, Naomi, Pillar of Order, Omnivorous Flytrap; Mythos of Illuna; evoke, tribute and Phage's keyword
+effects; the nested `ConditionalEffect`s.
+
+**Behaviour changes.**
+
+- Acererak the Archlich, Graven Archfiend and Pharika's Spawn: the ability isn't put on the stack when its intervening
+  "if" is false as it triggers (before, it was put on the stack and did nothing).
+- Armored Kincaller: a Dinosaur you control when the ability resolves counts, though it wasn't there as it triggered.
+
+**Tests changed.**
+
+- `EtbEffectResolverTest`: two new tests (a sacrificed-card intervening "if" is checked as the ability triggers, with
+  the card sacrificed to cast it; a condition on the target passes through). It also has 3 failures at HEAD, unrelated
+  to this run and failing the same way with HEAD's resolver (checked by restoring it): `ColorSpentToCast: snapshots the
+  cast-time result into the ETB trigger`, `GainLifeEqualToToughness: materialises toughness read at trigger time`,
+  `Collect-evidence gate keeps the ETB effect only when evidence was paid` (each expects the form the resolver gave
+  before a later change).
+- `GravenArchfiendTest`: two new tests (the ability isn't put on the stack without the sacrifice; it is with a non-Demon
+  creature sacrificed). `PharikasSpawnTest`: one new test (a normal cast puts no ability on the stack).
+  `AcererakTheArchlichTest.doesNotTriggerAfterDungeonCompletion`: now also asserts the stack is empty, as its name says.
+- `ArmoredKincallerTest`: two new tests (a Dinosaur arriving before the ability resolves counts; one leaving before it
+  resolves doesn't). Its other tests pass unchanged.
+
+**Test runs.**
+
+- Card: the test class of every card with a "when this enters" intervening "if" (option or wrapper), the `KEEP` cards,
+  Armored Kincaller, Kitnap and the offspring writers' cards (377 classes, 2,908 tests): no failure.
+- Application: run 4b's classes plus `EtbEffectResolverTest`, `SimulationCopyCompletenessTest` and
+  `StackResolutionServiceTest` (831 tests with the AI's): per class the failures recorded at HEAD
+  (`BattlefieldPlacementServiceTest` 24, `SpellCastingServiceTest` 10, `TargetLegalityServiceTest` 14,
+  `ETBTokenTargetServiceTest` 4, `ValidTargetServiceTest` 2, `CreatureControlServiceTest` 1,
+  `SimulationCopyCompletenessTest` 1) and `EtbEffectResolverTest`'s 3 above.
+- AI: `GameDataDeepCopyTest` passes; `TargetPolarityGuardTest` has its 2 known failures.
 - The full suite was not run here.
 
 ## Prompt
