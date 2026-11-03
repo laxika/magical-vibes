@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.StateTriggerKey;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -15,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.MiscWatch;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +34,8 @@ import java.util.UUID;
  * Implements MTG rule 603.8 — state-triggered abilities.
  *
  * <p>After state-based actions run, this service checks every permanent for
- * state-triggered abilities ({@code Triggers.state()}) whose condition is met. If the
+ * state-triggered abilities ({@code Triggers.state()}, read through {@link MiscWatch#STATE_TRIGGERED} as one
+ * {@link StateTriggerEffect} of each ability's game state) whose condition is met. If the
  * ability is not already on the stack (tracked via
  * {@link GameData#stateTriggerOnStack}), a triggered ability is pushed onto
  * the stack. The trigger won't fire again until it resolves, is countered,
@@ -44,27 +49,30 @@ public class StateTriggerService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameQueryService gameQueryService;
     private final ETBTokenTargetService etbTokenTargetService;
+    private final ConditionEvaluationService conditionEvaluationService;
 
     @Autowired
     public StateTriggerService(GameLogService gameLogService,
                                PredicateEvaluationService predicateEvaluationService,
                                GameQueryService gameQueryService,
-                               @Lazy ETBTokenTargetService etbTokenTargetService) {
+                               @Lazy ETBTokenTargetService etbTokenTargetService,
+                               @Lazy ConditionEvaluationService conditionEvaluationService) {
         this.gameLogService = gameLogService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.gameQueryService = gameQueryService;
         this.etbTokenTargetService = etbTokenTargetService;
+        this.conditionEvaluationService = conditionEvaluationService;
     }
 
     public StateTriggerService(GameLogService gameLogService,
                                PredicateEvaluationService predicateEvaluationService,
                                GameQueryService gameQueryService) {
-        this(gameLogService, predicateEvaluationService, gameQueryService, null);
+        this(gameLogService, predicateEvaluationService, gameQueryService, null, null);
     }
 
     public StateTriggerService(GameLogService gameLogService,
                                PredicateEvaluationService predicateEvaluationService) {
-        this(gameLogService, predicateEvaluationService, null, null);
+        this(gameLogService, predicateEvaluationService, null, null, null);
     }
 
 
@@ -109,6 +117,32 @@ public class StateTriggerService {
     }
 
     /**
+     * Whether the intervening "if" of a state trigger holds as its game state triggers it (CR 603.4): the legacy view
+     * ({@code TriggeredAbility.legacyEffects()}) wraps each of the ability's effects in it, as a
+     * {@link ConditionalEffect} that is checked again as the ability resolves. Without a condition evaluator (the
+     * unit-test constructors) nothing is checked here.
+     */
+    private boolean interveningIfMet(GameData gameData, StateTriggerEffect trigger, Permanent perm,
+                                     UUID controllerId) {
+        if (conditionEvaluationService == null) {
+            return true;
+        }
+        for (CardEffect effect : trigger.effects()) {
+            if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
+                    && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                    ConditionContext.forPermanent(perm, controllerId))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** The stack and log description of a state trigger: its own, or "[card name]'s state-triggered ability". */
+    private static String description(StateTriggerEffect trigger, Card card) {
+        return trigger.description() != null ? trigger.description() : card.getName() + "'s state-triggered ability";
+    }
+
+    /**
      * Checks all permanents for state-triggered abilities whose conditions are met.
      * For each qualifying permanent not already tracked, pushes a triggered ability
      * onto the stack and marks it in {@link GameData#stateTriggerOnStack}.
@@ -138,7 +172,8 @@ public class StateTriggerService {
                     StateTriggerKey key = new StateTriggerKey(perm.getId(), i);
                     if (gameData.stateTriggerOnStack.contains(key)) continue;
 
-                    if (conditionMet(gameData, trigger, perm, playerId)) {
+                    if (conditionMet(gameData, trigger, perm, playerId)
+                            && interveningIfMet(gameData, trigger, perm, playerId)) {
                         Permanent referencedPermanent = findReferencedPermanent(
                                 gameData, trigger.referencedPermanentPredicate(), perm, playerId);
                         if (trigger.referencedPermanentPredicate() != null && referencedPermanent == null) {
@@ -161,7 +196,7 @@ public class StateTriggerService {
                                     StackEntryType.TRIGGERED_ABILITY,
                                     perm.getCard(),
                                     playerId,
-                                    trigger.description(),
+                                    description(trigger, perm.getCard()),
                                     trigger.effects(),
                                     null,
                                     perm.getId()
@@ -177,7 +212,8 @@ public class StateTriggerService {
                             gameData.stack.add(entry);
                         }
 
-                        gameLogService.append(gameData, GameLog.text(trigger.description() + " triggers."));
+                        gameLogService.append(gameData,
+                                GameLog.text(description(trigger, perm.getCard()) + " triggers."));
                         log.info("Game {} - State trigger fires for {} (permanent {})",
                                 gameData.id, perm.getCard().getName(), perm.getId());
                     }
@@ -200,7 +236,8 @@ public class StateTriggerService {
             counterSnapshot.getCounters().putAll(source.getCounters());
             for (int i = 0; i < effects.size(); i++) {
                 if (!(effects.get(i) instanceof StateTriggerEffect trigger)
-                        || !conditionMet(gameData, trigger, counterSnapshot, gameData.planechase.controllerId)) {
+                        || !conditionMet(gameData, trigger, counterSnapshot, gameData.planechase.controllerId)
+                        || !interveningIfMet(gameData, trigger, counterSnapshot, gameData.planechase.controllerId)) {
                     continue;
                 }
                 StateTriggerKey key = new StateTriggerKey(source.getId(), i);

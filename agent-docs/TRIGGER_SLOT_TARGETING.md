@@ -410,7 +410,7 @@ Effects implementing `LeavingPermanentCountersAwareEffect` can bind the leaving 
 counters before queuing; targeted effects are routed through the trigger-target interaction flow.
 Non-targeting: a "you may have target player mill two cards" is a `MayEffect`-wrapped
 `MillEffect(2, TARGET_PLAYER)` whose "may" and player target are resolved on the stack),
-`Triggers.milled(THIS)`, `Triggers.putIntoGraveyardFrom(Zone.LIBRARY, THIS)`, `Triggers.state()`, `Triggers.beginningOfCombat(ActivePlayer.YOU)`,
+`Triggers.milled(THIS)`, `Triggers.putIntoGraveyardFrom(Zone.LIBRARY, THIS)`, the state triggers (`Triggers.state(…)`), `Triggers.beginningOfCombat(ActivePlayer.YOU)`,
 `Triggers.beginningOfCombat(ActivePlayer.ANY)`, `Triggers.beginningOfCombat(ActivePlayer.OPPONENT)`,
 `Triggers.creatureOpponentControlsDealtDamage()`, `Triggers.youCastSpell() from the graveyard`,
 `Triggers.youLoseLife()`,

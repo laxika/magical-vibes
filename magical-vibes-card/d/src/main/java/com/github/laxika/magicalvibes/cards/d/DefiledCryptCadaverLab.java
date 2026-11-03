@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -46,7 +45,6 @@ public class DefiledCryptCadaverLab extends Card {
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .targetGraveyard(true)
                 .build();
-        addTrigger(Triggers.doorUnlocked(),
-                new TriggeringRoomDoorConditionalEffect(1, returnCreature));
+        addTrigger(Triggers.doorUnlocked(1), returnCreature);
     }
 }

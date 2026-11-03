@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
 import com.github.laxika.magicalvibes.cards.e.EnchantedEvening;
 import com.github.laxika.magicalvibes.cards.t.TolarianWinds;
+import com.github.laxika.magicalvibes.cards.s.SongOfTheDryads;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VeiledCrocodile.class, GorillaWarrior.class, TolarianWinds.class, EnchantedEvening.class})
+@CardUsed({VeiledCrocodile.class, GorillaWarrior.class, TolarianWinds.class, EnchantedEvening.class,
+        SongOfTheDryads.class})
 class VeiledCrocodileTest extends BaseCardTest {
 
     @Test
@@ -102,5 +104,25 @@ class VeiledCrocodileTest extends BaseCardTest {
 
         assertThat(gd.stack).anySatisfy(entry ->
                 assertThat(entry.getSourcePermanentId()).isEqualTo(crocodile.getId()));
+    }
+
+    @Test
+    @DisplayName("Does not transform if it is no longer an enchantment when the trigger resolves")
+    void doesNotTransformWhenNoLongerEnchantmentAtResolution() {
+        harness.setHand(player1, List.of(new GorillaWarrior()));
+        harness.setHand(player2, List.of());
+        Permanent crocodile = harness.addToBattlefieldAndReturn(player1, new VeiledCrocodile());
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SongOfTheDryads());
+        aura.setAttachedTo(crocodile.getId());
+        assertThat(gqs.isEnchantment(gd, crocodile)).isFalse();
+
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+
+        assertThat(gqs.isCreature(gd, crocodile)).isFalse();
+        assertThat(gqs.isEnchantment(gd, crocodile)).isTrue();
     }
 }

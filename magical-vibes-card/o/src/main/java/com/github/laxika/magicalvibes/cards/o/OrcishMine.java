@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPermanen
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -16,8 +15,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "HML", collectorNumber = "78")
 public class OrcishMine extends Card {
@@ -33,10 +30,8 @@ public class OrcishMine extends Card {
         addTrigger(Triggers.enchantedPermanentBecomesTapped(), new RemoveCounterFromSourceEffect(CounterType.ORE, 1));
         // When the last ore counter is removed, destroy enchanted land and this Aura deals 2 damage to
         // that land's controller. A state trigger, so it fires however the last counter was removed.
-        addTrigger(Triggers.state(), new StateTriggerEffect(
-                new PermanentNotPredicate(new PermanentHasCountersPredicate(CounterType.ORE)),
-                List.of(new DealDamageToEnchantedPermanentControllerEffect(2),
-                        new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED)),
-                "Orcish Mine's last ore counter ability"));
+        addTrigger(Triggers.sourceState(new PermanentNotPredicate(new PermanentHasCountersPredicate(CounterType.ORE))),
+                new DealDamageToEnchantedPermanentControllerEffect(2),
+                new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED));
     }
 }

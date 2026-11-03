@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16 left) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -4538,7 +4538,9 @@ wrappers, run 6b `SpellCastTriggerEffect`, as the cast trigger's filter, the abi
 abilities (step 13's family 3), all of their wrapper kinds in one run, with the user; run 8 the damage abilities
 (step 13's family 4), run 9 the counter abilities (family 5), run 10 the becomes-the-target abilities (family 6),
 run 11 the library, draw and discard abilities (family 7), run 12 the tap and untap abilities (family 8), run 13 the
-life abilities (family 9) and run 14 the Saga abilities (family 10) the same way.
+life abilities (family 9), run 14 the Saga abilities (family 10) and run 15 everything else (family 11: actions,
+control change, attaching, crew, saddle and station, day and night, Rooms, Planechase, state triggers) the same way.
+Run 16, what no family owns, is the last.
 
 #### Run 1: the source's own zone changes
 
@@ -6715,7 +6717,7 @@ of Lake-town's and MACH-1's split halves were merged into one ability each.
 
 Step 13 family 10, every wrapper kind in one run: every Saga ability (the chapter abilities and the `SagaWatch`
 final-chapter abilities) is authored without trigger-only wrappers. The family had one: Tom Bombadil's "this ability
-triggers only once each turn", converted by script (1 card class). Family 11 (everything else, run 15) is next.
+triggers only once each turn", converted by script (1 card class). Family 11 (everything else, run 15) was next.
 
 **Authoring.**
 
@@ -6806,6 +6808,152 @@ triggers only once each turn", converted by script (1 card class). Family 11 (ev
   known from HEAD (runs 11 to 13): `DamageTriggerCollectorServiceTest` 6, `DeathTriggerCollectorServiceTest` 6,
   `SpellCastTriggerCollectorServiceTest` 3, `LandTapTriggerCollectorServiceTest` 2, and the known one each in
   `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and `CardEffectTargetingConsistencyTest`.
+- AI: the whole module (1,620 tests), with the same 10 failures as before.
+- The full suite was not run here.
+
+#### Run 15: everything else (family 11)
+
+Step 13 family 11, every wrapper kind in one run: every player and keyword action, control change, attach, crew,
+saddle and station, day and night, Room, Planechase and state-trigger ability is authored without trigger-only
+wrappers, but the ones kept below. 112 card classes were converted by script (11 of them by its `MANUAL` table).
+Run 16 is the last run of step 14.
+
+**Authoring.**
+
+- "This ability triggers only once each turn" is `TriggerLimit.ONCE_EACH_TURN`: the 13 crime cards (Magda the
+  Hoardmaster, Raven of Fell Omens, Gisa the Hellraiser, …), Curator of Sun's Creation (discover) and Inchblade
+  Companion (Equipment attach).
+- Intervening "if"s (**CR 603.4**, checked) are options: Knights of the Black Rose ("if you were the monarch as the turn
+  began"), Overzealous Muscle ("during your turn", as earlier runs made it), Barbarian Class's level.
+- "Becomes crewed / saddled for the first time each turn" is its own event, as step 13 kept "investigates for the first
+  time each turn": new `ObjectAction`s `BECOMES_CREWED_FOR_FIRST_TIME_EACH_TURN` / `BECOMES_SADDLED_FOR_FIRST_TIME_EACH_TURN`,
+  `Triggers.becomesCrewedForFirstTimeEachTurn()` (Mindlink Mech), `becomesSaddledForFirstTimeEachTurn()` (Stubborn
+  Burrowfiend). It is judged as before, by the collector's unkeyed once-each-turn mark on the Vehicle or Mount.
+- `ObjectActionTrigger` has two new components, both dropped from `watchKey()`: `filter`, the card an explore or
+  exploit is taken with (`creatureYouControlExplores().withFilter(land)`, Nicanzil, now two abilities as its Oracle text
+  says; `creatureYouControlExploits().withFilter(nonHuman)`, Henry Wu), and `door`, the Room door of "when you unlock
+  this door" (**CR 709.5h**, checked): `Triggers.doorUnlocked(0)` / `doorUnlocked(1)` (30 Rooms). `doorUnlocked()` is
+  the watch key. Other actions reject a filter or a door.
+- `PlayerActionTrigger` has a new `filter` component (only on "you set a scheme in motion", dropped from `watchKey()`):
+  `youSetSchemeInMotion().withFilter(nonOngoingScheme)` (My Laughter Echoes); Plots That Span Centuries authors its
+  plain effect. `SchemeSetInMotionTriggerEffect` is no longer authored.
+- **A state trigger's game state is its trigger** (**CR 603.8**, checked): `StateTrigger(predicate, sourcePredicate,
+  battlefieldPredicate, maximumBattlefieldMatches, minimumBattlefieldMatches, referencedPermanentPredicate)`, built by
+  `Triggers.state(StateTriggerPredicate)`, `sourceState(PermanentPredicate)`, `battlefieldHasAtMost(n, predicate)`,
+  `battlefieldHasAtLeast(n, predicate)` and `.withSource(…)`, `.withBattlefieldAtMost(…)`, `.referencing(…)`; the
+  ability's effects are its own (62 cards). `Triggers.state()` (no game state) is only the watch key: `Card` rejects it,
+  and rejects a `StateTriggerEffect` among a state trigger's effects. The four "when …, if this permanent is an
+  enchantment, …" cards (Opal Avenger, Lurking Jackals, Veiled Crocodile, Hidden Predators) have the enchantment check
+  as their intervening "if" (`SourceMatchesPermanentPredicate`); Hidden Predators' game state is
+  `battlefieldHasAtLeast(1, opponent's creature with power 4 or greater)` (it referred to that creature only to require
+  it). The authored description ("Bomb Squad's fuse trigger") is gone; the reader names the ability "[card]'s
+  state-triggered ability".
+
+**The engine.**
+
+- `ActionWatch` and `MiscWatch` read the legacy view (`effectsOf` / `registrationsOf`), so every family 11 collector
+  that reads through them gets the wrappers it read before. By hand: the crime, conjure and day/night graveyard readers
+  use `getEffectiveGraveyardLegacyTriggerEffects`, `CreatureControlService`'s granted control-change triggers the
+  legacy temporary and persistent getters.
+- `TriggeredAbility.legacyEffects()`: a state trigger is one `StateTriggerEffect.of(state, effects)` (each effect in the
+  intervening "if"'s `ConditionalEffect`; a limit or multiplicity throws); a "you set a scheme in motion" ability one
+  `SchemeSetInMotionTriggerEffect(filter, effects)` (options throw); an object-action trigger's first-time event, card
+  filter and door the unkeyed `OncePerTurnTriggerEffect`, `TriggeringCardConditionalEffect` and
+  `TriggeringRoomDoorConditionalEffect`, outside everything (options on a filtered or door ability, and a limit next to
+  a first-time event, throw: their collectors read the wrapper first). Limits and intervening "if"s use the generic
+  wrappers.
+- `StateTriggerService` checks a state trigger's intervening "if" as the game state triggers it (the top-level
+  intervening-if `ConditionalEffect`s of the record, through the new `ConditionEvaluationService` dependency; the
+  unit-test constructors skip it), and names a record without a description after its card.
+- `Card.targetIndicesForEffect` reads a target binding through `OncePerTurnTriggerEffect`,
+  `TriggeringRoomDoorConditionalEffect` and `TriggeringCardConditionalEffect`, and `appendSpellTargetingForEffectsFrom`
+  through it, so a Room entering with a door unlocked copies the door ability's targets from its legacy wrapper (the
+  card bound the plain effect now). `CreateTokenCopyOfSourceEffect` was found by class: Inchblade Companion's token
+  copy drops the ability by `withoutSourceEffect(CreateTokenCopyOfSourceEffect.class)` now.
+- No wrapper class is deleted: the legacy view still builds them. Run 16 deletes what is left.
+
+**Cards.**
+
+- `scripts/step14-misc-scan.py` (run 13's scan on the factories of `step13-action-slots.tsv` and
+  `step13-misc-slots.tsv`) lists the family's wrapped abilities: 189 card classes, 92 with locals (checked by hand for
+  wrappers; none but the ones below).
+- `scripts/step14-misc-options.py` (`--dry-run`, `--report`) did the conversion: run 13's peeling for the limits and
+  intervening "if"s (its `INTERVENING` and `KEEP` tables decide every top-level `ConditionalEffect`), a door rewrite, and
+  a `StateTriggerEffect` rewrite that maps each constructor and factory form to the `Triggers` state factories and
+  spreads the record's `List.of` effects into the call. Its `MANUAL` table holds Mindlink Mech, Stubborn Burrowfiend,
+  Inchblade Companion, Nicanzil, Henry Wu, the two schemes and the four "if this permanent is an enchantment" state
+  triggers. Running it again changes nothing.
+- `scripts/step14-misc-docs.py` rewrote 48 agent-docs passages (exact replacements). `ARCHITECTURE.md`, the
+  implement-card and review-card skills and the `Trigger.watchKey()`, watch and `StateTriggerEffect` Javadoc were edited
+  by hand.
+
+**Kept, with their reason.**
+
+- Pompeii ("whenever you roll a blank") and Mr. House ("whenever you roll a 4 or higher"): `EventValueAtLeast`
+  conditions on the die result, conditions of the event rather than intervening "if"s; a die-result filter on the
+  trigger would say them (run 16 or step 15).
+- The conditionals that don't follow the trigger condition stay effects (CR 603.4's last sentence): Valor's Reach's and
+  Sokenzan's "if it's a main phase", The Hippodrome's and Kharasha Foothills', Avatar Aang's "then if", Henry Wu's
+  "if the exploited creature had power 3 or greater", Victor's resolution counts.
+- Olivia, Crimson Bride grants a state trigger through a static ability, still a `StateTriggerEffect` with its
+  description.
+- The Eerie cards ("whenever an enchantment you control enters and whenever you fully unlock a Room") are still an
+  enters ability and an unlock ability sharing one effect (no wrapper); merging them is a later cleanup, as run 12 left
+  Freyalise's Winds. Paranormal Analyst's triggering card and Goblin Crash Pilot's delayed trigger are event data and an
+  effect.
+
+**Behaviour changes.**
+
+- Rules fix: Veiled Crocodile and Hidden Predators check "if this permanent is an enchantment" again as the ability
+  resolves (CR 603.4); they checked it only as the state triggered. New card tests
+  (`doesNotTransformWhenNoLongerEnchantmentAtResolution`) resolve it through the engine; the Veiled Crocodile one fails
+  on the old form. Opal Avenger and Lurking Jackals already checked both times (a source predicate and a
+  `ConditionalEffect`); they check the one option now.
+- A state trigger's stack and log text is "[card]'s state-triggered ability" for every card; four cards had their own
+  (Aretopolis, Bomb Squad, Garruk Relentless, Orcish Mine).
+- The once-each-turn limits of the crime cards, Curator of Sun's Creation and Inchblade Companion are keyed by the
+  ability, where the unkeyed wrapper shared the source's mark; none of them has another unkeyed once-each-turn ability.
+- Nicanzil has two abilities where it had one; the explore collector still puts every matching effect of the card on
+  one stack entry, as before.
+- Nothing else changed: the legacy view hands every collector the wrappers it read before. No may question moved.
+
+**For later runs.**
+
+- Run 16: the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags, the
+  `onlyIfSacrificed` flags and the wrapper classes left, as planned; the kept die-result conditions above; the Eerie
+  merges.
+- The explore collector merges the effects of all of a card's explore abilities into one stack object (CR 603.3 wants
+  one per ability); the Ring's two triggers (step 13 run 11a) are still apart.
+- Step 15: as step 13 runs 11a and 11b listed; also the state trigger's referenced permanent.
+
+**Tests changed.**
+
+- `MiscTriggerTest`: the state-trigger rejection case expects the new messages (no game state, a `StateTriggerEffect`);
+  seven new tests: a state trigger's watch key and its one-record legacy view with the intervening "if" (stable
+  identity; a limit rejected), a door's and an explored card's watch key and wrappers (options rejected), which actions
+  take a door or a filter, the first-time crew and saddle events' watch keys and unkeyed wrapper (a limit rejected),
+  the scheme record with and without a filter (options rejected), a limit read as the keyed mark. The factory list
+  covers the new factories.
+- `StateTriggerServiceTest` (by a one-off script, then by hand): the fixtures author `StateTrigger`s and pass the
+  effects to `addTrigger`; the description assertions expect "[card]'s state-triggered ability" or compare the
+  effects; the rejection case is `rejectsStateTriggerWithoutGameState`; new `checksInterveningIfAsItTriggers` (with a
+  `ConditionEvaluationService` mock).
+- `SpellCastingServiceTest#preparingRoomDoorPreservesTheUnlockAbilityTargetGroup` and
+  `StackResolutionServiceTest#enteringRoomRetainsItsDoorAbilityTargetGroupsAfterModalCasting` author
+  `Triggers.doorUnlocked(1)` with the plain effect.
+- `VeiledCrocodileTest`, `HiddenPredatorsTest`: the rules-fix tests above.
+
+**Test runs.**
+
+- Card: the test class of every card that uses a family 11 factory (converted or not) and every card test that
+  constructs one of them (699 classes, 5,498 tests): all passing.
+- Application: the `service.trigger` and `model.trigger` packages and the state-trigger, stack-resolution,
+  spell-casting, creature-control, planechase, state-based action, freeze, triggered-ability, card-ability,
+  granted-ability, legacy-slot, architecture, simulation-copy and targeting-consistency classes (1,015 tests): 46
+  failures, all known from HEAD (runs 11b to 14): `SpellCastingServiceTest` 10, `StateBasedActionServiceTest` 13,
+  `DamageTriggerCollectorServiceTest` 6, `DeathTriggerCollectorServiceTest` 6, `SpellCastTriggerCollectorServiceTest` 3,
+  `LandTapTriggerCollectorServiceTest` 2, `PlanechaseServiceTest` 2, `CreatureControlServiceTest` 1, and the known one
+  each in `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and `CardEffectTargetingConsistencyTest`.
 - AI: the whole module (1,620 tests), with the same 10 failures as before.
 - The full suite was not run here.
 

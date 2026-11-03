@@ -11,14 +11,11 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentCountAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "DRK", collectorNumber = "29")
 public class GiantShark extends Card {
@@ -39,11 +36,8 @@ public class GiantShark extends Card {
                 TriggerOptions.EACH_BLOCKER,
                 damagedCombatOpponentBonus);
 
-        addTrigger(Triggers.state(), new StateTriggerEffect(
-                new PermanentControllerControlsPermanentCountAtMostPredicate(
-                        0, new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
-                List.of(new SacrificeSelfEffect()),
-                "Giant Shark's state-triggered ability"
-        ));
+        addTrigger(Triggers.sourceState(new PermanentControllerControlsPermanentCountAtMostPredicate(
+                        0, new PermanentHasSubtypePredicate(CardSubtype.ISLAND))),
+                new SacrificeSelfEffect());
     }
 }

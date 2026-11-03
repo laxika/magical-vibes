@@ -9,12 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentCounterCountAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "OPC2", collectorNumber = "10")
 @CardRegistration(set = "OPCA", collectorNumber = "13")
@@ -30,8 +27,7 @@ public class Aretopolis extends Card {
         addTrigger(Triggers.chaosEnsues(), SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.SCROLL),
                 new DrawCardEffect(new CountersOnSource(CounterType.SCROLL))));
-        addTrigger(Triggers.state(),
-                new StateTriggerEffect(new PermanentCounterCountAtLeastPredicate(CounterType.SCROLL, 10),
-                        List.of(new PlaneswalkEffect()), "Aretopolis's scroll counter ability"));
+        addTrigger(Triggers.sourceState(new PermanentCounterCountAtLeastPredicate(CounterType.SCROLL, 10)),
+                new PlaneswalkEffect());
     }
 }

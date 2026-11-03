@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -22,12 +21,9 @@ public class EmperorCrocodile extends Card {
     public EmperorCrocodile() {
         // "When you control no other creatures, sacrifice this creature." —
         // State-triggered ability (MTG rule 603.8). The crocodile itself is excluded.
-        addTrigger(Triggers.state(), StateTriggerEffect.whenBattlefieldHasAtMost(0,
-                new PermanentAllOfPredicate(List.of(new PermanentControlledBySourceControllerPredicate(),
+        addTrigger(Triggers.battlefieldHasAtMost(0, new PermanentAllOfPredicate(List.of(new PermanentControlledBySourceControllerPredicate(),
                         new PermanentIsCreaturePredicate(),
-                        new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))),
-                List.of(new SacrificeSelfEffect()),
-                "Emperor Crocodile's state-triggered ability"
-        ));
+                        new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())))),
+                new SacrificeSelfEffect());
     }
 }

@@ -9,14 +9,12 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentChosenColorStrictlyMostCommonPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ICE", collectorNumber = "10")
@@ -36,12 +34,9 @@ public class CallToArms extends Card {
                         new PermanentColorInPredicate(Set.of(CardColor.WHITE)))));
 
         // "When the chosen color isn't the most common … or is tied for most common, sacrifice this."
-        addTrigger(Triggers.state(), new StateTriggerEffect(
-                (gameData, sourcePermanent, controllerId) -> sourcePermanent.getChosenColor() != null,
-                new PermanentNotPredicate(new PermanentChosenColorStrictlyMostCommonPredicate()),
-                null, 0, null,
-                List.of(new SacrificeSelfEffect()),
-                "Call to Arms's state-triggered ability"
-        ));
+        addTrigger(Triggers.state(
+                        (gameData, sourcePermanent, controllerId) -> sourcePermanent.getChosenColor() != null)
+                        .withSource(new PermanentNotPredicate(new PermanentChosenColorStrictlyMostCommonPredicate())),
+                new SacrificeSelfEffect());
     }
 }

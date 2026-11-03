@@ -8,8 +8,9 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
@@ -19,7 +20,8 @@ public class VadmirNewBlood extends Card {
 
     public VadmirNewBlood() {
         addTrigger(Triggers.youCommitCrime(),
-                new OncePerTurnTriggerEffect(new PutCountersOnSourceEffect(1, 1, 1)));
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new PutCountersOnSourceEffect(1, 1, 1));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(4, CounterType.PLUS_ONE_PLUS_ONE),
                 new GrantKeywordEffect(Set.of(Keyword.MENACE, Keyword.LIFELINK), GrantScope.SELF)));

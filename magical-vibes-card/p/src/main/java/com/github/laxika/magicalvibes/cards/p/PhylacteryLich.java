@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -24,14 +23,11 @@ public class PhylacteryLich extends Card {
 
         // "When you control no permanents with phylactery counters on them, sacrifice
         // Phylactery Lich." — State-triggered ability (MTG rule 603.8).
-        addTrigger(Triggers.state(), new StateTriggerEffect(
-                (gameData, sourcePermanent, controllerId) -> {
+        addTrigger(Triggers.state((gameData, sourcePermanent, controllerId) -> {
                     List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
                     if (battlefield == null) return true;
                     return battlefield.stream().noneMatch(p -> p.getCounterCount(CounterType.PHYLACTERY) > 0);
-                },
-                List.of(new SacrificeSelfEffect()),
-                "Phylactery Lich's state-triggered ability"
-        ));
+                }),
+                new SacrificeSelfEffect());
     }
 }

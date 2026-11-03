@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -32,11 +31,11 @@ public class GlassworksShatteredYard extends Card {
                         .withManaCost("{4}{R}")
         )));
 
-        target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.doorUnlocked(),
-                new TriggeringRoomDoorConditionalEffect(0, new DealDamageToTargetCreatureEffect(4,
+        target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.doorUnlocked(0),
+                new DealDamageToTargetCreatureEffect(4,
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
-                                new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))))));
+                                new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())))));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceRoomDoorUnlocked(1)),

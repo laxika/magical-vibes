@@ -6,22 +6,17 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DamageToControllerCounterReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "SCG", collectorNumber = "14")
 public class ForceBubble extends Card {
 
     public ForceBubble() {
         addStaticEffect(new DamageToControllerCounterReplacementEffect(CounterType.DEPLETION));
-        addTrigger(Triggers.state(), new StateTriggerEffect(
-                new PermanentHasAtLeastCountersPredicate(CounterType.DEPLETION, 4),
-                List.of(new SacrificeSelfEffect()),
-                "Force Bubble's state-triggered ability"));
+        addTrigger(Triggers.sourceState(new PermanentHasAtLeastCountersPredicate(CounterType.DEPLETION, 4)),
+                new SacrificeSelfEffect());
         addTrigger(Triggers.endStep(ActivePlayer.ANY),
                 new RemoveAllCountersEffect(CounterType.DEPLETION));
     }

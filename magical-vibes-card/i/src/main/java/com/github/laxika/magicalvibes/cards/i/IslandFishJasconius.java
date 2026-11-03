@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -43,11 +42,9 @@ public class IslandFishJasconius extends Card {
 
         // "When you control no Islands, sacrifice this creature." —
         // State-triggered ability (MTG rule 603.8).
-        addTrigger(Triggers.state(), StateTriggerEffect.whenBattlefieldHasAtMost(0,
-                new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.battlefieldHasAtMost(0, new PermanentAllOfPredicate(List.of(
                         new PermanentControlledBySourceControllerPredicate(),
-                        new PermanentHasSubtypePredicate(CardSubtype.ISLAND))),
-                List.of(new SacrificeSelfEffect()),
-                "Island Fish Jasconius's state-triggered ability"));
+                        new PermanentHasSubtypePredicate(CardSubtype.ISLAND)))),
+                new SacrificeSelfEffect());
     }
 }

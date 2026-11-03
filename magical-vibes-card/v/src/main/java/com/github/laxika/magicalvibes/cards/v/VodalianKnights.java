@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
@@ -29,12 +28,9 @@ public class VodalianKnights extends Card {
                 "an Island"
         ));
 
-        addTrigger(Triggers.state(), new StateTriggerEffect(
-                new PermanentNotPredicate(new PermanentControllerControlsPermanentPredicate(
-                        new PermanentHasSubtypePredicate(CardSubtype.ISLAND))),
-                List.of(new SacrificeSelfEffect()),
-                "Vodalian Knights's state-triggered ability"
-        ));
+        addTrigger(Triggers.sourceState(new PermanentNotPredicate(new PermanentControllerControlsPermanentPredicate(
+                        new PermanentHasSubtypePredicate(CardSubtype.ISLAND)))),
+                new SacrificeSelfEffect());
 
         addActivatedAbility(new ActivatedAbility(false, "{U}",
                 List.of(new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)),

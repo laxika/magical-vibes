@@ -107,10 +107,10 @@ class StackResolutionServiceTest {
         Card physical = createEnchantment("Room");
         physical.setSubtypes(List.of(CardSubtype.ROOM));
         physical.setRoomDoorManaCosts(List.of("{1}{W}", "{2}{W}"));
-        var effect = new com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect(1,
-                new com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
+        var effect = new com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect(
+                CounterType.PLUS_ONE_PLUS_ONE);
         physical.target(com.github.laxika.magicalvibes.model.filter.TargetFilters.creature(), 0, 2)
-                .addTrigger(Triggers.doorUnlocked(), effect);
+                .addTrigger(Triggers.doorUnlocked(1), effect);
         Card spell = physical.createRuntimeCopy();
         spell.setSelectedRoomDoor(0);
         spell.clearRuntimeSpellTargets();

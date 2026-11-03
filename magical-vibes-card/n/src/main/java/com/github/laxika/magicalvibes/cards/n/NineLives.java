@@ -6,11 +6,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToControllerAndPutCounterOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "28")
 @CardRegistration(set = "M21", collectorNumber = "344")
@@ -21,11 +18,9 @@ public class NineLives extends Card {
 
     public NineLives() {
         addStaticEffect(new PreventDamageToControllerAndPutCounterOnSelfEffect(CounterType.INCARNATION));
-        addTrigger(Triggers.state(), new StateTriggerEffect(
-                (gameData, sourcePermanent, controllerId) ->
-                        sourcePermanent.getCounterCount(CounterType.INCARNATION) >= 9,
-                List.of(new ExileSelfEffect()),
-                "Nine Lives's state-triggered ability"));
+        addTrigger(Triggers.state((gameData, sourcePermanent, controllerId) ->
+                        sourcePermanent.getCounterCount(CounterType.INCARNATION) >= 9),
+                new ExileSelfEffect());
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new ControllerLosesGameOnLeavesEffect());
     }
 }

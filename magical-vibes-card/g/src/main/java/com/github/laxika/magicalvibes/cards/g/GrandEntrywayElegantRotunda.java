@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -32,11 +31,9 @@ public class GrandEntrywayElegantRotunda extends Card {
         CreateTokenEffect glimmerToken = new CreateTokenEffect(
                 1, "Glimmer", 1, 1, CardColor.WHITE, List.of(CardSubtype.GLIMMER), Set.of(),
                 Set.of(CardType.ENCHANTMENT));
-        addTrigger(Triggers.doorUnlocked(),
-                new TriggeringRoomDoorConditionalEffect(0, glimmerToken));
+        addTrigger(Triggers.doorUnlocked(0), glimmerToken);
 
-        target(TargetFilters.creature(), 0, 2).addTrigger(Triggers.doorUnlocked(),
-                new TriggeringRoomDoorConditionalEffect(1,
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)));
+        target(TargetFilters.creature(), 0, 2).addTrigger(Triggers.doorUnlocked(1),
+                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

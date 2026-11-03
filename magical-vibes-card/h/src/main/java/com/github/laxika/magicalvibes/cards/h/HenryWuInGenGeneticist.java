@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -42,12 +41,10 @@ public class HenryWuInGenGeneticist extends Card {
                 new MayEffect(new ExploitEffect(), "Sacrifice a creature?")),
                 GrantScope.OWN_CREATURES, human));
 
-        addTrigger(Triggers.creatureYouControlExploits(),
-                new TriggeringCardConditionalEffect(
-                        new CardNotPredicate(new CardSubtypePredicate(CardSubtype.HUMAN)),
-                        SequenceEffect.of(
-                                new DrawCardEffect(1),
-                                new ConditionalEffect(new EventValueAtLeast(3),
-                                        CreateTokenEffect.ofTreasureToken(1)))));
+        addTrigger(Triggers.creatureYouControlExploits()
+                        .withFilter(new CardNotPredicate(new CardSubtypePredicate(CardSubtype.HUMAN))),
+                SequenceEffect.of(
+                        new DrawCardEffect(1),
+                        new ConditionalEffect(new EventValueAtLeast(3), CreateTokenEffect.ofTreasureToken(1))));
     }
 }

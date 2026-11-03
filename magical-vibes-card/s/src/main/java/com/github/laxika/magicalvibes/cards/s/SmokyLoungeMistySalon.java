@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
-import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -40,10 +39,9 @@ public class SmokyLoungeMistySalon extends Card {
                 new AwardRestrictedManaEffect(ManaColor.RED, 2, new ManaRestriction.RoomSpellsOrUnlocks()));
 
         DynamicAmount unlockedDoors = new UnlockedRoomDoorsCount(CountScope.CONTROLLER);
-        addTrigger(Triggers.doorUnlocked(),
-                new TriggeringRoomDoorConditionalEffect(1,
-                        new CreateTokenEffect(
-                                "Spirit", unlockedDoors, unlockedDoors, CardColor.BLUE,
-                                List.of(CardSubtype.SPIRIT), Set.of(Keyword.FLYING), Set.of())));
+        addTrigger(Triggers.doorUnlocked(1),
+                new CreateTokenEffect(
+                        "Spirit", unlockedDoors, unlockedDoors, CardColor.BLUE,
+                        List.of(CardSubtype.SPIRIT), Set.of(Keyword.FLYING), Set.of()));
     }
 }

@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SaddleCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -26,10 +25,9 @@ public class StubbornBurrowfiend extends Card {
     public StubbornBurrowfiend() {
         CardsInGraveyard creatureCardsInGraveyard = new CardsInGraveyard(
                 new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER);
-        addTrigger(Triggers.becomesSaddled(), new OncePerTurnTriggerEffect(
-                SequenceEffect.of(
-                        new MillEffect(2, MillRecipient.CONTROLLER),
-                        new BoostSelfEffect(creatureCardsInGraveyard, creatureCardsInGraveyard))));
+        addTrigger(Triggers.becomesSaddledForFirstTimeEachTurn(), SequenceEffect.of(
+                new MillEffect(2, MillRecipient.CONTROLLER),
+                new BoostSelfEffect(creatureCardsInGraveyard, creatureCardsInGraveyard)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -23,9 +23,10 @@ public sealed interface Trigger permits AbilityTrigger, AttachTrigger, ChapterTr
 
     /**
      * The trigger the old collectors read this one's abilities by (a {@code TriggerWatch}'s trigger): this trigger
-     * without the filters they still judge from the wrappers {@code TriggeredAbility.legacyEffects()} gives. Only the
-     * spell, land-play, activation, combat, damage and counter triggers have such filters (a counter trigger's key may
-     * also name the event whose collector reads it); every other trigger is its own key.
+     * without the filters they still judge from the wrappers {@code TriggeredAbility.legacyEffects()} gives (a filter,
+     * a Room door, a state trigger's game state), and for some the trigger of the event whose collector reads it (a
+     * counter or tap trigger, "becomes crewed for the first time each turn"). A trigger without such filters is its own
+     * key.
      */
     default Trigger watchKey() {
         return this;

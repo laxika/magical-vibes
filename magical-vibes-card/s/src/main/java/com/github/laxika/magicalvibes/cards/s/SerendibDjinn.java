@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerIfSacrificedCardMatchesEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -30,11 +29,9 @@ public class SerendibDjinn extends Card {
                 "a land", false, false));
 
         // When you control no lands, sacrifice this creature. State-triggered ability.
-        addTrigger(Triggers.state(), StateTriggerEffect.whenBattlefieldHasAtMost(0,
-                new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.battlefieldHasAtMost(0, new PermanentAllOfPredicate(List.of(
                         new PermanentControlledBySourceControllerPredicate(),
-                        new PermanentIsLandPredicate())),
-                List.of(new SacrificeSelfEffect()),
-                "Serendib Djinn's state-triggered ability"));
+                        new PermanentIsLandPredicate()))),
+                new SacrificeSelfEffect());
     }
 }

@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -35,13 +34,12 @@ public class RoaringFurnaceSteamingSauna extends Card {
                         .withManaCost("{3}{U}{U}")
         )));
 
-        target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.doorUnlocked(),
-                new TriggeringRoomDoorConditionalEffect(0,
-                        new DealDamageToTargetCreatureEffect(new CardsInHand(CountScope.CONTROLLER), false,
-                                new PermanentAllOfPredicate(List.of(
-                                        new PermanentIsCreaturePredicate(),
-                                        new PermanentNotPredicate(
-                                                new PermanentControlledBySourceControllerPredicate()))))));
+        target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.doorUnlocked(0),
+                new DealDamageToTargetCreatureEffect(new CardsInHand(CountScope.CONTROLLER), false,
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentNotPredicate(
+                                        new PermanentControlledBySourceControllerPredicate())))));
 
         addStaticEffect(new ConditionalEffect(new SourceRoomDoorUnlocked(1),
                 new NoMaximumHandSizeEffect()));

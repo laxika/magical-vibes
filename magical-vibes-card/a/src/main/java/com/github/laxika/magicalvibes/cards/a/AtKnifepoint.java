@@ -14,9 +14,10 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -39,7 +40,8 @@ public class AtKnifepoint extends Card {
                         new PermanentHasAnySubtypePredicate(OUTLAW_SUBTYPES))));
 
         addTrigger(Triggers.youCommitCrime(),
-                new OncePerTurnTriggerEffect(mercenaryToken()));
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                mercenaryToken());
     }
 
     private static CreateTokenEffect mercenaryToken() {

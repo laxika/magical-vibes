@@ -472,8 +472,8 @@ public class CreatureControlService {
     private void queueSelfControlChangeTriggers(GameData gameData, Permanent permanent, UUID controllerId) {
         List<CardEffect> effects = new ArrayList<>(
                 MiscWatch.ON_SELF_BECOMES_CONTROLLED.effectsOf(permanent.getCard()));
-        effects.addAll(permanent.getTemporaryTriggerEffects(MiscWatch.ON_SELF_BECOMES_CONTROLLED.trigger()));
-        effects.addAll(permanent.getPersistentTriggerEffects(MiscWatch.ON_SELF_BECOMES_CONTROLLED.trigger()));
+        effects.addAll(permanent.getLegacyTemporaryTriggerEffects(MiscWatch.ON_SELF_BECOMES_CONTROLLED.trigger()));
+        effects.addAll(permanent.getLegacyPersistentTriggerEffects(MiscWatch.ON_SELF_BECOMES_CONTROLLED.trigger()));
 
         for (CardEffect effect : effects) {
             StackEntry entry = new StackEntry(
@@ -495,8 +495,8 @@ public class CreatureControlService {
                                               UUID controllerId) {
         List<CardEffect> effects = new ArrayList<>(
                 MiscWatch.ON_SELF_LOSES_CONTROL.effectsOf(permanent.getCard()));
-        effects.addAll(permanent.getTemporaryTriggerEffects(MiscWatch.ON_SELF_LOSES_CONTROL.trigger()));
-        effects.addAll(permanent.getPersistentTriggerEffects(MiscWatch.ON_SELF_LOSES_CONTROL.trigger()));
+        effects.addAll(permanent.getLegacyTemporaryTriggerEffects(MiscWatch.ON_SELF_LOSES_CONTROL.trigger()));
+        effects.addAll(permanent.getLegacyPersistentTriggerEffects(MiscWatch.ON_SELF_LOSES_CONTROL.trigger()));
 
         for (CardEffect effect : effects) {
             StackEntry entry = new StackEntry(

@@ -5,11 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureWithLeastPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 /**
  * Porphyry Nodes — {W} Enchantment.
@@ -23,10 +20,6 @@ public class PorphyryNodes extends Card {
     public PorphyryNodes() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new DestroyCreatureWithLeastPowerEffect(true));
 
-        addTrigger(Triggers.state(), StateTriggerEffect.whenBattlefieldHasAtMost(
-                0, new PermanentIsCreaturePredicate(),
-                List.of(new SacrificeSelfEffect()),
-                "Porphyry Nodes's state-triggered ability"
-        ));
+        addTrigger(Triggers.battlefieldHasAtMost(0, new PermanentIsCreaturePredicate()), new SacrificeSelfEffect());
     }
 }

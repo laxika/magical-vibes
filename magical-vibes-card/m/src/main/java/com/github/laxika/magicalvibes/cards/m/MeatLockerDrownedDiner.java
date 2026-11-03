@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -30,14 +29,14 @@ public class MeatLockerDrownedDiner extends Card {
                         .withManaCost("{3}{U}{U}")
         )));
 
-        target(TargetFilters.creature(), 0, 1).addTrigger(Triggers.doorUnlocked(),
-                new TriggeringRoomDoorConditionalEffect(0, SequenceEffect.of(
+        target(TargetFilters.creature(), 0, 1).addTrigger(Triggers.doorUnlocked(0),
+                SequenceEffect.of(
                         new TapPermanentsEffect(TapUntapScope.TARGET),
-                        new PutCounterOnTargetPermanentEffect(CounterType.STUN, 2))));
+                        new PutCounterOnTargetPermanentEffect(CounterType.STUN, 2)));
 
-        addTrigger(Triggers.doorUnlocked(),
-                new TriggeringRoomDoorConditionalEffect(1, SequenceEffect.of(
+        addTrigger(Triggers.doorUnlocked(1),
+                SequenceEffect.of(
                         new DrawCardEffect(3),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER))));
+                        new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
     }
 }

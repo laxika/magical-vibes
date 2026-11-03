@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.trigger;
 
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+
 import java.util.Objects;
 
 /**
@@ -8,12 +10,41 @@ import java.util.Objects;
  *
  * @param action what the player does or what happens to them
  * @param player who, relative to the ability's controller
+ * @param filter what the card the action is taken with must be, or {@code null} for any card: only the scheme set in
+ *               motion ("whenever you set a non-ongoing scheme in motion" is
+ *               {@code Triggers.youSetSchemeInMotion().withFilter(nonOngoingScheme)}). The scheme collector reads it
+ *               from the legacy view ({@code TriggeredAbility.legacyEffects()}) as the
+ *               {@code SchemeSetInMotionTriggerEffect} it judges, so {@link #watchKey()} drops it
  */
-public record PlayerActionTrigger(PlayerAction action, PlayerRelation player) implements Trigger {
+public record PlayerActionTrigger(PlayerAction action, PlayerRelation player, CardPredicate filter)
+        implements Trigger {
 
     public PlayerActionTrigger {
         Objects.requireNonNull(action, "action");
         Objects.requireNonNull(player, "player");
+        if (filter != null && action != PlayerAction.SETS_SCHEME_IN_MOTION) {
+            throw new IllegalArgumentException("Only a scheme trigger takes a card filter: " + action);
+        }
+    }
+
+    /** A trigger on every {@code action} of the player {@code player} names. */
+    public PlayerActionTrigger(PlayerAction action, PlayerRelation player) {
+        this(action, player, null);
+    }
+
+    /** This trigger narrowed to an action taken with a card that matches {@code filter}, as {@link #filter} says. */
+    public PlayerActionTrigger withFilter(CardPredicate filter) {
+        Objects.requireNonNull(filter, "filter");
+        if (this.filter != null) {
+            throw new IllegalStateException("This trigger already has a filter: " + this);
+        }
+        return new PlayerActionTrigger(action, player, filter);
+    }
+
+    /** The trigger the collectors read this one's abilities by: without its {@link #filter}. */
+    @Override
+    public Trigger watchKey() {
+        return filter == null ? this : new PlayerActionTrigger(action, player);
     }
 
     /** What a player does, or what happens to them. */

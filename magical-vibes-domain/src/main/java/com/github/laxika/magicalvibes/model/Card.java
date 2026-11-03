@@ -1163,7 +1163,7 @@ public class Card {
         effectSet.addAll(effects);
         Set<Integer> sourceTargetIndices = new java.util.HashSet<>();
         for (CardEffect effect : effectSet) {
-            List<Integer> targetIndices = source.effectTargetIndexMap.get(effect);
+            List<Integer> targetIndices = source.targetIndicesForEffect(effect);
             if (targetIndices != null) {
                 sourceTargetIndices.addAll(targetIndices);
             }
@@ -1193,9 +1193,10 @@ public class Card {
             targetIndexMap.put(sourceTarget.getIndex(), targetIndex);
         }
 
-        source.effectTargetIndexMap.forEach((effect, targetIndices) -> {
-            if (!effectSet.contains(effect)) {
-                return;
+        for (CardEffect effect : effectSet) {
+            List<Integer> targetIndices = source.targetIndicesForEffect(effect);
+            if (targetIndices == null) {
+                continue;
             }
             targetIndices.forEach(sourceTargetIndex -> {
                 Integer targetIndex = targetIndexMap.get(sourceTargetIndex);
@@ -1203,7 +1204,7 @@ public class Card {
                     bindEffectToTargetGroup(effect, targetIndex);
                 }
             });
-        });
+        }
         syncSpellTargets();
     }
 
@@ -1429,6 +1430,17 @@ public class Card {
         }
         if (effect instanceof ConditionalEffect conditional) {
             return targetIndicesForEffect(conditional.wrapped());
+        }
+        // The legacy view of a triggered ability (TriggeredAbility.legacyEffects()) wraps the effects the card bound
+        // in the wrappers its collector judges; they target through the effect they wrap.
+        if (effect instanceof OncePerTurnTriggerEffect once) {
+            return targetIndicesForEffect(once.wrapped());
+        }
+        if (effect instanceof TriggeringRoomDoorConditionalEffect door) {
+            return targetIndicesForEffect(door.wrapped());
+        }
+        if (effect instanceof TriggeringCardConditionalEffect cardConditional) {
+            return targetIndicesForEffect(cardConditional.wrapped());
         }
         if (effect instanceof SequenceEffect sequence) {
             // A sequence assembled at resolution (a reflexive trigger's counters-then-phase-out) targets
@@ -2092,17 +2104,26 @@ public class Card {
     }
 
     /**
-     * A state trigger's game state is its {@link StateTriggerEffect}'s condition (CR 603.8), so it has no other
-     * effect.
+     * A state trigger's game state is its {@link StateTrigger}'s components (CR 603.8), so it names one, is the only
+     * condition of its ability, and has no {@link StateTriggerEffect} among the ability's effects: the legacy view
+     * ({@link TriggeredAbility#legacyEffects()}) builds that record for the state-trigger reader.
      */
     private static void validateStateTriggerEffects(TriggeredAbility ability) {
         if (ability.conditions().stream().noneMatch(condition -> condition.trigger() instanceof StateTrigger)) {
             return;
         }
+        if (ability.conditions().size() > 1) {
+            throw new IllegalArgumentException("A state trigger is the only condition of its ability: "
+                    + ability.conditions());
+        }
+        if (!(ability.conditions().getFirst().trigger() instanceof StateTrigger state) || !state.hasState()) {
+            throw new IllegalArgumentException("A state trigger needs its game state, as Triggers.state(predicate), "
+                    + "sourceState, battlefieldHasAtMost or battlefieldHasAtLeast build it");
+        }
         for (EffectRegistration registration : ability.effects()) {
-            if (!(registration.effect() instanceof StateTriggerEffect)) {
-                throw new IllegalArgumentException("A state trigger requires a StateTriggerEffect, got "
-                        + registration.effect().getClass().getSimpleName());
+            if (registration.effect() instanceof StateTriggerEffect) {
+                throw new IllegalArgumentException("A state trigger's game state is its StateTrigger's, not a "
+                        + "StateTriggerEffect's");
             }
         }
     }

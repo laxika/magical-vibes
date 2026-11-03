@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -25,11 +24,9 @@ public class PlagueBoiler extends Card {
     public PlagueBoiler() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCountersOnSelfEffect(CounterType.PLAGUE));
 
-        addTrigger(Triggers.state(), new StateTriggerEffect(
-                new PermanentHasAtLeastCountersPredicate(CounterType.PLAGUE, 3),
-                List.of(new SacrificeSelfThenEffect(new DestroyAllPermanentsEffect(
-                        new PermanentNotPredicate(new PermanentIsLandPredicate())))),
-                "Plague Boiler's state-triggered ability"));
+        addTrigger(Triggers.sourceState(new PermanentHasAtLeastCountersPredicate(CounterType.PLAGUE, 3)),
+                new SacrificeSelfThenEffect(new DestroyAllPermanentsEffect(
+                        new PermanentNotPredicate(new PermanentIsLandPredicate()))));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

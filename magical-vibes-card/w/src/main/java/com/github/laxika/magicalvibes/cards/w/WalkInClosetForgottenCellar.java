@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnCardsInsteadOfGraveyardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -30,9 +29,9 @@ public class WalkInClosetForgottenCellar extends Card {
 
         addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(0), new PlayLandsFromGraveyardEffect()));
-        addTrigger(Triggers.doorUnlocked(),
-                new TriggeringRoomDoorConditionalEffect(1, SequenceEffect.of(
+        addTrigger(Triggers.doorUnlocked(1),
+                SequenceEffect.of(
                         new AllowCastMatchingCardsFromGraveyardThisTurnEffect(new CardTruePredicate()),
-                        new ExileOwnCardsInsteadOfGraveyardUntilEndOfTurnEffect())));
+                        new ExileOwnCardsInsteadOfGraveyardUntilEndOfTurnEffect()));
     }
 }

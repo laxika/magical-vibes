@@ -214,8 +214,7 @@ class SpellCastingServiceTest {
         Card room = new Card();
         room.setRoomDoorManaCosts(List.of("{1}{W}", "{2}{W}"));
         var counter = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE);
-        room.target(TargetFilters.creature(), 0, 2).addTrigger(Triggers.doorUnlocked(),
-                new com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect(1, counter));
+        room.target(TargetFilters.creature(), 0, 2).addTrigger(Triggers.doorUnlocked(1), counter);
         List<CardEffect> spellEffects = new ArrayList<>(List.of(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("First door", List.of()).withManaCost("{1}{W}"),
                 new ChooseOneEffect.ChooseOneOption("Second door", List.of()).withManaCost("{2}{W}")))));

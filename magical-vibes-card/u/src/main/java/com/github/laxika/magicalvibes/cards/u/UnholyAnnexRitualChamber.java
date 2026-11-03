@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
@@ -49,7 +48,6 @@ public class UnholyAnnexRitualChamber extends Card {
         CreateTokenEffect demonToken = new CreateTokenEffect(
                 "Demon", 6, 6, CardColor.BLACK, List.of(CardSubtype.DEMON),
                 Set.of(Keyword.FLYING), Set.of());
-        addTrigger(Triggers.doorUnlocked(),
-                new TriggeringRoomDoorConditionalEffect(1, demonToken));
+        addTrigger(Triggers.doorUnlocked(1), demonToken);
     }
 }

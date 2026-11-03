@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ManifestDreadEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -32,8 +31,7 @@ public class TicketBoothTunnelOfHate extends Card {
                         .withManaCost("{4}{R}{R}")
         )));
 
-        addTrigger(Triggers.doorUnlocked(),
-                new TriggeringRoomDoorConditionalEffect(0, ManifestDreadEffect.forController()));
+        addTrigger(Triggers.doorUnlocked(0), ManifestDreadEffect.forController());
 
         PermanentAllOfPredicate attackingCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

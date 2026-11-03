@@ -6,12 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentCountAtMostPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "84")
 public class BogSerpent extends Card {
@@ -22,11 +19,8 @@ public class BogSerpent extends Card {
                 "a Swamp"
         ));
 
-        addTrigger(Triggers.state(), new StateTriggerEffect(
-                new PermanentControllerControlsPermanentCountAtMostPredicate(
-                        0, new PermanentHasSubtypePredicate(CardSubtype.SWAMP)),
-                List.of(new SacrificeSelfEffect()),
-                "Bog Serpent's state-triggered ability"
-        ));
+        addTrigger(Triggers.sourceState(new PermanentControllerControlsPermanentCountAtMostPredicate(
+                        0, new PermanentHasSubtypePredicate(CardSubtype.SWAMP))),
+                new SacrificeSelfEffect());
     }
 }

@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.ManifestDreadEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TurnSourceFaceUpEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -33,11 +32,11 @@ public class ExperimentalLabStaffRoom extends Card {
                         .withManaCost("{2}{G}")
         )));
 
-        addTrigger(Triggers.doorUnlocked(),
-                new TriggeringRoomDoorConditionalEffect(0, SequenceEffect.of(
+        addTrigger(Triggers.doorUnlocked(0),
+                SequenceEffect.of(
                         ManifestDreadEffect.forController(),
                         new PutCountersOnChosenPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
-                        new PutCountersOnChosenPermanentEffect(CounterType.TRAMPLE, 1))));
+                        new PutCountersOnChosenPermanentEffect(CounterType.TRAMPLE, 1)));
 
         addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(1),

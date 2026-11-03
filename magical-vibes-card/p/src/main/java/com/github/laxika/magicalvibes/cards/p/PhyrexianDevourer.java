@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.amount.ImprintedCardManaValue;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,11 +20,7 @@ public class PhyrexianDevourer extends Card {
     public PhyrexianDevourer() {
         // "When this creature's power is 7 or greater, sacrifice it." — state-triggered ability;
         // the layer-aware source predicate reads effective power, so the +1/+1 counters count.
-        addTrigger(Triggers.state(), new StateTriggerEffect(
-                new PermanentPowerAtLeastPredicate(7),
-                List.of(new SacrificeSelfEffect()),
-                "Phyrexian Devourer's state-triggered ability"
-        ));
+        addTrigger(Triggers.sourceState(new PermanentPowerAtLeastPredicate(7)), new SacrificeSelfEffect());
 
         // "Exile the top card of your library: Put X +1/+1 counters on this creature, where X is
         // the exiled card's mana value." The exile cost imprints what it exiled so the amount can

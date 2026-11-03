@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayReturnMilledPermanentToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -32,8 +31,6 @@ public class GreenhouseRicketyGazebo extends Card {
                 new GrantActivatedAbilityEffect(
                         ManaAbilities.tapForAnyColor(), GrantScope.OWN_LANDS)));
 
-        addTrigger(Triggers.doorUnlocked(),
-                new TriggeringRoomDoorConditionalEffect(1,
-                        new MillControllerAndMayReturnMilledPermanentToHandEffect(4, 2)));
+        addTrigger(Triggers.doorUnlocked(1), new MillControllerAndMayReturnMilledPermanentToHandEffect(4, 2));
     }
 }

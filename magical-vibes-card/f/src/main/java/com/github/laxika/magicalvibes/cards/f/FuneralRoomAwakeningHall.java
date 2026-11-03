@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardsFromControllerGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -43,9 +42,8 @@ public class FuneralRoomAwakeningHall extends Card {
                 new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
                         drain), GrantScope.SELF)));
 
-        addTrigger(Triggers.doorUnlocked(),
-                new TriggeringRoomDoorConditionalEffect(1,
-                        new ReturnCardsFromControllerGraveyardToBattlefieldEffect(
-                                new CardTypePredicate(CardType.CREATURE), new Fixed(Integer.MAX_VALUE), true)));
+        addTrigger(Triggers.doorUnlocked(1),
+                new ReturnCardsFromControllerGraveyardToBattlefieldEffect(
+                        new CardTypePredicate(CardType.CREATURE), new Fixed(Integer.MAX_VALUE), true));
     }
 }

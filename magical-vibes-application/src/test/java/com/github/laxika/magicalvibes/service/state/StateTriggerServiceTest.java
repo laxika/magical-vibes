@@ -14,15 +14,20 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.StateTriggerKey;
+import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.StateTrigger;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -54,6 +59,9 @@ class StateTriggerServiceTest {
     @Mock
     private PredicateEvaluationService predicateEvaluationService;
 
+    @Mock
+    private ConditionEvaluationService conditionEvaluationService;
+
     @InjectMocks
     private StateTriggerService sut;
 
@@ -80,11 +88,11 @@ class StateTriggerServiceTest {
         gd.playerManaPools.put(player2Id, new ManaPool());
     }
 
-    private static Card createCardWithStateTrigger(String name, StateTriggerEffect trigger) {
+    private static Card createCardWithStateTrigger(String name, StateTrigger trigger, CardEffect... effects) {
         Card card = new Card();
         card.setName(name);
         card.setType(CardType.ENCHANTMENT);
-        card.addTrigger(Triggers.state(), trigger);
+        card.addTrigger(trigger, effects);
         return card;
     }
 
@@ -96,12 +104,8 @@ class StateTriggerServiceTest {
         @DisplayName("Fires trigger when predicate is satisfied and not already on stack")
         void firesWhenPredicateSatisfied() {
             List<CardEffect> effects = List.of(new GainLifeEffect(3));
-            StateTriggerEffect trigger = new StateTriggerEffect(
-                    (gameData, perm, controllerId) -> true,
-                    effects,
-                    "Test trigger"
-            );
-            Card card = createCardWithStateTrigger("Trigger Card", trigger);
+            StateTrigger trigger = Triggers.state((gameData, perm, controllerId) -> true);
+            Card card = createCardWithStateTrigger("Trigger Card", trigger, effects.toArray(CardEffect[]::new));
             Permanent perm = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(perm);
 
@@ -112,12 +116,12 @@ class StateTriggerServiceTest {
             assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
             assertThat(entry.getCard()).isEqualTo(card);
             assertThat(entry.getControllerId()).isEqualTo(player1Id);
-            assertThat(entry.getDescription()).isEqualTo("Test trigger");
+            assertThat(entry.getDescription()).isEqualTo("Trigger Card's state-triggered ability");
             assertThat(entry.getEffectsToResolve()).isEqualTo(effects);
             assertThat(entry.getSourcePermanentId()).isEqualTo(perm.getId());
             assertThat(entry.getStateTriggerEffectIndex()).isZero();
             assertThat(gd.stateTriggerOnStack).contains(new StateTriggerKey(perm.getId(), 0));
-            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Test trigger triggers.")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Trigger Card's state-triggered ability triggers.")));
         }
 
         @Test
@@ -127,13 +131,9 @@ class StateTriggerServiceTest {
             selectedCard.setType(CardType.CREATURE);
             Permanent selected = new Permanent(selectedCard);
             gd.playerBattlefields.get(player2Id).add(selected);
-            StateTriggerEffect trigger = new StateTriggerEffect(
-                    (gameData, perm, controllerId) -> true,
-                    new PermanentIsCreaturePredicate(),
-                    List.of(new GainLifeEffect(1)),
-                    "Reference trigger"
-            );
-            Permanent source = new Permanent(createCardWithStateTrigger("Trigger Card", trigger));
+            StateTrigger trigger = Triggers.state((gameData, perm, controllerId) -> true)
+                    .referencing(new PermanentIsCreaturePredicate());
+            Permanent source = new Permanent(createCardWithStateTrigger("Trigger Card", trigger, new GainLifeEffect(1)));
             when(predicateEvaluationService.matchesPermanentPredicate(eq(source),
                     eq(trigger.referencedPermanentPredicate()), any())).thenReturn(false);
             when(predicateEvaluationService.matchesPermanentPredicate(eq(selected),
@@ -149,12 +149,8 @@ class StateTriggerServiceTest {
         @Test
         @DisplayName("Source predicate is evaluated through the layer-aware predicate evaluator")
         void firesFromSourcePredicate() {
-            StateTriggerEffect trigger = new StateTriggerEffect(
-                    new PermanentHasKeywordPredicate(Keyword.FLYING),
-                    List.of(new GainLifeEffect(3)),
-                    "Source predicate trigger"
-            );
-            Card card = createCardWithStateTrigger("Source Predicate Card", trigger);
+            StateTrigger trigger = Triggers.sourceState(new PermanentHasKeywordPredicate(Keyword.FLYING));
+            Card card = createCardWithStateTrigger("Source Predicate Card", trigger, new GainLifeEffect(3));
             Permanent perm = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(perm);
             when(predicateEvaluationService.matchesPermanentPredicate(eq(perm),
@@ -169,12 +165,8 @@ class StateTriggerServiceTest {
         @Test
         @DisplayName("Does not fire when the source predicate does not match")
         void doesNotFireWhenSourcePredicateUnmatched() {
-            StateTriggerEffect trigger = new StateTriggerEffect(
-                    new PermanentHasKeywordPredicate(Keyword.FLYING),
-                    List.of(new GainLifeEffect(3)),
-                    "Source predicate trigger"
-            );
-            Permanent perm = new Permanent(createCardWithStateTrigger("Source Predicate Card", trigger));
+            StateTrigger trigger = Triggers.sourceState(new PermanentHasKeywordPredicate(Keyword.FLYING));
+            Permanent perm = new Permanent(createCardWithStateTrigger("Source Predicate Card", trigger, new GainLifeEffect(3)));
             gd.playerBattlefields.get(player1Id).add(perm);
             when(predicateEvaluationService.matchesPermanentPredicate(eq(perm),
                     eq(trigger.sourcePredicate()), any())).thenReturn(false);
@@ -187,12 +179,8 @@ class StateTriggerServiceTest {
         @Test
         @DisplayName("Does not fire when predicate is not satisfied")
         void doesNotFireWhenPredicateNotSatisfied() {
-            StateTriggerEffect trigger = new StateTriggerEffect(
-                    (gameData, perm, controllerId) -> false,
-                    List.of(new GainLifeEffect(3)),
-                    "Never trigger"
-            );
-            Card card = createCardWithStateTrigger("No Trigger Card", trigger);
+            StateTrigger trigger = Triggers.state((gameData, perm, controllerId) -> false);
+            Card card = createCardWithStateTrigger("No Trigger Card", trigger, new GainLifeEffect(3));
             Permanent perm = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(perm);
 
@@ -206,12 +194,8 @@ class StateTriggerServiceTest {
         @Test
         @DisplayName("Does not retrigger while already on stack — CR 603.8")
         void doesNotRetriggerWhileOnStack() {
-            StateTriggerEffect trigger = new StateTriggerEffect(
-                    (gameData, perm, controllerId) -> true,
-                    List.of(new GainLifeEffect(3)),
-                    "Once trigger"
-            );
-            Card card = createCardWithStateTrigger("Already On Stack", trigger);
+            StateTrigger trigger = Triggers.state((gameData, perm, controllerId) -> true);
+            Card card = createCardWithStateTrigger("Already On Stack", trigger, new GainLifeEffect(3));
             Permanent perm = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(perm);
             gd.stateTriggerOnStack.add(new StateTriggerKey(perm.getId(), 0));
@@ -226,22 +210,14 @@ class StateTriggerServiceTest {
         @DisplayName("Checks both players in APNAP order")
         void checksPlayersInApnapOrder() {
             List<CardEffect> effects1 = List.of(new DealDamageToAnyTargetEffect(1));
-            StateTriggerEffect trigger1 = new StateTriggerEffect(
-                    (gameData, perm, controllerId) -> true,
-                    effects1,
-                    "Player1 trigger"
-            );
-            Card card1 = createCardWithStateTrigger("P1 Card", trigger1);
+            StateTrigger trigger1 = Triggers.state((gameData, perm, controllerId) -> true);
+            Card card1 = createCardWithStateTrigger("P1 Card", trigger1, effects1.toArray(CardEffect[]::new));
             Permanent perm1 = new Permanent(card1);
             gd.playerBattlefields.get(player1Id).add(perm1);
 
             List<CardEffect> effects2 = List.of(new GainLifeEffect(2));
-            StateTriggerEffect trigger2 = new StateTriggerEffect(
-                    (gameData, perm, controllerId) -> true,
-                    effects2,
-                    "Player2 trigger"
-            );
-            Card card2 = createCardWithStateTrigger("P2 Card", trigger2);
+            StateTrigger trigger2 = Triggers.state((gameData, perm, controllerId) -> true);
+            Card card2 = createCardWithStateTrigger("P2 Card", trigger2, effects2.toArray(CardEffect[]::new));
             Permanent perm2 = new Permanent(card2);
             gd.playerBattlefields.get(player2Id).add(perm2);
 
@@ -255,18 +231,10 @@ class StateTriggerServiceTest {
         @Test
         @DisplayName("Handles multiple permanents with triggers for same player")
         void handlesMultiplePermanentsForSamePlayer() {
-            StateTriggerEffect trigger1 = new StateTriggerEffect(
-                    (gameData, perm, controllerId) -> true,
-                    List.of(new GainLifeEffect(1)),
-                    "Trigger A"
-            );
-            StateTriggerEffect trigger2 = new StateTriggerEffect(
-                    (gameData, perm, controllerId) -> true,
-                    List.of(new GainLifeEffect(2)),
-                    "Trigger B"
-            );
-            Card card1 = createCardWithStateTrigger("Card A", trigger1);
-            Card card2 = createCardWithStateTrigger("Card B", trigger2);
+            StateTrigger trigger1 = Triggers.state((gameData, perm, controllerId) -> true);
+            StateTrigger trigger2 = Triggers.state((gameData, perm, controllerId) -> true);
+            Card card1 = createCardWithStateTrigger("Card A", trigger1, new GainLifeEffect(1));
+            Card card2 = createCardWithStateTrigger("Card B", trigger2, new GainLifeEffect(2));
             Permanent perm1 = new Permanent(card1);
             Permanent perm2 = new Permanent(card2);
             gd.playerBattlefields.get(player1Id).add(perm1);
@@ -297,44 +265,67 @@ class StateTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("Rejects a state trigger whose effect isn't a StateTriggerEffect")
-        void rejectsNonStateTriggerEffect() {
+        @DisplayName("Rejects a state trigger without a game state, or with a StateTriggerEffect")
+        void rejectsStateTriggerWithoutGameState() {
             Card card = new Card();
             card.setName("Odd Card");
             card.setType(CardType.ENCHANTMENT);
 
             assertThatThrownBy(() -> card.addTrigger(Triggers.state(), new GainLifeEffect(1)))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("A state trigger requires a StateTriggerEffect");
+                    .hasMessageContaining("A state trigger needs its game state");
+            assertThatThrownBy(() -> card.addTrigger(Triggers.state((gameData, perm, controllerId) -> true),
+                    new StateTriggerEffect((gameData, perm, controllerId) -> true, List.of(new GainLifeEffect(1)),
+                            "Old form")))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("not a StateTriggerEffect");
+        }
+
+        @Test
+        @DisplayName("Checks the intervening if as the game state triggers the ability and wraps it for resolution")
+        void checksInterveningIfAsItTriggers() {
+            StateTrigger trigger = Triggers.state((gameData, perm, controllerId) -> true);
+            Card card = new Card();
+            card.setName("Intervening Card");
+            card.setType(CardType.ENCHANTMENT);
+            card.addTrigger(trigger, TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()),
+                    new GainLifeEffect(1));
+            Permanent perm = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(perm);
+            when(conditionEvaluationService.isMet(eq(gd), eq(new ControllerTurn()), any())).thenReturn(false);
+
+            sut.checkStateTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+
+            when(conditionEvaluationService.isMet(eq(gd), eq(new ControllerTurn()), any())).thenReturn(true);
+
+            sut.checkStateTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEffectsToResolve())
+                    .containsExactly(new ConditionalEffect(new ControllerTurn(), new GainLifeEffect(1), true));
         }
 
         @Test
         @DisplayName("Fires all state triggers on same permanent independently")
         void firesAllTriggersOnSamePermanent() {
-            StateTriggerEffect trigger1 = new StateTriggerEffect(
-                    (gameData, perm, controllerId) -> true,
-                    List.of(new GainLifeEffect(1)),
-                    "First trigger"
-            );
-            StateTriggerEffect trigger2 = new StateTriggerEffect(
-                    (gameData, perm, controllerId) -> true,
-                    List.of(new GainLifeEffect(2)),
-                    "Second trigger"
-            );
+            StateTrigger trigger1 = Triggers.state((gameData, perm, controllerId) -> true);
+            StateTrigger trigger2 = Triggers.state((gameData, perm, controllerId) -> true);
             Card card = new Card();
             card.setName("Multi Trigger Card");
             card.setType(CardType.ENCHANTMENT);
-            card.addTrigger(Triggers.state(), trigger1);
-            card.addTrigger(Triggers.state(), trigger2);
+            card.addTrigger(trigger1, new GainLifeEffect(1));
+            card.addTrigger(trigger2, new GainLifeEffect(2));
             Permanent perm = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(perm);
 
             sut.checkStateTriggers(gd);
 
             assertThat(gd.stack).hasSize(2);
-            assertThat(gd.stack.get(0).getDescription()).isEqualTo("First trigger");
+            assertThat(gd.stack.get(0).getEffectsToResolve()).containsExactly(new GainLifeEffect(1));
             assertThat(gd.stack.get(0).getStateTriggerEffectIndex()).isZero();
-            assertThat(gd.stack.get(1).getDescription()).isEqualTo("Second trigger");
+            assertThat(gd.stack.get(1).getEffectsToResolve()).containsExactly(new GainLifeEffect(2));
             assertThat(gd.stack.get(1).getStateTriggerEffectIndex()).isEqualTo(1);
             assertThat(gd.stateTriggerOnStack).containsExactlyInAnyOrder(
                     new StateTriggerKey(perm.getId(), 0),
@@ -344,21 +335,13 @@ class StateTriggerServiceTest {
         @Test
         @DisplayName("Does not retrigger specific effect while on stack — other effects still fire")
         void doesNotRetriggerSpecificEffectWhileOnStack() {
-            StateTriggerEffect trigger1 = new StateTriggerEffect(
-                    (gameData, perm, controllerId) -> true,
-                    List.of(new GainLifeEffect(1)),
-                    "First trigger"
-            );
-            StateTriggerEffect trigger2 = new StateTriggerEffect(
-                    (gameData, perm, controllerId) -> true,
-                    List.of(new GainLifeEffect(2)),
-                    "Second trigger"
-            );
+            StateTrigger trigger1 = Triggers.state((gameData, perm, controllerId) -> true);
+            StateTrigger trigger2 = Triggers.state((gameData, perm, controllerId) -> true);
             Card card = new Card();
             card.setName("Multi Trigger Card");
             card.setType(CardType.ENCHANTMENT);
-            card.addTrigger(Triggers.state(), trigger1);
-            card.addTrigger(Triggers.state(), trigger2);
+            card.addTrigger(trigger1, new GainLifeEffect(1));
+            card.addTrigger(trigger2, new GainLifeEffect(2));
             Permanent perm = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(perm);
 
@@ -369,7 +352,7 @@ class StateTriggerServiceTest {
 
             // Only the second trigger fires
             assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getDescription()).isEqualTo("Second trigger");
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(new GainLifeEffect(2));
         }
 
         @Test
@@ -389,17 +372,13 @@ class StateTriggerServiceTest {
             Permanent[] capturedPerm = new Permanent[1];
             GameData[] capturedGd = new GameData[1];
 
-            StateTriggerEffect trigger = new StateTriggerEffect(
-                    (gameData, perm, controllerId) -> {
+            StateTrigger trigger = Triggers.state((gameData, perm, controllerId) -> {
                         capturedGd[0] = gameData;
                         capturedPerm[0] = perm;
                         capturedControllerId[0] = controllerId;
                         return false;
-                    },
-                    List.of(new GainLifeEffect(1)),
-                    "Arg check"
-            );
-            Card card = createCardWithStateTrigger("Arg Card", trigger);
+                    });
+            Card card = createCardWithStateTrigger("Arg Card", trigger, new GainLifeEffect(1));
             Permanent perm = new Permanent(card);
             gd.playerBattlefields.get(player2Id).add(perm);
 
@@ -506,12 +485,8 @@ class StateTriggerServiceTest {
         @DisplayName("Allows trigger to fire again after cleanup")
         void allowsRetriggerAfterCleanup() {
             List<CardEffect> effects = List.of(new GainLifeEffect(5));
-            StateTriggerEffect trigger = new StateTriggerEffect(
-                    (gameData, perm, controllerId) -> true,
-                    effects,
-                    "Repeating trigger"
-            );
-            Card card = createCardWithStateTrigger("Repeater", trigger);
+            StateTrigger trigger = Triggers.state((gameData, perm, controllerId) -> true);
+            Card card = createCardWithStateTrigger("Repeater", trigger, effects.toArray(CardEffect[]::new));
             Permanent perm = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(perm);
 

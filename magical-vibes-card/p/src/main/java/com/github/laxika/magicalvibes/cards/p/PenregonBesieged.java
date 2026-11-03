@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentCreatureAndPerpetuallyBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastToughnessAmongOpponentCreaturesPredicate;
@@ -23,11 +22,9 @@ public class PenregonBesieged extends Card {
                 new ChooseOpponentCreatureAndPerpetuallyBoostEffect(
                         -1, -1, new PermanentHasLeastToughnessAmongOpponentCreaturesPredicate()));
 
-        addTrigger(Triggers.state(), StateTriggerEffect.whenBattlefieldHasAtMost(0,
-                new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.battlefieldHasAtMost(0, new PermanentAllOfPredicate(List.of(
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
-                        new PermanentIsCreaturePredicate())),
-                List.of(new SacrificeSelfEffect()),
-                "Penregon Besieged's state-triggered ability"));
+                        new PermanentIsCreaturePredicate()))),
+                new SacrificeSelfEffect());
     }
 }

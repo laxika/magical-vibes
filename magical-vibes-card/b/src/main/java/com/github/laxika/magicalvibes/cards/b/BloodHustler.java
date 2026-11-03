@@ -6,11 +6,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -20,7 +21,8 @@ public class BloodHustler extends Card {
 
     public BloodHustler() {
         addTrigger(Triggers.youCommitCrime(),
-                new OncePerTurnTriggerEffect(new PutCountersOnSourceEffect(1, 1, 1)));
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new PutCountersOnSourceEffect(1, 1, 1));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

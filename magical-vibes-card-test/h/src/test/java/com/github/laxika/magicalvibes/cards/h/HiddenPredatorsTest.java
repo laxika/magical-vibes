@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.ArgothianSwine;
 import com.github.laxika.magicalvibes.cards.e.EnchantedEvening;
 import com.github.laxika.magicalvibes.cards.r.Rescind;
 import com.github.laxika.magicalvibes.cards.t.ThunderingGiant;
+import com.github.laxika.magicalvibes.cards.s.SongOfTheDryads;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HiddenPredators.class, ThunderingGiant.class, ArgothianSwine.class,
+@CardUsed({SongOfTheDryads.class, HiddenPredators.class, ThunderingGiant.class, ArgothianSwine.class,
         EnchantedEvening.class, Rescind.class})
 class HiddenPredatorsTest extends BaseCardTest {
 
@@ -161,5 +162,24 @@ class HiddenPredatorsTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.isCreature(gd, hiddenPredators)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Does not transform if it is no longer an enchantment when the trigger resolves")
+    void doesNotTransformWhenNoLongerEnchantmentAtResolution() {
+        Permanent hiddenPredators = harness.addToBattlefieldAndReturn(player1, new HiddenPredators());
+        harness.addToBattlefield(player2, new ThunderingGiant());
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SongOfTheDryads());
+        aura.setAttachedTo(hiddenPredators.getId());
+        assertThat(gqs.isEnchantment(gd, hiddenPredators)).isFalse();
+
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+
+        assertThat(gqs.isCreature(gd, hiddenPredators)).isFalse();
+        assertThat(gqs.isEnchantment(gd, hiddenPredators)).isTrue();
     }
 }

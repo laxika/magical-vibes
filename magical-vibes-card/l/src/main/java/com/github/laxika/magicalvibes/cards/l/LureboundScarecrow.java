@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenColorPredicate;
@@ -21,16 +20,11 @@ public class LureboundScarecrow extends Card {
 
         // "When you control no permanents of the chosen color, sacrifice this creature."
         // — State-triggered ability (MTG rule 603.8).
-        addTrigger(Triggers.state(), new StateTriggerEffect(
-                (gameData, sourcePermanent, controllerId) -> sourcePermanent.getChosenColor() != null,
-                null,
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentControlledBySourceControllerPredicate(),
-                        new PermanentHasSourceChosenColorPredicate())),
-                0,
-                null,
-                List.of(new SacrificeSelfEffect()),
-                "Lurebound Scarecrow's state-triggered ability"
-        ));
+        addTrigger(Triggers.state(
+                        (gameData, sourcePermanent, controllerId) -> sourcePermanent.getChosenColor() != null)
+                        .withBattlefieldAtMost(0, new PermanentAllOfPredicate(List.of(
+                                new PermanentControlledBySourceControllerPredicate(),
+                                new PermanentHasSourceChosenColorPredicate()))),
+                new SacrificeSelfEffect());
     }
 }

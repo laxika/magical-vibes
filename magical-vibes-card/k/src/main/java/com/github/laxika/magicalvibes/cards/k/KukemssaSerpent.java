@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantBasicLandTypeToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -44,11 +43,9 @@ public class KukemssaSerpent extends Card {
 
         // "When you control no Islands, sacrifice this creature." —
         // State-triggered ability (MTG rule 603.8).
-        addTrigger(Triggers.state(), StateTriggerEffect.whenBattlefieldHasAtMost(0,
-                new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.battlefieldHasAtMost(0, new PermanentAllOfPredicate(List.of(
                         new PermanentControlledBySourceControllerPredicate(),
-                        new PermanentHasSubtypePredicate(CardSubtype.ISLAND))),
-                List.of(new SacrificeSelfEffect()),
-                "Kukemssa Serpent's state-triggered ability"));
+                        new PermanentHasSubtypePredicate(CardSubtype.ISLAND)))),
+                new SacrificeSelfEffect());
     }
 }

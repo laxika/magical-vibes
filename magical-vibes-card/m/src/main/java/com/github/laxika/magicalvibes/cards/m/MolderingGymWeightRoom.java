@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.ManifestDreadEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -28,13 +27,12 @@ public class MolderingGymWeightRoom extends Card {
                         .withManaCost("{5}{G}")
         )));
 
-        addTrigger(Triggers.doorUnlocked(),
-                new TriggeringRoomDoorConditionalEffect(0,
-                        new SearchLibraryEffect(CardPredicateUtils.basicLand(),
-                                LibrarySearchDestination.BATTLEFIELD_TAPPED)));
-        addTrigger(Triggers.doorUnlocked(),
-                new TriggeringRoomDoorConditionalEffect(1, SequenceEffect.of(
+        addTrigger(Triggers.doorUnlocked(0),
+                new SearchLibraryEffect(CardPredicateUtils.basicLand(),
+                        LibrarySearchDestination.BATTLEFIELD_TAPPED));
+        addTrigger(Triggers.doorUnlocked(1),
+                SequenceEffect.of(
                         ManifestDreadEffect.forController(),
-                        new PutCountersOnChosenPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3))));
+                        new PutCountersOnChosenPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3)));
     }
 }

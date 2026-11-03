@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCrewedBySourceThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -33,10 +32,10 @@ public class MindlinkMech extends Card {
                         new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)))),
                 "Target must be a nonlegendary creature that crewed this Vehicle this turn");
         target(targetFilter)
-                .addTrigger(Triggers.becomesCrewed(),
-                        new OncePerTurnTriggerEffect(new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
+                .addTrigger(Triggers.becomesCrewedForFirstTimeEachTurn(),
+                        new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
                                 4, 3, Set.of(CardType.ARTIFACT), Set.of(CardSubtype.VEHICLE),
-                                Set.of(Keyword.FLYING))));
+                                Set.of(Keyword.FLYING)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

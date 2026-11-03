@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -46,13 +45,13 @@ public class PollutedCisternDimOubliette extends Card {
                                 TriggerOptions.ONE_OR_MORE, List.of(new EffectRegistration(
                                         new EachOpponentLosesLifeEqualToCardTypeCountOfTriggeringCardsEffect()))),
                         GrantScope.SELF)));
-        addTrigger(Triggers.doorUnlocked(),
-                new TriggeringRoomDoorConditionalEffect(1, SequenceEffect.of(
+        addTrigger(Triggers.doorUnlocked(1),
+                SequenceEffect.of(
                         new MillEffect(3, MillRecipient.CONTROLLER),
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                                 .filter(new CardTypePredicate(CardType.CREATURE))
                                 .mandatory(true)
-                                .build())));
+                                .build()));
     }
 }

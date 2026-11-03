@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -34,11 +33,10 @@ public class SpikedCorridorTorturePit extends Card {
 
         List<Ability> devilTokenEffects =
                 List.of(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(1)));
-        addTrigger(Triggers.doorUnlocked(),
-                new TriggeringRoomDoorConditionalEffect(0,
-                        new CreateTokenEffect(
-                                3, "Devil", 1, 1, CardColor.RED,
-                                List.of(CardSubtype.DEVIL), Set.of(), Set.of(), devilTokenEffects)));
+        addTrigger(Triggers.doorUnlocked(0),
+                new CreateTokenEffect(
+                        3, "Devil", 1, 1, CardColor.RED,
+                        List.of(CardSubtype.DEVIL), Set.of(), Set.of(), devilTokenEffects));
 
         addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(1),

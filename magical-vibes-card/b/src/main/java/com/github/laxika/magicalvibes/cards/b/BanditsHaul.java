@@ -6,9 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -18,7 +19,8 @@ public class BanditsHaul extends Card {
 
     public BanditsHaul() {
         addTrigger(Triggers.youCommitCrime(),
-                new OncePerTurnTriggerEffect(new PutCountersOnSelfEffect(CounterType.LOOT)));
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new PutCountersOnSelfEffect(CounterType.LOOT));
 
         addActivatedAbility(ManaAbilities.tapForAnyColor());
 

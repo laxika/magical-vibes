@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.amount.Divided;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -29,11 +28,7 @@ public class Floodgate extends Card {
     public Floodgate() {
         // "When this creature has flying, sacrifice it." — state-triggered ability (rule 603.8);
         // the source predicate is layer-aware so granted flying (auras, pumps) counts.
-        addTrigger(Triggers.state(), new StateTriggerEffect(
-                new PermanentHasKeywordPredicate(Keyword.FLYING),
-                List.of(new SacrificeSelfEffect()),
-                "Floodgate's state-triggered ability"
-        ));
+        addTrigger(Triggers.sourceState(new PermanentHasKeywordPredicate(Keyword.FLYING)), new SacrificeSelfEffect());
 
         // "When this creature leaves the battlefield, it deals damage to each nonblue creature
         // without flying equal to half the number of Islands you control, rounded down."

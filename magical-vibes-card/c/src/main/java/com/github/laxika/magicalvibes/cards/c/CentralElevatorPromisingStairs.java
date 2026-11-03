@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareNameWithControlledRoomPredicate;
@@ -36,8 +35,7 @@ public class CentralElevatorPromisingStairs extends Card {
         SearchLibraryEffect searchRoom = new SearchLibraryEffect(new CardAllOfPredicate(List.of(
                 new CardSubtypePredicate(CardSubtype.ROOM),
                 new CardDoesNotShareNameWithControlledRoomPredicate())));
-        addTrigger(Triggers.doorUnlocked(),
-                new TriggeringRoomDoorConditionalEffect(0, searchRoom));
+        addTrigger(Triggers.doorUnlocked(0), searchRoom);
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), ConditionalEffect.atTriggerTime(
                 new SourceRoomDoorUnlocked(1),

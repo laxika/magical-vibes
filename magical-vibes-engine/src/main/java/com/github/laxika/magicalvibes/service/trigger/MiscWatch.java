@@ -1,8 +1,13 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 /**
  * Which of the last old slot collectors reads a triggered ability, now that the ability has a real trigger
@@ -11,8 +16,11 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
  * collector it stands for and names the trigger its cards were converted to and the zone the collector reads them in.
  * The collectors in {@code TriggerCollectionService}, {@code CreatureControlService} and {@code StateTriggerService}
  * still decide when the ability triggers, how its effects group into stack objects, which wrappers filter it and which
- * event data it is bound to, as the slot's did, until steps 14 and 15 of the refactor replace them with trigger options
- * and effects that read the event.
+ * event data it is bound to, as the slot's did, until step 15 of the refactor replaces them with effects that read the
+ * event. They read the abilities in the legacy form ({@code TriggeredAbility.legacyEffects()}, step 14, run 15): a
+ * limit as the keyed {@code OncePerTurnTriggerEffect}, "becomes crewed / saddled for the first time each turn" as the
+ * unkeyed one, a Room door as a {@code TriggeringRoomDoorConditionalEffect}, and a state trigger as one
+ * {@code StateTriggerEffect} of its game state.
  */
 public enum MiscWatch implements TriggerWatch {
     /** "When you gain control of this from another player". */
@@ -76,5 +84,15 @@ public enum MiscWatch implements TriggerWatch {
     @Override
     public Zone zone() {
         return zone;
+    }
+
+    @Override
+    public List<CardEffect> effectsOf(Card card) {
+        return card.getLegacyTriggerEffects(trigger, zone);
+    }
+
+    @Override
+    public List<EffectRegistration> registrationsOf(Card card) {
+        return card.getLegacyTriggerEffectRegistrations(trigger, zone);
     }
 }

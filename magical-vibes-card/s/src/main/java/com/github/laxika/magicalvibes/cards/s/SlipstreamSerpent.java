@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,15 +22,12 @@ public class SlipstreamSerpent extends Card {
                 new DefendingPlayerControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
                 "an Island"
         ));
-        addTrigger(Triggers.state(), new StateTriggerEffect(
-                (gameData, sourcePermanent, controllerId) -> {
+        addTrigger(Triggers.state((gameData, sourcePermanent, controllerId) -> {
                     List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
                     if (battlefield == null) return true;
                     return battlefield.stream()
                             .noneMatch(p -> !p.isFaceDown() && p.getCard().getSubtypes().contains(CardSubtype.ISLAND));
-                },
-                List.of(new SacrificeSelfEffect()),
-                "Slipstream Serpent's state-triggered ability"
-        ));
+                }),
+                new SacrificeSelfEffect());
     }
 }

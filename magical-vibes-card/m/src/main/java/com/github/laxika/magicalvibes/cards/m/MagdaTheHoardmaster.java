@@ -8,9 +8,10 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -21,7 +22,8 @@ public class MagdaTheHoardmaster extends Card {
 
     public MagdaTheHoardmaster() {
         addTrigger(Triggers.youCommitCrime(),
-                new OncePerTurnTriggerEffect(CreateTokenEffect.ofTappedTreasureToken(1)));
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                CreateTokenEffect.ofTappedTreasureToken(1));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CyclingTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExceptFirstDrawStepTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.FirstOpponentLifeLossEachTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstDrawStepDrawOnlyTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.FirstOpponentLifeLossEachTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstOrSecondCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.LandPlayFromExileTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -22,8 +22,10 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCausedDiscardTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PerDamageSourceTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayFromOutsideHandTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.SchemeSetInMotionTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringBoastAbilityConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringLoyaltyAbilityConditionalEffect;
@@ -32,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringNonTapAbilityCondit
 import com.github.laxika.magicalvibes.model.effect.TriggeringOutlastAbilityConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPowerUpAbilityConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringSpellControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringTapAbilityConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.YouPutCounterOnControlledCreatureTriggerEffect;
@@ -52,10 +55,13 @@ import com.github.laxika.magicalvibes.model.trigger.LandPlayTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LibraryTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LifeTrigger;
+import com.github.laxika.magicalvibes.model.trigger.ObjectActionTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.PlayerActionTrigger;
 import com.github.laxika.magicalvibes.model.trigger.PlayerRelation;
 import com.github.laxika.magicalvibes.model.trigger.SpellFilter;
 import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
+import com.github.laxika.magicalvibes.model.trigger.StateTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TapTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TargetTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
@@ -251,8 +257,12 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * where the limits go, as {@link #lifeView()} says, and "an opponent loses life for the first time during each of
      * their turns" makes the ability one {@link FirstOpponentLifeLossEachTurnTriggerEffect} of all its effects. A
      * final-chapter trigger ({@link FinalChapterTrigger}) takes only "triggers only once each turn", as
-     * {@link #requireFinalChapterOptions()} says. An ability without options or such filters returns its registrations
-     * as they are.
+     * {@link #requireFinalChapterOptions()} says. A state trigger ({@link StateTrigger}) makes the ability one
+     * {@link StateTriggerEffect} of its game state and all its effects, as {@link #legacyStateEffects} says, and a
+     * "you set a scheme in motion" trigger one {@link SchemeSetInMotionTriggerEffect}, as {@link #legacySchemeEffects}
+     * says. An object-action trigger's card filter, Room door and "for the first time each turn" are the wrappers
+     * {@link #legacyObjectActionWrapper} gives, outside every other. An ability without options or such filters
+     * returns its registrations as they are.
      */
     public List<EffectRegistration> legacyEffects() {
         SpellTrigger spell = filteredTrigger(SpellTrigger.class);
@@ -274,6 +284,13 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
                 && life.event() == LifeTrigger.LifeEvent.LOSES_FOR_FIRST_TIME_DURING_THEIR_TURN)) {
             return legacyFirstOpponentLifeLossEffects();
         }
+        if (conditions.getFirst().trigger() instanceof StateTrigger state) {
+            return legacyStateEffects(state);
+        }
+        if (conditions.stream().anyMatch(condition -> condition.trigger() instanceof PlayerActionTrigger action
+                && action.action() == PlayerActionTrigger.PlayerAction.SETS_SCHEME_IN_MOTION)) {
+            return legacySchemeEffects();
+        }
         requireFinalChapterOptions();
         Condition interveningIf = options.interveningIf();
         TriggerLimit limit = options.limit();
@@ -288,10 +305,11 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         TargetView target = targetView();
         TapView tap = tapView();
         LifeView life = lifeView();
+        ObjectActionTrigger object = objectActionView();
         if (interveningIf == null && limit == TriggerLimit.NONE && landPlay == null && activation == null
                 && (combat == null || combat.plain()) && (damage == null || damage.plain())
                 && (counter == null || counter.plain()) && (target == null || target.plain())
-                && (tap == null || tap.plain()) && (life == null || life.plain())) {
+                && (tap == null || tap.plain()) && (life == null || life.plain()) && object == null) {
             return effects;
         }
         String key = limit == TriggerLimit.ONCE_EACH_TURN ? limitKey() : null;
@@ -348,6 +366,9 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             if (activation != null && activation.kind() != null) {
                 effect = legacyKindWrapper(activation.kind(), effect);
             }
+            if (object != null) {
+                effect = legacyObjectActionWrapper(object, effect);
+            }
             TriggerMode mode = combat != null ? combat.mode(registration.triggerMode()) : registration.triggerMode();
             if (counter != null) {
                 mode = counter.mode(mode);
@@ -358,6 +379,85 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             wrapped.add(new EffectRegistration(effect, mode, registration.simultaneousWithPrevious()));
         }
         return List.copyOf(wrapped);
+    }
+
+    /**
+     * The ability in the form the state-trigger reader takes a state trigger in (CR 603.8): one
+     * {@link StateTriggerEffect} of {@code state}'s game state and all the ability's effects, one stack object
+     * (CR 603.3), with no description (the reader names it after the card). The intervening "if" wraps each effect in
+     * a {@link ConditionalEffect} the reader checks as the game state triggers the ability and again as it resolves
+     * (CR 603.4); the reader reads no limit or multiplicity.
+     */
+    private List<EffectRegistration> legacyStateEffects(StateTrigger state) {
+        if (options.limit() != TriggerLimit.NONE || options.multiplicity() != TriggerMultiplicity.EACH) {
+            throw new IllegalStateException("The state-trigger reader reads only an intervening \"if\": " + options);
+        }
+        Condition interveningIf = options.interveningIf();
+        List<CardEffect> resolved = effects.stream()
+                .map(registration -> interveningIf == null ? registration.effect()
+                        : (CardEffect) new ConditionalEffect(interveningIf, registration.effect(), true))
+                .toList();
+        return List.of(new EffectRegistration(StateTriggerEffect.of(state, resolved),
+                effects.getFirst().triggerMode(), false));
+    }
+
+    /**
+     * The ability in the form the scheme collector judges a "whenever you set a [quality] scheme in motion" ability
+     * in: one {@link SchemeSetInMotionTriggerEffect} of all its effects, one stack object (CR 603.3), with the
+     * trigger's scheme filter.
+     */
+    private List<EffectRegistration> legacySchemeEffects() {
+        requireNoOptions("scheme");
+        CardPredicate filter = conditions.stream().map(TriggerCondition::trigger)
+                .filter(PlayerActionTrigger.class::isInstance).map(PlayerActionTrigger.class::cast)
+                .map(PlayerActionTrigger::filter).filter(Objects::nonNull).findFirst().orElse(null);
+        List<CardEffect> resolved = effects.stream().map(EffectRegistration::effect).toList();
+        return List.of(new EffectRegistration(new SchemeSetInMotionTriggerEffect(filter, resolved),
+                effects.getFirst().triggerMode(), false));
+    }
+
+    /**
+     * This ability's object-action condition that its collector reads by another trigger
+     * ({@link ObjectActionTrigger#watchKey()}), or {@code null}: an explored or exploited card's filter, a Room's
+     * door, or "becomes crewed / saddled for the first time each turn". Their collectors read the wrappers outside
+     * every other, so a filtered or door ability takes no options, and a first-time one no limit.
+     */
+    private ObjectActionTrigger objectActionView() {
+        ObjectActionTrigger object = filteredTrigger(ObjectActionTrigger.class);
+        if (object == null) {
+            return null;
+        }
+        if ((object.filter() != null || object.door() != null) && !options.equals(TriggerOptions.DEFAULT)) {
+            throw new IllegalStateException("The legacy view has no filtered object-action record with options: "
+                    + options);
+        }
+        if (firstTimeEachTurn(object) && options.limit() != TriggerLimit.NONE) {
+            throw new IllegalStateException("A first-time-each-turn trigger takes no limit: " + options);
+        }
+        return object;
+    }
+
+    private static boolean firstTimeEachTurn(ObjectActionTrigger object) {
+        return object.action() == ObjectActionTrigger.ObjectAction.BECOMES_CREWED_FOR_FIRST_TIME_EACH_TURN
+                || object.action() == ObjectActionTrigger.ObjectAction.BECOMES_SADDLED_FOR_FIRST_TIME_EACH_TURN;
+    }
+
+    /**
+     * {@code effect} wrapped in what {@code object}'s collector judges, as the cards wrote it: "for the first time each
+     * turn" as the unkeyed {@link OncePerTurnTriggerEffect} the crewed and saddled collectors mark on the source, the
+     * card filter as a {@link TriggeringCardConditionalEffect}, the door as a {@link TriggeringRoomDoorConditionalEffect}.
+     */
+    private static CardEffect legacyObjectActionWrapper(ObjectActionTrigger object, CardEffect effect) {
+        if (firstTimeEachTurn(object)) {
+            effect = new OncePerTurnTriggerEffect(effect);
+        }
+        if (object.filter() != null) {
+            effect = new TriggeringCardConditionalEffect(object.filter(), effect);
+        }
+        if (object.door() != null) {
+            effect = new TriggeringRoomDoorConditionalEffect(object.door(), effect);
+        }
+        return effect;
     }
 
     /**
@@ -1015,6 +1115,7 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
                     landPlay.notPlayedFrom());
             case AbilityTrigger activation -> Arrays.asList(activation.source(), activation.kind());
             case SpellTrigger spell -> Arrays.asList(spell.filter());
+            case ObjectActionTrigger object -> Arrays.asList(object.action(), object.filter(), object.door());
             default -> List.of();
         };
     }

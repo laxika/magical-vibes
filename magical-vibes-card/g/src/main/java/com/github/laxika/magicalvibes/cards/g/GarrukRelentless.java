@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkerDealDamageAndReceivePowerDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 import java.util.List;
@@ -28,12 +27,9 @@ public class GarrukRelentless extends Card {
 
         // When Garruk Relentless has two or fewer loyalty counters on him, transform him.
         // This is a state-triggered ability (MTG rule 603.8).
-        addTrigger(Triggers.state(), new StateTriggerEffect(
-                (gameData, sourcePermanent, controllerId) ->
-                        sourcePermanent.getCounterCount(CounterType.LOYALTY) <= 2 && !sourcePermanent.isTransformed(),
-                List.of(new TransformSelfEffect()),
-                "Garruk Relentless's transform trigger"
-        ));
+        addTrigger(Triggers.state((gameData, sourcePermanent, controllerId) ->
+                        sourcePermanent.getCounterCount(CounterType.LOYALTY) <= 2 && !sourcePermanent.isTransformed()),
+                new TransformSelfEffect());
 
         // 0: Garruk Relentless deals 3 damage to target creature.
         // That creature deals damage equal to its power to him.

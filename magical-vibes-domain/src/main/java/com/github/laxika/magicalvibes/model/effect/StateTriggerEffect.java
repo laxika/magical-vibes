@@ -1,11 +1,15 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.StateTrigger;
 
 import java.util.List;
 
 /**
- * A state-triggered ability (MTG rule 603.8). When the condition is met and the ability is not
+ * A state-triggered ability (CR 603.8) in the form the state-trigger reader takes it: a card's state trigger is
+ * authored as a {@link StateTrigger} game state and the ability's effects ({@code Triggers.state(predicate)}, …), and
+ * {@code TriggeredAbility.legacyEffects()} gives the ability as one of these, with no description; a static ability
+ * that grants a state trigger (Olivia, Crimson Bride) still writes one. When the condition is met and the ability is not
  * already on the stack, the {@code effects} are put onto the stack as a triggered ability. The
  * trigger won't fire again while it's on the stack; once resolved, countered, or otherwise
  * removed, it can fire again.
@@ -24,7 +28,8 @@ import java.util.List;
  * @param referencedPermanentPredicate selects a non-targeting permanent reference when the
  *                                     trigger fires, or {@code null}
  * @param effects         effects to put on the stack when triggered
- * @param description     log/stack description for the triggered ability
+ * @param description     log/stack description for the triggered ability, or {@code null} for "[card name]'s
+ *                        state-triggered ability"
  *
  * <p>The optional {@code referencedPermanentPredicate} is evaluated across all battlefields and
  * stores the first matching permanent as a non-targeting reference on the triggered stack entry.</p>
@@ -39,6 +44,13 @@ public record StateTriggerEffect(
         List<CardEffect> effects,
         String description
 ) implements CardEffect {
+
+    /** The legacy form of a state trigger's ability: {@code trigger}'s game state and the ability's effects. */
+    public static StateTriggerEffect of(StateTrigger trigger, List<CardEffect> effects) {
+        return new StateTriggerEffect(trigger.predicate(), trigger.sourcePredicate(), trigger.battlefieldPredicate(),
+                trigger.maximumBattlefieldMatches(), trigger.minimumBattlefieldMatches(),
+                trigger.referencedPermanentPredicate(), List.copyOf(effects), null);
+    }
 
     public StateTriggerEffect(StateTriggerPredicate predicate,
                               PermanentPredicate sourcePredicate,

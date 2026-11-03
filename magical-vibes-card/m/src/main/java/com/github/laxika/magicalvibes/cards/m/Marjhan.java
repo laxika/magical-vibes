@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -62,10 +61,8 @@ public class Marjhan extends Card {
 
         // "When you control no Islands, sacrifice this creature." —
         // State-triggered ability (MTG rule 603.8).
-        addTrigger(Triggers.state(), new StateTriggerEffect(
-                new PermanentControllerControlsPermanentCountAtMostPredicate(
-                        0, new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
-                List.of(new SacrificeSelfEffect()),
-                "Marjhan's state-triggered ability"));
+        addTrigger(Triggers.sourceState(new PermanentControllerControlsPermanentCountAtMostPredicate(
+                        0, new PermanentHasSubtypePredicate(CardSubtype.ISLAND))),
+                new SacrificeSelfEffect());
     }
 }

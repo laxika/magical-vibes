@@ -7,15 +7,12 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "MIR", collectorNumber = "205")
 public class AfiyaGrove extends Card {
@@ -30,10 +27,8 @@ public class AfiyaGrove extends Card {
                         new MoveCounterFromSourceToTargetCreatureEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         // "When this enchantment has no +1/+1 counters on it, sacrifice it." — state-triggered ability.
-        addTrigger(Triggers.state(), new StateTriggerEffect(
-                new PermanentNotPredicate(new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)),
-                List.of(new SacrificeSelfEffect()),
-                "Afiya Grove's state-triggered ability"
-        ));
+        addTrigger(Triggers.sourceState(
+                        new PermanentNotPredicate(new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE))),
+                new SacrificeSelfEffect());
     }
 }

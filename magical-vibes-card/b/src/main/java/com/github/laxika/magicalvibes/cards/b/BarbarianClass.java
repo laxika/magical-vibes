@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RollWithAdvantageEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -28,11 +29,10 @@ public class BarbarianClass extends Card {
         addStaticEffect(new RollWithAdvantageEffect());
 
         target(TargetFilters.creatureYouControl()).addTrigger(Triggers.youRollOneOrMoreDice(),
-                new ConditionalEffect(
-                        new SourceCounterThreshold(1, CounterType.LEVEL),
-                        SequenceEffect.of(
-                                new BoostTargetCreatureEffect(2, 0),
-                                new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET))));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, CounterType.LEVEL)),
+                SequenceEffect.of(
+                        new BoostTargetCreatureEffect(2, 0),
+                        new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

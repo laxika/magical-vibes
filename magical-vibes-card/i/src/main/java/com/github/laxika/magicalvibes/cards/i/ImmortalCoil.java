@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerAndExileFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,13 +25,10 @@ public class ImmortalCoil extends Card {
         addStaticEffect(new PreventAllDamageToControllerAndExileFromGraveyardEffect());
 
         // "When there are no cards in your graveyard, you lose the game." — state-triggered (CR 603.8).
-        addTrigger(Triggers.state(), new StateTriggerEffect(
-                (gameData, sourcePermanent, controllerId) -> {
+        addTrigger(Triggers.state((gameData, sourcePermanent, controllerId) -> {
                     var graveyard = gameData.playerGraveyards.get(controllerId);
                     return graveyard == null || graveyard.isEmpty();
-                },
-                List.of(new ControllerLosesGameEffect()),
-                "Immortal Coil's state-triggered ability"
-        ));
+                }),
+                new ControllerLosesGameEffect());
     }
 }

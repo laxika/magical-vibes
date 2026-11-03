@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -44,8 +43,7 @@ public class SurgicalSuiteHospitalRoom extends Card {
                         new CardMaxManaValuePredicate(3))))
                 .targetGraveyard(true)
                 .build();
-        addTrigger(Triggers.doorUnlocked(),
-                new TriggeringRoomDoorConditionalEffect(0, returnCreature));
+        addTrigger(Triggers.doorUnlocked(0), returnCreature);
 
         var attackingCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsAttackingPredicate(),

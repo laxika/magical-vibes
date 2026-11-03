@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -19,14 +18,11 @@ import java.util.List;
 public class SynodCenturion extends Card {
 
     public SynodCenturion() {
-        addTrigger(Triggers.state(), StateTriggerEffect.whenBattlefieldHasAtMost(0,
-                new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.battlefieldHasAtMost(0, new PermanentAllOfPredicate(List.of(
                         new PermanentControlledBySourceControllerPredicate(),
                         new PermanentIsArtifactPredicate(),
                         new PermanentNotPredicate(
-                                new PermanentIsSourcePermanentPredicate()))),
-                List.of(new SacrificeSelfEffect()),
-                "Synod Centurion's state-triggered ability"
-        ));
+                                new PermanentIsSourcePermanentPredicate())))),
+                new SacrificeSelfEffect());
     }
 }

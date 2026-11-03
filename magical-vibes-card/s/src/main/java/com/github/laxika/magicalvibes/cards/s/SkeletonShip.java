@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -24,14 +23,10 @@ public class SkeletonShip extends Card {
     public SkeletonShip() {
         // "When you control no Islands, sacrifice this creature." —
         // State-triggered ability (MTG rule 603.8).
-        addTrigger(Triggers.state(), StateTriggerEffect.whenBattlefieldHasAtMost(
-                0,
-                new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.battlefieldHasAtMost(0, new PermanentAllOfPredicate(List.of(
                         new PermanentControlledBySourceControllerPredicate(),
-                        new PermanentHasSubtypePredicate(CardSubtype.ISLAND))),
-                List.of(new SacrificeSelfEffect()),
-                "Skeleton Ship's state-triggered ability"
-        ));
+                        new PermanentHasSubtypePredicate(CardSubtype.ISLAND)))),
+                new SacrificeSelfEffect());
 
         // "{T}: Put a -1/-1 counter on target creature."
         addActivatedAbility(new ActivatedAbility(

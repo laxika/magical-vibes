@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,10 +28,9 @@ public class MirrorRoomFracturedRealm extends Card {
                         .withManaCost("{5}{U}{U}")
         )));
 
-        target(TargetFilters.creatureYouControl()).addTrigger(Triggers.doorUnlocked(),
-                new TriggeringRoomDoorConditionalEffect(0,
-                        new CreateTokenCopyOfTargetPermanentEffect(
-                                List.of(CardSubtype.REFLECTION), Set.of(), null, null, Map.of())));
+        target(TargetFilters.creatureYouControl()).addTrigger(Triggers.doorUnlocked(0),
+                new CreateTokenCopyOfTargetPermanentEffect(
+                        List.of(CardSubtype.REFLECTION), Set.of(), null, null, Map.of()));
 
         addStaticEffect(new AdditionalTriggeredAbilityEffect(
                         new PermanentTruePredicate(), new SourceRoomDoorUnlocked(1), true, false));

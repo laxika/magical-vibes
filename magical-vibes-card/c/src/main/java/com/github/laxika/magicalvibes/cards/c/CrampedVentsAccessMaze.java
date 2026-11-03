@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeEqualToSpellManaValueCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -32,10 +31,10 @@ public class CrampedVentsAccessMaze extends Card {
                         .withManaCost("{5}{B}{B}")
         )));
 
-        target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.doorUnlocked(),
-                new TriggeringRoomDoorConditionalEffect(0, SequenceEffect.of(
+        target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.doorUnlocked(0),
+                SequenceEffect.of(
                         new DealDamageToTargetCreatureEffect(6),
-                        new GainLifeEffect(new EventValue()))));
+                        new GainLifeEffect(new EventValue())));
 
         addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(1),

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -35,10 +34,8 @@ public class MazemindTome extends Card {
                 "{2}, {T}, Put a page counter on this artifact: Draw a card."
         ));
 
-        addTrigger(Triggers.state(), new StateTriggerEffect(
-                (gameData, sourcePermanent, controllerId) ->
-                        sourcePermanent.getCounterCount(CounterType.PAGE) >= 4,
-                List.of(new ExileSelfThenEffect(new GainLifeEffect(4))),
-                "Mazemind Tome's state-triggered ability"));
+        addTrigger(Triggers.state((gameData, sourcePermanent, controllerId) ->
+                        sourcePermanent.getCounterCount(CounterType.PAGE) >= 4),
+                new ExileSelfThenEffect(new GainLifeEffect(4)));
     }
 }

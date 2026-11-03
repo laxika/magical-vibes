@@ -763,7 +763,7 @@ public class TriggerCollectionService {
         List<Card> graveyard = gameData.playerGraveyards.get(committingPlayerId);
         if (graveyard != null) {
             for (Card card : List.copyOf(graveyard)) {
-                for (CardEffect effect : gameQueryService.getEffectiveGraveyardTriggerEffects(
+                for (CardEffect effect : gameQueryService.getEffectiveGraveyardLegacyTriggerEffects(
                         gameData, card, ActionWatch.GRAVEYARD_ON_CONTROLLER_COMMITS_CRIME.trigger())) {
                     queueGraveyardCrimeTrigger(gameData, card, committingPlayerId, effect);
                 }
@@ -3293,7 +3293,7 @@ public class TriggerCollectionService {
             return;
         }
         for (Card card : List.copyOf(graveyard)) {
-            for (CardEffect effect : gameQueryService.getEffectiveGraveyardTriggerEffects(
+            for (CardEffect effect : gameQueryService.getEffectiveGraveyardLegacyTriggerEffects(
                     gameData, card, ActionWatch.GRAVEYARD_ON_CONTROLLER_CONJURES.trigger())) {
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
@@ -14195,7 +14195,7 @@ public class TriggerCollectionService {
         if (graveyard == null) return;
 
         for (Card card : new ArrayList<>(graveyard)) {
-            for (CardEffect effect : gameQueryService.getEffectiveGraveyardTriggerEffects(
+            for (CardEffect effect : gameQueryService.getEffectiveGraveyardLegacyTriggerEffects(
                     gameData, card, MiscWatch.GRAVEYARD_ON_DAY_NIGHT_CHANGE.trigger())) {
                 StackEntry triggerEntry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,

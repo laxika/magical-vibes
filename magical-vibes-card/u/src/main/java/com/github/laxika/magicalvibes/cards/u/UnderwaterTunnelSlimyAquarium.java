@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.ManifestDreadEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,11 +25,10 @@ public class UnderwaterTunnelSlimyAquarium extends Card {
                         .withManaCost("{3}{U}")
         )));
 
-        addTrigger(Triggers.doorUnlocked(),
-                new TriggeringRoomDoorConditionalEffect(0, new SurveilEffect(2)));
-        addTrigger(Triggers.doorUnlocked(),
-                new TriggeringRoomDoorConditionalEffect(1, SequenceEffect.of(
+        addTrigger(Triggers.doorUnlocked(0), new SurveilEffect(2));
+        addTrigger(Triggers.doorUnlocked(1),
+                SequenceEffect.of(
                         ManifestDreadEffect.forController(),
-                        new PutCountersOnChosenPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))));
+                        new PutCountersOnChosenPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)));
     }
 }

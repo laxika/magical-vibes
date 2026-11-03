@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model.trigger;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.StateTriggerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -24,6 +25,7 @@ import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /** One factory per trigger event, for {@code Card.addTrigger}. */
@@ -1866,9 +1868,21 @@ public final class Triggers {
         return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.BECOMES_CREWED, ObjectRelation.THIS);
     }
 
+    /** "Whenever this Vehicle becomes crewed for the first time each turn" */
+    public static ObjectActionTrigger becomesCrewedForFirstTimeEachTurn() {
+        return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.BECOMES_CREWED_FOR_FIRST_TIME_EACH_TURN,
+                ObjectRelation.THIS);
+    }
+
     /** "Whenever this creature becomes saddled" */
     public static ObjectActionTrigger becomesSaddled() {
         return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.BECOMES_SADDLED, ObjectRelation.THIS);
+    }
+
+    /** "Whenever this creature becomes saddled for the first time each turn" */
+    public static ObjectActionTrigger becomesSaddledForFirstTimeEachTurn() {
+        return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.BECOMES_SADDLED_FOR_FIRST_TIME_EACH_TURN,
+                ObjectRelation.THIS);
     }
 
     /** "Whenever a creature stations this Spacecraft" */
@@ -1876,9 +1890,15 @@ public final class Triggers {
         return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.BECOMES_STATIONED, ObjectRelation.THIS);
     }
 
-    /** "When you unlock this door" (CR 709.5h); the door is the {@code TriggeringRoomDoorConditionalEffect}'s */
+    /** "When you unlock [a door of this Room]" (CR 709.5h), any door: the trigger the door collector watches */
     public static ObjectActionTrigger doorUnlocked() {
         return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.DOOR_UNLOCKED, ObjectRelation.THIS);
+    }
+
+    /** "When you unlock this door" (CR 709.5h), on the Room's left ({@code 0}) or right ({@code 1}) door */
+    public static ObjectActionTrigger doorUnlocked(int door) {
+        return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.DOOR_UNLOCKED, ObjectRelation.THIS, null,
+                door);
     }
 
     /** "Whenever you fully unlock a Room" (CR 709.5i) */
@@ -1949,8 +1969,42 @@ public final class Triggers {
         return new PlanarTrigger(PlanarTrigger.PlanarEvent.ENCOUNTERED);
     }
 
-    /** A state trigger (CR 603.8): its {@code StateTriggerEffect} names the game state it watches */
+    /**
+     * The trigger the state-trigger reader watches (CR 603.8), with no game state. A card's state trigger names its
+     * game state: {@link #state(StateTriggerPredicate)}, {@link #sourceState}, {@link #battlefieldHasAtMost},
+     * {@link #battlefieldHasAtLeast}.
+     */
     public static StateTrigger state() {
         return new StateTrigger();
+    }
+
+    /** A state trigger (CR 603.8) on a condition over the whole game: "when you have 30 or more life" */
+    public static StateTrigger state(StateTriggerPredicate predicate) {
+        return new StateTrigger(Objects.requireNonNull(predicate, "predicate"), null, null, 0, 0, null);
+    }
+
+    /**
+     * A state trigger (CR 603.8) on the source permanent, checked through the layer-aware predicate evaluator: "when
+     * this creature has flying"
+     */
+    public static StateTrigger sourceState(PermanentPredicate sourcePredicate) {
+        return new StateTrigger(null, Objects.requireNonNull(sourcePredicate, "sourcePredicate"), null, 0, 0, null);
+    }
+
+    /**
+     * A state trigger (CR 603.8) on at most {@code maximumMatches} permanents on the battlefield matching
+     * {@code predicate}: "when you control no Islands" is {@code battlefieldHasAtMost(0, islandYouControl)}
+     */
+    public static StateTrigger battlefieldHasAtMost(int maximumMatches, PermanentPredicate predicate) {
+        return new StateTrigger(null, null, Objects.requireNonNull(predicate, "predicate"), maximumMatches, 0, null);
+    }
+
+    /**
+     * A state trigger (CR 603.8) on at least {@code minimumMatches} permanents on the battlefield matching
+     * {@code predicate}
+     */
+    public static StateTrigger battlefieldHasAtLeast(int minimumMatches, PermanentPredicate predicate) {
+        return new StateTrigger(null, null, Objects.requireNonNull(predicate, "predicate"), Integer.MAX_VALUE,
+                minimumMatches, null);
     }
 }

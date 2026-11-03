@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentCountAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -32,11 +31,8 @@ public class EndrekSahrMasterBreeder extends Card {
                         new CreateTokenEffect(new EventValue(), "Thrull", 1, 1,
                                 CardColor.BLACK, List.of(CardSubtype.THRULL), Set.of(), Set.of())));
 
-        addTrigger(Triggers.state(), new StateTriggerEffect(
-                new PermanentNotPredicate(new PermanentControllerControlsPermanentCountAtMostPredicate(
-                        6, new PermanentHasSubtypePredicate(CardSubtype.THRULL))),
-                List.of(new SacrificeSelfEffect()),
-                "Endrek Sahr, Master Breeder's state-triggered ability"
-        ));
+        addTrigger(Triggers.sourceState(new PermanentNotPredicate(new PermanentControllerControlsPermanentCountAtMostPredicate(
+                        6, new PermanentHasSubtypePredicate(CardSubtype.THRULL)))),
+                new SacrificeSelfEffect());
     }
 }

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceChosenPlayerPredicate;
@@ -45,17 +44,9 @@ public class Jihad extends Card {
         // When the chosen player controls no matching nontoken permanent, sacrifice Jihad.
         // The count is layer-aware, so a color granted by another static effect (Painter's Servant)
         // counts toward the chosen player's matching permanents.
-        addTrigger(Triggers.state(), new StateTriggerEffect(
-                null,
-                null,
-                new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.battlefieldHasAtMost(0, new PermanentAllOfPredicate(List.of(
                         NONTOKEN_PERMANENT_OF_CHOSEN_COLOR,
-                        new PermanentControlledBySourceChosenPlayerPredicate())),
-                0,
-                0,
-                null,
-                List.of(new SacrificeSelfEffect()),
-                "Jihad's state-triggered ability"
-        ));
+                        new PermanentControlledBySourceChosenPlayerPredicate()))),
+                new SacrificeSelfEffect());
     }
 }

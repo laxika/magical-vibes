@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -42,10 +41,9 @@ public class SolitaryStudyEndlessCorridor extends Card {
                 new PermanentControlledBySourceControllerPredicate()));
         GrantKeywordEffect firstStrike = new GrantKeywordEffect(
                 Keyword.FIRST_STRIKE, GrantScope.TARGET, creatureYouControl);
-        addTrigger(Triggers.doorUnlocked(),
-                new TriggeringRoomDoorConditionalEffect(1,
-                        SequenceEffect.of(
-                                new ConjureDuplicateOfSourceCardIntoHandEffect("YDSK", "4"),
-                                new QueueReflexiveAbilityEffect(firstStrike))));
+        addTrigger(Triggers.doorUnlocked(1),
+                SequenceEffect.of(
+                        new ConjureDuplicateOfSourceCardIntoHandEffect("YDSK", "4"),
+                        new QueueReflexiveAbilityEffect(firstStrike)));
     }
 }

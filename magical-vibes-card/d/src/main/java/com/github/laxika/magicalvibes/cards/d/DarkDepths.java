@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -62,9 +61,7 @@ public class DarkDepths extends Card {
                 0,
                 Set.of());
 
-        addTrigger(Triggers.state(), new StateTriggerEffect(
-                new PermanentNotPredicate(new PermanentHasCountersPredicate(CounterType.ICE)),
-                List.of(new SacrificeSelfThenEffect(maritLage)),
-                "Dark Depths's state-triggered ability"));
+        addTrigger(Triggers.sourceState(new PermanentNotPredicate(new PermanentHasCountersPredicate(CounterType.ICE))),
+                new SacrificeSelfThenEffect(maritLage));
     }
 }

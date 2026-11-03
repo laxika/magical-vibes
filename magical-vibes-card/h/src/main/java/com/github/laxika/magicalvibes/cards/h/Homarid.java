@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -41,9 +40,7 @@ public class Homarid extends Card {
                         new NotCondition(new SourceCounterThreshold(4, CounterType.TIDE)))),
                 new StaticBoostEffect(1, 1, GrantScope.SELF)));
 
-        addTrigger(Triggers.state(), new StateTriggerEffect(
-                new PermanentHasAtLeastCountersPredicate(CounterType.TIDE, 4),
-                List.of(new RemoveAllCountersEffect(CounterType.TIDE)),
-                "Homarid's state-triggered ability"));
+        addTrigger(Triggers.sourceState(new PermanentHasAtLeastCountersPredicate(CounterType.TIDE, 4)),
+                new RemoveAllCountersEffect(CounterType.TIDE));
     }
 }

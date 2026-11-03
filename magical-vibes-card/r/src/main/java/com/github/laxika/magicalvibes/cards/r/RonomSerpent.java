@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -30,10 +29,8 @@ public class RonomSerpent extends Card {
                 "a snow land"
         ));
 
-        addTrigger(Triggers.state(), new StateTriggerEffect(
-                new PermanentNotPredicate(new PermanentControllerControlsPermanentPredicate(snowLand)),
-                List.of(new SacrificeSelfEffect()),
-                "Ronom Serpent's state-triggered ability"
-        ));
+        addTrigger(Triggers.sourceState(
+                        new PermanentNotPredicate(new PermanentControllerControlsPermanentPredicate(snowLand))),
+                new SacrificeSelfEffect());
     }
 }

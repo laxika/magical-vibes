@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -34,9 +33,7 @@ public class DerelictAtticWidowsWalk extends Card {
                         .withManaCost("{3}{B}")
         )));
 
-        addTrigger(Triggers.doorUnlocked(),
-                new TriggeringRoomDoorConditionalEffect(0,
-                        SequenceEffect.of(new DrawCardEffect(2), new LoseLifeEffect(2))));
+        addTrigger(Triggers.doorUnlocked(0), SequenceEffect.of(new DrawCardEffect(2), new LoseLifeEffect(2)));
 
         addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(1),

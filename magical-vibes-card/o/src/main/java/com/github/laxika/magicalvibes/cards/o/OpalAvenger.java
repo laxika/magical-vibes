@@ -5,12 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "ULG", collectorNumber = "15")
 public class OpalAvenger extends Card {
@@ -18,13 +15,9 @@ public class OpalAvenger extends Card {
     public OpalAvenger() {
         // "if this permanent is an enchantment" is an intervening-if (CR 603.4), so it is re-checked as the
         // ability resolves; the life-total trigger condition is not.
-        addTrigger(Triggers.state(), new StateTriggerEffect(
-                (gameData, sourcePermanent, controllerId) -> gameData.getLife(controllerId) <= 10,
-                new PermanentIsEnchantmentPredicate(), null, 0, null,
-                List.of(new ConditionalEffect(
-                        new SourceMatchesPermanentPredicate(new PermanentIsEnchantmentPredicate()),
-                        new BecomeCreatureEffect(3, 5, CardSubtype.SOLDIER))),
-                "Opal Avenger's state-triggered ability"
-        ));
+        addTrigger(Triggers.state((gameData, sourcePermanent, controllerId) -> gameData.getLife(controllerId) <= 10),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new SourceMatchesPermanentPredicate(new PermanentIsEnchantmentPredicate())),
+                new BecomeCreatureEffect(3, 5, CardSubtype.SOLDIER));
     }
 }

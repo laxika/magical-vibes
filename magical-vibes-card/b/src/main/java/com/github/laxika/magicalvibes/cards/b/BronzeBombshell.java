@@ -5,24 +5,19 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
 import java.util.UUID;
 
 @CardRegistration(set = "DIS", collectorNumber = "160")
 public class BronzeBombshell extends Card {
 
     public BronzeBombshell() {
-        addTrigger(Triggers.state(), new StateTriggerEffect(
-                (gameData, sourcePermanent, controllerId) -> {
+        addTrigger(Triggers.state((gameData, sourcePermanent, controllerId) -> {
                     UUID ownerId = sourcePermanent.getCard().getOwnerId();
                     return ownerId != null && !ownerId.equals(controllerId);
-                },
-                List.of(new SacrificeSelfThenEffect(
-                        new DealDamageToPlayersEffect(7, DamageRecipient.CONTROLLER))),
-                "Bronze Bombshell's state-triggered ability"
-        ));
+                }),
+                new SacrificeSelfThenEffect(
+                        new DealDamageToPlayersEffect(7, DamageRecipient.CONTROLLER)));
     }
 }

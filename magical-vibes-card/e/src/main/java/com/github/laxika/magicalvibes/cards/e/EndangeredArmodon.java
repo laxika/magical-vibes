@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -17,14 +16,11 @@ import java.util.List;
 public class EndangeredArmodon extends Card {
 
     public EndangeredArmodon() {
-        addTrigger(Triggers.state(), new StateTriggerEffect(
-                new PermanentControllerControlsPermanentPredicate(
+        addTrigger(Triggers.sourceState(new PermanentControllerControlsPermanentPredicate(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentToughnessAtMostPredicate(2)
-                        ))),
-                List.of(new SacrificeSelfEffect()),
-                "Endangered Armodon's state-triggered ability"
-        ));
+                        )))),
+                new SacrificeSelfEffect());
     }
 }

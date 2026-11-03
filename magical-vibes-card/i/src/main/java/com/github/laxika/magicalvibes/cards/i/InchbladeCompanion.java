@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
@@ -18,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -31,8 +32,8 @@ public class InchbladeCompanion extends Card {
         addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF,
                 EffectDuration.WHILE_ATTACHED));
         addTrigger(Triggers.becomesAttachedToCreature(),
-                new OncePerTurnTriggerEffect(
-                        CreateTokenCopyOfSourceEffect.withoutSourceEffect(OncePerTurnTriggerEffect.class)));
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                CreateTokenCopyOfSourceEffect.withoutSourceEffect(CreateTokenCopyOfSourceEffect.class));
 
         var reconfigureTarget = TargetPredicates.permanents(new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
