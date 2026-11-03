@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantAdditionalLoyaltyCounter
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -52,16 +51,13 @@ public class DarkIntimations extends Card {
                 .build());
         addSpellEffect(new DrawCardEffect());
 
-        addTrigger(new TriggerCondition(Triggers.youCastSpell(), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT, new SpellCastTriggerEffect(
-                new CardAllOfPredicate(List.of(
-                        new CardTypePredicate(CardType.PLANESWALKER),
-                        new CardSubtypePredicate(CardSubtype.BOLAS)
-                )),
-                List.of(
-                        new ExileSourceCardFromGraveyardEffect(),
-                        new GrantAdditionalLoyaltyCountersToCastSpellEffect(1)
-                )
-        ));
+        addTrigger(new TriggerCondition(Triggers.youCastSpell()
+                        .withFilter(new CardAllOfPredicate(List.of(
+                                new CardTypePredicate(CardType.PLANESWALKER),
+                                new CardSubtypePredicate(CardSubtype.BOLAS)
+                        ))), AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT,
+                new ExileSourceCardFromGraveyardEffect(),
+                new GrantAdditionalLoyaltyCountersToCastSpellEffect(1));
     }
 }

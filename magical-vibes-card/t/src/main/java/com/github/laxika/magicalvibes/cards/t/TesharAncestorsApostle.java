@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -25,16 +24,14 @@ public class TesharAncestorsApostle extends Card {
     public TesharAncestorsApostle() {
         // Whenever you cast a historic spell, return target creature card with mana value 3 or less
         // from your graveyard to the battlefield. (Artifacts, legendaries, and Sagas are historic.)
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardIsHistoricPredicate(),
-                List.of(ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.youCastSpell().withFilter(new CardIsHistoricPredicate()),
+                ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardMaxManaValuePredicate(3)
                         )))
                         .targetGraveyard(true)
-                        .build())
-        ));
+                        .build());
     }
 }

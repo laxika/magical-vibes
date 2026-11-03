@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,12 +21,12 @@ public class Dreamcatcher extends Card {
     public Dreamcatcher() {
         // Whenever you cast a Spirit or Arcane spell, you may sacrifice this creature. If you do,
         // draw a card.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardSubtypePredicate(CardSubtype.SPIRIT),
-                        new CardSubtypePredicate(CardSubtype.ARCANE))),
-                List.of(new MayEffect(SequenceEffect.of(new SacrificeSelfEffect(),
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardSubtypePredicate(CardSubtype.SPIRIT),
+                                new CardSubtypePredicate(CardSubtype.ARCANE)))),
+                new MayEffect(SequenceEffect.of(new SacrificeSelfEffect(),
                         ConditionalEffect.unless(PermanentLeftThisWay.sacrificed(), new DrawCardEffect(1))),
-                        "Sacrifice Dreamcatcher to draw a card?"))));
+                        "Sacrifice Dreamcatcher to draw a card?"));
     }
 }

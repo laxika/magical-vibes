@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -34,9 +33,9 @@ public class VivisPersistence extends Card {
 
     public VivisPersistence() {
         List<Ability> wizardTokenEffects = List.of(
-                new TriggeredAbility(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                        new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                        List.of(new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT)))));
+                new TriggeredAbility(Triggers.youCastSpell()
+                                .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                        new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT)));
 
         addSpellEffect(new CreateTokenEffect(
                 1, "Wizard", 0, 1, CardColor.BLACK, List.of(CardSubtype.WIZARD),

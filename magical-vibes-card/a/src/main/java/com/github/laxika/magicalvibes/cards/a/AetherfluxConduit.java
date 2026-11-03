@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.CastAnyNumberOfSpellsFromHand
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -19,9 +18,7 @@ import java.util.List;
 public class AetherfluxConduit extends Card {
 
     public AetherfluxConduit() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new EnergyCountersEffect(new XValue()))));
+        addTrigger(Triggers.youCastSpell().anySpell(), new EnergyCountersEffect(new XValue()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

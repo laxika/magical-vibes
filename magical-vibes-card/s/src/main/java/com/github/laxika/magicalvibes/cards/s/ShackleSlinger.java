@@ -6,15 +6,12 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "OTJ", collectorNumber = "65")
 public class ShackleSlinger extends Card {
@@ -26,22 +23,8 @@ public class ShackleSlinger extends Card {
 
         // Whenever you cast your second spell each turn, choose target creature an opponent
         // controls. If it's tapped, put a stun counter on it. Otherwise, tap it.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(
-                        new ConditionalEffect(tappedTarget,
-                                new PutCounterOnTargetPermanentEffect(CounterType.STUN)),
-                        new ConditionalEffect(untappedTarget,
-                                new TapPermanentsEffect(TapUntapScope.TARGET))
-                ),
-                null,
-                TargetFilters.creatureAnOpponentControls(),
-                null,
-                false,
-                false,
-                null,
-                2,
-                0
-        ));
+        target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.youCastSpell().nthThisTurn(2),
+                new ConditionalEffect(tappedTarget, new PutCounterOnTargetPermanentEffect(CounterType.STUN)),
+                new ConditionalEffect(untappedTarget, new TapPermanentsEffect(TapUntapScope.TARGET)));
     }
 }

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoublePlusOneCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -24,8 +23,7 @@ public class DragonsguardElite extends Card {
                 new CardTypePredicate(CardType.SORCERY)));
         List<CardEffect> magecraft = List.of(new PutCountersOnSourceEffect(1, 1, 1));
 
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(instantOrSorcery, magecraft));
+        addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery), magecraft.toArray(CardEffect[]::new));
         addTrigger(Triggers.youCopySpell(),
                 new SpellCopyTriggerEffect(instantOrSorcery, magecraft));
         addActivatedAbility(new ActivatedAbility(

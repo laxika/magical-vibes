@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -33,12 +32,10 @@ public class EntropicEidolon extends Card {
                 "{B}, Sacrifice this creature: Target player loses 1 life and you gain 1 life."
         ));
 
-        addTrigger(new TriggerCondition(Triggers.youCastSpell(), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT, new SpellCastTriggerEffect(
-                new CardIsMulticoloredPredicate(),
-                List.of(new MayEffect(
+        addTrigger(new TriggerCondition(Triggers.youCastSpell().withFilter(new CardIsMulticoloredPredicate()), AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT,
+                new MayEffect(
                         new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
-                        "Return Entropic Eidolon from your graveyard to your hand?"))
-        ));
+                        "Return Entropic Eidolon from your graveyard to your hand?"));
     }
 }

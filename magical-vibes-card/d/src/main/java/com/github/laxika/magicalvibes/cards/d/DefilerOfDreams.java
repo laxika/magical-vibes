@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeToReduceColoredCastCostEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
@@ -32,7 +31,6 @@ public class DefilerOfDreams extends Card {
         CardAllOfPredicate bluePermanentFilter = bluePermanentSpell();
         addStaticEffect(new PayLifeToReduceColoredCastCostEffect(
                 bluePermanentFilter, "{U}", 2, CostModificationScope.SELF));
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                bluePermanentFilter, List.of(new DrawCardEffect(1))));
+        addTrigger(Triggers.youCastSpell().withFilter(bluePermanentFilter), new DrawCardEffect(1));
     }
 }

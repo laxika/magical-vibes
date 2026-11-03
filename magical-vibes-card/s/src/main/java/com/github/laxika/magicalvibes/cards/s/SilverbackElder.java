@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -25,9 +24,8 @@ public class SilverbackElder extends Card {
                 new PermanentIsArtifactPredicate(),
                 new PermanentIsEnchantmentPredicate()));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardTypePredicate(CardType.CREATURE),
-                List.of(new ChooseOneEffect(List.of(
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
+                new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Destroy target artifact or enchantment.",
                                 new DestroyTargetPermanentEffect(),
@@ -39,7 +37,6 @@ public class SilverbackElder extends Card {
                                 LookAtTopCardsEffect.mayPutOneMatchingOntoBattlefieldRestOnBottomRandom(
                                         5, new CardTypePredicate(CardType.LAND))),
                         new ChooseOneEffect.ChooseOneOption("You gain 4 life.", new GainLifeEffect(4))
-                )))
-        ));
+                )));
     }
 }

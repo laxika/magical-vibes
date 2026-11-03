@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -45,8 +44,9 @@ public class GreatHallOfTheBiblioplex extends Card {
         ));
 
         addStaticEffect(new ConditionalEffect(new SourceIsCreature(),
-                new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.youCastSpell(),
-                        new SpellCastTriggerEffect(INSTANT_OR_SORCERY, List.of(new BoostSelfEffect(1, 0)))),
+                new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.youCastSpell()
+                                .withFilter(INSTANT_OR_SORCERY),
+                        new BoostSelfEffect(1, 0)),
                         GrantScope.SELF)));
 
         addActivatedAbility(new ActivatedAbility(

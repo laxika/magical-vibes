@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,13 +20,13 @@ public class QuestingDruid extends Card {
     public QuestingDruid() {
         setBackFaceCard(new SeekTheBeast());
         addCastingOption(new AdventureCast("{1}{R}"));
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardColorPredicate(CardColor.WHITE),
-                        new CardColorPredicate(CardColor.BLUE),
-                        new CardColorPredicate(CardColor.BLACK),
-                        new CardColorPredicate(CardColor.RED))),
-                List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardColorPredicate(CardColor.WHITE),
+                                new CardColorPredicate(CardColor.BLUE),
+                                new CardColorPredicate(CardColor.BLACK),
+                                new CardColorPredicate(CardColor.RED)))),
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
     }
 
     @Override

@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,14 +21,8 @@ import java.util.List;
 public class TreasuryThrull extends Card {
 
     public TreasuryThrull() {
-        addTrigger(Triggers.youCastSpell(), new MayEffect(
-                new SpellCastTriggerEffect(
-                        null,
-                        List.of(new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT, true)),
-                        "{W/B}"
-                ),
-                "Pay {W/B} to extort?"
-        ));
+        addTrigger(Triggers.youCastSpell().anySpell(),
+                new MayPayManaEffect("{W/B}", new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT, true), "Pay {W/B} to extort?"));
 
         addTrigger(Triggers.attacks(), new MayEffect(
                 ReturnCardFromGraveyardEffect.builder()

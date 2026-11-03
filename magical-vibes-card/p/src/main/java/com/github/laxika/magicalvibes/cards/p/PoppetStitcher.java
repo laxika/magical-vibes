@@ -4,10 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -27,12 +25,11 @@ public class PoppetStitcher extends Card {
     public PoppetStitcher() {
         setBackFaceCard(new PoppetFactory());
 
-        CardEffect zombieTrigger = new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY))),
-                List.of(CreateTokenEffect.blackZombieWithDecayed(1)));
-        addTrigger(Triggers.youCastSpell(), zombieTrigger);
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY)))),
+                CreateTokenEffect.blackZombieWithDecayed(1));
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(

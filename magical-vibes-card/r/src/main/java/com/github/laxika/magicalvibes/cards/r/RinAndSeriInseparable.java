@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,16 +26,10 @@ import java.util.Set;
 public class RinAndSeriInseparable extends Card {
 
     public RinAndSeriInseparable() {
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(
-                        new CardSubtypePredicate(CardSubtype.DOG),
-                        List.of(new CreateTokenEffect("Cat", 1, 1, CardColor.GREEN,
-                                List.of(CardSubtype.CAT), Set.of(), Set.of()))));
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(
-                        new CardSubtypePredicate(CardSubtype.CAT),
-                        List.of(new CreateTokenEffect("Dog", 1, 1, CardColor.WHITE,
-                                List.of(CardSubtype.DOG), Set.of(), Set.of()))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardSubtypePredicate(CardSubtype.DOG)),
+                new CreateTokenEffect("Cat", 1, 1, CardColor.GREEN, List.of(CardSubtype.CAT), Set.of(), Set.of()));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardSubtypePredicate(CardSubtype.CAT)),
+                new CreateTokenEffect("Dog", 1, 1, CardColor.WHITE, List.of(CardSubtype.DOG), Set.of(), Set.of()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

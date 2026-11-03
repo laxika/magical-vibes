@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -40,8 +39,7 @@ public class LoreholdApprentice extends Card {
                 EffectDuration.UNTIL_END_OF_TURN
         ));
 
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(instantOrSorcery, magecraft));
+        addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery), magecraft.toArray(CardEffect[]::new));
         addTrigger(Triggers.youCopySpell(),
                 new SpellCopyTriggerEffect(instantOrSorcery, magecraft));
     }

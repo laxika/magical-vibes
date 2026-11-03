@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,12 +27,11 @@ public class GlorifyingVerse extends Card {
 
         // Repartee — Whenever you cast an instant or sorcery spell that targets a creature,
         // conjure a card named Glorifying Verse into your hand.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY))),
-                List.of(new ConjureCardToHandEffect("YSOS", "19")),
-                new StackEntryTargetsPermanentPredicate(new PermanentIsCreaturePredicate())
-        ));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY))))
+                        .withStackEntryFilter(new StackEntryTargetsPermanentPredicate(new PermanentIsCreaturePredicate())),
+                new ConjureCardToHandEffect("YSOS", "19"));
     }
 }

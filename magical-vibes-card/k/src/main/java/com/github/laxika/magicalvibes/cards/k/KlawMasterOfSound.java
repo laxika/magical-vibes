@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfDamagedPlayerLi
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LandPlayFromExileTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,8 +22,8 @@ public class KlawMasterOfSound extends Card {
         List<CardEffect> indestructible = List.of(
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null, indestructible, new StackEntryCastFromZonePredicate(Zone.EXILE)));
+        addTrigger(Triggers.youCastSpell().withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.EXILE)),
+                indestructible.toArray(CardEffect[]::new));
         addTrigger(Triggers.youPlayLand(),
                 new LandPlayFromExileTriggerEffect(indestructible));
         addTrigger(Triggers.dealsCombatDamageToPlayer(),

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,16 +22,15 @@ public class MuseSeeker extends Card {
         // Opus — Whenever you cast an instant or sorcery spell, draw a card. Then discard a card unless
         // five or more mana was spent to cast that spell. Modelled as draw-then-discard by default,
         // replaced with a plain draw when the mana threshold is met.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY)
-                )),
-                List.of(new ConditionalReplacementEffect(
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY)
+                        ))),
+                new ConditionalReplacementEffect(
                         new SpellManaSpentAtLeast(5),
                         SequenceEffect.of(new DrawCardEffect(1), new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
                         new DrawCardEffect()
-                ))
-        ));
+                ));
     }
 }

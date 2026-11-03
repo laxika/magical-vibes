@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,9 +27,9 @@ public class AlignedHeart extends Card {
 
     public AlignedHeart() {
         List<Ability> monkTokenEffects = List.of(
-                new TriggeredAbility(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                        new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                        List.of(new BoostSelfEffect(1, 1)))));
+                new TriggeredAbility(Triggers.youCastSpell()
+                                .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                        new BoostSelfEffect(1, 1)));
         CreateTokenEffect monkTokens = new CreateTokenEffect(
                 CardType.CREATURE, new CountersOnSource(CounterType.RALLY), "Monk", 1, 1,
                 CardColor.WHITE, null, List.of(CardSubtype.MONK), Set.of(Keyword.PROWESS), Set.of(),

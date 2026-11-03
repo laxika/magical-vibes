@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -31,8 +30,7 @@ public class ElenaTurkRecruit extends Card {
                 .build());
 
         // Whenever you cast a historic spell, put a +1/+1 counter on Elena.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardIsHistoricPredicate(),
-                List.of(new PutCountersOnSourceEffect(1, 1, 1))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardIsHistoricPredicate()),
+                new PutCountersOnSourceEffect(1, 1, 1));
     }
 }

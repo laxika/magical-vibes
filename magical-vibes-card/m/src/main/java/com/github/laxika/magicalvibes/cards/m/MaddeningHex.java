@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD6Effect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
@@ -31,9 +30,9 @@ public class MaddeningHex extends Card {
                 SequenceEffect.of(new DealDamageToPlayersEffect(5, DamageRecipient.ENCHANTED_PLAYER), reattach),
                 SequenceEffect.of(new DealDamageToPlayersEffect(6, DamageRecipient.ENCHANTED_PLAYER), reattach)));
 
-        addTrigger(Triggers.playerCastsSpell(), new SpellCastTriggerEffect(
-                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(roll),
-                new StackEntryControlledByEnchantedPlayerPredicate()));
+        addTrigger(Triggers.playerCastsSpell()
+                        .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)))
+                        .withStackEntryFilter(new StackEntryControlledByEnchantedPlayerPredicate()),
+                roll);
     }
 }

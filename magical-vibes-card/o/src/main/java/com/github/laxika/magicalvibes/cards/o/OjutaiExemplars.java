@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.FlickerScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnTiming;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -26,9 +25,8 @@ import java.util.Set;
 public class OjutaiExemplars extends Card {
 
     public OjutaiExemplars() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(new ChooseOneEffect(List.of(
+        addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Tap target creature",
                                 new TapPermanentsEffect(TapUntapScope.TARGET),
@@ -50,7 +48,6 @@ public class OjutaiExemplars extends Card {
                                         0,
                                         false,
                                         false))
-                )))
-        ));
+                )));
     }
 }

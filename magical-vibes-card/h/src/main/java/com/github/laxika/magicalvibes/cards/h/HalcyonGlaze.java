@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,11 +18,7 @@ public class HalcyonGlaze extends Card {
     public HalcyonGlaze() {
         // Whenever you cast a creature spell, this enchantment becomes a 4/4 Illusion creature
         // with flying in addition to its other types until end of turn.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardTypePredicate(CardType.CREATURE),
-                List.of(new AnimatePermanentsEffect(
-                        4, 4, List.of(CardSubtype.ILLUSION), Set.of(Keyword.FLYING)
-                ))
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
+                new AnimatePermanentsEffect(4, 4, List.of(CardSubtype.ILLUSION), Set.of(Keyword.FLYING)));
     }
 }

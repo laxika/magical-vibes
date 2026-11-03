@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEf
 import com.github.laxika.magicalvibes.model.effect.LandPlayFromExileTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -54,10 +53,8 @@ class GhostSpider extends Card {
     GhostSpider() {
         addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 false, ExileAccessScope.CONTROLLER_WITHOUT_CONTROL_CHANGE));
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
-                new StackEntryCastFromZonePredicate(Zone.EXILE)));
+        addTrigger(Triggers.youCastSpell().withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.EXILE)),
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
         addTrigger(Triggers.youPlayLand(),
                 new LandPlayFromExileTriggerEffect(
                         List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))));

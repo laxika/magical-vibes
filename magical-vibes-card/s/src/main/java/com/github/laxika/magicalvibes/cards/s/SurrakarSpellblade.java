@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,13 +19,11 @@ import java.util.List;
 public class SurrakarSpellblade extends Card {
 
     public SurrakarSpellblade() {
-        addTrigger(Triggers.youCastSpell(), new MayEffect(
-                new SpellCastTriggerEffect(
-                        new CardAnyOfPredicate(List.of(
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),
-                                new CardTypePredicate(CardType.SORCERY))),
-                        List.of(new PutCountersOnSelfEffect(CounterType.CHARGE))),
-                "Put a charge counter on Surrakar Spellblade?"));
+                                new CardTypePredicate(CardType.SORCERY)))),
+                new MayEffect(new PutCountersOnSelfEffect(CounterType.CHARGE), "Put a charge counter on Surrakar Spellblade?"));
 
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new MayEffect(

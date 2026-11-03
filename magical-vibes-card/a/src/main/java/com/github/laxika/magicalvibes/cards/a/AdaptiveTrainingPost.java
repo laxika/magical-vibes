@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,10 +26,9 @@ public class AdaptiveTrainingPost extends Card {
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
 
-        addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.withIntervening(
-                instantOrSorcery,
-                List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)),
-                new NotCondition(new SourceCounterThreshold(3, CounterType.CHARGE))));
+        addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery),
+                TriggerOptions.DEFAULT.withInterveningIf(new NotCondition(new SourceCounterThreshold(3, CounterType.CHARGE))),
+                new PutCountersOnSelfEffect(CounterType.CHARGE));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

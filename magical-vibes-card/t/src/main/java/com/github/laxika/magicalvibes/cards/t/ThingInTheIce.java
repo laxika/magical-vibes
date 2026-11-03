@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -42,16 +41,16 @@ public class ThingInTheIce extends Card {
 
         // Whenever you cast an instant or sorcery spell, remove an ice counter from this creature.
         // Then if it has no ice counters on it, transform it.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY)
-                )),
-                List.of(SequenceEffect.of(
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY)
+                        ))),
+                SequenceEffect.of(
                         new RemoveCounterFromSourceEffect(CounterType.ICE, 1),
                         new ConditionalEffect(
                                 new NotCondition(new SourceCounterThreshold(1, CounterType.ICE)),
-                                new TransformSelfEffect())))));
+                                new TransformSelfEffect())));
     }
 
     @Override

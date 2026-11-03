@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,10 +22,9 @@ public class RoilingVortex extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                 new DealDamageToPlayersEffect(1, DamageRecipient.ACTIVE_PLAYER));
 
-        addTrigger(Triggers.playerCastsSpell(), SpellCastTriggerEffect.withIntervening(
-                null,
-                List.of(new DealDamageToPlayersEffect(5, DamageRecipient.TRIGGERING_PLAYER)),
-                new NotCondition(new SpellManaSpentAtLeast(1))));
+        addTrigger(Triggers.playerCastsSpell().anySpell(),
+                TriggerOptions.DEFAULT.withInterveningIf(new NotCondition(new SpellManaSpentAtLeast(1))),
+                new DealDamageToPlayersEffect(5, DamageRecipient.TRIGGERING_PLAYER));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

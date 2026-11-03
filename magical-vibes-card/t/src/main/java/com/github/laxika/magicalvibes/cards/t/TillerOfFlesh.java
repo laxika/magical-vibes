@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
@@ -18,11 +17,9 @@ import java.util.Set;
 public class TillerOfFlesh extends Card {
 
     public TillerOfFlesh() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(incubatorToken()),
-                new StackEntryTargetsPermanentPredicate(new PermanentTruePredicate())
-        ));
+        addTrigger(Triggers.youCastSpell()
+                        .withStackEntryFilter(new StackEntryTargetsPermanentPredicate(new PermanentTruePredicate())),
+                incubatorToken());
     }
 
     private static CreateTokenEffect incubatorToken() {

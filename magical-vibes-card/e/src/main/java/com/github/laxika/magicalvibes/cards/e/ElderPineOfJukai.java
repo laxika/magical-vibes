@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -25,13 +24,13 @@ import java.util.List;
 public class ElderPineOfJukai extends Card {
 
     public ElderPineOfJukai() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardSubtypePredicate(CardSubtype.SPIRIT),
-                        new CardSubtypePredicate(CardSubtype.ARCANE))),
-                List.of(new LookAtTopCardsEffect(
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardSubtypePredicate(CardSubtype.SPIRIT),
+                                new CardSubtypePredicate(CardSubtype.ARCANE)))),
+                new LookAtTopCardsEffect(
                         new Fixed(3), new Fixed(3), new CardTypePredicate(CardType.LAND),
-                        LookDestination.BOTTOM_OF_LIBRARY, true))));
+                        LookDestination.BOTTOM_OF_LIBRARY, true));
 
         // Soulshift 2: "When this creature dies, you may return target Spirit card with mana value 2
         // or less from your graveyard to your hand." The target is chosen as the trigger goes on the

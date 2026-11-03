@@ -17,11 +17,11 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -63,12 +63,12 @@ public class StormchasersTalent extends Card {
                         .targetGraveyard(true)
                         .build());
 
-        addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.withIntervening(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY))),
-                List.of(otterToken()),
-                new SourceCounterThreshold(2, CounterType.LEVEL)));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY)))),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(2, CounterType.LEVEL)),
+                otterToken());
     }
 
     private CreateTokenEffect otterToken() {
@@ -86,9 +86,9 @@ public class StormchasersTalent extends Card {
                 false,
                 false,
                 List.of(
-                        new TriggeredAbility(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                                List.of(new BoostSelfEffect(1, 1))))),
+                        new TriggeredAbility(Triggers.youCastSpell()
+                                        .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                                new BoostSelfEffect(1, 1))),
                 List.of(),
                 false,
                 false,

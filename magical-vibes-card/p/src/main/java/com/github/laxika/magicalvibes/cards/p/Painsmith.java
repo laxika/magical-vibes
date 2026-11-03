@@ -8,22 +8,16 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "74")
 @CardRegistration(set = "2XM", collectorNumber = "102")
 public class Painsmith extends Card {
 
     public Painsmith() {
-        addTrigger(Triggers.youCastSpell(), new MayEffect(
-                new SpellCastTriggerEffect(new CardTypePredicate(CardType.ARTIFACT),
-                        List.of(new BoostTargetCreatureEffect(2, 0),
-                                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET))),
-                "Have target creature get +2/+0 and gain deathtouch until end of turn?"
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.ARTIFACT)),
+                new MayEffect(SequenceEffect.of(new BoostTargetCreatureEffect(2, 0), new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET)), "Have target creature get +2/+0 and gain deathtouch until end of turn?"));
     }
 }

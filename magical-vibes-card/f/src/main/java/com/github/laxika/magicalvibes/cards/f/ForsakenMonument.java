@@ -6,13 +6,10 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AddManaOfTypeProducedByTappedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "ZNR", collectorNumber = "244")
 @CardRegistration(set = "M3C", collectorNumber = "293")
@@ -26,7 +23,6 @@ public class ForsakenMonument extends Card {
                 new AddManaOfTypeProducedByTappedPermanentEffect(ManaColor.COLORLESS));
         addTrigger(Triggers.youTapNonlandPermanentForMana(),
                 new AddManaOfTypeProducedByTappedPermanentEffect(ManaColor.COLORLESS));
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardIsColorlessPredicate(), List.of(new GainLifeEffect(2))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardIsColorlessPredicate()), new GainLifeEffect(2));
     }
 }

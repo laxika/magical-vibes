@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -37,12 +36,11 @@ public class SilkWebWeaver extends Card {
                 new ManaCastingCost("{1}{G}{W}"),
                 new ReturnPermanentsCost(1, tappedCreature))));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardTypePredicate(CardType.CREATURE),
-                List.of(new CreateTokenEffect(
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
+                new CreateTokenEffect(
                         1, "Human Citizen", 1, 1, CardColor.GREEN,
                         Set.of(CardColor.GREEN, CardColor.WHITE),
-                        List.of(CardSubtype.HUMAN, CardSubtype.CITIZEN)))));
+                        List.of(CardSubtype.HUMAN, CardSubtype.CITIZEN)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

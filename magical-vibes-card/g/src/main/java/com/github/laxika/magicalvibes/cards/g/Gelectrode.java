@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -30,15 +29,11 @@ public class Gelectrode extends Card {
         ));
 
         // Whenever you cast an instant or sorcery spell, you may untap this creature.
-        addTrigger(Triggers.youCastSpell(), new MayEffect(
-                new SpellCastTriggerEffect(
-                        new CardAnyOfPredicate(List.of(
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),
                                 new CardTypePredicate(CardType.SORCERY)
-                        )),
-                        List.of(new UntapPermanentsEffect(TapUntapScope.SELF))
-                ),
-                "Untap Gelectrode?"
-        ));
+                        ))),
+                new MayEffect(new UntapPermanentsEffect(TapUntapScope.SELF), "Untap Gelectrode?"));
     }
 }

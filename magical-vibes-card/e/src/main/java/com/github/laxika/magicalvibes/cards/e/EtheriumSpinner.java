@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,11 +16,9 @@ import java.util.Set;
 public class EtheriumSpinner extends Card {
 
     public EtheriumSpinner() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardMinManaValuePredicate(4, true),
-                List.of(new CreateTokenEffect("Thopter", 1, 1, null,
+        addTrigger(Triggers.youCastSpell().withFilter(new CardMinManaValuePredicate(4, true)),
+                new CreateTokenEffect("Thopter", 1, 1, null,
                         List.of(CardSubtype.THOPTER), Set.of(Keyword.FLYING),
-                        Set.of(CardType.ARTIFACT)))
-        ));
+                        Set.of(CardType.ARTIFACT)));
     }
 }

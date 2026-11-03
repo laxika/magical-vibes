@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDevourToCastSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -23,14 +22,14 @@ import java.util.Set;
 public class Jund extends Card {
 
     public Jund() {
-        addTrigger(Triggers.playerCastsSpell(), new SpellCastTriggerEffect(
-                new CardAllOfPredicate(List.of(
-                        new CardTypePredicate(CardType.CREATURE),
-                        new CardAnyOfPredicate(List.of(
-                                new CardColorPredicate(CardColor.BLACK),
-                                new CardColorPredicate(CardColor.RED),
-                                new CardColorPredicate(CardColor.GREEN))))),
-                List.of(new GrantDevourToCastSpellEffect(5))));
+        addTrigger(Triggers.playerCastsSpell()
+                        .withFilter(new CardAllOfPredicate(List.of(
+                                new CardTypePredicate(CardType.CREATURE),
+                                new CardAnyOfPredicate(List.of(
+                                        new CardColorPredicate(CardColor.BLACK),
+                                        new CardColorPredicate(CardColor.RED),
+                                        new CardColorPredicate(CardColor.GREEN)))))),
+                new GrantDevourToCastSpellEffect(5));
         addTrigger(Triggers.chaosEnsues(),
                 new CreateTokenEffect(2, "Goblin", 1, 1, CardColor.RED,
                         List.of(CardSubtype.GOBLIN), Set.of(), Set.of()));

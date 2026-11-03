@@ -5,11 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "403")
 @CardRegistration(set = "LEA", collectorNumber = "273")
@@ -25,8 +22,7 @@ public class ThroneOfBone extends Card {
 
     public ThroneOfBone() {
         // Whenever a player casts a black spell, you may pay {1}. If you do, you gain 1 life.
-        addTrigger(Triggers.playerCastsSpell(),
-                new SpellCastTriggerEffect(new CardColorPredicate(CardColor.BLACK),
-                        List.of(new MayPayManaEffect("{1}", new GainLifeEffect(1), "Pay {1} to gain 1 life?"))));
+        addTrigger(Triggers.playerCastsSpell().withFilter(new CardColorPredicate(CardColor.BLACK)),
+                new MayPayManaEffect("{1}", new GainLifeEffect(1), "Pay {1} to gain 1 life?"));
     }
 }

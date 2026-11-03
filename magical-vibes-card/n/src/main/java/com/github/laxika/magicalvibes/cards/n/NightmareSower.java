@@ -4,25 +4,15 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "114")
 public class NightmareSower extends Card {
 
     public NightmareSower() {
         target(TargetFilters.creature(), 0, 1)
-                .addTrigger(Triggers.youCastSpell(),
-                        new SpellCastTriggerEffect(
-                                null,
-                                List.of(new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1)),
-                                null,
-                                TargetFilters.creature(),
-                                null,
-                                true,
-                                false));
+                .addTrigger(Triggers.youCastSpell().duringOpponentsTurn(),
+                        new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1));
     }
 }

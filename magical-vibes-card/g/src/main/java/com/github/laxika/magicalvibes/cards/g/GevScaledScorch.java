@@ -9,14 +9,11 @@ import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithA
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "BLB", collectorNumber = "214")
 public class GevScaledScorch extends Card {
@@ -28,12 +25,8 @@ public class GevScaledScorch extends Card {
         addStaticEffect(ControlledCreaturesEnterWithAdditionalCountersEffect.forAllCreatures(
                         new OpponentsWhoLostLifeThisTurn()));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardSubtypePredicate(CardSubtype.LIZARD),
-                List.of(new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER)),
-                null,
-                new PlayerPredicateTargetFilter(
-                        new PlayerRelationPredicate(PlayerRelation.OPPONENT),
-                        "Target must be an opponent")));
+        target(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent")).addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardSubtypePredicate(CardSubtype.LIZARD)),
+                new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));
     }
 }

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPow
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ManifestTopCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TurnOwnCreatureFaceUpEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsColorlessPredicate;
@@ -22,11 +21,11 @@ import java.util.List;
 public class UginsMastery extends Card {
 
     public UginsMastery() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAllOfPredicate(List.of(
-                        new CardIsColorlessPredicate(),
-                        new CardTypePredicate(CardType.CREATURE))),
-                List.of(new ManifestTopCardEffect())));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAllOfPredicate(List.of(
+                                new CardIsColorlessPredicate(),
+                                new CardTypePredicate(CardType.CREATURE)))),
+                new ManifestTopCardEffect());
         addTrigger(Triggers.youAttack(),
                 new ConditionalEffect(
                         new AttackingCreaturesTotalPowerAtLeast(6),

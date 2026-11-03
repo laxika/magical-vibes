@@ -6,14 +6,11 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryScope;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "196")
 @CardRegistration(set = "GK1", collectorNumber = "9")
@@ -24,16 +21,10 @@ public class CircuDimirLobotomist extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player");
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardColorPredicate(CardColor.BLUE),
-                List.of(new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.TARGET_PLAYER)),
-                null,
-                anyPlayer));
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardColorPredicate(CardColor.BLACK),
-                List.of(new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.TARGET_PLAYER)),
-                null,
-                anyPlayer));
+        target(anyPlayer).addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.BLUE)),
+                new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.TARGET_PLAYER));
+        target(anyPlayer).addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.BLACK)),
+                new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.TARGET_PLAYER));
         addStaticEffect(new CantCastSpellsWithSameNameAsExiledCardEffect(true));
     }
 }

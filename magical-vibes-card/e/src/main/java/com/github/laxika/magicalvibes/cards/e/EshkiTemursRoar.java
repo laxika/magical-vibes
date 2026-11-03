@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtLeastPredicate;
@@ -22,20 +21,17 @@ import java.util.List;
 public class EshkiTemursRoar extends Card {
 
     public EshkiTemursRoar() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardTypePredicate(CardType.CREATURE),
-                List.of(
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                        new TriggeringCardConditionalEffect(
-                                new CardAllOfPredicate(List.of(
-                                        new CardTypePredicate(CardType.CREATURE),
-                                        new CardPowerAtLeastPredicate(4))),
-                                new DrawCardEffect(1)),
-                        new TriggeringCardConditionalEffect(
-                                new CardAllOfPredicate(List.of(
-                                        new CardTypePredicate(CardType.CREATURE),
-                                        new CardPowerAtLeastPredicate(6))),
-                                new DealDamageToPlayersEffect(new SourcePower(), DamageRecipient.EACH_OPPONENT))
-                )));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                new TriggeringCardConditionalEffect(
+                        new CardAllOfPredicate(List.of(
+                                new CardTypePredicate(CardType.CREATURE),
+                                new CardPowerAtLeastPredicate(4))),
+                        new DrawCardEffect(1)),
+                new TriggeringCardConditionalEffect(
+                        new CardAllOfPredicate(List.of(
+                                new CardTypePredicate(CardType.CREATURE),
+                                new CardPowerAtLeastPredicate(6))),
+                        new DealDamageToPlayersEffect(new SourcePower(), DamageRecipient.EACH_OPPONENT)));
     }
 }

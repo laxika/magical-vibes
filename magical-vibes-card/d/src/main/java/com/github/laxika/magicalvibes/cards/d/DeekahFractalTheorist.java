@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -44,8 +43,7 @@ public class DeekahFractalTheorist extends Card {
 
         // Magecraft — Whenever you cast or copy an instant or sorcery spell, create a Fractal
         // token and put +1/+1 counters on it equal to that spell's mana value.
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(instantOrSorcery, List.of(createFractal)));
+        addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery), createFractal);
         addTrigger(Triggers.youCopySpell(),
                 new SpellCopyTriggerEffect(instantOrSorcery, List.of(createFractal)));
 

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -30,12 +29,10 @@ public class SandstormEidolon extends Card {
                 TargetFilters.creature()
         ));
 
-        addTrigger(new TriggerCondition(Triggers.youCastSpell(), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT, new SpellCastTriggerEffect(
-                new CardIsMulticoloredPredicate(),
-                List.of(new MayEffect(
+        addTrigger(new TriggerCondition(Triggers.youCastSpell().withFilter(new CardIsMulticoloredPredicate()), AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT,
+                new MayEffect(
                         new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
-                        "Return Sandstorm Eidolon from your graveyard to your hand?"))
-        ));
+                        "Return Sandstorm Eidolon from your graveyard to your hand?"));
     }
 }

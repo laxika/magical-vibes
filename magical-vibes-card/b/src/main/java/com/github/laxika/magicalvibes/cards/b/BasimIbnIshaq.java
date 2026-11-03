@@ -5,13 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "ACR", collectorNumber = "49")
 @CardRegistration(set = "ACR", collectorNumber = "141")
@@ -20,12 +17,10 @@ public class BasimIbnIshaq extends Card {
     public BasimIbnIshaq() {
         // Whenever you cast a historic spell, draw a card. Basim Ibn Ishaq can't be blocked this
         // turn. This ability triggers only once each turn.
-        addTrigger(Triggers.youCastSpell(),
+        addTrigger(Triggers.youCastSpell().withFilter(new CardIsHistoricPredicate()),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
-                new SpellCastTriggerEffect(
-                        new CardIsHistoricPredicate(),
-                        List.of(new DrawCardEffect(), new MakeCreatureUnblockableEffect(true))
-                ));
+                new DrawCardEffect(),
+                new MakeCreatureUnblockableEffect(true));
 
         // Whenever Basim Ibn Ishaq deals combat damage to a player, put a +1/+1 counter on it.
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new PutCountersOnSourceEffect(1, 1, 1));

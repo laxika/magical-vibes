@@ -9,13 +9,11 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordsToCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LCI", collectorNumber = "67")
@@ -26,16 +24,10 @@ public class OjerPakpatiq extends Card {
         setBackFaceCard(new TempleOfCyclicalTime());
 
         // Whenever you cast an instant spell from your hand, it gains rebound.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardTypePredicate(CardType.INSTANT),
-                List.of(new GrantKeywordsToCastSpellEffect(Set.of(Keyword.REBOUND))),
-                null,
-                null,
-                new StackEntryCastFromZonePredicate(Zone.HAND),
-                false,
-                false,
-                null,
-                0));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardTypePredicate(CardType.INSTANT))
+                        .withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.HAND)),
+                new GrantKeywordsToCastSpellEffect(Set.of(Keyword.REBOUND)));
         addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new ReturnSourceTransformedFromGraveyardEffect(true, CounterType.TIME, 3, true));
     }

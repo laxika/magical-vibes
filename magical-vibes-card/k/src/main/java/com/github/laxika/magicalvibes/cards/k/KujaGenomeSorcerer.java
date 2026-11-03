@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -38,9 +37,9 @@ public class KujaGenomeSorcerer extends Card {
                         CardType.CREATURE, 1, "Wizard", 0, 1, CardColor.BLACK, null,
                         List.of(CardSubtype.WIZARD), Set.of(), Set.of(), false, true,
                         List.of(
-                                new TriggeredAbility(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                                List.of(new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT))))),
+                                new TriggeredAbility(Triggers.youCastSpell()
+                                                .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                                        new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT))),
                         List.of(), false, false, false, 0, Set.of()),
                 new ConditionalEffect(
                         new ControlsPermanentCount(4, new PermanentHasSubtypePredicate(CardSubtype.WIZARD)),

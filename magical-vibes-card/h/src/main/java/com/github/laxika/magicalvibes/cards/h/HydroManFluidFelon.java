@@ -11,16 +11,15 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilYourNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "33")
@@ -29,11 +28,9 @@ import java.util.Set;
 public class HydroManFluidFelon extends Card {
 
     public HydroManFluidFelon() {
-        addTrigger(Triggers.youCastSpell(),
-                SpellCastTriggerEffect.withIntervening(
-                        new CardColorPredicate(CardColor.BLUE),
-                        List.of(new BoostSelfEffect(1, 1)),
-                        new SourceIsCreature()));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.BLUE)),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsCreature()),
+                new BoostSelfEffect(1, 1));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 SequenceEffect.of(
                         new UntapPermanentsEffect(TapUntapScope.SELF),

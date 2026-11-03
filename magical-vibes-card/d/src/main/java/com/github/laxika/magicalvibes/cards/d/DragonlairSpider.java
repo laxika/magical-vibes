@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -17,9 +16,9 @@ public class DragonlairSpider extends Card {
 
     public DragonlairSpider() {
         // Whenever an opponent casts a spell, create a 1/1 green Insect creature token.
-        addTrigger(Triggers.opponentCastsSpell(),
-                new SpellCastTriggerEffect(null, List.of(new CreateTokenEffect(
+        addTrigger(Triggers.opponentCastsSpell().anySpell(),
+                new CreateTokenEffect(
                         "Insect", 1, 1, CardColor.GREEN,
-                        List.of(CardSubtype.INSECT), Set.of(), Set.of()))));
+                        List.of(CardSubtype.INSECT), Set.of(), Set.of()));
     }
 }

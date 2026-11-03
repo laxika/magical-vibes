@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEqualToTriggeringSpellManaValueDifferenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -31,12 +30,8 @@ public class AncientCellarspawn extends Card {
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 demonHorrorOrNightmare, 1, CostModificationScope.SELF));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new LoseLifeEqualToTriggeringSpellManaValueDifferenceEffect()),
-                new PlayerPredicateTargetFilter(
-                        new PlayerRelationPredicate(PlayerRelation.OPPONENT),
-                        "Target must be an opponent"),
-                new StackEntryManaSpentLessThanManaValuePredicate()));
+        target(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent")).addTrigger(Triggers.youCastSpell()
+                        .withStackEntryFilter(new StackEntryManaSpentLessThanManaValuePredicate()),
+                new LoseLifeEqualToTriggeringSpellManaValueDifferenceEffect());
     }
 }

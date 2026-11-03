@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -55,11 +54,11 @@ public class TChallaTheBlackPanther extends Card {
     public TChallaTheBlackPanther() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), VIBRANIUM_TOKEN);
         addTrigger(Triggers.attacks(), VIBRANIUM_TOKEN);
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAllOfPredicate(List.of(
-                        new CardTypePredicate(CardType.ARTIFACT),
-                        new CardMinManaValuePredicate(4, true)
-                )),
-                List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2))));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAllOfPredicate(List.of(
+                                new CardTypePredicate(CardType.ARTIFACT),
+                                new CardMinManaValuePredicate(4, true)
+                        ))),
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2));
     }
 }

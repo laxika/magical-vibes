@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -27,12 +26,10 @@ public class AuroraEidolon extends Card {
                 "{W}, Sacrifice this creature: Prevent the next 3 damage that would be dealt to any target this turn."
         ));
 
-        addTrigger(new TriggerCondition(Triggers.youCastSpell(), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT, new SpellCastTriggerEffect(
-                new CardIsMulticoloredPredicate(),
-                List.of(new MayEffect(
+        addTrigger(new TriggerCondition(Triggers.youCastSpell().withFilter(new CardIsMulticoloredPredicate()), AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT,
+                new MayEffect(
                         new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
-                        "Return Aurora Eidolon from your graveyard to your hand?"))
-        ));
+                        "Return Aurora Eidolon from your graveyard to your hand?"));
     }
 }

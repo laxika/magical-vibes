@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
@@ -24,9 +23,8 @@ public class MoiraAndTeshar extends Card {
                 new CardIsPermanentPredicate(),
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardIsHistoricPredicate(),
-                List.of(ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.youCastSpell().withFilter(new CardIsHistoricPredicate()),
+                ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(nonlandPermanent)
                         .targetGraveyard(true)
@@ -34,6 +32,6 @@ public class MoiraAndTeshar extends Card {
                         .grantHaste(true)
                         .exileAtEndStep(true)
                         .exileIfLeavesBattlefield(true)
-                        .build())));
+                        .build());
     }
 }

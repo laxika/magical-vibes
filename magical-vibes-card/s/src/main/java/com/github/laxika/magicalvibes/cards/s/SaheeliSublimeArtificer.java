@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetPermanentUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -29,10 +28,9 @@ import java.util.Set;
 public class SaheeliSublimeArtificer extends Card {
 
     public SaheeliSublimeArtificer() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(new CreateTokenEffect(1, "Servo", 1, 1, null,
-                        List.of(CardSubtype.SERVO), Set.of(), Set.of(CardType.ARTIFACT)))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                new CreateTokenEffect(1, "Servo", 1, 1, null,
+                        List.of(CardSubtype.SERVO), Set.of(), Set.of(CardType.ARTIFACT)));
 
         PermanentPredicateTargetFilter targetArtifactYouControl = new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

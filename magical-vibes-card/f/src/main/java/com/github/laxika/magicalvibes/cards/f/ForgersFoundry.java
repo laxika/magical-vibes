@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CastAllCardsExiledWithSourceW
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -39,12 +38,8 @@ public class ForgersFoundry extends Card {
                 "{T}: Add {U}. When you spend this mana to cast an instant or sorcery spell with mana value 3 or less, you may exile that spell instead of putting it into its owner's graveyard as it resolves."
         ));
 
-        addTrigger(Triggers.youCastSpell(), new MayEffect(
-                SpellCastTriggerEffect.usingManaProducedBySource(
-                        instantOrSorceryManaValueThreeOrLess,
-                        List.of(new ExileTriggeringSpellEffect())),
-                "Exile that spell instead of putting it into its owner's graveyard as it resolves?"
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(instantOrSorceryManaValueThreeOrLess).paidWithManaFromThis(),
+                new MayEffect(new ExileTriggeringSpellEffect(), "Exile that spell instead of putting it into its owner's graveyard as it resolves?"));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

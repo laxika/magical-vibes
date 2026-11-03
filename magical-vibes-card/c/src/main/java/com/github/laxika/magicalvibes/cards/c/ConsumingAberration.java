@@ -7,10 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilLandsMillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "152")
 @CardRegistration(set = "C16", collectorNumber = "189")
@@ -25,8 +22,7 @@ public class ConsumingAberration extends Card {
         CardsInGraveyard opponentGraveyards = new CardsInGraveyard(null, CountScope.OPPONENTS);
         addStaticEffect(new SetPowerToughnessToAmountEffect(opponentGraveyards, opponentGraveyards));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new RevealUntilLandsMillTargetPlayerEffect(1, MillRecipient.EACH_OPPONENT))));
+        addTrigger(Triggers.youCastSpell().anySpell(),
+                new RevealUntilLandsMillTargetPlayerEffect(1, MillRecipient.EACH_OPPONENT));
     }
 }

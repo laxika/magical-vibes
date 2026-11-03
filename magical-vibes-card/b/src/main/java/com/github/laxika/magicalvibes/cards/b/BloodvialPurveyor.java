@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -22,10 +21,8 @@ import java.util.List;
 public class BloodvialPurveyor extends Card {
 
     public BloodvialPurveyor() {
-        addTrigger(Triggers.opponentCastsSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new CreateTokenForTriggeringPlayerEffect(CreateTokenEffect.ofBloodToken(1)))
-        ));
+        addTrigger(Triggers.opponentCastsSpell().anySpell(),
+                new CreateTokenForTriggeringPlayerEffect(CreateTokenEffect.ofBloodToken(1)));
 
         PermanentCount defendingPlayerBloodTokens = new PermanentCount(
                 new PermanentAllOfPredicate(List.of(

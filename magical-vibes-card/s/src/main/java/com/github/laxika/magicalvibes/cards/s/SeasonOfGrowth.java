@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -21,12 +20,10 @@ public class SeasonOfGrowth extends Card {
     public SeasonOfGrowth() {
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL), new ScryEffect(1));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new DrawCardEffect(1)),
-                new StackEntryTargetsPermanentPredicate(new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentControlledBySourceControllerPredicate())))
-        ));
+        addTrigger(Triggers.youCastSpell()
+                        .withStackEntryFilter(new StackEntryTargetsPermanentPredicate(new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentControlledBySourceControllerPredicate())))),
+                new DrawCardEffect(1));
     }
 }

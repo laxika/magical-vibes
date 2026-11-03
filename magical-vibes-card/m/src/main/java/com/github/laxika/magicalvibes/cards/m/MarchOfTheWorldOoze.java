@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -20,8 +19,8 @@ public class MarchOfTheWorldOoze extends Card {
     public MarchOfTheWorldOoze() {
         addStaticEffect(new SetBasePowerToughnessEffect(6, 6, GrantScope.ALL_OWN_CREATURES));
         addStaticEffect(new GrantSubtypeEffect(CardSubtype.OOZE, GrantScope.ALL_OWN_CREATURES));
-        addTrigger(Triggers.opponentCastsSpell(),
-                SpellCastTriggerEffect.whenCasterIsNotActiveTurn(List.of(new CreateTokenEffect(
-                        "Elephant", 3, 3, CardColor.GREEN, List.of(CardSubtype.ELEPHANT), Set.of(), Set.of()))));
+        addTrigger(Triggers.opponentCastsSpell().notDuringCastersTurn(),
+                new CreateTokenEffect(
+                        "Elephant", 3, 3, CardColor.GREEN, List.of(CardSubtype.ELEPHANT), Set.of(), Set.of()));
     }
 }

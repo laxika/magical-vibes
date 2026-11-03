@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.amount.TriggeringSpellXValue;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureRandomCreatureWithManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,10 +17,8 @@ import java.util.List;
 public class AninaNaturalParallelist extends Card {
 
     public AninaNaturalParallelist() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardHasXInManaCostPredicate(),
-                List.of(new ConjureRandomCreatureWithManaValueEffect(
-                        new TriggeringSpellXValue(), false))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardHasXInManaCostPredicate()),
+                new ConjureRandomCreatureWithManaValueEffect(new TriggeringSpellXValue(), false));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

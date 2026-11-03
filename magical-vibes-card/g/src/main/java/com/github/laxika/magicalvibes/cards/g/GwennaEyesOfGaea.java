@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -29,13 +28,11 @@ public class GwennaEyesOfGaea extends Card {
                 "{T}: Add two mana in any combination of colors. Spend this mana only to cast creature spells or activate abilities of creature sources."
         ));
 
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(
-                        new CardAllOfPredicate(List.of(
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
-                                new CardPowerAtLeastPredicate(5))),
-                        List.of(
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                                new UntapPermanentsEffect(TapUntapScope.SELF))));
+                                new CardPowerAtLeastPredicate(5)))),
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                new UntapPermanentsEffect(TapUntapScope.SELF));
     }
 }

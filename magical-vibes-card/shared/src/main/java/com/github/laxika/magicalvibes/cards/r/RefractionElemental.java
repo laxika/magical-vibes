@@ -5,17 +5,13 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
 
 public class RefractionElemental extends Card {
 
     public RefractionElemental() {
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysLifeEffect(new Fixed(2)));
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT))));
+        addTrigger(Triggers.youCastSpell().anySpell(), new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
     }
 }

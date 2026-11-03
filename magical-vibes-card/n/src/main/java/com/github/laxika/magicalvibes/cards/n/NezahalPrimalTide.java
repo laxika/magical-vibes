@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,9 +25,9 @@ public class NezahalPrimalTide extends Card {
         addStaticEffect(new CantBeCounteredEffect());
         addStaticEffect(new NoMaximumHandSizeEffect());
 
-        addTrigger(Triggers.opponentCastsSpell(), new SpellCastTriggerEffect(
-                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(new DrawCardEffect())));
+        addTrigger(Triggers.opponentCastsSpell()
+                        .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                new DrawCardEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

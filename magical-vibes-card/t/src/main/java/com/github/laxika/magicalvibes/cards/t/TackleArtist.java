@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,16 +21,15 @@ public class TackleArtist extends Card {
 
         // Opus — Whenever you cast an instant or sorcery spell, put a +1/+1 counter on this creature.
         // If five or more mana was spent to cast that spell, put two +1/+1 counters on this creature instead.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY)
-                )),
-                List.of(new ConditionalReplacementEffect(
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY)
+                        ))),
+                new ConditionalReplacementEffect(
                         new SpellManaSpentAtLeast(5),
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)
-                ))
-        ));
+                ));
     }
 }

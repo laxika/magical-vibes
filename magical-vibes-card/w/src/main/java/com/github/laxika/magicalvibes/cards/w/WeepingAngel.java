@@ -6,11 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageBySelfToCreaturesAndShuffleEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "168")
 @CardRegistration(set = "WHO", collectorNumber = "453")
@@ -22,10 +19,8 @@ public class WeepingAngel extends Card {
 
     public WeepingAngel() {
         // Whenever an opponent casts a creature spell, Weeping Angel isn't a creature until end of turn.
-        addTrigger(Triggers.opponentCastsSpell(), new SpellCastTriggerEffect(
-                new CardTypePredicate(CardType.CREATURE),
-                List.of(new RemoveCardTypeFromTargetPermanentEffect(CardType.CREATURE, GrantScope.SELF))
-        ));
+        addTrigger(Triggers.opponentCastsSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
+                new RemoveCardTypeFromTargetPermanentEffect(CardType.CREATURE, GrantScope.SELF));
 
         // If Weeping Angel would deal combat damage to a creature, prevent that damage and shuffle
         // that creature into its owner's library.

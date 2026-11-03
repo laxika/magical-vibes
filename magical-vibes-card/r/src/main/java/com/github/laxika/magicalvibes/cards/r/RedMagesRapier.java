@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -30,10 +29,9 @@ public class RedMagesRapier extends Card {
                         List.of(CardSubtype.HERO), Set.of(), Set.of())));
 
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                new TriggeredAbility(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(
-                        new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                        List.of(new BoostSelfEffect(2, 0)))),
+                new TriggeredAbility(Triggers.youCastSpell()
+                                .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                        new BoostSelfEffect(2, 0)),
                 GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantSubtypeEffect(CardSubtype.WIZARD, GrantScope.EQUIPPED_CREATURE));
 

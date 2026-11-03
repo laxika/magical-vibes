@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatches
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -34,8 +33,7 @@ public class AvatarKuruk extends Card {
                 List.of(), false, false, false, 0, Set.of()
         );
 
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(null, List.of(spiritToken)));
+        addTrigger(Triggers.youCastSpell().anySpell(), spiritToken);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

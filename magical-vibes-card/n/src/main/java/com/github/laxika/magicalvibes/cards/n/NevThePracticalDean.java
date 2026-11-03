@@ -8,12 +8,9 @@ import com.github.laxika.magicalvibes.model.amount.TriggeringSpellXValue;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "SOC", collectorNumber = "41")
 @CardRegistration(set = "SOC", collectorNumber = "89")
@@ -25,9 +22,7 @@ public class NevThePracticalDean extends Card {
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasCountersPredicate(CounterType.ANY)));
 
-        addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.nth(
-                1,
-                new CardHasXInManaCostPredicate(),
-                List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new TriggeringSpellXValue()))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardHasXInManaCostPredicate()).nthThisTurn(1),
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new TriggeringSpellXValue()));
     }
 }

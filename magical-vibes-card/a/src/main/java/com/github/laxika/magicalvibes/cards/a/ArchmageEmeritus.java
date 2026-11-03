@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -28,8 +27,7 @@ public class ArchmageEmeritus extends Card {
         List<CardEffect> drawCard = List.of(new DrawCardEffect(1));
 
         // Magecraft — Whenever you cast or copy an instant or sorcery spell, draw a card.
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(instantOrSorcery, drawCard));
+        addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery), drawCard.toArray(CardEffect[]::new));
         addTrigger(Triggers.youCopySpell(),
                 new SpellCopyTriggerEffect(instantOrSorcery, drawCard));
     }

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPla
 import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -29,8 +28,7 @@ public class RalStormConduit extends Card {
     public RalStormConduit() {
         List<CardEffect> damageAbility = List.of(
                 new DealDamageToTargetPlayerOrPlaneswalkerEffect(1, PlayerRelation.OPPONENT));
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(INSTANT_OR_SORCERY, damageAbility));
+        addTrigger(Triggers.youCastSpell().withFilter(INSTANT_OR_SORCERY), damageAbility.toArray(CardEffect[]::new));
         addTrigger(Triggers.youCopySpell(),
                 new SpellCopyTriggerEffect(INSTANT_OR_SORCERY, damageAbility));
 

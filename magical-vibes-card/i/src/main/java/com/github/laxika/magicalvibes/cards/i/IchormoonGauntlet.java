@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -33,11 +32,8 @@ public class IchormoonGauntlet extends Card {
                 GrantScope.OWN_PERMANENTS,
                 new PermanentIsPlaneswalkerPredicate()
         ));
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(new AddAnotherCounterOfChosenTypeToTargetEffect()),
-                null,
-                TargetFilters.permanent()
-        ));
+        target(TargetFilters.permanent()).addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                new AddAnotherCounterOfChosenTypeToTargetEffect());
     }
 }

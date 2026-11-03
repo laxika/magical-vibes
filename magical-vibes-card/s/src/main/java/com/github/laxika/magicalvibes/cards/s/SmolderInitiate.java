@@ -5,15 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "78")
 public class SmolderInitiate extends Card {
@@ -23,12 +20,7 @@ public class SmolderInitiate extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addTrigger(Triggers.playerCastsSpell(), new MayEffect(
-                new SpellCastTriggerEffect(
-                        new CardColorPredicate(CardColor.BLACK),
-                        List.of(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER)),
-                        "{1}"),
-                "Pay {1} to make target player lose 1 life?"
-        ));
+        )).addTrigger(Triggers.playerCastsSpell().withFilter(new CardColorPredicate(CardColor.BLACK)),
+                new MayPayManaEffect("{1}", new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER), "Pay {1} to make target player lose 1 life?"));
     }
 }

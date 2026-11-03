@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringSpellWithSuspendCountersOnResolutionEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
@@ -21,13 +20,10 @@ public class GandalfOfTheSecretFire extends Card {
         CardAnyOfPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                instantOrSorcery,
-                List.of(new ExileTriggeringSpellWithSuspendCountersOnResolutionEffect(3)),
-                null,
-                null,
-                new StackEntryCastFromZonePredicate(Zone.HAND),
-                true,
-                false));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(instantOrSorcery)
+                        .withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.HAND))
+                        .duringOpponentsTurn(),
+                new ExileTriggeringSpellWithSuspendCountersOnResolutionEffect(3));
     }
 }

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -34,7 +33,6 @@ public class ShanidSleepersScourge extends Card {
         CardSupertypePredicate legendaryCard = new CardSupertypePredicate(CardSupertype.LEGENDARY);
         SequenceEffect drawAndLoseLife = SequenceEffect.of(new DrawCardEffect(), new LoseLifeEffect(1));
         addTrigger(Triggers.youPlayLand().withFilter(legendaryCard), drawAndLoseLife);
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(legendaryCard, List.of(drawAndLoseLife)));
+        addTrigger(Triggers.youCastSpell().withFilter(legendaryCard), drawAndLoseLife);
     }
 }

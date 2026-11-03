@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,10 +25,9 @@ public class GhostlyPilferer extends Card {
         addTrigger(Triggers.becomesUntapped(),
                 new MayPayManaEffect("{2}", new DrawCardEffect(), "Pay {2} to draw a card?"));
 
-        addTrigger(Triggers.opponentCastsSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new DrawCardEffect()),
-                new StackEntryNotPredicate(new StackEntryCastFromZonePredicate(Zone.HAND))));
+        addTrigger(Triggers.opponentCastsSpell()
+                        .withStackEntryFilter(new StackEntryNotPredicate(new StackEntryCastFromZonePredicate(Zone.HAND))),
+                new DrawCardEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

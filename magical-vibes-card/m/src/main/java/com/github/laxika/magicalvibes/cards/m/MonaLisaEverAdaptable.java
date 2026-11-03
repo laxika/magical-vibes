@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,10 +20,7 @@ import java.util.List;
 public class MonaLisaEverAdaptable extends Card {
 
     public MonaLisaEverAdaptable() {
-        addTrigger(Triggers.playerCastsSpell(),
-                new SpellCastTriggerEffect(
-                        new CardTypePredicate(CardType.CREATURE),
-                        List.of(mutagenToken())));
+        addTrigger(Triggers.playerCastsSpell().withFilter(new CardTypePredicate(CardType.CREATURE)), mutagenToken());
     }
 
     private static CreateTokenEffect mutagenToken() {

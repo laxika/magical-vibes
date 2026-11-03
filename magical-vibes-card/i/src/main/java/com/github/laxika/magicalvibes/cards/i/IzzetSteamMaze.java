@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,8 +19,7 @@ public class IzzetSteamMaze extends Card {
         CardAnyOfPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
-        addTrigger(Triggers.playerCastsSpell(),
-                SpellCastTriggerEffect.anyPlayer(instantOrSorcery, List.of(new CopyTriggeringSpellEffect())));
+        addTrigger(Triggers.playerCastsSpell().withFilter(instantOrSorcery), new CopyTriggeringSpellEffect());
         addTrigger(Triggers.chaosEnsues(),
                 new ReduceCastCostForMatchingSpellsUntilEndOfTurnEffect(instantOrSorcery, 3));
     }

@@ -22,10 +22,10 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -82,11 +82,9 @@ public class SorcererClass extends Card {
                 "this Class is level 2"
         ));
 
-        addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.withIntervening(
-                instantOrSorcery,
-                List.of(new DealDamageToEachOpponentFromTriggeringSpellEffect(
-                        new SpellsCastThisTurn(instantOrSorcery, CountScope.CONTROLLER))),
-                new SourceCounterThreshold(2, CounterType.LEVEL)
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(2, CounterType.LEVEL)),
+                new DealDamageToEachOpponentFromTriggeringSpellEffect(
+                        new SpellsCastThisTurn(instantOrSorcery, CountScope.CONTROLLER)));
     }
 }

@@ -6,15 +6,12 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "40K", collectorNumber = "78")
 public class KeeperOfSecrets extends Card {
@@ -25,11 +22,8 @@ public class KeeperOfSecrets extends Card {
         PlayerPredicateTargetFilter opponent = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent");
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.TARGET_PLAYER)),
-                opponent,
-                new StackEntryNotPredicate(new StackEntryCastFromZonePredicate(Zone.HAND))
-        ));
+        target(opponent).addTrigger(Triggers.youCastSpell()
+                        .withStackEntryFilter(new StackEntryNotPredicate(new StackEntryCastFromZonePredicate(Zone.HAND))),
+                new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.TARGET_PLAYER));
     }
 }

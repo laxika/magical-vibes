@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,9 +26,9 @@ public class QueenBrahne extends Card {
                 CardType.CREATURE, 1, "Wizard", 0, 1, CardColor.BLACK, null,
                 List.of(CardSubtype.WIZARD), Set.of(), Set.of(), false, false,
                 List.of(
-                        new TriggeredAbility(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                        new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                        List.of(new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT))))),
+                        new TriggeredAbility(Triggers.youCastSpell()
+                                        .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT))),
                 List.of(), false, false, false, 0, Set.of()));
     }
 }

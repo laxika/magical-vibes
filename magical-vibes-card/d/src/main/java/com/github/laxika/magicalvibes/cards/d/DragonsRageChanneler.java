@@ -8,14 +8,12 @@ import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SLD", collectorNumber = "2048")
@@ -25,9 +23,8 @@ import java.util.Set;
 public class DragonsRageChanneler extends Card {
 
     public DragonsRageChanneler() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(new SurveilEffect(1))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                new SurveilEffect(1));
 
         addStaticEffect(new ConditionalEffect(
                 new Delirium(), new StaticBoostEffect(2, 2, Set.of(Keyword.FLYING), GrantScope.SELF)));

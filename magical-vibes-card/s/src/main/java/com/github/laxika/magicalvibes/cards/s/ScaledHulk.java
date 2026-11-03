@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -15,10 +14,10 @@ import java.util.List;
 public class ScaledHulk extends Card {
 
     public ScaledHulk() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardSubtypePredicate(CardSubtype.SPIRIT),
-                        new CardSubtypePredicate(CardSubtype.ARCANE))),
-                List.of(new BoostSelfEffect(2, 2))));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardSubtypePredicate(CardSubtype.SPIRIT),
+                                new CardSubtypePredicate(CardSubtype.ARCANE)))),
+                new BoostSelfEffect(2, 2));
     }
 }

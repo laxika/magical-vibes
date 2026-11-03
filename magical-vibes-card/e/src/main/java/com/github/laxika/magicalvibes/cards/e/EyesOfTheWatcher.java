@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,12 +16,11 @@ public class EyesOfTheWatcher extends Card {
 
     public EyesOfTheWatcher() {
         // Whenever you cast an instant or sorcery spell, you may pay {1}. If you do, scry 2.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY)
-                )),
-                List.of(new MayPayManaEffect("{1}", new ScryEffect(2), "Pay {1} to scry 2?"))
-        ));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY)
+                        ))),
+                new MayPayManaEffect("{1}", new ScryEffect(2), "Pay {1} to scry 2?"));
     }
 }

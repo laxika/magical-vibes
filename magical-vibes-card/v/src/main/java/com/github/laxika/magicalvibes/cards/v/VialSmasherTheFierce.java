@@ -5,9 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToRandomOpponentOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToRandomOpponentOrTheirPlaneswalkerEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1202")
 @CardRegistration(set = "FCA", collectorNumber = "59")
@@ -16,8 +14,7 @@ import java.util.List;
 public class VialSmasherTheFierce extends Card {
 
     public VialSmasherTheFierce() {
-        addTrigger(Triggers.youCastSpell(),
-                SpellCastTriggerEffect.nth(1, null,
-                        List.of(new DealDamageToRandomOpponentOrTheirPlaneswalkerEffect(new EventValue()))));
+        addTrigger(Triggers.youCastSpell().nthThisTurn(1),
+                new DealDamageToRandomOpponentOrTheirPlaneswalkerEffect(new EventValue()));
     }
 }

@@ -1,5 +1,11 @@
 # Card Patterns: Lands & Spells
 
+> A row that still writes a "whenever [a player] casts a spell" ability as `SpellCastTriggerEffect(filter, effects, …)`
+> (or a factory such as `.nth(n, …)` / `.withIntervening(…)`) is shorthand: author it as the cast trigger's filter and the
+> ability's effects, `addTrigger(Triggers.youCastSpell().withFilter(filter)[.nthThisTurn(n)…][, TriggerOptions…], effects…)`
+> (`.anySpell()` for a null filter), with "you may" a `MayEffect`, a mana cost a `MayPayManaEffect` and a target filter a
+> target group. See `SpellCastTriggerEffect` in `EFFECTS_INDEX.md`; the record itself is built by the engine.
+
 > `SPELL` in this file means the card's spell ability (CR 113.3a), written `addSpellEffect(e)`,
 > `addSimultaneousSpellEffects(a, b)` or `target(f).addSpellEffect(e)`. A `…Cost` listed under `SPELL`
 > is a casting cost (CR 601.2b, 601.2f), written `addCastingCost(c)`; it is not part of the spell ability.

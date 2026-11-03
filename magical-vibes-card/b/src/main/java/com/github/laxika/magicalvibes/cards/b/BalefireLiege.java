@@ -6,13 +6,11 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "EVE", collectorNumber = "132")
@@ -31,13 +29,10 @@ public class BalefireLiege extends Card {
                 new PermanentColorInPredicate(Set.of(CardColor.WHITE))));
 
         // Whenever you cast a red spell, this creature deals 3 damage to target player or planeswalker.
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(new CardColorPredicate(CardColor.RED),
-                        List.of(new DealDamageToTargetPlayerOrPlaneswalkerEffect(3))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.RED)),
+                new DealDamageToTargetPlayerOrPlaneswalkerEffect(3));
 
         // Whenever you cast a white spell, you gain 3 life.
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(new CardColorPredicate(CardColor.WHITE),
-                        List.of(new GainLifeEffect(3))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.WHITE)), new GainLifeEffect(3));
     }
 }

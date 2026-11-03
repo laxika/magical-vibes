@@ -5,13 +5,10 @@ import com.github.laxika.magicalvibes.cards.l.LoneWolfOfTheNatterknolls;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "209")
 public class HermitOfTheNatterknolls extends Card {
@@ -19,8 +16,7 @@ public class HermitOfTheNatterknolls extends Card {
     public HermitOfTheNatterknolls() {
         setBackFaceCard(new LoneWolfOfTheNatterknolls());
 
-        addTrigger(Triggers.opponentCastsSpell(),
-                SpellCastTriggerEffect.duringYourTurn(null, List.of(new DrawCardEffect(1))));
+        addTrigger(Triggers.opponentCastsSpell().duringYourTurn(), new DrawCardEffect(1));
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                 TriggerOptions.DEFAULT.withInterveningIf(new NoSpellsCastLastTurn()),
                 new TransformSelfEffect());

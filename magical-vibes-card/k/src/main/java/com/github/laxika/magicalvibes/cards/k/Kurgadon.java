@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -17,11 +16,11 @@ import java.util.List;
 public class Kurgadon extends Card {
 
     public Kurgadon() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAllOfPredicate(List.of(
-                        new CardTypePredicate(CardType.CREATURE),
-                        new CardMinManaValuePredicate(6, true)
-                )),
-                List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 3))));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAllOfPredicate(List.of(
+                                new CardTypePredicate(CardType.CREATURE),
+                                new CardMinManaValuePredicate(6, true)
+                        ))),
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 3));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -25,10 +24,7 @@ public class LeoninBattlemage extends Card {
                 TargetFilters.creature()
         ));
 
-        addTrigger(Triggers.youCastSpell(), new MayEffect(
-                new SpellCastTriggerEffect(
-                        null,
-                        List.of(new UntapPermanentsEffect(TapUntapScope.SELF))),
-                "Untap Leonin Battlemage?"));
+        addTrigger(Triggers.youCastSpell().anySpell(),
+                new MayEffect(new UntapPermanentsEffect(TapUntapScope.SELF), "Untap Leonin Battlemage?"));
     }
 }

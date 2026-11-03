@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -22,14 +21,10 @@ import java.util.List;
 public class NecklaceOfGirion extends Card {
 
     public NecklaceOfGirion() {
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(
-                        new CardColorPredicate(CardColor.GREEN),
-                        List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)),
-                        null,
-                        TargetFilters.creatureYouControl()));
-
+        // Both abilities target a creature you control: one target group, each ability choosing its own target.
         target(TargetFilters.creatureYouControl())
+                .addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.GREEN)),
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))
                 .addTrigger(Triggers.enters(
                                 new PermanentAllOfPredicate(List.of(
                                         Triggers.LAND,

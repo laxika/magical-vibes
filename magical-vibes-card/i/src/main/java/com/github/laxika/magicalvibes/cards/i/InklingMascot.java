@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -22,14 +21,12 @@ public class InklingMascot extends Card {
     public InklingMascot() {
         // Repartee — Whenever you cast an instant or sorcery spell that targets a creature,
         // this creature gains flying until end of turn. Surveil 1.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY))),
-                List.of(
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF),
-                        new SurveilEffect(1)),
-                new StackEntryTargetsPermanentPredicate(new PermanentIsCreaturePredicate())
-        ));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY))))
+                        .withStackEntryFilter(new StackEntryTargetsPermanentPredicate(new PermanentIsCreaturePredicate())),
+                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF),
+                new SurveilEffect(1));
     }
 }

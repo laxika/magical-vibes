@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -28,9 +27,7 @@ public class LightningRigCrew extends Card {
         ));
 
         // Whenever you cast a Pirate spell, untap Lightning-Rig Crew.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardSubtypePredicate(CardSubtype.PIRATE),
-                List.of(new UntapPermanentsEffect(TapUntapScope.SELF))
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardSubtypePredicate(CardSubtype.PIRATE)),
+                new UntapPermanentsEffect(TapUntapScope.SELF));
     }
 }

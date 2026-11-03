@@ -10,11 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "110")
 @CardRegistration(set = "DMR", collectorNumber = "72")
@@ -22,17 +20,16 @@ public class VeiledSerpent extends Card {
 
     public VeiledSerpent() {
         addCycling("{2}");
-        addTrigger(Triggers.opponentCastsSpell(), SpellCastTriggerEffect.withIntervening(
-                null,
-                // The intervening "if" is rechecked before each effect, so the grant comes first: once the
-                // Serpent becomes a creature it is no longer an enchantment.
-                List.of(new GrantStaticEffectToSourceEffect(new GrantEffectEffect(
-                                new CantAttackUnlessEffect(
-                                        new DefendingPlayerControlsPermanent(
-                                                new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
-                                        "an Island"),
-                                GrantScope.SELF)),
-                        new BecomeCreatureEffect(4, 4, CardSubtype.SERPENT)),
-                new SourceIsEnchantment()));
+        // The intervening "if" is rechecked before each effect, so the grant comes first: once the
+        // Serpent becomes a creature it is no longer an enchantment.
+        addTrigger(Triggers.opponentCastsSpell().anySpell(),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsEnchantment()),
+                new GrantStaticEffectToSourceEffect(new GrantEffectEffect(
+                        new CantAttackUnlessEffect(
+                                new DefendingPlayerControlsPermanent(
+                                        new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
+                                "an Island"),
+                        GrantScope.SELF)),
+                new BecomeCreatureEffect(4, 4, CardSubtype.SERPENT));
     }
 }

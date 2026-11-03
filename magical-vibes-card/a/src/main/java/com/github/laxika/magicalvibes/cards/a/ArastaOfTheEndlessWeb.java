@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,12 +28,11 @@ public class ArastaOfTheEndlessWeb extends Card {
     public ArastaOfTheEndlessWeb() {
         // Whenever an opponent casts an instant or sorcery spell, create a 1/2 green Spider
         // creature token with reach.
-        addTrigger(Triggers.opponentCastsSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY))),
-                List.of(new CreateTokenEffect(1, "Spider", 1, 2, CardColor.GREEN,
-                        List.of(CardSubtype.SPIDER), Set.of(Keyword.REACH), Set.of()))
-        ));
+        addTrigger(Triggers.opponentCastsSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY)))),
+                new CreateTokenEffect(1, "Spider", 1, 2, CardColor.GREEN,
+                        List.of(CardSubtype.SPIDER), Set.of(Keyword.REACH), Set.of()));
     }
 }

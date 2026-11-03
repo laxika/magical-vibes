@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -31,14 +30,14 @@ public class FinalIteration extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.WIZARD)));
 
         // Whenever you cast an instant or sorcery spell, create a 1/1 blue Human Wizard creature token.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY)
-                )),
-                List.of(new CreateTokenEffect("Human Wizard", 1, 1,
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY)
+                        ))),
+                new CreateTokenEffect("Human Wizard", 1, 1,
                         CardColor.BLUE,
                         List.of(CardSubtype.HUMAN, CardSubtype.WIZARD),
-                        Set.of(), Set.of()))));
+                        Set.of(), Set.of()));
     }
 }

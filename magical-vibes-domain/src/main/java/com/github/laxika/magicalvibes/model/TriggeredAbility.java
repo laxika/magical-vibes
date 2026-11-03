@@ -3,8 +3,12 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.OnceOnlyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringBoastAbilityConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringLoyaltyAbilityConditionalEffect;
@@ -17,6 +21,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringTapAbilityCondition
 import com.github.laxika.magicalvibes.model.trigger.AbilityTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LandPlayTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
+import com.github.laxika.magicalvibes.model.trigger.SpellFilter;
+import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
@@ -115,6 +121,14 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
     }
 
     /**
+     * Whether one of this ability's trigger conditions has {@code trigger} as its {@link Trigger#watchKey()}, in any
+     * zone: the abilities granted to a permanent that a collector reading effects by trigger reads.
+     */
+    public boolean hasWatchedTrigger(Trigger trigger) {
+        return conditions.stream().anyMatch(condition -> condition.trigger().watchKey().equals(trigger));
+    }
+
+    /**
      * Whether {@code trigger} is one of this ability's trigger conditions and that condition functions in
      * {@code zone}.
      */
@@ -143,9 +157,15 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * is a {@link TriggeringCardConditionalEffect} inside the limit, an activation trigger's source filter a
      * {@link TriggeringPermanentConditionalEffect} there and its ability kind the matching
      * {@code Triggering…AbilityConditionalEffect} outside everything, as the spell, land-play and activation cards
-     * wrote them. An ability without options or such filters returns its registrations as they are.
+     * wrote them. A cast trigger's {@link SpellFilter} makes the ability one {@link SpellCastTriggerEffect} of all its
+     * effects, as {@link #legacySpellCastEffects} says. An ability without options or such filters returns its
+     * registrations as they are.
      */
     public List<EffectRegistration> legacyEffects() {
+        SpellTrigger spellCast = filteredTrigger(SpellTrigger.class);
+        if (spellCast != null) {
+            return legacySpellCastEffects(spellCast.filter());
+        }
         Condition interveningIf = options.interveningIf();
         TriggerLimit limit = options.limit();
         LandPlayTrigger landPlay = filteredTrigger(LandPlayTrigger.class);
@@ -203,8 +223,74 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         return switch (trigger) {
             case LandPlayTrigger landPlay -> Arrays.asList(landPlay.filter());
             case AbilityTrigger activation -> Arrays.asList(activation.source(), activation.kind());
+            case SpellTrigger spell -> Arrays.asList(spell.filter());
             default -> List.of();
         };
+    }
+
+    /**
+     * The ability in the form the spell-cast collectors judge a "whenever [a player] casts a [quality] spell"
+     * ability in (until steps 14 and 15 of effect-slot-refactor.md replace them): one {@link SpellCastTriggerEffect}
+     * of all the ability's effects, one stack object (CR 603.3), with the cast trigger's {@link SpellFilter} as its
+     * spell filter and conditions and the intervening "if" as its {@code intervening} condition (CR 603.4), which the
+     * collector checks as the ability triggers and wraps around the effects for resolution. "This ability triggers
+     * only once" wraps each effect in an {@link OnceOnlyTriggerEffect}; the other limits wrap the whole as
+     * {@link #legacyEffects()} says.
+     * <p>
+     * An ability whose only effect is a plain "you may pay {N}. If you do, …" ({@link MayPayManaEffect} with a mana
+     * cost and nothing else) or, functioning on the battlefield or in exile, a plain "you may …" ({@link MayEffect}
+     * with a prompt and nothing else) is given as the collectors read an optional ability: the cost is the
+     * {@code SpellCastTriggerEffect}'s mana cost and, on the battlefield or in exile, the effect (a written {@code SequenceEffect} stays one effect) is wrapped in a
+     * {@code MayEffect} of the prompt, which the collector asks as the ability resolves (CR 603.5) after choosing its
+     * targets (CR 603.3d). The graveyard, hand and command-zone readers take the cost from the
+     * {@code SpellCastTriggerEffect} and a "you may" as an effect inside it, as those cards wrote them.
+     */
+    private List<EffectRegistration> legacySpellCastEffects(SpellFilter filter) {
+        TriggerLimit limit = options.limit();
+        boolean onStackPath = conditions.stream().anyMatch(condition -> condition.trigger() instanceof SpellTrigger
+                && (condition.zones().functionsIn(Zone.BATTLEFIELD) || condition.zones().functionsIn(Zone.EXILE)));
+        List<CardEffect> resolved = effects.stream().map(EffectRegistration::effect).toList();
+        String manaCost = null;
+        String optionalPrompt = null;
+        if (resolved.size() == 1 && limit != TriggerLimit.ONCE) {
+            CardEffect only = resolved.getFirst();
+            if (only instanceof MayPayManaEffect pay && isPlainManaPayment(pay)) {
+                manaCost = pay.manaCost();
+                resolved = List.of(pay.wrapped());
+                optionalPrompt = onStackPath ? pay.prompt() : null;
+            } else if (onStackPath && only instanceof MayEffect may && isPlainMay(may)) {
+                resolved = List.of(may.wrapped());
+                optionalPrompt = may.prompt();
+            }
+        }
+        if (limit == TriggerLimit.ONCE) {
+            resolved = resolved.stream().map(effect -> (CardEffect) new OnceOnlyTriggerEffect(effect)).toList();
+        }
+        CardEffect effect = new SpellCastTriggerEffect(filter.spell(), resolved, manaCost, null, filter.stackEntry(),
+                filter.turn() == SpellFilter.Turn.OPPONENTS, filter.turn() == SpellFilter.Turn.YOURS,
+                options.interveningIf(), filter.nthThisTurn(), filter.nthOrLaterThisTurn(), false,
+                filter.paidWithManaFromThis(), filter.expend(), filter.paidWithTreasureMana(),
+                filter.twoOrMoreCardTypes(), filter.turn() == SpellFilter.Turn.NOT_CASTERS, filter.duringCombat());
+        if (optionalPrompt != null) {
+            effect = new MayEffect(effect, optionalPrompt);
+        }
+        if (limit == TriggerLimit.ONCE_EACH_TURN) {
+            effect = OncePerTurnTriggerEffect.keyed(effect, limitKey());
+        } else if (limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN) {
+            effect = OncePerTurnTriggerEffect.markOnAcceptance(effect);
+        }
+        return List.of(new EffectRegistration(effect, effects.getFirst().triggerMode(), false));
+    }
+
+    private static boolean isPlainManaPayment(MayPayManaEffect pay) {
+        return pay.manaCost() != null && pay.dynamicManaCost() == null && pay.wrapped() != null
+                && pay.payer() == MayPayPayer.CONTROLLER
+                && pay.elseEffect() == null && pay.lifeCost() == 0 && !pay.sourceIsTriggeringPermanent();
+    }
+
+    private static boolean isPlainMay(MayEffect may) {
+        return may.elseEffect() == null && may.choicePlayerId() == null
+                && may.choicePlayer() == MayChoicePlayer.CONTROLLER;
     }
 
     private static CardEffect legacyKindWrapper(AbilityTrigger.AbilityKind kind, CardEffect effect) {

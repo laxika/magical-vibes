@@ -6,11 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "171")
 @CardRegistration(set = "ECL", collectorNumber = "365")
@@ -18,7 +15,6 @@ public class ChampionsOfThePerfect extends Card {
 
     public ChampionsOfThePerfect() {
         addCastingCost(new BeholdAndExileCost(CardSubtype.ELF));
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(new CardTypePredicate(CardType.CREATURE), List.of(new DrawCardEffect())));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)), new DrawCardEffect());
     }
 }

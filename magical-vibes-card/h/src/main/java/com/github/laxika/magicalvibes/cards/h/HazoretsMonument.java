@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -31,10 +30,7 @@ public class HazoretsMonument extends Card {
                 )), 1, CostModificationScope.SELF));
 
         // Whenever you cast a creature spell, you may discard a card. If you do, draw a card.
-        addTrigger(Triggers.youCastSpell(), new MayEffect(
-                new SpellCastTriggerEffect(new CardTypePredicate(CardType.CREATURE),
-                        List.of(new DiscardAndDrawCardEffect())),
-                "Discard a card to draw a card?"
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
+                new MayEffect(new DiscardAndDrawCardEffect(), "Discard a card to draw a card?"));
     }
 }

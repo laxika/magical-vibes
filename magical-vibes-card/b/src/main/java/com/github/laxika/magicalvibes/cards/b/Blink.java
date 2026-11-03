@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetPermanentIntoLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -43,10 +42,9 @@ public class Blink extends Card {
                 Set.of(Keyword.FIRST_STRIKE, Keyword.VIGILANCE),
                 Set.of(CardType.ARTIFACT),
                 List.of(
-                        new TriggeredAbility(Triggers.opponentCastsSpell(), new SpellCastTriggerEffect(
-                                new CardTypePredicate(CardType.CREATURE),
-                                List.of(new RemoveCardTypeFromTargetPermanentEffect(
-                                        CardType.CREATURE, GrantScope.SELF))))));
+                        new TriggeredAbility(Triggers.opponentCastsSpell()
+                                        .withFilter(new CardTypePredicate(CardType.CREATURE)),
+                                new RemoveCardTypeFromTargetPermanentEffect(CardType.CREATURE, GrantScope.SELF))));
         addTrigger(Triggers.chapter(2), alienAngel);
         addTrigger(Triggers.chapter(4), alienAngel);
     }

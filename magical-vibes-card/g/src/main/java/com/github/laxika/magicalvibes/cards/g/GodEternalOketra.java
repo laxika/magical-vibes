@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSourceCardFromExileIntoLibraryNFromTopEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSourceCardFromGraveyardIntoLibraryNFromTopEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfExiledFromBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,12 +23,10 @@ import java.util.Set;
 public class GodEternalOketra extends Card {
 
     public GodEternalOketra() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardTypePredicate(CardType.CREATURE),
-                List.of(new CreateTokenEffect("Zombie Warrior", 4, 4, CardColor.BLACK,
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
+                new CreateTokenEffect("Zombie Warrior", 4, 4, CardColor.BLACK,
                         List.of(CardSubtype.ZOMBIE, CardSubtype.WARRIOR),
-                        Set.of(Keyword.VIGILANCE), Set.of()))
-        ));
+                        Set.of(Keyword.VIGILANCE), Set.of()));
 
         addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(
                 new PutSourceCardFromGraveyardIntoLibraryNFromTopEffect(2),

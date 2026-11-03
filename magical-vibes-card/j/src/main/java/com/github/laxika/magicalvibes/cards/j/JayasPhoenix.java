@@ -7,13 +7,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CopyNextLoyaltyAbilityThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "CMM", collectorNumber = "738")
 @CardRegistration(set = "CMM", collectorNumber = "768")
@@ -22,12 +19,11 @@ public class JayasPhoenix extends Card {
     public JayasPhoenix() {
         addTrigger(Triggers.dealsCombatDamageToPlayerOrPlaneswalker(),
                 new CopyNextLoyaltyAbilityThisTurnEffect());
-        addTrigger(new TriggerCondition(Triggers.youCastSpell(), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT, new SpellCastTriggerEffect(
-                new CardTypePredicate(CardType.PLANESWALKER),
-                List.of(new MayEffect(
+        addTrigger(new TriggerCondition(Triggers.youCastSpell()
+                        .withFilter(new CardTypePredicate(CardType.PLANESWALKER)), AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT,
+                new MayEffect(
                         new ReturnSourceCardFromGraveyardToBattlefieldEffect(false),
-                        "Return Jaya's Phoenix from your graveyard to the battlefield?"))
-        ));
+                        "Return Jaya's Phoenix from your graveyard to the battlefield?"));
     }
 }

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.condition.ControlledPermanentCounter
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalCountersToCastSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -26,11 +25,11 @@ import java.util.List;
 public class LuxArtillery extends Card {
 
     public LuxArtillery() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAllOfPredicate(List.of(
-                        new CardTypePredicate(CardType.ARTIFACT),
-                        new CardTypePredicate(CardType.CREATURE))),
-                List.of(new GrantAdditionalCountersToCastSpellEffect())));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAllOfPredicate(List.of(
+                                new CardTypePredicate(CardType.ARTIFACT),
+                                new CardTypePredicate(CardType.CREATURE)))),
+                new GrantAdditionalCountersToCastSpellEffect());
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(

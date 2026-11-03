@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,16 +21,15 @@ public class ThunderdrumSoloist extends Card {
 
         // Opus — Whenever you cast an instant or sorcery spell, this creature deals 1 damage to each opponent.
         // If five or more mana was spent to cast that spell, this creature deals 3 damage to each opponent instead.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY)
-                )),
-                List.of(new ConditionalReplacementEffect(
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY)
+                        ))),
+                new ConditionalReplacementEffect(
                         new SpellManaSpentAtLeast(5),
                         new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
                         new DealDamageToPlayersEffect(3, DamageRecipient.EACH_OPPONENT)
-                ))
-        ));
+                ));
     }
 }

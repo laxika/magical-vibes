@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -23,11 +22,8 @@ import java.util.Set;
 public class ChromeHostSeedshark extends Card {
 
     public ChromeHostSeedshark() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(new CreateXTokenWithXCountersEffect(
-                        incubatorToken(), new EventValue(), CounterType.PLUS_ONE_PLUS_ONE))
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                new CreateXTokenWithXCountersEffect(incubatorToken(), new EventValue(), CounterType.PLUS_ONE_PLUS_ONE));
     }
 
     private static CreateTokenEffect incubatorToken() {

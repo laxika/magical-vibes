@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -22,12 +21,12 @@ import java.util.List;
 public class AprilONeilHumanElement extends Card {
 
     public AprilONeilHumanElement() {
-        addTrigger(Triggers.playerCastsSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.ARTIFACT),
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY))),
-                List.of(CreateTokenEffect.ofArtifactToken(
+        addTrigger(Triggers.playerCastsSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.ARTIFACT),
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY)))),
+                CreateTokenEffect.ofArtifactToken(
                         1,
                         "Mutagen",
                         List.of(CardSubtype.MUTAGEN),
@@ -44,7 +43,6 @@ public class AprilONeilHumanElement extends Card {
                                 null,
                                 null,
                                 ActivationTimingRestriction.SORCERY_SPEED
-                        ))))
-        ));
+                ))));
     }
 }

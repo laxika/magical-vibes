@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,12 +19,8 @@ public class InfestedRoothold extends Card {
 
     public InfestedRoothold() {
         addStaticEffect(new ProtectionFromCardTypesEffect(Set.of(CardType.ARTIFACT)));
-        addTrigger(Triggers.opponentCastsSpell(), new MayEffect(
-                new SpellCastTriggerEffect(
-                        new CardTypePredicate(CardType.ARTIFACT),
-                        List.of(new CreateTokenEffect("Insect", 1, 1, CardColor.GREEN,
-                                List.of(CardSubtype.INSECT), Set.of(), Set.of()))),
-                "Create a 1/1 green Insect creature token?"
-        ));
+        addTrigger(Triggers.opponentCastsSpell().withFilter(new CardTypePredicate(CardType.ARTIFACT)),
+                new MayEffect(new CreateTokenEffect("Insect", 1, 1, CardColor.GREEN,
+                        List.of(CardSubtype.INSECT), Set.of(), Set.of()), "Create a 1/1 green Insect creature token?"));
     }
 }

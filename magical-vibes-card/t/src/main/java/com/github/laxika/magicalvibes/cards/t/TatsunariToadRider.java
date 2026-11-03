@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureBlockableOnlyByFilterThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -24,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -43,19 +43,17 @@ public class TatsunariToadRider extends Card {
             new PermanentHasKeywordPredicate(Keyword.REACH)));
 
     public TatsunariToadRider() {
-        addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.withIntervening(
-                new CardTypePredicate(CardType.ENCHANTMENT),
-                List.of(new CreateTokenEffect(
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.ENCHANTMENT)),
+                TriggerOptions.DEFAULT.withInterveningIf(new NotCondition(new ControlsPermanent(KEIMI))),
+                new CreateTokenEffect(
                         CardType.CREATURE, 1, "Keimi", 3, 3,
                         CardColor.BLACK, Set.of(CardColor.BLACK, CardColor.GREEN),
                         List.of(CardSubtype.FROG), Set.of(), Set.of(), false, false,
                         List.of(
-                                new TriggeredAbility(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                                        new CardTypePredicate(CardType.ENCHANTMENT),
-                                        List.of(
-                                                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT, true))))),
-                        List.of(), false, false, true, 0, Set.of())),
-                new NotCondition(new ControlsPermanent(KEIMI))));
+                                new TriggeredAbility(Triggers.youCastSpell()
+                                                .withFilter(new CardTypePredicate(CardType.ENCHANTMENT)),
+                                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT, true))),
+                        List.of(), false, false, true, 0, Set.of()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CastSpellsExiledWithSourceWithinTotalManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringSpellWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,12 +16,11 @@ import java.util.List;
 public class RodOfAbsorption extends Card {
 
     public RodOfAbsorption() {
-        addTrigger(Triggers.playerCastsSpell(),
-                new SpellCastTriggerEffect(
-                        new CardAnyOfPredicate(List.of(
+        addTrigger(Triggers.playerCastsSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),
-                                new CardTypePredicate(CardType.SORCERY))),
-                        List.of(new ExileTriggeringSpellWithSourceEffect())));
+                                new CardTypePredicate(CardType.SORCERY)))),
+                new ExileTriggeringSpellWithSourceEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

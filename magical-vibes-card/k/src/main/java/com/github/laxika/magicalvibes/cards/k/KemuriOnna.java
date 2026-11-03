@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -28,12 +27,10 @@ public class KemuriOnna extends Card {
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
 
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(
-                        new CardAnyOfPredicate(List.of(
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardSubtypePredicate(CardSubtype.SPIRIT),
-                                new CardSubtypePredicate(CardSubtype.ARCANE))),
-                        List.of(new MayEffect(ReturnToHandEffect.self(),
-                                "Return Kemuri-Onna to its owner's hand?"))));
+                                new CardSubtypePredicate(CardSubtype.ARCANE)))),
+                new MayEffect(ReturnToHandEffect.self(), "Return Kemuri-Onna to its owner's hand?"));
     }
 }

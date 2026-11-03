@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -35,9 +34,9 @@ public class CoriSteelCutter extends Card {
         addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.EQUIPPED_CREATURE));
 
         List<Ability> monkTokenEffects = List.of(
-                new TriggeredAbility(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                        new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                        List.of(new BoostSelfEffect(1, 1)))));
+                new TriggeredAbility(Triggers.youCastSpell()
+                                .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                        new BoostSelfEffect(1, 1)));
         CreateTokenEffect monkToken = new CreateTokenEffect(
                 CardType.CREATURE, 1, "Monk", 1, 1, CardColor.WHITE, null,
                 List.of(CardSubtype.MONK), Set.of(), Set.of(), false, false,

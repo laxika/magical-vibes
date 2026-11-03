@@ -6,22 +6,15 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "IKO", collectorNumber = "208")
 public class Slitherwisp extends Card {
 
     public Slitherwisp() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardKeywordPredicate(Keyword.FLASH),
-                List.of(
-                        new DrawCardEffect(1),
-                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT)
-                )
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardKeywordPredicate(Keyword.FLASH)),
+                new DrawCardEffect(1),
+                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
     }
 }

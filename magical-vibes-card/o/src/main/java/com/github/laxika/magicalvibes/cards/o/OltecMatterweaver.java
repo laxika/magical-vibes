@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -22,9 +21,8 @@ import java.util.Set;
 public class OltecMatterweaver extends Card {
 
     public OltecMatterweaver() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardTypePredicate(CardType.CREATURE),
-                List.of(new ChooseOneEffect(List.of(
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
+                new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Create a 1/1 colorless Gnome artifact creature token",
                                 new CreateTokenEffect(
@@ -38,7 +36,6 @@ public class OltecMatterweaver extends Card {
                                                 new PermanentIsArtifactPredicate(),
                                                 new PermanentIsTokenPredicate())),
                                         "Target must be an artifact token you control"))
-                )))
-        ));
+                )));
     }
 }

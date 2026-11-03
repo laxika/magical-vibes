@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -27,10 +26,9 @@ import java.util.List;
 public class TheCabbageMerchant extends Card {
 
     public TheCabbageMerchant() {
-        addTrigger(Triggers.opponentCastsSpell(), new SpellCastTriggerEffect(
-                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(foodToken())
-        ));
+        addTrigger(Triggers.opponentCastsSpell()
+                        .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                foodToken());
 
         addTrigger(Triggers.creatureDealsCombatDamageToYou(),
                 new SacrificePermanentsEffect(

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -20,21 +19,8 @@ public class GlenElendraPranksters extends Card {
         // Flying (auto-loaded from Scryfall).
         // Whenever you cast a spell during an opponent's turn, you may return target creature you
         // control to its owner's hand.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new MayEffect(ReturnToHandEffect.target(),
-                        "Return target creature you control to its owner's hand?")),
-                null,
-                new PermanentPredicateTargetFilter(
-                        new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentControlledBySourceControllerPredicate()
-                        )),
-                        "Target must be a creature you control"
-                ),
-                null,
-                true,
-                false
-        ));
+        target(new PermanentPredicateTargetFilter(new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(), new PermanentControlledBySourceControllerPredicate())), "Target must be a creature you control")).addTrigger(Triggers.youCastSpell()
+                        .duringOpponentsTurn(),
+                new MayEffect(ReturnToHandEffect.target(), "Return target creature you control to its owner's hand?"));
     }
 }

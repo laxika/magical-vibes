@@ -7,24 +7,19 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "165")
 public class GravelgillDuo extends Card {
 
     public GravelgillDuo() {
         // Whenever you cast a blue spell, this creature gets +1/+1 until end of turn.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardColorPredicate(CardColor.BLUE),
-                List.of(new BoostSelfEffect(1, 1))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.BLUE)),
+                new BoostSelfEffect(1, 1));
 
         // Whenever you cast a black spell, this creature gains fear until end of turn.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardColorPredicate(CardColor.BLACK),
-                List.of(new GrantKeywordEffect(Keyword.FEAR, GrantScope.SELF))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.BLACK)),
+                new GrantKeywordEffect(Keyword.FEAR, GrantScope.SELF));
     }
 }

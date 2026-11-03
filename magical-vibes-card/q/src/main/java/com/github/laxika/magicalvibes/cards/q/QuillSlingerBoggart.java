@@ -6,23 +6,15 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "137")
 public class QuillSlingerBoggart extends Card {
 
     public QuillSlingerBoggart() {
         // Whenever a player casts a Kithkin spell, you may have target player lose 1 life.
-        addTrigger(Triggers.playerCastsSpell(), new MayEffect(
-                new SpellCastTriggerEffect(
-                        new CardSubtypePredicate(CardSubtype.KITHKIN),
-                        List.of(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER))
-                ),
-                "Have target player lose 1 life?"
-        ));
+        addTrigger(Triggers.playerCastsSpell().withFilter(new CardSubtypePredicate(CardSubtype.KITHKIN)),
+                new MayEffect(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER), "Have target player lose 1 life?"));
     }
 }

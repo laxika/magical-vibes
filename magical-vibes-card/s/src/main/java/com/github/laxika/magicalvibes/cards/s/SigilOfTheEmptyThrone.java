@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -27,9 +26,8 @@ public class SigilOfTheEmptyThrone extends Card {
 
     public SigilOfTheEmptyThrone() {
         // Whenever you cast an enchantment spell, create a 4/4 white Angel creature token with flying.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardTypePredicate(CardType.ENCHANTMENT),
-                List.of(new CreateTokenEffect("Angel", 4, 4, CardColor.WHITE,
-                        List.of(CardSubtype.ANGEL), Set.of(Keyword.FLYING), Set.of()))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.ENCHANTMENT)),
+                new CreateTokenEffect("Angel", 4, 4, CardColor.WHITE,
+                        List.of(CardSubtype.ANGEL), Set.of(Keyword.FLYING), Set.of()));
     }
 }

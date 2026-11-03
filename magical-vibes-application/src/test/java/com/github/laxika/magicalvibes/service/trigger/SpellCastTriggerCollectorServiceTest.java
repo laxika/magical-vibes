@@ -18,6 +18,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
@@ -660,8 +664,8 @@ class SpellCastTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("adds to pending may abilities when wrapped in MayEffect")
-        void addsToMayAbilitiesWhenMayEffect() {
+        @DisplayName("puts an optional trigger on the stack, its choice made as it resolves (CR 603.5)")
+        void putsOptionalTriggerOnStackWhenMayEffect() {
             Permanent perm = createPermanent("Angel's Feather");
             var innerEffect = new PutCountersOnSourceEffect(0, 0, 1);
             var spellCastTrigger = new SpellCastTriggerEffect(null, List.of(innerEffect));
@@ -677,9 +681,61 @@ class SpellCastTriggerCollectorServiceTest {
                     SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, mayEffect, ctx);
 
             assertThat(result).isTrue();
-            assertThat(gd.stack).isEmpty();
-            assertThat(gd.pendingMayAbilities).hasSize(1);
-            assertThat(gd.pendingMayAbilities.getFirst().description()).contains("Angel's Feather");
+            assertThat(gd.pendingMayAbilities).isEmpty();
+            assertThat(gd.stack).singleElement().satisfies(entry -> assertThat(entry.getEffectsToResolve())
+                    .containsExactly(new MayEffect(innerEffect, "Gain 1 life?")));
+        }
+
+        @Test
+        @DisplayName("an optional trigger whose effect reads the mana spent also goes on the stack, asked as it resolves")
+        void optionalManaSpentTriggerGoesOnStack() {
+            Permanent perm = createPermanent("Uncover the Moon-Letters");
+            var draw = new DrawCardEffect(new XValue());
+            var mayEffect = new MayEffect(new SpellCastTriggerEffect(null, List.of(draw)), "Draw cards?");
+            Card spellCard = createInstant("Dark Ritual");
+            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+            gd.addSpellCastManaSpent(spellCard.getId(), 3);
+
+            when(amountEvaluationService.referencesXValue(new XValue())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
+                    eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, mayEffect),
+                    SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, mayEffect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.pendingMayAbilities).isEmpty();
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getEffectsToResolve()).containsExactly(new MayEffect(draw, "Draw cards?"));
+                assertThat(entry.getXValue()).isEqualTo(3);
+            });
+        }
+
+        @Test
+        @DisplayName("a targeting trigger takes its target filter from the target group its effect is bound to")
+        void targetFilterComesFromTheBoundTargetGroup() {
+            Card source = createCard("Necklace of Girion");
+            source.target(TargetFilters.creature(), 0, 1)
+                    .addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1));
+            source.target(TargetFilters.creatureYouControl())
+                    .addTrigger(Triggers.youCastSpell().anySpell(), new BoostTargetCreatureEffect(1, 1));
+            Permanent perm = new Permanent(source);
+            CardEffect effect = source.getLegacyTriggerEffects(Triggers.youCastSpell(), Zone.BATTLEFIELD).getFirst();
+            Card spellCard = createCard("Grizzly Bears", CardColor.GREEN);
+            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
+                    eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect), SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+
+            // The ability's own group takes one target, so it is not the card's "up to one" multi-target choice.
+            assertThat(result).isTrue();
+            assertThat(gd.pendingInteractions).singleElement()
+                    .isInstanceOfSatisfying(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class, queued ->
+                            assertThat(queued.targetFilter()).isSameAs(source.getTargetGroups().get(1).getFilter()));
         }
 
         @Test

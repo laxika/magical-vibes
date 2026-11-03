@@ -6,12 +6,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "MSC", collectorNumber = "38")
 @CardRegistration(set = "MSC", collectorNumber = "342")
@@ -20,7 +17,6 @@ public class ValeriaRichardsPrecocious extends Card {
     public ValeriaRichardsPrecocious() {
         CardNotPredicate noncreatureSpell = new CardNotPredicate(new CardTypePredicate(CardType.CREATURE));
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(noncreatureSpell, 1, CostModificationScope.SELF));
-        addTrigger(Triggers.youCastSpell(),
-                SpellCastTriggerEffect.nth(1, noncreatureSpell, List.of(new DrawCardEffect())));
+        addTrigger(Triggers.youCastSpell().withFilter(noncreatureSpell).nthThisTurn(1), new DrawCardEffect());
     }
 }

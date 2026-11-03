@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.amount.ControllerExperienceCounters;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExperienceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,9 +21,8 @@ import java.util.Set;
 public class DaxosTheReturned extends Card {
 
     public DaxosTheReturned() {
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(new CardTypePredicate(CardType.ENCHANTMENT),
-                        List.of(new ExperienceCountersEffect(1))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.ENCHANTMENT)),
+                new ExperienceCountersEffect(1));
 
         CreateTokenEffect spirit = new CreateTokenEffect(
                 CardType.CREATURE, 1, "Spirit", 0, 0,

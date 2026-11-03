@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,11 +27,10 @@ public class SaiMasterThopterist extends Card {
 
     public SaiMasterThopterist() {
         // Whenever you cast an artifact spell, create a 1/1 colorless Thopter artifact creature token with flying.
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(new CardTypePredicate(CardType.ARTIFACT),
-                        List.of(new CreateTokenEffect("Thopter", 1, 1, null,
-                                List.of(CardSubtype.THOPTER), Set.of(Keyword.FLYING),
-                                Set.of(CardType.ARTIFACT)))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.ARTIFACT)),
+                new CreateTokenEffect("Thopter", 1, 1, null,
+                        List.of(CardSubtype.THOPTER), Set.of(Keyword.FLYING),
+                        Set.of(CardType.ARTIFACT)));
 
         // {1}{U}, Sacrifice two artifacts: Draw a card.
         addActivatedAbility(new ActivatedAbility(false, "{1}{U}", List.of(

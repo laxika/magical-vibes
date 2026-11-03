@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaValueParity;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfThenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueParityPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -30,13 +29,9 @@ public class SoundwaveSuperiorCaptain extends Card {
                 Set.of(Keyword.FLYING, Keyword.HEXPROOF), Set.of(CardType.CREATURE),
                 false, false, List.of(), List.of(), false, false, true, 0, Set.of());
 
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(
-                        new CardManaValueParityPredicate(ManaValueParity.ODD),
-                        List.of(new TransformSelfThenEffect(ravage))));
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(
-                        new CardManaValueParityPredicate(ManaValueParity.EVEN),
-                        List.of(new TransformSelfThenEffect(laserbeak))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardManaValueParityPredicate(ManaValueParity.ODD)),
+                new TransformSelfThenEffect(ravage));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardManaValueParityPredicate(ManaValueParity.EVEN)),
+                new TransformSelfThenEffect(laserbeak));
     }
 }

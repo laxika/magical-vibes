@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -26,34 +25,21 @@ public class AragornTheUniter extends Card {
 
     public AragornTheUniter() {
         // Whenever you cast a white spell, create a 1/1 white Human Soldier creature token.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardColorPredicate(CardColor.WHITE),
-                List.of(new CreateTokenEffect("Human Soldier", 1, 1, CardColor.WHITE,
-                        List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of()))
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.WHITE)),
+                new CreateTokenEffect("Human Soldier", 1, 1, CardColor.WHITE,
+                        List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of()));
 
         // Whenever you cast a blue spell, scry 2.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardColorPredicate(CardColor.BLUE),
-                List.of(new ScryEffect(2))
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.BLUE)), new ScryEffect(2));
 
         // Whenever you cast a red spell, Aragorn deals 3 damage to target opponent.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardColorPredicate(CardColor.RED),
-                List.of(new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER)),
-                null,
-                new PlayerPredicateTargetFilter(
-                        new PlayerRelationPredicate(PlayerRelation.OPPONENT),
-                        "Target must be an opponent")
-        ));
+        target(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent")).addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardColorPredicate(CardColor.RED)),
+                new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER));
 
         // Whenever you cast a green spell, target creature gets +4/+4 until end of turn.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardColorPredicate(CardColor.GREEN),
-                List.of(new BoostTargetCreatureEffect(4, 4)),
-                null,
-                TargetFilters.creature()
-        ));
+        target(TargetFilters.creature()).addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardColorPredicate(CardColor.GREEN)),
+                new BoostTargetCreatureEffect(4, 4));
     }
 }

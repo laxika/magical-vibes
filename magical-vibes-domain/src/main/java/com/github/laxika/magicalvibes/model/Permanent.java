@@ -2113,17 +2113,18 @@ public class Permanent {
     /**
      * The effects of the triggered abilities with {@code trigger} granted until end of turn, end of combat or next
      * upkeep, then those granted until it leaves the battlefield, in that order, each wrapped in its ability's options
-     * ({@link TriggeredAbility#legacyEffects()}) for the collectors that still read effects.
+     * ({@link TriggeredAbility#legacyEffects()}) for the collectors that still read effects. An ability is found by its
+     * trigger's {@link Trigger#watchKey()}, as {@link Card#getLegacyTriggerEffects(Trigger)} finds a card's.
      */
     public List<CardEffect> getGrantedTriggerEffects(Trigger trigger) {
         List<CardEffect> effects = new ArrayList<>();
         for (TriggeredAbility ability : getTemporaryTriggeredAbilities()) {
-            if (ability.hasTrigger(trigger)) {
+            if (ability.hasWatchedTrigger(trigger)) {
                 ability.legacyEffects().forEach(registration -> effects.add(registration.effect()));
             }
         }
         for (TriggeredAbility ability : getPersistentTriggeredAbilities()) {
-            if (ability.hasTrigger(trigger)) {
+            if (ability.hasWatchedTrigger(trigger)) {
                 ability.legacyEffects().forEach(registration -> effects.add(registration.effect()));
             }
         }

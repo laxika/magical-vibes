@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
@@ -35,10 +34,10 @@ public class DirgurFocusmageBraingeyser extends Card {
 
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 INSTANT_OR_SORCERY, 1, CostModificationScope.SELF));
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                HIGH_VALUE_INSTANT_OR_SORCERY,
-                List.of(new BecomePreparedEffect()),
-                new StackEntryCastFromZonePredicate(Zone.HAND)));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(HIGH_VALUE_INSTANT_OR_SORCERY)
+                        .withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.HAND)),
+                new BecomePreparedEffect());
     }
 
     @Override

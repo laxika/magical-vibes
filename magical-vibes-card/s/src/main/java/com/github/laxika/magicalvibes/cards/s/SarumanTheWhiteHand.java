@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -29,10 +28,8 @@ public class SarumanTheWhiteHand extends Card {
 
     public SarumanTheWhiteHand() {
         // Whenever you cast a noncreature spell, amass Orcs X, where X is that spell's mana value.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(new AmassGoblinsEqualToCastSpellManaValueEffect(CardSubtype.ORC))
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                new AmassGoblinsEqualToCastSpellManaValueEffect(CardSubtype.ORC));
 
         // Goblins and Orcs you control have ward {2}.
         PermanentPredicate goblinOrOrc = new PermanentAnyOfPredicate(List.of(

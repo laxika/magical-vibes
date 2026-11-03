@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -16,10 +15,10 @@ public class KamiOfTheHunt extends Card {
 
     public KamiOfTheHunt() {
         // Whenever you cast a Spirit or Arcane spell, this creature gets +1/+1 until end of turn.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardSubtypePredicate(CardSubtype.SPIRIT),
-                        new CardSubtypePredicate(CardSubtype.ARCANE))),
-                List.of(new BoostSelfEffect(1, 1))));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardSubtypePredicate(CardSubtype.SPIRIT),
+                                new CardSubtypePredicate(CardSubtype.ARCANE)))),
+                new BoostSelfEffect(1, 1));
     }
 }

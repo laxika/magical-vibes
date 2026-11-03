@@ -8,11 +8,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "98")
 @CardRegistration(set = "AKR", collectorNumber = "161")
@@ -27,13 +24,9 @@ public class ImminentDoom extends Card {
         // enchantment, this enchantment deals that much damage to any target. Then put a doom
         // counter on this enchantment.
         // Damage is snapshotted at trigger time (CountersOnSource → Fixed in the collector).
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(
-                        new DealDamageToAnyTargetEffect(new CountersOnSource(CounterType.DOOM)),
-                        new PutCountersOnSelfEffect(CounterType.DOOM)
-                ),
-                new StackEntryManaValueEqualsSourceCountersPredicate(CounterType.DOOM)
-        ));
+        addTrigger(Triggers.youCastSpell()
+                        .withStackEntryFilter(new StackEntryManaValueEqualsSourceCountersPredicate(CounterType.DOOM)),
+                new DealDamageToAnyTargetEffect(new CountersOnSource(CounterType.DOOM)),
+                new PutCountersOnSelfEffect(CounterType.DOOM));
     }
 }

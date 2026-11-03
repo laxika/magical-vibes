@@ -6,19 +6,15 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "EVE", collectorNumber = "11")
 public class LoyalGyrfalcon extends Card {
 
     public LoyalGyrfalcon() {
         // Whenever you cast a white spell, this creature loses defender until end of turn.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardColorPredicate(CardColor.WHITE),
-                List.of(new RemoveKeywordEffect(Keyword.DEFENDER, GrantScope.SELF))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.WHITE)),
+                new RemoveKeywordEffect(Keyword.DEFENDER, GrantScope.SELF));
     }
 }

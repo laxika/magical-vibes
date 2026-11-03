@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,9 +17,8 @@ public class ZukoAvatarHunter extends Card {
 
     public ZukoAvatarHunter() {
         // Whenever you cast a red spell, create a 2/2 red Soldier creature token.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardColorPredicate(CardColor.RED),
-                List.of(new CreateTokenEffect("Soldier", 2, 2, CardColor.RED,
-                        List.of(CardSubtype.SOLDIER), Set.of(), Set.of()))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.RED)),
+                new CreateTokenEffect("Soldier", 2, 2, CardColor.RED,
+                        List.of(CardSubtype.SOLDIER), Set.of(), Set.of()));
     }
 }

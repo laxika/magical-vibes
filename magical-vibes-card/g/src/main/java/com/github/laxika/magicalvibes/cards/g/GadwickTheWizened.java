@@ -5,15 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "48")
 @CardRegistration(set = "ELD", collectorNumber = "344")
@@ -22,11 +19,8 @@ public class GadwickTheWizened extends Card {
     public GadwickTheWizened() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(new XValue()));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardColorPredicate(CardColor.BLUE),
-                List.of(new TapPermanentsEffect(TapUntapScope.TARGET)),
-                null,
-                TargetFilters.nonlandPermanentAnOpponentControls()
-        ));
+        target(TargetFilters.nonlandPermanentAnOpponentControls()).addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardColorPredicate(CardColor.BLUE)),
+                new TapPermanentsEffect(TapUntapScope.TARGET));
     }
 }

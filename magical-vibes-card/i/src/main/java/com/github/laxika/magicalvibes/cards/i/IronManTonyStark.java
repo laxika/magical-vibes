@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -25,10 +24,9 @@ public class IronManTonyStark extends Card {
         addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES,
                         new PermanentIsAttackingPredicate()));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardColorPredicate(CardColor.RED),
-                List.of(new CreateTokenEffect("Robot", 2, 1, null,
+        addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.RED)),
+                new CreateTokenEffect("Robot", 2, 1, null,
                         List.of(CardSubtype.ROBOT, CardSubtype.HERO), Set.of(Keyword.FLYING),
-                        Set.of(CardType.ARTIFACT)))));
+                        Set.of(CardType.ARTIFACT)));
     }
 }

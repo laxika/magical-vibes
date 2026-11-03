@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,14 +20,12 @@ import java.util.List;
 public class ChulaneTellerOfTales extends Card {
 
     public ChulaneTellerOfTales() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardTypePredicate(CardType.CREATURE),
-                List.of(
-                        new DrawCardEffect(1),
-                        new MayEffect(
-                                new PutCardToBattlefieldEffect(
-                                        new CardTypePredicate(CardType.LAND), "land"),
-                                "Put a land card from your hand onto the battlefield?"))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
+                new DrawCardEffect(1),
+                new MayEffect(
+                        new PutCardToBattlefieldEffect(
+                                new CardTypePredicate(CardType.LAND), "land"),
+                        "Put a land card from your hand onto the battlefield?"));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

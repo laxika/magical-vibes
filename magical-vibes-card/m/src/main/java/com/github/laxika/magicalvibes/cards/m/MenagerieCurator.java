@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithLibraryCreaturePredicate;
@@ -31,7 +30,6 @@ public class MenagerieCurator extends Card {
                 new CardTypePredicate(CardType.CREATURE),
                 new CardNotPredicate(new CardSharesCreatureTypeWithLibraryCreaturePredicate())
         ));
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(qualifyingCreatureSpell, List.of(new DrawCardEffect())));
+        addTrigger(Triggers.youCastSpell().withFilter(qualifyingCreatureSpell), new DrawCardEffect());
     }
 }

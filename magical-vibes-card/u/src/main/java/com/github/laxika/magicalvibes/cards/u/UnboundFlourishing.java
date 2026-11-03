@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleXValueOfTriggeringSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasXInManaCostPredicate;
@@ -22,11 +21,11 @@ import java.util.List;
 public class UnboundFlourishing extends Card {
 
     public UnboundFlourishing() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAllOfPredicate(List.of(
-                        new CardIsPermanentPredicate(),
-                        new CardHasXInManaCostPredicate())),
-                List.of(new DoubleXValueOfTriggeringSpellEffect())));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAllOfPredicate(List.of(
+                                new CardIsPermanentPredicate(),
+                                new CardHasXInManaCostPredicate()))),
+                new DoubleXValueOfTriggeringSpellEffect());
 
         addTrigger(Triggers.youCastSpell(), new CopyControllerCastSpellOnSpellCastEffect(
                 new CardAllOfPredicate(List.of(

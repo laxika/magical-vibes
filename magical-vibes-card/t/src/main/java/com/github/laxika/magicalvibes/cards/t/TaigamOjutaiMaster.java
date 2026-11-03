@@ -9,11 +9,11 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ControllerSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordsToCastSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -39,15 +39,10 @@ public class TaigamOjutaiMaster extends Card {
 
         // Whenever you cast an instant or sorcery spell from your hand, if Taigam attacked this
         // turn, that spell gains rebound.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                instantOrSorcery,
-                List.of(new GrantKeywordsToCastSpellEffect(Set.of(Keyword.REBOUND))),
-                null,
-                null,
-                new StackEntryCastFromZonePredicate(Zone.HAND),
-                false,
-                false,
-                new SourceAttackedThisTurn(),
-                0));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(instantOrSorcery)
+                        .withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.HAND)),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceAttackedThisTurn()),
+                new GrantKeywordsToCastSpellEffect(Set.of(Keyword.REBOUND)));
     }
 }

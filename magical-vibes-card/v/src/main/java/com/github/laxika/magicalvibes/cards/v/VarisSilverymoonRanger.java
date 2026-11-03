@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.VentureIntoDungeonEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -24,13 +23,12 @@ public class VarisSilverymoonRanger extends Card {
     public VarisSilverymoonRanger() {
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(1));
 
-        addTrigger(Triggers.youCastSpell(),
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
-                new SpellCastTriggerEffect(
-                        new CardAnyOfPredicate(List.of(
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
-                                new CardTypePredicate(CardType.PLANESWALKER))),
-                        List.of(new VentureIntoDungeonEffect())));
+                                new CardTypePredicate(CardType.PLANESWALKER)))),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new VentureIntoDungeonEffect());
 
         addTrigger(Triggers.youCompleteDungeon(),
                 new CreateTokenEffect("Wolf", 2, 2, CardColor.GREEN,

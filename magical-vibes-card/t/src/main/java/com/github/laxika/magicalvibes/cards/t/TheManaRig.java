@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,9 +17,8 @@ import java.util.List;
 public class TheManaRig extends Card {
 
     public TheManaRig() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardIsMulticoloredPredicate(),
-                List.of(CreateTokenEffect.ofPowerstoneToken(new Fixed(1)))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardIsMulticoloredPredicate()),
+                CreateTokenEffect.ofPowerstoneToken(new Fixed(1)));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

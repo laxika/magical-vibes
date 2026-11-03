@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.amount.PermanentsEnteredBattlefieldT
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnteringCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -24,11 +23,10 @@ import java.util.Set;
 public class GeralfTheFleshwright extends Card {
 
     public GeralfTheFleshwright() {
-        addTrigger(Triggers.youCastSpell(),
-                SpellCastTriggerEffect.atLeastDuringYourTurn(2, null, List.of(
-                        new CreateTokenEffect("Zombie Rogue", 2, 2, CardColor.BLUE,
-                                Set.of(CardColor.BLUE, CardColor.BLACK),
-                                List.of(CardSubtype.ZOMBIE, CardSubtype.ROGUE)))));
+        addTrigger(Triggers.youCastSpell().duringYourTurn().nthOrLaterThisTurn(2),
+                new CreateTokenEffect("Zombie Rogue", 2, 2, CardColor.BLUE,
+                        Set.of(CardColor.BLUE, CardColor.BLACK),
+                        List.of(CardSubtype.ZOMBIE, CardSubtype.ROGUE)));
 
         var otherZombiesEnteredThisTurn = new Sum(
                 new PermanentsEnteredBattlefieldThisTurn(

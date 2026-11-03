@@ -6,19 +6,16 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "24")
 public class OpalCaryatid extends Card {
 
     public OpalCaryatid() {
-        addTrigger(Triggers.opponentCastsSpell(), SpellCastTriggerEffect.withIntervening(
-                new CardTypePredicate(CardType.CREATURE),
-                List.of(new BecomeCreatureEffect(2, 2, CardSubtype.SOLDIER)),
-                new SourceIsEnchantment()));
+        addTrigger(Triggers.opponentCastsSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsEnchantment()),
+                new BecomeCreatureEffect(2, 2, CardSubtype.SOLDIER));
     }
 }

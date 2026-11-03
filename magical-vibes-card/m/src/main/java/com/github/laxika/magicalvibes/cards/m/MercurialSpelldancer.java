@@ -12,12 +12,9 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "ONE", collectorNumber = "61")
 public class MercurialSpelldancer extends Card {
@@ -25,9 +22,8 @@ public class MercurialSpelldancer extends Card {
     public MercurialSpelldancer() {
         addStaticEffect(new CantBeBlockedEffect());
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(new PutCountersOnSelfEffect(CounterType.OIL))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                new PutCountersOnSelfEffect(CounterType.OIL));
 
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new MayEffect(
                 ConditionalEffect.unless(

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -37,22 +36,15 @@ public class TheFantasticar extends Card {
     public TheFantasticar() {
         // Whenever you cast a noncreature spell, you may have The Fantasticar become an artifact
         // creature until end of turn.
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(
-                        NONCREATURE_SPELL,
-                        List.of(new MayEffect(
-                                AnimatePermanentsEffect.crew(),
-                                "Have The Fantasticar become an artifact creature?"))));
+        addTrigger(Triggers.youCastSpell().withFilter(NONCREATURE_SPELL),
+                new MayEffect(AnimatePermanentsEffect.crew(), "Have The Fantasticar become an artifact creature?"));
 
         // Whenever you cast your fourth noncreature spell each turn, you may sacrifice The
         // Fantasticar. If you do, create four 4/4 colorless Construct artifact creature tokens
         // with flying and haste.
-        addTrigger(Triggers.youCastSpell(),
-                SpellCastTriggerEffect.nth(
-                        4,
-                        NONCREATURE_SPELL,
-                        List.of(new MayEffect(
-                                new SacrificeSelfThenEffect(CONSTRUCTS),
-                                "Sacrifice The Fantasticar and create four Constructs?"))));
+        addTrigger(Triggers.youCastSpell().withFilter(NONCREATURE_SPELL).nthThisTurn(4),
+                new MayEffect(
+                        new SacrificeSelfThenEffect(CONSTRUCTS),
+                        "Sacrifice The Fantasticar and create four Constructs?"));
     }
 }

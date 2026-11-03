@@ -10,11 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "JUD", collectorNumber = "138")
 @CardRegistration(set = "DMR", collectorNumber = "191")
@@ -24,13 +21,11 @@ public class HuntingGrounds extends Card {
         addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(7, null),
                 new GrantTriggeredAbilityEffect(
-                        new TriggeredAbility(Triggers.opponentCastsSpell(),
-                        new SpellCastTriggerEffect(
-                                null,
-                                List.of(new MayEffect(
+                        new TriggeredAbility(Triggers.opponentCastsSpell().anySpell(),
+                                new MayEffect(
                                         new PutCardToBattlefieldEffect(
                                                 new CardTypePredicate(CardType.CREATURE), "creature"),
-                                        "Put a creature card from your hand onto the battlefield?")))),
+                                        "Put a creature card from your hand onto the battlefield?")),
                         GrantScope.SELF)));
     }
 }

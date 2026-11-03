@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CounterTriggeringSpellAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,9 +21,9 @@ import java.util.Set;
 public class Dovescape extends Card {
 
     public Dovescape() {
-        addTrigger(Triggers.playerCastsSpell(), new SpellCastTriggerEffect(
-                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(new CounterTriggeringSpellAndCreateTokensEffect(
+        addTrigger(Triggers.playerCastsSpell()
+                        .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                new CounterTriggeringSpellAndCreateTokensEffect(
                         new CreateTokenEffect(
                                 CardType.CREATURE,
                                 new EventValue(),
@@ -44,7 +43,6 @@ public class Dovescape extends Card {
                                 false,
                                 false,
                                 0,
-                                Set.of()))
-        )));
+                                Set.of())));
     }
 }

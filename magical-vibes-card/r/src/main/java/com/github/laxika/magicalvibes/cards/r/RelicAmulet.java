@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -23,14 +22,13 @@ import java.util.List;
 public class RelicAmulet extends Card {
 
     public RelicAmulet() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY),
-                        new CardSubtypePredicate(CardSubtype.WIZARD)
-                )),
-                List.of(new PutCountersOnSelfEffect(CounterType.CHARGE))
-        ));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY),
+                                new CardSubtypePredicate(CardSubtype.WIZARD)
+                        ))),
+                new PutCountersOnSelfEffect(CounterType.CHARGE));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

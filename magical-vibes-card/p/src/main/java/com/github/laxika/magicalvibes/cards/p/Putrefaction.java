@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -16,11 +15,10 @@ import java.util.List;
 public class Putrefaction extends Card {
 
     public Putrefaction() {
-        addTrigger(Triggers.playerCastsSpell(),
-                new SpellCastTriggerEffect(
-                        new CardAnyOfPredicate(List.of(
+        addTrigger(Triggers.playerCastsSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardColorPredicate(CardColor.GREEN),
-                                new CardColorPredicate(CardColor.WHITE))),
-                        List.of(new DiscardEffect(1, DiscardRecipient.TRIGGERING_PLAYER, false))));
+                                new CardColorPredicate(CardColor.WHITE)))),
+                new DiscardEffect(1, DiscardRecipient.TRIGGERING_PLAYER, false));
     }
 }

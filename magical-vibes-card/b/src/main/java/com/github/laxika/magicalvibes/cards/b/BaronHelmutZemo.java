@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.CopyCardsExiledWithSourceAndCastUpToEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,10 +21,10 @@ import java.util.List;
 public class BaronHelmutZemo extends Card {
 
     public BaronHelmutZemo() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardColorPredicate(CardColor.BLACK),
-                List.of(new DrawDiscardAndConniveEffect()),
-                new StackEntryCastFromZonePredicate(Zone.HAND)));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardColorPredicate(CardColor.BLACK))
+                        .withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.HAND)),
+                new DrawDiscardAndConniveEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

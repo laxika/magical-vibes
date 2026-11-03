@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalCounterToTriggeringCreatureSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordsToCastSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -33,17 +32,12 @@ public class JadeOrbOfDragonkind extends Card {
                 "{T}: Add {G}. When you spend this mana to cast a Dragon creature spell, it enters with an additional +1/+1 counter on it and gains hexproof until your next turn."
         ));
 
-        addTrigger(Triggers.youCastSpell(),
-                SpellCastTriggerEffect.usingManaProducedBySource(
-                        new CardAllOfPredicate(List.of(
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
-                                new CardSubtypePredicate(CardSubtype.DRAGON))),
-                        List.of(
-                                new GrantAdditionalCounterToTriggeringCreatureSpellEffect(
-                                        CounterType.PLUS_ONE_PLUS_ONE, 1),
-                                new GrantKeywordsToCastSpellEffect(
-                                        Set.of(Keyword.HEXPROOF),
-                                        GrantDuration.UNTIL_YOUR_NEXT_TURN)
-                        )));
+                                new CardSubtypePredicate(CardSubtype.DRAGON))))
+                        .paidWithManaFromThis(),
+                new GrantAdditionalCounterToTriggeringCreatureSpellEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
+                new GrantKeywordsToCastSpellEffect(Set.of(Keyword.HEXPROOF), GrantDuration.UNTIL_YOUR_NEXT_TURN));
     }
 }

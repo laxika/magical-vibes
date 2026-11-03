@@ -6,14 +6,11 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "FIC", collectorNumber = "86")
 @CardRegistration(set = "FIC", collectorNumber = "176")
@@ -22,18 +19,15 @@ public class KrileBaldesion extends Card {
     public KrileBaldesion() {
         // Trace Aether — whenever you cast a noncreature spell, you may return a creature card
         // with mana value equal to that spell's mana value from your graveyard to your hand.
-        addTrigger(Triggers.youCastSpell(),
+        addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.DO_ONLY_ONCE_EACH_TURN),
-                new SpellCastTriggerEffect(
-                        new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                        List.of(new MayEffect(
-                                ReturnCardFromGraveyardEffect.builder()
-                                        .destination(GraveyardChoiceDestination.HAND)
-                                        .filter(new CardTypePredicate(CardType.CREATURE))
-                                        .targetGraveyard(true)
-                                        .requiresManaValueEqualsX(true)
-                                        .build(),
-                                "Return target creature card with mana value equal to that spell's mana value from your graveyard to your hand?"))
-                ));
+                new MayEffect(
+                        ReturnCardFromGraveyardEffect.builder()
+                                .destination(GraveyardChoiceDestination.HAND)
+                                .filter(new CardTypePredicate(CardType.CREATURE))
+                                .targetGraveyard(true)
+                                .requiresManaValueEqualsX(true)
+                                .build(),
+                        "Return target creature card with mana value equal to that spell's mana value from your graveyard to your hand?"));
     }
 }

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeAllCreaturesUnblockableEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
@@ -24,13 +23,13 @@ public class LeitmotifComposer extends Card {
     public LeitmotifComposer() {
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new DrawCardEffect());
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAllOfPredicate(List.of(
-                        new CardAnyOfPredicate(List.of(
-                                new CardTypePredicate(CardType.INSTANT),
-                                new CardTypePredicate(CardType.SORCERY))),
-                        new CardMinManaValuePredicate(5))),
-                List.of(new CreateTokenCopyOfSourceEffect())));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAllOfPredicate(List.of(
+                                new CardAnyOfPredicate(List.of(
+                                        new CardTypePredicate(CardType.INSTANT),
+                                        new CardTypePredicate(CardType.SORCERY))),
+                                new CardMinManaValuePredicate(5)))),
+                new CreateTokenCopyOfSourceEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

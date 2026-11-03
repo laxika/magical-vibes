@@ -5,13 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "NCC", collectorNumber = "74")
 @CardRegistration(set = "NCC", collectorNumber = "174")
@@ -20,14 +17,8 @@ import java.util.List;
 public class LifeInsurance extends Card {
 
     public LifeInsurance() {
-        addTrigger(Triggers.youCastSpell(), new MayEffect(
-                new SpellCastTriggerEffect(
-                        null,
-                        List.of(new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT, true)),
-                        "{W/B}"
-                ),
-                "Pay {W/B} to extort?"
-        ));
+        addTrigger(Triggers.youCastSpell().anySpell(),
+                new MayPayManaEffect("{W/B}", new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT, true), "Pay {W/B} to extort?"));
 
         addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANY),
                 SequenceEffect.of(

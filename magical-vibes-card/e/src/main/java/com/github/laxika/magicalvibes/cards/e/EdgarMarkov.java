@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.condition.SourceCardOnBattlefield;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -45,11 +44,10 @@ public class EdgarMarkov extends Card {
         ConditionalEffect eminenceGate = new ConditionalEffect(
                 new AnyOf(List.of(new SourceCardInCommandZone(), new SourceCardOnBattlefield())),
                 vampireToken);
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                vampireSpell, List.of(eminenceGate)));
-        addTrigger(new TriggerCondition(Triggers.youCastSpell(), AbilityZones.COMMAND),
-                TriggerOptions.DEFAULT, new SpellCastTriggerEffect(
-                vampireSpell, List.of(new ConditionalEffect(new SourceCardInCommandZone(), vampireToken))));
+        addTrigger(Triggers.youCastSpell().withFilter(vampireSpell), eminenceGate);
+        addTrigger(new TriggerCondition(Triggers.youCastSpell().withFilter(vampireSpell), AbilityZones.COMMAND),
+                TriggerOptions.DEFAULT,
+                new ConditionalEffect(new SourceCardInCommandZone(), vampireToken));
 
         // Whenever Edgar Markov attacks, put a +1/+1 counter on each Vampire you control.
         addTrigger(Triggers.attacks(), new PutCounterOnEachControlledPermanentEffect(

@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -21,10 +21,9 @@ import java.util.List;
 public class RunawaySteamKin extends Card {
 
     public RunawaySteamKin() {
-        addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.withIntervening(
-                new CardColorPredicate(CardColor.RED),
-                List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
-                new NotCondition(new SourceCounterThreshold(3, CounterType.PLUS_ONE_PLUS_ONE))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.RED)),
+                TriggerOptions.DEFAULT.withInterveningIf(new NotCondition(new SourceCounterThreshold(3, CounterType.PLUS_ONE_PLUS_ONE))),
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

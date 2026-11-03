@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -31,11 +30,8 @@ public class KefnetsMonument extends Card {
 
         // Whenever you cast a creature spell, target creature an opponent controls doesn't untap
         // during its controller's next untap step.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardTypePredicate(CardType.CREATURE),
-                List.of(new SkipNextUntapEffect(TapUntapScope.TARGET)),
-                null,
-                TargetFilters.creatureAnOpponentControls()
-        ));
+        target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardTypePredicate(CardType.CREATURE)),
+                new SkipNextUntapEffect(TapUntapScope.TARGET));
     }
 }

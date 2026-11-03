@@ -8,13 +8,10 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "TLA", collectorNumber = "221")
 public class FireLordZuko extends Card {
@@ -26,9 +23,8 @@ public class FireLordZuko extends Card {
         PutCounterOnEachControlledPermanentEffect counterEffect =
                 new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate());
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(null, List.of(counterEffect),
-                        new StackEntryCastFromZonePredicate(Zone.EXILE)));
+        addTrigger(Triggers.youCastSpell().withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.EXILE)),
+                counterEffect);
         addTrigger(Triggers.entersFrom(Zone.EXILE, null, ObjectRelation.YOU_CONTROL), counterEffect);
     }
 }

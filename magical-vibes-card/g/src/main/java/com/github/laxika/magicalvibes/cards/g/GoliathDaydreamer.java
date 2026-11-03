@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringSpellWithDreamCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardsWithDreamCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
@@ -18,12 +17,12 @@ import java.util.List;
 public class GoliathDaydreamer extends Card {
 
     public GoliathDaydreamer() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY))),
-                List.of(new ExileTriggeringSpellWithDreamCounterEffect()),
-                new StackEntryCastFromZonePredicate(Zone.HAND)));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY))))
+                        .withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.HAND)),
+                new ExileTriggeringSpellWithDreamCounterEffect());
         addTrigger(Triggers.attacks(), new MayCastExiledCardsWithDreamCounterEffect());
     }
 }

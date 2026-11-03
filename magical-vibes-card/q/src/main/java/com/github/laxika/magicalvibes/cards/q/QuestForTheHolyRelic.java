@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForEquipmentToBattlefieldAndAttachEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,11 +19,9 @@ import java.util.List;
 public class QuestForTheHolyRelic extends Card {
 
     public QuestForTheHolyRelic() {
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(
-                        new CardTypePredicate(CardType.CREATURE),
-                        List.of(new MayEffect(new PutCountersOnSelfEffect(CounterType.QUEST),
-                                "Put a quest counter on Quest for the Holy Relic?"))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
+                new MayEffect(new PutCountersOnSelfEffect(CounterType.QUEST),
+                        "Put a quest counter on Quest for the Holy Relic?"));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

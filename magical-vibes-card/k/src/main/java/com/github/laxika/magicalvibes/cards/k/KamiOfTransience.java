@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.condition.EnchantmentPutIntoGraveyar
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -17,15 +16,12 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
-
 @CardRegistration(set = "NEO", collectorNumber = "197")
 public class KamiOfTransience extends Card {
 
     public KamiOfTransience() {
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(new CardTypePredicate(CardType.ENCHANTMENT),
-                        List.of(new PutCountersOnSourceEffect(1, 1, 1))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.ENCHANTMENT)),
+                new PutCountersOnSourceEffect(1, 1, 1));
 
         addTrigger(new TriggerCondition(Triggers.endStep(ActivePlayer.ANY), AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT.withInterveningIf(new EnchantmentPutIntoGraveyardFromBattlefieldThisTurn()),

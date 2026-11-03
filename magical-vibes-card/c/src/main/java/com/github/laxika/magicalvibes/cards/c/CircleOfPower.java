@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -32,9 +31,9 @@ public class CircleOfPower extends Card {
     public CircleOfPower() {
         PermanentHasSubtypePredicate wizard = new PermanentHasSubtypePredicate(CardSubtype.WIZARD);
         List<Ability> tokenEffects = List.of(
-                new TriggeredAbility(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                        new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                        List.of(new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT)))));
+                new TriggeredAbility(Triggers.youCastSpell()
+                                .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                        new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT)));
         CreateTokenEffect wizardToken = new CreateTokenEffect(
                 1, "Wizard", 0, 1, CardColor.BLACK, List.of(CardSubtype.WIZARD),
                 Set.of(), Set.of(), tokenEffects);

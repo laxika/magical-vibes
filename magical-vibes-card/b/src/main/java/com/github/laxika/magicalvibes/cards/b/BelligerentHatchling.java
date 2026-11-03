@@ -7,11 +7,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "EVE", collectorNumber = "134")
 public class BelligerentHatchling extends Card {
@@ -21,13 +18,11 @@ public class BelligerentHatchling extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, new Fixed(4)));
 
         // Whenever you cast a red spell, remove a -1/-1 counter from this creature.
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(new CardColorPredicate(CardColor.RED),
-                        List.of(new RemoveCounterFromSourceEffect(CounterType.MINUS_ONE_MINUS_ONE, 1))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.RED)),
+                new RemoveCounterFromSourceEffect(CounterType.MINUS_ONE_MINUS_ONE, 1));
 
         // Whenever you cast a white spell, remove a -1/-1 counter from this creature.
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(new CardColorPredicate(CardColor.WHITE),
-                        List.of(new RemoveCounterFromSourceEffect(CounterType.MINUS_ONE_MINUS_ONE, 1))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.WHITE)),
+                new RemoveCounterFromSourceEffect(CounterType.MINUS_ONE_MINUS_ONE, 1));
     }
 }

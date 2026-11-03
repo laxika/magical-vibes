@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -20,12 +19,10 @@ public class HaruOnna extends Card {
     public HaruOnna() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1));
 
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(
-                        new CardAnyOfPredicate(List.of(
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardSubtypePredicate(CardSubtype.SPIRIT),
-                                new CardSubtypePredicate(CardSubtype.ARCANE))),
-                        List.of(new MayEffect(ReturnToHandEffect.self(),
-                                "Return Haru-Onna to its owner's hand?"))));
+                                new CardSubtypePredicate(CardSubtype.ARCANE)))),
+                new MayEffect(ReturnToHandEffect.self(), "Return Haru-Onna to its owner's hand?"));
     }
 }

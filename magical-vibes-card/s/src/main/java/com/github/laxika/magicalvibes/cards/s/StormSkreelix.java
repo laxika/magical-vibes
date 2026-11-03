@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,7 +23,6 @@ public class StormSkreelix extends Card {
     public StormSkreelix() {
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 INSTANT_OR_SORCERY, 1, CostModificationScope.SELF));
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(INSTANT_OR_SORCERY, List.of(new BoostSelfEffect(2, 0))));
+        addTrigger(Triggers.youCastSpell().withFilter(INSTANT_OR_SORCERY), new BoostSelfEffect(2, 0));
     }
 }

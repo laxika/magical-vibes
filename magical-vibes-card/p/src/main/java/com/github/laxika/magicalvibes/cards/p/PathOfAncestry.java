@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import java.util.List;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -57,11 +56,11 @@ public class PathOfAncestry extends Card {
                         .withProducingSourceForSpellCastTriggers()),
                 "{T}: Add one mana of any color in your commander's color identity. When that mana is spent to cast a creature spell that shares a creature type with your commander, scry 1."
         ));
-        addTrigger(Triggers.youCastSpell(),
-                SpellCastTriggerEffect.usingManaProducedBySource(
-                        new CardAllOfPredicate(List.of(
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
-                                new CardSharesCreatureTypeWithCommanderPredicate())),
-                        List.of(new ScryEffect(1))));
+                                new CardSharesCreatureTypeWithCommanderPredicate())))
+                        .paidWithManaFromThis(),
+                new ScryEffect(1));
     }
 }

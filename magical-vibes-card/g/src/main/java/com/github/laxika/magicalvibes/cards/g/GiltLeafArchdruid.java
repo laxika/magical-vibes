@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsTargetPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -21,10 +20,8 @@ public class GiltLeafArchdruid extends Card {
 
     public GiltLeafArchdruid() {
         // Whenever you cast a Druid spell, you may draw a card.
-        addTrigger(Triggers.youCastSpell(), new MayEffect(
-                new SpellCastTriggerEffect(new CardSubtypePredicate(CardSubtype.DRUID),
-                        List.of(new DrawCardEffect(1))),
-                "Draw a card?"));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardSubtypePredicate(CardSubtype.DRUID)),
+                new MayEffect(new DrawCardEffect(1), "Draw a card?"));
 
         // Tap seven untapped Druids you control: Gain control of all lands target player controls.
         addActivatedAbility(new ActivatedAbility(

@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityToCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -30,14 +29,12 @@ public class WaystonesGuidance extends Card {
                         new PermanentIsTokenPredicate(),
                         new PermanentIsAttackingPredicate()))));
 
-        addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.nth(
-                1,
-                new CardTypePredicate(CardType.CREATURE),
-                List.of(new GrantTriggeredAbilityToCastSpellEffect(
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)).nthThisTurn(1),
+                new GrantTriggeredAbilityToCastSpellEffect(
                         new TriggeredAbility(Triggers.attacks(),
                         SequenceEffect.of(
                                 new CreateTokenEffect(1, "Warrior", 1, 1, CardColor.RED,
                                         List.of(CardSubtype.WARRIOR), true),
-                                new SacrificeCreatedPermanentsAtEndStepEffect()))))));
+                                new SacrificeCreatedPermanentsAtEndStepEffect()))));
     }
 }

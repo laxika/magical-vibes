@@ -6,11 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "180")
 @CardRegistration(set = "C18", collectorNumber = "151")
@@ -21,8 +18,7 @@ public class HeraldOfThePantheon extends Card {
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardTypePredicate(CardType.ENCHANTMENT), 1, CostModificationScope.SELF));
         // Whenever you cast an enchantment spell, you gain 1 life
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardTypePredicate(CardType.ENCHANTMENT),
-                List.of(new GainLifeEffect(1))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.ENCHANTMENT)),
+                new GainLifeEffect(1));
     }
 }

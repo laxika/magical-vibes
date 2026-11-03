@@ -5,11 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1004")
 @CardRegistration(set = "LEB", collectorNumber = "223")
@@ -27,8 +24,7 @@ public class VerduranEnchantress extends Card {
 
     public VerduranEnchantress() {
         // Whenever you cast an enchantment spell, you may draw a card.
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(new CardTypePredicate(CardType.ENCHANTMENT),
-                        List.of(new MayEffect(new DrawCardEffect(), "Draw a card?"))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.ENCHANTMENT)),
+                new MayEffect(new DrawCardEffect(), "Draw a card?"));
     }
 }

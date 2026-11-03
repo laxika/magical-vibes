@@ -5,14 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentMayPlayWithOpponentTaxEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "NCC", collectorNumber = "11")
 @CardRegistration(set = "NCC", collectorNumber = "112")
@@ -26,10 +23,8 @@ public class AerialExtortionist extends Card {
                 .addTrigger(Triggers.dealsCombatDamageToPlayer(),
                         new ExileTargetPermanentMayPlayWithOpponentTaxEffect(0));
 
-        addTrigger(Triggers.opponentCastsSpell(),
-                new SpellCastTriggerEffect(
-                        null,
-                        List.of(new DrawCardEffect()),
-                        new StackEntryNotPredicate(new StackEntryCastFromZonePredicate(Zone.HAND))));
+        addTrigger(Triggers.opponentCastsSpell()
+                        .withStackEntryFilter(new StackEntryNotPredicate(new StackEntryCastFromZonePredicate(Zone.HAND))),
+                new DrawCardEffect());
     }
 }

@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.condition.CreatureSubtypeDiedUnderYo
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -32,18 +31,16 @@ public class BrimazBlightOfOreskos extends Card {
     public BrimazBlightOfOreskos() {
         // Whenever you cast a Phyrexian creature or artifact creature spell, incubate X,
         // where X is that spell's mana value.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardAllOfPredicate(List.of(
-                                new CardTypePredicate(CardType.CREATURE),
-                                new CardSubtypePredicate(CardSubtype.PHYREXIAN))),
-                        new CardAllOfPredicate(List.of(
-                                new CardTypePredicate(CardType.ARTIFACT),
-                                new CardTypePredicate(CardType.CREATURE)))
-                )),
-                List.of(new CreateXTokenWithXCountersEffect(
-                        incubatorToken(), new EventValue(), CounterType.PLUS_ONE_PLUS_ONE))
-        ));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardAllOfPredicate(List.of(
+                                        new CardTypePredicate(CardType.CREATURE),
+                                        new CardSubtypePredicate(CardSubtype.PHYREXIAN))),
+                                new CardAllOfPredicate(List.of(
+                                        new CardTypePredicate(CardType.ARTIFACT),
+                                        new CardTypePredicate(CardType.CREATURE)))
+                        ))),
+                new CreateXTokenWithXCountersEffect(incubatorToken(), new EventValue(), CounterType.PLUS_ONE_PLUS_ONE));
 
         // At the beginning of each end step, if a Phyrexian died under your control this turn,
         // proliferate.

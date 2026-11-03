@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,12 +23,10 @@ public class TorensFistOfTheAngels extends Card {
 
         // Whenever you cast a creature spell, create a 1/1 green and white Human Soldier
         // creature token with training.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardTypePredicate(CardType.CREATURE),
-                List.of(new CreateTokenEffect(1, "Human Soldier", 1, 1, CardColor.GREEN,
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
+                new CreateTokenEffect(1, "Human Soldier", 1, 1, CardColor.GREEN,
                         Set.of(CardColor.GREEN, CardColor.WHITE),
                         List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER),
-                        Set.of(Keyword.TRAINING), Set.of()))
-        ));
+                        Set.of(Keyword.TRAINING), Set.of()));
     }
 }

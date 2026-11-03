@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,12 +20,11 @@ public class OyobiWhoSplitTheHeavens extends Card {
     public OyobiWhoSplitTheHeavens() {
         // Whenever you cast a Spirit or Arcane spell, create a 3/3 white Spirit creature token
         // with flying.
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(
-                        new CardAnyOfPredicate(List.of(
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardSubtypePredicate(CardSubtype.SPIRIT),
-                                new CardSubtypePredicate(CardSubtype.ARCANE))),
-                        List.of(new CreateTokenEffect(1, "Spirit", 3, 3, CardColor.WHITE,
-                                List.of(CardSubtype.SPIRIT), Set.of(Keyword.FLYING), Set.of()))));
+                                new CardSubtypePredicate(CardSubtype.ARCANE)))),
+                new CreateTokenEffect(1, "Spirit", 3, 3, CardColor.WHITE,
+                        List.of(CardSubtype.SPIRIT), Set.of(Keyword.FLYING), Set.of()));
     }
 }

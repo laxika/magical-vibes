@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,13 +18,7 @@ public class WorthyKnight extends Card {
 
     public WorthyKnight() {
         // Whenever you cast a Knight spell, create a 1/1 white Human creature token.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardSubtypePredicate(CardSubtype.KNIGHT),
-                List.of(new CreateTokenEffect("Human", 1, 1,
-                        CardColor.WHITE,
-                        List.of(CardSubtype.HUMAN),
-                        Set.of(),
-                        Set.of()))
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardSubtypePredicate(CardSubtype.KNIGHT)),
+                new CreateTokenEffect("Human", 1, 1, CardColor.WHITE, List.of(CardSubtype.HUMAN), Set.of(), Set.of()));
     }
 }

@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -33,12 +32,9 @@ public class SpiderManIndia extends Card {
                 new ManaCastingCost("{1}{G}{W}"),
                 new ReturnPermanentsCost(1, tappedCreature))));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardTypePredicate(CardType.CREATURE),
-                List.of(
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET)),
-                null,
-                TargetFilters.creatureYouControl()));
+        target(TargetFilters.creatureYouControl()).addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardTypePredicate(CardType.CREATURE)),
+                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
     }
 }

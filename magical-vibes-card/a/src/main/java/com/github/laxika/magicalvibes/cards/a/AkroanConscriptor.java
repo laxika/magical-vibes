@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -32,16 +31,10 @@ public class AkroanConscriptor extends Card {
                 "Target must be another creature"
         );
 
-        target(anotherCreature).addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(
-                        null,
-                        List.of(
-                                new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
-                                new UntapPermanentsEffect(TapUntapScope.TARGET),
-                                new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)
-                        ),
-                        anotherCreature,
-                        new StackEntryTargetsSourcePredicate()
-                ));
+        target(anotherCreature).addTrigger(Triggers.youCastSpell()
+                        .withStackEntryFilter(new StackEntryTargetsSourcePredicate()),
+                new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                new UntapPermanentsEffect(TapUntapScope.TARGET),
+                new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
     }
 }

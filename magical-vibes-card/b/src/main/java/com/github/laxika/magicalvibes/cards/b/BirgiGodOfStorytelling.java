@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AllowExtraBoastActivationEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardPersistentManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -21,10 +20,7 @@ public class BirgiGodOfStorytelling extends Card {
         setBackFaceCard(new HarnfelHornOfBounty());
         setModalDoubleFaced(true);
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new AwardPersistentManaEffect(ManaColor.RED, new Fixed(1)))
-        ));
+        addTrigger(Triggers.youCastSpell().anySpell(), new AwardPersistentManaEffect(ManaColor.RED, new Fixed(1)));
         addStaticEffect(new AllowExtraBoastActivationEffect());
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Birgi, God of Storytelling", List.of())

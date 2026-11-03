@@ -7,11 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "40")
 @CardRegistration(set = "DDU", collectorNumber = "39")
@@ -20,10 +18,7 @@ import java.util.List;
 public class Riddlesmith extends Card {
 
     public Riddlesmith() {
-        addTrigger(Triggers.youCastSpell(), new MayEffect(
-                new SpellCastTriggerEffect(new CardTypePredicate(CardType.ARTIFACT),
-                        List.of(new DrawCardEffect(), new DiscardEffect(1, DiscardRecipient.CONTROLLER))),
-                "Draw a card and discard a card?"
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.ARTIFACT)),
+                new MayEffect(SequenceEffect.of(new DrawCardEffect(), new DiscardEffect(1, DiscardRecipient.CONTROLLER)), "Draw a card and discard a card?"));
     }
 }

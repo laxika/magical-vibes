@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -29,19 +28,18 @@ public class DocentOfPerfection extends Card {
 
         // Whenever you cast an instant or sorcery spell, create a 1/1 blue Human Wizard
         // creature token. Then if you control three or more Wizards, transform this creature.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY)
-                )),
-                List.of(
-                        new CreateTokenEffect("Human Wizard", 1, 1,
-                                CardColor.BLUE,
-                                List.of(CardSubtype.HUMAN, CardSubtype.WIZARD),
-                                Set.of(), Set.of()),
-                        new ConditionalEffect(
-                                new ControlsPermanentCount(3, new PermanentHasSubtypePredicate(CardSubtype.WIZARD)),
-                                new TransformSelfEffect()))));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY)
+                        ))),
+                new CreateTokenEffect("Human Wizard", 1, 1,
+                        CardColor.BLUE,
+                        List.of(CardSubtype.HUMAN, CardSubtype.WIZARD),
+                        Set.of(), Set.of()),
+                new ConditionalEffect(
+                        new ControlsPermanentCount(3, new PermanentHasSubtypePredicate(CardSubtype.WIZARD)),
+                        new TransformSelfEffect()));
     }
 
     @Override

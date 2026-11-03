@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellOrPermanentToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -44,9 +43,9 @@ public class JeskaiRevelation extends Card {
                 "Target must be any target")).addSpellEffect(new DealDamageToAnyTargetEffect(4));
 
         List<Ability> monkTokenEffects = List.of(
-                new TriggeredAbility(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                        new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                        List.of(new BoostSelfEffect(1, 1)))));
+                new TriggeredAbility(Triggers.youCastSpell()
+                                .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                        new BoostSelfEffect(1, 1)));
         addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, 2, "Monk", 1, 1,
                 CardColor.WHITE, null, List.of(CardSubtype.MONK),

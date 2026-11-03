@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -28,10 +27,7 @@ public class MatterbendingMage extends Card {
         target(new PermanentPredicateTargetFilter(anotherCreature, "Target must be another creature"), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), ReturnToHandEffect.target());
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new MakeCreatureUnblockableEffect(true)),
-                new StackEntryHasXInManaCostPredicate()
-        ));
+        addTrigger(Triggers.youCastSpell().withStackEntryFilter(new StackEntryHasXInManaCostPredicate()),
+                new MakeCreatureUnblockableEffect(true));
     }
 }

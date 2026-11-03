@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -25,18 +24,16 @@ import java.util.Set;
 public class NoyanDarRoilShaper extends Card {
 
     public NoyanDarRoilShaper() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY))),
-                List.of(new MayEffect(
+        target(TargetFilters.landYouControl()).addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY)))),
+                new MayEffect(
                         SequenceEffect.of(
                                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3),
                                 new AnimatePermanentsEffect(
                                         0, 0, List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.HASTE), null,
                                         Set.of(CardType.CREATURE), GrantScope.TARGET, EffectDuration.PERMANENT)),
-                        "Put three +1/+1 counters on target land you control?")),
-                null,
-                TargetFilters.landYouControl()));
+                        "Put three +1/+1 counters on target land you control?"));
     }
 }

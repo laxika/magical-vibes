@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -33,16 +32,7 @@ public class WayspeakerBodyguard extends Card {
                 .targetGraveyard(true)
                 .build());
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new TapPermanentsEffect(TapUntapScope.TARGET)),
-                null,
-                TargetFilters.creatureAnOpponentControls(),
-                null,
-                false,
-                false,
-                null,
-                2
-        ));
+        target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.youCastSpell().nthThisTurn(2),
+                new TapPermanentsEffect(TapUntapScope.TARGET));
     }
 }

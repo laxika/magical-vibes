@@ -4,10 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardAndCounterTriggeringSpellIfManaValueMatchesEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "CSP", collectorNumber = "31")
 @CardRegistration(set = "MP2", collectorNumber = "9")
@@ -17,8 +14,8 @@ import java.util.List;
 public class Counterbalance extends Card {
 
     public Counterbalance() {
-        addTrigger(Triggers.opponentCastsSpell(), new SpellCastTriggerEffect(null, List.of(
+        addTrigger(Triggers.opponentCastsSpell().anySpell(),
                 new MayEffect(new RevealTopCardAndCounterTriggeringSpellIfManaValueMatchesEffect(),
-                        "Reveal the top card of your library?"))));
+                        "Reveal the top card of your library?"));
     }
 }

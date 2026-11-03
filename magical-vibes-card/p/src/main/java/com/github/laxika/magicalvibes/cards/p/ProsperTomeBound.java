@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LandPlayFromExileTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,9 +23,8 @@ public class ProsperTomeBound extends Card {
                 new ExileTopCardsMayPlayUntilNextTurnEffect(1));
 
         List<CardEffect> treasure = List.of(CreateTokenEffect.ofTreasureToken(1));
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(null, treasure,
-                        new StackEntryCastFromZonePredicate(Zone.EXILE)));
+        addTrigger(Triggers.youCastSpell().withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.EXILE)),
+                treasure.toArray(CardEffect[]::new));
         addTrigger(Triggers.youPlayLand(),
                 new LandPlayFromExileTriggerEffect(treasure));
     }

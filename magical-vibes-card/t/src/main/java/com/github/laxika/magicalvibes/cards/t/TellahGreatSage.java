@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -27,15 +26,11 @@ import java.util.Set;
 public class TellahGreatSage extends Card {
 
     public TellahGreatSage() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(
-                        new CreateTokenEffect("Hero", 1, 1, null, List.of(CardSubtype.HERO), Set.of(), Set.of()),
-                        new ConditionalEffect(new SpellManaSpentAtLeast(4), new DrawCardEffect(2)),
-                        new ConditionalEffect(new SpellManaSpentAtLeast(8), SequenceEffect.of(
-                                new SacrificeSelfEffect(),
-                                new DealDamageToPlayersEffect(new ManaSpentToCast(), DamageRecipient.EACH_OPPONENT)))
-                )
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                new CreateTokenEffect("Hero", 1, 1, null, List.of(CardSubtype.HERO), Set.of(), Set.of()),
+                new ConditionalEffect(new SpellManaSpentAtLeast(4), new DrawCardEffect(2)),
+                new ConditionalEffect(new SpellManaSpentAtLeast(8), SequenceEffect.of(
+                        new SacrificeSelfEffect(),
+                        new DealDamageToPlayersEffect(new ManaSpentToCast(), DamageRecipient.EACH_OPPONENT))));
     }
 }

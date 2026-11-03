@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -31,15 +30,12 @@ public class DelugeVirtuoso extends Card {
 
         // Opus — Whenever you cast an instant or sorcery spell, this creature gets +1/+1 until end of turn.
         // If five or more mana was spent to cast that spell, this creature gets +2/+2 until end of turn instead.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY)
-                )),
-                List.of(
-                        new BoostSelfEffect(1, 1),
-                        new ConditionalEffect(new SpellManaSpentAtLeast(5), new BoostSelfEffect(1, 1))
-                )
-        ));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY)
+                        ))),
+                new BoostSelfEffect(1, 1),
+                new ConditionalEffect(new SpellManaSpentAtLeast(5), new BoostSelfEffect(1, 1)));
     }
 }

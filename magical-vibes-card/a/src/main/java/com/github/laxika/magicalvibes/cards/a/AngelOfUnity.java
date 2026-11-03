@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandAndApplyPerpetualPowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -28,7 +27,6 @@ public class AngelOfUnity extends Card {
                 new CardAllOfPredicate(List.of(new CardTypePredicate(CardType.CREATURE), partyCard)), 1, 1);
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), boost);
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(partyCard, List.of(boost)));
+        addTrigger(Triggers.youCastSpell().withFilter(partyCard), boost);
     }
 }

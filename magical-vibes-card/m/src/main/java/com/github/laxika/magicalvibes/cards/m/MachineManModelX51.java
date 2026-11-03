@@ -8,12 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "MSC", collectorNumber = "751")
 public class MachineManModelX51 extends Card {
@@ -21,11 +18,9 @@ public class MachineManModelX51 extends Card {
     public MachineManModelX51() {
         // Whenever you cast a noncreature spell, put a +1/+1 counter on Machine Man,
         // Model X-51 and he gains flying until end of turn.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(SequenceEffect.of(
+        addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                SequenceEffect.of(
                         new PutCountersOnSourceEffect(1, 1, 1),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)))
-        ));
+                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
     }
 }

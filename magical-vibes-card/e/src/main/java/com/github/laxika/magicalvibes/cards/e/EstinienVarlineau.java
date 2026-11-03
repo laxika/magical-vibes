@@ -14,13 +14,10 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "FIC", collectorNumber = "82")
 @CardRegistration(set = "FIC", collectorNumber = "171")
@@ -28,11 +25,9 @@ import java.util.List;
 public class EstinienVarlineau extends Card {
 
     public EstinienVarlineau() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF))
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF));
 
         var qualifyingCombatDamage = new OpponentsDealtCombatDamageBySourceNameOrSubtypeThisTurn(
                 "Estinien Varlineau", CardSubtype.DRAGON);

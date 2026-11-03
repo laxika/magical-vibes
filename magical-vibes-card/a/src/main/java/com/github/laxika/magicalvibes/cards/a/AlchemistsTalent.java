@@ -19,9 +19,9 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -68,10 +68,8 @@ public class AlchemistsTalent extends Card {
                         new NotCondition(new SourceCounterThreshold(2, CounterType.LEVEL)))),
                 "this Class is level 2"));
 
-        addTrigger(Triggers.youCastSpell(),
-                SpellCastTriggerEffect.usingTreasureMana(List.of(
-                        new DealDamageToPlayersEffect(
-                                new TargetSpellManaValue(), DamageRecipient.EACH_OPPONENT)),
-                        new SourceCounterThreshold(2, CounterType.LEVEL)));
+        addTrigger(Triggers.youCastSpell().paidWithTreasureMana(),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(2, CounterType.LEVEL)),
+                new DealDamageToPlayersEffect(new TargetSpellManaValue(), DamageRecipient.EACH_OPPONENT));
     }
 }

@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromRingBearersEffect;
 import com.github.laxika.magicalvibes.model.effect.SetAllOwnCreaturesBasePowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -37,15 +36,14 @@ public class LordOfTheNazgL extends Card {
         // Whenever you cast an instant or sorcery spell, create a 3/3 black Wraith creature token
         // with menace. Then if you control nine or more Wraiths, set their base P/T to 9/9 until
         // end of turn.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY))),
-                List.of(
-                        new CreateTokenEffect("Wraith", 3, 3, CardColor.BLACK,
-                                List.of(CardSubtype.WRAITH), Set.of(Keyword.MENACE), Set.of()),
-                        new ConditionalEffect(
-                                new ControlsPermanentCount(9, wraiths),
-                                new SetAllOwnCreaturesBasePowerToughnessEffect(9, 9, wraiths)))));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY)))),
+                new CreateTokenEffect("Wraith", 3, 3, CardColor.BLACK,
+                        List.of(CardSubtype.WRAITH), Set.of(Keyword.MENACE), Set.of()),
+                new ConditionalEffect(
+                        new ControlsPermanentCount(9, wraiths),
+                        new SetAllOwnCreaturesBasePowerToughnessEffect(9, 9, wraiths)));
     }
 }

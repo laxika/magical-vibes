@@ -11,9 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.condition.SpellCreatureManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -31,10 +31,8 @@ public class IngaAndEsika extends Card {
                                 List.of(new AwardAnyColorManaEffect(1, ManaSpendRestriction.CREATURE_SPELL_ONLY)),
                                 "{T}: Add one mana of any color. Spend this mana only to cast a creature spell."),
                         GrantScope.ALL_OWN_CREATURES));
-        addTrigger(Triggers.youCastSpell(),
-                SpellCastTriggerEffect.withIntervening(
-                        new CardTypePredicate(CardType.CREATURE),
-                        List.of(new DrawCardEffect()),
-                        new SpellCreatureManaSpentAtLeast(3)));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
+                TriggerOptions.DEFAULT.withInterveningIf(new SpellCreatureManaSpentAtLeast(3)),
+                new DrawCardEffect());
     }
 }

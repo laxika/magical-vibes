@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -18,15 +17,10 @@ public class TellerOfTales extends Card {
 
     public TellerOfTales() {
         // Whenever you cast a Spirit or Arcane spell, you may tap or untap target creature.
-        target(TargetFilters.creature());
-        addTrigger(Triggers.youCastSpell(), new MayEffect(
-                new SpellCastTriggerEffect(
-                        new CardAnyOfPredicate(List.of(
+        target(TargetFilters.creature()).addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardSubtypePredicate(CardSubtype.SPIRIT),
-                                new CardSubtypePredicate(CardSubtype.ARCANE))),
-                        List.of(new TapOrUntapTargetPermanentEffect()),
-                        null,
-                        TargetFilters.creature()),
-                "Tap or untap target creature?"));
+                                new CardSubtypePredicate(CardSubtype.ARCANE)))),
+                new MayEffect(new TapOrUntapTargetPermanentEffect(), "Tap or untap target creature?"));
     }
 }

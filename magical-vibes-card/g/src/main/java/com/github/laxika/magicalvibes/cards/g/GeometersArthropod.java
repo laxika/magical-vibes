@@ -5,12 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "SOS", collectorNumber = "191")
 public class GeometersArthropod extends Card {
@@ -19,16 +16,13 @@ public class GeometersArthropod extends Card {
         // Whenever you cast a spell with {X} in its mana cost, look at the top X cards of your
         // library. Put one of them into your hand and the rest on the bottom of your library in a
         // random order.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new LookAtTopCardsEffect(
+        addTrigger(Triggers.youCastSpell().withStackEntryFilter(new StackEntryHasXInManaCostPredicate()),
+                new LookAtTopCardsEffect(
                         new XValue(),
                         new Fixed(1),
                         null,
                         LookDestination.BOTTOM_OF_LIBRARY_RANDOM,
                         false
-                )),
-                new StackEntryHasXInManaCostPredicate()
-        ));
+                ));
     }
 }

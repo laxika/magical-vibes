@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalPlusOnePlusOneCountersToTriggeringCreatureSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -26,13 +25,13 @@ public class TorgalAFineHound extends Card {
     public TorgalAFineHound() {
         PermanentHasAnySubtypePredicate dogsAndWolves = new PermanentHasAnySubtypePredicate(
                 Set.of(CardSubtype.DOG, CardSubtype.WOLF));
-        addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.nth(
-                1,
-                new CardAllOfPredicate(List.of(
-                        new CardTypePredicate(CardType.CREATURE),
-                        new CardSubtypePredicate(CardSubtype.HUMAN))),
-                List.of(new GrantAdditionalPlusOnePlusOneCountersToTriggeringCreatureSpellEffect(
-                        new PermanentCount(dogsAndWolves, CountScope.CONTROLLER), true))));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAllOfPredicate(List.of(
+                                new CardTypePredicate(CardType.CREATURE),
+                                new CardSubtypePredicate(CardSubtype.HUMAN))))
+                        .nthThisTurn(1),
+                new GrantAdditionalPlusOnePlusOneCountersToTriggeringCreatureSpellEffect(
+                        new PermanentCount(dogsAndWolves, CountScope.CONTROLLER), true));
 
         addActivatedAbility(ManaAbilities.tapForAnyColor());
     }

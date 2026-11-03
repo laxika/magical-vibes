@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -24,19 +23,10 @@ public class OreGorger extends Card {
     public OreGorger() {
         // Whenever you cast a Spirit or Arcane spell, you may destroy target nonbasic land. The
         // target is chosen as the trigger goes on the stack; the "may" is decided at resolution.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardSubtypePredicate(CardSubtype.SPIRIT),
-                        new CardSubtypePredicate(CardSubtype.ARCANE))),
-                List.of(new MayEffect(new DestroyTargetPermanentEffect(), "Destroy target nonbasic land?")),
-                null,
-                new PermanentPredicateTargetFilter(
-                        new PermanentAllOfPredicate(List.of(
-                                new PermanentIsLandPredicate(),
-                                new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.BASIC))
-                        )),
-                        "Target must be a nonbasic land."
-                )
-        ));
+        target(new PermanentPredicateTargetFilter(new PermanentAllOfPredicate(List.of(new PermanentIsLandPredicate(), new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.BASIC)))), "Target must be a nonbasic land.")).addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardSubtypePredicate(CardSubtype.SPIRIT),
+                                new CardSubtypePredicate(CardSubtype.ARCANE)))),
+                new MayEffect(new DestroyTargetPermanentEffect(), "Destroy target nonbasic land?"));
     }
 }

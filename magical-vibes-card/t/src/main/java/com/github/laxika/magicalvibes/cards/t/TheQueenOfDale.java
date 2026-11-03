@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,16 +23,15 @@ public class TheQueenOfDale extends Card {
     public TheQueenOfDale() {
         CardNotPredicate noncreature = new CardNotPredicate(new CardTypePredicate(CardType.CREATURE));
         CardNotPredicate nonland = new CardNotPredicate(new CardTypePredicate(CardType.LAND));
-        addTrigger(Triggers.opponentCastsSpell(),
-                SpellCastTriggerEffect.nth(1, noncreature, List.of(
-                        SequenceEffect.of(
-                                new DrawCardEffect(1),
-                                new DiscardCardThenEffect(
-                                        null,
-                                        new CreateTokenEffect("Human Soldier", 1, 1, CardColor.WHITE,
-                                                List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of()),
-                                        "a card",
-                                        nonland,
-                                        false, null, null, DiscardRecipient.CONTROLLER, true)))));
+        addTrigger(Triggers.opponentCastsSpell().withFilter(noncreature).nthThisTurn(1),
+                SequenceEffect.of(
+                        new DrawCardEffect(1),
+                        new DiscardCardThenEffect(
+                                null,
+                                new CreateTokenEffect("Human Soldier", 1, 1, CardColor.WHITE,
+                                        List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of()),
+                                "a card",
+                                nonland,
+                                false, null, null, DiscardRecipient.CONTROLLER, true)));
     }
 }

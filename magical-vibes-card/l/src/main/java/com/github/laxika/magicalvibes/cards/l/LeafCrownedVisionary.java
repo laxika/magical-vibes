@@ -6,13 +6,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SPG", collectorNumber = "140")
@@ -25,8 +23,7 @@ public class LeafCrownedVisionary extends Card {
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ELF))));
 
         // Whenever you cast an Elf spell, you may pay {G}. If you do, draw a card.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardSubtypePredicate(CardSubtype.ELF),
-                List.of(new MayPayManaEffect("{G}", new DrawCardEffect(1), "Pay {G} to draw a card?"))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardSubtypePredicate(CardSubtype.ELF)),
+                new MayPayManaEffect("{G}", new DrawCardEffect(1), "Pay {G} to draw a card?"));
     }
 }

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeToReduceColoredCastCostEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
@@ -32,7 +31,6 @@ public class DefilerOfFaith extends Card {
         CardAllOfPredicate whitePermanentFilter = whitePermanentSpell();
         addStaticEffect(new PayLifeToReduceColoredCastCostEffect(
                 whitePermanentFilter, "{W}", 2, CostModificationScope.SELF));
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                whitePermanentFilter, List.of(CreateTokenEffect.whiteSoldier(1))));
+        addTrigger(Triggers.youCastSpell().withFilter(whitePermanentFilter), CreateTokenEffect.whiteSoldier(1));
     }
 }

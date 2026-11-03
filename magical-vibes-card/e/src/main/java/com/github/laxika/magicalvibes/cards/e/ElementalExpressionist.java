@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantExileIfLeavesBattlefieldUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfExiledFromBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -38,8 +37,8 @@ public class ElementalExpressionist extends Card {
                         new TriggeredAbility(Triggers.leavesBattlefield(ObjectRelation.THIS),
                         new SelfExiledFromBattlefieldEffect(elemental))));
 
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(instantOrSorcery, magecraft, null, TargetFilters.creatureYouControl()));
+        target(TargetFilters.creatureYouControl()).addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery),
+                magecraft.toArray(CardEffect[]::new));
         addTrigger(Triggers.youCopySpell(),
                 new SpellCopyTriggerEffect(instantOrSorcery, magecraft, TargetFilters.creatureYouControl()));
     }

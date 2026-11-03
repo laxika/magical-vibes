@@ -9,18 +9,14 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExperienceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "TLE", collectorNumber = "93")
 @CardRegistration(set = "TLE", collectorNumber = "180")
 public class KataraWaterbendingMaster extends Card {
 
     public KataraWaterbendingMaster() {
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(null, List.of(new ExperienceCountersEffect(1)), true));
+        addTrigger(Triggers.youCastSpell().duringOpponentsTurn(), new ExperienceCountersEffect(1));
 
         addTrigger(Triggers.attacks(), new MayEffect(
                 SequenceEffect.of(

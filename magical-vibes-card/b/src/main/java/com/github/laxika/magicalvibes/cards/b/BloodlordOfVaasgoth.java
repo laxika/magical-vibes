@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.condition.OpponentDealtDamageThisTur
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantBloodthirstToCastSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -32,10 +31,10 @@ public class BloodlordOfVaasgoth extends Card {
     public BloodlordOfVaasgoth() {
         addStaticEffect(new ConditionalEffect(new OpponentDealtDamageThisTurn(1),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3))));
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAllOfPredicate(List.of(
-                        new CardTypePredicate(CardType.CREATURE),
-                        new CardSubtypePredicate(CardSubtype.VAMPIRE))),
-                List.of(new GrantBloodthirstToCastSpellEffect(3))));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAllOfPredicate(List.of(
+                                new CardTypePredicate(CardType.CREATURE),
+                                new CardSubtypePredicate(CardSubtype.VAMPIRE)))),
+                new GrantBloodthirstToCastSpellEffect(3));
     }
 }

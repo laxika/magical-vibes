@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaDealXDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -24,11 +23,11 @@ public class ElectroAssaultingBattery extends Card {
     public ElectroAssaultingBattery() {
         addStaticEffect(new PreventManaDrainEffect(ManaColor.RED));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY))),
-                List.of(new AwardManaEffect(ManaColor.RED))));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY)))),
+                new AwardManaEffect(ManaColor.RED));
 
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 PayXManaDealXDamageToAnyTargetEffect.reflexive("{X}", TargetPredicates.player()));

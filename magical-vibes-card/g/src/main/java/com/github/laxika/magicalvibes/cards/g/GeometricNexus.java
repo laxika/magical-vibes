@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnCreatedPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEqualToTriggeringSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,12 +23,11 @@ import java.util.Set;
 public class GeometricNexus extends Card {
 
     public GeometricNexus() {
-        addTrigger(Triggers.playerCastsSpell(),
-                new SpellCastTriggerEffect(
-                        new CardAnyOfPredicate(List.of(
+        addTrigger(Triggers.playerCastsSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),
-                                new CardTypePredicate(CardType.SORCERY))),
-                        List.of(new PutCountersOnSelfEqualToTriggeringSpellManaValueEffect(CounterType.CHARGE))));
+                                new CardTypePredicate(CardType.SORCERY)))),
+                new PutCountersOnSelfEqualToTriggeringSpellManaValueEffect(CounterType.CHARGE));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

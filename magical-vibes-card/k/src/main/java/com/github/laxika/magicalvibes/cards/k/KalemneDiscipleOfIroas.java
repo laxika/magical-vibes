@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.amount.ControllerExperienceCounters;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExperienceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -24,9 +23,7 @@ public class KalemneDiscipleOfIroas extends Card {
                 new CardTypePredicate(CardType.CREATURE),
                 new CardMinManaValuePredicate(5, true)));
 
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(qualifyingCreatureSpell,
-                        List.of(new ExperienceCountersEffect(1))));
+        addTrigger(Triggers.youCastSpell().withFilter(qualifyingCreatureSpell), new ExperienceCountersEffect(1));
         addStaticEffect(new DynamicStaticBoostEffect(
                 new ControllerExperienceCounters(),
                 new ControllerExperienceCounters(),

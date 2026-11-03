@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,10 +24,9 @@ public class AlistairTheBrigadier extends Card {
 
     public AlistairTheBrigadier() {
         // Whenever you cast a historic spell, create a 1/1 white Soldier creature token.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardIsHistoricPredicate(),
-                List.of(new CreateTokenEffect("Soldier", 1, 1, CardColor.WHITE,
-                        List.of(CardSubtype.SOLDIER), Set.of(), Set.of()))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardIsHistoricPredicate()),
+                new CreateTokenEffect("Soldier", 1, 1, CardColor.WHITE,
+                        List.of(CardSubtype.SOLDIER), Set.of(), Set.of()));
 
         // Whenever Alistair attacks, you may pay {8}. If you do, creatures you control get +X/+X
         // until end of turn, where X is the number of historic permanents you control.

@@ -12,10 +12,10 @@ import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaOfColorsEf
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -36,16 +36,12 @@ public class TheEmperorOfPalamecia extends Card {
         ));
 
         CardNotPredicate noncreatureSpell = new CardNotPredicate(new CardTypePredicate(CardType.CREATURE));
-        addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.withIntervening(
-                noncreatureSpell,
-                List.of(
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                        ConditionalEffect.unless(
-                                new SourceCounterThreshold(3, CounterType.PLUS_ONE_PLUS_ONE),
-                                new TransformSelfEffect())
-                ),
-                new SpellManaSpentAtLeast(4)
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(noncreatureSpell),
+                TriggerOptions.DEFAULT.withInterveningIf(new SpellManaSpentAtLeast(4)),
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                ConditionalEffect.unless(
+                        new SourceCounterThreshold(3, CounterType.PLUS_ONE_PLUS_ONE),
+                        new TransformSelfEffect()));
     }
 
     @Override

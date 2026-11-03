@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.SolveSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -38,10 +37,8 @@ public class CaseOfTheRansackedLab extends Card {
                                 ))),
                 new SolveSourceEffect());
 
-        addTrigger(Triggers.youCastSpell(),
-                SpellCastTriggerEffect.withIntervening(
-                        instantOrSorcery,
-                        List.of(new DrawCardEffect(1)),
-                        new SourceIsSolved()));
+        addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSolved()),
+                new DrawCardEffect(1));
     }
 }

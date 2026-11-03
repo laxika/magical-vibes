@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTopUntilNonlandMayCastWithoutPayingManaEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,10 +18,9 @@ import java.util.List;
 public class NicoMinoruRunaway extends Card {
 
     public NicoMinoruRunaway() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT)),
-                new StackEntryNotPredicate(new StackEntryCastFromZonePredicate(Zone.HAND))));
+        addTrigger(Triggers.youCastSpell()
+                        .withStackEntryFilter(new StackEntryNotPredicate(new StackEntryCastFromZonePredicate(Zone.HAND))),
+                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

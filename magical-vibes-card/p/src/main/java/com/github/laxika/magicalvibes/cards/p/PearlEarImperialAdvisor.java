@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -30,11 +29,11 @@ public class PearlEarImperialAdvisor extends Card {
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardTypePredicate(CardType.ENCHANTMENT), aurasYouControl, CostModificationScope.SELF));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardIsAuraPredicate(),
-                List.of(new DrawCardEffect()),
-                new StackEntryTargetsPermanentPredicate(new PermanentAllOfPredicate(List.of(
-                        new PermanentIsModifiedPredicate(),
-                        new PermanentControlledBySourceControllerPredicate())))));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardIsAuraPredicate())
+                        .withStackEntryFilter(new StackEntryTargetsPermanentPredicate(new PermanentAllOfPredicate(List.of(
+                                new PermanentIsModifiedPredicate(),
+                                new PermanentControlledBySourceControllerPredicate())))),
+                new DrawCardEffect());
     }
 }

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,9 +21,8 @@ public class DjinnOfTheFountain extends Card {
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                instantOrSorcery,
-                List.of(new ChooseOneEffect(List.of(
+        addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery),
+                new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Djinn of the Fountain gets +1/+1 until end of turn",
                                 new BoostSelfEffect(1, 1)),
@@ -32,7 +30,6 @@ public class DjinnOfTheFountain extends Card {
                                 "Exile Djinn of the Fountain. Return it to the battlefield under its owner's control at the beginning of the next end step",
                                 FlickerEffect.exileSelfReturnAtEndStepUnderOwnerControl(false)),
                         new ChooseOneEffect.ChooseOneOption("Scry 1", new ScryEffect(1))
-                )))
-        ));
+                )));
     }
 }

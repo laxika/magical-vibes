@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -27,14 +26,9 @@ public class LysAlanaHuntmaster extends Card {
 
     public LysAlanaHuntmaster() {
         // Whenever you cast an Elf spell, you may create a 1/1 green Elf Warrior creature token.
-        addTrigger(Triggers.youCastSpell(), new MayEffect(
-                new SpellCastTriggerEffect(
-                        new CardSubtypePredicate(CardSubtype.ELF),
-                        List.of(new CreateTokenEffect(
-                                "Elf Warrior", 1, 1, CardColor.GREEN,
-                                List.of(CardSubtype.ELF, CardSubtype.WARRIOR), Set.of(), Set.of()))
-                ),
-                "Create a 1/1 green Elf Warrior creature token?"
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardSubtypePredicate(CardSubtype.ELF)),
+                new MayEffect(new CreateTokenEffect(
+                        "Elf Warrior", 1, 1, CardColor.GREEN,
+                        List.of(CardSubtype.ELF, CardSubtype.WARRIOR), Set.of(), Set.of()), "Create a 1/1 green Elf Warrior creature token?"));
     }
 }

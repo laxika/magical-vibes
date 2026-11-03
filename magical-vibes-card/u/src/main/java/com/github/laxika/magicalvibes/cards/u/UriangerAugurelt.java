@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LandPlayFromExileTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,9 +19,8 @@ import java.util.List;
 public class UriangerAugurelt extends Card {
 
     public UriangerAugurelt() {
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(null, List.of(new GainLifeEffect(2)),
-                        new StackEntryCastFromZonePredicate(Zone.EXILE)));
+        addTrigger(Triggers.youCastSpell().withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.EXILE)),
+                new GainLifeEffect(2));
         addTrigger(Triggers.youPlayLand(),
                 new LandPlayFromExileTriggerEffect(List.of(new GainLifeEffect(2))));
 

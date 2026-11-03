@@ -7,11 +7,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "234")
 @CardRegistration(set = "FCA", collectorNumber = "20")
@@ -24,9 +21,7 @@ public class TraxosScourgeOfKroog extends Card {
         addStaticEffect(DoesntUntapEffect.self());
 
         // Whenever you cast a historic spell, untap Traxos.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardIsHistoricPredicate(),
-                List.of(new UntapPermanentsEffect(TapUntapScope.SELF))
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardIsHistoricPredicate()),
+                new UntapPermanentsEffect(TapUntapScope.SELF));
     }
 }

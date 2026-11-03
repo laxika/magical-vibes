@@ -7,15 +7,13 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "83")
 @CardRegistration(set = "FIN", collectorNumber = "442")
@@ -24,25 +22,14 @@ public class UltrosObnoxiousOctopus extends Card {
     public UltrosObnoxiousOctopus() {
         CardNotPredicate noncreatureSpell = new CardNotPredicate(new CardTypePredicate(CardType.CREATURE));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                noncreatureSpell,
-                List.of(
-                        new TapPermanentsEffect(TapUntapScope.TARGET),
-                        new PutCounterOnTargetPermanentEffect(CounterType.STUN)
-                ),
-                null,
-                TargetFilters.creatureAnOpponentControls(),
-                null,
-                false,
-                false,
-                new SpellManaSpentAtLeast(4),
-                0
-        ));
+        target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.youCastSpell()
+                        .withFilter(noncreatureSpell),
+                TriggerOptions.DEFAULT.withInterveningIf(new SpellManaSpentAtLeast(4)),
+                new TapPermanentsEffect(TapUntapScope.TARGET),
+                new PutCounterOnTargetPermanentEffect(CounterType.STUN));
 
-        addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.withIntervening(
-                noncreatureSpell,
-                List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 8)),
-                new SpellManaSpentAtLeast(8)
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(noncreatureSpell),
+                TriggerOptions.DEFAULT.withInterveningIf(new SpellManaSpentAtLeast(8)),
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 8));
     }
 }

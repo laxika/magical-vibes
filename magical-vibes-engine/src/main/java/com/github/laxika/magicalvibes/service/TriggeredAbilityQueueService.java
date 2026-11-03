@@ -2042,9 +2042,14 @@ public class TriggeredAbilityQueueService {
                     + (power.value() >= 0 ? "+" : "") + power.value() + "/"
                     + (toughness.value() >= 0 ? "+" : "") + toughness.value();
         }
-        for (CardEffect effect : entry.getCard().getTriggerEffects(Triggers.youCastSpell(), Zone.BATTLEFIELD)) {
+        List<CardEffect> resolving = entry.getEffectsToResolve().size() == 1
+                && entry.getEffectsToResolve().getFirst() instanceof MayEffect may
+                ? List.of(may.wrapped()) : entry.getEffectsToResolve();
+        for (CardEffect legacy : entry.getCard().getLegacyTriggerEffects(Triggers.youCastSpell(), Zone.BATTLEFIELD)) {
+            CardEffect effect = legacy instanceof MayEffect may ? may.wrapped() : legacy;
             if (effect instanceof com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect trigger
-                    && trigger.resolvedEffects().equals(entry.getEffectsToResolve())
+                    && (trigger.resolvedEffects().equals(entry.getEffectsToResolve())
+                    || trigger.resolvedEffects().equals(resolving))
                     && trigger.spellFilter() instanceof com.github.laxika.magicalvibes.model.filter.CardColorPredicate color) {
                 return entry.getDescription() + " — cast a " + color.color().name().toLowerCase(java.util.Locale.ROOT) + " spell";
             }

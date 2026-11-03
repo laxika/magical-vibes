@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMatchingToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -22,21 +21,18 @@ import java.util.List;
 public class MomirVigSimicVisionary extends Card {
 
     public MomirVigSimicVisionary() {
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(
-                        new CardAllOfPredicate(List.of(
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAllOfPredicate(List.of(
                                 new CardColorPredicate(CardColor.GREEN),
-                                new CardTypePredicate(CardType.CREATURE))),
-                        List.of(new MayEffect(
-                                new SearchLibraryEffect(new CardTypePredicate(CardType.CREATURE),
-                                        LibrarySearchDestination.TOP_OF_LIBRARY),
-                                "Search your library for a creature card?"))));
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(
-                        new CardAllOfPredicate(List.of(
+                                new CardTypePredicate(CardType.CREATURE)))),
+                new MayEffect(
+                        new SearchLibraryEffect(new CardTypePredicate(CardType.CREATURE),
+                                LibrarySearchDestination.TOP_OF_LIBRARY),
+                        "Search your library for a creature card?"));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAllOfPredicate(List.of(
                                 new CardColorPredicate(CardColor.BLUE),
-                                new CardTypePredicate(CardType.CREATURE))),
-                        List.of(new RevealTopCardMatchingToHandEffect(
-                                new CardTypePredicate(CardType.CREATURE)))));
+                                new CardTypePredicate(CardType.CREATURE)))),
+                new RevealTopCardMatchingToHandEffect(new CardTypePredicate(CardType.CREATURE)));
     }
 }

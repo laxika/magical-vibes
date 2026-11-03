@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -24,14 +23,13 @@ public class InformedInkwright extends Card {
     public InformedInkwright() {
         // Repartee — Whenever you cast an instant or sorcery spell that targets a creature,
         // create a 1/1 white and black Inkling creature token with flying.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY))),
-                List.of(new CreateTokenEffect(1, "Inkling", 1, 1,
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY))))
+                        .withStackEntryFilter(new StackEntryTargetsPermanentPredicate(new PermanentIsCreaturePredicate())),
+                new CreateTokenEffect(1, "Inkling", 1, 1,
                         CardColor.WHITE, Set.of(CardColor.WHITE, CardColor.BLACK),
-                        List.of(CardSubtype.INKLING), Set.of(Keyword.FLYING), Set.of())),
-                new StackEntryTargetsPermanentPredicate(new PermanentIsCreaturePredicate())
-        ));
+                        List.of(CardSubtype.INKLING), Set.of(Keyword.FLYING), Set.of()));
     }
 }

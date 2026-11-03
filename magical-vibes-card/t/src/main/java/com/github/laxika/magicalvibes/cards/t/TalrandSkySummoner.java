@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -32,15 +31,14 @@ public class TalrandSkySummoner extends Card {
 
     public TalrandSkySummoner() {
         // Whenever you cast an instant or sorcery spell, create a 2/2 blue Drake creature token with flying.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY))),
-                List.of(new CreateTokenEffect("Drake", 2, 2,
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY)))),
+                new CreateTokenEffect("Drake", 2, 2,
                         CardColor.BLUE,
                         List.of(CardSubtype.DRAKE),
                         Set.of(Keyword.FLYING),
-                        Set.of()))
-        ));
+                        Set.of()));
     }
 }

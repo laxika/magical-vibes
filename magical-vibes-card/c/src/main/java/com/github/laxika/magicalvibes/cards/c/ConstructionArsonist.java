@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandAndApplyPerpetualIncorporationEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -31,10 +30,7 @@ public class ConstructionArsonist extends Card {
                         "{R}",
                         new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT)));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardIsMulticoloredPredicate(),
-                List.of(new BoostSelfEffect(
-                        new TriggeringSpellColorCount(),
-                        new TriggeringSpellColorCount()))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardIsMulticoloredPredicate()),
+                new BoostSelfEffect(new TriggeringSpellColorCount(), new TriggeringSpellColorCount()));
     }
 }

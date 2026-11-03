@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -34,7 +33,6 @@ public class FireNationOccupation extends Card {
 
         // Whenever you cast a spell during an opponent's turn, create a 2/2 red Soldier creature
         // token with firebending 1.
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(null, List.of(SOLDIER_TOKEN), true));
+        addTrigger(Triggers.youCastSpell().duringOpponentsTurn(), SOLDIER_TOKEN);
     }
 }

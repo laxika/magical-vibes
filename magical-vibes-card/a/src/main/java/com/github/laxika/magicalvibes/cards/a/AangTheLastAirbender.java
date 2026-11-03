@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AirbendTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -32,9 +31,7 @@ public class AangTheLastAirbender extends Card {
                 "Target must be another nonland permanent"), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new AirbendTargetPermanentEffect());
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardSubtypePredicate(CardSubtype.LESSON),
-                List.of(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF))
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardSubtypePredicate(CardSubtype.LESSON)),
+                new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF));
     }
 }

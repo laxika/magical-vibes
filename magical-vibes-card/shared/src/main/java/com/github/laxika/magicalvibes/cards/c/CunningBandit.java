@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -25,13 +24,11 @@ public class CunningBandit extends Card {
         setBackFaceCard(new AzamukiTreacheryIncarnate());
 
         // "Whenever you cast a Spirit or Arcane spell, you may put a ki counter on this creature."
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(
-                        new CardAnyOfPredicate(List.of(
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardSubtypePredicate(CardSubtype.SPIRIT),
-                                new CardSubtypePredicate(CardSubtype.ARCANE))),
-                        List.of(new MayEffect(new PutCountersOnSelfEffect(CounterType.KI),
-                                "Put a ki counter on Cunning Bandit?"))));
+                                new CardSubtypePredicate(CardSubtype.ARCANE)))),
+                new MayEffect(new PutCountersOnSelfEffect(CounterType.KI), "Put a ki counter on Cunning Bandit?"));
 
         // "At the beginning of the end step, if there are two or more ki counters on this creature,
         // you may flip it." - every end step, not just yours; the counter count is an intervening-if

@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessSacrificesEffect
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RingTemptsYouEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -39,9 +38,7 @@ public class SauronTheDarkLord extends Card {
                         legendaryArtifactOrCreature,
                         "legendary artifact or legendary creature"));
 
-        addTrigger(Triggers.opponentCastsSpell(),
-                new SpellCastTriggerEffect(null,
-                        List.of(new AmassGoblinsEffect(1, CardSubtype.ORC))));
+        addTrigger(Triggers.opponentCastsSpell().anySpell(), new AmassGoblinsEffect(1, CardSubtype.ORC));
 
         PermanentPredicate army = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

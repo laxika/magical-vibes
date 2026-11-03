@@ -7,15 +7,12 @@ import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackController
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "MSH", collectorNumber = "230")
 public class StormWindrider extends Card {
@@ -33,11 +30,8 @@ public class StormWindrider extends Card {
 
         // Whenever you cast a spell that targets one or more creatures, those creatures gain flying
         // until end of turn.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGETS,
-                        new PermanentIsCreaturePredicate())),
-                new StackEntryTargetsPermanentPredicate(new PermanentIsCreaturePredicate())
-        ));
+        addTrigger(Triggers.youCastSpell()
+                        .withStackEntryFilter(new StackEntryTargetsPermanentPredicate(new PermanentIsCreaturePredicate())),
+                new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGETS, new PermanentIsCreaturePredicate()));
     }
 }

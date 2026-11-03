@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -28,11 +27,11 @@ public class LapisOrbOfDragonkind extends Card {
                 "{T}: Add {U}. When you spend this mana to cast a Dragon creature spell, scry 2."
         ));
 
-        addTrigger(Triggers.youCastSpell(),
-                SpellCastTriggerEffect.usingManaProducedBySource(
-                        new CardAllOfPredicate(List.of(
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
-                                new CardSubtypePredicate(CardSubtype.DRAGON))),
-                        List.of(new ScryEffect(2))));
+                                new CardSubtypePredicate(CardSubtype.DRAGON))))
+                        .paidWithManaFromThis(),
+                new ScryEffect(2));
     }
 }

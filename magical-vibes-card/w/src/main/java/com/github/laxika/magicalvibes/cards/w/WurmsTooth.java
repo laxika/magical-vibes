@@ -4,12 +4,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "316")
 @CardRegistration(set = "10E", collectorNumber = "346")
@@ -21,8 +18,7 @@ import java.util.List;
 public class WurmsTooth extends Card {
 
     public WurmsTooth() {
-        addTrigger(Triggers.playerCastsSpell(), new MayEffect(
-                new SpellCastTriggerEffect(new CardColorPredicate(CardColor.GREEN), List.of(new GainLifeEffect(1))),
-                "Gain 1 life?"));
+        addTrigger(Triggers.playerCastsSpell().withFilter(new CardColorPredicate(CardColor.GREEN)),
+                new MayEffect(new GainLifeEffect(1), "Gain 1 life?"));
     }
 }

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -30,9 +29,8 @@ public class DiregrafColossus extends Card {
                 new CardsInGraveyard(new CardSubtypePredicate(CardSubtype.ZOMBIE), CountScope.CONTROLLER)));
 
         // Whenever you cast a Zombie spell, create a tapped 2/2 black Zombie creature token.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardSubtypePredicate(CardSubtype.ZOMBIE),
-                List.of(new CreateTokenEffect(1, "Zombie", 2, 2, CardColor.BLACK,
-                        List.of(CardSubtype.ZOMBIE), Set.of(), Set.of(), true))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardSubtypePredicate(CardSubtype.ZOMBIE)),
+                new CreateTokenEffect(1, "Zombie", 2, 2, CardColor.BLACK,
+                        List.of(CardSubtype.ZOMBIE), Set.of(), Set.of(), true));
     }
 }

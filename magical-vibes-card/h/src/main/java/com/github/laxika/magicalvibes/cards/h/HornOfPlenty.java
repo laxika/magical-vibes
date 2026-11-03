@@ -5,21 +5,17 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextEndStepEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "MMQ", collectorNumber = "298")
 public class HornOfPlenty extends Card {
 
     public HornOfPlenty() {
-        addTrigger(Triggers.playerCastsSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new MayPayManaEffect(
+        addTrigger(Triggers.playerCastsSpell().anySpell(),
+                new MayPayManaEffect(
                         "{1}",
                         RegisterDrawCardsAtNextEndStepEffect.triggeringPlayer(),
                         "Pay {1}?",
-                        MayPayPayer.TRIGGERING_PLAYER))));
+                        MayPayPayer.TRIGGERING_PLAYER));
     }
 }

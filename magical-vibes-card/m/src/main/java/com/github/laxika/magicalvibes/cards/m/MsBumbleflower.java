@@ -12,14 +12,11 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "BLC", collectorNumber = "3")
 @CardRegistration(set = "BLC", collectorNumber = "103")
@@ -45,8 +42,6 @@ public class MsBumbleflower extends Card {
         registerEffectTargetIndex(counter, creatureTarget.getIndex());
         registerEffectTargetIndex(flying, creatureTarget.getIndex());
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(opponentDraw, counter, flying, secondResolutionDraw)));
+        addTrigger(Triggers.youCastSpell().anySpell(), opponentDraw, counter, flying, secondResolutionDraw);
     }
 }

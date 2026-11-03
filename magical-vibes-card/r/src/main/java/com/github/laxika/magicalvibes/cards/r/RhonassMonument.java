@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -39,19 +38,9 @@ public class RhonassMonument extends Card {
 
         // Whenever you cast a creature spell, target creature you control gets +2/+2
         // and gains trample until end of turn.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardTypePredicate(CardType.CREATURE),
-                List.of(
-                        new BoostTargetCreatureEffect(2, 2),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)
-                ),
-                null,
-                new PermanentPredicateTargetFilter(
-                        new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentControlledBySourceControllerPredicate()
-                        )),
-                        "Target must be a creature you control")
-        ));
+        target(new PermanentPredicateTargetFilter(new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(), new PermanentControlledBySourceControllerPredicate())), "Target must be a creature you control")).addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardTypePredicate(CardType.CREATURE)),
+                new BoostTargetCreatureEffect(2, 2),
+                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
     }
 }

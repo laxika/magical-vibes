@@ -4,12 +4,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "322")
 @CardRegistration(set = "M10", collectorNumber = "210")
@@ -22,8 +19,7 @@ import java.util.List;
 public class DragonsClaw extends Card {
 
     public DragonsClaw() {
-        addTrigger(Triggers.playerCastsSpell(),
-                new SpellCastTriggerEffect(new CardColorPredicate(CardColor.RED),
-                        List.of(new MayEffect(new GainLifeEffect(1), "Gain 1 life?"))));
+        addTrigger(Triggers.playerCastsSpell().withFilter(new CardColorPredicate(CardColor.RED)),
+                new MayEffect(new GainLifeEffect(1), "Gain 1 life?"));
     }
 }

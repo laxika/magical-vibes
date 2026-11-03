@@ -9,30 +9,19 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "MSC", collectorNumber = "739")
 public class AntManReformedRogue extends Card {
 
     public AntManReformedRogue() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardColorPredicate(CardColor.GREEN),
-                List.of(
-                        new BoostSelfEffect(1, 0),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)
-                )
-        ));
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardColorPredicate(CardColor.BLUE),
-                List.of(
-                        new BoostSelfEffect(-1, 0),
-                        new MakeCreatureUnblockableEffect(true)
-                )
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.GREEN)),
+                new BoostSelfEffect(1, 0),
+                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.BLUE)),
+                new BoostSelfEffect(-1, 0),
+                new MakeCreatureUnblockableEffect(true));
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new DrawCardEffect());
     }
 }

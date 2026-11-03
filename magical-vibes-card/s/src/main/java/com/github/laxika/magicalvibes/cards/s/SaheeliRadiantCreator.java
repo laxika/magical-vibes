@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -26,11 +25,11 @@ import java.util.Set;
 public class SaheeliRadiantCreator extends Card {
 
     public SaheeliRadiantCreator() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardSubtypePredicate(CardSubtype.ARTIFICER),
-                        new CardTypePredicate(CardType.ARTIFACT))),
-                List.of(new EnergyCountersEffect(1))));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardSubtypePredicate(CardSubtype.ARTIFICER),
+                                new CardTypePredicate(CardType.ARTIFACT)))),
+                new EnergyCountersEffect(1));
 
         target(TargetFilters.permanentYouControl()).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new ForcedCostOrElseEffect(

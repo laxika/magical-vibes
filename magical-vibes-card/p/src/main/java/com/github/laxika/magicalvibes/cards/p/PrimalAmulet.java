@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfThenTransformIfThresholdEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -40,10 +39,8 @@ public class PrimalAmulet extends Card {
         // Whenever you cast an instant or sorcery spell, put a charge counter on Primal Amulet.
         // Then if there are four or more charge counters on it, you may remove those counters
         // and transform it.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                INSTANT_OR_SORCERY,
-                List.of(new PutCounterOnSelfThenTransformIfThresholdEffect(CounterType.CHARGE, 4, true))
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(INSTANT_OR_SORCERY),
+                new PutCounterOnSelfThenTransformIfThresholdEffect(CounterType.CHARGE, 4, true));
     }
 
     @Override

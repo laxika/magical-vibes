@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -26,9 +25,8 @@ import java.util.List;
 public class KykarZephyrAwakener extends Card {
 
     public KykarZephyrAwakener() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(new ChooseOneEffect(List.of(
+        addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Exile another target creature you control. Return that card at the beginning of the next end step",
                                 FlickerEffect.exileTargetReturnAtEndStep(),
@@ -44,7 +42,6 @@ public class KykarZephyrAwakener extends Card {
                                 "Create a 1/1 white Spirit creature token with flying",
                                 CreateTokenEffect.whiteSpirit(1)
                         )
-                )))
-        ));
+                )));
     }
 }

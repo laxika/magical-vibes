@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -41,20 +40,11 @@ public class LozhanDragonsLegacy extends Card {
         );
         DealDamageToAnyTargetEffect damage = new DealDamageToAnyTargetEffect(new TargetSpellManaValue());
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardSubtypePredicate(CardSubtype.DRAGON),
-                List.of(damage),
-                null,
-                nonCommanderAnyTarget
-        ));
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(damage),
-                null,
-                nonCommanderAnyTarget,
-                new StackEntryCastWithAdventurePredicate(),
-                false,
-                false
-        ));
+        target(nonCommanderAnyTarget).addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardSubtypePredicate(CardSubtype.DRAGON)),
+                damage);
+        target(nonCommanderAnyTarget).addTrigger(Triggers.youCastSpell()
+                        .withStackEntryFilter(new StackEntryCastWithAdventurePredicate()),
+                damage);
     }
 }

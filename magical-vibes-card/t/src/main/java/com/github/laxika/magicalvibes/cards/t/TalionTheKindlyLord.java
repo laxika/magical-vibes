@@ -6,11 +6,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseNumberOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "215")
 @CardRegistration(set = "WOE", collectorNumber = "301")
@@ -18,9 +15,9 @@ public class TalionTheKindlyLord extends Card {
 
     public TalionTheKindlyLord() {
         addStaticEffect(new ChooseNumberOnEnterEffect(1, 10));
-        addTrigger(Triggers.opponentCastsSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new LoseLifeEffect(2, LoseLifeRecipient.TRIGGERING_PLAYER), new DrawCardEffect(1)),
-                new StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate()));
+        addTrigger(Triggers.opponentCastsSpell()
+                        .withStackEntryFilter(new StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate()),
+                new LoseLifeEffect(2, LoseLifeRecipient.TRIGGERING_PLAYER),
+                new DrawCardEffect(1));
     }
 }

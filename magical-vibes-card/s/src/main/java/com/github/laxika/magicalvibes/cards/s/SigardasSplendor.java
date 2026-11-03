@@ -6,12 +6,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.DrawCardIfControllerLifeTotalAtLeastNotedEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.NoteControllerLifeTotalEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "33")
 @CardRegistration(set = "DBL", collectorNumber = "33")
@@ -20,7 +17,6 @@ public class SigardasSplendor extends Card {
     public SigardasSplendor() {
         addStaticEffect(new NoteControllerLifeTotalEffect());
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new DrawCardIfControllerLifeTotalAtLeastNotedEffect());
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardColorPredicate(CardColor.WHITE), List.of(new GainLifeEffect(1))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.WHITE)), new GainLifeEffect(1));
     }
 }

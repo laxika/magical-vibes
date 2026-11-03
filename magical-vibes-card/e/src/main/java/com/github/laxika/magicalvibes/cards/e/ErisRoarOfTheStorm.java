@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.amount.DistinctManaValuesAmongCardsI
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -31,11 +30,9 @@ public class ErisRoarOfTheStorm extends Card {
         addStaticEffect(new ReduceOwnCastCostEffect(
                 new Scaled(new DistinctManaValuesAmongCardsInGraveyard(
                         CountScope.CONTROLLER, false, instantOrSorcery), 2)));
-        addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.nth(
-                2,
-                null,
-                List.of(new CreateTokenEffect("Dragon Elemental", 4, 4, CardColor.RED,
+        addTrigger(Triggers.youCastSpell().nthThisTurn(2),
+                new CreateTokenEffect("Dragon Elemental", 4, 4, CardColor.RED,
                         List.of(CardSubtype.DRAGON, CardSubtype.ELEMENTAL),
-                        Set.of(Keyword.FLYING, Keyword.PROWESS), Set.of()))));
+                        Set.of(Keyword.FLYING, Keyword.PROWESS), Set.of()));
     }
 }

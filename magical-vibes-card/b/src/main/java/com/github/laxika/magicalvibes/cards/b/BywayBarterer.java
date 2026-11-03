@@ -6,19 +6,15 @@ import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "BLB", collectorNumber = "129")
 public class BywayBarterer extends Card {
 
     public BywayBarterer() {
-        addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.wheneverYouExpend(
-                4,
-                List.of(new MayEffect(
+        addTrigger(Triggers.youCastSpell().expend(4),
+                new MayEffect(
                         SequenceEffect.of(new DiscardHandEffect(), new DrawCardEffect(2)),
-                        "Discard your hand to draw two cards?"))));
+                        "Discard your hand to draw two cards?"));
     }
 }

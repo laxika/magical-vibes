@@ -85,12 +85,13 @@ public class GrantedTriggeredAbilitySupport {
     /**
      * Form for callers that already hold the permanent's static bonus for the current game state, sparing a second
      * layered query. Each effect is wrapped in its ability's options ({@link TriggeredAbility#legacyEffects()}), the
-     * form the collectors that still read effects take.
+     * form the collectors that still read effects take, and an ability is found by its trigger's
+     * {@link com.github.laxika.magicalvibes.model.trigger.Trigger#watchKey()}.
      */
     public List<CardEffect> grantedTriggerEffects(GameData gameData, Permanent permanent,
                                                   GameQueryService.StaticBonus staticBonus, Trigger trigger) {
         return grantedTriggeredAbilities(gameData, permanent, staticBonus,
-                ability -> ability.hasTrigger(trigger)).stream()
+                ability -> ability.hasWatchedTrigger(trigger)).stream()
                 .flatMap(ability -> ability.legacyEffects().stream().map(EffectRegistration::effect))
                 .toList();
     }

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -24,13 +23,11 @@ public class WaxmaneBaku extends Card {
 
     public WaxmaneBaku() {
         // Whenever you cast a Spirit or Arcane spell, you may put a ki counter on this creature.
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(
-                        new CardAnyOfPredicate(List.of(
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardSubtypePredicate(CardSubtype.SPIRIT),
-                                new CardSubtypePredicate(CardSubtype.ARCANE))),
-                        List.of(new MayEffect(new PutCountersOnSelfEffect(CounterType.KI),
-                                "Put a ki counter on this creature?"))));
+                                new CardSubtypePredicate(CardSubtype.ARCANE)))),
+                new MayEffect(new PutCountersOnSelfEffect(CounterType.KI), "Put a ki counter on this creature?"));
 
         // {1}, Remove X ki counters from this creature: Tap X target creatures. X is announced at
         // activation (capped by the ki counters present) and requires exactly X targets;

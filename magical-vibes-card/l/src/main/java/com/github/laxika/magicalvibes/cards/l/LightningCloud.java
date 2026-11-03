@@ -4,11 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "VIS", collectorNumber = "87")
 public class LightningCloud extends Card {
@@ -18,10 +16,7 @@ public class LightningCloud extends Card {
         // damage to any target.
         // Target chosen as the trigger goes on the stack; the collector wraps the damage in
         // MayPayManaEffect so {R} is paid at resolution (Malachite Talisman shape).
-        addTrigger(Triggers.playerCastsSpell(), new SpellCastTriggerEffect(
-                new CardColorPredicate(CardColor.RED),
-                List.of(new DealDamageToAnyTargetEffect(1)),
-                "{R}"
-        ));
+        addTrigger(Triggers.playerCastsSpell().withFilter(new CardColorPredicate(CardColor.RED)),
+                new MayPayManaEffect("{R}", new DealDamageToAnyTargetEffect(1), "Pay {R}?"));
     }
 }

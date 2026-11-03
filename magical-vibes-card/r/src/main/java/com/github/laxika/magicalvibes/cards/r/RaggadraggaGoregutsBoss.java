@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasManaAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -38,23 +38,10 @@ public class RaggadraggaGoregutsBoss extends Card {
                         new PermanentHasManaAbilityPredicate(),
                         new UntapTriggeringPermanentEffect()));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(
-                        new UntapPermanentsEffect(TapUntapScope.TARGET),
-                        new BoostTargetCreatureEffect(7, 7),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)),
-                null,
-                TargetFilters.creature(),
-                null,
-                false,
-                false,
-                new SpellManaSpentAtLeast(7),
-                0,
-                0,
-                false,
-                false,
-                0,
-                false));
+        target(TargetFilters.creature()).addTrigger(Triggers.youCastSpell().anySpell(),
+                TriggerOptions.DEFAULT.withInterveningIf(new SpellManaSpentAtLeast(7)),
+                new UntapPermanentsEffect(TapUntapScope.TARGET),
+                new BoostTargetCreatureEffect(7, 7),
+                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,11 +17,8 @@ public class RosnakhtHeirOfRohgahh extends Card {
 
     public RosnakhtHeirOfRohgahh() {
         // Whenever you cast a spell that targets Rosnakht, create a 0/1 red Kobold creature token.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new CreateTokenEffect("Kobolds of Kher Keep", 0, 1, CardColor.RED,
-                        List.of(CardSubtype.KOBOLD), Set.of(), Set.of())),
-                new StackEntryTargetsSourcePredicate()
-        ));
+        addTrigger(Triggers.youCastSpell().withStackEntryFilter(new StackEntryTargetsSourcePredicate()),
+                new CreateTokenEffect("Kobolds of Kher Keep", 0, 1, CardColor.RED,
+                        List.of(CardSubtype.KOBOLD), Set.of(), Set.of()));
     }
 }

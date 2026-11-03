@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordsToCastSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -32,18 +31,17 @@ public class JudithCarnageConnoisseur extends Card {
 
     public JudithCarnageConnoisseur() {
         List<Ability> tokenEffects = List.of(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT)));
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY)
-                )),
-                List.of(new ChooseOneEffect(List.of(
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY)
+                        ))),
+                new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(KEYWORD_MODE,
                                 new GrantKeywordsToCastSpellEffect(Set.of(Keyword.DEATHTOUCH, Keyword.LIFELINK))),
                         new ChooseOneEffect.ChooseOneOption(IMP_MODE,
                                 new CreateTokenEffect(1, "Imp", 2, 2, CardColor.RED,
                                         List.of(CardSubtype.IMP), Set.of(), Set.of(), tokenEffects))
-                )))
-        ));
+                )));
     }
 }

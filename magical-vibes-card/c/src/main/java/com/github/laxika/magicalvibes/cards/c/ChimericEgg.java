@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,10 +21,9 @@ import java.util.Set;
 public class ChimericEgg extends Card {
 
     public ChimericEgg() {
-        addTrigger(Triggers.opponentCastsSpell(),
-                new SpellCastTriggerEffect(
-                        new CardNotPredicate(new CardTypePredicate(CardType.ARTIFACT)),
-                        List.of(new PutCountersOnSelfEffect(CounterType.CHARGE))));
+        addTrigger(Triggers.opponentCastsSpell()
+                        .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.ARTIFACT))),
+                new PutCountersOnSelfEffect(CounterType.CHARGE));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

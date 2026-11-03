@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,13 +18,11 @@ public class SnakePit extends Card {
 
     public SnakePit() {
         // Whenever an opponent casts a blue or black spell, you may create a 1/1 green Snake creature token.
-        addTrigger(Triggers.opponentCastsSpell(), new MayEffect(
-                new SpellCastTriggerEffect(
-                        new CardAnyOfPredicate(List.of(
+        addTrigger(Triggers.opponentCastsSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardColorPredicate(CardColor.BLUE),
-                                new CardColorPredicate(CardColor.BLACK))),
-                        List.of(new CreateTokenEffect("Snake", 1, 1, CardColor.GREEN,
-                                List.of(CardSubtype.SNAKE), Set.of(), Set.of()))),
-                "Create a 1/1 green Snake creature token?"));
+                                new CardColorPredicate(CardColor.BLACK)))),
+                new MayEffect(new CreateTokenEffect("Snake", 1, 1, CardColor.GREEN,
+                        List.of(CardSubtype.SNAKE), Set.of(), Set.of()), "Create a 1/1 green Snake creature token?"));
     }
 }

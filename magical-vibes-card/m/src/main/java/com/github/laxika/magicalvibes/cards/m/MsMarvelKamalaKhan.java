@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -24,16 +23,14 @@ public class MsMarvelKamalaKhan extends Card {
 
     public MsMarvelKamalaKhan() {
         addStaticEffect(new NoMaximumHandSizeEffect());
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(
-                        new DrawCardEffect(),
-                        new GrantStaticEffectToSourceEffect(
-                                new SetBasePowerToughnessToAmountEffect(
-                                        new CardsInHand(CountScope.CONTROLLER), null, GrantScope.SELF),
-                                EffectDuration.UNTIL_END_OF_TURN)),
-                new StackEntryTargetsPermanentPredicate(new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentControlledBySourceControllerPredicate())))));
+        addTrigger(Triggers.youCastSpell()
+                        .withStackEntryFilter(new StackEntryTargetsPermanentPredicate(new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentControlledBySourceControllerPredicate())))),
+                new DrawCardEffect(),
+                new GrantStaticEffectToSourceEffect(
+                        new SetBasePowerToughnessToAmountEffect(
+                                new CardsInHand(CountScope.CONTROLLER), null, GrantScope.SELF),
+                        EffectDuration.UNTIL_END_OF_TURN));
     }
 }

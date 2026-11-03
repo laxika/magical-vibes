@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -18,7 +17,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "EVE", collectorNumber = "85")
@@ -36,18 +34,17 @@ public class DeathbringerLiege extends Card {
                 new PermanentColorInPredicate(Set.of(CardColor.BLACK))));
 
         // Whenever you cast a white spell, you may tap target creature.
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(new CardColorPredicate(CardColor.WHITE),
-                        List.of(new MayEffect(new TapPermanentsEffect(TapUntapScope.TARGET),
-                                "Tap target creature?")), null, TargetFilters.creature()));
+        target(TargetFilters.creature()).addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardColorPredicate(CardColor.WHITE)),
+                new MayEffect(new TapPermanentsEffect(TapUntapScope.TARGET), "Tap target creature?"));
 
         // Whenever you cast a black spell, you may destroy target creature if it's tapped.
         // Targets any creature; the tapped check happens at resolution (Gatherer ruling).
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(new CardColorPredicate(CardColor.BLACK),
-                        List.of(new MayEffect(new ConditionalEffect(
-                                new TargetPermanentMatches(new PermanentIsTappedPredicate()),
-                                new DestroyTargetPermanentEffect()),
-                                "Destroy target creature (if it's tapped)?")), null, TargetFilters.creature()));
+        target(TargetFilters.creature()).addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardColorPredicate(CardColor.BLACK)),
+                new MayEffect(new ConditionalEffect(
+                        new TargetPermanentMatches(new PermanentIsTappedPredicate()),
+                        new DestroyTargetPermanentEffect()),
+                        "Destroy target creature (if it's tapped)?"));
     }
 }

@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -35,12 +34,10 @@ public class MirrodinBesieged extends Card {
     public MirrodinBesieged() {
         addStaticEffect(new ChooseModeOnEnterEffect(List.of(MIRRAN, PHYREXIAN)));
 
-        addTrigger(Triggers.youCastSpell(),
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.ARTIFACT)),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(MIRRAN)),
-                new SpellCastTriggerEffect(
-                        new CardTypePredicate(CardType.ARTIFACT),
-                        List.of(new CreateTokenEffect("Myr", 1, 1, null,
-                                List.of(CardSubtype.MYR), Set.of(), Set.of(CardType.ARTIFACT)))));
+                new CreateTokenEffect("Myr", 1, 1, null,
+                        List.of(CardSubtype.MYR), Set.of(), Set.of(CardType.ARTIFACT)));
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

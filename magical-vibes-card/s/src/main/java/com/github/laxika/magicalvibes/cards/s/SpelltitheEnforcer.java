@@ -3,18 +3,13 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesPermanentUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "18")
 public class SpelltitheEnforcer extends Card {
 
     public SpelltitheEnforcer() {
-        addTrigger(Triggers.opponentCastsSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new EachOpponentSacrificesPermanentUnlessPaysEffect("{1}"))
-        ));
+        addTrigger(Triggers.opponentCastsSpell().anySpell(),
+                new EachOpponentSacrificesPermanentUnlessPaysEffect("{1}"));
     }
 }

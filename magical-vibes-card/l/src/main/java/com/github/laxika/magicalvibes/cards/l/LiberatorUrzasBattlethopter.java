@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanSourcePower;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,10 +24,8 @@ public class LiberatorUrzasBattlethopter extends Card {
                 new CardIsColorlessPredicate(),
                 new CardTypePredicate(CardType.ARTIFACT)
         ))));
-        addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.withIntervening(
-                null,
-                List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
-                new SpellManaSpentGreaterThanSourcePower()
-        ));
+        addTrigger(Triggers.youCastSpell().anySpell(),
+                TriggerOptions.DEFAULT.withInterveningIf(new SpellManaSpentGreaterThanSourcePower()),
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

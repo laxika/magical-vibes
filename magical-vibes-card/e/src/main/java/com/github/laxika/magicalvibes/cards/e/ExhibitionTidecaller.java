@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,16 +20,15 @@ public class ExhibitionTidecaller extends Card {
     public ExhibitionTidecaller() {
         // Opus — Whenever you cast an instant or sorcery spell, target player mills three cards.
         // If five or more mana was spent to cast that spell, that player mills ten cards instead.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY)
-                )),
-                List.of(new ConditionalReplacementEffect(
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY)
+                        ))),
+                new ConditionalReplacementEffect(
                         new SpellManaSpentAtLeast(5),
                         new MillEffect(3, MillRecipient.TARGET_PLAYER),
                         new MillEffect(10, MillRecipient.TARGET_PLAYER)
-                ))
-        ));
+                ));
     }
 }

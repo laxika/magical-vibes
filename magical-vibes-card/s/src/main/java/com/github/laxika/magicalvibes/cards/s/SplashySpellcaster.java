@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -41,14 +40,12 @@ public class SplashySpellcaster extends Card {
         target(new PermanentPredicateTargetFilter(
                 anotherCreatureYouControl,
                 "Target must be another creature you control"
-        ), 0, 1).addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(
-                        new CardAnyOfPredicate(List.of(
+        ), 0, 1).addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),
                                 new CardTypePredicate(CardType.SORCERY)
-                        )),
-                        List.of(new CreateTokenAttachedToTargetEffect(sorcererRoleToken()))
-                ));
+                        ))),
+                new CreateTokenAttachedToTargetEffect(sorcererRoleToken()));
     }
 
     private static CreateTokenEffect sorcererRoleToken() {

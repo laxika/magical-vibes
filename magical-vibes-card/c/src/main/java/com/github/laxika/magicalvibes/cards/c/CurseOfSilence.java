@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseCastCostForChosenNameSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesChosenNameWithSourcePredicate;
@@ -22,12 +21,11 @@ public class CurseOfSilence extends Card {
     public CurseOfSilence() {
         addStaticEffect(new ChooseCardNameOnEnterEffect());
         addStaticEffect(new IncreaseCastCostForChosenNameSpellsEffect(2));
-        addTrigger(Triggers.playerCastsSpell(), new SpellCastTriggerEffect(
-                        null,
-                        List.of(new MayEffect(new SacrificeSelfThenEffect(new DrawCardEffect()),
-                                "Sacrifice Curse of Silence to draw a card?")),
-                        new StackEntryAllOfPredicate(List.of(
+        addTrigger(Triggers.playerCastsSpell()
+                        .withStackEntryFilter(new StackEntryAllOfPredicate(List.of(
                                 new StackEntrySharesChosenNameWithSourcePredicate(),
-                                new StackEntryControlledByEnchantedPlayerPredicate()))));
+                                new StackEntryControlledByEnchantedPlayerPredicate()))),
+                new MayEffect(new SacrificeSelfThenEffect(new DrawCardEffect()),
+                        "Sacrifice Curse of Silence to draw a card?"));
     }
 }

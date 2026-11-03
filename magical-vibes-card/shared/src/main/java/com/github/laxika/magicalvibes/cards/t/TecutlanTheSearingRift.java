@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscoverEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,9 +19,7 @@ public class TecutlanTheSearingRift extends Card {
                 null,
                 List.of(new AwardManaEffect(ManaColor.RED).withProducingSourceForSpellCastTriggers()),
                 "{T}: Add {R}."));
-        addTrigger(Triggers.youCastSpell(),
-                SpellCastTriggerEffect.usingManaProducedBySource(
-                        new CardIsPermanentPredicate(),
-                        List.of(new DiscoverEffect(new TargetSpellManaValue()))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardIsPermanentPredicate()).paidWithManaFromThis(),
+                new DiscoverEffect(new TargetSpellManaValue()));
     }
 }

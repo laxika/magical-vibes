@@ -6,11 +6,8 @@ import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetPlayerLibraryForNamedCardToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "FIC", collectorNumber = "33")
 @CardRegistration(set = "FIC", collectorNumber = "140")
@@ -24,7 +21,6 @@ public class AlphinaudLeveilleur extends Card {
                 "Have target player put Alisaie Leveilleur into their hand from their library?",
                 null,
                 MayChoicePlayer.TARGET_PLAYER));
-        addTrigger(Triggers.youCastSpell(),
-                SpellCastTriggerEffect.nth(2, null, List.of(new DrawCardEffect())));
+        addTrigger(Triggers.youCastSpell().nthThisTurn(2), new DrawCardEffect());
     }
 }

@@ -3,10 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "35")
 @CardRegistration(set = "MM2", collectorNumber = "49")
@@ -19,7 +16,6 @@ import java.util.List;
 public class InexorableTide extends Card {
 
     public InexorableTide() {
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(null, List.of(new ProliferateEffect())));
+        addTrigger(Triggers.youCastSpell().anySpell(), new ProliferateEffect());
     }
 }

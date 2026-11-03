@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.condition.MinimumAttackingCreaturesO
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,10 +22,9 @@ import java.util.Set;
 public class HermesOverseerOfElpis extends Card {
 
     public HermesOverseerOfElpis() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(new CreateTokenEffect("Bird", 1, 1, CardColor.BLUE,
-                        List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING, Keyword.VIGILANCE), Set.of()))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                new CreateTokenEffect("Bird", 1, 1, CardColor.BLUE,
+                        List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING, Keyword.VIGILANCE), Set.of()));
 
         addTrigger(Triggers.youAttack(), new ConditionalEffect(
                 new MinimumAttackingCreaturesOfSubtype(1, CardSubtype.BIRD), new ScryEffect(2)));

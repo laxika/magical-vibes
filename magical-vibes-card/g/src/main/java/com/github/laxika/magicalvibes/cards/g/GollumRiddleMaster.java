@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueParityMatchesSourceChosenParityPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,9 +21,9 @@ public class GollumRiddleMaster extends Card {
 
     public GollumRiddleMaster() {
         addStaticEffect(new ChooseManaValueParityOnEnterEffect());
-        addTrigger(Triggers.opponentCastsSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new ChooseModeNotYetChosenEffect(List.of(
+        addTrigger(Triggers.opponentCastsSpell()
+                        .withStackEntryFilter(new StackEntryManaValueParityMatchesSourceChosenParityPredicate()),
+                new ChooseModeNotYetChosenEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Put a +1/+1 counter on Gollum",
                                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
@@ -33,7 +32,6 @@ public class GollumRiddleMaster extends Card {
                                 List.of(
                                         new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
                                         new GainLifeEffect(2))),
-                        new ChooseOneEffect.ChooseOneOption("Draw a card", new DrawCardEffect())))),
-                new StackEntryManaValueParityMatchesSourceChosenParityPredicate()));
+                        new ChooseOneEffect.ChooseOneOption("Draw a card", new DrawCardEffect()))));
     }
 }

@@ -16,11 +16,11 @@ import com.github.laxika.magicalvibes.model.effect.ControlledPermanentsEnterWith
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceColoredCastCostForMatchingSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -71,10 +71,8 @@ public class BardClass extends Card {
                 "this Class is level 2"
         ));
 
-        addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.withIntervening(
-                new CardSupertypePredicate(CardSupertype.LEGENDARY),
-                List.of(new ExileTopCardMayPlayThisTurnEffect(2, false)),
-                new SourceCounterThreshold(2, CounterType.LEVEL)
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardSupertypePredicate(CardSupertype.LEGENDARY)),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(2, CounterType.LEVEL)),
+                new ExileTopCardMayPlayThisTurnEffect(2, false));
     }
 }

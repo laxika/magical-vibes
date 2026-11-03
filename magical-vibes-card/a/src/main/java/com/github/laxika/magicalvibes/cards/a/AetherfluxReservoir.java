@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.amount.SpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -19,10 +18,8 @@ import java.util.List;
 public class AetherfluxReservoir extends Card {
 
     public AetherfluxReservoir() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new GainLifeEffect(new SpellsCastThisTurn(CountScope.CONTROLLER)))
-        ));
+        addTrigger(Triggers.youCastSpell().anySpell(),
+                new GainLifeEffect(new SpellsCastThisTurn(CountScope.CONTROLLER)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

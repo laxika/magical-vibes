@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AirbendTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -22,8 +21,6 @@ public class AvatarYangchen extends Card {
         PermanentPredicateTargetFilter airbendTarget = new PermanentPredicateTargetFilter(
                 anotherNonland, "Target must be another nonland permanent");
         target(airbendTarget, 0, 1)
-                .addTrigger(Triggers.youCastSpell(),
-                        SpellCastTriggerEffect.nth(2, null,
-                                List.of(new AirbendTargetPermanentEffect()), airbendTarget));
+                .addTrigger(Triggers.youCastSpell().nthThisTurn(2), new AirbendTargetPermanentEffect());
     }
 }

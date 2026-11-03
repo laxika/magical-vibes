@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToExileWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -35,11 +34,8 @@ public class UginEyeOfTheStorms extends Card {
                 .addTrigger(Triggers.youCastThisSpell(), new ExileTargetPermanentEffect());
 
         target(coloredPermanent, 0, 1)
-                .addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                        new CardIsColorlessPredicate(),
-                        List.of(new ExileTargetPermanentEffect()),
-                        null,
-                        coloredPermanent));
+                .addTrigger(Triggers.youCastSpell().withFilter(new CardIsColorlessPredicate()),
+                        new ExileTargetPermanentEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 +2,

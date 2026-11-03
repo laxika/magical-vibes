@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,10 +21,9 @@ import java.util.Set;
 public class RavenousRobots extends Card {
 
     public RavenousRobots() {
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(new CardTypePredicate(CardType.ARTIFACT),
-                        List.of(new CreateTokenEffect("Robot", 1, 1, null,
-                                List.of(CardSubtype.ROBOT), Set.of(), Set.of(CardType.ARTIFACT)))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.ARTIFACT)),
+                new CreateTokenEffect("Robot", 1, 1, null,
+                        List.of(CardSubtype.ROBOT), Set.of(), Set.of(CardType.ARTIFACT)));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

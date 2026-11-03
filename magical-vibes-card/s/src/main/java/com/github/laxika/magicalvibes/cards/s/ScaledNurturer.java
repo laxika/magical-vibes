@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -28,11 +27,11 @@ public class ScaledNurturer extends Card {
                 "{T}: Add {G}. When you spend this mana to cast a Dragon creature spell, you gain 2 life."
         ));
 
-        addTrigger(Triggers.youCastSpell(),
-                SpellCastTriggerEffect.usingManaProducedBySource(
-                        new CardAllOfPredicate(List.of(
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
-                                new CardSubtypePredicate(CardSubtype.DRAGON))),
-                        List.of(new GainLifeEffect(2))));
+                                new CardSubtypePredicate(CardSubtype.DRAGON))))
+                        .paidWithManaFromThis(),
+                new GainLifeEffect(2));
     }
 }

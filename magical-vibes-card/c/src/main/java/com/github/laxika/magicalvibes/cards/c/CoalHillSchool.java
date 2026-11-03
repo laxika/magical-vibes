@@ -5,20 +5,16 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "576")
 public class CoalHillSchool extends Card {
 
     public CoalHillSchool() {
         // Whenever a player casts a historic spell, that player draws a card.
-        addTrigger(Triggers.playerCastsSpell(),
-                SpellCastTriggerEffect.anyPlayer(new CardIsHistoricPredicate(),
-                        List.of(new DrawCardForTargetPlayerEffect(1))));
+        addTrigger(Triggers.playerCastsSpell().withFilter(new CardIsHistoricPredicate()),
+                new DrawCardForTargetPlayerEffect(1));
 
         // Whenever chaos ensues, return target historic card from your graveyard to your hand.
         addTrigger(Triggers.chaosEnsues(), ReturnCardFromGraveyardEffect.builder()

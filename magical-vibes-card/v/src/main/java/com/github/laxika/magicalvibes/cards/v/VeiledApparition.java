@@ -14,8 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -25,10 +25,9 @@ import java.util.Set;
 public class VeiledApparition extends Card {
 
     public VeiledApparition() {
-        addTrigger(Triggers.opponentCastsSpell(), SpellCastTriggerEffect.withIntervening(
-                null,
-                List.of(new BecomeCreatureEffect(3, 3, CardSubtype.ILLUSION, Set.of(Keyword.FLYING))),
-                new SourceIsEnchantment()));
+        addTrigger(Triggers.opponentCastsSpell().anySpell(),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsEnchantment()),
+                new BecomeCreatureEffect(3, 3, CardSubtype.ILLUSION, Set.of(Keyword.FLYING)));
 
         addStaticEffect(new ConditionalEffect(
                 new SourceIsCreature(),

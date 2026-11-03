@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -59,12 +58,11 @@ public class LeadersTalent extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceClassLevelAtLeast(2)),
                 new GainLifeEffect(2));
 
-        addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.withIntervening(
-                null,
-                List.of(new PutCounterOnEachControlledPermanentEffect(
+        addTrigger(Triggers.youCastSpell().anySpell(),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceClassLevelAtLeast(3)),
+                new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE,
                         1,
-                        new PermanentIsCreaturePredicate())),
-                new SourceClassLevelAtLeast(3)));
+                        new PermanentIsCreaturePredicate()));
     }
 }

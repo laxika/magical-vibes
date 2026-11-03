@@ -8,13 +8,10 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsAttacking;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "MIR", collectorNumber = "135")
 public class PurrajOfUrborg extends Card {
@@ -26,9 +23,7 @@ public class PurrajOfUrborg extends Card {
                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)));
 
         // Whenever a player casts a black spell, you may pay {B}. If you do, put a +1/+1 counter on Purraj.
-        addTrigger(Triggers.playerCastsSpell(), new MayEffect(
-                new SpellCastTriggerEffect(new CardColorPredicate(CardColor.BLACK),
-                        List.of(new PutCountersOnSourceEffect(1, 1, 1)), "{B}"),
-                "Pay {B} to put a +1/+1 counter on Purraj of Urborg?"));
+        addTrigger(Triggers.playerCastsSpell().withFilter(new CardColorPredicate(CardColor.BLACK)),
+                new MayPayManaEffect("{B}", new PutCountersOnSourceEffect(1, 1, 1), "Pay {B} to put a +1/+1 counter on Purraj of Urborg?"));
     }
 }

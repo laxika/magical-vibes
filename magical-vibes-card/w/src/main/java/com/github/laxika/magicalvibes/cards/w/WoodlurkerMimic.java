@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,12 +19,11 @@ public class WoodlurkerMimic extends Card {
     public WoodlurkerMimic() {
         // Whenever you cast a spell that's both black and green, this creature has base power and
         // toughness 4/5 until end of turn and gains wither until end of turn.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAllOfPredicate(List.of(
-                        new CardColorPredicate(CardColor.BLACK),
-                        new CardColorPredicate(CardColor.GREEN))),
-                List.of(
-                        new SetBasePowerToughnessEffect(4, 5, GrantScope.SELF),
-                        new GrantKeywordEffect(Keyword.WITHER, GrantScope.SELF))));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAllOfPredicate(List.of(
+                                new CardColorPredicate(CardColor.BLACK),
+                                new CardColorPredicate(CardColor.GREEN)))),
+                new SetBasePowerToughnessEffect(4, 5, GrantScope.SELF),
+                new GrantKeywordEffect(Keyword.WITHER, GrantScope.SELF));
     }
 }

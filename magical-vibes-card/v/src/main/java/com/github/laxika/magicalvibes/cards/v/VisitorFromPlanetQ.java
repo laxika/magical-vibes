@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -27,11 +26,9 @@ public class VisitorFromPlanetQ extends Card {
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardKeywordPredicate(Keyword.FLASH)))));
-        addTrigger(Triggers.youCastSpell(), new MayEffect(
-                SpellCastTriggerEffect.withAtLeastTwoCardTypes(List.of(
-                        SequenceEffect.of(
-                                new DrawCardEffect(1),
-                                new DiscardEffect(1, DiscardRecipient.CONTROLLER)))),
-                "Draw a card, then discard a card?"));
+        addTrigger(Triggers.youCastSpell().withTwoOrMoreCardTypes(),
+                new MayEffect(SequenceEffect.of(
+                        new DrawCardEffect(1),
+                        new DiscardEffect(1, DiscardRecipient.CONTROLLER)), "Draw a card, then discard a card?"));
     }
 }

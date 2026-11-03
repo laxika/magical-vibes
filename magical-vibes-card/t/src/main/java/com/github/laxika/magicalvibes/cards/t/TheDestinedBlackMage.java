@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -40,11 +39,10 @@ public class TheDestinedBlackMage extends Card {
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))),
                         "Target must be another creature you control")));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(new ConditionalReplacementEffect(
+        addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                new ConditionalReplacementEffect(
                         new FullParty(),
                         new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
-                        new DealDamageToPlayersEffect(3, DamageRecipient.EACH_OPPONENT)))));
+                        new DealDamageToPlayersEffect(3, DamageRecipient.EACH_OPPONENT)));
     }
 }

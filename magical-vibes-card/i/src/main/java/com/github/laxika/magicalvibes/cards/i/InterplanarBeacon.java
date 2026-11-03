@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,8 +18,8 @@ import java.util.List;
 public class InterplanarBeacon extends Card {
 
     public InterplanarBeacon() {
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(new CardTypePredicate(CardType.PLANESWALKER), List.of(new GainLifeEffect(1))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.PLANESWALKER)),
+                new GainLifeEffect(1));
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
 

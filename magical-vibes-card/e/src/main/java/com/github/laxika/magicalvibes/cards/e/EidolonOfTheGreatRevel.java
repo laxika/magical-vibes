@@ -4,11 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "JOU", collectorNumber = "94")
 @CardRegistration(set = "A25", collectorNumber = "128")
@@ -17,9 +14,7 @@ import java.util.List;
 public class EidolonOfTheGreatRevel extends Card {
 
     public EidolonOfTheGreatRevel() {
-        addTrigger(Triggers.playerCastsSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PLAYER)),
-                new StackEntryMaxManaValuePredicate(3)));
+        addTrigger(Triggers.playerCastsSpell().withStackEntryFilter(new StackEntryMaxManaValuePredicate(3)),
+                new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PLAYER));
     }
 }

@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -36,16 +35,12 @@ public class TophHardheadedTeacher extends Card {
                         "a card", null, true, null, null, DiscardRecipient.CONTROLLER, true),
                 "Discard a card to return target instant or sorcery card from your graveyard to your hand?"));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardNotPredicate(new CardSubtypePredicate(CardSubtype.LESSON)),
-                List.of(new EarthbendTargetLandEffect(1)),
-                null,
-                TargetFilters.landYouControl()));
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardSubtypePredicate(CardSubtype.LESSON),
-                List.of(new EarthbendTargetLandEffect(1),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)),
-                null,
-                TargetFilters.landYouControl()));
+        target(TargetFilters.landYouControl()).addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardNotPredicate(new CardSubtypePredicate(CardSubtype.LESSON))),
+                new EarthbendTargetLandEffect(1));
+        target(TargetFilters.landYouControl()).addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardSubtypePredicate(CardSubtype.LESSON)),
+                new EarthbendTargetLandEffect(1),
+                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
     }
 }

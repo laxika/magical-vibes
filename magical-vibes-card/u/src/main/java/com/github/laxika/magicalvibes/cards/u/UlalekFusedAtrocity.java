@@ -5,11 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerAllSpellsAndAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "M3C", collectorNumber = "4")
 @CardRegistration(set = "M3C", collectorNumber = "16")
@@ -20,11 +17,10 @@ import java.util.List;
 public class UlalekFusedAtrocity extends Card {
 
     public UlalekFusedAtrocity() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardSubtypePredicate(CardSubtype.ELDRAZI),
-                List.of(new MayPayManaEffect(
+        addTrigger(Triggers.youCastSpell().withFilter(new CardSubtypePredicate(CardSubtype.ELDRAZI)),
+                new MayPayManaEffect(
                         "{C}{C}",
                         new CopyControllerAllSpellsAndAbilitiesEffect(),
-                        "Pay {C}{C} to copy all spells and abilities?"))));
+                        "Pay {C}{C} to copy all spells and abilities?"));
     }
 }

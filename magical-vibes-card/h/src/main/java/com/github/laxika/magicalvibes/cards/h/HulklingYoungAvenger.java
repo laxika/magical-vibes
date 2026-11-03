@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -32,9 +31,8 @@ public class HulklingYoungAvenger extends Card {
                         "Hulkling, Young Avenger", Set.of(), 4, 4, Set.of(),
                         Set.of(), Set.of(Keyword.FLYING), Triggers.youCastSpell());
 
-        target(targetFilter, 0, 1).addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(
-                        new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                        List.of(copyEffect), null, targetFilter));
+        target(targetFilter, 0, 1).addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                copyEffect);
     }
 }

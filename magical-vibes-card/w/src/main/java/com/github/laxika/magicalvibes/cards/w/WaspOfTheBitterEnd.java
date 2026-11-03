@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -26,16 +25,13 @@ public class WaspOfTheBitterEnd extends Card {
         // Whenever you cast a Bolas planeswalker spell, you may sacrifice this creature.
         // If you do, destroy target creature.
         // Target chosen as the trigger stacks (CR 603.3d); may/sacrifice at resolution (CR 603.5).
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAllOfPredicate(List.of(
-                        new CardTypePredicate(CardType.PLANESWALKER),
-                        new CardSubtypePredicate(CardSubtype.BOLAS)
-                )),
-                List.of(new MayEffect(
+        target(TargetFilters.creature()).addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAllOfPredicate(List.of(
+                                new CardTypePredicate(CardType.PLANESWALKER),
+                                new CardSubtypePredicate(CardSubtype.BOLAS)
+                        ))),
+                new MayEffect(
                         new SacrificeSelfThenEffect(new DestroyTargetPermanentEffect(new PermanentIsCreaturePredicate())),
-                        "You may sacrifice this creature. If you do, destroy the target creature.")),
-                null,
-                TargetFilters.creature()
-        ));
+                        "You may sacrifice this creature. If you do, destroy the target creature."));
     }
 }

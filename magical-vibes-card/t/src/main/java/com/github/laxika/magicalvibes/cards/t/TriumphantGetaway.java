@@ -7,15 +7,12 @@ import com.github.laxika.magicalvibes.model.effect.HeistTargetOpponentLibraryEff
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardControllerDoesNotOwnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "YOTJ", collectorNumber = "27")
 public class TriumphantGetaway extends Card {
@@ -30,10 +27,8 @@ public class TriumphantGetaway extends Card {
                         new HeistTargetOpponentLibraryEffect()));
 
         // Whenever you cast a spell you don't own, each opponent loses 2 life and you gain 2 life.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardControllerDoesNotOwnPredicate(),
-                List.of(
-                        new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
-                        new GainLifeEffect(2))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardControllerDoesNotOwnPredicate()),
+                new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
+                new GainLifeEffect(2));
     }
 }

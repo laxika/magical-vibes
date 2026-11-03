@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromExileToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -31,11 +30,10 @@ public class PhoenixOfIteration extends Card {
             new CardTypePredicate(CardType.SORCERY)));
 
     public PhoenixOfIteration() {
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(INSTANT_OR_SORCERY, opusEffects()));
-        addTrigger(new TriggerCondition(Triggers.youCastSpell(), AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
-                new SpellCastTriggerEffect(INSTANT_OR_SORCERY, List.of(
-                        new ConditionalEffect(new SourceCardInGraveyard(), new SequenceEffect(opusEffects())))));
+        addTrigger(Triggers.youCastSpell().withFilter(INSTANT_OR_SORCERY), opusEffects().toArray(CardEffect[]::new));
+        addTrigger(new TriggerCondition(Triggers.youCastSpell().withFilter(INSTANT_OR_SORCERY), AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT,
+                new ConditionalEffect(new SourceCardInGraveyard(), new SequenceEffect(opusEffects())));
     }
 
     private static List<CardEffect> opusEffects() {

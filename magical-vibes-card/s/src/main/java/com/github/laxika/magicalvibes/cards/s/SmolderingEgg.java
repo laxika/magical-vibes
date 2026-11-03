@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -32,19 +31,15 @@ public class SmolderingEgg extends Card {
                 new CardTypePredicate(CardType.SORCERY)
         ));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                instantOrSorcery,
-                List.of(
-                        new PutCountersOnSelfEffect(CounterType.EMBER, new ManaSpentToCast()),
-                        new ConditionalEffect(
-                                new SourceCounterThreshold(7, CounterType.EMBER),
-                                SequenceEffect.of(
-                                        new RemoveCounterFromSourceEffect(
-                                                CounterType.EMBER,
-                                                new CountersOnSource(CounterType.EMBER)),
-                                        new TransformSelfEffect()))
-                )
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery),
+                new PutCountersOnSelfEffect(CounterType.EMBER, new ManaSpentToCast()),
+                new ConditionalEffect(
+                        new SourceCounterThreshold(7, CounterType.EMBER),
+                        SequenceEffect.of(
+                                new RemoveCounterFromSourceEffect(
+                                        CounterType.EMBER,
+                                        new CountersOnSource(CounterType.EMBER)),
+                                new TransformSelfEffect())));
     }
 
     @Override

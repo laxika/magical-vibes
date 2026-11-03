@@ -7,10 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "EMN", collectorNumber = "98")
 @CardRegistration(set = "SIR", collectorNumber = "126")
@@ -18,10 +15,9 @@ public class NoosegrafMob extends Card {
 
     public NoosegrafMob() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(5)));
-        addTrigger(Triggers.playerCastsSpell(),
-                new SpellCastTriggerEffect(null, List.of(
-                        new RemoveCounterFromSourceThenEffect(
-                                CounterType.PLUS_ONE_PLUS_ONE, 1, CreateTokenEffect.blackZombie(1),
-                                false, false))));
+        addTrigger(Triggers.playerCastsSpell().anySpell(),
+                new RemoveCounterFromSourceThenEffect(
+                        CounterType.PLUS_ONE_PLUS_ONE, 1, CreateTokenEffect.blackZombie(1),
+                        false, false));
     }
 }

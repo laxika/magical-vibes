@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -22,12 +21,12 @@ public class UmaraWizard extends Card {
         setBackFaceCard(new UmaraSkyfalls());
         setModalDoubleFaced(true);
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY),
-                        new CardSubtypePredicate(CardSubtype.WIZARD))),
-                List.of(new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF))));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY),
+                                new CardSubtypePredicate(CardSubtype.WIZARD)))),
+                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF));
     }
 
     @Override

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -28,12 +27,10 @@ public class VerdantEidolon extends Card {
                 "{G}, Sacrifice this creature: Add three mana of any one color."
         ));
 
-        addTrigger(new TriggerCondition(Triggers.youCastSpell(), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT, new SpellCastTriggerEffect(
-                new CardIsMulticoloredPredicate(),
-                List.of(new MayEffect(
+        addTrigger(new TriggerCondition(Triggers.youCastSpell().withFilter(new CardIsMulticoloredPredicate()), AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT,
+                new MayEffect(
                         new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
-                        "Return Verdant Eidolon from your graveyard to your hand?"))
-        ));
+                        "Return Verdant Eidolon from your graveyard to your hand?"));
     }
 }

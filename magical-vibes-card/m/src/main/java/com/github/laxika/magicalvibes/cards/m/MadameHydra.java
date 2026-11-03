@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,10 +16,9 @@ import java.util.Set;
 public class MadameHydra extends Card {
 
     public MadameHydra() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardSubtypePredicate(CardSubtype.VILLAIN),
-                List.of(new CreateTokenEffect(
+        addTrigger(Triggers.youCastSpell().withFilter(new CardSubtypePredicate(CardSubtype.VILLAIN)),
+                new CreateTokenEffect(
                         1, "Villain", 2, 1, CardColor.BLACK,
-                        List.of(CardSubtype.VILLAIN), Set.of(Keyword.MENACE), Set.of()))));
+                        List.of(CardSubtype.VILLAIN), Set.of(Keyword.MENACE), Set.of()));
     }
 }

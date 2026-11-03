@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.ConjureSpellbookIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -28,12 +27,11 @@ public class DragonweaveTapestry extends Card {
     public DragonweaveTapestry() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ConjureSpellbookIntoLibraryEffect(SPELLBOOK, 2));
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(
-                        new CardAnyOfPredicate(List.of(
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardSubtypePredicate(CardSubtype.DRAGON),
-                                new CardSubtypePredicate(CardSubtype.OMEN))),
-                        List.of(new DrawCardEffect())));
+                                new CardSubtypePredicate(CardSubtype.OMEN)))),
+                new DrawCardEffect());
         addActivatedAbility(ManaAbilities.tapForAnyColor());
     }
 }

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -28,11 +27,10 @@ public class ZaxaraTheExemplary extends Card {
                 "{T}: Add two mana of any one color."
         ));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardHasXInManaCostPredicate(),
-                List.of(new CreateXTokenWithXCountersEffect(
+        addTrigger(Triggers.youCastSpell().withFilter(new CardHasXInManaCostPredicate()),
+                new CreateXTokenWithXCountersEffect(
                         "Hydra", 0, 0,
                         CardColor.GREEN, Set.of(CardColor.GREEN),
-                        List.of(CardSubtype.HYDRA), CounterType.PLUS_ONE_PLUS_ONE))));
+                        List.of(CardSubtype.HYDRA), CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

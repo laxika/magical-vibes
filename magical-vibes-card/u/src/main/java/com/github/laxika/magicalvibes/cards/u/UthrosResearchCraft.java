@@ -21,11 +21,11 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -36,10 +36,10 @@ import java.util.Set;
 public class UthrosResearchCraft extends Card {
 
     public UthrosResearchCraft() {
-        addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.withIntervening(
-                new CardTypePredicate(CardType.ARTIFACT),
-                List.of(new DrawCardEffect(1), new PutCountersOnSelfEffect(CounterType.CHARGE)),
-                new SourceCounterThreshold(3, CounterType.CHARGE)));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.ARTIFACT)),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(3, CounterType.CHARGE)),
+                new DrawCardEffect(1),
+                new PutCountersOnSelfEffect(CounterType.CHARGE));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

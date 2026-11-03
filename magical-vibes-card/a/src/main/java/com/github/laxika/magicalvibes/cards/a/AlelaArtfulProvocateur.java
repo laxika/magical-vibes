@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -32,11 +31,11 @@ public class AlelaArtfulProvocateur extends Card {
 
         // Whenever you cast an artifact or enchantment spell, create a 1/1 blue Faerie creature
         // token with flying.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.ARTIFACT),
-                        new CardTypePredicate(CardType.ENCHANTMENT))),
-                List.of(new CreateTokenEffect("Faerie", 1, 1, CardColor.BLUE,
-                        List.of(CardSubtype.FAERIE), Set.of(Keyword.FLYING), Set.of()))));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.ARTIFACT),
+                                new CardTypePredicate(CardType.ENCHANTMENT)))),
+                new CreateTokenEffect("Faerie", 1, 1, CardColor.BLUE,
+                        List.of(CardSubtype.FAERIE), Set.of(Keyword.FLYING), Set.of()));
     }
 }

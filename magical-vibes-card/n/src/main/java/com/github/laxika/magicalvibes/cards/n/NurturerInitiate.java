@@ -4,13 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "124")
 public class NurturerInitiate extends Card {
@@ -18,11 +15,7 @@ public class NurturerInitiate extends Card {
     public NurturerInitiate() {
         // Whenever a player casts a green spell, you may pay {1}. If you do, target creature gets +1/+1 until end of turn.
         target(TargetFilters.creature())
-                .addTrigger(Triggers.playerCastsSpell(), new MayEffect(
-                        new SpellCastTriggerEffect(
-                                new CardColorPredicate(CardColor.GREEN),
-                                List.of(new BoostTargetCreatureEffect(1, 1)),
-                                "{1}"),
-                        "Pay {1} to give target creature +1/+1 until end of turn?"));
+                .addTrigger(Triggers.playerCastsSpell().withFilter(new CardColorPredicate(CardColor.GREEN)),
+                        new MayPayManaEffect("{1}", new BoostTargetCreatureEffect(1, 1), "Pay {1} to give target creature +1/+1 until end of turn?"));
     }
 }

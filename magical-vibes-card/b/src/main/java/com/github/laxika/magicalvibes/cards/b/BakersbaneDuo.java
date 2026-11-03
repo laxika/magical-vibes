@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,8 +18,7 @@ public class BakersbaneDuo extends Card {
 
     public BakersbaneDuo() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), foodToken());
-        addTrigger(Triggers.youCastSpell(),
-                SpellCastTriggerEffect.wheneverYouExpend(4, List.of(new BoostSelfEffect(1, 1))));
+        addTrigger(Triggers.youCastSpell().expend(4), new BoostSelfEffect(1, 1));
     }
 
     private static CreateTokenEffect foodToken() {

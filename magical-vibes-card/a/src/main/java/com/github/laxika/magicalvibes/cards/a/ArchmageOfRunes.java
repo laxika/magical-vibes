@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,9 +28,6 @@ public class ArchmageOfRunes extends Card {
                 INSTANT_OR_SORCERY, 1, CostModificationScope.SELF));
 
         // Whenever you cast an instant or sorcery spell, draw a card.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                INSTANT_OR_SORCERY,
-                List.of(new DrawCardEffect(1))
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(INSTANT_OR_SORCERY), new DrawCardEffect(1));
     }
 }

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -67,6 +68,7 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
                 (BecomeCopyOfTargetCreatureUntilEndOfTurnEffect) effect;
         Card originalCard = sourcePermanent.getCard();
         EffectRegistration retainedRegistration = findRetainedRegistration(originalCard, copyEffect);
+        TriggeredAbility retainedAbility = findRetainedAbility(originalCard, copyEffect);
         if (targetPerm != null) {
             permanentCopierService.applyCloneCopy(sourcePermanent, targetPerm,
                     copyEffect.powerOverride(), copyEffect.toughnessOverride(),
@@ -106,6 +108,9 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
             if (copyEffect.retainedTrigger() instanceof LegacySlotTrigger legacy) {
                 sourcePermanent.getCard().addEffect(legacy.slot(),
                         retainedRegistration.effect(), retainedRegistration.triggerMode());
+            } else if (retainedAbility != null) {
+                // "Except it has this ability": the ability as the card wrote it, its trigger's filter included.
+                sourcePermanent.getCard().addTriggeredAbility(retainedAbility);
             } else {
                 sourcePermanent.getCard().addTrigger(copyEffect.retainedTrigger(),
                         retainedRegistration.triggerMode(), retainedRegistration.effect());
@@ -127,10 +132,34 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
         log.info("Game {} - {} becomes a copy of {} until end of turn", gameData.id, originalName, targetName);
     }
 
+    /**
+     * The source's triggered ability whose trigger is (or, with its filters, is found by) the copy effect's retained
+     * trigger and whose effects are the copy effect itself, or {@code null}.
+     */
+    private TriggeredAbility findRetainedAbility(Card sourceCard,
+                                                 BecomeCopyOfTargetCreatureUntilEndOfTurnEffect copyEffect) {
+        if (copyEffect.retainedTrigger() == null || copyEffect.retainedTrigger() instanceof LegacySlotTrigger) {
+            return null;
+        }
+        return sourceCard.getTriggeredAbilities().stream()
+                .filter(ability -> ability.hasWatchedTrigger(copyEffect.retainedTrigger()))
+                .filter(ability -> ability.effects().stream()
+                        .anyMatch(registration -> containsEffect(registration.effect(), copyEffect)))
+                .findFirst()
+                .orElse(null);
+    }
+
     private EffectRegistration findRetainedRegistration(
             Card sourceCard, BecomeCopyOfTargetCreatureUntilEndOfTurnEffect copyEffect) {
         if (copyEffect.retainedTrigger() == null) {
             return null;
+        }
+        TriggeredAbility ability = findRetainedAbility(sourceCard, copyEffect);
+        if (ability != null) {
+            return ability.effects().stream()
+                    .filter(registration -> containsEffect(registration.effect(), copyEffect))
+                    .findFirst()
+                    .orElse(null);
         }
         return sourceCard.getTriggerEffectRegistrations(copyEffect.retainedTrigger()).stream()
                 .filter(registration -> containsEffect(registration.effect(), copyEffect))

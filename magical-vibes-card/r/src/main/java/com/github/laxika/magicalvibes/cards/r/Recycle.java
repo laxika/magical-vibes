@@ -5,10 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "248")
 @CardRegistration(set = "TPR", collectorNumber = "189")
@@ -20,10 +17,7 @@ public class Recycle extends Card {
 
         // Whenever you play a card, draw a card.
         // "Play a card" = cast a spell or play a land, hence the two slots.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new DrawCardEffect(1))
-        ));
+        addTrigger(Triggers.youCastSpell().anySpell(), new DrawCardEffect(1));
         addTrigger(Triggers.youPlayLand(), new DrawCardEffect(1));
 
         // Your maximum hand size is two.

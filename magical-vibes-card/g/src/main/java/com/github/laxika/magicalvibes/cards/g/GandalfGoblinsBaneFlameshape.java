@@ -9,12 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayWhileControllingSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "HOB", collectorNumber = "96")
 public class GandalfGoblinsBaneFlameshape extends Card {
@@ -23,11 +20,9 @@ public class GandalfGoblinsBaneFlameshape extends Card {
         setBackFaceCard(new Flameshape());
         addCastingOption(new AdventureCast("{1}{R}"));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(
-                        new BoostSelfEffect(1, 1),
-                        new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                new BoostSelfEffect(1, 1),
+                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
     }
 
     @Override

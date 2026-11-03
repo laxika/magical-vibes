@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -30,18 +29,12 @@ public class ThiefOfHope extends Card {
         // Whenever you cast a Spirit or Arcane spell, target opponent loses 1 life and you gain
         // 1 life. The opponent is chosen as the trigger goes on the stack; the life gain happens
         // even if the opponent's life total can't change.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardSubtypePredicate(CardSubtype.SPIRIT),
-                        new CardSubtypePredicate(CardSubtype.ARCANE))),
-                List.of(
-                        new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),
-                        new GainLifeEffect(1)),
-                null,
-                new PlayerPredicateTargetFilter(
-                        new PlayerRelationPredicate(PlayerRelation.OPPONENT),
-                        "Target must be an opponent")
-        ));
+        target(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent")).addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardSubtypePredicate(CardSubtype.SPIRIT),
+                                new CardSubtypePredicate(CardSubtype.ARCANE)))),
+                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),
+                new GainLifeEffect(1));
 
         // Soulshift 2: "When this creature dies, you may return target Spirit card with mana value 2
         // or less from your graveyard to your hand."

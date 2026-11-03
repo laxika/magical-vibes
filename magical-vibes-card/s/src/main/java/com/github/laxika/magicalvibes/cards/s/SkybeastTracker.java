@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,9 +28,8 @@ public class SkybeastTracker extends Card {
             )));
 
     public SkybeastTracker() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(FOOD_TOKEN),
-                new StackEntryNotPredicate(new StackEntryMaxManaValuePredicate(4))));
+        addTrigger(Triggers.youCastSpell()
+                        .withStackEntryFilter(new StackEntryNotPredicate(new StackEntryMaxManaValuePredicate(4))),
+                FOOD_TOKEN);
     }
 }

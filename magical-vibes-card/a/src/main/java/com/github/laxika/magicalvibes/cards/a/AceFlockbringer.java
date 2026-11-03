@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfTriggeringCreatureToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -20,12 +19,11 @@ import java.util.List;
 public class AceFlockbringer extends Card {
 
     public AceFlockbringer() {
-        addTrigger(Triggers.youCastSpell(),
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
-                new SpellCastTriggerEffect(
-                        new CardAllOfPredicate(List.of(
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
-                                new CardNotPredicate(new CardKeywordPredicate(Keyword.FLYING)))),
-                        List.of(new ConjureDuplicateOfTriggeringCreatureToHandEffect())));
+                                new CardNotPredicate(new CardKeywordPredicate(Keyword.FLYING))))),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new ConjureDuplicateOfTriggeringCreatureToHandEffect());
     }
 }

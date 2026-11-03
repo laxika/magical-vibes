@@ -7,13 +7,11 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BoostLegendaryCreaturesByOtherLegendaryCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1932")
 @CardRegistration(set = "DMU", collectorNumber = "203")
@@ -25,9 +23,9 @@ public class JodahTheUnifier extends Card {
                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)));
         addStaticEffect(new BoostLegendaryCreaturesByOtherLegendaryCreaturesEffect(1, 1));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardSupertypePredicate(CardSupertype.LEGENDARY),
-                List.of(new CascadeEffect(false, new CardSupertypePredicate(CardSupertype.LEGENDARY), false, true)),
-                new StackEntryCastFromZonePredicate(Zone.HAND)));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardSupertypePredicate(CardSupertype.LEGENDARY))
+                        .withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.HAND)),
+                new CascadeEffect(false, new CardSupertypePredicate(CardSupertype.LEGENDARY), false, true));
     }
 }

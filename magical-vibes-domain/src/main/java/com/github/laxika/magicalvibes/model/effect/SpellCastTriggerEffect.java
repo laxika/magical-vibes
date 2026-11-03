@@ -8,10 +8,14 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import java.util.List;
 
 /**
- * Generic trigger descriptor for "whenever [someone] casts a spell [matching filter]" abilities.
+ * Generic trigger descriptor for "whenever [someone] casts a spell [matching filter]" abilities, in the form the
+ * spell-cast collectors read until steps 14 and 15 of effect-slot-refactor.md replace them.
  * <p>
- * Works in both {@code Triggers.playerCastsSpell()} and {@code Triggers.youCastSpell()} abilities —
- * the EffectSlot determines which loop fires it.
+ * Cards don't author it (step 14, run 6b): such an ability is a cast trigger with a
+ * {@link com.github.laxika.magicalvibes.model.trigger.SpellFilter}
+ * ({@code Triggers.youCastSpell().withFilter(spellFilter).duringYourTurn()}), its options and its effects, and
+ * {@code TriggeredAbility.legacyEffects()} builds this record from them for the collectors. Emblems
+ * ({@code CreateEmblemEffect}) still hold it, as do the few abilities effect-slot-refactor.md lists as kept.
  * <p>
  * When wrapped in {@link MayEffect}, the player is prompted before the effects resolve.
  * If {@code manaCost} is non-null, a "may pay" prompt is shown and the cost must be paid.

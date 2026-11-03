@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,13 +19,8 @@ public class ParadisePlume extends Card {
 
     public ParadisePlume() {
         addStaticEffect(new ChooseColorOnEnterEffect());
-        addTrigger(Triggers.playerCastsSpell(), new MayEffect(
-                new SpellCastTriggerEffect(
-                        new CardHasSourceChosenColorPredicate(),
-                        List.of(new GainLifeEffect(1))
-                ),
-                "Gain 1 life?"
-        ));
+        addTrigger(Triggers.playerCastsSpell().withFilter(new CardHasSourceChosenColorPredicate()),
+                new MayEffect(new GainLifeEffect(1), "Gain 1 life?"));
         addActivatedAbility(new ActivatedAbility(true, null,
                 List.of(new AwardChosenColorManaEffect()),
                 "{T}: Add one mana of the chosen color."

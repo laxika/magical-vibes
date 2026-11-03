@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,10 +20,8 @@ import java.util.List;
 public class ElementalistsPalette extends Card {
 
     public ElementalistsPalette() {
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(null,
-                        List.of(new PutCountersOnSelfEffect(CounterType.CHARGE, 2)),
-                        new StackEntryHasXInManaCostPredicate()));
+        addTrigger(Triggers.youCastSpell().withStackEntryFilter(new StackEntryHasXInManaCostPredicate()),
+                new PutCountersOnSelfEffect(CounterType.CHARGE, 2));
 
         addActivatedAbility(ManaAbilities.tapForAnyColor());
 

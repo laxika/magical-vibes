@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.ExperienceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.amount.ControllerExperienceCounters;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -28,9 +27,9 @@ public class MizzixOfTheIzmagnus extends Card {
 
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(instantOrSorcery,
                         new ControllerExperienceCounters(), CostModificationScope.SELF));
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(instantOrSorcery,
-                        List.of(new ExperienceCountersEffect(1)),
-                        new StackEntryManaValueGreaterThanControllerExperienceCountersPredicate()));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(instantOrSorcery)
+                        .withStackEntryFilter(new StackEntryManaValueGreaterThanControllerExperienceCountersPredicate()),
+                new ExperienceCountersEffect(1));
     }
 }

@@ -5,19 +5,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaToCastingPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "259")
 public class Tangleroot extends Card {
 
     public Tangleroot() {
-        addTrigger(Triggers.playerCastsSpell(),
-                new SpellCastTriggerEffect(
-                        new CardTypePredicate(CardType.CREATURE),
-                        List.of(new AwardManaToCastingPlayerEffect(ManaColor.GREEN))));
+        addTrigger(Triggers.playerCastsSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
+                new AwardManaToCastingPlayerEffect(ManaColor.GREEN));
     }
 }

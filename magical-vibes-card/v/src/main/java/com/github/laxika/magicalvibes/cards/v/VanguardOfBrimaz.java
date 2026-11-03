@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,13 +16,10 @@ import java.util.Set;
 public class VanguardOfBrimaz extends Card {
 
     public VanguardOfBrimaz() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new CreateTokenEffect(
+        addTrigger(Triggers.youCastSpell().withStackEntryFilter(new StackEntryTargetsSourcePredicate()),
+                new CreateTokenEffect(
                         "Cat Soldier", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.CAT, CardSubtype.SOLDIER),
-                        Set.of(Keyword.VIGILANCE), Set.of())),
-                new StackEntryTargetsSourcePredicate()
-        ));
+                        Set.of(Keyword.VIGILANCE), Set.of()));
     }
 }

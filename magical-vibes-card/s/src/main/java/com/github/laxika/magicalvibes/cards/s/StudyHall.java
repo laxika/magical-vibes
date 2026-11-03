@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.amount.CommanderCastsFromCommandZone
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySourceIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -28,19 +27,9 @@ public class StudyHall extends Card {
                         .withProducingSourceForSpellCastTriggers()),
                 "{1}, {T}: Add one mana of any color. When you spend this mana to cast your commander, scry X, where X is the number of times it's been cast from the command zone this game."
         ));
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(
-                        null,
-                        List.of(new ScryEffect(CommanderCastsFromCommandZoneThisGame.ofTriggeringCommander())),
-                        null,
-                        null,
-                        new StackEntrySourceIsCommanderPredicate(),
-                        false,
-                        false,
-                        null,
-                        0,
-                        0,
-                        false,
-                        true));
+        addTrigger(Triggers.youCastSpell()
+                        .withStackEntryFilter(new StackEntrySourceIsCommanderPredicate())
+                        .paidWithManaFromThis(),
+                new ScryEffect(CommanderCastsFromCommandZoneThisGame.ofTriggeringCommander()));
     }
 }

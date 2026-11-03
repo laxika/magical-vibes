@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffe
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityToCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
@@ -28,12 +27,11 @@ public class GaleaKindlerOfHope extends Card {
 
         addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
         addStaticEffect(new AllowCastFromTopOfLibraryEffect(auraOrEquipment));
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(
-                        new CardSubtypePredicate(CardSubtype.EQUIPMENT),
-                        List.of(new GrantTriggeredAbilityToCastSpellEffect(
-                                new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
-                                AttachSourceEquipmentToTargetCreatureEffect.forCreatureYouControl()))),
-                        new StackEntryCastFromZonePredicate(Zone.LIBRARY)));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardSubtypePredicate(CardSubtype.EQUIPMENT))
+                        .withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.LIBRARY)),
+                new GrantTriggeredAbilityToCastSpellEffect(
+                        new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
+                        AttachSourceEquipmentToTargetCreatureEffect.forCreatureYouControl())));
     }
 }

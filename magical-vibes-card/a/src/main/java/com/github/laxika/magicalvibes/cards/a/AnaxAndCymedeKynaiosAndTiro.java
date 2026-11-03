@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayPutLandFromHandThenOpponentsDrawEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
@@ -44,11 +43,8 @@ public class AnaxAndCymedeKynaiosAndTiro extends Card {
     }
 
     public AnaxAndCymedeKynaiosAndTiro() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(
-                        new DrawCardEffect(),
-                        new EachPlayerMayPutLandFromHandThenOpponentsDrawEffect()),
-                new StackEntryTargetsSourcePredicate()));
+        addTrigger(Triggers.youCastSpell().withStackEntryFilter(new StackEntryTargetsSourcePredicate()),
+                new DrawCardEffect(),
+                new EachPlayerMayPutLandFromHandThenOpponentsDrawEffect());
     }
 }

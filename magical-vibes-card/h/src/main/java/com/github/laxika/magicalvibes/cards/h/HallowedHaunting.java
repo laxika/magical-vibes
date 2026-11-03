@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -43,8 +42,6 @@ public class HallowedHaunting extends Card {
                 1, "Spirit Cleric", 0, 0, CardColor.WHITE,
                 List.of(CardSubtype.SPIRIT, CardSubtype.CLERIC), Set.of(), Set.of(),
                 List.of(StaticAbility.of(new SetPowerToughnessToAmountEffect(spirits, spirits))));
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardTypePredicate(CardType.ENCHANTMENT),
-                List.of(spiritCleric)));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.ENCHANTMENT)), spiritCleric);
     }
 }

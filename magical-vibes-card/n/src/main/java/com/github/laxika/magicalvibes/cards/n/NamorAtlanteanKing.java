@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -27,11 +26,9 @@ public class NamorAtlanteanKing extends Card {
 
     public NamorAtlanteanKing() {
         // Whenever you cast a noncreature spell, create a 1/1 blue Merfolk creature token.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(new CreateTokenEffect("Merfolk", 1, 1, CardColor.BLUE,
-                        List.of(CardSubtype.MERFOLK), Set.of(), Set.of()))
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                new CreateTokenEffect("Merfolk", 1, 1, CardColor.BLUE,
+                        List.of(CardSubtype.MERFOLK), Set.of(), Set.of()));
 
         // Whenever Namor attacks a player who has more life than you, other creatures you control
         // attacking that player get +2/+0 until end of turn.

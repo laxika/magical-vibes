@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -34,10 +33,8 @@ public class ValleyFloodcaller extends Card {
     public ValleyFloodcaller() {
         addStaticEffect(new GrantFlashToCardTypeEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))));
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(
-                        new BoostAllOwnCreaturesEffect(1, 1, FLOODCALLER_CREATURES),
-                        new UntapPermanentsEffect(TapUntapScope.CONTROLLED, FLOODCALLER_CREATURES))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                new BoostAllOwnCreaturesEffect(1, 1, FLOODCALLER_CREATURES),
+                new UntapPermanentsEffect(TapUntapScope.CONTROLLED, FLOODCALLER_CREATURES));
     }
 }

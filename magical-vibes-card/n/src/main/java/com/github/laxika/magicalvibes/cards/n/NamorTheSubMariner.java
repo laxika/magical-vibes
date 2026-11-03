@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorManaSymbols;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasColorManaSymbolPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -34,10 +33,9 @@ public class NamorTheSubMariner extends Card {
         CardAllOfPredicate noncreatureSpellWithBlueManaSymbol = new CardAllOfPredicate(List.of(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                 new CardHasColorManaSymbolPredicate(ManaColor.BLUE)));
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(noncreatureSpellWithBlueManaSymbol, List.of(
-                        new CreateTokenEffect(new TriggeringSpellColorManaSymbols(ManaColor.BLUE),
-                                "Merfolk", 1, 1, CardColor.BLUE, List.of(CardSubtype.MERFOLK),
-                                Set.of(), Set.of()))));
+        addTrigger(Triggers.youCastSpell().withFilter(noncreatureSpellWithBlueManaSymbol),
+                new CreateTokenEffect(new TriggeringSpellColorManaSymbols(ManaColor.BLUE),
+                        "Merfolk", 1, 1, CardColor.BLUE, List.of(CardSubtype.MERFOLK),
+                        Set.of(), Set.of()));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -29,10 +28,7 @@ public class BallynockTrapper extends Card {
         ));
 
         // Whenever you cast a white spell, you may untap this creature.
-        addTrigger(Triggers.youCastSpell(), new MayEffect(
-                new SpellCastTriggerEffect(
-                        new CardColorPredicate(CardColor.WHITE),
-                        List.of(new UntapPermanentsEffect(TapUntapScope.SELF))),
-                "Untap Ballynock Trapper?"));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.WHITE)),
+                new MayEffect(new UntapPermanentsEffect(TapUntapScope.SELF), "Untap Ballynock Trapper?"));
     }
 }

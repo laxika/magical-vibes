@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,11 +24,8 @@ public class Riddleform extends Card {
     public Riddleform() {
         // Whenever you cast a noncreature spell, you may have this enchantment become a 3/3
         // Sphinx creature with flying in addition to its other types until end of turn.
-        addTrigger(Triggers.youCastSpell(), new MayEffect(
-                new SpellCastTriggerEffect(
-                        new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                        List.of(new AnimatePermanentsEffect(3, 3, List.of(CardSubtype.SPHINX), Set.of(Keyword.FLYING)))),
-                "Have Riddleform become a 3/3 Sphinx creature with flying?"));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                new MayEffect(new AnimatePermanentsEffect(3, 3, List.of(CardSubtype.SPHINX), Set.of(Keyword.FLYING)), "Have Riddleform become a 3/3 Sphinx creature with flying?"));
 
         // {2}{U}: Scry 1.
         addActivatedAbility(new ActivatedAbility(false, "{2}{U}", List.of(new ScryEffect(1)),

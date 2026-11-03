@@ -7,12 +7,9 @@ import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControl
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "BLC", collectorNumber = "26")
 @CardRegistration(set = "BLC", collectorNumber = "60")
@@ -23,8 +20,7 @@ public class PyreswipeHawk extends Card {
                 new GreatestManaValueAmongControlled(new PermanentIsArtifactPredicate()),
                 new Fixed(0)));
 
-        target(TargetFilters.artifact(), 0, 1).addTrigger(Triggers.youCastSpell(),
-                SpellCastTriggerEffect.wheneverYouExpend(6,
-                        List.of(new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD))));
+        target(TargetFilters.artifact(), 0, 1).addTrigger(Triggers.youCastSpell().expend(6),
+                new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD));
     }
 }

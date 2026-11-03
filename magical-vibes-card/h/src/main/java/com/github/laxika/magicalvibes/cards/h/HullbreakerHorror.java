@@ -4,10 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.HullbreakerHorrorTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "68")
 @CardRegistration(set = "INR", collectorNumber = "303")
@@ -31,7 +28,6 @@ public class HullbreakerHorror extends Card {
         // Whenever you cast a spell, choose up to one —
         // • Return target spell you don't control to its owner's hand.
         // • Return target nonland permanent to its owner's hand.
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(null, List.of(new HullbreakerHorrorTriggerEffect())));
+        addTrigger(Triggers.youCastSpell().anySpell(), new HullbreakerHorrorTriggerEffect());
     }
 }

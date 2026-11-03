@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardE
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityToCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.PlayLandOrCastPermanentFromGraveyardOncePerTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -45,10 +44,10 @@ public class RivazOfTheClaw extends Card {
         addStaticEffect(new PlayLandOrCastPermanentFromGraveyardOncePerTurnEffect(
                 dragonCreature, null));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                dragonCreature,
-                List.of(new GrantTriggeredAbilityToCastSpellEffect(
-                        new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new ExileSourceCardFromGraveyardEffect()))),
-                new StackEntryCastFromZonePredicate(Zone.GRAVEYARD)));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(dragonCreature)
+                        .withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.GRAVEYARD)),
+                new GrantTriggeredAbilityToCastSpellEffect(
+                        new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new ExileSourceCardFromGraveyardEffect())));
     }
 }

@@ -6,13 +6,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessSacrificesEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "77")
 public class BloodFunnel extends Card {
@@ -21,8 +18,7 @@ public class BloodFunnel extends Card {
         CardNotPredicate noncreatureSpell = new CardNotPredicate(new CardTypePredicate(CardType.CREATURE));
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 noncreatureSpell, 2, CostModificationScope.SELF));
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                noncreatureSpell,
-                List.of(new CounterUnlessSacrificesEffect(new PermanentIsCreaturePredicate(), "creature"))));
+        addTrigger(Triggers.youCastSpell().withFilter(noncreatureSpell),
+                new CounterUnlessSacrificesEffect(new PermanentIsCreaturePredicate(), "creature"));
     }
 }

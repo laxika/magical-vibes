@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
@@ -36,11 +35,8 @@ public class SanctumOfUgin extends Card {
         // Whenever you cast a colorless spell with mana value 7 or greater, you may sacrifice this
         // land. If you do, search your library for a colorless creature card, reveal it, put it into
         // your hand, then shuffle.
-        addTrigger(Triggers.youCastSpell(), new MayEffect(
-                new SpellCastTriggerEffect(
-                        colorlessSpellWithManaValueSeven,
-                        List.of(new SacrificeSelfThenEffect(new SearchLibraryEffect(
-                                colorlessCreature, LibrarySearchDestination.HAND)))),
-                "Sacrifice Sanctum of Ugin?"));
+        addTrigger(Triggers.youCastSpell().withFilter(colorlessSpellWithManaValueSeven),
+                new MayEffect(new SacrificeSelfThenEffect(new SearchLibraryEffect(
+                        colorlessCreature, LibrarySearchDestination.HAND)), "Sacrifice Sanctum of Ugin?"));
     }
 }

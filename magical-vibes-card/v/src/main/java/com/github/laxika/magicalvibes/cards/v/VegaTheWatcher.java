@@ -4,21 +4,17 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "233")
 @CardRegistration(set = "KHM", collectorNumber = "332")
 public class VegaTheWatcher extends Card {
 
     public VegaTheWatcher() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new DrawCardEffect()),
-                new StackEntryNotPredicate(new StackEntryCastFromZonePredicate(Zone.HAND))));
+        addTrigger(Triggers.youCastSpell()
+                        .withStackEntryFilter(new StackEntryNotPredicate(new StackEntryCastFromZonePredicate(Zone.HAND))),
+                new DrawCardEffect());
     }
 }

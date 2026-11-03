@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -29,7 +28,7 @@ public class PrismariApprentice extends Card {
                 new MakeCreatureUnblockableEffect(true),
                 new ConditionalEffect(new EventValueAtLeast(5), new PutCountersOnSourceEffect(1, 1, 1)));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(instantOrSorcery, magecraft));
+        addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery), magecraft.toArray(CardEffect[]::new));
         addTrigger(Triggers.youCopySpell(), new SpellCopyTriggerEffect(instantOrSorcery, magecraft));
     }
 }

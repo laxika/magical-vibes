@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -27,9 +26,8 @@ public class PollywogSymbiote extends Card {
 
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 mutateCreature, 1, CostModificationScope.SELF));
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                mutateCreature, List.of(
-                        new DrawCardEffect(1),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER))));
+        addTrigger(Triggers.youCastSpell().withFilter(mutateCreature),
+                new DrawCardEffect(1),
+                new DiscardEffect(1, DiscardRecipient.CONTROLLER));
     }
 }

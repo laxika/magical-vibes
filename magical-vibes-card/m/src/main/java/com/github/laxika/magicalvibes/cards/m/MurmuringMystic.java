@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,15 +26,14 @@ public class MurmuringMystic extends Card {
 
     public MurmuringMystic() {
         // Whenever you cast an instant or sorcery spell, create a 1/1 blue Bird Illusion creature token with flying.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY))),
-                List.of(new CreateTokenEffect("Bird Illusion", 1, 1,
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY)))),
+                new CreateTokenEffect("Bird Illusion", 1, 1,
                         CardColor.BLUE,
                         List.of(CardSubtype.BIRD, CardSubtype.ILLUSION),
                         Set.of(Keyword.FLYING),
-                        Set.of()))
-        ));
+                        Set.of()));
     }
 }

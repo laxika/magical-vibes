@@ -7,13 +7,13 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardNamedIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
-import com.github.laxika.magicalvibes.model.effect.OnceOnlyTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,10 +24,9 @@ public class SapphireCollector extends Card {
 
     public SapphireCollector() {
         CardNotPredicate noncreatureSpell = new CardNotPredicate(new CardTypePredicate(CardType.CREATURE));
-        addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.nth(
-                2,
-                noncreatureSpell,
-                List.of(new OnceOnlyTriggerEffect(new ConjureCardNamedIntoHandEffect("LEA", "265", false)))));
+        addTrigger(Triggers.youCastSpell().withFilter(noncreatureSpell).nthThisTurn(2),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE),
+                new ConjureCardNamedIntoHandEffect("LEA", "265", false));
 
         CardPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),

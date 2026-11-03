@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeEnchantmentEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -18,10 +18,9 @@ import java.util.List;
 public class OpalAcrolith extends Card {
 
     public OpalAcrolith() {
-        addTrigger(Triggers.opponentCastsSpell(), SpellCastTriggerEffect.withIntervening(
-                new CardTypePredicate(CardType.CREATURE),
-                List.of(new BecomeCreatureEffect(2, 4, CardSubtype.SOLDIER)),
-                new SourceIsEnchantment()));
+        addTrigger(Triggers.opponentCastsSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsEnchantment()),
+                new BecomeCreatureEffect(2, 4, CardSubtype.SOLDIER));
 
         addActivatedAbility(new ActivatedAbility(false, "{0}", List.of(new BecomeEnchantmentEffect()),
                 "{0}: This permanent becomes an enchantment."));

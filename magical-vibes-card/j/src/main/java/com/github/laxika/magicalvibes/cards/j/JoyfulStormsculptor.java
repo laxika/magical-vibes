@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPerma
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
@@ -29,14 +28,12 @@ public class JoyfulStormsculptor extends Card {
                 new CreateTokenEffect(2, "Elemental", 1, 1, null,
                         Set.of(CardColor.BLUE, CardColor.RED), List.of(CardSubtype.ELEMENTAL)));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardKeywordPredicate(Keyword.CONVOKE),
-                List.of(
-                        new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
-                        new DealDamageToEachMatchingPermanentEffect(1,
-                                new PermanentAllOfPredicate(List.of(
-                                        new PermanentIsBattlePredicate(),
-                                        new PermanentProtectedByOpponentOfSourceControllerPredicate())),
-                                EachPermanentScope.ALL_PLAYERS))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardKeywordPredicate(Keyword.CONVOKE)),
+                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
+                new DealDamageToEachMatchingPermanentEffect(1,
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsBattlePredicate(),
+                                new PermanentProtectedByOpponentOfSourceControllerPredicate())),
+                        EachPermanentScope.ALL_PLAYERS));
     }
 }

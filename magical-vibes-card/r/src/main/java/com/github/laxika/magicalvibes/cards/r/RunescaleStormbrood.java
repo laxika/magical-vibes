@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.OmenCast;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -23,13 +22,12 @@ public class RunescaleStormbrood extends Card {
         setBackFaceCard(new ChillingScreech());
         addCastingOption(new OmenCast());
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                        new CardSubtypePredicate(CardSubtype.DRAGON)
-                )),
-                List.of(new BoostSelfEffect(2, 0))
-        ));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
+                                new CardSubtypePredicate(CardSubtype.DRAGON)
+                        ))),
+                new BoostSelfEffect(2, 0));
     }
 
     @Override

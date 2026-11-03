@@ -5,12 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "HBG", collectorNumber = "246")
 public class OjiTheExquisiteBlade extends Card {
@@ -21,8 +18,6 @@ public class OjiTheExquisiteBlade extends Card {
 
         var creatureYouControl = TargetFilters.creatureYouControl();
         target(creatureYouControl, 0, 1)
-                .addTrigger(Triggers.youCastSpell(),
-                        SpellCastTriggerEffect.nth(2, null,
-                                List.of(FlickerEffect.flickerTarget()), creatureYouControl));
+                .addTrigger(Triggers.youCastSpell().nthThisTurn(2), FlickerEffect.flickerTarget());
     }
 }

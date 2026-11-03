@@ -6,11 +6,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveCountersFromSourceToOtherCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "SCG", collectorNumber = "120")
 @CardRegistration(set = "HOP", collectorNumber = "73")
@@ -32,10 +29,8 @@ import java.util.List;
 public class ForgottenAncient extends Card {
 
     public ForgottenAncient() {
-        addTrigger(Triggers.playerCastsSpell(), new MayEffect(
-                new SpellCastTriggerEffect(null,
-                        List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))),
-                "Put a +1/+1 counter on Forgotten Ancient?"));
+        addTrigger(Triggers.playerCastsSpell().anySpell(),
+                new MayEffect(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE), "Put a +1/+1 counter on Forgotten Ancient?"));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
                 new MoveCountersFromSourceToOtherCreaturesEffect(CounterType.PLUS_ONE_PLUS_ONE),
                 "Move any number of +1/+1 counters from Forgotten Ancient onto other creatures?"));

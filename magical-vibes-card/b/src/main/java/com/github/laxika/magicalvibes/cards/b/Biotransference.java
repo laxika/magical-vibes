@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,12 +24,10 @@ public class Biotransference extends Card {
         addStaticEffect(new GrantCardTypeToOwnCardsEffect(CardType.ARTIFACT,
                         new CardTypePredicate(CardType.CREATURE), false));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardTypePredicate(CardType.ARTIFACT),
-                List.of(
-                        new LoseLifeEffect(1),
-                        new CreateTokenEffect(1, "Necron Warrior", 2, 2, CardColor.BLACK,
-                                List.of(CardSubtype.NECRON, CardSubtype.WARRIOR), Set.of(),
-                                Set.of(CardType.ARTIFACT)))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.ARTIFACT)),
+                new LoseLifeEffect(1),
+                new CreateTokenEffect(1, "Necron Warrior", 2, 2, CardColor.BLACK,
+                        List.of(CardSubtype.NECRON, CardSubtype.WARRIOR), Set.of(),
+                        Set.of(CardType.ARTIFACT)));
     }
 }

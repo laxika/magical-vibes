@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,9 +23,8 @@ public class ShrineOfPiercingVision extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCountersOnSelfEffect(CounterType.CHARGE));
 
         // Whenever you cast a blue spell, put a charge counter on Shrine of Piercing Vision.
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(new CardColorPredicate(CardColor.BLUE),
-                        List.of(new PutCountersOnSelfEffect(CounterType.CHARGE))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.BLUE)),
+                new PutCountersOnSelfEffect(CounterType.CHARGE));
 
         // {T}, Sacrifice Shrine of Piercing Vision: Look at the top X cards of your library,
         // where X is the number of charge counters on Shrine of Piercing Vision.

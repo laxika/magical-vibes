@@ -5,15 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "VOC", collectorNumber = "11")
 @CardRegistration(set = "VOC", collectorNumber = "49")
@@ -22,10 +19,9 @@ public class BreathOfTheSleepless extends Card {
     public BreathOfTheSleepless() {
         addStaticEffect(new GrantFlashToCardTypeEffect(new CardSubtypePredicate(CardSubtype.SPIRIT)));
         target(TargetFilters.creature(), 0, 1)
-                .addTrigger(Triggers.youCastSpell(),
-                        new SpellCastTriggerEffect(
-                                new CardTypePredicate(CardType.CREATURE),
-                                List.of(new TapPermanentsEffect(TapUntapScope.TARGET)),
-                                true));
+                .addTrigger(Triggers.youCastSpell()
+                                .withFilter(new CardTypePredicate(CardType.CREATURE))
+                                .duringOpponentsTurn(),
+                        new TapPermanentsEffect(TapUntapScope.TARGET));
     }
 }

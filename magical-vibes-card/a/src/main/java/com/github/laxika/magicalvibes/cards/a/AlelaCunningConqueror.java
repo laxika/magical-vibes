@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -25,12 +24,10 @@ import java.util.Set;
 public class AlelaCunningConqueror extends Card {
 
     public AlelaCunningConqueror() {
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(null,
-                        List.of(new CreateTokenEffect("Faerie Rogue", 1, 1, CardColor.BLACK,
-                                List.of(CardSubtype.FAERIE, CardSubtype.ROGUE),
-                                Set.of(Keyword.FLYING), Set.of())),
-                        null, null, null, true, false, null, 1));
+        addTrigger(Triggers.youCastSpell().duringOpponentsTurn().nthThisTurn(1),
+                new CreateTokenEffect("Faerie Rogue", 1, 1, CardColor.BLACK,
+                        List.of(CardSubtype.FAERIE, CardSubtype.ROGUE),
+                        Set.of(Keyword.FLYING), Set.of()));
 
         PermanentPredicate defendingPlayerCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

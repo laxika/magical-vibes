@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,11 +18,8 @@ import java.util.Set;
 public class AkroanCrusader extends Card {
 
     public AkroanCrusader() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new CreateTokenEffect(1, "Soldier", 1, 1, CardColor.RED,
-                        List.of(CardSubtype.SOLDIER), Set.of(Keyword.HASTE), Set.of())),
-                new StackEntryTargetsSourcePredicate()
-        ));
+        addTrigger(Triggers.youCastSpell().withStackEntryFilter(new StackEntryTargetsSourcePredicate()),
+                new CreateTokenEffect(1, "Soldier", 1, 1, CardColor.RED,
+                        List.of(CardSubtype.SOLDIER), Set.of(Keyword.HASTE), Set.of()));
     }
 }

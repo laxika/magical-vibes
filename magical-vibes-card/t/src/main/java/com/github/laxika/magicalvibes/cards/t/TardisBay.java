@@ -7,20 +7,16 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "601")
 public class TardisBay extends Card {
 
     public TardisBay() {
-        addTrigger(Triggers.youCastSpell(),
-                SpellCastTriggerEffect.nth(1, new CardMinManaValuePredicate(2, true),
-                        List.of(new CascadeEffect())));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardMinManaValuePredicate(2, true)).nthThisTurn(1),
+                new CascadeEffect());
         target(TargetFilters.artifact()).addTrigger(Triggers.chaosEnsues(),
                 SequenceEffect.of(
                         new GainControlOfTargetEffect(ControlDuration.PERMANENT),

@@ -10,15 +10,12 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalCountersToCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "BLC", collectorNumber = "29")
 @CardRegistration(set = "BLC", collectorNumber = "63")
@@ -36,10 +33,7 @@ public class CommunalBrewing extends Card {
                         new PutCountersOnSelfEffect(CounterType.INGREDIENT,
                                 new CardsDrawnThisResolution())));
 
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(
-                        new CardTypePredicate(CardType.CREATURE),
-                        List.of(new GrantAdditionalCountersToCastSpellEffect(
-                                new CountersOnSource(CounterType.INGREDIENT)))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
+                new GrantAdditionalCountersToCastSpellEffect(new CountersOnSource(CounterType.INGREDIENT)));
     }
 }

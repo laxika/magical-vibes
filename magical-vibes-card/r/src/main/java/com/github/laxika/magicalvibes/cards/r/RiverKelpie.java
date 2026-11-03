@@ -4,12 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "49")
 @CardRegistration(set = "TDC", collectorNumber = "166")
@@ -24,9 +21,8 @@ public class RiverKelpie extends Card {
         addTrigger(Triggers.entersFrom(Zone.GRAVEYARD, null, ObjectRelation.ANY), new DrawCardEffect());
 
         // Whenever a player casts a spell from a graveyard, draw a card.
-        addTrigger(Triggers.playerCastsSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new DrawCardEffect()),
-                new StackEntryCastFromZonePredicate(Zone.GRAVEYARD)));
+        addTrigger(Triggers.playerCastsSpell()
+                        .withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.GRAVEYARD)),
+                new DrawCardEffect());
     }
 }

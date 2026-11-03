@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -27,10 +26,7 @@ public class MerrowBonegnawer extends Card {
         ));
 
         // Whenever you cast a black spell, you may untap this creature.
-        addTrigger(Triggers.youCastSpell(), new MayEffect(
-                new SpellCastTriggerEffect(
-                        new CardColorPredicate(CardColor.BLACK),
-                        List.of(new UntapPermanentsEffect(TapUntapScope.SELF))),
-                "Untap Merrow Bonegnawer?"));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.BLACK)),
+                new MayEffect(new UntapPermanentsEffect(TapUntapScope.SELF), "Untap Merrow Bonegnawer?"));
     }
 }

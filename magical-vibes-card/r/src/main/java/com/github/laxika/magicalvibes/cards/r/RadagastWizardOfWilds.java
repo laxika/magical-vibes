@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -41,16 +40,14 @@ public class RadagastWizardOfWilds extends Card {
                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                 new CounterUnlessPaysEffect(1)), GrantScope.OWN_CREATURES, beastOrBird));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardMinManaValuePredicate(5),
-                List.of(new ChooseOneEffect(List.of(
+        addTrigger(Triggers.youCastSpell().withFilter(new CardMinManaValuePredicate(5)),
+                new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(BEAST_MODE,
                                 new CreateTokenEffect("Beast", 3, 3, CardColor.GREEN,
                                         List.of(CardSubtype.BEAST), Set.of(), Set.of())),
                         new ChooseOneEffect.ChooseOneOption(BIRD_MODE,
                                 new CreateTokenEffect("Bird", 2, 2, CardColor.BLUE,
                                         List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of()))
-                )))
-        ));
+                )));
     }
 }

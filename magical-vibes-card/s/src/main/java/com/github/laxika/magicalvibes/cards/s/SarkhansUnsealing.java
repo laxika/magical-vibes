@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostPredicate;
@@ -20,24 +19,20 @@ import java.util.List;
 public class SarkhansUnsealing extends Card {
 
     public SarkhansUnsealing() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAllOfPredicate(List.of(
-                        new CardTypePredicate(CardType.CREATURE),
-                        new CardPowerAtLeastPredicate(4),
-                        new CardPowerAtMostPredicate(6)
-                )),
-                List.of(new DealDamageToAnyTargetEffect(4))
-        ));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAllOfPredicate(List.of(
+                                new CardTypePredicate(CardType.CREATURE),
+                                new CardPowerAtLeastPredicate(4),
+                                new CardPowerAtMostPredicate(6)
+                        ))),
+                new DealDamageToAnyTargetEffect(4));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAllOfPredicate(List.of(
-                        new CardTypePredicate(CardType.CREATURE),
-                        new CardPowerAtLeastPredicate(7)
-                )),
-                List.of(
-                        new DealDamageToPlayersEffect(4, DamageRecipient.EACH_OPPONENT),
-                        new DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect(4)
-                )
-        ));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAllOfPredicate(List.of(
+                                new CardTypePredicate(CardType.CREATURE),
+                                new CardPowerAtLeastPredicate(7)
+                        ))),
+                new DealDamageToPlayersEffect(4, DamageRecipient.EACH_OPPONENT),
+                new DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect(4));
     }
 }

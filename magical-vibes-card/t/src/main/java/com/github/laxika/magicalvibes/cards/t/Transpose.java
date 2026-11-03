@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -34,9 +33,8 @@ public class Transpose extends Card {
         addSpellEffect(new LoseLifeEffect(1));
         addSpellEffect(new ConditionalEffect(new CastFromZone(Zone.HAND), new CreateTokenEffect(
                 1, "Wizard", 0, 1, CardColor.BLACK, List.of(CardSubtype.WIZARD), Set.of(), Set.of(), List.of(
-                        new TriggeredAbility(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                                List.of(new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT))
-                        ))))));
+                        new TriggeredAbility(Triggers.youCastSpell()
+                                        .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT))))));
     }
 }

@@ -11,12 +11,10 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DST", collectorNumber = "9")
@@ -32,8 +30,7 @@ public class PristineAngel extends Card {
                 new SourceUntapped(),
                 new ProtectionFromColorsEffect(Set.of(
                         CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN))));
-        addTrigger(Triggers.youCastSpell(), new MayEffect(
-                new SpellCastTriggerEffect(null, List.of(new UntapPermanentsEffect(TapUntapScope.SELF))),
-                "Untap Pristine Angel?"));
+        addTrigger(Triggers.youCastSpell().anySpell(),
+                new MayEffect(new UntapPermanentsEffect(TapUntapScope.SELF), "Untap Pristine Angel?"));
     }
 }

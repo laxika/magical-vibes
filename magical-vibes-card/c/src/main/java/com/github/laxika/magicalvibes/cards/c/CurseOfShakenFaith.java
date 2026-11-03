@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,17 +17,10 @@ public class CurseOfShakenFaith extends Card {
     public CurseOfShakenFaith() {
         DealDamageToPlayersEffect damage = new DealDamageToPlayersEffect(2, DamageRecipient.ENCHANTED_PLAYER);
 
-        addTrigger(Triggers.playerCastsSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(damage),
-                null,
-                null,
-                new StackEntryControlledByEnchantedPlayerPredicate(),
-                false,
-                false,
-                null,
-                0,
-                2));
+        addTrigger(Triggers.playerCastsSpell()
+                        .withStackEntryFilter(new StackEntryControlledByEnchantedPlayerPredicate())
+                        .nthOrLaterThisTurn(2),
+                damage);
 
         SpellCopyTriggerEffect copyTrigger = new SpellCopyTriggerEffect(
                 null,

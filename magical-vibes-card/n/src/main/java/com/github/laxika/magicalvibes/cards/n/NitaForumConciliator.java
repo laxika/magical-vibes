@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardControllerDoesNotOwnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,11 +20,9 @@ public class NitaForumConciliator extends Card {
 
     public NitaForumConciliator() {
         // Whenever you cast a spell you don't own, put a +1/+1 counter on each creature you control.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardControllerDoesNotOwnPredicate(),
-                List.of(new PutCounterOnEachControlledPermanentEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()))
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardControllerDoesNotOwnPredicate()),
+                new PutCounterOnEachControlledPermanentEffect(
+                        CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()));
 
         // {2}, Sacrifice another creature: Exile target instant or sorcery card from an opponent's
         // graveyard. You may cast it this turn, and mana of any type can be spent to cast that spell.

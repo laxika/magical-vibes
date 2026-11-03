@@ -7,15 +7,12 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.HeistTargetOpponentLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardControllerDoesNotOwnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "YOTJ", collectorNumber = "12")
 public class ImpetuousLootmonger extends Card {
@@ -30,8 +27,7 @@ public class ImpetuousLootmonger extends Card {
                         new HeistTargetOpponentLibraryEffect()));
 
         // Whenever you cast a spell you don't own, create a tapped Treasure token.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardControllerDoesNotOwnPredicate(),
-                List.of(CreateTokenEffect.ofTappedTreasureToken(1))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardControllerDoesNotOwnPredicate()),
+                CreateTokenEffect.ofTappedTreasureToken(1));
     }
 }

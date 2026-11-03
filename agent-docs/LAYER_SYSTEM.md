@@ -362,8 +362,8 @@ setter simply overwrites the entry; (d) both handler loops in
 suppression still checks the original), so unmanaged outputs (7c boosts behind text-changed
 filters, self CDAs counting a text-changed land word) follow the rewritten text too;
 (e) `TriggerCollectionService.dispatchSlot` transforms each battlefield trigger with the
-permanent's own and global replacements before matching, so `SpellCastTriggerEffect`'s
-`spellFilter` (`CardColorPredicate`/`CardSubtypePredicate`, recursing through card
+permanent's own and global replacements before matching, so a cast trigger's spell filter (the
+`SpellCastTriggerEffect` the legacy view builds from `Triggers.youCastSpell().withFilter(...)`; `CardColorPredicate`/`CardSubtypePredicate`, recursing through card
 AllOf/AnyOf/Not) follows the rewritten words (Glamerdye on Riverfall Mimic); (f)
 `TargetLegalityService`'s resolution-time target checks read a spell's target restriction
 through its own `GameData.spellTextReplacements` (then the global change), so a text change
@@ -378,7 +378,7 @@ extend the transformer's visitor when a card needs them): `PreventDamageEffect.f
 `BoostColorSourceDamageThisTurnEffect`, `DealDamageOnSpellLifeGainEffect`,
 `PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect`,
 `AwardAnyColorManaEffect`'s `subtype`, color/land-type words inside trigger effects other
-than `SpellCastTriggerEffect`'s spell filter, and activated-ability target restrictions. The remaining `CardColor`/`CardSubtype`-carrying
+than a cast trigger's spell filter, and activated-ability target restrictions. The remaining `CardColor`/`CardSubtype`-carrying
 effect types (token creators, one-shot damage/draw/return effects, costs) consume their
 parameters at resolution and are never re-read from a permanent's text. Text changes applied to
 a spell on the stack instead rewrite that stack entry's frozen resolving effects immediately.

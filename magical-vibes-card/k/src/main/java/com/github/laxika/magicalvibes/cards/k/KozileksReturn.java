@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardE
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -30,20 +29,19 @@ public class KozileksReturn extends Card {
     public KozileksReturn() {
         addSpellEffect(new MassDamageEffect(2));
 
-        addTrigger(new TriggerCondition(Triggers.youCastSpell(), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT, new SpellCastTriggerEffect(
-                new CardAllOfPredicate(List.of(
-                        new CardTypePredicate(CardType.CREATURE),
-                        new CardSubtypePredicate(CardSubtype.ELDRAZI),
-                        new CardMinManaValuePredicate(7)
-                )),
-                List.of(new ConditionalEffect(
+        addTrigger(new TriggerCondition(Triggers.youCastSpell()
+                        .withFilter(new CardAllOfPredicate(List.of(
+                                new CardTypePredicate(CardType.CREATURE),
+                                new CardSubtypePredicate(CardSubtype.ELDRAZI),
+                                new CardMinManaValuePredicate(7)
+                        ))), AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT,
+                new ConditionalEffect(
                         new SourceCardInGraveyard(),
                         new MayEffect(
                                 SequenceEffect.of(
                                         new ExileSourceCardFromGraveyardEffect(),
                                         new MassDamageEffect(5)),
-                                "Exile Kozilek's Return from your graveyard?")))
-        ));
+                                "Exile Kozilek's Return from your graveyard?")));
     }
 }

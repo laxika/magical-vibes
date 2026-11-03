@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -26,10 +25,7 @@ public class SokkaTenaciousTactician extends Card {
         PermanentHasSubtypePredicate ally = new PermanentHasSubtypePredicate(CardSubtype.ALLY);
 
         addStaticEffect(new GrantKeywordEffect(Set.of(Keyword.MENACE, Keyword.PROWESS), GrantScope.OWN_CREATURES, ally));
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(noncreatureSpell, List.of(
-                        new CreateTokenEffect("Ally", 1, 1, CardColor.WHITE,
-                                List.of(CardSubtype.ALLY), Set.of(), Set.of())
-                )));
+        addTrigger(Triggers.youCastSpell().withFilter(noncreatureSpell),
+                new CreateTokenEffect("Ally", 1, 1, CardColor.WHITE, List.of(CardSubtype.ALLY), Set.of(), Set.of()));
     }
 }

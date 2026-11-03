@@ -10,11 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "A25", collectorNumber = "196")
@@ -28,9 +26,8 @@ public class AnimarSoulOfElements extends Card {
         addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.WHITE, CardColor.BLACK)));
 
         // Whenever you cast a creature spell, put a +1/+1 counter on Animar.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardTypePredicate(CardType.CREATURE),
-                List.of(new PutCountersOnSourceEffect(1, 1, 1))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
+                new PutCountersOnSourceEffect(1, 1, 1));
 
         // Creature spells you cast cost {1} less to cast for each +1/+1 counter on Animar.
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(

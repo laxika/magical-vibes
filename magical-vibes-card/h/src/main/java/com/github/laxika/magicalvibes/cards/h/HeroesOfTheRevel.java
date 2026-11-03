@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,9 +24,7 @@ public class HeroesOfTheRevel extends Card {
                 List.of(CardSubtype.SATYR), Set.of(), Set.of(),
                 List.of(StaticAbility.of(new CantBlockEffect()))));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new BoostAllOwnCreaturesEffect(1, 0)),
-                new StackEntryTargetsSourcePredicate()));
+        addTrigger(Triggers.youCastSpell().withStackEntryFilter(new StackEntryTargetsSourcePredicate()),
+                new BoostAllOwnCreaturesEffect(1, 0));
     }
 }

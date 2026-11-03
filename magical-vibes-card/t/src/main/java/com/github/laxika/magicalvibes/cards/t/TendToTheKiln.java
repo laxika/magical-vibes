@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -45,22 +44,20 @@ public class TendToTheKiln extends Card {
                         CardType.KINDRED,
                         CardSubtype.ELEMENTAL));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardSubtypePredicate(CardSubtype.ELEMENTAL),
-                List.of(
-                        new PutCountersOnSelfEffect(CounterType.FLAME),
-                        new ConditionalEffect(
-                                new SourceCounterThreshold(3, CounterType.FLAME),
-                                SequenceEffect.of(
-                                        new RemoveAllCountersEffect(CounterType.FLAME),
-                                        new ConjureCardToBattlefieldEffect("ECL", "139"),
-                                        new GrantKeywordEffect(
-                                                Keyword.HASTE,
-                                                GrantScope.TOKENS_CREATED_THIS_RESOLUTION,
-                                                GrantDuration.INDEFINITE),
-                                        new GrantTriggeredAbilityToCreatedPermanentsEffect(
-                                                new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY),
-                                                        new SacrificeSelfEffect(true)))
-                                )))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardSubtypePredicate(CardSubtype.ELEMENTAL)),
+                new PutCountersOnSelfEffect(CounterType.FLAME),
+                new ConditionalEffect(
+                        new SourceCounterThreshold(3, CounterType.FLAME),
+                        SequenceEffect.of(
+                                new RemoveAllCountersEffect(CounterType.FLAME),
+                                new ConjureCardToBattlefieldEffect("ECL", "139"),
+                                new GrantKeywordEffect(
+                                        Keyword.HASTE,
+                                        GrantScope.TOKENS_CREATED_THIS_RESOLUTION,
+                                        GrantDuration.INDEFINITE),
+                                new GrantTriggeredAbilityToCreatedPermanentsEffect(
+                                        new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY),
+                                                new SacrificeSelfEffect(true)))
+                )));
     }
 }

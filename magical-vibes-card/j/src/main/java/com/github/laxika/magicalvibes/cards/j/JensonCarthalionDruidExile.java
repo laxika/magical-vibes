@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardHasExactlyNColorsPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
@@ -24,16 +23,15 @@ import java.util.Set;
 public class JensonCarthalionDruidExile extends Card {
 
     public JensonCarthalionDruidExile() {
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(new CardIsMulticoloredPredicate(), List.of(
-                        new ScryEffect(1),
-                        new TriggeringCardConditionalEffect(
-                                new CardHasExactlyNColorsPredicate(5),
-                                new CreateTokenEffect(
-                                        1, "Angel", 4, 4, CardColor.WHITE,
-                                        List.of(CardSubtype.ANGEL),
-                                        Set.of(Keyword.FLYING, Keyword.VIGILANCE),
-                                        Set.of())))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardIsMulticoloredPredicate()),
+                new ScryEffect(1),
+                new TriggeringCardConditionalEffect(
+                        new CardHasExactlyNColorsPredicate(5),
+                        new CreateTokenEffect(
+                                1, "Angel", 4, 4, CardColor.WHITE,
+                                List.of(CardSubtype.ANGEL),
+                                Set.of(Keyword.FLYING, Keyword.VIGILANCE),
+                                Set.of())));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

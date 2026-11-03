@@ -8,11 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ChoosePlayerOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByChosenPlayerPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "CMD", collectorNumber = "98")
 @CardRegistration(set = "CM2", collectorNumber = "75")
@@ -25,10 +22,7 @@ public class SewerNemesis extends Card {
                 new CardsInGraveyard(null, CountScope.CHOSEN_PLAYER);
         addStaticEffect(new SetPowerToughnessToAmountEffect(chosenPlayerGraveyard, chosenPlayerGraveyard));
 
-        addTrigger(Triggers.playerCastsSpell(),
-                new SpellCastTriggerEffect(
-                        null,
-                        List.of(new MillEffect(1, MillRecipient.CHOSEN_PLAYER)),
-                        new StackEntryControlledByChosenPlayerPredicate()));
+        addTrigger(Triggers.playerCastsSpell().withStackEntryFilter(new StackEntryControlledByChosenPlayerPredicate()),
+                new MillEffect(1, MillRecipient.CHOSEN_PLAYER));
     }
 }

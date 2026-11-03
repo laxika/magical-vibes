@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,12 +19,8 @@ import java.util.Set;
 public class Goblinslide extends Card {
 
     public Goblinslide() {
-        addTrigger(Triggers.youCastSpell(), new MayEffect(
-                new SpellCastTriggerEffect(
-                        new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                        List.of(new CreateTokenEffect("Goblin", 1, 1, CardColor.RED,
-                                List.of(CardSubtype.GOBLIN), Set.of(Keyword.HASTE), Set.of())),
-                        "{1}"),
-                "Pay {1} to create a 1/1 red Goblin creature token with haste?"));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                new MayPayManaEffect("{1}", new CreateTokenEffect("Goblin", 1, 1, CardColor.RED,
+                        List.of(CardSubtype.GOBLIN), Set.of(Keyword.HASTE), Set.of()), "Pay {1} to create a 1/1 red Goblin creature token with haste?"));
     }
 }

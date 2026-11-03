@@ -7,24 +7,19 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "238")
 public class SafeholdDuo extends Card {
 
     public SafeholdDuo() {
         // Whenever you cast a green spell, this creature gets +1/+1 until end of turn.
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(new CardColorPredicate(CardColor.GREEN),
-                        List.of(new BoostSelfEffect(1, 1))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.GREEN)),
+                new BoostSelfEffect(1, 1));
 
         // Whenever you cast a white spell, this creature gains vigilance until end of turn.
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(new CardColorPredicate(CardColor.WHITE),
-                        List.of(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.WHITE)),
+                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF));
     }
 }

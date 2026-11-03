@@ -5,19 +5,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.CastingPlayerMayDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayReturnCardFromGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "OHOP", collectorNumber = "24")
 @CardRegistration(set = "OPCA", collectorNumber = "50")
 public class Minamo extends Card {
 
     public Minamo() {
-        addTrigger(Triggers.playerCastsSpell(),
-                new SpellCastTriggerEffect(null, List.of(new CastingPlayerMayDrawCardEffect())));
+        addTrigger(Triggers.playerCastsSpell().anySpell(), new CastingPlayerMayDrawCardEffect());
         addTrigger(Triggers.chaosEnsues(),
                 new EachPlayerMayReturnCardFromGraveyardToHandEffect(new CardColorPredicate(CardColor.BLUE)));
     }

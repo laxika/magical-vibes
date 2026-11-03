@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -20,9 +19,7 @@ public class StaffOfTheDeathMagus extends Card {
 
     public StaffOfTheDeathMagus() {
         // Whenever you cast a black spell or a Swamp you control enters, you gain 1 life.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardColorPredicate(CardColor.BLACK),
-                List.of(new GainLifeEffect(1))));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.BLACK)), new GainLifeEffect(1));
 
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(

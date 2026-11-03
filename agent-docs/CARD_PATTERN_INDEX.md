@@ -1,4 +1,10 @@
 # CARD_PATTERN_INDEX
+> A row that still writes a "whenever [a player] casts a spell" ability as `SpellCastTriggerEffect(filter, effects, …)`
+> (or a factory such as `.nth(n, …)` / `.withIntervening(…)`) is shorthand: author it as the cast trigger's filter and the
+> ability's effects, `addTrigger(Triggers.youCastSpell().withFilter(filter)[.nthThisTurn(n)…][, TriggerOptions…], effects…)`
+> (`.anySpell()` for a null filter), with "you may" a `MayEffect`, a mana cost a `MayPayManaEffect` and a target filter a
+> target group. See `SpellCastTriggerEffect` in `EFFECTS_INDEX.md`; the record itself is built by the engine.
+
 | end-step draw after casting a spell from a graveyard or activating an ability of a graveyard card | `l/LaboratoryDrudge.java` + `ConditionalEffect(ControllerCastSpellFromGraveyardOrActivatedGraveyardAbilityThisTurn, DrawCardEffect)` |
 | sorcery that looks at six, may put one land tapped onto the battlefield and one Elf into hand, then random-bottoms the rest | `b/BountyOfSkemfar.java` + `LookAtTopCardsRevealTwoTypesToHandThenRestEffect.landAndSubtypeToBattlefieldAndHandRestOnBottomRandom(...)` |
 | hand-cast instant or sorcery during an opponent's turn exiled with three time counters after resolution | `g/GandalfOfTheSecretFire.java` + `SpellCastTriggerEffect(INSTANT_OR_SORCERY, ExileTriggeringSpellWithSuspendCountersOnResolutionEffect(3), StackEntryCastFromZonePredicate(HAND), onlyDuringOpponentTurn)` |
@@ -404,7 +410,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | remove any number of counters from among permanents | CARD_PATTERNS_LANDS_SPELLS.md |
 | proliferate, then phase out permanents that received counters | `r/RipplesOfPotential.java` + `PhaseOutPermanentsThatReceivedCountersThisWayEffect` |
 | ETB: starting with you each player chooses up to five permanents; all other permanents except the source phase out and permanents can't phase in | `d/DiscipleOfCaelusNin.java` + `EachPlayerChoosesPermanentsThenPhaseOutRestEffect` + `PermanentsCantPhaseInEffect` |
-| cast a spell from among cards put into your hand this turn | `q/QuicksilverServitor.java` + `SpellCastTriggerEffect(new CardPutIntoHandThisTurnPredicate(), List.of(new ProliferateEffect()))` |
+| cast a spell from among cards put into your hand this turn | `q/QuicksilverServitor.java` + `.withFilter(new CardPutIntoHandThisTurnPredicate())` on the cast trigger with `new ProliferateEffect()` |
 | bounce, unsummon, return to hand | CARD_PATTERNS_LANDS_SPELLS.md |
 | choose a creature type, return all other creatures to hand | `ReturnAllCreaturesExceptChosenTypeToHandEffect` + resolution-time creature-type choice; `r/RaiseThePalisade.java` |
 | graveyard return, reanimate, flashback | CARD_PATTERNS_LANDS_SPELLS.md |

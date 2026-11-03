@@ -7,21 +7,18 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "USG", collectorNumber = "23")
 public class OpalArchangel extends Card {
 
     public OpalArchangel() {
-        addTrigger(Triggers.opponentCastsSpell(), SpellCastTriggerEffect.withIntervening(
-                new CardTypePredicate(CardType.CREATURE),
-                List.of(new BecomeCreatureEffect(5, 5, CardSubtype.ANGEL,
-                        Set.of(Keyword.FLYING, Keyword.VIGILANCE))),
-                new SourceIsEnchantment()));
+        addTrigger(Triggers.opponentCastsSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsEnchantment()),
+                new BecomeCreatureEffect(5, 5, CardSubtype.ANGEL, Set.of(Keyword.FLYING, Keyword.VIGILANCE)));
     }
 }

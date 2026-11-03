@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -34,12 +33,11 @@ public class DragonTyphoon extends Card {
             new DraftFromSpellbookEffect.SpellbookCard("FDC", "182"));
 
     public DragonTyphoon() {
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(
-                        new CardAnyOfPredicate(List.of(
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardSubtypePredicate(CardSubtype.DRAGON),
-                                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)))),
-                        List.of(DraftCardFromSpellbookEffect.toBattlefield(SPELLBOOK, null))));
+                                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))))),
+                DraftCardFromSpellbookEffect.toBattlefield(SPELLBOOK, null));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,

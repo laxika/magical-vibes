@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
@@ -19,15 +18,12 @@ import java.util.List;
 public class ZhulodokVoidGorger extends Card {
 
     public ZhulodokVoidGorger() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAllOfPredicate(List.of(
-                        new CardIsColorlessPredicate(),
-                        new CardMinManaValuePredicate(7, true))),
-                List.of(new CascadeEffect(), new CascadeEffect()),
-                null,
-                null,
-                new StackEntryCastFromZonePredicate(Zone.HAND),
-                false,
-                false));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAllOfPredicate(List.of(
+                                new CardIsColorlessPredicate(),
+                                new CardMinManaValuePredicate(7, true))))
+                        .withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.HAND)),
+                new CascadeEffect(),
+                new CascadeEffect());
     }
 }

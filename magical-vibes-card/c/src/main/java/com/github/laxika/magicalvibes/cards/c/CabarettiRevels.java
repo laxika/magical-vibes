@@ -8,22 +8,18 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "YSNC", collectorNumber = "21")
 public class CabarettiRevels extends Card {
 
     public CabarettiRevels() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardTypePredicate(CardType.CREATURE),
-                List.of(new SeekLibraryEffect(
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
+                new SeekLibraryEffect(
                         new Fixed(1),
                         new CardTypePredicate(CardType.CREATURE),
                         LibrarySearchDestination.BATTLEFIELD,
-                        new ManaValueBound(new EventValue(), false, -1)))));
+                        new ManaValueBound(new EventValue(), false, -1)));
     }
 }

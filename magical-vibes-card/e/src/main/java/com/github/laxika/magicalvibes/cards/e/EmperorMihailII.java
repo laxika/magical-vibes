@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffe
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,12 +23,11 @@ public class EmperorMihailII extends Card {
         addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
         addStaticEffect(new AllowCastFromTopOfLibraryEffect(new CardSubtypePredicate(CardSubtype.MERFOLK)));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardSubtypePredicate(CardSubtype.MERFOLK),
-                List.of(new MayPayManaEffect(
+        addTrigger(Triggers.youCastSpell().withFilter(new CardSubtypePredicate(CardSubtype.MERFOLK)),
+                new MayPayManaEffect(
                         "{1}",
                         new CreateTokenEffect("Merfolk", 1, 1, CardColor.BLUE,
                                 List.of(CardSubtype.MERFOLK), Set.of(), Set.of()),
-                        "Pay {1} to create a 1/1 blue Merfolk creature token?"))));
+                        "Pay {1} to create a 1/1 blue Merfolk creature token?"));
     }
 }

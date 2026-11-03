@@ -7,14 +7,11 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "135")
 @CardRegistration(set = "GK1", collectorNumber = "44")
@@ -22,19 +19,13 @@ public class TiborAndLumia extends Card {
 
     public TiborAndLumia() {
         // Whenever you cast a blue spell, target creature gains flying until end of turn.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardColorPredicate(CardColor.BLUE),
-                List.of(new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET)),
-                null,
-                TargetFilters.creature()
-        ));
+        target(TargetFilters.creature()).addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardColorPredicate(CardColor.BLUE)),
+                new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
 
         // Whenever you cast a red spell, Tibor and Lumia deals 1 damage to each creature without flying.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardColorPredicate(CardColor.RED),
-                List.of(new MassDamageEffect(1, false, false,
-                        new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING)))
-                )
-        ));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.RED)),
+                new MassDamageEffect(1, false, false,
+                        new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
     }
 }

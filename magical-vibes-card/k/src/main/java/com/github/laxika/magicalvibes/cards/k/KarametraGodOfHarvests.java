@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -33,14 +32,11 @@ public class KarametraGodOfHarvests extends Card {
                 new NotCondition(new DevotionToColorsAtLeast(
                         Set.of(ManaColor.GREEN, ManaColor.WHITE), 7)),
                 new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, GrantScope.SELF)));
-        addTrigger(Triggers.youCastSpell(), new MayEffect(
-                new SpellCastTriggerEffect(
-                        new CardTypePredicate(CardType.CREATURE),
-                        List.of(new SearchLibraryEffect(
-                                new CardAnyOfPredicate(List.of(
-                                        new CardSubtypePredicate(CardSubtype.FOREST),
-                                        new CardSubtypePredicate(CardSubtype.PLAINS))),
-                                LibrarySearchDestination.BATTLEFIELD_TAPPED))),
-                "Search your library for a Forest or Plains card?"));
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
+                new MayEffect(new SearchLibraryEffect(
+                        new CardAnyOfPredicate(List.of(
+                                new CardSubtypePredicate(CardSubtype.FOREST),
+                                new CardSubtypePredicate(CardSubtype.PLAINS))),
+                        LibrarySearchDestination.BATTLEFIELD_TAPPED), "Search your library for a Forest or Plains card?"));
     }
 }

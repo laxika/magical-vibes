@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -4532,8 +4532,8 @@ Step 14 is repeatable by family (its section has the order). Run 1 converted the
 the creature-death family, run 3a the other zone and permanent changes but "another object enters", run 3b "another
 object enters", run 4a the reading of the own enters abilities' options and the "this or another" enters merges, run 4b
 the own enters abilities' intervening "if"s, run 4c the rules fixes: every own enters intervening "if" checked
-as the ability triggers, run 5 the steps and phases, and run 6a the spell, land-play and activation abilities' generic
-wrappers.
+as the ability triggers, run 5 the steps and phases, run 6a the spell, land-play and activation abilities' generic
+wrappers, and run 6b `SpellCastTriggerEffect`, as the cast trigger's filter, the ability's options and its effects.
 
 #### Run 1: the source's own zone changes
 
@@ -5495,6 +5495,141 @@ default handler's trigger-time check through the engine.
   (the same names at HEAD `edf279f06f`, checked in a worktree), and the known ones in `SimulationCopyCompletenessTest`,
   `CardImmutabilityArchTest` and `CardEffectTargetingConsistencyTest`.
 - AI: the whole module (1,620 tests), the same 10 failures as before.
+- The full suite was not run here.
+
+#### Run 6b: `SpellCastTriggerEffect` becomes the cast trigger's filter, options and effects
+
+Every "whenever [you / an opponent / a player] casts a [quality] spell" ability that wrote a `SpellCastTriggerEffect`
+(`Triggers.youCastSpell`, `opponentCastsSpell`, `playerCastsSpell`, on the battlefield, in a graveyard, hand, exile or
+the command zone, on the card, a target group, a token's abilities or a static grant) is authored as its trigger's
+filter, its options and its effects, but for the four cards kept below.
+
+**Authoring.**
+
+- `SpellTrigger` gained a nullable `SpellFilter` (new, `model/trigger/SpellFilter`): what the spell must be
+  (`withFilter(cardPredicate)`), what its stack object must be (`withStackEntryFilter(stackEntryPredicate)`: "that
+  targets this creature", "cast from your graveyard"), the turn (`duringYourTurn()`, `duringOpponentsTurn()`,
+  `notDuringCastersTurn()`), `duringCombat()`, the casting player's nth matching spell this turn (`nthThisTurn(n)`,
+  `nthOrLaterThisTurn(n)`), `paidWithManaFromThis()`, `paidWithTreasureMana()`, `withTwoOrMoreCardTypes()` and
+  `expend(n)`. `anySpell()` is the filter of any spell. Only a `CAST` trigger takes one. **A cast trigger with a filter is
+  what the generic spell-cast collector reads; one without is still collected by its effect's class** (run 6c's
+  condition-as-effect classes, and the effects whose collector binds the spell or its caster, such as
+  `DealDamageToPlayersEffect`, `GivePoisonCountersEffect` or `MillEffect` on a plain trigger), so a plain
+  `Triggers.youCastSpell()` with an ordinary effect does nothing, as before. An explicit filter was needed because the
+  class-keyed handlers include ordinary effects that the converted abilities also hold: no rule over the effects
+  could tell the two apart.
+- The intervening condition is `TriggerOptions.DEFAULT.withInterveningIf(c)` (CR 603.4, checked), "triggers only
+  once" around every effect (Sapphire Collector) the `ONCE` limit.
+- An outer `MayEffect(SpellCastTriggerEffect(…), prompt)` is a `MayEffect` of the effect (`SequenceEffect.of` for
+  several), the mana cost a `MayPayManaEffect(cost, effect, prompt)` ("Pay {N}?" where the targeted collector asked
+  that, the graveyard collector's "Pay {N} to return <name> from your graveyard to your hand?" for the three graveyard
+  cards).
+- The target filter is a target group: dropped when the statement was already on `target(sameFilter)`, otherwise the
+  statement is put on `target(filter)`. Brinelin, the Moon Kraken, Hraesvelgr of the First Brood and Necklace of
+  Girion share the group their enters ability declares with the same filter; Conciliator's Duelist's bare
+  `target(creature, 0, 1)` became its cast ability's group.
+- `anyPlayer` is an emblem-only flag the card abilities never read, so it is dropped.
+
+**The engine.**
+
+- `SpellTrigger.watchKey()` drops the filter, so the `SpellAbilityWatch` collectors find the ability.
+  `TriggeredAbility.legacyEffects()` gives a filtered cast ability as one `SpellCastTriggerEffect` of all its
+  effects (one stack object, CR 603.3, checked), with the filter's fields, the intervening "if" as its `intervening`
+  (which the collector checks with the spell's mana spent and mana value, as `withIntervening` did, and wraps around the
+  effects for the resolution check), and the limits around it as 6a gave them. A lone plain `MayPayManaEffect` becomes
+  the record's mana cost, and on the battlefield or in exile it and a lone plain `MayEffect` become the outer "you may"
+  the collector reads; the graveyard, hand and command-zone readers take the cost from the record and a "you may"
+  inside it, as those cards wrote them. A written `SequenceEffect` stays one effect.
+- The generic collector (`SpellCastTriggerCollectorService.handleGenericSpellCastTrigger`) takes a missing target
+  filter from the target group the ability's effects are bound to (directly or through the "you may" / "you may pay"
+  around them), and decides "multi-target" from the groups its effects are bound to (Ms. Bumbleflower's two) instead of
+  every group of the card, so a card with two
+  targeted cast abilities (Deathbringer Liege, Lozhan, Dragon's Legacy, Aragorn, the Uniter, Circu, Dimir Lobotomist,
+  Toph, Hardheaded Teacher) or one next to an "up to one" enters target keeps the single-target choice.
+- An optional ability is never asked before it is on the stack any more: the cast-time `PendingMayAbility` branch
+  (effects that read the mana spent, target a graveyard card or a spell, or choose a mode) wraps the effects in the
+  `MayEffect` / `MayPayManaEffect` and continues to the stack branches, so the targets are chosen as it triggers
+  (CR 603.3d, checked) and the choice is made as it resolves (CR 603.5, checked).
+- The granted-ability readers (`Permanent.getGrantedTriggerEffects`, `GrantedTriggeredAbilitySupport
+  .grantedTriggerEffects`) find abilities by `watchKey()` (`TriggeredAbility.hasWatchedTrigger(Trigger)`, new).
+  `TriggeredAbilityQueueService`'s stack label reads the legacy view. `BecomeCopyOfTargetCreatureUntilEndOfTurnEffect
+  Handler` keeps the retained ability whole, its filter included (Hulkling, Young Avenger).
+  `TextChangeTransformer` rewrites inside a `MayEffect`, so a text change still reaches the spell filter of an
+  optional cast ability (Mind Bend and Trait Doctoring on Dragon's Claw).
+
+**Cards.** `scripts/step14-spell-cast-options.py` (per letter module; `--dry-run`, `--report`; run twice for an ability
+nested in a token's abilities, Tatsunari, Toad Rider) converted 1,085 abilities in 1,043 card classes; Brinelin,
+Hraesvelgr, Necklace of Girion, Conciliator's Duelist, Phoenix of Iteration (a helper's effects) and Hex, Kellan's
+Companion (one ability on the battlefield and in exile, CR 113.6k, checked) were done by hand.
+`scripts/step14-spell-cast-converted.txt` lists all 1,091. `scripts/step14-spell-cast-docs.py` rewrote 112 agent-docs
+spans; the `SpellCastTriggerEffect` entries of `EFFECTS_INDEX.md` and `EFFECTS_QUICK_REFERENCE.md` say "don't author",
+the pattern files carry a note on the rows still written in the old shorthand, and `PREDICATES_REFERENCE.md`,
+`ACTIVATED_ABILITY_GUIDE.md`, `LAYER_SYSTEM.md`, `ARCHITECTURE.md` and the implement-card skill were edited by hand.
+
+**Kept, with their reason (the script's `KEEP`).**
+
+- Leshrac's Sigil: "you may pay {B}{B}. If you do, look at that player's hand" pays into an effect that declares a
+  hand target while the player is the caster, bound as a non-target; a converted "you may pay" would offer a target.
+  Step 15 (the event's player).
+- Gale, Conduit of the Arcane: its specialized faces' abilities are built at runtime by `SpecializeGaleEffectHandler`
+  from the card's helper.
+- Passionate Archaeologist: a granted ability with a target filter ("target opponent"); a granted ability has no card
+  target group.
+- Emblems (`CreateEmblemEffect`) still hold `SpellCastTriggerEffect`s; they are no triggered abilities, and the
+  emblem collector in `TriggerCollectionService` reads them. Delayed and registered spell-cast triggers
+  (`RegisterDelayed…SpellCastTriggerEffect`, `RegisterGlobalTriggeredAbility…`) are their own records.
+
+**For run 6c and later.**
+
+- The run 6a readers that matched the family on the plain view: the stack label now reads the legacy view;
+  `ChoiceHandlerService`'s subtype-choice activation copy reads `youActivateAbility()` and `PredicateEvaluationService`'s
+  cascade check `youCastThisSpell()`, neither of which this run filters; they still match exactly.
+- Cemetery Gatekeeper and Cemetery Protector can now merge their land and cast halves (a filtered `youPlayLand` and a
+  filtered `youCastSpell` condition in one ability): not done here.
+- 6c's classes, once filters too, can drop the "a filtered trigger" marker: when no class-keyed cast handler is left,
+  a plain cast trigger can be the generic one and `anySpell()` can go.
+
+**Behaviour changes.**
+
+- Uncover the Moon-Letters ("you may draw cards equal to the amount of mana spent"): its "you may" was asked as the
+  spell was cast, before the trigger was on the stack; it is now asked as the ability resolves (CR 603.5). The same
+  holds for any optional cast ability whose effect reads the mana spent or targets a graveyard card or a spell; no
+  other converted card's tests show it.
+- The inner-"you may" cards the legacy view now gives with an outer "you may" (Dragon's Claw, Verduran Enchantress, the
+  ki-counter Spirits, …) are judged on the effect inside the may (targets, the spell it refers to): the same choices on
+  the same stack object, but read as the outer-"you may" cards always were.
+- Mirrodin Besieged and Glacierwood Siege: the chosen-mode intervening "if" is also checked as the ability resolves
+  (it can't change).
+
+**Tests changed.**
+
+- `SpellAbilityTriggerTest`: five new tests (a filtered cast trigger is watched by its unfiltered trigger and the
+  filter's methods reject a non-cast trigger and bad counts; the legacy view gives one `SpellCastTriggerEffect` of the
+  ability's effects with the filter and the intervening "if", stable across calls; the optional forms per zone; the
+  limits around it; a granted filtered ability is found by `hasWatchedTrigger`).
+- `SpellCastTriggerCollectorServiceTest`: "adds to pending may abilities when wrapped in MayEffect" (the cast-time
+  prompt this run removes) is now "puts an optional trigger on the stack, its choice made as it resolves"; new: an
+  optional trigger that reads the mana spent goes on the stack with that X; a targeting trigger takes its filter from
+  its bound target group and is not the card's "up to one" choice.
+- `TextChangeTransformerTest`: new, a color word replacement rewrites the spell filter of an optional spell-cast
+  trigger.
+- `UncoverTheMoonLettersTest` (4 tests): the "you may" is answered after the trigger resolves (CR 603.5), no longer
+  right after the cast.
+
+**Test runs.**
+
+- Card: the test class of every converted card and every card test that constructs one (1,666 classes, 14,729
+  tests). The first run had 21 failures in 6 classes: Deathbringer Liege, Lozhan, Dragon's Legacy and Quiet
+  Contemplation (the multi-target and sequence fixes above), Mind Bend and Trait Doctoring (the text change inside a
+  "you may") and Uncover the Moon-Letters (the test change above). The second run, after the fixes, had 2 (Ms.
+  Bumbleflower, fixed by reading every bound group); the 210 classes of the cards with target groups and cast abilities
+  (and their users), rerun after that fix, all pass (1,832 tests).
+- Application: the trigger-model, collector, registry, step, pipeline, text-change, freeze, architecture and copy
+  classes (444 tests): 22 failures, all failing at HEAD: `StepTriggerServiceTest` 16, `SpellCastTriggerCollectorServiceTest`
+  3 (CasterLosesLifeOnChosenColorSpellCastEffect, PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect's may,
+  same-name artifact search; checked in a worktree at `0f5aadba57`, where the test rewritten above fails too), and the
+  known ones in `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and `CardEffectTargetingConsistencyTest`.
+- AI: `GameDataDeepCopyTest` passes (no new state).
 - The full suite was not run here.
 
 ## Prompt

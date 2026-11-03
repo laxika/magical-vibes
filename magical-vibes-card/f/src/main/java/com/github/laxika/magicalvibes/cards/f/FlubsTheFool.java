@@ -8,10 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "BLC", collectorNumber = "356")
 public class FlubsTheFool extends Card {
@@ -19,8 +16,7 @@ public class FlubsTheFool extends Card {
     public FlubsTheFool() {
         addStaticEffect(new PlaysAdditionalLandEachTurnEffect(1));
         addTrigger(Triggers.youPlayLand(), drawOrDiscard());
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(null, List.of(drawOrDiscard())));
+        addTrigger(Triggers.youCastSpell().anySpell(), drawOrDiscard());
     }
 
     private static ConditionalReplacementEffect drawOrDiscard() {

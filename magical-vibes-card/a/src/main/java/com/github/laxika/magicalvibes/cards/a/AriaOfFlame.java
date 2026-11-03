@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPla
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -33,19 +32,9 @@ public class AriaOfFlame extends Card {
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)
         ));
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                instantOrSorcery,
-                List.of(
-                        new PutCountersOnSelfEffect(CounterType.VERSE),
-                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(
-                                new CountersOnSource(CounterType.VERSE))
-                ),
-                null,
-                new AnyTargetPredicateTargetFilter(
-                        new PermanentIsPlaneswalkerPredicate(),
-                        new PlayerRelationPredicate(PlayerRelation.ANY),
-                        "Target must be a player or planeswalker"
-                )
-        ));
+        target(new AnyTargetPredicateTargetFilter(new PermanentIsPlaneswalkerPredicate(), new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player or planeswalker")).addTrigger(Triggers.youCastSpell()
+                        .withFilter(instantOrSorcery),
+                new PutCountersOnSelfEffect(CounterType.VERSE),
+                new DealDamageToTargetPlayerOrPlaneswalkerEffect(new CountersOnSource(CounterType.VERSE)));
     }
 }

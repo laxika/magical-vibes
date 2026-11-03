@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -41,13 +40,11 @@ public class ChakraMeditation extends Card {
                         .upTo(true)
                         .build());
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                instantOrSorcery,
-                List.of(
-                        new DrawCardEffect(),
-                        ConditionalEffect.unless(
-                                new NotCondition(new GraveyardCardThreshold(
-                                        3, new CardSubtypePredicate(CardSubtype.LESSON))),
-                                new DiscardEffect(1, DiscardRecipient.CONTROLLER)))));
+        addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery),
+                new DrawCardEffect(),
+                ConditionalEffect.unless(
+                        new NotCondition(new GraveyardCardThreshold(
+                                3, new CardSubtypePredicate(CardSubtype.LESSON))),
+                        new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
     }
 }

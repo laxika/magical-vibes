@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostPerTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -24,10 +23,7 @@ public class BattlefieldThaumaturge extends Card {
                 new PermanentIsCreaturePredicate(), 1,
                 new CardAnyOfPredicate(List.of(new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY)))));
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)),
-                new StackEntryTargetsSourcePredicate()
-        ));
+        addTrigger(Triggers.youCastSpell().withStackEntryFilter(new StackEntryTargetsSourcePredicate()),
+                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraEnchantCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -19,13 +18,12 @@ public class Tallowisp extends Card {
     public Tallowisp() {
         // "Whenever you cast a Spirit or Arcane spell, you may search your library for an Aura card
         // with enchant creature, reveal it, put it into your hand, then shuffle."
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(
-                        new CardAnyOfPredicate(List.of(
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardSubtypePredicate(CardSubtype.SPIRIT),
-                                new CardSubtypePredicate(CardSubtype.ARCANE))),
-                        List.of(new MayEffect(
-                                new SearchLibraryEffect(new CardIsAuraEnchantCreaturePredicate()),
-                                "Search your library for an Aura card with enchant creature?"))));
+                                new CardSubtypePredicate(CardSubtype.ARCANE)))),
+                new MayEffect(
+                        new SearchLibraryEffect(new CardIsAuraEnchantCreaturePredicate()),
+                        "Search your library for an Aura card with enchant creature?"));
     }
 }

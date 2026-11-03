@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
@@ -171,5 +172,18 @@ class TextChangeTransformerTest {
         CardEffect result = TextChangeTransformer.transform(trigger, List.of(BLACK_TO_BLUE, MOUNTAIN_TO_ISLAND));
 
         assertThat(result).isSameAs(trigger);
+    }
+
+    @Test
+    @DisplayName("A color word replacement rewrites the spell filter of an optional spell-cast trigger")
+    void colorReplacementRewritesOptionalSpellCastTriggerFilter() {
+        MayEffect trigger = new MayEffect(new SpellCastTriggerEffect(
+                new CardColorPredicate(CardColor.BLACK), List.of()), "Gain 1 life?");
+
+        CardEffect result = TextChangeTransformer.transform(trigger, List.of(BLACK_TO_BLUE));
+
+        assertThat(result).isEqualTo(new MayEffect(new SpellCastTriggerEffect(
+                new CardColorPredicate(CardColor.BLUE), List.of()), "Gain 1 life?"));
+        assertThat(TextChangeTransformer.transform(trigger, List.of(MOUNTAIN_TO_ISLAND))).isSameAs(trigger);
     }
 }

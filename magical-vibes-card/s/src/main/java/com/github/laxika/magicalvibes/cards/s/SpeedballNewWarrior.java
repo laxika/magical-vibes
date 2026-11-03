@@ -5,24 +5,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "MSH", collectorNumber = "227")
 public class SpeedballNewWarrior extends Card {
 
     public SpeedballNewWarrior() {
-        addTrigger(Triggers.playerCastsSpell(),
-                new SpellCastTriggerEffect(
-                        null,
-                        List.of(
-                                new BoostSelfEffect(2, 2),
-                                new MayEffect(new ChooseNewTargetsForTargetSpellEffect(),
-                                        "Choose new targets for the spell?")
-                        ),
-                        new StackEntryTargetsSourcePredicate()));
+        addTrigger(Triggers.playerCastsSpell().withStackEntryFilter(new StackEntryTargetsSourcePredicate()),
+                new BoostSelfEffect(2, 2),
+                new MayEffect(new ChooseNewTargetsForTargetSpellEffect(), "Choose new targets for the spell?"));
     }
 }

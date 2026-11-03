@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -31,15 +30,12 @@ public class YshtolaNightsBlessed extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new AnyPlayerLostLifeThisTurn(4)),
                 new DrawCardEffect(1));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAllOfPredicate(List.of(
-                        new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                        new CardMinManaValuePredicate(3)
-                )),
-                List.of(
-                        new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT),
-                        new GainLifeEffect(2)
-                )
-        ));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAllOfPredicate(List.of(
+                                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
+                                new CardMinManaValuePredicate(3)
+                        ))),
+                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT),
+                new GainLifeEffect(2));
     }
 }

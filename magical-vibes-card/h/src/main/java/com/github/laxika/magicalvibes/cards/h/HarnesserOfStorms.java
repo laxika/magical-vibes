@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -21,14 +20,11 @@ import java.util.List;
 public class HarnesserOfStorms extends Card {
 
     public HarnesserOfStorms() {
-        addTrigger(Triggers.youCastSpell(),
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
+                                new CardSubtypePredicate(CardSubtype.OTTER)))),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
-                new MayEffect(
-                        new SpellCastTriggerEffect(
-                                new CardAnyOfPredicate(List.of(
-                                        new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                                        new CardSubtypePredicate(CardSubtype.OTTER))),
-                                List.of(new ExileTopCardMayPlayThisTurnEffect(false))),
-                        "Exile the top card of your library?"));
+                new MayEffect(new ExileTopCardMayPlayThisTurnEffect(false), "Exile the top card of your library?"));
     }
 }

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -29,12 +28,12 @@ public class JinGitaxias extends Card {
         // Ward {2}.
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
 
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAllOfPredicate(List.of(
-                        new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                        new CardMinManaValuePredicate(3)
-                )),
-                List.of(new DrawCardEffect(1))));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAllOfPredicate(List.of(
+                                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
+                                new CardMinManaValuePredicate(3)
+                        ))),
+                new DrawCardEffect(1));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

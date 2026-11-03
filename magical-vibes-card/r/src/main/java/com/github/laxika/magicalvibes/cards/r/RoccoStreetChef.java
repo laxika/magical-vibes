@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.LandPlayFromExileTriggerEffec
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -39,9 +38,9 @@ public class RoccoStreetChef extends Card {
                         CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()),
                 foodToken());
 
-        addTrigger(Triggers.playerCastsSpell(),
-                new SpellCastTriggerEffect(null, List.of(reward), TargetFilters.creature(),
-                        new StackEntryCastFromZonePredicate(Zone.EXILE)));
+        target(TargetFilters.creature()).addTrigger(Triggers.playerCastsSpell()
+                        .withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.EXILE)),
+                reward);
 
         LandPlayFromExileTriggerEffect landTrigger = new LandPlayFromExileTriggerEffect(
                 List.of(reward), TargetFilters.creature());

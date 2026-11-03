@@ -26,9 +26,12 @@ class UncoverTheMoonLettersTest extends BaseCardTest {
 
         harness.castInstant(player1, 0);
 
+        // CR 603.5: the trigger goes on the stack and "you may" is chosen as it resolves.
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);
@@ -61,6 +64,7 @@ class UncoverTheMoonLettersTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.castInstant(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
@@ -80,8 +84,8 @@ class UncoverTheMoonLettersTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.castEnchantment(player1, 0);
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
@@ -107,8 +111,8 @@ class UncoverTheMoonLettersTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.castInstant(player1, 0);
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
         resolveAllTriggers();
 

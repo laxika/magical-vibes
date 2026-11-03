@@ -6,16 +6,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "230")
 @CardRegistration(set = "MMA", collectorNumber = "154")
@@ -31,15 +29,12 @@ public class MaskedAdmirers extends Card {
 
         // Whenever you cast a creature spell, you may pay {G}{G}. If you do,
         // return this card from your graveyard to your hand.
-        addTrigger(new TriggerCondition(Triggers.youCastSpell(), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT, new SpellCastTriggerEffect(
-                new CardTypePredicate(CardType.CREATURE),
-                List.of(ReturnCardFromGraveyardEffect.builder()
+        addTrigger(new TriggerCondition(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)), AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT,
+                new MayPayManaEffect("{G}{G}", ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
                         .filter(new CardIsSelfPredicate())
                         .returnAll(true)
-                        .build()),
-                "{G}{G}"
-        ));
+                        .build(), "Pay {G}{G} to return Masked Admirers from your graveyard to your hand?"));
     }
 }

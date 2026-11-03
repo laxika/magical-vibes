@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
@@ -21,20 +20,18 @@ import java.util.List;
 public class AcademyWall extends Card {
 
     public AcademyWall() {
-        addTrigger(Triggers.youCastSpell(),
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
-                new SpellCastTriggerEffect(
-                        new CardAnyOfPredicate(List.of(
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),
                                 new CardTypePredicate(CardType.SORCERY)
-                        )),
-                        List.of(new MayEffect(
-                                SequenceEffect.of(
-                                        new DrawCardEffect(1),
-                                        new DiscardEffect(1, DiscardRecipient.CONTROLLER)
-                                ),
-                                "Draw a card, then discard a card?"
-                        ))
+                        ))),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new MayEffect(
+                        SequenceEffect.of(
+                                new DrawCardEffect(1),
+                                new DiscardEffect(1, DiscardRecipient.CONTROLLER)
+                        ),
+                        "Draw a card, then discard a card?"
                 ));
     }
 }

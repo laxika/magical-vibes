@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
@@ -27,8 +26,8 @@ public class JinGitaxiasProgressTyrant extends Card {
         addTrigger(Triggers.youCastSpell(),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
                 new CopyControllerCastSpellOnSpellCastEffect(artifactInstantOrSorcery, null, null));
-        addTrigger(Triggers.opponentCastsSpell(),
+        addTrigger(Triggers.opponentCastsSpell().withFilter(artifactInstantOrSorcery),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
-                new SpellCastTriggerEffect(artifactInstantOrSorcery, List.of(new CounterSpellEffect())));
+                new CounterSpellEffect());
     }
 }

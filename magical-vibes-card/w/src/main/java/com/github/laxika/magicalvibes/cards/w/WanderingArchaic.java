@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,18 +28,18 @@ public class WanderingArchaic extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Explore the Vastlands", backFace.getSpellEffects()).withManaCost("{3}")
         )));
-        addTrigger(Triggers.opponentCastsSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY))),
-                List.of(new MayPayManaEffect(
+        addTrigger(Triggers.opponentCastsSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY)))),
+                new MayPayManaEffect(
                         "{2}",
                         null,
                         "Pay {2} to avoid copying that spell?",
                         MayPayPayer.TRIGGERING_SPELL_CONTROLLER,
                         new MayEffect(new CopySpellEffect(), "Copy that spell?"),
                         0
-                ))));
+                ));
     }
 
     @Override

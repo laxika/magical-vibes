@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,14 +21,12 @@ public class SkywiseTeachings extends Card {
 
     public SkywiseTeachings() {
         CardNotPredicate noncreatureSpell = new CardNotPredicate(new CardTypePredicate(CardType.CREATURE));
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                noncreatureSpell,
-                List.of(new MayPayManaEffect(
+        addTrigger(Triggers.youCastSpell().withFilter(noncreatureSpell),
+                new MayPayManaEffect(
                         "{1}{U}",
                         new CreateTokenEffect("Djinn Monk", 2, 2, CardColor.BLUE,
                                 List.of(CardSubtype.DJINN, CardSubtype.MONK),
                                 Set.of(Keyword.FLYING), Set.of()),
-                        "Pay {1}{U} to create a 2/2 blue Djinn Monk creature token with flying?"))
-        ));
+                        "Pay {1}{U} to create a 2/2 blue Djinn Monk creature token with flying?"));
     }
 }

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,10 +21,8 @@ public class CosmograndZenith extends Card {
     private static final String COUNTER_MODE = "Put a +1/+1 counter on each creature you control.";
 
     public CosmograndZenith() {
-        addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.nth(
-                2,
-                null,
-                List.of(new ChooseOneEffect(List.of(
+        addTrigger(Triggers.youCastSpell().nthThisTurn(2),
+                new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(TOKEN_MODE,
                                 new CreateTokenEffect(2, "Human Soldier", 1, 1,
                                         CardColor.WHITE,
@@ -36,7 +33,6 @@ public class CosmograndZenith extends Card {
                                         CounterType.PLUS_ONE_PLUS_ONE,
                                         1,
                                         new PermanentIsCreaturePredicate()))
-                )))
-        ));
+                )));
     }
 }

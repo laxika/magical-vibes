@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,10 +22,8 @@ public class ThaliasGeistcaller extends Card {
     public ThaliasGeistcaller() {
         // Whenever you cast a spell from your graveyard, create a 1/1 white Spirit creature token
         // with flying.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                null,
-                List.of(CreateTokenEffect.whiteSpirit(1)),
-                new StackEntryCastFromZonePredicate(Zone.GRAVEYARD)));
+        addTrigger(Triggers.youCastSpell().withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.GRAVEYARD)),
+                CreateTokenEffect.whiteSpirit(1));
 
         // Sacrifice a Spirit: This creature gains indestructible until end of turn.
         addActivatedAbility(new ActivatedAbility(

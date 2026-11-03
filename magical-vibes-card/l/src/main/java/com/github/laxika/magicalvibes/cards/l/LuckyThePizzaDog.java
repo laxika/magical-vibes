@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -20,12 +19,12 @@ import java.util.List;
 public class LuckyThePizzaDog extends Card {
 
     public LuckyThePizzaDog() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardSubtypePredicate(CardSubtype.CAT),
-                        new CardSubtypePredicate(CardSubtype.DOG),
-                        new CardSubtypePredicate(CardSubtype.HERO))),
-                List.of(CreateTokenEffect.ofFoodToken(1))));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardSubtypePredicate(CardSubtype.CAT),
+                                new CardSubtypePredicate(CardSubtype.DOG),
+                                new CardSubtypePredicate(CardSubtype.HERO)))),
+                CreateTokenEffect.ofFoodToken(1));
         addTrigger(Triggers.endStep(ActivePlayer.ANY),
                 TriggerOptions.DEFAULT.withInterveningIf(new GainedLifeThisTurn()),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));

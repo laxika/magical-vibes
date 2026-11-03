@@ -3294,20 +3294,20 @@ public class SpellCastTriggerCollectorService {
             mayChoicePromptOnResolution = optionalMay.prompt();
             optionalMay = null;
         }
+        // CR 603.5: every other optional spell-cast trigger (one whose effects read the mana spent, or that targets
+        // a card in a graveyard or a spell) also goes on the stack, its targets chosen as it does (CR 603.3d), and
+        // the choice (and payment) is made as it resolves.
+        boolean paymentWrapped = false;
         if (optionalMay != null) {
-            PendingMayAbility pendingMayAbility = PendingMayAbility.forSpellCastTrigger(
-                    sourceCard,
-                    match.controllerId(),
-                    resolved,
-                    sourceCard.getName() + " — " + optionalMay.prompt(),
-                    trigger.manaCost(),
-                    sourcePermanentId,
-                    spellCard.getId());
-            if (needsSpellManaSpentX) {
-                pendingMayAbility = pendingMayAbility.withXValue(spellManaSpentX);
-            }
-            match.gameData().pendingMayAbilities.add(pendingMayAbility);
-        } else if (resolved.size() == 1 && resolved.getFirst() instanceof ChooseModeNotYetChosenEffect modeEffect) {
+            CardEffect wrapped = resolved.size() == 1 ? resolved.getFirst()
+                    : SequenceEffect.of(resolved.toArray(CardEffect[]::new));
+            resolved = List.of(trigger.manaCost() == null
+                    ? new MayEffect(wrapped, optionalMay.prompt())
+                    : new MayPayManaEffect(trigger.manaCost(), wrapped, optionalMay.prompt()));
+            paymentWrapped = trigger.manaCost() != null;
+            optionalMay = null;
+        }
+        if (resolved.size() == 1 && resolved.getFirst() instanceof ChooseModeNotYetChosenEffect modeEffect) {
             match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
                     sourceCard, match.controllerId(), new ChooseOneEffect(modeEffect.options()),
                     sourcePermanentId, false, true, spellCard.getId()));
@@ -3354,7 +3354,7 @@ public class SpellCastTriggerCollectorService {
             // as the trigger goes on the stack (CR 603.3d), while the payment choice waits for resolution
             // (CR 603.5) —
             // so wrap after the targeting decision has been made from the unwrapped effects.
-            List<CardEffect> queued = trigger.manaCost() == null
+            List<CardEffect> queued = trigger.manaCost() == null || paymentWrapped
                     ? resolved
                     : resolved.stream().map(e -> (CardEffect) new MayPayManaEffect(
                             trigger.manaCost(), e, mayPayPrompt)).toList();
@@ -3364,8 +3364,13 @@ public class SpellCastTriggerCollectorService {
                         : SequenceEffect.of(queued.toArray(CardEffect[]::new));
                 queued = List.of(new MayEffect(optionalEffect, prompt));
             }
-            boolean multiTarget = sourceCard.getTargetGroups().size() > 1
-                    || sourceCard.getTargetGroups().stream()
+            // The ability's own target groups when its effects are bound to them, else every group of the card.
+            List<Integer> boundGroups = boundTargetGroups(sourceCard, trigger.resolvedEffects());
+            List<com.github.laxika.magicalvibes.model.TargetGroup> abilityGroups = boundGroups.isEmpty()
+                    ? sourceCard.getTargetGroups()
+                    : boundGroups.stream().map(sourceCard.getTargetGroups()::get).toList();
+            boolean multiTarget = abilityGroups.size() > 1
+                    || abilityGroups.stream()
                     .anyMatch(target -> target.getMaxTargets() > 1 || target.getMinTargets() == 0);
             if (multiTarget) {
                 match.gameData().queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
@@ -3374,7 +3379,9 @@ public class SpellCastTriggerCollectorService {
                         null, carriesTriggeringSpellManaValue ? triggeringSpellManaValue : 0));
             } else {
                 match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                        sourceCard, match.controllerId(), queued, playerTargetOnly, trigger.targetFilter(),
+                        sourceCard, match.controllerId(), queued, playerTargetOnly,
+                        trigger.targetFilter() != null ? trigger.targetFilter()
+                                : boundTargetFilter(sourceCard, trigger.resolvedEffects()),
                         spellManaSpentX, sourcePermanentId, null, false, null, null,
                         match.controllerId(), carriesTriggeringSpellManaValue ? triggeringSpellManaValue : null,
                         match.sourcePlanarObject() == null ? null : match.sourcePlanarObject().copy(),
@@ -3477,6 +3484,45 @@ public class SpellCastTriggerCollectorService {
                     match.gameData(), match.permanent(), effect));
         }
         return true;
+    }
+
+    /**
+     * The filter of the target group the ability's effects are bound to, or {@code null} for none: a "whenever you
+     * cast a spell" ability declares its target as a target group of the card ({@code target(filter).addTrigger(…)}),
+     * bound to its effect or to the "you may" / "you may pay" effect around it.
+     */
+    private static TargetFilter boundTargetFilter(Card sourceCard, List<CardEffect> effects) {
+        List<Integer> groups = boundTargetGroups(sourceCard, effects);
+        return groups.isEmpty() ? null : sourceCard.getTargetGroups().get(groups.getFirst()).getFilter();
+    }
+
+    /**
+     * The indexes of the target groups the ability's effects are bound to (directly, or through the "you may" / "you
+     * may pay" effect around them), in their effects' order, each once; empty for none.
+     */
+    private static List<Integer> boundTargetGroups(Card sourceCard, List<CardEffect> effects) {
+        List<Integer> indexes = new ArrayList<>();
+        List<com.github.laxika.magicalvibes.model.TargetGroup> groups = sourceCard.getTargetGroups();
+        for (CardEffect effect : effects) {
+            CardEffect bound = effect instanceof com.github.laxika.magicalvibes.model.effect.OnceOnlyTriggerEffect once
+                    ? once.wrapped() : effect;
+            int index = sourceCard.getEffectTargetIndex(bound);
+            for (int group = 0; index < 0 && group < groups.size(); group++) {
+                for (CardEffect candidate : sourceCard.getEffectsBoundToTargetGroup(group)) {
+                    CardEffect wrapped = candidate instanceof MayEffect may ? may.wrapped()
+                            : candidate instanceof MayPayManaEffect pay ? pay.wrapped() : null;
+                    if (wrapped == bound || wrapped instanceof SequenceEffect sequence
+                            && sequence.steps().stream().anyMatch(step -> step == bound)) {
+                        index = group;
+                        break;
+                    }
+                }
+            }
+            if (index >= 0 && index < groups.size() && !indexes.contains(index)) {
+                indexes.add(index);
+            }
+        }
+        return indexes;
     }
 
     private boolean matchesCastSpellPredicate(TriggerMatchContext match, StackEntry spellEntry,

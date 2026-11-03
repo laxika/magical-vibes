@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -23,8 +22,6 @@ public class ArmoryPaladin extends Card {
         CardPredicate auraOrEquipment = new CardAnyOfPredicate(List.of(
                 new CardIsAuraPredicate(),
                 new CardSubtypePredicate(CardSubtype.EQUIPMENT)));
-        addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(auraOrEquipment,
-                        List.of(new ExileTopCardsMayPlayUntilNextTurnEffect(1))));
+        addTrigger(Triggers.youCastSpell().withFilter(auraOrEquipment), new ExileTopCardsMayPlayUntilNextTurnEffect(1));
     }
 }

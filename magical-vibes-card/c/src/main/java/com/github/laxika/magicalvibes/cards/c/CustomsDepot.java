@@ -8,23 +8,18 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "MMQ", collectorNumber = "71")
 public class CustomsDepot extends Card {
 
     public CustomsDepot() {
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardTypePredicate(CardType.CREATURE),
-                List.of(new MayPayManaEffect("{1}",
+        addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
+                new MayPayManaEffect("{1}",
                         SequenceEffect.of(
                                 new DrawCardEffect(),
                                 new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
-                        "Pay {1} to draw a card, then discard a card?"))
-        ));
+                        "Pay {1} to draw a card, then discard a card?"));
     }
 }

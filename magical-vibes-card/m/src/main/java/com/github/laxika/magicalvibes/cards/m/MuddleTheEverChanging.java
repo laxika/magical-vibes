@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -34,16 +33,12 @@ public class MuddleTheEverChanging extends Card {
                 nonlegendaryCreatureYouControl,
                 "Target must be a nonlegendary creature you control");
 
-        target(targetFilter, 0, 1).addTrigger(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(
-                        new CardAnyOfPredicate(List.of(
+        target(targetFilter, 0, 1).addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),
                                 new CardTypePredicate(CardType.SORCERY)
-                        )),
-                        List.of(new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(List.of(new TriggeredAbility(Triggers.attacks(),
-                                new CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(true))))),
-                        null,
-                        targetFilter
-                ));
+                        ))),
+                new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(List.of(new TriggeredAbility(Triggers.attacks(),
+                        new CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(true)))));
     }
 }

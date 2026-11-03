@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastLesserSpellWithSharedTypeOrCreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -43,12 +42,11 @@ public class BaralAndKariZev extends Card {
             Set.of(Keyword.HASTE));
 
     public BaralAndKariZev() {
-        addTrigger(Triggers.youCastSpell(),
-                SpellCastTriggerEffect.nth(
-                        1,
-                        new CardAnyOfPredicate(List.of(
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),
-                                new CardTypePredicate(CardType.SORCERY))),
-                        List.of(new MayCastLesserSpellWithSharedTypeOrCreateTokenEffect(RAGAVAN_TOKEN))));
+                                new CardTypePredicate(CardType.SORCERY))))
+                        .nthThisTurn(1),
+                new MayCastLesserSpellWithSharedTypeOrCreateTokenEffect(RAGAVAN_TOKEN));
     }
 }

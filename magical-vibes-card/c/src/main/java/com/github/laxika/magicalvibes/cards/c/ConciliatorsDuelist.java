@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -23,7 +22,6 @@ import java.util.List;
 public class ConciliatorsDuelist extends Card {
 
     public ConciliatorsDuelist() {
-        target(TargetFilters.creature(), 0, 1);
         // When this creature enters, draw a card. Each player loses 1 life.
         addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
         addTrigger(Triggers.enters(ObjectRelation.THIS), new LoseLifeEffect(1, LoseLifeRecipient.EACH_PLAYER));
@@ -31,13 +29,11 @@ public class ConciliatorsDuelist extends Card {
         // Repartee — Whenever you cast an instant or sorcery spell that targets a creature,
         // exile up to one target creature. Return that card to the battlefield under its
         // owner's control at the beginning of the next end step.
-        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY))),
-                List.of(FlickerEffect.exileTargetReturnAtEndStep()),
-                TargetFilters.creature(),
-                new StackEntryTargetsPermanentPredicate(new PermanentIsCreaturePredicate())
-        ));
+        target(TargetFilters.creature(), 0, 1).addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY))))
+                        .withStackEntryFilter(new StackEntryTargetsPermanentPredicate(new PermanentIsCreaturePredicate())),
+                FlickerEffect.exileTargetReturnAtEndStep());
     }
 }
