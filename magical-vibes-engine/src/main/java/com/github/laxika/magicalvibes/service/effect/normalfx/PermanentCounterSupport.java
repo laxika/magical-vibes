@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
@@ -1435,54 +1436,6 @@ public class PermanentCounterSupport {
         fireCounterPutOnControlledCreatureTriggers(gameData, target, 1, placingPlayerId);
     }
 
-    private void fireControllerPutPlusOnePlusOneCountersOnCreatureTriggers(
-            GameData gameData, Permanent creature, int count, UUID placingPlayerId,
-            UUID creatureControllerId) {
-        if (count <= 0 || creature == null || placingPlayerId == null
-                || creatureControllerId == null || !gameQueryService.isCreature(gameData, creature)) {
-            return;
-        }
-
-        if (!placingPlayerId.equals(creatureControllerId)) {
-            return;
-        }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(placingPlayerId);
-        if (battlefield == null) {
-            return;
-        }
-
-        for (Permanent source : new ArrayList<>(battlefield)) {
-            for (CardEffect authoredEffect :
-                    CounterWatch.ON_CONTROLLER_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE.effectsOf(source.getCard())) {
-                CardEffect effect = OncePerTurnTriggerSupport.unwrapIfAvailable(
-                        gameData, source, authoredEffect);
-                if (effect == null) {
-                    continue;
-                }
-
-                if (effect instanceof MayEffect may) {
-                    gameData.queueMayAbility(source.getCard(), placingPlayerId, may,
-                            null, source.getId(), count,
-                            authoredEffect instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance());
-                } else {
-                    StackEntry triggerEntry = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            source.getCard(),
-                            placingPlayerId,
-                            source.getCard().getName() + "'s triggered ability",
-                            new ArrayList<>(List.of(effect)),
-                            null,
-                            source.getId());
-                    triggerEntry.setEventValue(count);
-                    gameData.stack.add(triggerEntry);
-                }
-                OncePerTurnTriggerSupport.markIfNeeded(gameData, source, authoredEffect);
-                gameLogService.append(gameData,
-                        GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
-            }
-        }
-    }
-
     private void fireYouPutPlusOnePlusOneCountersOnAnyCreatureTriggers(
             GameData gameData, int count, UUID placingPlayerId) {
         if (count <= 0 || placingPlayerId == null) {
@@ -1581,6 +1534,8 @@ public class PermanentCounterSupport {
                 boolean oncePerTurnQueued = false;
                 boolean oncePerCreatureQueued = false;
                 for (CardEffect effect : effects) {
+                    // The wrappers in the order the legacy view nests them (TriggeredAbility.legacyEffects()): "you
+                    // put", the filter, the limit, then the intervening "if".
                     CardEffect resolved = effect;
                     if (resolved instanceof YouPutCounterOnControlledCreatureTriggerEffect youPut) {
                         if (!Objects.equals(placingPlayerId, controllerId)) {
@@ -1595,6 +1550,24 @@ public class PermanentCounterSupport {
                         }
                         resolved = conditional.wrapped();
                     }
+                    boolean oncePerTurn = false;
+                    boolean oncePerCreature = false;
+                    if (resolved instanceof OncePerTurnTriggerEffect once) {
+                        if (gameData.oncePerTurnTriggersFiredThisTurn.contains(source.getId())) {
+                            continue;
+                        }
+                        resolved = once.wrapped();
+                        oncePerTurn = true;
+                    }
+                    if (resolved instanceof OncePerTurnPerCreatureTriggerEffect perCreature) {
+                        Set<UUID> firedCreatures = gameData.oncePerCreatureTriggersFiredThisTurn
+                                .computeIfAbsent(source.getId(), ignored -> ConcurrentHashMap.newKeySet());
+                        if (!firstCountersThisTurn || firedCreatures.contains(creature.getId())) {
+                            continue;
+                        }
+                        resolved = perCreature.wrapped();
+                        oncePerCreature = true;
+                    }
                     if (resolved instanceof ConditionalEffect conditional && conditional.interveningIf()) {
                         if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
                                 ConditionContext.forPermanent(source, controllerId))) {
@@ -1602,22 +1575,8 @@ public class PermanentCounterSupport {
                         }
                         resolved = conditional.wrapped();
                     }
-                    if (resolved instanceof OncePerTurnTriggerEffect oncePerTurn) {
-                        if (gameData.oncePerTurnTriggersFiredThisTurn.contains(source.getId())) {
-                            continue;
-                        }
-                        resolved = oncePerTurn.wrapped();
-                        oncePerTurnQueued = true;
-                    }
-                    if (resolved instanceof OncePerTurnPerCreatureTriggerEffect oncePerCreature) {
-                        Set<UUID> firedCreatures = gameData.oncePerCreatureTriggersFiredThisTurn
-                                .computeIfAbsent(source.getId(), ignored -> ConcurrentHashMap.newKeySet());
-                        if (!firstCountersThisTurn || firedCreatures.contains(creature.getId())) {
-                            continue;
-                        }
-                        resolved = oncePerCreature.wrapped();
-                        oncePerCreatureQueued = true;
-                    }
+                    oncePerTurnQueued |= oncePerTurn;
+                    oncePerCreatureQueued |= oncePerCreature;
                     effectsToResolve.add(resolved);
                 }
                 if (effectsToResolve.isEmpty()) {
@@ -1826,8 +1785,9 @@ public class PermanentCounterSupport {
                 .filter(GrantTriggeredAbilityEffect.class::isInstance)
                 .map(GrantTriggeredAbilityEffect.class::cast)
                 .filter(grant -> grant.grantedAbility() instanceof TriggeredAbility ability
-                        && ability.hasTrigger(CounterWatch.ON_SELF_COUNTERS_PUT.trigger()))
-                .map(GrantTriggeredAbilityEffect::grantedEffect)
+                        && ability.hasWatchedTrigger(CounterWatch.ON_SELF_COUNTERS_PUT.trigger()))
+                .flatMap(grant -> ((TriggeredAbility) grant.grantedAbility()).legacyEffects().stream()
+                        .map(EffectRegistration::effect))
                 .filter(granted -> firstPlacementThisTurn || !(granted instanceof OncePerTurnTriggerEffect))
                 .forEach(effects::add);
         if (effects.isEmpty()) {
@@ -2115,8 +2075,6 @@ public class PermanentCounterSupport {
                 }
                 firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(gameData, controllerId, count,
                         CounterWatch.ON_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ALLY_CREATURE);
-                fireControllerPutPlusOnePlusOneCountersOnCreatureTriggers(
-                        gameData, target, count, placingPlayerId, controllerId);
                 fireYouPutPlusOnePlusOneCountersOnAnyCreatureTriggers(gameData, count, placingPlayerId);
             }
             if (firstPlacementOnThisPermanent) {

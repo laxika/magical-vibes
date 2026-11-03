@@ -25,9 +25,12 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringOutlastAbilityCondi
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPowerUpAbilityConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringTapAbilityConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.YouPutCounterOnControlledCreatureTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.YouRemoveTimeCounterFromExiledCardTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.AbilityTrigger;
 import com.github.laxika.magicalvibes.model.trigger.CombatTrigger;
+import com.github.laxika.magicalvibes.model.trigger.CounterTrigger;
 import com.github.laxika.magicalvibes.model.trigger.DamageTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LandPlayTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
@@ -196,7 +199,13 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * source" ({@link TriggerMultiplicity#EACH_SOURCE}) a {@link PerDamageSourceTriggerEffect} outside that, as the
      * damage cards wrote them. "Once each turn for each creature"
      * ({@link TriggerLimit#ONCE_EACH_TURN_FOR_EACH_CREATURE}) is an {@link OncePerTurnPerCreatureTriggerEffect} where
-     * the other limits go. An ability without options or such filters returns its registrations as they are.
+     * the other limits go. A counter trigger's filter ({@link CounterTrigger#qualifier()}) is a
+     * {@link TriggeringPermanentConditionalEffect} outside the limit, and the counter triggers the collector of
+     * another event reads ({@link CounterTrigger#watchedEvent()}) are that collector's wrapper outside that: "you put
+     * counters" a {@link YouPutCounterOnControlledCreatureTriggerEffect}, "you remove a time counter" a
+     * {@link YouRemoveTimeCounterFromExiledCardTriggerEffect}, and "a +1/+1 counter is put on this", once for each
+     * counter, the registrations' {@link TriggerMode#PER_COUNTER}, as the counter cards wrote them. An ability without
+     * options or such filters returns its registrations as they are.
      */
     public List<EffectRegistration> legacyEffects() {
         SpellTrigger spell = filteredTrigger(SpellTrigger.class);
@@ -219,8 +228,10 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         AbilityTrigger activation = filteredTrigger(AbilityTrigger.class);
         CombatView combat = combatView();
         DamageView damage = damageView();
+        CounterView counter = counterView();
         if (interveningIf == null && limit == TriggerLimit.NONE && landPlay == null && activation == null
-                && (combat == null || combat.plain()) && (damage == null || damage.plain())) {
+                && (combat == null || combat.plain()) && (damage == null || damage.plain())
+                && (counter == null || counter.plain())) {
             return effects;
         }
         String key = limit == TriggerLimit.ONCE_EACH_TURN ? limitKey() : null;
@@ -262,10 +273,16 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             if (damage != null) {
                 effect = damage.wrap(effect);
             }
+            if (counter != null) {
+                effect = counter.wrap(effect);
+            }
             if (activation != null && activation.kind() != null) {
                 effect = legacyKindWrapper(activation.kind(), effect);
             }
             TriggerMode mode = combat != null ? combat.mode(registration.triggerMode()) : registration.triggerMode();
+            if (counter != null) {
+                mode = counter.mode(mode);
+            }
             wrapped.add(new EffectRegistration(effect, mode, registration.simultaneousWithPrevious()));
         }
         return List.copyOf(wrapped);
@@ -354,6 +371,71 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         CardEffect wrap(CardEffect effect) {
             CardEffect filtered = filter != null ? new TriggeringPermanentConditionalEffect(filter, effect) : effect;
             return eachSource ? new PerDamageSourceTriggerEffect(filtered) : filtered;
+        }
+    }
+
+    /**
+     * What the legacy view adds for this ability's counter conditions, or {@code null} when it has none: their filter
+     * (the {@link CounterTrigger#qualifier()} {@link CounterTrigger#watchKey()} drops) and the event the collector
+     * that reads them judges in a wrapper or trigger mode. The conditions must agree on both. The counter collectors
+     * have no multiplicity option: "each counter" is an event of its own.
+     */
+    private CounterView counterView() {
+        List<CounterTrigger> counter = conditions.stream().map(TriggerCondition::trigger)
+                .filter(CounterTrigger.class::isInstance).map(CounterTrigger.class::cast).toList();
+        if (counter.isEmpty()) {
+            return null;
+        }
+        List<CounterView> views = counter.stream()
+                .map(trigger -> new CounterView(trigger.qualifier(),
+                        trigger.watchedEvent() == trigger.event() ? null : trigger.event()))
+                .distinct().toList();
+        if (views.size() > 1) {
+            throw new IllegalStateException("The counter conditions of one ability must have the same filter and "
+                    + "watched event: " + conditions);
+        }
+        if (options.multiplicity() != TriggerMultiplicity.EACH) {
+            throw new IllegalStateException("The legacy view has no " + options.multiplicity() + " form for "
+                    + conditions);
+        }
+        return views.getFirst();
+    }
+
+    /**
+     * The legacy view of an ability's counter conditions, as {@link #counterView()} builds it.
+     *
+     * @param filter   the conditions' filter, or {@code null}
+     * @param narrowed the event read by another event's collector, which judges it as a wrapper or a trigger mode, or
+     *                 {@code null}
+     */
+    private record CounterView(PermanentPredicate filter, CounterTrigger.CounterEvent narrowed) {
+
+        /** Whether the legacy view adds nothing to the effects and modes. */
+        boolean plain() {
+            return filter == null && narrowed == null;
+        }
+
+        CardEffect wrap(CardEffect effect) {
+            CardEffect filtered = filter != null ? new TriggeringPermanentConditionalEffect(filter, effect) : effect;
+            if (narrowed == CounterTrigger.CounterEvent.YOU_REMOVE_TIME_COUNTER_IN_EXILE) {
+                return new YouRemoveTimeCounterFromExiledCardTriggerEffect(filtered);
+            }
+            if (narrowed == CounterTrigger.CounterEvent.YOU_PUT_COUNTERS
+                    || narrowed == CounterTrigger.CounterEvent.YOU_PUT_PLUS_ONE_COUNTERS) {
+                return new YouPutCounterOnControlledCreatureTriggerEffect(filtered);
+            }
+            return filtered;
+        }
+
+        TriggerMode mode(TriggerMode authored) {
+            if (narrowed != CounterTrigger.CounterEvent.EACH_PLUS_ONE_COUNTER_PUT) {
+                return authored;
+            }
+            if (authored != TriggerMode.NORMAL) {
+                throw new IllegalStateException("A registration's trigger mode " + authored
+                        + " on a trigger that is once for each counter");
+            }
+            return TriggerMode.PER_COUNTER;
         }
     }
 

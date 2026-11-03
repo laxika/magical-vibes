@@ -19,26 +19,86 @@ import java.util.Objects;
  *                 creature", {@link ObjectRelation#OPPONENT_CONTROLS} for "a creature you don't control" or "a creature
  *                 they control". An event about you alone (energy, proliferate, counters on a permanent or player) is
  *                 {@link ObjectRelation#ANY}
- * @param filter   what that permanent must be, or {@code null} for any permanent: a creature, a Human, a non-Hydra
- *                 creature, a Hero, a planeswalker, a Saga. The engine's counter collectors check it
+ * @param filter    what that permanent must be, or {@code null} for any permanent: a creature, a Human, a non-Hydra
+ *                  creature, a Hero, a planeswalker, a Saga. The engine's counter collectors check it
+ * @param qualifier what that permanent must also be, or {@code null}: "another colorless creature" is
+ *                  {@code Triggers.youPutPlusOneCountersOnAnotherCreature().withFilter(new
+ *                  PermanentIsColorlessPredicate())}. The counter collectors read it from the legacy view
+ *                  ({@code TriggeredAbility.legacyEffects()}) as the {@code TriggeringPermanentConditionalEffect} they
+ *                  judge, so {@link #watchKey()} drops it
  */
-public record CounterTrigger(CounterEvent event, ObjectRelation relation, PermanentPredicate filter)
-        implements Trigger {
+public record CounterTrigger(CounterEvent event, ObjectRelation relation, PermanentPredicate filter,
+                             PermanentPredicate qualifier) implements Trigger {
 
     public CounterTrigger {
         Objects.requireNonNull(event, "event");
         Objects.requireNonNull(relation, "relation");
     }
 
-    /** A trigger on any permanent that relates to the source as {@code relation} says. */
-    public CounterTrigger(CounterEvent event, ObjectRelation relation) {
-        this(event, relation, null);
+    /** A trigger on any permanent of {@code filter}'s type that relates to the source as {@code relation} says. */
+    public CounterTrigger(CounterEvent event, ObjectRelation relation, PermanentPredicate filter) {
+        this(event, relation, filter, null);
     }
 
-    /** {@link CounterEvent#TIME_COUNTER_REMOVED_IN_EXILE} functions from exile; every other event from the battlefield. */
+    /** A trigger on any permanent that relates to the source as {@code relation} says. */
+    public CounterTrigger(CounterEvent event, ObjectRelation relation) {
+        this(event, relation, null, null);
+    }
+
+    /**
+     * This trigger narrowed to a permanent that also matches {@code filter}, as {@link #qualifier} says: "whenever you
+     * put one or more counters on a Goblin, Orc, or Army you control".
+     */
+    public CounterTrigger withFilter(PermanentPredicate filter) {
+        Objects.requireNonNull(filter, "filter");
+        if (qualifier != null) {
+            throw new IllegalStateException("This counter trigger already has a filter: " + this);
+        }
+        return new CounterTrigger(event, relation, this.filter, filter);
+    }
+
+    /**
+     * The exile events ({@link CounterEvent#TIME_COUNTER_REMOVED_IN_EXILE},
+     * {@link CounterEvent#YOU_REMOVE_TIME_COUNTER_IN_EXILE}) function from exile; every other event from the
+     * battlefield.
+     */
     @Override
     public AbilityZones defaultZones() {
-        return event == CounterEvent.TIME_COUNTER_REMOVED_IN_EXILE ? AbilityZones.EXILE : AbilityZones.BATTLEFIELD;
+        return event == CounterEvent.TIME_COUNTER_REMOVED_IN_EXILE
+                || event == CounterEvent.YOU_REMOVE_TIME_COUNTER_IN_EXILE
+                ? AbilityZones.EXILE : AbilityZones.BATTLEFIELD;
+    }
+
+    /**
+     * The trigger the {@code CounterWatch} collectors read this one's abilities by: without its {@link #qualifier},
+     * and, for the events no collector of their own reads, with the event whose collector reads them. "You put
+     * counters on a creature you control" and "you put +1/+1 counters on this" are read by the collectors of the
+     * event about any player ({@link CounterEvent#COUNTERS_PUT}, {@link CounterEvent#PLUS_ONE_COUNTERS_PUT}), "you
+     * remove a time counter from this card while it's exiled" by the one of
+     * {@link CounterEvent#TIME_COUNTER_REMOVED_IN_EXILE}, and "a +1/+1 counter is put on this", once for each counter,
+     * by the one of {@link CounterEvent#PLUS_ONE_COUNTERS_PUT}. The legacy view ({@code
+     * TriggeredAbility.legacyEffects()}) gives them the "you" wrapper or the per-counter trigger mode those collectors
+     * judge.
+     */
+    @Override
+    public Trigger watchKey() {
+        CounterEvent watched = watchedEvent();
+        if (watched == event && qualifier == null) {
+            return this;
+        }
+        return new CounterTrigger(watched, relation, filter);
+    }
+
+    /** The event of {@link #watchKey()}: {@link #event}, or the event whose collector reads this one's abilities. */
+    public CounterEvent watchedEvent() {
+        return switch (event) {
+            case YOU_PUT_COUNTERS -> relation == ObjectRelation.YOU_CONTROL ? CounterEvent.COUNTERS_PUT : event;
+            case YOU_PUT_PLUS_ONE_COUNTERS -> relation == ObjectRelation.THIS ? CounterEvent.PLUS_ONE_COUNTERS_PUT : event;
+            case EACH_PLUS_ONE_COUNTER_PUT -> relation == ObjectRelation.THIS ? CounterEvent.PLUS_ONE_COUNTERS_PUT : event;
+            case YOU_REMOVE_TIME_COUNTER_IN_EXILE -> relation == ObjectRelation.THIS
+                    ? CounterEvent.TIME_COUNTER_REMOVED_IN_EXILE : event;
+            default -> event;
+        };
     }
 
     /**
@@ -62,14 +122,10 @@ public record CounterTrigger(CounterEvent event, ObjectRelation relation, Perman
         COUNTERS_REMOVED,
         /** One or more +1/+1 counters are put on a permanent. */
         PLUS_ONE_COUNTERS_PUT,
+        /** A +1/+1 counter is put on a permanent, once for each counter. */
+        EACH_PLUS_ONE_COUNTER_PUT,
         /** You put one or more +1/+1 counters on a permanent. */
         YOU_PUT_PLUS_ONE_COUNTERS,
-        /**
-         * You put one or more +1/+1 counters on a permanent, for an ability that triggers or does this only once each
-         * turn. It is the same event as {@link #YOU_PUT_PLUS_ONE_COUNTERS}, kept apart because the engine collects
-         * the two with different code, as it did the two slots they replace.
-         */
-        YOU_PUT_PLUS_ONE_COUNTERS_ONCE_EACH_TURN,
         /** One or more +1/+1 counters are put on a permanent for the first time this turn. */
         FIRST_PLUS_ONE_COUNTERS_PUT_THIS_TURN,
         /** A +1/+1 counter is removed from a permanent, once for each counter. */
@@ -92,6 +148,8 @@ public record CounterTrigger(CounterEvent event, ObjectRelation relation, Perman
         TIME_COUNTERS_REMOVED,
         /** A time counter is removed from this card while it's exiled; functions from exile. */
         TIME_COUNTER_REMOVED_IN_EXILE,
+        /** You remove a time counter from this card while it's exiled; functions from exile. */
+        YOU_REMOVE_TIME_COUNTER_IN_EXILE,
         /** You put a lore counter on a permanent, once for each counter. */
         YOU_PUT_EACH_LORE_COUNTER,
         /** A permanent becomes renowned (CR 702.112b). */

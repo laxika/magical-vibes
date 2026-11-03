@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
-import com.github.laxika.magicalvibes.model.effect.YouPutCounterOnControlledCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -58,8 +57,7 @@ public class BlasterCombatDJ extends Card {
                         CounterType.PLUS_ONE_PLUS_ONE, true, artifactCreature)),
                 GrantScope.OWN_PERMANENTS,
                 modularTarget));
-        addTrigger(Triggers.plusOneCountersPutOnThis(),
-                new YouPutCounterOnControlledCreatureTriggerEffect(new TransformToBackFaceEffect()));
+        addTrigger(Triggers.youPutPlusOneCountersOnThis(), new TransformToBackFaceEffect());
     }
 
     @Override

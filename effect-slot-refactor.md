@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -6047,6 +6047,151 @@ source.
     each in `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and `CardEffectTargetingConsistencyTest`;
   - `TurnCleanupServiceTest` 10 and `PlanechaseServiceTest` 2, and `DamageTriggerCollectorServiceTest`'s 6: the same
     test names fail at HEAD `35b3fbf3e1`, checked in a worktree with the main tree's `card-data-cache`.
+- AI: the whole module (1,620 tests), with the same 10 failures as before.
+- The full suite was not run here.
+
+#### Run 9: counters
+
+Step 13 family 5, every wrapper kind in one run: every counter ability that the `CounterWatch` collectors read is
+authored without trigger-only wrappers, but the abilities kept below. 31 abilities in 29 card classes were converted;
+Ant-Man, Colony Commander's and Ichor Aberration's split halves were merged into one ability each, and the
+`youPutPlusOneCountersOnCreatureYouControlOnceEachTurn()` event step 13 kept apart is gone.
+
+**Authoring.**
+
+- A further restriction on the permanent is the trigger's filter: `CounterTrigger.withFilter(PermanentPredicate)`, kept
+  in the new `qualifier` component because `filter` already holds the type the watch is keyed by:
+  `Triggers.youPutPlusOneCountersOnAnotherCreature().withFilter(new PermanentIsColorlessPredicate())` (Omarthis),
+  `Triggers.youPutCountersOnCreatureYouControl().withFilter(GOBLIN_ORC_ARMY)` (The Great Goblin). A second filter is
+  rejected.
+- "You" and "each counter" are events, as step 13 made the other "you put" and "a … counter" wordings, with new
+  factories: `youPutCountersOnCreatureYouControl()` (`YOU_PUT_COUNTERS`, `YOU_CONTROL`; Mikey & Leo, The Great Goblin),
+  `youPutPlusOneCountersOnThis()` (`YOU_PUT_PLUS_ONE_COUNTERS`, `THIS`; Exemplar of Light, Blaster),
+  `youRemoveTimeCounterFromThisInExile()` (new `YOU_REMOVE_TIME_COUNTER_IN_EXILE`, from exile by default; Watcher of
+  Hours) and `plusOneCounterPutOnThis()` (new `EACH_PLUS_ONE_COUNTER_PUT`; Fathom Mage, Bloodcrazed Hoplite).
+  `TriggerMode.PER_COUNTER` is no longer authored.
+- An intervening "if" is `TriggerOptions.DEFAULT.withInterveningIf(c)` (CR 603.4, checked), as is a condition of the
+  trigger event: "during your turn" (Contagion Dispenser, Brotherhood Scribe), a chosen mode (Hollowmurk Siege), "if this
+  card is in your graveyard" (Moss-Pit Skeleton, Ichor Aberration), and "when the last time counter is removed" (the
+  vanishing sacrifice of Calciderm, Chronozoa, Aven Riftwatcher and Regenerations Restored, CR 702.63a, checked; Veiling
+  Oddity's and Riftmarked Knight's suspend `NotCondition(SourceCardSuspended)`). "Triggers only once each turn" / "for
+  the first time each turn" are `ONCE_EACH_TURN`, "do this only once each turn" `DO_ONLY_ONCE_EACH_TURN` (CR 603.2h,
+  checked; Terrasymbiosis, Earth Kingdom General), Stalwart Successor's "if it's the first time counters have been put
+  on that creature this turn" run 8's `ONCE_EACH_TURN_FOR_EACH_CREATURE`.
+- Ichor Aberration's "whenever you proliferate, if this is in your graveyard or on the battlefield" is one ability with
+  `new TriggerCondition(Triggers.youProliferate(), AbilityZones.of(Zone.BATTLEFIELD, Zone.GRAVEYARD))`. Ant-Man's
+  "whenever you put a +1/+1 counter on a creature" is one `youPutPlusOneCountersOnCreature()` ability with
+  `ONCE_EACH_TURN`, where a "creature you control" (once-each-turn event) half and an "another creature" half shared the
+  unkeyed mark.
+
+**The engine.**
+
+- `CounterTrigger.watchKey()` drops the qualifier and gives the four events above the event whose collector reads them
+  (`CounterTrigger.watchedEvent()`): `COUNTERS_PUT`, `PLUS_ONE_COUNTERS_PUT`, `TIME_COUNTER_REMOVED_IN_EXILE`. Only those
+  (event, relation) pairs are mapped; every other counter trigger is its own key but for its qualifier.
+- `TriggeredAbility.legacyEffects()` rebuilds the counter wrappers in the order the cards nested them, outermost first:
+  the "you" wrapper (`YouPutCounterOnControlledCreatureTriggerEffect`, `YouRemoveTimeCounterFromExiledCardTriggerEffect`),
+  the qualifier as a `TriggeringPermanentConditionalEffect`, the limit (keyed `OncePerTurnTriggerEffect`,
+  `markOnAcceptance`, `OncePerTurnPerCreatureTriggerEffect`), the intervening "if", then `OnceOnlyTriggerEffect`; the
+  each-counter event becomes the registrations' `PER_COUNTER`. Any multiplicity other than `EACH`, a registration mode
+  next to the each-counter event, and counter conditions of one ability with different qualifiers or watched events
+  throw.
+- `CounterWatch.effectsOf` and `registrationsOf` read the legacy view. By hand (three calls, no reader script): the two
+  graveyard readers (`GRAVEYARD_ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_CREATURE`, `GRAVEYARD_ON_CONTROLLER_PROLIFERATES`)
+  use `getEffectiveGraveyardLegacyTriggerEffects`, and the "counters put on this" collector reads a granted ability
+  (Danny Pink) with `hasWatchedTrigger` and its `legacyEffects()`.
+- The "one or more counters are put on a creature you control" collector (`fireCounterPutOnControlledCreatureTriggers`)
+  checked the intervening "if" before the limit; it now peels the wrappers in the legacy view's order ("you", filter,
+  limit, then the "if") and sets the limit's mark only for an effect it queues. Hollowmurk Siege's mode "if" was outside
+  its limit; the legacy view puts it inside, and the reorder keeps the limit unmarked when the mode doesn't match.
+- `CounterEvent.YOU_PUT_PLUS_ONE_COUNTERS_ONCE_EACH_TURN`, its factory, `CounterWatch.ON_CONTROLLER_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE`
+  and its collector (`fireControllerPutPlusOnePlusOneCountersOnCreatureTriggers`, one stack object per effect, a
+  `MayEffect` through `queueMayAbility`) are deleted: Terrasymbiosis is read by the
+  `youPutPlusOneCountersOnCreatureYouControl()` collector, Ant-Man by the `youPutPlusOneCountersOnCreature()` one.
+- No wrapper class is deleted: the legacy view still builds them. Run 16 deletes what is left.
+
+**Cards.**
+
+- `scripts/step14-counter-scan.py` (run 8's scan on the counter factories) lists the family's wrapped abilities.
+- `scripts/step14-counter-options.py` did the conversion: the family is small, so it is a table of exact replacements
+  per card class, which stops on a replacement that doesn't match, plus the import fix-up (unused wrapper imports
+  dropped, `TriggerOptions` / `TriggerLimit` / `Zone` added).
+- `scripts/step14-counter-docs.py` rewrote 25 agent-docs lines (exact replacements) and added "don't author" notes to
+  the entries of `YouPutCounterOnControlledCreatureTriggerEffect`, `YouRemoveTimeCounterFromExiledCardTriggerEffect` and
+  `OncePerTurnPerCreatureTriggerEffect`. The three classes' Javadoc, `ARCHITECTURE.md` and the implement-card and
+  review-card skills were edited by hand.
+- `scripts/step13-counter-slots.tsv` is step 13's record and still names the deleted once-each-turn factory; the scan
+  script only reads its factory names.
+- Check: every family card's `CounterWatch` registrations were dumped before and after the conversion (a throwaway
+  test, deleted). They are equal but for the once-each-turn keys, which are now the abilities', and the changes listed
+  here: Ant-Man and Terrasymbiosis on their new watches, Hardened Bonds on the +1/+1 watch, Hollowmurk Siege's "if"
+  inside its limit and Moss-Pit Skeleton's "if" outside its `MayEffect`.
+
+**Kept, with their reason.**
+
+- "When the Nth [kind] counter is put on this" (`ConditionalEffect.atTriggerTime(new SourceCounterThreshold(N, kind),
+  …)`): the nine plan-counter enchantments (Villainous Syndication, Rewrite History, Robot Domination, Political Triumph,
+  Glorious Purpose, Death to Our Enemies, Doom Reigns Supreme, Claim the Kingdom, Construct a Cosmic Cube), Midnight
+  Clock and Shang-Chi. The condition belongs to the event and is checked only as the ability triggers (the collector
+  compares the counts before and after the placement); an intervening "if" would check it again on resolution. Run 16,
+  with the `triggerTimeOnly` flag (as Bloodbraid Marauder).
+- Effect-text "if"s, which stay effects: Regenerations Restored's "Then if this enchantment has no time counters on it"
+  (`ConditionalEffect.unless`), Venser, Corpse Puppet's first mode, Auntie Ool's "draw a card if you control that
+  creature. If you don't …" (still two abilities for one Oracle ability, as before).
+- Event-reading effects (step 15): Rikku's `MakeCreatureUnblockableEffect.forTriggeringPermanentNotBlockableByOpponents()`
+  and Kros's `GoadTriggeringCreatureUntilNextTurnEffect`.
+
+**Behaviour changes.**
+
+- Hardened Bonds ("whenever a +1/+1 counter is put on a creature you control", YTDM 16) was on
+  `countersPutOnCreatureYouControl()` and triggered on a counter of any kind. It is on
+  `plusOneCountersPutOnCreatureYouControl()` now, with `ONCE_EACH_TURN`. Rules fix, with a card test.
+- Terrasymbiosis: its "you may draw that many cards" was asked through `queueMayAbility` before the ability was on the
+  stack; it now goes on the stack and is asked as it resolves (CR 603.5, checked), and accepting it marks "do this only
+  once each turn" through the stack entry, as Earth Kingdom General's did.
+- Moss-Pit Skeleton: its may question was asked before the ability was on the stack (the graveyard collector queues a
+  top-level `MayEffect`); the ability is now the intervening "if" around the `MayEffect`, so it goes on the stack and
+  the question is asked on resolution, after the "if" is checked again.
+- Ant-Man: the merged ability is read by the "you put +1/+1 counters on a creature" collector, which every +1/+1
+  placement path calls; the old "another creature" half was called only from the placement effects. A +1/+1 counter
+  you put on another player's creature through one of the other paths (damage prevention to counters, the multi-
+  permanent choice handlers) now triggers it, as its Oracle text says.
+- Nothing else changed: the legacy view hands every other collector the wrappers and modes it read before.
+
+**For later runs.**
+
+- The plan-counter `atTriggerTime` thresholds above (run 16).
+- Several counter collectors still check and set the unkeyed once-each-turn mark whatever the key (the +1/+1 on
+  this, Human, another creature, controlled permanent and "counters put on a creature you control" collectors); the
+  "counters put on this" collector honours the key.
+- Most counter collectors check an intervening "if" only as the ability resolves, or not at all (the graveyard +1/+1
+  collector relies on the zone); the legacy view rebuilds the same wrappers, so nothing changed. A run like 4c's would
+  make them check it as the ability triggers.
+- Step 15: as step 13 run 5 listed.
+
+**Tests changed.**
+
+- `CounterTriggerTest`: the test that kept the once-each-turn event apart is gone (the event is); eight new tests: a
+  filter is dropped from the watch key and a second one rejected; the "you" and each-counter events are watched by
+  the event about any player; the legacy view gives "you put" and the filter outside the limit and the limit outside
+  the intervening "if", with a stable identity; the other limits and the "you remove" wrapper; the each-counter event
+  is a `PER_COUNTER` registration; an unreadable multiplicity or two readings are rejected; an ability that functions
+  from two zones is read by both watches; granted abilities are read in the legacy form.
+- `HardenedBondsTest`: new test, a shield counter put on a creature you control doesn't trigger it (and a +1/+1 counter
+  later that turn still does). This is the rules fix above; it fails with the old trigger.
+- No other test changed.
+
+**Test runs.**
+
+- Card: the test class of every card of the family (all 116, converted or not) and every card test that constructs
+  one (174 classes, 1,429 tests): all passing; then `HardenedBondsTest` again with the new test.
+- Application: the `service.trigger` and `model.trigger` packages and the freeze, triggered-ability, architecture,
+  simulation-copy, deep-copy, targeting, step, query, activated-ability execution, placement, as-enters, combat, combat
+  damage, timestamp, stack-resolution and graveyard/library handler classes (1,606 tests): 161 failures, exactly the
+  test names that fail at HEAD `3ae62c89dc` (1,599 tests there), checked in a worktree with the main tree's
+  `card-data-cache`: run 8's counts, plus the mock wiring of `ActivatedAbilityExecutionServiceTest` (35),
+  `BattlefieldPlacementServiceTest` (24), `CombatServiceTest` (5), `PermanentTimestampTest` (5) and
+  `PutTargetCardsFromGraveyardOnBottomOfLibraryEffectHandlerTest` (1).
 - AI: the whole module (1,620 tests), with the same 10 failures as before.
 - The full suite was not run here.
 

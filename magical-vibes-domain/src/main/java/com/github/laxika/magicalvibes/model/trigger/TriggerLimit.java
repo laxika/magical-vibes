@@ -15,7 +15,8 @@ public enum TriggerLimit {
     ONCE,
     /**
      * Once each turn for each creature the event names: Stensia's "whenever a creature deals damage to one or more
-     * players for the first time each turn", keyed by the source and the creature. Only the collectors that read the
+     * players for the first time each turn", keyed by the source and the creature, and Stalwart Successor's "if it's
+     * the first time counters have been put on that creature this turn". Only the collectors that read the
      * legacy view ({@code TriggeredAbility.legacyEffects()}) know it, as the {@code OncePerTurnPerCreatureTriggerEffect}
      * it gives.
      */

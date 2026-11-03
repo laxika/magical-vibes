@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,7 +18,6 @@ public class FathomMage extends Card {
         // Evolve is auto-loaded as Keyword.EVOLVE; the ally-creature entry scan drives it.
 
         // Whenever a +1/+1 counter is put on Fathom Mage, you may draw a card (once per counter).
-        addTrigger(Triggers.plusOneCountersPutOnThis(), TriggerMode.PER_COUNTER,
-                new MayEffect(new DrawCardEffect(), "Draw a card?"));
+        addTrigger(Triggers.plusOneCounterPutOnThis(), new MayEffect(new DrawCardEffect(), "Draw a card?"));
     }
 }

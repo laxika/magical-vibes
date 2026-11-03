@@ -8,9 +8,10 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,10 +27,9 @@ public class AntManColonyCommander extends Card {
                         new QueueReflexiveAbilityEffect(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)),
                         "Pay {1} to put a +1/+1 counter on target creature?"));
 
-        addTrigger(Triggers.youPutPlusOneCountersOnCreatureYouControlOnceEachTurn(),
-                new OncePerTurnTriggerEffect(insectToken()));
-        addTrigger(Triggers.youPutPlusOneCountersOnAnotherCreature(),
-                new OncePerTurnTriggerEffect(insectToken()));
+        addTrigger(Triggers.youPutPlusOneCountersOnCreature(),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                insectToken());
     }
 
     private static CreateTokenEffect insectToken() {

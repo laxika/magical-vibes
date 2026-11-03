@@ -11,9 +11,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -25,8 +25,9 @@ public class RiftmarkedKnight extends Card {
 
     public RiftmarkedKnight() {
         addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
-        addTrigger(Triggers.timeCounterRemovedFromThisInExile(), new ConditionalEffect(
-                new NotCondition(new SourceCardSuspended()), new CreateTokenEffect(
+        addTrigger(Triggers.timeCounterRemovedFromThisInExile(),
+                TriggerOptions.DEFAULT.withInterveningIf(new NotCondition(new SourceCardSuspended())),
+                new CreateTokenEffect(
                 1,
                 "Knight",
                 2,
@@ -36,7 +37,7 @@ public class RiftmarkedKnight extends Card {
                 Set.of(Keyword.FLANKING, Keyword.HASTE),
                 Set.of(),
                 List.of(StaticAbility.of(new ProtectionFromColorsEffect(Set.of(CardColor.WHITE))))
-        )));
+        ));
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{1}{W}{W}",

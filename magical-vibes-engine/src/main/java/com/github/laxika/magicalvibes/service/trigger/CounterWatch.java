@@ -1,8 +1,13 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 /**
  * Which of the old counter slot collectors reads a triggered ability, now that the ability has a real trigger
@@ -12,9 +17,19 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
  * the ability triggers, how its effects group into stack objects and which wrappers filter it, and its
  * {@link CollectsCounterTrigger} handlers bind the event data, as the slot's did, until steps 14 and 15 of the refactor
  * replace them with trigger options and effects that read the event.
+ * <p>
+ * The collectors read the abilities in the form the cards wrote them before step 14
+ * ({@link Card#getLegacyTriggerEffects(Trigger, Zone)}): an intervening "if" and a limit wrapped around each effect, a
+ * counter trigger's filter as the {@code TriggeringPermanentConditionalEffect} they judge, "you put counters" and "you
+ * remove a time counter" as the {@code YouPutCounterOnControlledCreatureTriggerEffect} and
+ * {@code YouRemoveTimeCounterFromExiledCardTriggerEffect} the collectors of the events about any player judge, and "a
+ * +1/+1 counter is put on this", once for each counter, as a {@code TriggerMode.PER_COUNTER} registration.
  */
 public enum CounterWatch implements TriggerWatch {
-    /** "Whenever a time counter is removed from this card while it's exiled", from exile. */
+    /**
+     * "Whenever a time counter is removed from this card while it's exiled", from exile; also reads "whenever you
+     * remove a time counter from this card while it's exiled".
+     */
     ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE(Triggers.timeCounterRemovedFromThisInExile(), Zone.EXILE),
     /** "When this creature becomes renowned". */
     ON_SELF_BECOMES_RENOWNED(Triggers.becomesRenowned(), Zone.BATTLEFIELD),
@@ -30,8 +45,9 @@ public enum CounterWatch implements TriggerWatch {
     /** "Whenever you put one or more counters on a creature". */
     ON_YOU_PUT_COUNTERS_ON_CREATURE(Triggers.youPutCountersOnCreature(), Zone.BATTLEFIELD),
     /**
-     * "Whenever one or more +1/+1 counters are put on this permanent"; a {@code TriggerMode.PER_COUNTER} registration
-     * triggers once for each counter.
+     * "Whenever one or more +1/+1 counters are put on this permanent"; also reads "whenever you put one or more +1/+1
+     * counters on this" and "whenever a +1/+1 counter is put on this", once for each counter (a
+     * {@code TriggerMode.PER_COUNTER} registration in the legacy view).
      */
     ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT(Triggers.plusOneCountersPutOnThis(), Zone.BATTLEFIELD),
     /** "Whenever this creature trains". */
@@ -73,12 +89,6 @@ public enum CounterWatch implements TriggerWatch {
     /** "Whenever you put one or more +1/+1 counters on another creature". */
     ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_ANOTHER_CREATURE(
             Triggers.youPutPlusOneCountersOnAnotherCreature(), Zone.BATTLEFIELD),
-    /**
-     * "Whenever you put one or more +1/+1 counters on a creature you control", for an ability that triggers or does
-     * this only once each turn.
-     */
-    ON_CONTROLLER_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE(
-            Triggers.youPutPlusOneCountersOnCreatureYouControlOnceEachTurn(), Zone.BATTLEFIELD),
     /** "Whenever you put one or more counters on a permanent or player". */
     ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER(Triggers.youPutCountersOnPermanentOrPlayer(), Zone.BATTLEFIELD),
     /** "Whenever you put one or more time counters on a permanent you control". */
@@ -91,7 +101,10 @@ public enum CounterWatch implements TriggerWatch {
             Triggers.opponentPutsCountersOnCreatureTheyControl(), Zone.BATTLEFIELD),
     /** "Whenever you put a lore counter on a Saga you control", once for each counter. */
     ON_YOU_PUT_LORE_COUNTERS_ON_SAGA(Triggers.youPutLoreCounterOnSagaYouControl(), Zone.BATTLEFIELD),
-    /** "Whenever one or more counters are put on a creature you control". */
+    /**
+     * "Whenever one or more counters are put on a creature you control"; also reads "whenever you put one or more
+     * counters on a creature you control".
+     */
     ON_ALLY_COUNTER_PUT_ON_CREATURE(Triggers.countersPutOnCreatureYouControl(), Zone.BATTLEFIELD),
     /** "Whenever this creature evolves". */
     ON_SELF_EVOLVES(Triggers.evolves(), Zone.BATTLEFIELD),
@@ -140,5 +153,15 @@ public enum CounterWatch implements TriggerWatch {
     @Override
     public Zone zone() {
         return zone;
+    }
+
+    @Override
+    public List<CardEffect> effectsOf(Card card) {
+        return card.getLegacyTriggerEffects(trigger, zone);
+    }
+
+    @Override
+    public List<EffectRegistration> registrationsOf(Card card) {
+        return card.getLegacyTriggerEffectRegistrations(trigger, zone);
     }
 }

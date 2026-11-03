@@ -6,13 +6,12 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,9 +23,10 @@ public class HollowmurkSiege extends Card {
     public HollowmurkSiege() {
         addStaticEffect(new ChooseModeOnEnterEffect(List.of("Sultai", "Abzan")));
 
-        addTrigger(Triggers.countersPutOnCreatureYouControl(), new ConditionalEffect(
-                new SourceHasChosenMode("Sultai"),
-                new OncePerTurnTriggerEffect(new DrawCardEffect(1))));
+        addTrigger(Triggers.countersPutOnCreatureYouControl(),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode("Sultai"))
+                        .withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new DrawCardEffect(1));
 
         target(TargetFilters.attackingCreature())
                 .addTrigger(Triggers.youAttack(),

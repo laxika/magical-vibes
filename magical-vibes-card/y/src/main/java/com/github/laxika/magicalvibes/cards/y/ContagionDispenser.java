@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.y;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -36,8 +36,8 @@ public class ContagionDispenser extends Card {
     public ContagionDispenser() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ProliferateEffect());
         addTrigger(Triggers.youProliferate(),
-                new OncePerTurnTriggerEffect(
-                        new ConditionalEffect(new ControllerTurn(),
-                                new DraftCardFromSpellbookEffect(SPELLBOOK))));
+                TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn())
+                        .withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new DraftCardFromSpellbookEffect(SPELLBOOK));
     }
 }

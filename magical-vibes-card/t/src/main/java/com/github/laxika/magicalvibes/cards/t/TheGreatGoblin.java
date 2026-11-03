@@ -6,8 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.YouPutCounterOnControlledCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -30,11 +28,9 @@ public class TheGreatGoblin extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addTrigger(Triggers.countersPutOnCreatureYouControl(),
-                new YouPutCounterOnControlledCreatureTriggerEffect(
-                        new TriggeringPermanentConditionalEffect(
-                                new PermanentHasAnySubtypePredicate(GOBLIN_ORC_ARMY),
-                                new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER))));
+        )).addTrigger(Triggers.youPutCountersOnCreatureYouControl()
+                        .withFilter(new PermanentHasAnySubtypePredicate(GOBLIN_ORC_ARMY)),
+                new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER));
 
         addTrigger(Triggers.creatureDies(
                         new PermanentAnyOfPredicate(List.of(

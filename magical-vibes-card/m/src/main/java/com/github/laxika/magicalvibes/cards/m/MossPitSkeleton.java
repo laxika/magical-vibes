@@ -24,10 +24,9 @@ public class MossPitSkeleton extends Card {
         addStaticEffect(new ConditionalEffect(new Kicked(),
                         new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3))));
         addTrigger(new TriggerCondition(Triggers.plusOneCountersPutOnCreatureYouControl(), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT,
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCardInGraveyard()),
                 new MayEffect(
-                        new ConditionalEffect(new SourceCardInGraveyard(),
-                                new PutSourceCardFromGraveyardIntoLibraryNFromTopEffect(0)),
+                        new PutSourceCardFromGraveyardIntoLibraryNFromTopEffect(0),
                         "Put Moss-Pit Skeleton on top of your library?"));
     }
 }

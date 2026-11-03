@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -26,7 +25,7 @@ public class Calciderm extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, CounterType.TIME)),
                 new RemoveCounterFromSourceEffect(CounterType.TIME, 1));
         addTrigger(Triggers.timeCountersRemovedFromThis(),
-                new ConditionalEffect(new NotCondition(new SourceCounterThreshold(1, CounterType.TIME)),
-                        new SacrificeSelfEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(new NotCondition(new SourceCounterThreshold(1, CounterType.TIME))),
+                new SacrificeSelfEffect());
     }
 }

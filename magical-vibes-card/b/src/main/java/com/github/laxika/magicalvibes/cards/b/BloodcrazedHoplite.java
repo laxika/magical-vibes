@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -22,7 +21,7 @@ public class BloodcrazedHoplite extends Card {
         addTrigger(Triggers.youCastSpell().withStackEntryFilter(new StackEntryTargetsSourcePredicate()),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
-        addTrigger(Triggers.plusOneCountersPutOnThis(), TriggerMode.PER_COUNTER,
+        addTrigger(Triggers.plusOneCounterPutOnThis(),
                 new RemoveCounterFromTargetPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE,
                         new PermanentAllOfPredicate(List.of(

@@ -467,7 +467,7 @@ public class TriggerCollectionService {
         }
 
         for (Card card : new ArrayList<>(graveyard)) {
-            List<CardEffect> effects = gameQueryService.getEffectiveGraveyardTriggerEffects(
+            List<CardEffect> effects = gameQueryService.getEffectiveGraveyardLegacyTriggerEffects(
                     gameData, card,
                     CounterWatch.GRAVEYARD_ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_CREATURE.trigger());
             if (effects == null || effects.isEmpty()) {
@@ -11495,7 +11495,7 @@ public class TriggerCollectionService {
         if (graveyard == null) return;
 
         for (Card card : new ArrayList<>(graveyard)) {
-            List<CardEffect> effects = gameQueryService.getEffectiveGraveyardTriggerEffects(
+            List<CardEffect> effects = gameQueryService.getEffectiveGraveyardLegacyTriggerEffects(
                     gameData, card, CounterWatch.GRAVEYARD_ON_CONTROLLER_PROLIFERATES.trigger());
             if (effects == null || effects.isEmpty()) continue;
 

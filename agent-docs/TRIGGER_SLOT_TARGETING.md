@@ -1,6 +1,6 @@
 # Trigger Slot Targeting Reference
 
-`Triggers.plusOneCountersPutOnThis()` uses `TriggerMode.PER_COUNTER` for abilities that trigger for each individual counter, such as Bloodcrazed Hoplite. The counter-placement collector queues a separate ability and mandatory target choice for each counter actually placed; all targets are chosen before those abilities resolve. The default mode still fires once per placement event.
+`Triggers.plusOneCounterPutOnThis()` ("whenever a +1/+1 counter is put on this") triggers for each individual counter, such as Bloodcrazed Hoplite; don't author `TriggerMode.PER_COUNTER`. The counter-placement collector queues a separate ability and mandatory target choice for each counter actually placed; all targets are chosen before those abilities resolve. The default mode still fires once per placement event.
 
 `Triggers.enters(Triggers.TOKEN, ObjectRelation.YOU_CONTROL)` uses `TriggerMode.PER_TOKEN` for abilities that trigger for each token entering, such as Junk Winder's "whenever a token you control enters". The token-enter collector queues one dispatch per entering token, each seeing only that token. The default mode still fires once per token-creation event.
 
@@ -424,15 +424,16 @@ counters are put on a Human the controller controls, including counters the Huma
 one or more +1/+1 counters are put on another non-Hydra creature the controller controls),
 `Triggers.youPutPlusOneCountersOnAnotherCreature()` (Knight of Wundagore; fires once when
 the controller puts one or more +1/+1 counters on a creature other than the watcher, regardless of
-that creature's controller; it also accepts a `TriggeringPermanentConditionalEffect` wrapper for
-event-subject restrictions such as "another colorless creature"),
+that creature's controller; a restriction on that creature such as "another colorless creature" is the
+trigger's `withFilter(…)`),
 `Triggers.youPutPlusOneCountersOnAnotherHeroYouControl()` (Invisible Woman, Sue Storm; fires once when
 the controller puts one or more +1/+1 counters on another Hero they control),
 `Triggers.plusOneCountersPutOnAnotherCreatureYouControl()` (Enduring Scalelord; fires once when
 one or more +1/+1 counters are put on another creature the controller controls),
-`Triggers.youPutPlusOneCountersOnCreatureYouControlOnceEachTurn()` (Terrasymbiosis; fires once when the
+`Triggers.youPutPlusOneCountersOnCreatureYouControl()` (Terrasymbiosis; fires once when the
 controller puts one or more +1/+1 counters on a creature they control and carries the number of
-counters placed as the trigger event value),
+counters placed as the trigger event value; "do this only once each turn" is
+`TriggerOptions.DEFAULT.withLimit(TriggerLimit.DO_ONLY_ONCE_EACH_TURN)`),
 `Triggers.plusOneCountersPutOnCreatureYouControl() from the graveyard` (Moss-Pit Skeleton; fires once for
 each +1/+1 counter-placement event on a creature controlled by the graveyard card's owner),
 `Triggers.youPutCountersOnPermanentOrPlayer()` (All Will Be One; fires once for each counter-placement
@@ -451,9 +452,10 @@ event when an opponent puts one or more counters on a creature they control; the
 controlled by Bold Plagiarist's controller and captures the opponent who placed the counters so the
 same number and kind are placed by that opponent),
 `Triggers.countersPutOnCreatureYouControl()` (Hollowmurk Siege; fires for counters of any type put on a creature
-the controller controls, including counters the creature enters with; a `OncePerTurnTriggerEffect`
-is marked only after its mode condition is met. `OncePerTurnPerCreatureTriggerEffect` uses the same
-slot for first-time-per-creature wording and keys the marker to the watcher and triggering creature),
+the controller controls, including counters the creature enters with; its once-each-turn limit
+is marked only after its intervening "if" (the chosen mode) is met. `TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE`
+is the first-time-per-creature wording and keys the marker to the watcher and triggering creature;
+`Triggers.youPutCountersOnCreatureYouControl()` counts only the controller's placements),
 `Triggers.evolves()` (Renegade Krasis; fired by `EvolveTriggerEffectHandler` only when the evolve trigger
 actually places the +1/+1 counter),
 `Triggers.minusOneCounterPutOnCreature()` (Flourishing Defenses; global watcher — fires on

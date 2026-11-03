@@ -36,8 +36,8 @@ public class RegenerationsRestored extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, CounterType.TIME)),
                 new RemoveCounterFromSourceEffect(CounterType.TIME, 1));
         addTrigger(Triggers.timeCountersRemovedFromThis(),
-                new ConditionalEffect(new NotCondition(new SourceCounterThreshold(1, CounterType.TIME)),
-                        new SacrificeSelfEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(new NotCondition(new SourceCounterThreshold(1, CounterType.TIME))),
+                new SacrificeSelfEffect());
 
         // Whenever one or more time counters are removed from this enchantment, scry 1 and gain 1
         // life. Then, if it has no time counters, exile it and take an extra turn.
