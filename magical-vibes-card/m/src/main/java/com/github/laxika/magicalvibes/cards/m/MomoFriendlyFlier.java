@@ -7,12 +7,13 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceFirstMatchingSpellCastCostEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -30,9 +31,11 @@ public class MomoFriendlyFlier extends Card {
                 )),
                 1));
 
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardKeywordPredicate(Keyword.FLYING),
-                        new BoostSelfEffect(1, 1)));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasKeywordPredicate(Keyword.FLYING))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new BoostSelfEffect(1, 1));
     }
 }

@@ -8,8 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,11 +25,13 @@ import java.util.Set;
 public class LathlissDragonQueen extends Card {
 
     public LathlissDragonQueen() {
-        addTrigger(Triggers.enters(Triggers.NONTOKEN_CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.DRAGON),
-                        new CreateTokenEffect("Dragon", 5, 5, CardColor.RED,
-                                List.of(CardSubtype.DRAGON), Set.of(Keyword.FLYING), Set.of())));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.NONTOKEN_CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.DRAGON))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new CreateTokenEffect("Dragon", 5, 5, CardColor.RED,
+                        List.of(CardSubtype.DRAGON), Set.of(Keyword.FLYING), Set.of()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

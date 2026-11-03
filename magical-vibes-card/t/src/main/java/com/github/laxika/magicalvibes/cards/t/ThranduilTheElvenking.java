@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCardsInControllerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -27,13 +26,11 @@ public class ThranduilTheElvenking extends Card {
         CardPredicate elf = new CardSubtypePredicate(CardSubtype.ELF);
         addStaticEffect(new GainActivatedAbilitiesOfCardsInControllerGraveyardEffect(elf));
 
-        addTrigger(Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
                                 new PermanentHasSubtypePredicate(CardSubtype.ELF))),
-                        SequenceEffect.of(
-                                new DrawCardEffect(2),
-                                new DiscardEffect(1, DiscardRecipient.CONTROLLER))));
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                SequenceEffect.of(new DrawCardEffect(2), new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
     }
 }

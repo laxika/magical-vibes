@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -30,10 +30,12 @@ public class NecklaceOfGirion extends Card {
                         TargetFilters.creatureYouControl()));
 
         target(TargetFilters.creatureYouControl())
-                .addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
-                        new TriggeringCardConditionalEffect(
-                                new CardSubtypePredicate(CardSubtype.FOREST),
-                                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)));
+                .addTrigger(Triggers.enters(
+                                new PermanentAllOfPredicate(List.of(
+                                        Triggers.LAND,
+                                        new PermanentHasSubtypePredicate(CardSubtype.FOREST))),
+                                ObjectRelation.YOU_CONTROL),
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));
     }

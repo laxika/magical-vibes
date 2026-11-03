@@ -9,13 +9,14 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -34,19 +35,21 @@ public class MaralenFaeAscendant extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"));
 
-        CardAnyOfPredicate elfOrFaerie = new CardAnyOfPredicate(List.of(
-                new CardSubtypePredicate(CardSubtype.ELF),
-                new CardSubtypePredicate(CardSubtype.FAERIE)));
+        var elfOrFaerie = new PermanentAnyOfPredicate(List.of(new PermanentHasSubtypePredicate(CardSubtype.ELF),
+                new PermanentHasSubtypePredicate(CardSubtype.FAERIE)));
         ExileTopCardsToSourceEffect exileTopTwo = new ExileTopCardsToSourceEffect(2, false, false,
                 LibraryScope.TARGET_OPPONENT, true);
 
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                new TriggeringCardConditionalEffect(elfOrFaerie, exileTopTwo));
-        addTrigger(Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardAllOfPredicate(List.of(elfOrFaerie,
-                                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)))),
-                        exileTopTwo));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(Triggers.CREATURE, elfOrFaerie)),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                exileTopTwo);
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                elfOrFaerie,
+                                new PermanentNotPredicate(new PermanentIsCreaturePredicate()))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                exileTopTwo);
 
         addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 false,

@@ -4,13 +4,16 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AllowCastMatchingCardsFromGraveyardThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.EnteringCreatureNotCastFromHandConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentCastFromZonePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -34,9 +37,13 @@ public class ChainerNightmareAdept extends Card {
                         + "Activate only once each turn.",
                 1));
 
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                new EnteringCreatureNotCastFromHandConditionalEffect(
-                        new BoostEnteringCreatureEffect(0, 0, Set.of(Keyword.HASTE),
-                                GrantDuration.UNTIL_YOUR_NEXT_TURN)));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentAllOfPredicate(List.of(
+                                        Triggers.NONTOKEN,
+                                        new PermanentNotPredicate(new PermanentCastFromZonePredicate(Zone.HAND)))))),
+                        ObjectRelation.YOU_CONTROL),
+                new BoostEnteringCreatureEffect(0, 0, Set.of(Keyword.HASTE), GrantDuration.UNTIL_YOUR_NEXT_TURN));
     }
 }

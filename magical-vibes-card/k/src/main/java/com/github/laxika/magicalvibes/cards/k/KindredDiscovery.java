@@ -5,9 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "WOT", collectorNumber = "22")
 @CardRegistration(set = "WOT", collectorNumber = "69")
@@ -21,9 +24,12 @@ public class KindredDiscovery extends Card {
 
     public KindredDiscovery() {
         addStaticEffect(new ChooseSubtypeOnEnterEffect());
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasSourceChosenSubtypePredicate(), new DrawCardEffect()));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSourceChosenSubtypePredicate())),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new DrawCardEffect());
         addTrigger(Triggers.creatureYouControlAttacks(),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasSourceChosenSubtypePredicate(), new DrawCardEffect()));

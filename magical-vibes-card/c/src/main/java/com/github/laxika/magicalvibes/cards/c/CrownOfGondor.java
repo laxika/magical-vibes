@@ -11,14 +11,16 @@ import com.github.laxika.magicalvibes.model.condition.ControllerIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.NoMonarch;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "LTC", collectorNumber = "75")
 @CardRegistration(set = "LTC", collectorNumber = "155")
@@ -31,10 +33,13 @@ public class CrownOfGondor extends Card {
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),
                 GrantScope.EQUIPPED_CREATURE));
 
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardSupertypePredicate(CardSupertype.LEGENDARY),
-                        new ConditionalEffect(new NoMonarch(), new BecomeMonarchEffect())));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                TriggerOptions.DEFAULT.withInterveningIf(new NoMonarch()),
+                new BecomeMonarchEffect());
 
         addActivatedAbility(new EquipActivatedAbility("{4}",
                 new ReduceActivationCostEffect(new FixedIfCondition(new ControllerIsMonarch(), 3, 0))));

@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEf
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -28,16 +28,20 @@ public class KolodinTriumphCaster extends Card {
                 GrantScope.OWN_PERMANENTS,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.MOUNT, CardSubtype.VEHICLE))));
 
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.MOUNT),
-                        new BecomeSaddledUntilEndOfTurnEffect(GrantScope.SELF)));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.MOUNT))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new BecomeSaddledUntilEndOfTurnEffect(GrantScope.SELF));
 
-        addTrigger(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.VEHICLE),
-                        new AnimatePermanentsEffect(
-                                null, null, List.of(), Set.of(), null, Set.of(CardType.CREATURE),
-                                GrantScope.SELF, EffectDuration.UNTIL_END_OF_TURN, null)));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.ARTIFACT,
+                                new PermanentHasSubtypePredicate(CardSubtype.VEHICLE))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new AnimatePermanentsEffect(
+                        null, null, List.of(), Set.of(), null, Set.of(CardType.CREATURE),
+                        GrantScope.TRIGGERING_PERMANENT, EffectDuration.UNTIL_END_OF_TURN, null));
     }
 }

@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTur
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 /**
  * Vildin-Pack Alpha — back face of Geier Reach Bandit.
@@ -22,10 +24,12 @@ public class VildinPackAlpha extends Card {
 
     public VildinPackAlpha() {
         // Whenever a Werewolf you control enters, you may transform it.
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.WEREWOLF),
-                        new TransformEnteringCreatureEffect()));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.WEREWOLF))),
+                        ObjectRelation.YOU_CONTROL),
+                new TransformEnteringCreatureEffect());
 
         // At the beginning of each upkeep, if a player cast two or more spells last turn,
         // transform Vildin-Pack Alpha.

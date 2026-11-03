@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,12 +26,14 @@ public class TitaniaNaturesForce extends Card {
     public TitaniaNaturesForce() {
         addStaticEffect(new PlayLandsFromGraveyardEffect(new CardSubtypePredicate(CardSubtype.FOREST)));
 
-        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.FOREST),
-                        new CreateTokenEffect("Elemental", 5, 3,
-                                CardColor.GREEN, List.of(CardSubtype.ELEMENTAL),
-                                Set.of(), Set.of())));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.LAND,
+                                new PermanentHasSubtypePredicate(CardSubtype.FOREST))),
+                        ObjectRelation.YOU_CONTROL),
+                new CreateTokenEffect("Elemental", 5, 3,
+                        CardColor.GREEN, List.of(CardSubtype.ELEMENTAL),
+                        Set.of(), Set.of()));
 
         addTrigger(Triggers.creatureDies(
                         new PermanentHasSubtypePredicate(CardSubtype.ELEMENTAL),

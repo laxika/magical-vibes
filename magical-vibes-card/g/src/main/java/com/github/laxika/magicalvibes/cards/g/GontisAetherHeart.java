@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -22,12 +21,12 @@ import java.util.List;
 public class GontisAetherHeart extends Card {
 
     public GontisAetherHeart() {
-        addTrigger(Triggers.enters(null, ObjectRelation.ANY),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),
                                 new PermanentControlledBySourceControllerPredicate())),
-                        new EnergyCountersEffect(2)));
+                        ObjectRelation.YOU_CONTROL),
+                new EnergyCountersEffect(2));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

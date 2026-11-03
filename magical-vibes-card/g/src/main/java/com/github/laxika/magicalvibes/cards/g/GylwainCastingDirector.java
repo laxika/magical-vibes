@@ -18,9 +18,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -42,10 +42,12 @@ public class GylwainCastingDirector extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a Monster Role token attached to that creature.",
                         new CreateTokenAttachedToTriggeringPermanentEffect(monsterRoleToken()))));
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardNotPredicate(new CardIsTokenPredicate()),
-                        new ChooseOneAtTriggerTimeEffect(choice)));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                new ChooseOneAtTriggerTimeEffect(choice));
     }
 
     private static CreateTokenEffect royalRoleToken() {

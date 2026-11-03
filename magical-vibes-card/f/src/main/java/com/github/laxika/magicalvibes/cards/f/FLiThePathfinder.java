@@ -10,13 +10,10 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.StoriedEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -31,17 +28,13 @@ public class FLiThePathfinder extends Card {
         addStaticEffect(new ConditionalEffect(
                 new ControllerHasEnduringStory(),
                 new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES)));
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardAnyOfPredicate(List.of(
-                                new CardIsSelfPredicate(),
-                                new CardAllOfPredicate(List.of(
-                                        new CardSubtypePredicate(CardSubtype.DWARF),
-                                        new CardNotPredicate(new CardIsTokenPredicate())
-                                ))
-                        )),
-                        new CreateTokenEffect("Dwarf", 2, 2, CardColor.RED,
-                                List.of(CardSubtype.DWARF), Set.of(), Set.of())
-                ));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentHasSubtypePredicate(CardSubtype.DWARF),
+                                        new PermanentNotPredicate(new PermanentIsTokenPredicate()))))),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                new CreateTokenEffect("Dwarf", 2, 2, CardColor.RED, List.of(CardSubtype.DWARF), Set.of(), Set.of()));
     }
 }

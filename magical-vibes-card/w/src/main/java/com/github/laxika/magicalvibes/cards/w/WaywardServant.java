@@ -7,10 +7,12 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "208")
 @CardRegistration(set = "AKR", collectorNumber = "267")
@@ -21,10 +23,11 @@ public class WaywardServant extends Card {
         // Whenever another Zombie you control enters, each opponent loses 1 life and you gain 1 life.
         // One triggered ability doing both — bundle the loss+gain so the trigger slot pushes a single
         // stack entry (a flat pair would become two separate triggers).
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.ZOMBIE),
-                        SequenceEffect.of(
-                                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
-                                new GainLifeEffect(1))));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                SequenceEffect.of(new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT), new GainLifeEffect(1)));
     }
 }

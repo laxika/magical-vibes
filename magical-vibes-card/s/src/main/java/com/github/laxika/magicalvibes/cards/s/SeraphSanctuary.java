@@ -6,10 +6,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "228")
 @CardRegistration(set = "DDQ", collectorNumber = "33")
@@ -24,9 +26,12 @@ public class SeraphSanctuary extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(1));
 
         // Whenever an Angel you control enters, you gain 1 life.
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.ANGEL),
-                        new GainLifeEffect(1)));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.ANGEL))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new GainLifeEffect(1));
 
         // {T}: Add {C}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));

@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,12 +23,14 @@ public class HazezonShaperOfSand extends Card {
     public HazezonShaperOfSand() {
         addStaticEffect(new PlayLandsFromGraveyardEffect(new CardSubtypePredicate(CardSubtype.DESERT)));
 
-        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.DESERT),
-                        new CreateTokenEffect(2, "Sand Warrior", 1, 1,
-                                CardColor.RED,
-                                Set.of(CardColor.RED, CardColor.GREEN, CardColor.WHITE),
-                                List.of(CardSubtype.SAND, CardSubtype.WARRIOR))));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.LAND,
+                                new PermanentHasSubtypePredicate(CardSubtype.DESERT))),
+                        ObjectRelation.YOU_CONTROL),
+                new CreateTokenEffect(2, "Sand Warrior", 1, 1,
+                        CardColor.RED,
+                        Set.of(CardColor.RED, CardColor.GREEN, CardColor.WHITE),
+                        List.of(CardSubtype.SAND, CardSubtype.WARRIOR)));
     }
 }

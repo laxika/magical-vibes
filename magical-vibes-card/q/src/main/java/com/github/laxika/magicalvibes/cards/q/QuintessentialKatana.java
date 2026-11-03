@@ -12,11 +12,13 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "TMT", collectorNumber = "23")
 public class QuintessentialKatana extends Card {
@@ -29,9 +31,12 @@ public class QuintessentialKatana extends Card {
                         new UntapPermanentsEffect(TapUntapScope.SOURCE_PERMANENT),
                         new GainLifeEffect(2))),
                 GrantScope.EQUIPPED_CREATURE));
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.NINJA),
-                        new AttachSourceEquipmentToEnteringCreatureEffect()));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.NINJA))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new AttachSourceEquipmentToEnteringCreatureEffect());
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

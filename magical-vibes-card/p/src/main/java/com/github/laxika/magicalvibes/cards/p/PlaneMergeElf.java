@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -43,7 +44,7 @@ public class PlaneMergeElf extends Card {
         // Kinfall — Whenever a creature enters under your control, if it shares a creature type
         // with Plane-Merge Elf, creatures you control get +1/+1 until end of turn.
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                new ConditionalEffect(new TriggeringPermanentSharesCreatureTypeWithSource(),
-                        new BoostAllOwnCreaturesEffect(1, 1)));
+                TriggerOptions.DEFAULT.withInterveningIf(new TriggeringPermanentSharesCreatureTypeWithSource()),
+                new BoostAllOwnCreaturesEffect(1, 1));
     }
 }

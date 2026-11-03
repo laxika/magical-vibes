@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CaveManaSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,9 +26,11 @@ public class BatColony extends Card {
                 new CaveManaSpentToCast(), "Bat", 1, 1, CardColor.BLACK,
                 List.of(CardSubtype.BAT), Set.of(Keyword.FLYING), Set.of()));
 
-        target(TargetFilters.creatureYouControl()).addTrigger(Triggers.enters(Triggers.LAND,
-                ObjectRelation.YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.CAVE),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)));
+        target(TargetFilters.creatureYouControl()).addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.LAND,
+                                new PermanentHasSubtypePredicate(CardSubtype.CAVE))),
+                        ObjectRelation.YOU_CONTROL),
+                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

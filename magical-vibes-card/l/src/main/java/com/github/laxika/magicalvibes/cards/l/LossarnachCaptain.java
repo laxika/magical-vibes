@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -27,10 +27,12 @@ public class LossarnachCaptain extends Card {
         // The self half is unconditional: it must still trigger when a type-replacing effect makes this creature a non-Human.
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                        new TriggeringCardConditionalEffect(
-                                new CardSubtypePredicate(CardSubtype.HUMAN),
-                                new TapPermanentsEffect(TapUntapScope.TARGET)));
+                .addTrigger(Triggers.enters(
+                                new PermanentAllOfPredicate(List.of(
+                                        Triggers.CREATURE,
+                                        new PermanentHasSubtypePredicate(CardSubtype.HUMAN))),
+                                ObjectRelation.ANOTHER_YOU_CONTROL),
+                        new TapPermanentsEffect(TapUntapScope.TARGET));
 
         // At the beginning of your upkeep, create a 1/1 white Human Soldier creature token.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new CreateTokenEffect(

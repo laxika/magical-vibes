@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForFirstMatchingSpellEachTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "C19", collectorNumber = "45")
 public class KadenaSlinkingSorcerer extends Card {
@@ -17,8 +19,9 @@ public class KadenaSlinkingSorcerer extends Card {
     public KadenaSlinkingSorcerer() {
         addStaticEffect(new ReduceCastCostForFirstMatchingSpellEachTurnEffect(
                 new CardTypePredicate(CardType.CREATURE), 3, false, true));
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsFaceDownPredicate(), new DrawCardEffect(1)));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(Triggers.CREATURE, new PermanentIsFaceDownPredicate())),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new DrawCardEffect(1));
     }
 }

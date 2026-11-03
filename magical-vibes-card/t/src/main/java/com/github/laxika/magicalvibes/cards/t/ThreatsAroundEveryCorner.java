@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.ManifestDreadEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -20,12 +19,11 @@ public class ThreatsAroundEveryCorner extends Card {
 
     public ThreatsAroundEveryCorner() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), ManifestDreadEffect.forController());
-        addTrigger(Triggers.enters(null, ObjectRelation.ANY),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentControlledBySourceControllerPredicate(),
                                 new PermanentIsFaceDownPredicate())),
-                        new SearchLibraryEffect(
-                                CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED)));
+                        ObjectRelation.YOU_CONTROL),
+                new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED));
     }
 }

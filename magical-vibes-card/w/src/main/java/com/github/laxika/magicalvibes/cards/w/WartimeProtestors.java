@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnteringCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,10 +21,13 @@ public class WartimeProtestors extends Card {
     public WartimeProtestors() {
         // Whenever another Ally you control enters, put a +1/+1 counter on that creature and it
         // gains haste until end of turn.
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.ALLY),
-                        new PutCountersOnEnteringCreatureEffect(1, false,
-                                List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET,
-                                        GrantDuration.END_OF_TURN)))));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.ALLY))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new PutCountersOnEnteringCreatureEffect(1, false,
+                        List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET,
+                                GrantDuration.END_OF_TURN))));
     }
 }

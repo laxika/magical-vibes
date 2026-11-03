@@ -10,9 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,16 +25,18 @@ import java.util.Set;
 public class ThievesGuildEnforcer extends Card {
 
     public ThievesGuildEnforcer() {
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.ROGUE),
-                        new MillEffect(2, MillRecipient.EACH_OPPONENT)));
-        addTrigger(Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.ROGUE))),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                new MillEffect(2, MillRecipient.EACH_OPPONENT));
+        addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentHasSubtypePredicate(CardSubtype.ROGUE),
                                 new PermanentNotPredicate(new PermanentIsCreaturePredicate()))),
-                        new MillEffect(2, MillRecipient.EACH_OPPONENT)));
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new MillEffect(2, MillRecipient.EACH_OPPONENT));
         addStaticEffect(new ConditionalEffect(
                         new OpponentGraveyardAtLeast(8),
                         new StaticBoostEffect(2, 1, Set.of(Keyword.DEATHTOUCH), GrantScope.SELF)));

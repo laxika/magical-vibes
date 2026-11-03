@@ -11,23 +11,27 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
+
 @CardRegistration(set = "GRN", collectorNumber = "141")
 public class PeltCollector extends Card {
 
     public PeltCollector() {
-        CardEffect growWhenLarger = new TriggeringPermanentConditionalEffect(
-                new PermanentNotPredicate(new PermanentPowerAtMostSourcePowerPredicate()),
-                new ConditionalEffect(
-                        new TriggeringPermanentPowerGreaterThanSourcePower(),
-                        new PutCountersOnSourceEffect(1, 1, 1)));
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL), growWhenLarger);
+        CardEffect growWhenLarger = new PutCountersOnSourceEffect(1, 1, 1);
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentNotPredicate(new PermanentPowerAtMostSourcePowerPredicate()))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                TriggerOptions.DEFAULT.withInterveningIf(new TriggeringPermanentPowerGreaterThanSourcePower()),
+                growWhenLarger);
         addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
                 TriggerOptions.DEFAULT.withInterveningIf(new TriggeringPermanentPowerGreaterThanSourcePower()),
                 new PutCountersOnSourceEffect(1, 1, 1));

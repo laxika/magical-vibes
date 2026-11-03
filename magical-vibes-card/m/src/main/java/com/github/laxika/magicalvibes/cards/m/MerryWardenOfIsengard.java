@@ -8,9 +8,10 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetPlayerLibraryForNamedCardToHandEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -31,8 +32,9 @@ public class MerryWardenOfIsengard extends Card {
                 MayChoicePlayer.TARGET_PLAYER));
 
         addTrigger(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new OncePerTurnTriggerEffect(new CreateTokenEffect(
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new CreateTokenEffect(
                         1, "Soldier", 1, 1, CardColor.WHITE,
-                        List.of(CardSubtype.SOLDIER), Set.of(Keyword.LIFELINK), Set.of())));
+                        List.of(CardSubtype.SOLDIER), Set.of(Keyword.LIFELINK), Set.of()));
     }
 }

@@ -8,11 +8,13 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "146")
 public class VeteransArmaments extends Card {
@@ -30,9 +32,12 @@ public class VeteransArmaments extends Card {
                 new BoostEquippedCreatureUntilEndOfTurnEffect(attackingCreatures, attackingCreatures));
 
         // Whenever a Soldier creature enters, you may attach this Equipment to it.
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.SOLDIER),
-                        new AttachSourceEquipmentToEnteringCreatureEffect()));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.SOLDIER))),
+                        ObjectRelation.ANOTHER),
+                new AttachSourceEquipmentToEnteringCreatureEffect());
 
         // Equip {2}
         addActivatedAbility(new EquipActivatedAbility("{2}"));

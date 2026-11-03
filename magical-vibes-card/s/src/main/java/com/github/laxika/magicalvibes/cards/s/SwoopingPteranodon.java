@@ -13,13 +13,10 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedEndStepTrigger
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetLandDealsDamageToTriggeringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -32,20 +29,19 @@ import java.util.Set;
 public class SwoopingPteranodon extends Card {
 
     public SwoopingPteranodon() {
-        target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.enters(Triggers.CREATURE,
-                ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentAnyOfPredicate(List.of(
-                                new PermanentIsSourcePermanentPredicate(),
+        target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR),
                                         new PermanentHasKeywordPredicate(Keyword.FLYING))))),
-                        SequenceEffect.of(
-                                new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
-                                new UntapPermanentsEffect(TapUntapScope.TARGET),
-                                new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.HASTE), GrantScope.TARGET),
-                                new RegisterDelayedEndStepTriggerEffect(
-                                        List.of(new DelayedTargetGroup(TargetFilters.land(), 1, 1)),
-                                        new TargetLandDealsDamageToTriggeringCreatureEffect()))));
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                SequenceEffect.of(
+                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                        new UntapPermanentsEffect(TapUntapScope.TARGET),
+                        new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.HASTE), GrantScope.TARGET),
+                        new RegisterDelayedEndStepTriggerEffect(
+                                List.of(new DelayedTargetGroup(TargetFilters.land(), 1, 1)),
+                                new TargetLandDealsDamageToTriggeringCreatureEffect())));
     }
 }

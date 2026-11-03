@@ -12,9 +12,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -45,9 +45,12 @@ public class ThornbiteStaff extends Card {
         ));
 
         // Whenever a Shaman creature enters, you may attach this Equipment to it.
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.SHAMAN),
-                        new AttachSourceEquipmentToEnteringCreatureEffect()));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.SHAMAN))),
+                        ObjectRelation.ANOTHER),
+                new AttachSourceEquipmentToEnteringCreatureEffect());
 
         // Equip {4}
         addActivatedAbility(new EquipActivatedAbility("{4}"));

@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters") |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters") |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -4520,7 +4520,8 @@ was re-rendered with `--keep-baseline`.
 ### Step 14
 
 Step 14 is repeatable by family (its section has the order). Run 1 converted the source's own zone changes, run 2
-the creature-death family, run 3a the other zone and permanent changes but "another object enters".
+the creature-death family, run 3a the other zone and permanent changes but "another object enters", run 3b "another
+object enters".
 
 #### Run 1: the source's own zone changes
 
@@ -4841,6 +4842,129 @@ where the wrappers read the printed card for some watches (Yomiji's "legendary",
 - AI: the whole module (1,620 tests), the same 10 failures as before.
 - `magical-vibes-webservice`'s `CardBrowserServiceTest` doesn't compile (`CardCatalog.findLoadedPrintingByName`); this
   run touches neither module.
+- The full suite was not run here.
+
+#### Run 3b: another object entering
+
+Every "whenever [an object] enters" ability (an `enters`, `entersFrom` or `tokensCreated` trigger whose relation isn't
+`THIS`, collected by step 12a part 2's entering watches) is free of trigger-only wrappers but the ten kept below. The
+entering bodies no longer read `TriggeringCardConditionalEffect`, `TriggeringPermanentConditionalEffect`,
+`EnterCreatureConditionalEffect`, `EnteringLandConditionalEffect` or `OncePerTurnTriggerEffect` (Sigil Captain's and
+Akim's excepted).
+
+**Authoring.**
+
+- A restriction on the permanent that entered is the trigger's filter, as in runs 2 and 3a:
+  `Triggers.enters(AllOf(Triggers.CREATURE, PermanentHasSubtypePredicate(ELF)), ANOTHER_YOU_CONTROL)`. The entering
+  conditionals became filters too: power (`PermanentPowerAtLeastPredicate` / `AtMost`), counters
+  (`PermanentHasCountersPredicate`), tapped (`PermanentIsTappedPredicate`), and where it came from, with two new
+  predicates: `PermanentEnteredOrCastFromZonePredicate(zone)` ("entered from a graveyard or you cast it from a
+  graveyard") and `PermanentWasCastPredicate` ("if it wasn't cast"; "if you didn't cast it from your hand" is
+  `Not(PermanentCastFromZonePredicate(HAND))`). "If you cast it", which was checked only as it triggered
+  (`ConditionalEffect.atTriggerTime(WasCast(true))`), is the filter `PermanentCastBySourceControllerThisTurnPredicate`
+  (The Sibsig Ceremony).
+- "This creature or another [X] you control" is `THIS_OR_ANOTHER_YOU_CONTROL` with the filter `AllOf(CREATURE, X)`,
+  the source counting whatever its subtypes are (the old body let the source past a non-gating card filter); "a [X]
+  you control" is `YOU_CONTROL`, which judges the source by the filter too. `scripts/step14-enters-options.py` decides
+  by the Oracle wording ("or another", "and/or one or more other") with a `RELATIONS` table for "this or another …,
+  if that creature …" (Breathless Knight, Alex Wilder), and drops a `CardIsSelfPredicate` / `IsSourcePermanent`
+  alternative the new relation says.
+- On `enters(null, ANY)` the two-argument `TriggeringPermanentConditionalEffect` also meant "you control": those
+  abilities are `YOU_CONTROL` (a new key of `ON_ANY_PERMANENT_ENTERS_BATTLEFIELD`).
+- Limits and intervening "if"s are options as in 3a. One Oracle ability with two conditions under one limit is one
+  `TriggeredAbility` (K'Li, the Resourceful; Expedition Supplier and Extraordinary Journey, whose "this or another"
+  halves each had their own copy of the limit, are one ability with `THIS_OR_ANOTHER_YOU_CONTROL` / `ANY`). Corruption
+  of Towashi's "do this only once each turn" is `DO_ONLY_ONCE_EACH_TURN` on both of its halves, which mark the source
+  unkeyed, so they still share it.
+- Kolodin, Triumph Caster's animation names the Vehicle with `GrantScope.TRIGGERING_PERMANENT` (the handler told it
+  apart by the wrapper; `AnimationSupport.animateSingle` resolves that scope to the entry's triggering permanent).
+
+**The engine.**
+
+- `TriggerMatcher.enteredMatches` judges an entered permanent's filter: characteristics (types, subtypes, colors,
+  keywords, token) on the copy with the characteristics it has as its enters abilities are processed, anything else
+  (layered power, counters, origin, "other than this", "you control") on the permanent with the watching ability's
+  source as the filter's source and the entered permanent as the triggering one. Before, every predicate ran without
+  a context, so a power filter read unlayered values and a source-relative one failed.
+- `TriggeredAbilityStackService.triggeringContext` checks an intervening "if" with an entered permanent's layered power
+  (Pelt Collector's enters half), and the "during your turn" check is null-safe for a moving object without a
+  controller.
+- `ZoneChangeWatch` keys: `enters(CREATURE, THIS_OR_ANOTHER_YOU_CONTROL)` (each and "one or more") on the self-or-ally
+  creature watches, `enters(null, YOU_CONTROL)` and `enters(NONTOKEN_CREATURE, ANY)` on the any-permanent watch (the
+  latter keeps Overburden and Genesis Chamber, whose effects name the entering creature's controller, where they were).
+- The bodies: `triggerAllyCreatureEnters` serves the self-or-ally creature watches too (`dispatchSelfOrAllyCreature…`
+  is gone); the artifact-type, Equipment and nontoken-artifact watches share one loop; the limit reaches every body
+  through `dispatchEntering` (a limited ability is one trigger, no Panharmonicon or Clara copy, as the wrapper made it;
+  `TriggerMatchContext.triggersOnlyOnceEachTurn` is new) or, for the enchantment, landfall and token bodies, read from
+  the candidate. Landfall's "a printed land doesn't see its own entry" exception reads whether the trigger narrows the
+  lands (`narrowedLandfall`). Oran-Rief Hydra's and Emeria Shepherd's "if it's a Forest … otherwise" branches are
+  effect-level conditions, still read by the landfall body (`branchOnEnteringLand`).
+- Deleted: the any-permanent card- and permanent-conditional handlers, the ally-permanent permanent-conditional
+  handler and `enqueueAllyPermanentEnter` (the registry's defaults do the same; a targeted "you may" on the
+  any-permanent watch goes to `handleEnterMay`, as the conditional handler sent it), the ally-token card-conditional
+  handler, `unwrapEnteringCardSubtypeConditional`, `unwrapEnteringLandConditional`, `enteringCardMatches`,
+  `effectiveEnteringCard`, and the classes `EnteringCreatureMinPower…`, `MaxPower…`, `HasCounters…`, `FromGraveyard…`,
+  `FromExile…`, `NotCast…`, `NotCastFromHand…ConditionalEffect`, `EnteringLandConditionalEffect`,
+  `EnteringLandTappedConditionalEffect` and `EnteringLandNotFromHandConditionalEffect`.
+- Abilities the pipeline doesn't match read the filter themselves: face-up planes (`planarEnteringEffects`: Murasa,
+  Isle of Vesuva, and Nyx, whose narrowed trigger is the enchantment watch's) and the abilities a spell registers until
+  end of turn (`watchesEntering`: Theoretical Duplication).
+
+**Cards.** `scripts/step14-enters-scan.py` lists the family's wrapped abilities by watch;
+`scripts/step14-enters-options.py` (per letter module, `--dry-run` prints every relation decision and every watch
+change) converted 427 card classes, with `MANUAL` (Kolodin, Corruption of Towashi, Nature's Wrath and Expedition
+Supplier, whose wrappers come from a helper method) and `AFTER` (K'Li's merge, long lines, Voldaren Bloodcaster's
+two-pass conversion, stale comments) tables; Extraordinary Journey was converted by hand. `scripts/step14-enters-docs.py`
+rewrote 178 agent-docs rows, the implement-card and review-card skills and `PREDICATES_REFERENCE.md`; `ARCHITECTURE.md`
+was edited by hand.
+
+**Watches that changed.** Nine abilities now narrow a generic watch's trigger to a specific one and are collected
+there, with the same results (their card tests pass): Lethal Vapors, Spreading Plague, Tainted Aether, Blasting
+Station ("a creature enters"), Captain Storm and Gonti's Aether Heart ("an artifact you control"), Gladewalker
+Ritualist ("another creature you control"), Nyx ("another enchantment you control"), Tetzin ("another artifact you
+control").
+
+**Behaviour changes (rules fixes, from the Oracle wording).**
+
+- "A [X] you control enters" now judges the source by the filter when it enters itself; the old self-or-ally body let
+  it through: April O'Neil, Bishop of Wings, Geralf the Fleshwright and Mary Jane Watson no longer trigger for their
+  own entry.
+- "This creature or another [X] with …" no longer requires the source to meet the restriction: Overseer of Vault 76
+  ("power 3 or less") and the cards that already spelled it with an `IsSourcePermanent` alternative.
+- An entering filter is judged as the game sees the permanent after the event (CR 603.6a): layered power and
+  subtypes, where some wrappers read the printed card.
+
+**Kept for later runs.**
+
+- Sigil Captain: "if that creature is 1/1" is checked again on resolution through its wrapper
+  (`EnteringCreatureExactStatsConditionalEffect`, the last `EnterCreatureConditionalEffect`).
+- Akim, the Soaring Wind: "the first time you create one or more tokens each turn"
+  (`OncePerTurnTriggerEffect.firstTokenCreation`).
+- Archaeomancer's Map, Confounding Conundrum, Invader Parasite, Tunnel Ignus: their intervening "if" is about the
+  entering land or its controller, which the opponent-land body binds and the pipeline's context doesn't (step 15).
+- Phyrexian Dragon Engine, Archfiend's Vessel (`entersFrom(GRAVEYARD, THIS)`), Field of the Dead (its "another land"
+  shares its effect with its own enters copy) and Oasis of Renewal: run 4.
+
+**Tests changed.**
+
+- `TriggerPipelineTest`: four new tests through the engine: a "this or another Zombie" enters ability triggers for its
+  non-Zombie source and another Zombie but not another non-Zombie; an enters filter on power reads a 2/2 entering
+  under Glorious Anthem as a 3/3; an enters ability limited to once each turn triggers once for two creatures; a
+  "Bear you control" ability ignores an opponent's Bear.
+- `EnterTriggerCollectorServiceTest` (mock-wired): the cases that tested a wrapper's gating (power, counters, subtype,
+  token type, once-per-turn) were removed, the gating being the matcher's; the others use the plain effect.
+
+**Test runs.**
+
+- Card: the test class of every card with an ability of this family, of the kept cards, and every card test that
+  constructs one (1,732 classes). The first run failed in 10 classes: the two helper-wrapped cards above, Kolodin, the
+  three planes, Theoretical Duplication, Overburden's watch move, K'Li's split limit and Foe-Liage's null controller;
+  after the fixes those classes and the whole `e` and `n` selections pass.
+- Application: the pipeline, rules-event, trigger-model, collector, watch, ETB, placement, predicate and architecture
+  classes (655 tests): the failures are `DeathTriggerCollectorServiceTest`'s 6, `CardImmutabilityArchTest` and
+  `SimulationCopyCompletenessTest`'s known ones, and `BattlefieldPlacementServiceTest`'s 24 and
+  `CostEffectClassificationTest`'s 1, which fail the same way at HEAD (checked in a HEAD worktree).
+- AI: the whole module (1,620 tests), the same 10 failures as before.
 - The full suite was not run here.
 
 ## Prompt

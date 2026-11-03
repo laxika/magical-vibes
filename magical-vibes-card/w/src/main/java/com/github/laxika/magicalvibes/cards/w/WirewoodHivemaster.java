@@ -6,11 +6,10 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,13 +20,16 @@ import java.util.Set;
 public class WirewoodHivemaster extends Card {
 
     public WirewoodHivemaster() {
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER),
-                new TriggeringCardConditionalEffect(
-                        new CardAllOfPredicate(List.of(new CardSubtypePredicate(CardSubtype.ELF),
-                                new CardNotPredicate(new CardIsTokenPredicate()))),
-                        new MayEffect(
-                                new CreateTokenEffect("Insect", 1, 1, CardColor.GREEN,
-                                        List.of(CardSubtype.INSECT), Set.of(), Set.of()),
-                                "Create a 1/1 green Insect creature token?")));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentHasSubtypePredicate(CardSubtype.ELF),
+                                        new PermanentNotPredicate(new PermanentIsTokenPredicate()))))),
+                        ObjectRelation.ANOTHER),
+                new MayEffect(
+                        new CreateTokenEffect("Insect", 1, 1, CardColor.GREEN,
+                                List.of(CardSubtype.INSECT), Set.of(), Set.of()),
+                        "Create a 1/1 green Insect creature token?"));
     }
 }

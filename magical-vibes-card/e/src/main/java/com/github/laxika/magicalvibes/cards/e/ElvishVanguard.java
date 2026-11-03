@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -22,13 +21,11 @@ public class ElvishVanguard extends Card {
 
     public ElvishVanguard() {
         // Whenever another Elf enters the battlefield, put a +1/+1 counter on this creature.
-        addTrigger(Triggers.enters(null, ObjectRelation.ANY),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentHasSubtypePredicate(CardSubtype.ELF),
-                                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
-                        )),
-                        new PutCountersOnSourceEffect(1, 1, 1),
-                        true));
+                                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))),
+                        ObjectRelation.ANY),
+                new PutCountersOnSourceEffect(1, 1, 1));
     }
 }

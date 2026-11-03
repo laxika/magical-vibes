@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTriggeringPermanentThenConjureDuplicateEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCastBySourceControllerThisTurnPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -27,12 +27,14 @@ public class PrototypeX8 extends Card {
         addStaticEffect(new ReduceOwnCastCostEffect(
                 new Scaled(new CardsInGraveyard(
                         new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER), 2)));
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentCastBySourceControllerThisTurnPredicate(),
-                        new SacrificeTriggeringPermanentThenConjureDuplicateEffect(
-                                new CreateTokenCopyOfTargetPermanentEffect(
-                                        List.of(CardSubtype.ROBOT), Set.of(CardType.ARTIFACT),
-                                        null, null, Map.of()))));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentCastBySourceControllerThisTurnPredicate())),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new SacrificeTriggeringPermanentThenConjureDuplicateEffect(
+                        new CreateTokenCopyOfTargetPermanentEffect(
+                                List.of(CardSubtype.ROBOT), Set.of(CardType.ARTIFACT),
+                                null, null, Map.of())));
     }
 }

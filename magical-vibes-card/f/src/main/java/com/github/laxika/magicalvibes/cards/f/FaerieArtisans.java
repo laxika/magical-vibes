@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTrackedTokensAndCreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -27,9 +27,11 @@ public class FaerieArtisans extends Card {
                 List.of(), Set.of(CardType.ARTIFACT), null, null, Map.of(), false, false, false, false,
                 true, false, null, Set.of(), false, List.of(), List.of(), false, false,
                 new Fixed(1), false, Set.of(), false);
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.OPPONENT_CONTROLS),
-                new TriggeringCardConditionalEffect(
-                        new CardNotPredicate(new CardIsTokenPredicate()),
-                        new ExileTrackedTokensAndCreateTokenCopyOfTargetPermanentEffect(copyEffect)));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
+                        ObjectRelation.OPPONENT_CONTROLS),
+                new ExileTrackedTokensAndCreateTokenCopyOfTargetPermanentEffect(copyEffect));
     }
 }

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,8 +24,11 @@ public class TrialOfStrength extends Card {
                 new CreateTokenEffect("Beast", 4, 2, CardColor.GREEN, List.of(CardSubtype.BEAST), Set.of(), Set.of()));
 
         // When a Cartouche you control enters, return this enchantment to its owner's hand.
-        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.CARTOUCHE),
-                        ReturnToHandEffect.self()));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.ENCHANTMENT,
+                                new PermanentHasSubtypePredicate(CardSubtype.CARTOUCHE))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                ReturnToHandEffect.self());
     }
 }

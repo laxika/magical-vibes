@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToEnteringCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,13 +24,11 @@ public class GatewatchBeacon extends Card {
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.WHITE));
 
-        addTrigger(Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsPlaneswalkerPredicate(),
-                        new MayEffect(
-                                new ConditionalEffect(
-                                        new SourceCounterThreshold(1, CounterType.LOYALTY),
-                                        new MoveCounterFromSourceToEnteringCreatureEffect(CounterType.LOYALTY)),
-                                "Move a loyalty counter onto that planeswalker?")));
+        addTrigger(Triggers.enters(new PermanentIsPlaneswalkerPredicate(), ObjectRelation.ANOTHER_YOU_CONTROL),
+                new MayEffect(
+                        new ConditionalEffect(
+                                new SourceCounterThreshold(1, CounterType.LOYALTY),
+                                new MoveCounterFromSourceToEnteringCreatureEffect(CounterType.LOYALTY)),
+                        "Move a loyalty counter onto that planeswalker?"));
     }
 }

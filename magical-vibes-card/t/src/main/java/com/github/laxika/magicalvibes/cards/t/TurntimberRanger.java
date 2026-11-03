@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,13 +20,16 @@ import java.util.Set;
 public class TurntimberRanger extends Card {
 
     public TurntimberRanger() {
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.ALLY),
-                        new MayEffect(
-                                SequenceEffect.of(
-                                        new CreateTokenEffect("Wolf", 2, 2, CardColor.GREEN,
-                                                List.of(CardSubtype.WOLF), Set.of(), Set.of()),
-                                        new PutCountersOnSourceEffect(1, 1, 1)),
-                                "Create a 2/2 green Wolf creature token?")));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.ALLY))),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                new MayEffect(
+                        SequenceEffect.of(
+                                new CreateTokenEffect("Wolf", 2, 2, CardColor.GREEN,
+                                        List.of(CardSubtype.WOLF), Set.of(), Set.of()),
+                                new PutCountersOnSourceEffect(1, 1, 1)),
+                        "Create a 2/2 green Wolf creature token?"));
     }
 }

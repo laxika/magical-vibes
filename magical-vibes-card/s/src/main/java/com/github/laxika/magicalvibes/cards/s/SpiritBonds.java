@@ -10,12 +10,10 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -27,10 +25,13 @@ import java.util.List;
 public class SpiritBonds extends Card {
 
     public SpiritBonds() {
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardNotPredicate(new CardIsTokenPredicate()),
-                        new MayPayManaEffect("{W}", CreateTokenEffect.whiteSpirit(1),
-                                "Pay {W} to create a 1/1 white Spirit creature token?")));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
+                        ObjectRelation.YOU_CONTROL),
+                new MayPayManaEffect("{W}", CreateTokenEffect.whiteSpirit(1),
+                        "Pay {W} to create a 1/1 white Spirit creature token?"));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

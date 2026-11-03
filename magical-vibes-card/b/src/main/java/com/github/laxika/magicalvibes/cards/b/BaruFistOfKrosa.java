@@ -8,15 +8,16 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -30,13 +31,21 @@ public class BaruFistOfKrosa extends Card {
 
     public BaruFistOfKrosa() {
         PermanentColorInPredicate green = new PermanentColorInPredicate(Set.of(CardColor.GREEN));
-        TriggeringCardConditionalEffect forestTrigger = new TriggeringCardConditionalEffect(
-                new CardSubtypePredicate(CardSubtype.FOREST),
-                SequenceEffect.of(
+        CardEffect forestTrigger = SequenceEffect.of(
                         new BoostAllOwnCreaturesEffect(1, 1, green),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES, green)));
-        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), forestTrigger);
-        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.OPPONENT_CONTROLS), forestTrigger);
+                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES, green));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.LAND,
+                                new PermanentHasSubtypePredicate(CardSubtype.FOREST))),
+                        ObjectRelation.YOU_CONTROL),
+                forestTrigger);
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.LAND,
+                                new PermanentHasSubtypePredicate(CardSubtype.FOREST))),
+                        ObjectRelation.OPPONENT_CONTROLS),
+                forestTrigger);
 
         PermanentCount landsYouControl = new PermanentCount(
                 new PermanentIsLandPredicate(), CountScope.CONTROLLER);

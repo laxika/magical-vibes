@@ -9,14 +9,15 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "YBLB", collectorNumber = "27")
 public class MarshlandHordemaster extends Card {
@@ -28,10 +29,12 @@ public class MarshlandHordemaster extends Card {
     public MarshlandHordemaster() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new PerpetuallyGrantKeywordToSourceEffect(Keyword.BATTLE_CRY));
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.LIZARD),
-                        new PerpetuallyGrantKeywordToSourceEffect(Keyword.BATTLE_CRY)));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.LIZARD))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new PerpetuallyGrantKeywordToSourceEffect(Keyword.BATTLE_CRY));
 
         var deathTrigger = target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

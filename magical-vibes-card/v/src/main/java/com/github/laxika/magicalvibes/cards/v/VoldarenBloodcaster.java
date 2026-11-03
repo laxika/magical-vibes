@@ -5,17 +5,15 @@ import com.github.laxika.magicalvibes.cards.b.BloodbatSummoner;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -27,12 +25,7 @@ public class VoldarenBloodcaster extends Card {
 
     private static final CreateTokenEffect CREATE_BLOOD = CreateTokenEffect.ofBloodToken(1);
 
-    private static final ConditionalEffect TRANSFORM_IF_FIVE_BLOOD = new ConditionalEffect(
-            new ControlsPermanentCount(5, new PermanentAllOfPredicate(List.of(
-                    new PermanentIsTokenPredicate(),
-                    new PermanentHasSubtypePredicate(CardSubtype.BLOOD)
-            ))),
-            new TransformSelfEffect());
+    private static final CardEffect TRANSFORM_IF_FIVE_BLOOD = new TransformSelfEffect();
 
     public VoldarenBloodcaster() {
         setBackFaceCard(new BloodbatSummoner());
@@ -41,14 +34,13 @@ public class VoldarenBloodcaster extends Card {
         addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL), CREATE_BLOOD);
 
         // Whenever you create a Blood token, if you control five or more Blood tokens, transform.
-        // Blood tokens are artifacts — gated via TriggeringCardConditionalEffect on ally-artifact ETB.
-        addTrigger(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                new CardAllOfPredicate(List.of(
-                        new CardIsTokenPredicate(),
-                        new CardSubtypePredicate(CardSubtype.BLOOD)
-                )),
-                TRANSFORM_IF_FIVE_BLOOD));
+        // Blood tokens are artifacts: the trigger's filter is "a Blood token" among them.
+        var bloodToken = new PermanentAllOfPredicate(List.of(
+                new PermanentIsTokenPredicate(), new PermanentHasSubtypePredicate(CardSubtype.BLOOD)));
+        addTrigger(Triggers.enters(new PermanentAllOfPredicate(List.of(Triggers.ARTIFACT, bloodToken)),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                TriggerOptions.DEFAULT.withInterveningIf(new ControlsPermanentCount(5, bloodToken)),
+                TRANSFORM_IF_FIVE_BLOOD);
     }
 
     @Override

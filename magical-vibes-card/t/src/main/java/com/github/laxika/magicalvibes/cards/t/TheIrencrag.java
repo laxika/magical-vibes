@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.BecomeEverflameEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -22,11 +21,13 @@ public class TheIrencrag extends Card {
 
     public TheIrencrag() {
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))),
-                        new MayEffect(new BecomeEverflameEffect(), "Have The Irencrag become Everflame?")));
+                                Triggers.CREATURE,
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new MayEffect(new BecomeEverflameEffect(), "Have The Irencrag become Everflame?"));
     }
 }

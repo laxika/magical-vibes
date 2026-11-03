@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,10 +20,8 @@ public class RimefireTorque extends Card {
 
     public RimefireTorque() {
         addStaticEffect(new ChooseSubtypeOnEnterEffect());
-        addTrigger(Triggers.enters(null, ObjectRelation.ANY),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasSourceChosenSubtypePredicate(),
-                        new PutCountersOnSelfEffect(CounterType.CHARGE)));
+        addTrigger(Triggers.enters(new PermanentHasSourceChosenSubtypePredicate(), ObjectRelation.YOU_CONTROL),
+                new PutCountersOnSelfEffect(CounterType.CHARGE));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

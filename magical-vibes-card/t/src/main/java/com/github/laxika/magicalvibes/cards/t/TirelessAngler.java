@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -36,11 +36,13 @@ public class TirelessAngler extends Card {
     public TirelessAngler() {
         // Whenever an Island or Swamp enters the battlefield under your control, draft a card from
         // this creature's spellbook.
-        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardAnyOfPredicate(List.of(
-                                new CardSubtypePredicate(CardSubtype.ISLAND),
-                                new CardSubtypePredicate(CardSubtype.SWAMP))),
-                        new DraftCardFromSpellbookEffect(SPELLBOOK)));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.LAND,
+                                new PermanentAnyOfPredicate(List.of(
+                                        new PermanentHasSubtypePredicate(CardSubtype.ISLAND),
+                                        new PermanentHasSubtypePredicate(CardSubtype.SWAMP))))),
+                        ObjectRelation.YOU_CONTROL),
+                new DraftCardFromSpellbookEffect(SPELLBOOK));
     }
 }

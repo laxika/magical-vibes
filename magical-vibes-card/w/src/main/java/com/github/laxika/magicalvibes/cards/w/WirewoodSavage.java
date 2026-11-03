@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,9 +15,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class WirewoodSavage extends Card {
 
     public WirewoodSavage() {
-        addTrigger(Triggers.enters(null, ObjectRelation.ANY),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.BEAST),
-                        new MayEffect(new DrawCardEffect(1), "Draw a card?")));
+        addTrigger(Triggers.enters(new PermanentHasSubtypePredicate(CardSubtype.BEAST), ObjectRelation.ANY),
+                new MayEffect(new DrawCardEffect(1), "Draw a card?"));
     }
 }

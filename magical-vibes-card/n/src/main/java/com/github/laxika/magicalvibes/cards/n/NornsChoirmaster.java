@@ -15,9 +15,8 @@ public class NornsChoirmaster extends Card {
 
     public NornsChoirmaster() {
         // Whenever a commander you control enters or attacks, proliferate.
-        addTrigger(Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsCommanderPredicate(), new ProliferateEffect()));
+        addTrigger(Triggers.enters(new PermanentIsCommanderPredicate(), ObjectRelation.ANOTHER_YOU_CONTROL),
+                new ProliferateEffect());
         addTrigger(Triggers.creatureYouControlAttacks(),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsCommanderPredicate(), new ProliferateEffect()));

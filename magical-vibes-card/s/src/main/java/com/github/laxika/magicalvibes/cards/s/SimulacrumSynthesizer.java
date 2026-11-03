@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -34,7 +34,9 @@ public class SimulacrumSynthesizer extends Card {
                 Set.of(), Set.of(CardType.ARTIFACT),
                 List.of(StaticAbility.of(new BoostSelfEffect(artifactsYouControl, artifactsYouControl)))
         );
-        addTrigger(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardMinManaValuePredicate(3), construct));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(Triggers.ARTIFACT, new PermanentMinManaValuePredicate(3))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                construct);
     }
 }

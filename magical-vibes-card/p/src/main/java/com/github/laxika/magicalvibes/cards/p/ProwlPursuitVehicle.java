@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -39,11 +38,10 @@ public class ProwlPursuitVehicle extends Card {
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)))));
-        addTrigger(Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(anotherCreatureOrVehicle,
-                        SequenceEffect.of(
-                                new PutCountersOnSourceEffect(1, 1, 1),
-                                ConditionalEffect.unless(new NthAbilityResolutionThisTurn(2),
-                                        new TransformSelfEffect()))));
+        addTrigger(Triggers.enters(anotherCreatureOrVehicle, ObjectRelation.ANOTHER_YOU_CONTROL),
+                SequenceEffect.of(
+                        new PutCountersOnSourceEffect(1, 1, 1),
+                        ConditionalEffect.unless(new NthAbilityResolutionThisTurn(2),
+                                new TransformSelfEffect())));
     }
 }

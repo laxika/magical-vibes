@@ -11,12 +11,13 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEff
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "WWK", collectorNumber = "94")
 public class TuktukScrapper extends Card {
@@ -25,13 +26,16 @@ public class TuktukScrapper extends Card {
         PermanentCount allies = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.ALLY), CountScope.CONTROLLER);
 
-        target(TargetFilters.artifact()).addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.ALLY),
-                        new MayEffect(DestroyTargetPermanentThenEffect.ifDiesThisWay(
-                                EventStat.NONE,
-                                new DealDamageToPlayersEffect(allies, DamageRecipient.TARGET_PLAYER),
-                                ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET,
-                                null),
-                                "Destroy target artifact?")));
+        target(TargetFilters.artifact()).addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.ALLY))),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                new MayEffect(DestroyTargetPermanentThenEffect.ifDiesThisWay(
+                        EventStat.NONE,
+                        new DealDamageToPlayersEffect(allies, DamageRecipient.TARGET_PLAYER),
+                        ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET,
+                        null),
+                        "Destroy target artifact?"));
     }
 }

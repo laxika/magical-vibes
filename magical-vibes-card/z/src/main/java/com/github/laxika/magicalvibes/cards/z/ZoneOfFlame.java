@@ -7,9 +7,8 @@ import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -27,8 +26,11 @@ public class ZoneOfFlame extends Card {
         // Tokens aren't cards, so token entries and departures don't count.
         DealDamageToPlayersEffect trigger =
                 new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT);
-        addTrigger(new TriggerCondition(Triggers.enters(null, ObjectRelation.ANY)), TriggerOptions.ONE_OR_MORE,
-                new TriggeringCardConditionalEffect(new CardNotPredicate(new CardIsTokenPredicate()), trigger));
+        addTrigger(new TriggerCondition(Triggers.enters(
+                                new PermanentNotPredicate(new PermanentIsTokenPredicate()),
+                                ObjectRelation.ANY)),
+                TriggerOptions.ONE_OR_MORE,
+                trigger);
         addTriggeredAbility(new TriggeredAbility(List.of(
                 new TriggerCondition(Triggers.leavesBattlefield(Triggers.NONTOKEN, ObjectRelation.ANOTHER)),
                 new TriggerCondition(Triggers.leavesBattlefield(Triggers.NONTOKEN, ObjectRelation.THIS))),

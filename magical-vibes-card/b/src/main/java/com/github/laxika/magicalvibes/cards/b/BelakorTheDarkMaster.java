@@ -10,11 +10,12 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "40K", collectorNumber = "6")
 @CardRegistration(set = "40K", collectorNumber = "172")
@@ -27,9 +28,11 @@ public class BelakorTheDarkMaster extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new LoseLifeEffect(demons, LoseLifeRecipient.CONTROLLER));
 
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.DEMON),
-                        new DealDamageToAnyTargetEffect(new SourcePower())));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.DEMON))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new DealDamageToAnyTargetEffect(new SourcePower()));
     }
 }

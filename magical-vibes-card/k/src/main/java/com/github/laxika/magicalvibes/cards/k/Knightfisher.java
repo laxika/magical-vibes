@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,10 +17,11 @@ import java.util.Set;
 public class Knightfisher extends Card {
 
     public Knightfisher() {
-        addTrigger(Triggers.enters(Triggers.NONTOKEN_CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.BIRD),
-                        new CreateTokenEffect("Fish", 1, 1, CardColor.BLUE,
-                                List.of(CardSubtype.FISH), Set.of(), Set.of())));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.NONTOKEN_CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.BIRD))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new CreateTokenEffect("Fish", 1, 1, CardColor.BLUE, List.of(CardSubtype.FISH), Set.of(), Set.of()));
     }
 }

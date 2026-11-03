@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -26,12 +25,12 @@ import java.util.List;
 public class EraOfInnovation extends Card {
 
     public EraOfInnovation() {
-        addTrigger(Triggers.enters(null, ObjectRelation.ANY),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.enters(
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),
                                 new PermanentHasSubtypePredicate(CardSubtype.ARTIFICER))),
-                        new MayPayManaEffect("{1}", new EnergyCountersEffect(2), "Pay {1}?")));
+                        ObjectRelation.YOU_CONTROL),
+                new MayPayManaEffect("{1}", new EnergyCountersEffect(2), "Pay {1}?"));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

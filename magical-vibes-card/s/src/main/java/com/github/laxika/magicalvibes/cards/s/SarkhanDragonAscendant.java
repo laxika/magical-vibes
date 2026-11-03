@@ -15,10 +15,12 @@ import com.github.laxika.magicalvibes.model.effect.GrantSubtypeUntilEndOfTurnEff
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "TDM", collectorNumber = "118")
 @CardRegistration(set = "FDC", collectorNumber = "172")
@@ -31,12 +33,14 @@ public class SarkhanDragonAscendant extends Card {
                         new MayEffect(
                                 new BeholdEffect(CardSubtype.DRAGON, CreateTokenEffect.ofTreasureToken(1)),
                                 "Behold a Dragon?")));
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                TriggeringCardConditionalEffect.gatingSource(
-                        new CardSubtypePredicate(CardSubtype.DRAGON),
-                        SequenceEffect.of(
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                                new GrantSubtypeUntilEndOfTurnEffect(CardSubtype.DRAGON, GrantScope.SELF),
-                                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF))));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.DRAGON))),
+                        ObjectRelation.YOU_CONTROL),
+                SequenceEffect.of(
+                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                        new GrantSubtypeUntilEndOfTurnEffect(CardSubtype.DRAGON, GrantScope.SELF),
+                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
     }
 }

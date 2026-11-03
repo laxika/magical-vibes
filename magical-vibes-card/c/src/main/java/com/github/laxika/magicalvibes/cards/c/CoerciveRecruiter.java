@@ -11,12 +11,14 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "LCC", collectorNumber = "222")
 public class CoerciveRecruiter extends Card {
@@ -26,9 +28,12 @@ public class CoerciveRecruiter extends Card {
         // creature until end of turn. Untap that creature. Until end of turn, it gains haste and
         // becomes a Pirate in addition to its other types.
         target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS), gainControl());
-        target(TargetFilters.creature()).addTrigger(Triggers.enters(Triggers.CREATURE,
-                ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.PIRATE), gainControl()));
+        target(TargetFilters.creature()).addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.PIRATE))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                gainControl());
     }
 
     private static SequenceEffect gainControl() {

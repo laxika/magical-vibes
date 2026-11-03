@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -29,10 +29,12 @@ public class MausoleumWanderer extends Card {
     public MausoleumWanderer() {
         // Whenever another Spirit you control enters, this creature gets +1/+1 until end of turn.
         // ON_ALLY_CREATURE_ENTERS_BATTLEFIELD already excludes the source ("another").
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                new CardSubtypePredicate(CardSubtype.SPIRIT),
-                new BoostSelfEffect(1, 1)));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.SPIRIT))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new BoostSelfEffect(1, 1));
 
         // Sacrifice this creature: Counter target instant or sorcery spell unless its controller
         // pays {X}, where X is this creature's power (snapshotted at payment).

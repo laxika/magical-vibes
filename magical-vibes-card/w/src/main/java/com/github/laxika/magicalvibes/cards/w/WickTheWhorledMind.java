@@ -15,8 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,16 +27,17 @@ import java.util.Set;
 public class WickTheWhorledMind extends Card {
 
     public WickTheWhorledMind() {
-        var rat = new CardSubtypePredicate(CardSubtype.RAT);
+        var rat = new PermanentHasSubtypePredicate(CardSubtype.RAT);
         var snail = new PermanentHasSubtypePredicate(CardSubtype.SNAIL);
 
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                new TriggeringCardConditionalEffect(rat,
-                        new ConditionalReplacementEffect(
-                                new ControlsPermanent(snail),
-                                new CreateTokenEffect("Snail", 1, 1, CardColor.BLACK,
-                                        List.of(CardSubtype.SNAIL), Set.of(), Set.of()),
-                                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, snail))));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(Triggers.CREATURE, rat)),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                new ConditionalReplacementEffect(
+                        new ControlsPermanent(snail),
+                        new CreateTokenEffect("Snail", 1, 1, CardColor.BLACK,
+                                List.of(CardSubtype.SNAIL), Set.of(), Set.of()),
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, snail)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

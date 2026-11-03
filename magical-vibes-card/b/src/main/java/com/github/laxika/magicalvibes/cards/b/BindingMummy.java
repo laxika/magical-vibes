@@ -7,8 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -24,17 +25,18 @@ public class BindingMummy extends Card {
 
     public BindingMummy() {
         // Whenever another Zombie you control enters, you may tap target artifact or creature.
-        // The subtype gate is applied by TriggeringCardConditionalEffect on the entering creature;
+        // The subtype gate is the trigger's filter, judged on the entering creature;
         // the target is chosen as the trigger is put on the stack, and the may choice is made on resolution.
         target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsCreaturePredicate())),
                 "Target must be an artifact or creature"));
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                new CardSubtypePredicate(CardSubtype.ZOMBIE),
-                new MayEffect(new TapPermanentsEffect(TapUntapScope.TARGET),
-                        "tap target artifact or creature")));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new MayEffect(new TapPermanentsEffect(TapUntapScope.TARGET), "tap target artifact or creature"));
     }
 }

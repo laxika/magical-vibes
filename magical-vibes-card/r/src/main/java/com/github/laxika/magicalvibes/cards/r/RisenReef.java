@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayPutMatchingOntoBattlefieldElseToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "217")
 @CardRegistration(set = "SLD", collectorNumber = "1257")
@@ -23,10 +25,12 @@ public class RisenReef extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new LookAtTopCardMayPutMatchingOntoBattlefieldElseToHandEffect(
                         new CardTypePredicate(CardType.LAND), true));
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.ELEMENTAL),
-                        new LookAtTopCardMayPutMatchingOntoBattlefieldElseToHandEffect(
-                                new CardTypePredicate(CardType.LAND), true)));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.ELEMENTAL))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new LookAtTopCardMayPutMatchingOntoBattlefieldElseToHandEffect(
+                        new CardTypePredicate(CardType.LAND), true));
     }
 }

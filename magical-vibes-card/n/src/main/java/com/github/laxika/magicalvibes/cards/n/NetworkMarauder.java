@@ -7,12 +7,13 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostOwnedCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -35,11 +36,13 @@ public class NetworkMarauder extends Card {
     public NetworkMarauder() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{1}{U}"))));
         addTrigger(Triggers.enters(ObjectRelation.THIS), BOOST);
-        addTrigger(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardAllOfPredicate(List.of(
-                                new CardTypePredicate(CardType.ARTIFACT),
-                                new CardMinManaValuePredicate(3))),
-                        BOOST));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.ARTIFACT,
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsArtifactPredicate(),
+                                        new PermanentMinManaValuePredicate(3))))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                BOOST);
     }
 }

@@ -9,8 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -22,8 +20,12 @@ import java.util.List;
 public class ProjektorInspector extends Card {
 
     public ProjektorInspector() {
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.DETECTIVE), detectiveLoot()));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.DETECTIVE))),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                detectiveLoot());
         addTrigger(Triggers.turnedFaceUp(new PermanentAllOfPredicate(List.of(
                                 Triggers.CREATURE, new PermanentHasSubtypePredicate(CardSubtype.DETECTIVE))),
                         ObjectRelation.YOU_CONTROL),

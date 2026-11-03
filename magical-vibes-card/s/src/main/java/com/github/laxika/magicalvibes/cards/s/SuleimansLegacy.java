@@ -6,13 +6,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
 import java.util.List;
 
 @CardRegistration(set = "VIS", collectorNumber = "138")
@@ -27,10 +25,11 @@ public class SuleimansLegacy extends Card {
                 true));
 
         // Whenever a Djinn or Efreet enters, destroy it. It can't be regenerated.
-        addTrigger(Triggers.enters(null, ObjectRelation.ANY), new TriggeringCardConditionalEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardSubtypePredicate(CardSubtype.DJINN),
-                        new CardSubtypePredicate(CardSubtype.EFREET))),
-                new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING, true)));
+        addTrigger(Triggers.enters(
+                        new PermanentAnyOfPredicate(List.of(
+                                new PermanentHasSubtypePredicate(CardSubtype.DJINN),
+                                new PermanentHasSubtypePredicate(CardSubtype.EFREET))),
+                        ObjectRelation.ANY),
+                new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING, true));
     }
 }

@@ -10,10 +10,12 @@ import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "AA2", collectorNumber = "12")
 @CardRegistration(set = "M3C", collectorNumber = "59")
@@ -25,8 +27,11 @@ public class Pyrogoyf extends Card {
                 new CardTypesAmongCardsInGraveyard(CountScope.ANY_PLAYER);
         addStaticEffect(new SetPowerToughnessToAmountEffect(
                 cardTypes, new Sum(cardTypes, new Fixed(1))));
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.LHURGOYF),
-                        DealDamageToAnyTargetEffect.fromEnteringPermanent(new SourcePower())));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.LHURGOYF))),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                DealDamageToAnyTargetEffect.fromEnteringPermanent(new SourcePower()));
     }
 }

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -29,11 +29,11 @@ public class TolsimirFriendToWolves extends Card {
                 List.of(), List.of(), false, false, true, 0, Set.of()));
 
         target(TargetFilters.creatureAnOpponentControls(), 0, 1)
-                .addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                        new TriggeringPermanentConditionalEffect(
-                                new PermanentHasSubtypePredicate(CardSubtype.WOLF),
-                                SequenceEffect.of(
-                                        new GainLifeEffect(3),
-                                        new EnteringCreatureFightsTargetCreatureEffect())));
+                .addTrigger(Triggers.enters(
+                                new PermanentAllOfPredicate(List.of(
+                                        Triggers.CREATURE,
+                                        new PermanentHasSubtypePredicate(CardSubtype.WOLF))),
+                                ObjectRelation.YOU_CONTROL),
+                        SequenceEffect.of(new GainLifeEffect(3), new EnteringCreatureFightsTargetCreatureEffect()));
     }
 }

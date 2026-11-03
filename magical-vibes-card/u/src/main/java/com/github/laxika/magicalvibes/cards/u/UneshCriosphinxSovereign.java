@@ -6,10 +6,13 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsAndSeparateEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "52")
 @CardRegistration(set = "AKR", collectorNumber = "85")
@@ -24,8 +27,11 @@ public class UneshCriosphinxSovereign extends Card {
         // library. An opponent separates those cards into two piles. Put one pile into your hand
         // and the other into your graveyard. Two slots: Unesh's own ETB, plus other Sphinxes.
         addTrigger(Triggers.enters(ObjectRelation.THIS), new RevealTopCardsAndSeparateEffect(4));
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.SPHINX),
-                        new RevealTopCardsAndSeparateEffect(4)));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.SPHINX))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new RevealTopCardsAndSeparateEffect(4));
     }
 }

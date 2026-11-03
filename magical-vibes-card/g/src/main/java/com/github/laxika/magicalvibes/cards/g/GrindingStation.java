@@ -3,15 +3,12 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -35,10 +32,7 @@ public class GrindingStation extends Card {
         ));
 
         // Whenever an artifact enters, you may untap Grinding Station.
-        addTrigger(Triggers.enters(null, ObjectRelation.ANY),
-                new TriggeringCardConditionalEffect(
-                        new CardTypePredicate(CardType.ARTIFACT),
-                        new MayEffect(new UntapPermanentsEffect(TapUntapScope.SELF),
-                                "Untap Grinding Station?")));
+        addTrigger(Triggers.enters(new PermanentIsArtifactPredicate(), ObjectRelation.ANY),
+                new MayEffect(new UntapPermanentsEffect(TapUntapScope.SELF), "Untap Grinding Station?"));
     }
 }

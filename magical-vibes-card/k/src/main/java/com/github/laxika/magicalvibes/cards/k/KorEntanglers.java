@@ -5,10 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,11 +18,11 @@ public class KorEntanglers extends Card {
 
     public KorEntanglers() {
         target(TargetFilters.creatureAnOpponentControls())
-                .addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                        new TriggeringCardConditionalEffect(
-                                new CardAnyOfPredicate(List.of(
-                                        new CardIsSelfPredicate(),
-                                        new CardSubtypePredicate(CardSubtype.ALLY))),
-                                new TapPermanentsEffect(TapUntapScope.TARGET)));
+                .addTrigger(Triggers.enters(
+                                new PermanentAllOfPredicate(List.of(
+                                        Triggers.CREATURE,
+                                        new PermanentHasSubtypePredicate(CardSubtype.ALLY))),
+                                ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                        new TapPermanentsEffect(TapUntapScope.TARGET));
     }
 }

@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -23,14 +23,16 @@ public class VialSmasherGleefulGrenadier extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardAnyOfPredicate(List.of(
-                                new CardSubtypePredicate(CardSubtype.ASSASSIN),
-                                new CardSubtypePredicate(CardSubtype.MERCENARY),
-                                new CardSubtypePredicate(CardSubtype.PIRATE),
-                                new CardSubtypePredicate(CardSubtype.ROGUE),
-                                new CardSubtypePredicate(CardSubtype.WARLOCK))),
-                        new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER)));
+        )).addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentAnyOfPredicate(List.of(
+                                        new PermanentHasSubtypePredicate(CardSubtype.ASSASSIN),
+                                        new PermanentHasSubtypePredicate(CardSubtype.MERCENARY),
+                                        new PermanentHasSubtypePredicate(CardSubtype.PIRATE),
+                                        new PermanentHasSubtypePredicate(CardSubtype.ROGUE),
+                                        new PermanentHasSubtypePredicate(CardSubtype.WARLOCK))))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));
     }
 }

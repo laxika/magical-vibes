@@ -7,10 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,12 +20,13 @@ public class MerchantRaiders extends Card {
 
     public MerchantRaiders() {
         target(TargetFilters.creature(), 0, 1)
-                .addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                        new TriggeringCardConditionalEffect(
-                                new CardAnyOfPredicate(List.of(new CardIsSelfPredicate(),
-                                        new CardSubtypePredicate(CardSubtype.PIRATE))),
-                                SequenceEffect.of(
-                                        new TapPermanentsEffect(TapUntapScope.TARGET),
-                                        DoesntUntapEffect.targetWhileSourceControlled())));
+                .addTrigger(Triggers.enters(
+                                new PermanentAllOfPredicate(List.of(
+                                        Triggers.CREATURE,
+                                        new PermanentHasSubtypePredicate(CardSubtype.PIRATE))),
+                                ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                        SequenceEffect.of(
+                                new TapPermanentsEffect(TapUntapScope.TARGET),
+                                DoesntUntapEffect.targetWhileSourceControlled()));
     }
 }

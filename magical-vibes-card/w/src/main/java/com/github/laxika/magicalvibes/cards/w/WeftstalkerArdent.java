@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -25,16 +24,14 @@ public class WeftstalkerArdent extends Card {
     public WeftstalkerArdent() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{R}"))));
 
-        addTrigger(Triggers.enters(null, ObjectRelation.ANY),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentControlledBySourceControllerPredicate(),
                                 new PermanentAnyOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
-                                        new PermanentIsArtifactPredicate()
-                                )),
-                                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
-                        )),
-                        new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT)));
+                                        new PermanentIsArtifactPredicate())),
+                                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))),
+                        ObjectRelation.YOU_CONTROL),
+                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
     }
 }

@@ -7,10 +7,12 @@ import com.github.laxika.magicalvibes.model.condition.ControllerHasEnduringStory
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawThatManyAndDealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.StoriedEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "HOB", collectorNumber = "87")
 public class BalinLoremaster extends Card {
@@ -21,9 +23,11 @@ public class BalinLoremaster extends Card {
                 new DiscardOwnHandThenDrawThatManyAndDealDamageEffect(new ControllerHasEnduringStory()),
                 "Discard your hand and draw that many cards?");
         addTrigger(Triggers.enters(ObjectRelation.THIS), ability);
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.DWARF),
-                        ability));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.DWARF))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                ability);
     }
 }

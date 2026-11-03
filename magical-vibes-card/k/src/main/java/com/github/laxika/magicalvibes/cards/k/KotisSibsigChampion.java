@@ -3,10 +3,12 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CastSpellFromGraveyardOncePerYourTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFromGraveyardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentEnteredOrCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -22,9 +24,12 @@ public class KotisSibsigChampion extends Card {
                 new CardTypePredicate(CardType.CREATURE),
                 List.of(), 3));
 
-        addTrigger(new TriggerCondition(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL)),
+        addTrigger(new TriggerCondition(Triggers.enters(
+                                new PermanentAllOfPredicate(List.of(
+                                        Triggers.CREATURE,
+                                        new PermanentEnteredOrCastFromZonePredicate(Zone.GRAVEYARD))),
+                                ObjectRelation.YOU_CONTROL)),
                 TriggerOptions.ONE_OR_MORE,
-                new EnteringCreatureFromGraveyardConditionalEffect(
-                        new PutCountersOnSourceEffect(1, 1, 2)));
+                new PutCountersOnSourceEffect(1, 1, 2));
     }
 }

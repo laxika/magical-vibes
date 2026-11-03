@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,8 +21,9 @@ public class ReaperKing extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.SCARECROW)));
 
         // Whenever another Scarecrow you control enters, destroy target permanent.
-        addTrigger(Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(new PermanentHasSubtypePredicate(CardSubtype.SCARECROW),
-                        new DestroyTargetPermanentEffect(false)));
+        addTrigger(Triggers.enters(
+                        new PermanentHasSubtypePredicate(CardSubtype.SCARECROW),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new DestroyTargetPermanentEffect(false));
     }
 }

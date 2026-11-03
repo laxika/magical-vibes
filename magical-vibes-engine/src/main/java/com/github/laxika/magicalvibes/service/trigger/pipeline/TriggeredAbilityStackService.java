@@ -143,7 +143,7 @@ public class TriggeredAbilityStackService {
         Permanent source = candidate.sourceAsPermanent();
         Condition interveningIf = options.interveningIf();
         if (interveningIf != null && !conditionEvaluationService.isMet(gameData, interveningIf,
-                triggeringContext(source, candidate.controllerId(), events.getFirst()))) {
+                triggeringContext(gameData, source, candidate.controllerId(), events.getFirst()))) {
             return;
         }
         UUID sourceId = candidate.sourceObjectId();
@@ -276,16 +276,19 @@ public class TriggeredAbilityStackService {
 
     /**
      * The context an intervening "if" is checked in as the ability triggers (CR 603.4): its source and controller,
-     * and the permanent that moved, with its last-known power, for "if that creature's power is greater than this
-     * creature's".
+     * and the permanent that moved, for "if that creature's power is greater than this creature's": with its
+     * last-known power when it left the battlefield, and its power as the game sees it now when it entered.
      */
-    private static ConditionContext triggeringContext(Permanent source, UUID controllerId, ZoneChangeEvent event) {
+    private ConditionContext triggeringContext(GameData gameData, Permanent source, UUID controllerId,
+                                               ZoneChangeEvent event) {
         ConditionContext context = ConditionContext.forPermanent(source, controllerId);
         Permanent moved = event.permanent();
         if (moved == null) {
             return context;
         }
-        int power = moved.getLastKnownPower() != null ? moved.getLastKnownPower() : moved.getEffectivePower();
+        Permanent entered = event.leftBattlefield() ? null : gameQueryService.findPermanentById(gameData, moved.getId());
+        int power = entered != null ? gameQueryService.getEffectivePower(gameData, entered)
+                : moved.getLastKnownPower() != null ? moved.getLastKnownPower() : moved.getEffectivePower();
         return context.withTriggeringPermanentId(moved.getId())
                 .withTriggeringPermanentPowerAtTrigger(Math.max(0, power));
     }

@@ -10,11 +10,11 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,12 +26,15 @@ import java.util.Set;
 public class ElvishWarmaster extends Card {
 
     public ElvishWarmaster() {
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.ELF),
-                        new OncePerTurnTriggerEffect(new CreateTokenEffect(
-                                "Elf Warrior", 1, 1, CardColor.GREEN,
-                                List.of(CardSubtype.ELF, CardSubtype.WARRIOR), Set.of(), Set.of()))));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.ELF))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new CreateTokenEffect(
+                        "Elf Warrior", 1, 1, CardColor.GREEN,
+                        List.of(CardSubtype.ELF, CardSubtype.WARRIOR), Set.of(), Set.of()));
 
         PermanentHasSubtypePredicate elves = new PermanentHasSubtypePredicate(CardSubtype.ELF);
         addActivatedAbility(new ActivatedAbility(

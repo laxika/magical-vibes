@@ -8,8 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,9 +21,10 @@ public class MarwynTheNurturer extends Card {
 
     public MarwynTheNurturer() {
         // Whenever another Elf you control enters, put a +1/+1 counter on Marwyn, the Nurturer.
-        addTrigger(Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.ELF),
-                        new PutCountersOnSourceEffect(1, 1, 1)));
+        addTrigger(Triggers.enters(
+                        new PermanentHasSubtypePredicate(CardSubtype.ELF),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new PutCountersOnSourceEffect(1, 1, 1));
 
         // {T}: Add an amount of {G} equal to Marwyn's power.
         addActivatedAbility(new ActivatedAbility(

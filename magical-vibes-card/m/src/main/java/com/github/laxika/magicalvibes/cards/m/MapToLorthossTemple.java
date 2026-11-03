@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -38,10 +37,10 @@ public class MapToLorthossTemple extends Card {
 
         addTrigger(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new CompleteChecklistObjectiveEffect(DIVING_GEAR, OBJECTIVES, completion));
-        addTrigger(Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.enters(
                         new PermanentHasSubtypePredicate(CardSubtype.MERFOLK),
-                        new CompleteChecklistObjectiveEffect(MERFOLK, OBJECTIVES, completion)));
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new CompleteChecklistObjectiveEffect(MERFOLK, OBJECTIVES, completion));
         addTrigger(Triggers.youCastSpell(),
                 new SpellCastTriggerEffect(
                         new CardAnyOfPredicate(List.of(

@@ -7,10 +7,12 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "160")
 @CardRegistration(set = "MSC", collectorNumber = "201")
@@ -24,10 +26,12 @@ public class HerosBlade extends Card {
 
     public HerosBlade() {
         addStaticEffect(new StaticBoostEffect(3, 2, GrantScope.EQUIPPED_CREATURE));
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardSupertypePredicate(CardSupertype.LEGENDARY),
-                        new AttachSourceEquipmentToEnteringCreatureEffect()));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new AttachSourceEquipmentToEnteringCreatureEffect());
         addActivatedAbility(new EquipActivatedAbility("{4}"));
     }
 }

@@ -8,10 +8,13 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "RIX", collectorNumber = "72")
 public class ForerunnerOfTheCoalition extends Card {
@@ -22,8 +25,11 @@ public class ForerunnerOfTheCoalition extends Card {
                         LibrarySearchDestination.TOP_OF_LIBRARY),
                 "Search your library for a Pirate card, reveal it, then shuffle and put that card on top?"));
 
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.PIRATE),
-                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT)));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.PIRATE))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
     }
 }

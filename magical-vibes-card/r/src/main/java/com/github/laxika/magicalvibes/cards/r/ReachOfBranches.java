@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -30,14 +30,18 @@ public class ReachOfBranches extends Card {
                 List.of(CardSubtype.TREEFOLK, CardSubtype.SHAMAN), Set.of(), Set.of()));
 
         // Whenever a Forest you control enters, you may return this card from your graveyard to your hand.
-        addTrigger(new TriggerCondition(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
-                AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.FOREST),
-                        new MayEffect(ReturnCardFromGraveyardEffect.builder()
-                                .destination(GraveyardChoiceDestination.HAND)
-                                .filter(new CardIsSelfPredicate())
-                                .returnAll(true)
-                                .build(),
-                                "Return Reach of Branches from your graveyard to your hand?")));
+        addTrigger(new TriggerCondition(Triggers.enters(
+                                new PermanentAllOfPredicate(List.of(
+                                        Triggers.LAND,
+                                        new PermanentHasSubtypePredicate(CardSubtype.FOREST))),
+                                ObjectRelation.YOU_CONTROL),
+                        AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT,
+                new MayEffect(ReturnCardFromGraveyardEffect.builder()
+                        .destination(GraveyardChoiceDestination.HAND)
+                        .filter(new CardIsSelfPredicate())
+                        .returnAll(true)
+                        .build(),
+                        "Return Reach of Branches from your graveyard to your hand?"));
     }
 }

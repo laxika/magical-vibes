@@ -12,23 +12,27 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "2085")
 public class MilesTailsPrower extends Card {
 
     public MilesTailsPrower() {
         TriggeringPermanentHasKeyword hasFlying = new TriggeringPermanentHasKeyword(Keyword.FLYING);
-        addTrigger(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                new CardSubtypePredicate(CardSubtype.VEHICLE),
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.ARTIFACT,
+                                new PermanentHasSubtypePredicate(CardSubtype.VEHICLE))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
                 SequenceEffect.of(
                         new ConditionalEffect(hasFlying, new DrawCardEffect(1)),
                         new ConditionalEffect(new NotCondition(hasFlying),
                                 new PutCounterOnReferencedPermanentEffect(
-                                        PermanentReference.TRIGGERING, CounterType.FLYING)))));
+                                        PermanentReference.TRIGGERING, CounterType.FLYING))));
     }
 }

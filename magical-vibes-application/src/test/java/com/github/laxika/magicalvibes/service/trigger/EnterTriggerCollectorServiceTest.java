@@ -23,9 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EnteringCreatureHasCountersConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureExactStatsConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMinPowerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToPowerEffect;
@@ -42,12 +40,10 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnteringCreature
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
@@ -55,11 +51,7 @@ import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -342,8 +334,7 @@ class EnterTriggerCollectorServiceTest {
     @Test
     @DisplayName("Ally-creature scan skips non-creature (null toughness) entrants")
     void allyCreatureSkipsNonCreature() {
-        addAllyCreatureTrigger(ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-                new EnteringCreatureMinPowerConditionalEffect(3, new GainLifeEffect(1)));
+        addAllyCreatureTrigger(ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new GainLifeEffect(1));
 
         Card land = new Card();
         land.setName("Forest");
@@ -359,18 +350,13 @@ class EnterTriggerCollectorServiceTest {
     @DisplayName("Ally-permanent player targets are chosen when the trigger is put on the stack")
     void allyPermanentPlayerTargetQueuesChoice() {
         addAllyCreatureTrigger(ZoneChangeWatch.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentTruePredicate(),
-                        new MillEffect(2, MillRecipient.TARGET_PLAYER)));
+                new MillEffect(2, MillRecipient.TARGET_PLAYER));
 
         Card entering = new Card();
         entering.setName("Snow Permanent");
         entering.setType(CardType.LAND);
         Permanent enteringPermanent = new Permanent(entering);
         gd.playerBattlefields.get(player1Id).add(enteringPermanent);
-
-        when(predicateEvaluationService.matchesPermanentPredicate(
-                any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
 
         enter(player1Id, entering);
         service.checkAllyPermanentEntersTriggers(gd, player1Id, entering);
@@ -380,26 +366,11 @@ class EnterTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("Ally-creature stat conditional gates below threshold")
-    void allyCreatureConditionalGatesBelowThreshold() {
-        addAllyCreatureTrigger(ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-                new EnteringCreatureMinPowerConditionalEffect(3, new GainLifeEffect(1)));
-
-        Card entering = enteringCreature(2, 2);
-        gd.playerBattlefields.get(player1Id).add(new Permanent(entering));
-
-        enter(player1Id, entering);
-        service.checkAllyCreatureEntersTriggers(gd, player1Id, entering, 0);
-
-        assertThat(gd.stack).isEmpty();
-    }
-
-    @Test
-    @DisplayName("Ally-creature stat conditional queues the wrapped effect when met")
-    void allyCreatureConditionalQueuesWhenMet() {
+    @DisplayName("Ally-creature ability queues its effect")
+    void allyCreatureQueuesEffect() {
         Card source = new Card();
         source.setName("Garruk's Packleader");
-        addWatched(source, ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new EnteringCreatureMinPowerConditionalEffect(3, new GainLifeEffect(1)));
+        addWatched(source, ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new GainLifeEffect(1));
         gd.playerBattlefields.get(player1Id).add(new Permanent(source));
         Card entering = enteringCreature(4, 4);
         gd.playerBattlefields.get(player1Id).add(new Permanent(entering));
@@ -416,7 +387,7 @@ class EnterTriggerCollectorServiceTest {
     @DisplayName("Ally-creature scan does not trigger for the entering permanent itself")
     void allyCreatureDoesNotTriggerSelf() {
         Card entering = enteringCreature(4, 4);
-        addWatched(entering, ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new EnteringCreatureMinPowerConditionalEffect(3, new GainLifeEffect(1)));
+        addWatched(entering, ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new GainLifeEffect(1));
         gd.playerBattlefields.get(player1Id).add(new Permanent(entering));
 
         enter(player1Id, entering);
@@ -513,8 +484,7 @@ class EnterTriggerCollectorServiceTest {
     @Test
     @DisplayName("Naban doubling duplicates each ally-creature trigger produced during the scan")
     void allyCreatureNabanDoubling() {
-        addAllyCreatureTrigger(ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-                new EnteringCreatureMinPowerConditionalEffect(3, new GainLifeEffect(1)));
+        addAllyCreatureTrigger(ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new GainLifeEffect(1));
         Card entering = enteringCreature(4, 4);
         gd.playerBattlefields.get(player1Id).add(new Permanent(entering));
 
@@ -529,17 +499,12 @@ class EnterTriggerCollectorServiceTest {
     @Test
     @DisplayName("Ally-creature may-transform-entering bakes the entering permanent (Vildin-Pack Alpha)")
     void allyCreatureMayTransformEntering() {
-        var predicate = new CardSubtypePredicate(CardSubtype.WEREWOLF);
         addAllyCreatureTrigger(ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-                new TriggeringCardConditionalEffect(predicate, new TransformEnteringCreatureEffect()));
+                new TransformEnteringCreatureEffect());
 
         Card entering = enteringCreature(2, 2);
         Permanent enteringPermanent = new Permanent(entering);
         gd.playerBattlefields.get(player1Id).add(enteringPermanent);
-
-        // The predicate is judged on the entering creature's effective characteristics, a copy of its card.
-        when(predicateEvaluationService.matchesCardPredicate(any(Card.class), eq(predicate), any(), any(), any()))
-                .thenReturn(true);
 
         enter(player1Id, entering);
         service.checkAllyCreatureEntersTriggers(gd, player1Id, entering, 0);
@@ -553,18 +518,12 @@ class EnterTriggerCollectorServiceTest {
     @Test
     @DisplayName("Self-or-ally flying trigger materializes entering power for a may life gain")
     void selfOrAllyFlyingGainLifeUsesEnteringPower() {
-        var predicate = new PermanentTruePredicate();
         addAllyCreatureTrigger(ZoneChangeWatch.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-                new TriggeringPermanentConditionalEffect(predicate,
-                        new MayEffect(new GainLifeEqualToPowerEffect(), "Gain life?")));
+                new MayEffect(new GainLifeEqualToPowerEffect(), "Gain life?"));
 
         Card entering = enteringCreature(4, 1);
         Permanent enteringPermanent = new Permanent(entering);
         gd.playerBattlefields.get(player1Id).add(enteringPermanent);
-
-        when(predicateEvaluationService.matchesPermanentPredicate(
-                any(Permanent.class), eq(predicate), any(FilterContext.class)))
-                .thenReturn(true);
 
         enter(player1Id, entering);
         service.checkAllyCreatureEntersTriggers(gd, player1Id, entering, 0);
@@ -576,10 +535,10 @@ class EnterTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("Ally-creature power gate queues a may-put-counters on the entering creature (Mighty Emergence)")
+    @DisplayName("Ally-creature may-put-counters queues on the entering creature (Mighty Emergence)")
     void allyCreaturePutCountersOnEntering() {
         addAllyCreatureTrigger(ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-                new EnteringCreatureMinPowerConditionalEffect(5, new PutCountersOnEnteringCreatureEffect(2)));
+                new PutCountersOnEnteringCreatureEffect(2));
 
         Card entering = enteringCreature(8, 8);
         Permanent enteringPermanent = new Permanent(entering);
@@ -648,11 +607,10 @@ class EnterTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("Ally-creature counter gate matches the entering permanent's oil counters")
-    void allyCreatureCounterConditionalMatchesEnteringPermanent() {
+    @DisplayName("Ally-creature oil-counter trigger puts the counter on the entering permanent")
+    void allyCreatureCounterTriggerTargetsEnteringPermanent() {
         addAllyCreatureTrigger(ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-                new EnteringCreatureHasCountersConditionalEffect(CounterType.OIL,
-                        new PutCountersOnEnteringCreatureEffect(CounterType.OIL, 1, false)));
+                new PutCountersOnEnteringCreatureEffect(CounterType.OIL, 1, false));
 
         Card entering = enteringCreature(2, 2);
         Permanent enteringPermanent = new Permanent(entering);
@@ -667,22 +625,6 @@ class EnterTriggerCollectorServiceTest {
                 gd.stack.getFirst().getEffectsToResolve().getFirst();
         assertThat(counter.counterType()).isEqualTo(CounterType.OIL);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(enteringPermanent.getId());
-    }
-
-    @Test
-    @DisplayName("Ally-creature counter gate skips the entering permanent without oil counters")
-    void allyCreatureCounterConditionalSkipsEnteringPermanentWithoutCounter() {
-        addAllyCreatureTrigger(ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-                new EnteringCreatureHasCountersConditionalEffect(CounterType.OIL,
-                        new PutCountersOnEnteringCreatureEffect(CounterType.OIL, 1, false)));
-
-        Card entering = enteringCreature(2, 2);
-        gd.playerBattlefields.get(player1Id).add(new Permanent(entering));
-
-        enter(player1Id, entering);
-        service.checkAllyCreatureEntersTriggers(gd, player1Id, entering, 0);
-
-        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -766,31 +708,12 @@ class EnterTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("Ally-nontoken-creature copy trigger skips non-matching subtype")
-    void allyNontokenCreatureCreateTokenCopySkipsNonMatchingSubtype() {
-        var predicate = new CardSubtypePredicate(CardSubtype.ZOMBIE);
-        addAllyCreatureTrigger(ZoneChangeWatch.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
-                new TriggeringCardConditionalEffect(predicate, new CreateTokenCopyOfTargetPermanentEffect()));
-
-        Card entering = enteringCreature(2, 2);
-        gd.playerBattlefields.get(player1Id).add(new Permanent(entering));
-
-        when(predicateEvaluationService.matchesCardPredicate(eq(entering), eq(predicate), eq(null), any(), any()))
-                .thenReturn(false);
-
-        enter(player1Id, entering);
-
-        assertThat(gd.stack).isEmpty();
-    }
-
-    @Test
-    @DisplayName("Ally-token card conditional triggers when a creature token enters")
-    void allyTokenCardConditionalTriggersForCreatureToken() {
+    @DisplayName("Ally-token ability triggers when a creature token enters")
+    void allyTokenTriggersForCreatureToken() {
         Card source = new Card();
         source.setName("Staff");
-        addWatched(source, ZoneChangeWatch.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD, new TriggeringCardConditionalEffect(
-                        new CardTypePredicate(CardType.CREATURE),
-                        new PutCountersOnSelfEffect(CounterType.STORY)));
+        addWatched(source, ZoneChangeWatch.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD,
+                new PutCountersOnSelfEffect(CounterType.STORY));
         Permanent sourcePermanent = new Permanent(source);
         gd.playerBattlefields.get(player1Id).add(sourcePermanent);
 
@@ -799,8 +722,6 @@ class EnterTriggerCollectorServiceTest {
         Permanent tokenPermanent = new Permanent(creatureToken);
         gd.playerBattlefields.get(player1Id).add(tokenPermanent);
         when(gameQueryService.findPermanentById(gd, tokenPermanent.getId())).thenReturn(tokenPermanent);
-        when(predicateEvaluationService.matchesCardPredicate(
-                eq(creatureToken), any(), isNull(), eq(gd), eq(player1Id))).thenReturn(true);
 
         enterTokens(player1Id, List.of(tokenPermanent.getId()));
         service.checkAllyTokenEntersTriggers(gd, player1Id, List.of(tokenPermanent.getId()));
@@ -808,32 +729,6 @@ class EnterTriggerCollectorServiceTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst())
                 .isInstanceOf(PutCountersOnSelfEffect.class);
-    }
-
-    @Test
-    @DisplayName("Ally-token card conditional skips a noncreature token")
-    void allyTokenCardConditionalSkipsNoncreatureToken() {
-        Card source = new Card();
-        source.setName("Staff");
-        addWatched(source, ZoneChangeWatch.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD, new TriggeringCardConditionalEffect(
-                        new CardTypePredicate(CardType.CREATURE),
-                        new PutCountersOnSelfEffect(CounterType.STORY)));
-        gd.playerBattlefields.get(player1Id).add(new Permanent(source));
-
-        Card artifactToken = new Card();
-        artifactToken.setName("Clue");
-        artifactToken.setType(CardType.ARTIFACT);
-        artifactToken.setToken(true);
-        Permanent tokenPermanent = new Permanent(artifactToken);
-        gd.playerBattlefields.get(player1Id).add(tokenPermanent);
-        when(gameQueryService.findPermanentById(gd, tokenPermanent.getId())).thenReturn(tokenPermanent);
-        when(predicateEvaluationService.matchesCardPredicate(
-                eq(artifactToken), any(), isNull(), eq(gd), eq(player1Id))).thenReturn(false);
-
-        enterTokens(player1Id, List.of(tokenPermanent.getId()));
-        service.checkAllyTokenEntersTriggers(gd, player1Id, List.of(tokenPermanent.getId()));
-
-        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -1032,40 +927,6 @@ class EnterTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("Ally-artifact once-per-turn trigger queues only once")
-    void allyArtifactOncePerTurnQueuesOnlyOnce() {
-        addAllyCreatureTrigger(ZoneChangeWatch.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
-                new OncePerTurnTriggerEffect(new GainLifeEffect(1)));
-
-        Card firstArtifact = new Card();
-        firstArtifact.setName("First Artifact");
-        firstArtifact.setType(CardType.ARTIFACT);
-        Permanent firstPermanent = new Permanent(firstArtifact);
-        gd.playerBattlefields.get(player1Id).add(firstPermanent);
-        when(gameQueryService.findPermanentById(gd, firstPermanent.getId())).thenReturn(firstPermanent);
-        when(gameQueryService.isArtifact(gd, firstPermanent)).thenReturn(true);
-
-        enter(player1Id, firstArtifact);
-        service.checkAllyArtifactEntersTriggers(gd, player1Id, firstArtifact);
-
-        Card secondArtifact = new Card();
-        secondArtifact.setName("Second Artifact");
-        secondArtifact.setType(CardType.ARTIFACT);
-        Permanent secondPermanent = new Permanent(secondArtifact);
-        gd.playerBattlefields.get(player1Id).add(secondPermanent);
-        when(gameQueryService.findPermanentById(gd, secondPermanent.getId())).thenReturn(secondPermanent);
-        when(gameQueryService.isArtifact(gd, secondPermanent)).thenReturn(true);
-
-        enter(player1Id, secondArtifact);
-        service.checkAllyArtifactEntersTriggers(gd, player1Id, secondArtifact);
-
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(new GainLifeEffect(1));
-        assertThat(gd.oncePerTurnTriggersFiredThisTurn)
-                .containsExactly(gd.playerBattlefields.get(player1Id).getFirst().getId());
-    }
-
-    @Test
     @DisplayName("Ally-equipment scan queues a may ability")
     void allyEquipmentQueuesMayAbility() {
         addAllyCreatureTrigger(ZoneChangeWatch.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD,
@@ -1108,27 +969,22 @@ class EnterTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("Any-permanent conditional can match an artifact entering under an opponent's control")
-    void anyPermanentConditionalCanMatchAnyController() {
+    @DisplayName("Any-permanent ability can see an artifact entering under an opponent's control")
+    void anyPermanentAbilitySeesAnyController() {
         UUID player2Id = UUID.randomUUID();
         gd.orderedPlayerIds.add(player2Id);
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
 
         Card source = new Card();
         source.setName("Arcbound Crusher");
-        addWatched(source, ZoneChangeWatch.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD, new TriggeringPermanentConditionalEffect(
-                        new PermanentTruePredicate(),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                        true));
+        addWatched(source, ZoneChangeWatch.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD,
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
         gd.playerBattlefields.get(player1Id).add(new Permanent(source));
 
         Card entering = new Card();
         entering.setName("Opponent Artifact");
         entering.setType(CardType.ARTIFACT);
         gd.playerBattlefields.get(player2Id).add(new Permanent(entering));
-
-        when(predicateEvaluationService.matchesPermanentPredicate(
-                any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
 
         enter(player2Id, entering);
         service.checkAnyPermanentEntersTriggers(gd, player2Id, entering);
@@ -1140,26 +996,21 @@ class EnterTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("Any-permanent conditional May effects queue enter-trigger target selection")
-    void anyPermanentConditionalMayEffectQueuesTargetSelection() {
+    @DisplayName("Any-permanent targeted May effects queue enter-trigger target selection")
+    void anyPermanentMayEffectQueuesTargetSelection() {
         gd.playerIds.add(player1Id);
         gd.playerIdToName.put(player1Id, "Player1");
 
         Card source = new Card();
         source.setName("Iceberg Cancrix");
-        addWatched(source, ZoneChangeWatch.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD, new TriggeringPermanentConditionalEffect(
-                        new PermanentTruePredicate(),
-                        new MayEffect(new MillEffect(2, MillRecipient.TARGET_PLAYER),
-                                "have target player mill two cards")));
+        addWatched(source, ZoneChangeWatch.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD,
+                new MayEffect(new MillEffect(2, MillRecipient.TARGET_PLAYER), "have target player mill two cards"));
         gd.playerBattlefields.get(player1Id).add(new Permanent(source));
 
         Card entering = new Card();
         entering.setName("Snow-Covered Island");
         Permanent enteringPermanent = new Permanent(entering);
         gd.playerBattlefields.get(player1Id).add(enteringPermanent);
-
-        when(predicateEvaluationService.matchesPermanentPredicate(
-                any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
 
         enter(player1Id, entering);
         service.checkAnyPermanentEntersTriggers(gd, player1Id, entering);

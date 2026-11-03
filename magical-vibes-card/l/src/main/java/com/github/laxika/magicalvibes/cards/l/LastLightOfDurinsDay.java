@@ -14,8 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchHandAndOrLibraryForCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -30,12 +31,12 @@ public class LastLightOfDurinsDay extends Card {
                 new SacrificeSelfThenEffect(
                         new SearchHandAndOrLibraryForCardToBattlefieldEffect(
                                 new CardSubtypePredicate(CardSubtype.DRAGON))));
-        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.MOUNTAIN),
-                        SequenceEffect.of(
-                                new PutCountersOnSelfEffect(CounterType.QUEST),
-                                summonDragon)));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.LAND,
+                                new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN))),
+                        ObjectRelation.YOU_CONTROL),
+                SequenceEffect.of(new PutCountersOnSelfEffect(CounterType.QUEST), summonDragon));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{2}",
                 List.of(new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.MOUNTAIN))),

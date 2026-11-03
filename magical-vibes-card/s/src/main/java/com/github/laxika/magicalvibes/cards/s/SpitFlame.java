@@ -8,13 +8,15 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "AFC", collectorNumber = "142")
 @CardRegistration(set = "M19", collectorNumber = "160")
@@ -26,15 +28,19 @@ public class SpitFlame extends Card {
     public SpitFlame() {
         addSpellEffect(new DealDamageToTargetCreatureEffect(4));
 
-        addTrigger(new TriggerCondition(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.DRAGON),
-                        new MayPayManaEffect("{R}",
-                                ReturnCardFromGraveyardEffect.builder()
-                                        .destination(GraveyardChoiceDestination.HAND)
-                                        .filter(new CardIsSelfPredicate())
-                                        .returnAll(true)
-                                        .build(),
-                                "Pay {R} to return Spit Flame from your graveyard to your hand?")));
+        addTrigger(new TriggerCondition(Triggers.enters(
+                                new PermanentAllOfPredicate(List.of(
+                                        Triggers.CREATURE,
+                                        new PermanentHasSubtypePredicate(CardSubtype.DRAGON))),
+                                ObjectRelation.YOU_CONTROL),
+                        AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT,
+                new MayPayManaEffect("{R}",
+                        ReturnCardFromGraveyardEffect.builder()
+                                .destination(GraveyardChoiceDestination.HAND)
+                                .filter(new CardIsSelfPredicate())
+                                .returnAll(true)
+                                .build(),
+                        "Pay {R} to return Spit Flame from your graveyard to your hand?"));
     }
 }

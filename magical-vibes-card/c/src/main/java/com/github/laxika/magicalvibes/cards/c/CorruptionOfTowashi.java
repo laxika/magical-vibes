@@ -7,9 +7,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -20,10 +21,12 @@ public class CorruptionOfTowashi extends Card {
 
     public CorruptionOfTowashi() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), incubatorToken());
-        OncePerTurnTriggerEffect drawTrigger = OncePerTurnTriggerEffect.markOnAcceptance(
-                new MayEffect(new DrawCardEffect(1), "Draw a card?"));
-        addTrigger(Triggers.transforms(null, ObjectRelation.YOU_CONTROL), drawTrigger);
-        addTrigger(Triggers.enters(Triggers.TRANSFORMED, ObjectRelation.YOU_CONTROL), drawTrigger);
+        // "Do this only once each turn" marks the source as the draw is accepted, which covers both trigger
+        // conditions (CR 603.2h).
+        TriggerOptions doOnlyOnce = TriggerOptions.DEFAULT.withLimit(TriggerLimit.DO_ONLY_ONCE_EACH_TURN);
+        MayEffect draw = new MayEffect(new DrawCardEffect(1), "Draw a card?");
+        addTrigger(Triggers.transforms(null, ObjectRelation.YOU_CONTROL), doOnlyOnce, draw);
+        addTrigger(Triggers.enters(Triggers.TRANSFORMED, ObjectRelation.YOU_CONTROL), doOnlyOnce, draw);
     }
 
     private static CreateTokenEffect incubatorToken() {

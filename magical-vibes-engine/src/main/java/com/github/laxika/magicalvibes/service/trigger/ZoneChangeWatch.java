@@ -367,12 +367,19 @@ public enum ZoneChangeWatch {
     /** "Whenever one or more other creatures you control enter". */
     ON_ALLY_CREATURES_ENTERS_BATTLEFIELD(battlefield(Triggers.enters(Triggers.CREATURE,
             ObjectRelation.ANOTHER_YOU_CONTROL), TriggerMultiplicity.ONE_OR_MORE)),
-    /** "Whenever this creature or another creature you control enters", "a creature you control". */
-    ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD(battlefield(Triggers.enters(Triggers.CREATURE,
-            ObjectRelation.YOU_CONTROL))),
-    /** "Whenever this creature and/or one or more other creatures you control enter". */
-    ON_SELF_OR_ALLY_CREATURES_ENTERS_BATTLEFIELD(battlefield(Triggers.enters(Triggers.CREATURE,
-            ObjectRelation.YOU_CONTROL), TriggerMultiplicity.ONE_OR_MORE)),
+    /**
+     * "Whenever this creature or another creature you control enters", "a creature you control", and "this creature
+     * or another [restricted] creature you control".
+     */
+    ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD(
+            battlefield(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL)),
+            battlefield(Triggers.enters(Triggers.CREATURE, ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL))),
+    /** "Whenever this creature and/or one or more other [restricted] creatures you control enter". */
+    ON_SELF_OR_ALLY_CREATURES_ENTERS_BATTLEFIELD(
+            battlefield(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
+                    TriggerMultiplicity.ONE_OR_MORE),
+            battlefield(Triggers.enters(Triggers.CREATURE, ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                    TriggerMultiplicity.ONE_OR_MORE)),
     /** "Whenever another nontoken creature you control enters". */
     ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD(battlefield(Triggers.enters(Triggers.NONTOKEN_CREATURE,
             ObjectRelation.ANOTHER_YOU_CONTROL))),
@@ -451,10 +458,15 @@ public enum ZoneChangeWatch {
     ON_PERMANENT_ENTERS_FROM_EXILE(battlefield(Triggers.entersFrom(Zone.EXILE, null, ObjectRelation.YOU_CONTROL))),
     /** "When this enters from a graveyard". */
     ON_SELF_ENTERS_FROM_GRAVEYARD(battlefield(Triggers.entersFrom(Zone.GRAVEYARD, null, ObjectRelation.THIS))),
-    /** "Whenever a permanent enters", and "one or more permanents". */
+    /**
+     * "Whenever a permanent enters", "one or more permanents", "a permanent you control", and "a nontoken creature",
+     * whose controller the effect names (Overburden, Genesis Chamber).
+     */
     ON_ANY_PERMANENT_ENTERS_BATTLEFIELD(
             battlefield(Triggers.enters(null, ObjectRelation.ANY)),
-            battlefield(Triggers.enters(null, ObjectRelation.ANY), TriggerMultiplicity.ONE_OR_MORE)),
+            battlefield(Triggers.enters(null, ObjectRelation.ANY), TriggerMultiplicity.ONE_OR_MORE),
+            battlefield(Triggers.enters(null, ObjectRelation.YOU_CONTROL)),
+            battlefield(Triggers.enters(Triggers.NONTOKEN_CREATURE, ObjectRelation.ANY))),
     /** "Whenever another permanent you control enters". */
     ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD(battlefield(Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL))),
     /** Landfall from the graveyard. */

@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -52,10 +51,10 @@ public class VivisPersistence extends Card {
                         .build(),
                 "Pay {2} to return this card from your graveyard to your hand?");
 
-        addTrigger(new TriggerCondition(Triggers.enters(null, ObjectRelation.ANY),
-                AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsCommanderPredicate(true), returnToHand));
+        addTrigger(new TriggerCondition(Triggers.enters(new PermanentIsCommanderPredicate(true), ObjectRelation.ANY),
+                        AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT,
+                returnToHand);
         addTrigger(new TriggerCondition(Triggers.youAttack(), AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
                 new ConditionalEffect(
                         new HasAttacker(new PermanentIsCommanderPredicate(true)), returnToHand));

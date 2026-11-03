@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -32,19 +31,18 @@ public class CharismaticConqueror extends Card {
         CreateTokenEffect vampireToken = new CreateTokenEffect(
                 "Vampire", 1, 1, CardColor.WHITE, List.of(CardSubtype.VAMPIRE),
                 Set.of(Keyword.LIFELINK), Set.of());
-        addTrigger(Triggers.enters(null, ObjectRelation.ANY),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentAnyOfPredicate(List.of(
                                         new PermanentIsArtifactPredicate(),
                                         new PermanentIsCreaturePredicate())),
                                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
                                 new PermanentNotPredicate(new PermanentIsTappedPredicate()))),
-                        new MayEffect(
-                                new TapPermanentsEffect(TapUntapScope.TRIGGERING),
-                                "Tap that permanent?",
-                                vampireToken,
-                                MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER),
-                        true));
+                        ObjectRelation.ANY),
+                new MayEffect(
+                        new TapPermanentsEffect(TapUntapScope.TRIGGERING),
+                        "Tap that permanent?",
+                        vampireToken,
+                        MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER));
     }
 }

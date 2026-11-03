@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfEachOpponentLibraryAndGrantPlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeToOwnerOfTriggeringPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -21,11 +20,11 @@ public class BrainstealerDragon extends Card {
     public BrainstealerDragon() {
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ExileTopCardOfEachOpponentLibraryAndGrantPlayPermissionEffect());
-        addTrigger(Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                                 new PermanentNotPredicate(new PermanentOwnedBySourceControllerPredicate()))),
-                        new LoseLifeToOwnerOfTriggeringPermanentEffect()));
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new LoseLifeToOwnerOfTriggeringPermanentEffect());
     }
 }

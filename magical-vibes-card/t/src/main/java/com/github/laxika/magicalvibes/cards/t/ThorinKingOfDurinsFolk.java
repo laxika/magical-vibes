@@ -9,8 +9,6 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -30,10 +28,12 @@ public class ThorinKingOfDurinsFolk extends Card {
                         new PermanentIsTokenPredicate())),
                 CountScope.CONTROLLER);
 
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.DWARF),
-                        CreateTokenEffect.ofTreasureToken(1)));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.DWARF))),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                CreateTokenEffect.ofTreasureToken(1));
         addStaticEffect(new DynamicStaticBoostEffect(
                 artifactTokens, new Fixed(0), GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.DWARF)));

@@ -29,8 +29,7 @@ public class TomeOfLegends extends Card {
 
         PutCountersOnSelfEffect addPageCounter = new PutCountersOnSelfEffect(CounterType.PAGE);
         PermanentIsCommanderPredicate yourCommander = new PermanentIsCommanderPredicate(true);
-        addTrigger(Triggers.enters(null, ObjectRelation.ANY),
-                new TriggeringPermanentConditionalEffect(yourCommander, addPageCounter, true));
+        addTrigger(Triggers.enters(yourCommander, ObjectRelation.ANY), addPageCounter);
         addTrigger(Triggers.creatureAttacks(),
                 new TriggeringPermanentConditionalEffect(yourCommander, addPageCounter));
 

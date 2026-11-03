@@ -8,11 +8,13 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "63")
 public class SageOfTheFalls extends Card {
@@ -23,8 +25,11 @@ public class SageOfTheFalls extends Card {
                 new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
                 "You may draw a card. If you do, discard a card.");
         addTrigger(Triggers.enters(ObjectRelation.THIS), loot);
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardNotPredicate(new CardSubtypePredicate(CardSubtype.HUMAN)), loot));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                loot);
     }
 }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnteringPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -20,11 +19,13 @@ public class MoltenEchoes extends Card {
 
     public MoltenEchoes() {
         addStaticEffect(new ChooseSubtypeOnEnterEffect());
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
-                                new PermanentHasSourceChosenSubtypePredicate(),
-                                new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
-                        new CreateTokenCopyOfEnteringPermanentEffect(true, true)));
+                                Triggers.CREATURE,
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentHasSourceChosenSubtypePredicate(),
+                                        new PermanentNotPredicate(new PermanentIsTokenPredicate()))))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new CreateTokenCopyOfEnteringPermanentEffect(true, true));
     }
 }

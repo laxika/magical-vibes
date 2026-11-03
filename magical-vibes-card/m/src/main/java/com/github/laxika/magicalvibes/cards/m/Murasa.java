@@ -11,10 +11,10 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,18 +27,20 @@ import java.util.Set;
 public class Murasa extends Card {
 
     public Murasa() {
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER),
-                new TriggeringCardConditionalEffect(
-                        new CardNotPredicate(new CardIsTokenPredicate()),
-                        new MayEffect(
-                                new SearchLibraryEffect(
-                                        new Fixed(1),
-                                        CardPredicateUtils.basicLand(),
-                                        LibrarySearchDestination.BATTLEFIELD_TAPPED,
-                                        LibrarySearchPlayer.TRIGGERING_PERMANENT_CONTROLLER),
-                                "Search your library for a basic land card?",
-                                null,
-                                MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER)));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
+                        ObjectRelation.ANOTHER),
+                new MayEffect(
+                        new SearchLibraryEffect(
+                                new Fixed(1),
+                                CardPredicateUtils.basicLand(),
+                                LibrarySearchDestination.BATTLEFIELD_TAPPED,
+                                LibrarySearchPlayer.TRIGGERING_PERMANENT_CONTROLLER),
+                        "Search your library for a basic land card?",
+                        null,
+                        MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER));
         target(TargetFilters.land()).addTrigger(Triggers.chaosEnsues(),
                 new AnimatePermanentsEffect(4, 4, List.of(), Set.of(), null, Set.of(),
                         GrantScope.TARGET, EffectDuration.PERMANENT));

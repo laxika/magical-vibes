@@ -11,10 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -28,18 +24,20 @@ public class TalusPaladin extends Card {
 
     public TalusPaladin() {
         PermanentHasSubtypePredicate ally = new PermanentHasSubtypePredicate(CardSubtype.ALLY);
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardAnyOfPredicate(List.of(
-                        new CardIsSelfPredicate(), new CardSubtypePredicate(CardSubtype.ALLY))),
-                        SequenceEffect.of(
-                                new MayEffect(SequenceEffect.of(
-                                        new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.OWN_CREATURES, ally),
-                                        new ConditionalEffect(new SourceMatchesPermanentPredicate(
-                                                new PermanentAllOfPredicate(List.of(ally,
-                                                        new PermanentControlledBySourceControllerPredicate()))),
-                                                new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF))
-                                ), "Have Ally creatures you control gain lifelink until end of turn?"),
-                                new MayEffect(new PutCountersOnSourceEffect(1, 1, 1),
-                                        "Put a +1/+1 counter on Talus Paladin?"))));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.ALLY))),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                SequenceEffect.of(
+                        new MayEffect(SequenceEffect.of(
+                                new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.OWN_CREATURES, ally),
+                                new ConditionalEffect(new SourceMatchesPermanentPredicate(
+                                        new PermanentAllOfPredicate(List.of(ally,
+                                                new PermanentControlledBySourceControllerPredicate()))),
+                                        new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF))
+                        ), "Have Ally creatures you control gain lifelink until end of turn?"),
+                        new MayEffect(new PutCountersOnSourceEffect(1, 1, 1),
+                                "Put a +1/+1 counter on Talus Paladin?")));
     }
 }

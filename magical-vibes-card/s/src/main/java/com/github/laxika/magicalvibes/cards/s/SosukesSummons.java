@@ -9,12 +9,11 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -30,17 +29,20 @@ public class SosukesSummons extends Card {
         addSpellEffect(new CreateTokenEffect(2, "Snake", 1, 1, CardColor.GREEN,
                 List.of(CardSubtype.SNAKE), Set.of(), Set.of()));
 
-        addTrigger(new TriggerCondition(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
-                new TriggeringCardConditionalEffect(
-                        new CardAllOfPredicate(List.of(
-                                new CardSubtypePredicate(CardSubtype.SNAKE),
-                                new CardNotPredicate(new CardIsTokenPredicate()))),
-                        new MayEffect(ReturnCardFromGraveyardEffect.builder()
-                                .destination(GraveyardChoiceDestination.HAND)
-                                .filter(new CardIsSelfPredicate())
-                                .returnAll(true)
-                                .build(),
-                                "Return Sosuke's Summons from your graveyard to your hand?")));
+        addTrigger(new TriggerCondition(Triggers.enters(
+                                new PermanentAllOfPredicate(List.of(
+                                        Triggers.CREATURE,
+                                        new PermanentAllOfPredicate(List.of(
+                                                new PermanentHasSubtypePredicate(CardSubtype.SNAKE),
+                                                new PermanentNotPredicate(new PermanentIsTokenPredicate()))))),
+                                ObjectRelation.YOU_CONTROL),
+                        AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT,
+                new MayEffect(ReturnCardFromGraveyardEffect.builder()
+                        .destination(GraveyardChoiceDestination.HAND)
+                        .filter(new CardIsSelfPredicate())
+                        .returnAll(true)
+                        .build(),
+                        "Return Sosuke's Summons from your graveyard to your hand?"));
     }
 }

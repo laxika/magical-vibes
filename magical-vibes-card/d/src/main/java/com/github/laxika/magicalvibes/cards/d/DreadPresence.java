@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,14 +20,17 @@ import java.util.List;
 public class DreadPresence extends Card {
 
     public DreadPresence() {
-        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(new PermanentHasSubtypePredicate(CardSubtype.SWAMP),
-                        new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
-                                new ChooseOneEffect.ChooseOneOption(
-                                        "You draw a card and you lose 1 life.",
-                                        List.of(new DrawCardEffect(1), new LoseLifeEffect(1))),
-                                new ChooseOneEffect.ChooseOneOption(
-                                        "This creature deals 2 damage to any target and you gain 2 life.",
-                                        List.of(new DealDamageToAnyTargetEffect(2), new GainLifeEffect(2))))))));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.LAND,
+                                new PermanentHasSubtypePredicate(CardSubtype.SWAMP))),
+                        ObjectRelation.YOU_CONTROL),
+                new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
+                        new ChooseOneEffect.ChooseOneOption(
+                                "You draw a card and you lose 1 life.",
+                                List.of(new DrawCardEffect(1), new LoseLifeEffect(1))),
+                        new ChooseOneEffect.ChooseOneOption(
+                                "This creature deals 2 damage to any target and you gain 2 life.",
+                                List.of(new DealDamageToAnyTargetEffect(2), new GainLifeEffect(2)))))));
     }
 }

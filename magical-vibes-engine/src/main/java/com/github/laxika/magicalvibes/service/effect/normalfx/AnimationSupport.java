@@ -161,6 +161,9 @@ public class AnimationSupport {
             targetIds = List.of(enchantedId);
         } else if (effect.scope() == GrantScope.SELF && entry.getSourcePermanentId() != null) {
             targetIds = List.of(entry.getSourcePermanentId());
+        } else if (effect.scope() == GrantScope.TRIGGERING_PERMANENT && entry.getTriggeringPermanentId() != null) {
+            // "It becomes …": the permanent whose event triggered the ability (Kolodin, Triumph Caster).
+            targetIds = List.of(entry.getTriggeringPermanentId());
         } else if (effect.scope() == GrantScope.TARGET && !entry.getTargetIds().isEmpty()
                 && entry.targetsForResolvingEffectGroup() != null) {
             targetIds = entry.targetsForResolvingEffectGroup();
@@ -648,6 +651,9 @@ public class AnimationSupport {
             targetIds = List.of(entry.getTargetId());
         } else if (effect.scope() == GrantScope.SELF && entry.getSourcePermanentId() != null) {
             targetIds = List.of(entry.getSourcePermanentId());
+        } else if (effect.scope() == GrantScope.TRIGGERING_PERMANENT && entry.getTriggeringPermanentId() != null) {
+            // "It becomes …": the permanent whose event triggered the ability (Kolodin, Triumph Caster).
+            targetIds = List.of(entry.getTriggeringPermanentId());
         } else {
             return;
         }

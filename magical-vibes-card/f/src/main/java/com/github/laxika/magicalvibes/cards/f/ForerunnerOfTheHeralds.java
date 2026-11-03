@@ -8,10 +8,13 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "RIX", collectorNumber = "129")
 public class ForerunnerOfTheHeralds extends Card {
@@ -22,8 +25,11 @@ public class ForerunnerOfTheHeralds extends Card {
                         LibrarySearchDestination.TOP_OF_LIBRARY),
                 "Search your library for a Merfolk card, reveal it, then shuffle and put that card on top?"));
 
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.MERFOLK),
-                        new PutCountersOnSourceEffect(1, 1, 1)));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.MERFOLK))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new PutCountersOnSourceEffect(1, 1, 1));
     }
 }

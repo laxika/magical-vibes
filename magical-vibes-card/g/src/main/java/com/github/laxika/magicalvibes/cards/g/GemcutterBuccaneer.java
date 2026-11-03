@@ -10,22 +10,25 @@ import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "LCC", collectorNumber = "55")
 @CardRegistration(set = "LCC", collectorNumber = "87")
 public class GemcutterBuccaneer extends Card {
 
     public GemcutterBuccaneer() {
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.PIRATE),
-                        CreateTokenEffect.ofTappedTreasureToken(1)));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.PIRATE))),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                CreateTokenEffect.ofTappedTreasureToken(1));
 
         PermanentPredicate treasure = new PermanentHasSubtypePredicate(CardSubtype.TREASURE);
 

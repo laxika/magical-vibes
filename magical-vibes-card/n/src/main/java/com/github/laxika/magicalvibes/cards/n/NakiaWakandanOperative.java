@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
@@ -25,9 +24,8 @@ import java.util.List;
 public class NakiaWakandanOperative extends Card {
 
     public NakiaWakandanOperative() {
-        addTrigger(Triggers.enters(null, ObjectRelation.ANY),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsCommanderPredicate(true), new BecomeMonarchEffect(), true));
+        addTrigger(Triggers.enters(new PermanentIsCommanderPredicate(true), ObjectRelation.ANY),
+                new BecomeMonarchEffect());
 
         PermanentPredicate creatureOrVehicle = new PermanentAnyOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

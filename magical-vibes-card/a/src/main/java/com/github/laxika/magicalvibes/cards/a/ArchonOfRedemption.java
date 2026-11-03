@@ -5,10 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,11 +17,11 @@ import java.util.List;
 public class ArchonOfRedemption extends Card {
 
     public ArchonOfRedemption() {
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentAnyOfPredicate(List.of(new PermanentIsSourcePermanentPredicate(),
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
                                 new PermanentHasKeywordPredicate(Keyword.FLYING))),
-                        new MayEffect(new GainLifeEqualToPowerEffect(),
-                                "Gain life equal to that creature's power?")));
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                new MayEffect(new GainLifeEqualToPowerEffect(), "Gain life equal to that creature's power?"));
     }
 }

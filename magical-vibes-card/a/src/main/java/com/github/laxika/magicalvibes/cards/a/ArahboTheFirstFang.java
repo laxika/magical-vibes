@@ -7,12 +7,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -32,14 +31,13 @@ public class ArahboTheFirstFang extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new CreateTokenEffect("Cat", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.CAT), Set.of(), Set.of()));
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardAllOfPredicate(List.of(
-                                new CardSubtypePredicate(CardSubtype.CAT),
-                                new CardNotPredicate(new CardIsTokenPredicate())
-                        )),
-                        new CreateTokenEffect("Cat", 1, 1, CardColor.WHITE,
-                                List.of(CardSubtype.CAT), Set.of(), Set.of())
-                ));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentHasSubtypePredicate(CardSubtype.CAT),
+                                        new PermanentNotPredicate(new PermanentIsTokenPredicate()))))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new CreateTokenEffect("Cat", 1, 1, CardColor.WHITE, List.of(CardSubtype.CAT), Set.of(), Set.of()));
     }
 }

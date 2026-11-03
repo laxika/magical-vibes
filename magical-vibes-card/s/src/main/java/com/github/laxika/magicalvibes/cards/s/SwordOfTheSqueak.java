@@ -9,13 +9,11 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBasePowerEqualsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBaseToughnessEqualsPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -38,14 +36,16 @@ public class SwordOfTheSqueak extends Card {
         addStaticEffect(new DynamicStaticBoostEffect(
                 qualifyingCreatures, qualifyingCreatures, GrantScope.EQUIPPED_CREATURE));
 
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardAnyOfPredicate(List.of(
-                                new CardSubtypePredicate(CardSubtype.HAMSTER),
-                                new CardSubtypePredicate(CardSubtype.MOUSE),
-                                new CardSubtypePredicate(CardSubtype.RAT),
-                                new CardSubtypePredicate(CardSubtype.SQUIRREL))),
-                        new AttachSourceEquipmentToEnteringCreatureEffect()));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentAnyOfPredicate(List.of(
+                                        new PermanentHasSubtypePredicate(CardSubtype.HAMSTER),
+                                        new PermanentHasSubtypePredicate(CardSubtype.MOUSE),
+                                        new PermanentHasSubtypePredicate(CardSubtype.RAT),
+                                        new PermanentHasSubtypePredicate(CardSubtype.SQUIRREL))))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new AttachSourceEquipmentToEnteringCreatureEffect());
 
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

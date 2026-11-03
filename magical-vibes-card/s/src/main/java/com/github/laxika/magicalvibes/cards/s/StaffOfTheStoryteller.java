@@ -3,18 +3,17 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1863")
@@ -27,11 +26,11 @@ public class StaffOfTheStoryteller extends Card {
     public StaffOfTheStoryteller() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.whiteSpirit(1));
 
-        addTrigger(new TriggerCondition(Triggers.tokensCreated(null, ObjectRelation.YOU_CONTROL)),
+        addTrigger(new TriggerCondition(Triggers.tokensCreated(
+                                new PermanentIsCreaturePredicate(),
+                                ObjectRelation.YOU_CONTROL)),
                 TriggerOptions.ONE_OR_MORE,
-                new TriggeringCardConditionalEffect(
-                        new CardTypePredicate(CardType.CREATURE),
-                        new PutCountersOnSelfEffect(CounterType.STORY)));
+                new PutCountersOnSelfEffect(CounterType.STORY));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

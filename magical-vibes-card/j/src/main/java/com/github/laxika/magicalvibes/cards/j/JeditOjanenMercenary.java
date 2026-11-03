@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -27,12 +27,14 @@ public class JeditOjanenMercenary extends Card {
                 "Cat Warrior", 2, 2, CardColor.GREEN,
                 List.of(CardSubtype.CAT, CardSubtype.WARRIOR),
                 Set.of(Keyword.FORESTWALK), Set.of());
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardAnyOfPredicate(List.of(
-                                new CardSupertypePredicate(CardSupertype.LEGENDARY),
-                                new CardIsSelfPredicate())),
-                        new MayPayManaEffect("{G}", catWarriorToken,
-                                "Pay {G} to create a 2/2 green Cat Warrior creature token with forestwalk?")));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentAnyOfPredicate(List.of(
+                                        new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
+                                        new PermanentIsSourceCardPredicate())))),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                new MayPayManaEffect("{G}", catWarriorToken,
+                        "Pay {G} to create a 2/2 green Cat Warrior creature token with forestwalk?"));
     }
 }

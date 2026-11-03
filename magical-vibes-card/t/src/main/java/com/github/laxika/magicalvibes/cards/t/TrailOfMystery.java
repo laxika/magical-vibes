@@ -8,12 +8,14 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "154")
 @CardRegistration(set = "DSC", collectorNumber = "203")
@@ -22,12 +24,12 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class TrailOfMystery extends Card {
 
     public TrailOfMystery() {
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsFaceDownPredicate(),
-                        new MayEffect(
-                                new SearchLibraryEffect(CardPredicateUtils.basicLand()),
-                                "Search your library for a basic land card?")));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(Triggers.CREATURE, new PermanentIsFaceDownPredicate())),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new MayEffect(
+                        new SearchLibraryEffect(CardPredicateUtils.basicLand()),
+                        "Search your library for a basic land card?"));
         addTrigger(Triggers.turnedFaceUp(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
                 new ConditionalEffect(new TargetPermanentMatches(new PermanentIsCreaturePredicate()),
                         new BoostReferencedPermanentEffect(PermanentReference.TRIGGERING, 2, 2)));

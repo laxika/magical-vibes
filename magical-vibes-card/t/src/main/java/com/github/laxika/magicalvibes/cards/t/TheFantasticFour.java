@@ -13,8 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePowerOrToughnessEqualsPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -41,10 +41,10 @@ public class TheFantasticFour extends Card {
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption("Draw a card", new DrawCardEffect()));
 
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardIsSelfPredicate(),
-                        new ChooseModeNotYetChosenThisTurnEffect(options)));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(Triggers.CREATURE, new PermanentIsSourceCardPredicate())),
+                        ObjectRelation.YOU_CONTROL),
+                new ChooseModeNotYetChosenThisTurnEffect(options));
         addTrigger(Triggers.youCastSpell(),
                 new ChooseModeNotYetChosenThisTurnOnSpellCastEffect(
                         null,

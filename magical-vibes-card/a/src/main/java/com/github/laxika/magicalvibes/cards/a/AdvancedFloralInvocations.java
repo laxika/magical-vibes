@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCreatureCards
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -51,9 +52,9 @@ public class AdvancedFloralInvocations extends Card {
                 new NotCondition(new SourceCounterThreshold(2, CounterType.LEVEL)))),
                 "this Class is level 2"));
 
-        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), new ConditionalEffect(
-                new SourceCounterThreshold(1, CounterType.LEVEL),
-                new PerpetuallyBoostCreatureCardsInGraveyardEffect(1, 1)));
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, CounterType.LEVEL)),
+                new PerpetuallyBoostCreatureCardsInGraveyardEffect(1, 1));
 
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(2, CounterType.LEVEL),

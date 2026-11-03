@@ -9,14 +9,17 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "103")
 public class BloodSpeaker extends Card {
@@ -30,13 +33,17 @@ public class BloodSpeaker extends Card {
                         "Sacrifice Blood Speaker to search your library for a Demon card?"));
 
         // Whenever a Demon you control enters, return this card from your graveyard to your hand.
-        addTrigger(new TriggerCondition(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.DEMON),
-                        ReturnCardFromGraveyardEffect.builder()
-                                .destination(GraveyardChoiceDestination.HAND)
-                                .filter(new CardIsSelfPredicate())
-                                .returnAll(true)
-                                .build()));
+        addTrigger(new TriggerCondition(Triggers.enters(
+                                new PermanentAllOfPredicate(List.of(
+                                        Triggers.CREATURE,
+                                        new PermanentHasSubtypePredicate(CardSubtype.DEMON))),
+                                ObjectRelation.YOU_CONTROL),
+                        AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT,
+                ReturnCardFromGraveyardEffect.builder()
+                        .destination(GraveyardChoiceDestination.HAND)
+                        .filter(new CardIsSelfPredicate())
+                        .returnAll(true)
+                        .build());
     }
 }

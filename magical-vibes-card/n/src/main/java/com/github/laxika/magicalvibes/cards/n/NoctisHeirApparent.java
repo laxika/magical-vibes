@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfReturnAtNextTurnDeclareAttackersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.condition.DuringCombat;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateT
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,9 +26,9 @@ public class NoctisHeirApparent extends Card {
                 "Target must be an Equipment you control"));
         target(TargetFilters.creatureYouControl());
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                new ConditionalEffect(new DuringCombat(),
-                        new MayEffect(new AttachTargetEquipmentToTargetCreatureEffect(),
-                                "Attach target Equipment you control to target creature you control?")));
+                TriggerOptions.DEFAULT.withInterveningIf(new DuringCombat()),
+                new MayEffect(new AttachTargetEquipmentToTargetCreatureEffect(),
+                        "Attach target Equipment you control to target creature you control?"));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

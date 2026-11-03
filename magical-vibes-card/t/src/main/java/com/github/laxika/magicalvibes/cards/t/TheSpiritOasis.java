@@ -6,11 +6,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "TLA", collectorNumber = "72")
 public class TheSpiritOasis extends Card {
@@ -19,8 +20,11 @@ public class TheSpiritOasis extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new DrawCardEffect(new PermanentCount(
                         new PermanentHasSubtypePredicate(CardSubtype.SHRINE), CountScope.CONTROLLER)));
-        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.SHRINE),
-                        new DrawCardEffect(1)));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.ENCHANTMENT,
+                                new PermanentHasSubtypePredicate(CardSubtype.SHRINE))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new DrawCardEffect(1));
     }
 }

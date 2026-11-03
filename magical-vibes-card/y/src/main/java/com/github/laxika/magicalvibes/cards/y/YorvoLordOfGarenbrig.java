@@ -11,10 +11,13 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "ELD", collectorNumber = "185")
 @CardRegistration(set = "ELD", collectorNumber = "376")
@@ -28,8 +31,11 @@ public class YorvoLordOfGarenbrig extends Card {
                 ConditionalEffect.unless(
                         new TriggeringPermanentPowerGreaterThanSourcePower(),
                         new PutCountersOnSourceEffect(1, 1, 1)));
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardColorPredicate(CardColor.GREEN), counterSequence));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentColorInPredicate(Set.of(CardColor.GREEN)))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                counterSequence);
     }
 }

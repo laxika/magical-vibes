@@ -70,7 +70,8 @@ final class TriggerMatcher {
             if (condition.trigger() instanceof ZoneChangeTrigger trigger
                     && condition.zones().functionsIn(candidate.zone())
                     && trigger.matchesMove(event.from(), event.to(), event.cause())
-                    && (!trigger.duringYourTurn() || candidate.controllerId().equals(gameData.activePlayerId))
+                    && (!trigger.duringYourTurn() || gameData.activePlayerId != null
+                    && gameData.activePlayerId.equals(candidate.controllerId()))
                     && causedBy(trigger.causedBy(), candidate, event)
                     && (movingObject ? relatesToItself(gameData, predicates, trigger, candidate, event)
                     : relates(gameData, predicates, trigger, candidate, event))) {
@@ -232,10 +233,9 @@ final class TriggerMatcher {
 
     /**
      * Whether the moving object passes the trigger's filter. A departed object is judged by its last-known copy,
-     * whose card holds the types, colors and keywords it left with (CR 603.10a), and an entered one by its copy with
-     * the characteristics it has as its enters abilities are processed (CR 603.6a), so no layered query runs on it:
-     * one would read the game as it is after the departure. A permanent that left the battlefield is judged as
-     * {@link #departedMatches} says.
+     * whose card holds the types, colors and keywords it left with (CR 603.10a), and a card that moved between
+     * other zones by its card. A permanent that left the battlefield is judged as {@link #departedMatches} says, one
+     * that entered as {@link #enteredMatches} says.
      */
     private static boolean filterMatches(GameData gameData, PredicateEvaluationService predicates,
                                          ZoneChangeTrigger trigger, TriggerCandidate candidate,
@@ -243,9 +243,8 @@ final class TriggerMatcher {
         if (trigger.filter() == null) {
             return true;
         }
-        if (event.permanent() == null || !event.leftBattlefield()) {
-            Permanent moved = event.permanent() != null ? event.permanent() : new Permanent(event.card());
-            return predicates.matchesPermanentPredicate(moved, trigger.filter(), null);
+        if (event.permanent() == null) {
+            return predicates.matchesPermanentPredicate(new Permanent(event.card()), trigger.filter(), null);
         }
         Permanent watcher = candidate.sourceAsPermanent();
         FilterContext context = FilterContext.of(gameData)
@@ -255,7 +254,45 @@ final class TriggerMatcher {
                 .withSourcePermanentSnapshot(watcher)
                 .withTriggeringPermanentId(event.permanent().getId())
                 .withTriggeringPermanentControllerId(event.controllerId());
+        if (!event.leftBattlefield()) {
+            Permanent live = onBattlefield(gameData, event.permanent().getId());
+            return enteredMatches(predicates, trigger.filter(), event.permanent(),
+                    live != null ? live : event.permanent(), context);
+        }
         return departedMatches(predicates, trigger.filter(), event.permanent(), event.attachments(), context);
+    }
+
+    private static Permanent onBattlefield(GameData gameData, UUID permanentId) {
+        for (var battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent permanent : battlefield) {
+                if (permanent.getId().equals(permanentId)) {
+                    return permanent;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Whether a permanent that entered matches {@code predicate} as the game checks it after the event (CR 603.6a):
+     * "whenever another Elf you control enters", "a creature with power 4 or greater", "a creature you didn't cast".
+     * Its characteristics are those of {@code asEntered}, its copy with the characteristics it has as its enters
+     * abilities are processed. Anything else reads {@code live}, the permanent on the battlefield (its copy once it
+     * has left), with the watching ability's source as the filter's source and the entered permanent as the
+     * triggering one: its layered power, its counters, where it came from, whether it is the source.
+     */
+    private static boolean enteredMatches(PredicateEvaluationService predicates, PermanentPredicate predicate,
+                                          Permanent asEntered, Permanent live, FilterContext context) {
+        return switch (predicate) {
+            case PermanentAllOfPredicate allOf -> allOf.predicates().stream()
+                    .allMatch(part -> enteredMatches(predicates, part, asEntered, live, context));
+            case PermanentAnyOfPredicate anyOf -> anyOf.predicates().stream()
+                    .anyMatch(part -> enteredMatches(predicates, part, asEntered, live, context));
+            case PermanentNotPredicate not -> !enteredMatches(predicates, not.predicate(), asEntered, live, context);
+            default -> isCharacteristic(predicate)
+                    ? predicates.matchesPermanentPredicate(asEntered, predicate, null)
+                    : predicates.matchesPermanentPredicate(live, predicate, context);
+        };
     }
 
     /**

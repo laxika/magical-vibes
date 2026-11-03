@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -44,9 +44,12 @@ public class DivinersWand extends Card {
         ));
 
         // Whenever a Wizard creature enters, you may attach this Equipment to it.
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.WIZARD),
-                        new AttachSourceEquipmentToEnteringCreatureEffect()));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.WIZARD))),
+                        ObjectRelation.ANOTHER),
+                new AttachSourceEquipmentToEnteringCreatureEffect());
 
         // Equip {3}
         addActivatedAbility(new EquipActivatedAbility("{3}"));

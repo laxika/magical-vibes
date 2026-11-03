@@ -9,12 +9,13 @@ import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -41,13 +42,14 @@ public class FrontierSiege extends Card {
                         new AwardManaEffect(ManaColor.GREEN, 2)));
 
         target(TargetFilters.creatureAnOpponentControls())
-                .addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                        new TriggeringPermanentConditionalEffect(
-                                new PermanentHasKeywordPredicate(Keyword.FLYING),
-                                new ConditionalEffect(
-                                        new SourceHasChosenMode(DRAGONS),
-                                        new MayEffect(
-                                                new EnteringCreatureFightsTargetCreatureEffect(),
-                                                "Have that creature fight target creature you don't control?"))));
+                .addTrigger(Triggers.enters(
+                                new PermanentAllOfPredicate(List.of(
+                                        Triggers.CREATURE,
+                                        new PermanentHasKeywordPredicate(Keyword.FLYING))),
+                                ObjectRelation.ANOTHER_YOU_CONTROL),
+                        TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(DRAGONS)),
+                        new MayEffect(
+                                new EnteringCreatureFightsTargetCreatureEffect(),
+                                "Have that creature fight target creature you don't control?"));
     }
 }

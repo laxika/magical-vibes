@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.IntensifyNamedCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.condition.SourceIntensityThreshold;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -31,14 +31,17 @@ public class AwestruckCygnet extends Card {
     private static final SourceIntensityThreshold TRANSFORM_THRESHOLD = new SourceIntensityThreshold(3);
 
     public AwestruckCygnet() {
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentHasKeywordPredicate(Keyword.FLYING),
-                                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))),
-                        new ConditionalEffect(new SourceMatchesPermanentPredicate(new PermanentNamedPredicate(CARD_NAME)),
-                                new IntensifyNamedCardsEffect(CARD_NAME))));
+                                Triggers.CREATURE,
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentHasKeywordPredicate(Keyword.FLYING),
+                                        new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new SourceMatchesPermanentPredicate(new PermanentNamedPredicate(CARD_NAME))),
+                new IntensifyNamedCardsEffect(CARD_NAME));
 
         addStaticEffect(new ConditionalEffect(TRANSFORM_THRESHOLD,
                 new SetBasePowerToughnessEffect(4, 4, GrantScope.SELF)));

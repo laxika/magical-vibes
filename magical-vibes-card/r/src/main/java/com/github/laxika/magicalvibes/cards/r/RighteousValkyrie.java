@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,12 +22,14 @@ import java.util.List;
 public class RighteousValkyrie extends Card {
 
     public RighteousValkyrie() {
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardAnyOfPredicate(List.of(
-                                new CardSubtypePredicate(CardSubtype.ANGEL),
-                                new CardSubtypePredicate(CardSubtype.CLERIC))),
-                        new GainLifeEqualToToughnessEffect()));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentAnyOfPredicate(List.of(
+                                        new PermanentHasSubtypePredicate(CardSubtype.ANGEL),
+                                        new PermanentHasSubtypePredicate(CardSubtype.CLERIC))))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new GainLifeEqualToToughnessEffect());
         addStaticEffect(new ConditionalEffect(
                         new ControllerLifeAtLeast(7, true),
                         new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES)));

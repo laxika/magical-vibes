@@ -19,6 +19,8 @@ import java.util.UUID;
  * @param sourceCard   the card whose effect slot produced the trigger
  * @param markSourceOncePerTurnOnAcceptance whether accepting this trigger's may ability consumes
  *                                           the source's once-per-turn allowance
+ * @param triggersOnlyOnceEachTurn whether the ability "triggers only once each turn" ({@code
+ *                                 TriggerLimit.ONCE_EACH_TURN}), which nothing can make trigger additional times
  */
 public record TriggerMatchContext(
         GameData gameData,
@@ -27,8 +29,15 @@ public record TriggerMatchContext(
         CardEffect rawEffect,
         Card sourceCard,
         PlanarObject sourcePlanarObject,
-        boolean markSourceOncePerTurnOnAcceptance
+        boolean markSourceOncePerTurnOnAcceptance,
+        boolean triggersOnlyOnceEachTurn
 ) {
+
+    public TriggerMatchContext(GameData gameData, Permanent permanent, UUID controllerId, CardEffect rawEffect,
+            Card sourceCard, PlanarObject sourcePlanarObject, boolean markSourceOncePerTurnOnAcceptance) {
+        this(gameData, permanent, controllerId, rawEffect, sourceCard, sourcePlanarObject,
+                markSourceOncePerTurnOnAcceptance, false);
+    }
 
     public TriggerMatchContext(GameData gameData, Permanent permanent, UUID controllerId,
             CardEffect rawEffect) {

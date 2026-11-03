@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaOfChosenColorEqualTo
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -28,9 +27,8 @@ public class Nyx extends Card {
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsTokenPredicate())))));
-        addTrigger(Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsEnchantmentPredicate(), new GainLifeEffect(1)));
+        addTrigger(Triggers.enters(new PermanentIsEnchantmentPredicate(), ObjectRelation.ANOTHER_YOU_CONTROL),
+                new GainLifeEffect(1));
         addTrigger(Triggers.chaosEnsues(), new AwardManaOfChosenColorEqualToDevotionEffect());
     }
 }

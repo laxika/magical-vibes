@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceFromGraveyardAttachedToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
@@ -31,16 +30,19 @@ public class SwordOfTheMeek extends Card {
     public SwordOfTheMeek() {
         addStaticEffect(new StaticBoostEffect(1, 2, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
-        addTrigger(new TriggerCondition(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentPowerAtLeastPredicate(1),
-                                new PermanentPowerAtMostPredicate(1),
-                                new PermanentToughnessAtLeastPredicate(1),
-                                new PermanentToughnessAtMostPredicate(1))),
-                        new MayEffect(new ReturnSourceFromGraveyardAttachedToEnteringCreatureEffect(),
-                                "Return this card from your graveyard to the battlefield, then attach it to that creature?")));
+        addTrigger(new TriggerCondition(Triggers.enters(
+                                new PermanentAllOfPredicate(List.of(
+                                        Triggers.CREATURE,
+                                        new PermanentAllOfPredicate(List.of(
+                                                new PermanentIsCreaturePredicate(),
+                                                new PermanentPowerAtLeastPredicate(1),
+                                                new PermanentPowerAtMostPredicate(1),
+                                                new PermanentToughnessAtLeastPredicate(1),
+                                                new PermanentToughnessAtMostPredicate(1))))),
+                                ObjectRelation.YOU_CONTROL),
+                        AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT,
+                new MayEffect(new ReturnSourceFromGraveyardAttachedToEnteringCreatureEffect(),
+                        "Return this card from your graveyard to the battlefield, then attach it to that creature?"));
     }
 }

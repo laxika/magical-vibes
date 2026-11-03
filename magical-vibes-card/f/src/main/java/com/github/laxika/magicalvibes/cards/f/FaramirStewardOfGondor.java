@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.condition.ControllerIsMonarch;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -27,13 +26,15 @@ import java.util.Set;
 public class FaramirStewardOfGondor extends Card {
 
     public FaramirStewardOfGondor() {
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
-                                new PermanentMinManaValuePredicate(4))),
-                        new BecomeMonarchEffect()));
+                                Triggers.CREATURE,
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
+                                        new PermanentMinManaValuePredicate(4))))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new BecomeMonarchEffect());
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ConditionalEffect(new ControllerIsMonarch(), new CreateTokenEffect(

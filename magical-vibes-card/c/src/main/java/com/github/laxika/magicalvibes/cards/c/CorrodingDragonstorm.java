@@ -8,10 +8,12 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "TDM", collectorNumber = "75")
 public class CorrodingDragonstorm extends Card {
@@ -21,8 +23,11 @@ public class CorrodingDragonstorm extends Card {
                 new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new SurveilEffect(2));
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.DRAGON),
-                        ReturnToHandEffect.self()));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.DRAGON))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                ReturnToHandEffect.self());
     }
 }

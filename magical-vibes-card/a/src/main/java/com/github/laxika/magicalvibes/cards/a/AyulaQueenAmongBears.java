@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -30,10 +29,10 @@ public class AyulaQueenAmongBears extends Card {
         var targetBearYouControl = new ControlledPermanentPredicateTargetFilter(
                 bearPredicate, "Target must be a Bear you control");
 
-        addTrigger(Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.enters(
                         new PermanentHasSubtypePredicate(CardSubtype.BEAR),
-                        new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Put two +1/+1 counters on target Bear.",
                                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
@@ -42,6 +41,6 @@ public class AyulaQueenAmongBears extends Card {
                                         "Target Bear you control fights target creature you don't control.",
                                         List.of(FightTargetsEffect.boundTargetGroupAndNext()),
                                         List.of(targetBearYouControl, TargetFilters.creatureAnOpponentControls()))
-                        )))));
+                        ))));
     }
 }

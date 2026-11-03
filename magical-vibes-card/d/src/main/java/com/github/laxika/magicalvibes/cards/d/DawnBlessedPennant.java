@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -31,9 +30,8 @@ public class DawnBlessedPennant extends Card {
 
     public DawnBlessedPennant() {
         addStaticEffect(new ChooseSubtypeOnEnterEffect(CHOOSABLE_TYPES));
-        addTrigger(Triggers.enters(null, ObjectRelation.ANY),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasSourceChosenSubtypePredicate(), new GainLifeEffect(1)));
+        addTrigger(Triggers.enters(new PermanentHasSourceChosenSubtypePredicate(), ObjectRelation.YOU_CONTROL),
+                new GainLifeEffect(1));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

@@ -14,9 +14,9 @@ import java.util.List;
  * entered. The enter collector resolves the entering permanent and, when {@code optional}, queues a
  * {@code MayEffect(PutCounterOnTargetPermanentEffect(counterType, count))} with {@code targetId}
  * set to that creature and {@code sourcePermanentId} set to this permanent; when not {@code optional}
- * it queues the mandatory counter placement directly. Typically wrapped in an
- * {@link EnteringCreatureMinPowerConditionalEffect} (Mighty Emergence: count = 2, minPower = 5, may) or
- * an {@link EnteringCreatureExactStatsConditionalEffect} (Sigil Captain: count = 2, is 1/1, mandatory).
+ * it queues the mandatory counter placement directly. Typically narrowed by its trigger's filter (Mighty
+ * Emergence's "with power 5 or greater": count = 2, may) or wrapped in an
+ * {@link EnteringCreatureExactStatsConditionalEffect} (Sigil Captain: count = 2, is 1/1, mandatory).
  */
 public record PutCountersOnEnteringCreatureEffect(CounterType counterType, DynamicAmount amount, boolean optional,
                                                   CounterType requiredCounterType, List<CardEffect> followUpEffects)

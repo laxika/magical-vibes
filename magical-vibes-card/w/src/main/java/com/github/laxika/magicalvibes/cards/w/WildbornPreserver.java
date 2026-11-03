@@ -5,20 +5,24 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PayXManaPutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "182")
 @CardRegistration(set = "ELD", collectorNumber = "375")
 public class WildbornPreserver extends Card {
 
     public WildbornPreserver() {
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardNotPredicate(new CardSubtypePredicate(CardSubtype.HUMAN)),
-                        new PayXManaPutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, false, true)));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new PayXManaPutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, false, true));
     }
 }

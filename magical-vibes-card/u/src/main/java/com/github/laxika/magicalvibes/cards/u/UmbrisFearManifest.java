@@ -8,10 +8,9 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopUntilLandOfTargetOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -33,12 +32,13 @@ public class UmbrisFearManifest extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentAnyOfPredicate(List.of(
-                                new PermanentIsSourceCardPredicate(),
-                                new PermanentHasSubtypePredicate(CardSubtype.NIGHTMARE),
-                                new PermanentHasSubtypePredicate(CardSubtype.HORROR))),
-                        new ExileTopUntilLandOfTargetOpponentEffect()));
+        )).addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentAnyOfPredicate(List.of(
+                                        new PermanentHasSubtypePredicate(CardSubtype.NIGHTMARE),
+                                        new PermanentHasSubtypePredicate(CardSubtype.HORROR))))),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                new ExileTopUntilLandOfTargetOpponentEffect());
     }
 }

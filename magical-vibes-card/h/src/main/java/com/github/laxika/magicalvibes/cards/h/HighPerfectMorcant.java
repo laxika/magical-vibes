@@ -8,11 +8,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentBlightsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "229")
@@ -21,10 +20,10 @@ public class HighPerfectMorcant extends Card {
 
     public HighPerfectMorcant() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new EachOpponentBlightsEffect(1));
-        addTrigger(Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.ELF),
-                        new EachOpponentBlightsEffect(1)));
+        addTrigger(Triggers.enters(
+                        new PermanentHasSubtypePredicate(CardSubtype.ELF),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new EachOpponentBlightsEffect(1));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

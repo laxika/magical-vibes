@@ -10,13 +10,13 @@ import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
 import java.util.List;
 import java.util.Set;
 
@@ -32,23 +32,19 @@ public class NaturesWrath extends Card {
         // Whenever a player puts an Island or blue permanent onto the battlefield, that player
         // sacrifices an Island or blue permanent of their choice. Same for Swamp/black permanents.
         // A basic Island is colorless (CR 202.2), so both halves of each clause are needed.
-        addTrigger(Triggers.enters(null, ObjectRelation.ANY),
+        addTrigger(Triggers.enters(landTypeOrColor(CardSubtype.ISLAND, CardColor.BLUE), ObjectRelation.ANY),
                 sacrificeTrigger(CardSubtype.ISLAND, CardColor.BLUE));
-        addTrigger(Triggers.enters(null, ObjectRelation.ANY),
+        addTrigger(Triggers.enters(landTypeOrColor(CardSubtype.SWAMP, CardColor.BLACK), ObjectRelation.ANY),
                 sacrificeTrigger(CardSubtype.SWAMP, CardColor.BLACK));
     }
 
+    private static PermanentAnyOfPredicate landTypeOrColor(CardSubtype landType, CardColor color) {
+        return new PermanentAnyOfPredicate(List.of(
+                new PermanentHasSubtypePredicate(landType),
+                new PermanentColorInPredicate(Set.of(color))));
+    }
+
     private static CardEffect sacrificeTrigger(CardSubtype landType, CardColor color) {
-        return new TriggeringPermanentConditionalEffect(
-                new PermanentAnyOfPredicate(List.of(
-                        new PermanentHasSubtypePredicate(landType),
-                        new PermanentColorInPredicate(Set.of(color)))),
-                new SacrificePermanentsEffect(
-                        1,
-                        new PermanentAnyOfPredicate(List.of(
-                                new PermanentHasSubtypePredicate(landType),
-                                new PermanentColorInPredicate(Set.of(color)))),
-                        SacrificeRecipient.TARGET_PLAYER),
-                true);
+        return new SacrificePermanentsEffect(1, landTypeOrColor(landType, color), SacrificeRecipient.TARGET_PLAYER);
     }
 }

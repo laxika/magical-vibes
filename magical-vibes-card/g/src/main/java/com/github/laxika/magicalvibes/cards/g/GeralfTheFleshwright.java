@@ -11,8 +11,9 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -33,9 +34,11 @@ public class GeralfTheFleshwright extends Card {
                 new PermanentsEnteredBattlefieldThisTurn(
                         new CardSubtypePredicate(CardSubtype.ZOMBIE), CountScope.CONTROLLER),
                 new Fixed(-1));
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.ZOMBIE),
-                        new PutCountersOnEnteringCreatureEffect(otherZombiesEnteredThisTurn, false)));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE))),
+                        ObjectRelation.YOU_CONTROL),
+                new PutCountersOnEnteringCreatureEffect(otherZombiesEnteredThisTurn, false));
     }
 }

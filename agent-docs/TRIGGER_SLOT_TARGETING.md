@@ -241,7 +241,7 @@ combat damage step is processed.
 | `Triggers.opponentDrawsCard()` (any-target effects) | `DrawService.checkOpponentDrawTriggers` → `DrawTriggerAnyTarget` (the source controller chooses the target before the ability goes on the stack). | Draw (any target) |
 | `Triggers.entersFrom(Zone.GRAVEYARD, Triggers.CREATURE, ObjectRelation.ANY)` | `TriggerCollectionService.checkEntersFromGraveyardTriggers` | Enters-from-graveyard (any target) |
 | `Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL)` / `Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL)` / `Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL)` / `Triggers.enters(Triggers.CREATURE, ObjectRelation.OPPONENT_CONTROLS)` / `Triggers.enters(Triggers.LAND, ObjectRelation.OPPONENT_CONTROLS)` / `Triggers.enters(Triggers.NONTOKEN_ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL)` (targeting effects) | `EnterTriggerCollectorService.handleEnterDefault` → `EntersTriggerTarget` (queued when the effect's `targetSpec()` includes permanents, e.g. Reaper King's "destroy target permanent"). Player-targeting effects on `Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL)` also queue this choice because the entering player's identity is not a default target; other player-targeting enter effects may use their pre-set `defaultTargetPlayerId`. | Enters (reuses `TriggerTargetCollector.Options.ATTACK` for the target list — permanents honouring the card's `PermanentPredicateTargetFilter` / `ControlledPermanentPredicateTargetFilter`; true "any target" effects are narrowed by evaluating `TargetPredicates.anyTarget()`) |
-| `Triggers.enters(null, ObjectRelation.ANY)` | `TriggerCollectionService.checkAllyPermanentEntersTriggers` scans the controller's graveyard for each permanent entering under that controller's control; `TriggeringPermanentConditionalEffect` filters the entering permanent and `MayEffect` is queued as a may-ability. | None (graveyard-resident, non-targeting) |
+| `Triggers.enters(null, ObjectRelation.ANY)` | `TriggerCollectionService.checkAllyPermanentEntersTriggers` scans the controller's graveyard for each permanent entering under that controller's control; the trigger's filter restricts the entering permanent (`PermanentIsCommanderPredicate(true)` for Endless Ranks of HYDRA) and `MayEffect` is queued as a may-ability. | None (graveyard-resident, non-targeting) |
 | `Triggers.enters(Triggers.TOKEN, ObjectRelation.YOU_CONTROL)` | `PermanentControlSupport.applyCreateToken` → `BattlefieldEntryService.checkAllyTokenEntersTriggers` → `TriggerCollectionService.checkAllyTokenEntersTriggers`; ordinary effects fire once per token-creation batch and snapshot the batch count into `eventValue`, while effects branching on ability resolution count fire once per token | Token creation (non-targeting) |
 | `Triggers.enters(Triggers.TOKEN, ObjectRelation.YOU_CONTROL)` | `PermanentControlSupport.applyCreateToken` → `BattlefieldEntryService.checkAllyTokenEntersTriggers` → `TriggerCollectionService.checkAllyTokenEntersTriggers`; ordinary effects fire once per token-creation batch and snapshot the batch count into `eventValue`, while effects branching on ability resolution count fire once per token. Permanent-targeting effects queue `EntersTriggerTarget` for target choice before the trigger is put on the stack. | Token creation |
 | `Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL)` (permanent-targeting effects only) | `TriggerCollectionService.checkAllyEnchantmentEntersTriggers` → `EntersTriggerTarget` (queued when the resolved effect's `targetSpec()` includes permanents — including a `MayEffect` wrapper, whose spec delegates to the wrapped effect; Oath of the Ancient Wood's "you may put a +1/+1 counter on target creature"). Non-targeting effects still push straight to the stack with `triggeringCardId` set. | Enters (same `Options.ATTACK` target list; honours the card's `PermanentPredicateTargetFilter`) |
@@ -383,7 +383,7 @@ baked in as the trigger's `targetId`, so `TARGET_PLAYER`-scoped effects act on t
 `Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL)` (Trial of Solidarity; "Whenever an enchantment enters under
 your control" — checked in `TriggerCollectionService.checkAllyEnchantmentEntersTriggers` from
 `BattlefieldEntryService.processCreatureETBEffects`, skips the entering permanent itself; gate by subtype
-with a `TriggeringCardConditionalEffect(CardSubtypePredicate(...))` for "Whenever a Cartouche you control enters"),
+through the trigger's filter (`PermanentAllOfPredicate(Triggers.ENCHANTMENT, PermanentHasSubtypePredicate(...))`) for "Whenever a Cartouche you control enters"),
 `Triggers.enters(Triggers.CREATURE, ObjectRelation.OPPONENT_CONTROLS)`,
 `Triggers.opponentDealtNoncombatDamage()`, `Triggers.opponentDealtDamageByRedInstantSorceryOrPlaneswalkerYouControl() from the graveyard`,
 `Triggers.creaturesYouControlDealDamageToPlayer()`,
@@ -477,13 +477,13 @@ counters were placed at once; non-targeting — the Snake creation is a plain `C
 `Triggers.milled(Triggers.NONLAND, ObjectRelation.OPPONENT_OWNS)` (Infesting Radroach; scans each owner's graveyard and
 fires once per nonland card milled by an opponent),
 `Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL)` (graveyard mirror of `Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL)`;
-`TriggeringCardConditionalEffect` subtype-gate + `MayPayManaEffect` pay-to-return — Unconventional Tactics),
+subtype filter on the trigger + `MayPayManaEffect` pay-to-return — Unconventional Tactics),
 `Triggers.enters(null, ObjectRelation.ANY)` (graveyard mirror of
-`Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL)`; use `TriggeringPermanentConditionalEffect` for a commander or
+`Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL)`; narrow it with the trigger's filter for a commander or
 other permanent predicate — Endless Ranks of HYDRA),
 `Triggers.putIntoGraveyardFromAnywhere(Triggers.LAND_CARD, ObjectRelation.ANY)` (graveyard watcher for any non-token land card entering any graveyard from any zone; `MayPayManaEffect` pay-to-return — Centaur Vinecrasher),
 `Triggers.enters(Triggers.CREATURE, ObjectRelation.ANY)` (graveyard watcher for any creature entering;
-`TriggeringCardConditionalEffect` can gate on the entering card's mana value — Dragon Scales),
+the trigger's filter (`PermanentMinManaValuePredicate`) can gate on the entering card's mana value — Dragon Scales),
 `Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER)` (scans each graveyard for
 creatures that entered from that graveyard or were cast from it; Prized Amalgam),
 `Triggers.creatureYouControlBecomesTargetOfOpponentSpellOrAbility()`,

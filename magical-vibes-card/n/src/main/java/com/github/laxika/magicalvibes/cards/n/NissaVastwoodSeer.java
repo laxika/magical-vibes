@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -37,9 +37,9 @@ public class NissaVastwoodSeer extends Card {
         // Whenever a land you control enters, if you control seven or more lands, exile Nissa,
         // then return her to the battlefield transformed under her owner's control.
         // The land that triggered this has already entered, so it counts toward the seven.
-        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), new ConditionalEffect(
-                new ControlsPermanentCount(7, new PermanentIsLandPredicate()),
-                new ExileSelfAndReturnTransformedEffect()));
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
+                TriggerOptions.DEFAULT.withInterveningIf(new ControlsPermanentCount(7, new PermanentIsLandPredicate())),
+                new ExileSelfAndReturnTransformedEffect());
     }
 
     @Override

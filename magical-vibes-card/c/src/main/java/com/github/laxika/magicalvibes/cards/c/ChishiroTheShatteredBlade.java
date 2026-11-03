@@ -9,9 +9,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -32,8 +31,12 @@ public class ChishiroTheShatteredBlade extends Card {
                 Set.of(CardColor.RED), List.of(CardSubtype.SPIRIT), Set.of(Keyword.MENACE), Set.of(),
                 false, false, List.of(), List.of(), false, false, false, 0, Set.of());
 
-        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardIsAuraPredicate(), spiritToken));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.ENCHANTMENT,
+                                new PermanentHasSubtypePredicate(CardSubtype.AURA))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                spiritToken);
         addTrigger(Triggers.enters(Triggers.EQUIPMENT, ObjectRelation.ANOTHER_YOU_CONTROL), spiritToken);
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),

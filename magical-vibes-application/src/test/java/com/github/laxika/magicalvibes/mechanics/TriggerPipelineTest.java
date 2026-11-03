@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.mechanics;
 
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MoonlitWake;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
@@ -18,6 +19,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -29,8 +31,10 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
@@ -550,6 +554,91 @@ class TriggerPipelineTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.inMutationScope(() -> moveCard(player1, second, Zone.GRAVEYARD, Zone.HAND));
 
+        assertThat(onlyTriggerOf(watcher.getCard()).getEffectsToResolve()).containsExactly(DRAW);
+    }
+
+    @Test
+    @CardUsed(WalkingCorpse.class)
+    void aThisOrAnotherZombieEntersAbilityTriggersForItsSourceWhateverItIsAndForAnotherCreatureOnlyIfItMatches() {
+        Card self = new GrizzlyBears();
+        self.addTrigger(Triggers.enters(new PermanentAllOfPredicate(List.of(Triggers.CREATURE,
+                new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE))), ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL), GAIN);
+        harness.setHand(player1, List.of(self, new GrizzlyBears(), new WalkingCorpse()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        // "This creature or another Zombie you control": the source counts whatever its subtypes are.
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(triggersOf(self)).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(triggersOf(self)).isEmpty();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(triggersOf(self)).hasSize(1);
+    }
+
+    @Test
+    @CardUsed(GloriousAnthem.class)
+    void anEntersFilterOnPowerReadsThePowerTheEnteringCreatureHasWithContinuousEffects() {
+        Permanent watcher = battlefieldCreatureWith(Triggers.enters(new PermanentAllOfPredicate(List.of(
+                Triggers.CREATURE, new PermanentPowerAtLeastPredicate(3))), ObjectRelation.ANOTHER_YOU_CONTROL), DRAW);
+        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(triggersOf(watcher.getCard())).isEmpty();
+
+        // A 2/2 entering under Glorious Anthem is a 3/3 as its enters abilities are checked (CR 603.6a, 613.1).
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(onlyTriggerOf(watcher.getCard()).getEffectsToResolve()).containsExactly(DRAW);
+    }
+
+    @Test
+    void anEntersAbilityLimitedToOnceEachTurnTriggersOnceForTwoCreatures() {
+        Permanent watcher = battlefieldCreatureWith(
+                new TriggerCondition(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL)),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW);
+        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(triggersOf(watcher.getCard())).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(triggersOf(watcher.getCard())).isEmpty();
+    }
+
+    @Test
+    void aPermanentYouControlEntersAbilitySeesYourPermanentsButNotAnOpponents() {
+        Permanent watcher = battlefieldCreatureWith(Triggers.enters(new PermanentHasSubtypePredicate(CardSubtype.BEAR),
+                ObjectRelation.YOU_CONTROL), DRAW);
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        assertThat(triggersOf(watcher.getCard())).isEmpty();
+
+        harness.forceActivePlayer(player1);
+        harness.clearPriorityPassed();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
         assertThat(onlyTriggerOf(watcher.getCard()).getEffectsToResolve()).containsExactly(DRAW);
     }
 

@@ -8,13 +8,13 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,11 +26,11 @@ public class BaronBertramGraywater extends Card {
 
     public BaronBertramGraywater() {
         addTrigger(new TriggerCondition(Triggers.enters(Triggers.TOKEN, ObjectRelation.YOU_CONTROL)),
-                TriggerOptions.ONE_OR_MORE,
-                new OncePerTurnTriggerEffect(new CreateTokenEffect(
+                TriggerOptions.ONE_OR_MORE.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new CreateTokenEffect(
                         "Vampire Rogue", 1, 1, CardColor.BLACK,
                         List.of(CardSubtype.VAMPIRE, CardSubtype.ROGUE),
-                        Set.of(Keyword.LIFELINK), Set.of())));
+                        Set.of(Keyword.LIFELINK), Set.of()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

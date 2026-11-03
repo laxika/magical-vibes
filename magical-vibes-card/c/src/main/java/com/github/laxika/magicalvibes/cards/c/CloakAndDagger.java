@@ -9,10 +9,12 @@ import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToEnteri
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "141")
 public class CloakAndDagger extends Card {
@@ -23,9 +25,12 @@ public class CloakAndDagger extends Card {
         addStaticEffect(new GrantKeywordEffect(Keyword.SHROUD, GrantScope.EQUIPPED_CREATURE));
 
         // Whenever a Rogue creature enters, you may attach this Equipment to it.
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.ROGUE),
-                        new AttachSourceEquipmentToEnteringCreatureEffect()));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.ROGUE))),
+                        ObjectRelation.ANOTHER),
+                new AttachSourceEquipmentToEnteringCreatureEffect());
 
         // Equip {3}
         addActivatedAbility(new EquipActivatedAbility("{3}"));

@@ -26,8 +26,7 @@ public class SearchForDagger extends Card {
         var commander = new PermanentIsCommanderPredicate();
 
         // Whenever your commander enters or attacks, look at the top six cards of your library.
-        addTrigger(Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(commander, search));
+        addTrigger(Triggers.enters(commander, ObjectRelation.ANOTHER_YOU_CONTROL), search);
         addTrigger(Triggers.creatureYouControlAttacks(),
                 new TriggeringPermanentConditionalEffect(commander, search));
     }

@@ -5,20 +5,24 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromMulticoloredEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "BRO", collectorNumber = "244")
 public class SpectrumSentinel extends Card {
 
     public SpectrumSentinel() {
         addStaticEffect(new ProtectionFromMulticoloredEffect());
-        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.OPPONENT_CONTROLS),
-                new TriggeringCardConditionalEffect(
-                        new CardNotPredicate(new CardSupertypePredicate(CardSupertype.BASIC)),
-                        new GainLifeEffect(1)));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.LAND,
+                                new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.BASIC)))),
+                        ObjectRelation.OPPONENT_CONTROLS),
+                new GainLifeEffect(1));
     }
 }

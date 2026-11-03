@@ -7,12 +7,13 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "TLA", collectorNumber = "184")
 public class KyoshiIslandPlaza extends Card {
@@ -24,9 +25,11 @@ public class KyoshiIslandPlaza extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new SearchLibraryEffect(shrinesYouControl, CardPredicateUtils.basicLand(),
                         LibrarySearchDestination.BATTLEFIELD_TAPPED));
-        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.SHRINE),
-                        new SearchLibraryEffect(CardPredicateUtils.basicLand(),
-                                LibrarySearchDestination.BATTLEFIELD_TAPPED)));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.ENCHANTMENT,
+                                new PermanentHasSubtypePredicate(CardSubtype.SHRINE))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED));
     }
 }

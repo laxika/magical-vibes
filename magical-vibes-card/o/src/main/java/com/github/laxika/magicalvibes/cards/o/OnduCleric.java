@@ -7,10 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,11 +18,13 @@ import java.util.List;
 public class OnduCleric extends Card {
 
     public OnduCleric() {
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardAnyOfPredicate(List.of(new CardIsSelfPredicate(), new CardSubtypePredicate(CardSubtype.ALLY))),
-                        new MayEffect(new GainLifeEffect(new PermanentCount(
-                                new PermanentHasSubtypePredicate(CardSubtype.ALLY), CountScope.CONTROLLER)),
-                                "Gain life equal to the number of Allies you control?")));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.ALLY))),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                new MayEffect(new GainLifeEffect(new PermanentCount(
+                        new PermanentHasSubtypePredicate(CardSubtype.ALLY), CountScope.CONTROLLER)),
+                        "Gain life equal to the number of Allies you control?"));
     }
 }

@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -27,10 +26,8 @@ public class MaritLagesSlumber extends Card {
 
     public MaritLagesSlumber() {
         // Whenever this or another snow permanent you control enters, scry 1.
-        addTrigger(Triggers.enters(null, ObjectRelation.ANY),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasSupertypePredicate(CardSupertype.SNOW),
-                        new ScryEffect(1)));
+        addTrigger(Triggers.enters(new PermanentHasSupertypePredicate(CardSupertype.SNOW), ObjectRelation.YOU_CONTROL),
+                new ScryEffect(1));
 
         // At the beginning of your upkeep, if you control ten or more snow permanents, sacrifice
         // this enchantment. If you do, create Marit Lage, a legendary 20/20 black Avatar creature

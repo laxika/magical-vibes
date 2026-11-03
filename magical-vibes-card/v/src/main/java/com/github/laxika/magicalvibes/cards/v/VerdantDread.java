@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardNamedOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ManifestDreadEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,10 +17,8 @@ public class VerdantDread extends Card {
 
     public VerdantDread() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), ManifestDreadEffect.forController());
-        addTrigger(Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentNamedPredicate("Verdant Dread"),
-                        ManifestDreadEffect.forController()));
+        addTrigger(Triggers.enters(new PermanentNamedPredicate("Verdant Dread"), ObjectRelation.ANOTHER_YOU_CONTROL),
+                ManifestDreadEffect.forController());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

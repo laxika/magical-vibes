@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,8 +24,9 @@ public class SecuritronSquadron extends Card {
         addCastingCost(new RepeatableAdditionalManaCost(List.of("{3}")));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{3}")));
-        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardIsTokenPredicate(),
-                        new PutCountersOnEnteringCreatureEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, false)));
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(Triggers.CREATURE, new PermanentIsTokenPredicate())),
+                        ObjectRelation.YOU_CONTROL),
+                new PutCountersOnEnteringCreatureEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, false));
     }
 }

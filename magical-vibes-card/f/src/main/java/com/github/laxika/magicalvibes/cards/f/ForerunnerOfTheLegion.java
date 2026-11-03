@@ -7,11 +7,14 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "RIX", collectorNumber = "9")
 public class ForerunnerOfTheLegion extends Card {
@@ -22,9 +25,11 @@ public class ForerunnerOfTheLegion extends Card {
                         LibrarySearchDestination.TOP_OF_LIBRARY),
                 "Search your library for a Vampire card?"));
 
-        target(TargetFilters.creature()).addTrigger(Triggers.enters(Triggers.CREATURE,
-                ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.VAMPIRE),
-                        new BoostTargetCreatureEffect(1, 1)));
+        target(TargetFilters.creature()).addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new BoostTargetCreatureEffect(1, 1));
     }
 }

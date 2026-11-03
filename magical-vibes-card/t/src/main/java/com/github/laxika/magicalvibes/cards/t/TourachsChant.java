@@ -10,11 +10,11 @@ import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
 import java.util.List;
 
 @CardRegistration(set = "FEM", collectorNumber = "47")
@@ -24,12 +24,10 @@ public class TourachsChant extends Card {
     public TourachsChant() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new ForcedCostOrElseEffect(new PayManaCost("{B}"), List.of(new SacrificeSelfEffect()), true));
-        addTrigger(Triggers.enters(null, ObjectRelation.ANY),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.FOREST),
-                        ForcedCostOrElseEffect.enchantedControllerMayPay(
-                                new PutCounterOnControlledCreatureCost(CounterType.MINUS_ONE_MINUS_ONE, 1),
-                                List.of(new DealDamageToPlayersEffect(3,
-                                        DamageRecipient.ENCHANTED_PERMANENT_CONTROLLER)))));
+        addTrigger(Triggers.enters(new PermanentHasSubtypePredicate(CardSubtype.FOREST), ObjectRelation.ANY),
+                ForcedCostOrElseEffect.enchantedControllerMayPay(
+                        new PutCounterOnControlledCreatureCost(CounterType.MINUS_ONE_MINUS_ONE, 1),
+                        List.of(new DealDamageToPlayersEffect(3,
+                                DamageRecipient.ENCHANTED_PERMANENT_CONTROLLER))));
     }
 }

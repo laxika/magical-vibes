@@ -9,14 +9,14 @@ import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInCommandZone;
 import com.github.laxika.magicalvibes.model.condition.SourceCardOnBattlefield;
 import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1639")
@@ -39,12 +40,22 @@ public class InallaArchmageRitualist extends Card {
                         new AnyOf(List.of(new SourceIsOnBattlefield(), new SourceCardInCommandZone())),
                         new CreateTokenCopyOfTargetPermanentEffect(true, true)),
                 "Pay {1} to create a token that's a copy of that Wizard?");
-        TriggeringCardConditionalEffect wizardTrigger = new TriggeringCardConditionalEffect(
-                new CardSubtypePredicate(CardSubtype.WIZARD), copyWizard);
+        CardEffect wizardTrigger = copyWizard;
 
-        addTrigger(Triggers.enters(Triggers.NONTOKEN_CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL), wizardTrigger);
-        addTrigger(new TriggerCondition(Triggers.enters(Triggers.NONTOKEN_CREATURE, ObjectRelation.YOU_CONTROL),
-                AbilityZones.COMMAND), TriggerOptions.DEFAULT, wizardTrigger);
+        addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.NONTOKEN_CREATURE,
+                                new PermanentHasSubtypePredicate(CardSubtype.WIZARD))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                wizardTrigger);
+        addTrigger(new TriggerCondition(Triggers.enters(
+                                new PermanentAllOfPredicate(List.of(
+                                        Triggers.NONTOKEN_CREATURE,
+                                        new PermanentHasSubtypePredicate(CardSubtype.WIZARD))),
+                                ObjectRelation.YOU_CONTROL),
+                        AbilityZones.COMMAND),
+                TriggerOptions.DEFAULT,
+                wizardTrigger);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

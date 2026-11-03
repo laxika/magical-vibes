@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -24,9 +23,11 @@ public class CaptainStormCosmiumRaider extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.PIRATE),
                 "Target must be a Pirate you control"
-        )).addTrigger(Triggers.enters(null, ObjectRelation.ANY),
-                new TriggeringPermanentConditionalEffect(new PermanentAllOfPredicate(List.of(
-                        new PermanentIsArtifactPredicate(), new PermanentControlledBySourceControllerPredicate())),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)));
+        )).addTrigger(Triggers.enters(
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsArtifactPredicate(),
+                                new PermanentControlledBySourceControllerPredicate())),
+                        ObjectRelation.YOU_CONTROL),
+                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
     }
 }
