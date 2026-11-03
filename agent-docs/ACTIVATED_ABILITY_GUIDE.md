@@ -1266,7 +1266,7 @@ opening-hand actions (`MayEffect(PregameChoiceEffect)`, CR 103.6: the hand) and 
 | `Triggers.chapter(3)` | Saga chapter III (third lore counter, saga sacrificed after) |
 | `Triggers.chapter(4)` | Saga chapter IV (fourth lore counter, saga sacrificed after) |
 | `Triggers.chapter(5)` / `Triggers.chapter(6)` | Saga chapters V and VI; the greatest chapter is the final one (CR 714.2d) |
-| `Triggers.finalChapterAbilityTriggers()` / `Triggers.finalChapterAbilityResolves()` | The final chapter ability of a Saga you control triggers / resolves (CR 714.2e) |
+| `Triggers.finalChapterAbilityTriggers()` / `Triggers.finalChapterAbilityResolves()` | The final chapter ability of a Saga you control triggers / resolves (CR 714.2e); "triggers only once each turn" is `TriggerLimit.ONCE_EACH_TURN` in its `TriggerOptions` |
 | `Triggers.beginningOfCombat(ActivePlayer.YOU)` | Beginning of combat on controller's turn |
 | `Triggers.beginningOfCombat(ActivePlayer.YOU) from the graveyard` | Beginning of combat on the card owner's turn while the card is in their graveyard |
 | `Triggers.beginningOfCombat(ActivePlayer.ANY)` | Beginning of each combat (any player's turn) |

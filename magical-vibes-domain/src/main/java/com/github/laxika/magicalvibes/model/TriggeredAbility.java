@@ -43,9 +43,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.AbilityTrigger;
+import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
 import com.github.laxika.magicalvibes.model.trigger.CombatTrigger;
 import com.github.laxika.magicalvibes.model.trigger.CounterTrigger;
 import com.github.laxika.magicalvibes.model.trigger.DamageTrigger;
+import com.github.laxika.magicalvibes.model.trigger.FinalChapterTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LandPlayTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LibraryTrigger;
@@ -111,6 +113,14 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
                 throw new IllegalArgumentException("A legacy slot trigger takes its options from its slot's "
                         + "collectors and wrapper effects, not from TriggerOptions");
             }
+        }
+        if (!options.equals(TriggerOptions.DEFAULT)
+                && conditions.stream().anyMatch(condition -> condition.trigger() instanceof ChapterTrigger)) {
+            // "{rN}—[Effect]" is "when one or more lore counters are put onto this Saga, if the number of lore
+            // counters on it was less than N and became at least N, [effect]" (CR 714.2b): the threshold is the
+            // chapter's only intervening "if", and an "if" in its effect is a condition of the effect.
+            throw new IllegalArgumentException("A chapter ability takes no options: " + conditions + " with "
+                    + options);
         }
     }
 
@@ -239,8 +249,10 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * order {@link #legacyLibraryEffects} says. A life trigger's "for the first time each turn"
      * ({@link LifeTrigger#firstEachTurn()}) is the counting {@link OncePerTurnTriggerEffect} the life collectors judge,
      * where the limits go, as {@link #lifeView()} says, and "an opponent loses life for the first time during each of
-     * their turns" makes the ability one {@link FirstOpponentLifeLossEachTurnTriggerEffect} of all its effects. An
-     * ability without options or such filters returns its registrations as they are.
+     * their turns" makes the ability one {@link FirstOpponentLifeLossEachTurnTriggerEffect} of all its effects. A
+     * final-chapter trigger ({@link FinalChapterTrigger}) takes only "triggers only once each turn", as
+     * {@link #requireFinalChapterOptions()} says. An ability without options or such filters returns its registrations
+     * as they are.
      */
     public List<EffectRegistration> legacyEffects() {
         SpellTrigger spell = filteredTrigger(SpellTrigger.class);
@@ -262,6 +274,7 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
                 && life.event() == LifeTrigger.LifeEvent.LOSES_FOR_FIRST_TIME_DURING_THEIR_TURN)) {
             return legacyFirstOpponentLifeLossEffects();
         }
+        requireFinalChapterOptions();
         Condition interveningIf = options.interveningIf();
         TriggerLimit limit = options.limit();
         LandPlayTrigger landPlay = filteredTrigger(LandPlayTrigger.class);
@@ -345,6 +358,23 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             wrapped.add(new EffectRegistration(effect, mode, registration.simultaneousWithPrevious()));
         }
         return List.copyOf(wrapped);
+    }
+
+    /**
+     * Rejects the options of an ability with a {@link FinalChapterTrigger} that the final-chapter collector doesn't
+     * read. It takes "triggers only once each turn" off the effect as the ability triggers, and puts every other effect
+     * on the stack as it is, once for each final chapter ability: an intervening "if" would be checked only as the
+     * ability resolves, and it marks no "do this only once each turn" and reads no "triggers only once" or "one or
+     * more".
+     */
+    private void requireFinalChapterOptions() {
+        if (conditions.stream().noneMatch(condition -> condition.trigger() instanceof FinalChapterTrigger)) {
+            return;
+        }
+        if (options.interveningIf() != null || options.multiplicity() != TriggerMultiplicity.EACH
+                || (options.limit() != TriggerLimit.NONE && options.limit() != TriggerLimit.ONCE_EACH_TURN)) {
+            throw new IllegalStateException("The final-chapter collector doesn't read " + options + ": " + conditions);
+        }
     }
 
     /**

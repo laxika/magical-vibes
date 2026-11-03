@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -4537,8 +4537,8 @@ wrappers, run 6b `SpellCastTriggerEffect`, as the cast trigger's filter, the abi
 6c the other spell, copy and land-play condition-as-effect classes, as the trigger's filter, run 7 the combat
 abilities (step 13's family 3), all of their wrapper kinds in one run, with the user; run 8 the damage abilities
 (step 13's family 4), run 9 the counter abilities (family 5), run 10 the becomes-the-target abilities (family 6),
-run 11 the library, draw and discard abilities (family 7) and run 12 the tap and untap abilities (family 8) the same
-way.
+run 11 the library, draw and discard abilities (family 7), run 12 the tap and untap abilities (family 8), run 13 the
+life abilities (family 9) and run 14 the Saga abilities (family 10) the same way.
 
 #### Run 1: the source's own zone changes
 
@@ -6706,6 +6706,104 @@ of Lake-town's and MACH-1's split halves were merged into one ability each.
 - Application: the `service.trigger` and `model.trigger` packages and the freeze, triggered-ability, card-ability,
   granted-ability, simulation-copy, architecture and targeting-consistency classes (736 tests): 20 failures, all known
   from HEAD (runs 11 and 12): `DamageTriggerCollectorServiceTest` 6, `DeathTriggerCollectorServiceTest` 6,
+  `SpellCastTriggerCollectorServiceTest` 3, `LandTapTriggerCollectorServiceTest` 2, and the known one each in
+  `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and `CardEffectTargetingConsistencyTest`.
+- AI: the whole module (1,620 tests), with the same 10 failures as before.
+- The full suite was not run here.
+
+#### Run 14: sagas
+
+Step 13 family 10, every wrapper kind in one run: every Saga ability (the chapter abilities and the `SagaWatch`
+final-chapter abilities) is authored without trigger-only wrappers. The family had one: Tom Bombadil's "this ability
+triggers only once each turn", converted by script (1 card class). Family 11 (everything else, run 15) is next.
+
+**Authoring.**
+
+- "This ability triggers only once each turn" on a final-chapter ability is `TriggerLimit.ONCE_EACH_TURN`:
+  `addTrigger(Triggers.finalChapterAbilityResolves(), TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+  …)` (Tom Bombadil).
+- **A chapter ability takes no options.** "{rN}—[Effect]" is "when one or more lore counters are put onto this Saga,
+  if the number of lore counters on it was less than N and became at least N, [effect]" (**CR 714.2b**, checked): the
+  threshold is the chapter's only intervening "if", and an "if" in its text doesn't immediately follow a trigger
+  condition, so it has its normal meaning (**CR 603.4**, checked) and is checked on resolution. The family's 11
+  chapter `ConditionalEffect`s (The First Iroan Games, Summon: Fenrir, Leaves from the Vine, Ifrit's "if this Saga has
+  three or more lore counters", Nightmares and Daydreams, Heaven Sent's and Inventive Iteration's `unless` pairs, The
+  Misty Mountains Cold's "then if") stay effects. The `TriggeredAbility` constructor now rejects a chapter ability
+  with options other than `DEFAULT`, since the chapter readers read the plain effects and would drop them.
+
+**The engine.**
+
+- `SagaWatch.effectsOf` and `registrationsOf` read the legacy view, as `LifeWatch` does: the generic limit wrapper,
+  `OncePerTurnTriggerEffect` keyed by `limitKey()`, which `dispatchSlotEffect` unwraps and marks through
+  `OncePerTurnTriggerSupport` as it did the unkeyed wrapper. Granted abilities were already read in the legacy form.
+- `TriggeredAbility.legacyEffects()` rejects, for an ability with a `FinalChapterTrigger`
+  (`requireFinalChapterOptions()`), the options its collector doesn't read: an intervening "if" (`SagaTriggerCollectorService`
+  puts the effect on the stack as it is, so it would be checked only on resolution), "do this only once each turn"
+  (`dispatchWatch` marks nothing on acceptance), `ONCE` and a multiplicity other than `EACH`.
+- The chapter readers (`SagaChapterService`, `StepTriggerService`, the `PermanentCounterSupport` fallback,
+  `initializeReturnedSaga`) are unchanged: they read the chapter's plain effects, which hold no trigger-only wrapper.
+- No wrapper class is deleted: the legacy view still builds `OncePerTurnTriggerEffect`, and other families author it.
+
+**Cards.**
+
+- `scripts/step14-saga-scan.py` (run 13's scan on `Triggers.chapter`, `finalChapterAbilityTriggers` and
+  `finalChapterAbilityResolves`) lists the family's wrapped abilities: 25, of which one limit; the rest are the chapter
+  conditionals above and the abilities chapters create, kept below. A check of the effects passed in locals and of
+  whole Saga files for the other wrapper kinds (`OnceOnlyTriggerEffect`, `TriggerMode`, `atTriggerTime`, the batched
+  wrappers, `interveningIf`) found nothing else.
+- `scripts/step14-saga-options.py` (`--dry-run`, `--report`) did the conversion with run 13's peeling, re-indenting
+  and import code: every chapter `ConditionalEffect` stays an effect, and a chapter ability with a trigger-only wrapper
+  stops it. Its own `placed` re-indents an effect that started inside a line (under the peeled wrapper) from that
+  line's indent; run 13's cut Tom Bombadil's continuation line to the margin. Running it again changes nothing.
+- `scripts/step14-saga-docs.py` rewrote 5 agent-docs passages (exact replacements): the Saga authoring paragraph of
+  `CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md`, the final-chapter row of `ACTIVATED_ABILITY_GUIDE.md` and the
+  `OncePerTurnTriggerEffect` entries of `EFFECTS_INDEX.md` and `EFFECTS_QUICK_REFERENCE.md`. `ARCHITECTURE.md` and the
+  implement-card and review-card skills were edited by hand.
+
+**Kept, with their reason.**
+
+- The abilities chapters create are their own families' records, not Saga abilities:
+  `RegisterDelayedControllerSpellCastTriggerEffect` (Showdown of the Skalds, Summon: Fenrir, Summon: Good King Mog XII,
+  Rediscover the Way, Origin of Thor, Nightmares and Daydreams, Kumano Faces Kakkazan, Battle of Frost and Fire, Summon:
+  Brynhildr) and the combat abilities `RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect` registers (The Last Ronin,
+  The Revelations of Ezio, Harald Unites the Elves; run 7 kept their `TriggeringPermanentControllerConditionalEffect`).
+- `ChosenNameSpellCastTriggerEffect` (Medomai's Prophecy) is a chapter effect (run 6c). `ChooseOneAtTriggerTimeEffect`
+  (Life of Toshiro Umezawa) and `ChooseOneAtRandomEffect` (Summon: Magus Sisters) are modal effects, not trigger
+  options.
+
+**Behaviour changes.**
+
+- Tom Bombadil's once-each-turn limit is keyed by its ability, where the unkeyed wrapper marked the source's shared
+  mark. It has no other once-each-turn ability, so nothing can notice.
+- Nothing else changed. No may question moved.
+
+**For later runs.**
+
+- Run 10's Saga items are unchanged (the duplicated chapter logic, chapter I of a returned Saga without targeting, the
+  final chapter recognised by the stack entry's description, proliferate not triggering chapters, …), and Copy
+  Enchantment's copy of a Saga still gets no lore counter.
+- Step 15: the final-chapter watchers' event value (the Saga's mana value) and the Saga-specific chapter target
+  records, as run 10 listed.
+
+**Tests changed.**
+
+- `SagaTriggerTest`, three new tests: a chapter ability with options is rejected (through `Card.addTrigger` and the
+  `TriggeredAbility` constructor); the legacy view gives a final-chapter limit as `OncePerTurnTriggerEffect` keyed by
+  the ability, the plain view the effect; the legacy view rejects an intervening "if", `DO_ONLY_ONCE_EACH_TURN`,
+  `ONCE` and `ONE_OR_MORE` on a final-chapter ability.
+- `SagaWatchTest`, one new test: the watch hands the collector the keyed wrapper, the same object from `effectsOf` and
+  `registrationsOf`.
+- No card test changed. `TomBombadilTest#putsASagaOntoTheBattlefieldAfterOnlyOneFinalChapterResolvesEachTurn` covers
+  the limit through the engine.
+
+**Test runs.**
+
+- Card: the test classes of the three final-chapter cards (Tom Bombadil; Narci, Fable Singer; Historian's Boon), of
+  every card the scan listed and of every card test that constructs one of the final-chapter cards; Ifrit through
+  Clive, Ifrit's Dominant (20 classes, 202 tests): all passing.
+- Application: the `service.trigger` and `model.trigger` packages and the freeze, triggered-ability, card-ability,
+  granted-ability, simulation-copy, architecture and targeting-consistency classes (731 tests): 20 failures, the ones
+  known from HEAD (runs 11 to 13): `DamageTriggerCollectorServiceTest` 6, `DeathTriggerCollectorServiceTest` 6,
   `SpellCastTriggerCollectorServiceTest` 3, `LandTapTriggerCollectorServiceTest` 2, and the known one each in
   `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and `CardEffectTargetingConsistencyTest`.
 - AI: the whole module (1,620 tests), with the same 10 failures as before.

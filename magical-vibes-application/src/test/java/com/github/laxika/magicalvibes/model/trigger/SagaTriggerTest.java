@@ -6,9 +6,11 @@ import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.SagaChapterTargets;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import org.junit.jupiter.api.Test;
 
@@ -116,5 +118,46 @@ class SagaTriggerTest {
         card.addTrigger(Triggers.finalChapterAbilityResolves(), GAIN);
 
         assertThat(card.getSagaFinalChapter()).isEqualTo(3);
+    }
+
+    @Test
+    void aChapterAbilityTakesNoOptions() {
+        Card card = new Card();
+
+        assertThatThrownBy(() -> card.addTrigger(Triggers.chapter(2),
+                TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()), DRAW))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("A chapter ability takes no options");
+        assertThatThrownBy(() -> new TriggeredAbility(Triggers.chapter(1),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(card.getTriggeredAbilities()).isEmpty();
+    }
+
+    @Test
+    void theLegacyViewOfAFinalChapterAbilityGivesItsLimitKeyedByTheAbility() {
+        Card card = new Card();
+        card.addTrigger(Triggers.finalChapterAbilityResolves(),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW);
+        TriggeredAbility ability = card.getTriggeredAbilities().getFirst();
+
+        assertThat(ability.legacyEffects()).extracting(EffectRegistration::effect)
+                .containsExactly(OncePerTurnTriggerEffect.keyed(DRAW, ability.limitKey()));
+        assertThat(card.getTriggerEffects(Triggers.finalChapterAbilityResolves())).containsExactly(DRAW);
+    }
+
+    @Test
+    void theLegacyViewRejectsTheFinalChapterOptionsNoCollectorReads() {
+        assertThat(List.of(
+                TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.DO_ONLY_ONCE_EACH_TURN),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE),
+                TriggerOptions.ONE_OR_MORE)).allSatisfy(options -> {
+                    TriggeredAbility ability = new TriggeredAbility(Triggers.finalChapterAbilityTriggers(), options,
+                            DRAW);
+                    assertThatThrownBy(ability::legacyEffects).as(options.toString())
+                            .isInstanceOf(IllegalStateException.class)
+                            .hasMessageContaining("final-chapter collector");
+                });
     }
 }
