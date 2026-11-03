@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.condition.DescendedThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -19,8 +19,8 @@ import java.util.Set;
 public class BroodrageMycoid extends Card {
 
     public BroodrageMycoid() {
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new DescendedThisTurn(),
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new DescendedThisTurn()),
                 new CreateTokenEffect(
                         1,
                         "Fungus",
@@ -30,6 +30,6 @@ public class BroodrageMycoid extends Card {
                         List.of(CardSubtype.FUNGUS),
                         Set.of(),
                         Set.of(),
-                        List.of(StaticAbility.of(new CantBlockEffect())))));
+                        List.of(StaticAbility.of(new CantBlockEffect()))));
     }
 }

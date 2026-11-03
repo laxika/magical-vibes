@@ -8,13 +8,13 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ZEN", collectorNumber = "213")
@@ -25,13 +25,14 @@ public class EmeriaTheSkyRuin extends Card {
 
     public EmeriaTheSkyRuin() {
         addStaticEffect(new EntersTappedEffect());
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                new ControlsPermanentCount(7, new PermanentHasSubtypePredicate(CardSubtype.PLAINS)),
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new ControlsPermanentCount(7, new PermanentHasSubtypePredicate(CardSubtype.PLAINS))),
                 new MayEffect(ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardTypePredicate(CardType.CREATURE))
                         .targetGraveyard(true)
-                        .build(), "Return target creature card from your graveyard to the battlefield?")));
+                        .build(), "Return target creature card from your graveyard to the battlefield?"));
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.WHITE));
     }
 }

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "151")
@@ -32,8 +33,8 @@ public class RegenerationsRestored extends Card {
         // sacrifice is added first so the card's own exile trigger sits above it on the stack and
         // can exile the enchantment (and earn the extra turn) before it is sacrificed.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new ConditionalEffect(new SourceCounterThreshold(1, CounterType.TIME),
-                        new RemoveCounterFromSourceEffect(CounterType.TIME, 1)));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, CounterType.TIME)),
+                new RemoveCounterFromSourceEffect(CounterType.TIME, 1));
         addTrigger(Triggers.timeCountersRemovedFromThis(),
                 new ConditionalEffect(new NotCondition(new SourceCounterThreshold(1, CounterType.TIME)),
                         new SacrificeSelfEffect()));

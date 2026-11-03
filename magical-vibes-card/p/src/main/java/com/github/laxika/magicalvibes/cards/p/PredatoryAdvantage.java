@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.EndStepPlayerDidntCastCreatureSpell;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -19,9 +19,9 @@ public class PredatoryAdvantage extends Card {
     public PredatoryAdvantage() {
         // At the beginning of each opponent's end step, if that player didn't cast a creature spell
         // this turn, create a 2/2 green Lizard creature token.
-        addTrigger(Triggers.endStep(ActivePlayer.OPPONENT), new ConditionalEffect(
-                new EndStepPlayerDidntCastCreatureSpell(),
+        addTrigger(Triggers.endStep(ActivePlayer.OPPONENT),
+                TriggerOptions.DEFAULT.withInterveningIf(new EndStepPlayerDidntCastCreatureSpell()),
                 new CreateTokenEffect("Lizard", 2, 2, CardColor.GREEN,
-                        List.of(CardSubtype.LIZARD), Set.of(), Set.of())));
+                        List.of(CardSubtype.LIZARD), Set.of(), Set.of()));
     }
 }

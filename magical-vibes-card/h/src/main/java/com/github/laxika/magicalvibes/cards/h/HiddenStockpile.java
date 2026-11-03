@@ -6,11 +6,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.PermanentLeftBattlefieldUnderYourControlThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,8 +26,9 @@ public class HiddenStockpile extends Card {
                 1, "Servo", 1, 1, null,
                 List.of(CardSubtype.SERVO), Set.of(), Set.of(CardType.ARTIFACT));
 
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new PermanentLeftBattlefieldUnderYourControlThisTurn(), servoToken));
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new PermanentLeftBattlefieldUnderYourControlThisTurn()),
+                servoToken);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

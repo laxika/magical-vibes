@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageToCreatureThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageFromSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
@@ -20,8 +20,8 @@ public class WolverineBestThereIs extends Card {
     public WolverineBestThereIs() {
         addStaticEffect(new DoubleDamageFromSelfEffect());
         addTrigger(Triggers.endStep(ActivePlayer.ANY),
-                new ConditionalEffect(new SelfDealtDamageToCreatureThisTurn(),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
+                TriggerOptions.DEFAULT.withInterveningIf(new SelfDealtDamageToCreatureThisTurn()),
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
         addActivatedAbility(new ActivatedAbility(false, "{1}{G}",
                 List.of(new RegenerateEffect()), "{1}{G}: Regenerate Wolverine."));
     }

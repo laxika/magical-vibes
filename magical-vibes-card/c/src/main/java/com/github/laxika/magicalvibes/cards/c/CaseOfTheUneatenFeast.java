@@ -9,13 +9,13 @@ import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSolved;
 import com.github.laxika.magicalvibes.model.effect.AllowCastMatchingCardsFromGraveyardThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SolveSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -27,12 +27,9 @@ public class CaseOfTheUneatenFeast extends Card {
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL), new GainLifeEffect(1));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(
-                        new AllOf(List.of(
-                                new GainedLifeThisTurn(5),
-                                new NotCondition(new SourceIsSolved())
-                        )),
-                        new SolveSourceEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AllOf(List.of(new GainedLifeThisTurn(5), new NotCondition(new SourceIsSolved())))),
+                new SolveSourceEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

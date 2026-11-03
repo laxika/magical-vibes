@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -23,11 +23,11 @@ public class QuestForTheNihilStone extends Card {
         addTrigger(Triggers.opponentDiscardsCard(),
                 new MayEffect(new PutCountersOnSelfEffect(CounterType.QUEST),
                         "Put a quest counter on Quest for the Nihil Stone?"));
-        addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT), new ConditionalEffect(
-                new AllOf(List.of(
-                        new ActivePlayerHandEmpty(),
-                        new SourceCounterThreshold(2, CounterType.QUEST))),
-                new MayEffect(new LoseLifeEffect(5, LoseLifeRecipient.TARGET_PLAYER),
-                        "Have that player lose 5 life?")));
+        addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AllOf(List.of(
+                                new ActivePlayerHandEmpty(),
+                                new SourceCounterThreshold(2, CounterType.QUEST)))),
+                new MayEffect(new LoseLifeEffect(5, LoseLifeRecipient.TARGET_PLAYER), "Have that player lose 5 life?"));
     }
 }

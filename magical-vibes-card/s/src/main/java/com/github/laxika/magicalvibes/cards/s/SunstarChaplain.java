@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -27,13 +27,13 @@ public class SunstarChaplain extends Card {
 
     public SunstarChaplain() {
         target(TargetFilters.creatureYouControl())
-                .addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                        new ControlsPermanentCount(2, new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentIsTappedPredicate()
-                        ))),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)
-                ));
+                .addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                        TriggerOptions.DEFAULT.withInterveningIf(
+                                new ControlsPermanentCount(2, new PermanentAllOfPredicate(List.of(
+                                                new PermanentIsCreaturePredicate(),
+                                                new PermanentIsTappedPredicate()
+                                        )))),
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         PermanentAnyOfPredicate artifactOrCreature = new PermanentAnyOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(),

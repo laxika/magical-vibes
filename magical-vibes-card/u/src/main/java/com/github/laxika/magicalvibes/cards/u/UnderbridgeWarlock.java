@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YWOE", collectorNumber = "8")
@@ -31,10 +32,10 @@ public class UnderbridgeWarlock extends Card {
                                         new GainLifeEffect(5),
                                         new ConsumeBoonEffect(BoonTrigger.CONTROLLER_END_STEP)))));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(new ControllerHasBoon(),
-                        SequenceEffect.of(
-                                new MillEffect(3, MillRecipient.CONTROLLER),
-                                new DrawCardEffect(1),
-                                new LoseLifeEffect(2))));
+                TriggerOptions.DEFAULT.withInterveningIf(new ControllerHasBoon()),
+                SequenceEffect.of(
+                        new MillEffect(3, MillRecipient.CONTROLLER),
+                        new DrawCardEffect(1),
+                        new LoseLifeEffect(2)));
     }
 }

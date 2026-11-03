@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceClassLevelAtLeast;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -72,8 +71,8 @@ public class ScavengersTalent extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceClassLevelAtLeast(2)),
                 new MillEffect(2, MillRecipient.TARGET_PLAYER));
 
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new SourceClassLevelAtLeast(3),
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceClassLevelAtLeast(3)),
                 new MayEffect(
                         new SacrificePermanentsThenEffect(
                                 3,
@@ -87,7 +86,7 @@ public class ScavengersTalent extends Card {
                                         .enterWithCounterCount(1)
                                         .build(),
                                 "three other nonland permanents"),
-                        "Sacrifice three other nonland permanents?")));
+                        "Sacrifice three other nonland permanents?"));
     }
 
     private static CreateTokenEffect foodToken() {

@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTur
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayWhileExiledEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceSecondSpellCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -20,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -44,11 +44,11 @@ public class MonkClass extends Card {
                 new NotCondition(new SourceCounterThreshold(1, CounterType.LEVEL)),
                 "this Class is level 1"));
 
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                new SourceCounterThreshold(2, CounterType.LEVEL),
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(2, CounterType.LEVEL)),
                 new ExileTopCardMayPlayWhileExiledEffect(
                         new ControllerCastSpellThisTurn(new CardTruePredicate()), false, false,
-                        new CardNotPredicate(new CardTypePredicate(CardType.LAND)))));
+                        new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilSourceLeavesEffect;
@@ -22,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -45,12 +45,12 @@ public class HotPursuit extends Card {
         // "Untap them. They gain haste" refers to the creatures gained this way, which are no longer
         // goaded once you control them.
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new ConditionalEffect(condition,
-                        new GainControlOfAllPermanentsMatchingEffect(
-                                goadedOrSuspectedCreature,
-                                ControlDuration.END_OF_TURN,
-                                List.of(
-                                        new UntapPermanentsEffect(TapUntapScope.TARGET),
-                                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)))));
+                TriggerOptions.DEFAULT.withInterveningIf(condition),
+                new GainControlOfAllPermanentsMatchingEffect(
+                        goadedOrSuspectedCreature,
+                        ControlDuration.END_OF_TURN,
+                        List.of(
+                                new UntapPermanentsEffect(TapUntapScope.TARGET),
+                                new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))));
     }
 }

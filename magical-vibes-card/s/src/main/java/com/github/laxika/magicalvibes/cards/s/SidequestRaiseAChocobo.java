@@ -9,13 +9,13 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -29,9 +29,9 @@ public class SidequestRaiseAChocobo extends Card {
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), birdToken());
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
-                new ConditionalEffect(
-                        new ControlsPermanentCount(4, new PermanentHasSubtypePredicate(CardSubtype.BIRD)),
-                        new TransformSelfEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new ControlsPermanentCount(4, new PermanentHasSubtypePredicate(CardSubtype.BIRD))),
+                new TransformSelfEffect());
     }
 
     @Override

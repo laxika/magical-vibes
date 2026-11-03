@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -23,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -37,13 +37,12 @@ public class LordSkittersBlessing extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new CreateTokenAttachedToTargetEffect(wickedRoleToken()));
 
-        addTrigger(Triggers.drawStep(ActivePlayer.YOU), new ConditionalEffect(
-                new ControlsPermanent(new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentIsEnchantedPredicate()))),
-                SequenceEffect.of(
-                        new LoseLifeEffect(1),
-                        new DrawCardEffect(1))));
+        addTrigger(Triggers.drawStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new ControlsPermanent(new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentIsEnchantedPredicate())))),
+                SequenceEffect.of(new LoseLifeEffect(1), new DrawCardEffect(1)));
     }
 
     private static CreateTokenEffect wickedRoleToken() {

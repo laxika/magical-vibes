@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -21,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -40,10 +40,11 @@ public class ChevillBaneOfMonsters extends Card {
         target(new PermanentPredicateTargetFilter(
                 creatureOrPlaneswalkerOpponentControls,
                 "Target must be a creature or planeswalker an opponent controls"
-        )).addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                new NotCondition(new OpponentControlsPermanent(
-                        new PermanentHasCountersPredicate(CounterType.BOUNTY))),
-                new PutCounterOnTargetPermanentEffect(CounterType.BOUNTY)));
+        )).addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new NotCondition(new OpponentControlsPermanent(
+                                new PermanentHasCountersPredicate(CounterType.BOUNTY)))),
+                new PutCounterOnTargetPermanentEffect(CounterType.BOUNTY));
 
         addTrigger(Triggers.dies(
                         new PermanentHasCountersPredicate(CounterType.BOUNTY),

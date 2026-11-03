@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnGraveyardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -32,10 +31,8 @@ public class Ichorid extends Card {
         addTrigger(Triggers.endStep(ActivePlayer.ANY), new SacrificeSelfEffect());
 
         addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT,
-                new ConditionalEffect(
-                        new SourceCardInGraveyard(),
-                        ExileOwnGraveyardCardThenEffect.ifYouDo(
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCardInGraveyard()),
+                ExileOwnGraveyardCardThenEffect.ifYouDo(
                                 new CardAllOfPredicate(List.of(
                                         new CardColorPredicate(CardColor.BLACK),
                                         new CardTypePredicate(CardType.CREATURE),
@@ -47,6 +44,6 @@ public class Ichorid extends Card {
                                         .returnAll(true)
                                         .build(),
                                 false
-                        )));
+                        ));
     }
 }

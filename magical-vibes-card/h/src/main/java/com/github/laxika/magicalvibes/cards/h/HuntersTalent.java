@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -65,12 +66,13 @@ public class HuntersTalent extends Card {
                                 new SourceClassLevelAtLeast(2),
                                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)));
 
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new AllOf(List.of(
-                        new SourceClassLevelAtLeast(3),
-                        new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentPowerAtLeastPredicate(4)))))),
-                new DrawCardEffect(1)));
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AllOf(List.of(
+                                new SourceClassLevelAtLeast(3),
+                                new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentPowerAtLeastPredicate(4))))))),
+                new DrawCardEffect(1));
     }
 }

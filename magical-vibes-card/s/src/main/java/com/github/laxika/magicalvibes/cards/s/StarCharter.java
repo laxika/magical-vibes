@@ -7,12 +7,12 @@ import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControllerDidntLoseLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -21,14 +21,15 @@ import java.util.List;
 public class StarCharter extends Card {
 
     public StarCharter() {
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new AnyOf(List.of(
-                        new GainedLifeThisTurn(),
-                        new NotCondition(new ControllerDidntLoseLifeThisTurn()))),
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AnyOf(List.of(
+                                new GainedLifeThisTurn(),
+                                new NotCondition(new ControllerDidntLoseLifeThisTurn())))),
                 LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(
                         4,
                         new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
-                                new CardPowerAtMostPredicate(3))))));
+                                new CardPowerAtMostPredicate(3)))));
     }
 }

@@ -129,8 +129,10 @@ class AcrobaticCheerleaderTest extends BaseCardTest {
         assertThat(second.getCounterCount(CounterType.FLYING)).isEqualTo(1);
     }
 
+    /** Moves to the second main phase of a new turn of {@code activePlayer}, whose first main phase has begun. */
     private void advanceToPostcombatMain(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
+        gd.mainPhasesBegunThisTurn = 1;
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();
         harness.passUntil(activePlayer, TurnStep.POSTCOMBAT_MAIN);

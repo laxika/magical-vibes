@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerCreatedTokenThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "NCC", collectorNumber = "86")
@@ -15,6 +15,7 @@ public class BennieBracksZoologist extends Card {
 
     public BennieBracksZoologist() {
         addTrigger(Triggers.endStep(ActivePlayer.ANY),
-                new ConditionalEffect(new ControllerCreatedTokenThisTurn(), new DrawCardEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(new ControllerCreatedTokenThisTurn()),
+                new DrawCardEffect());
     }
 }

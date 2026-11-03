@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
@@ -20,16 +20,18 @@ public class BloodhallOoze extends Card {
     public BloodhallOoze() {
         // At the beginning of your upkeep, if you control a black permanent, you may
         // put a +1/+1 counter on this creature.
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                new ControlsPermanentCount(1, new PermanentColorInPredicate(Set.of(CardColor.BLACK))),
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new ControlsPermanentCount(1, new PermanentColorInPredicate(Set.of(CardColor.BLACK)))),
                 new MayEffect(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                        "Put a +1/+1 counter on Bloodhall Ooze?")));
+                        "Put a +1/+1 counter on Bloodhall Ooze?"));
 
         // At the beginning of your upkeep, if you control a green permanent, you may
         // put a +1/+1 counter on this creature.
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                new ControlsPermanentCount(1, new PermanentColorInPredicate(Set.of(CardColor.GREEN))),
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new ControlsPermanentCount(1, new PermanentColorInPredicate(Set.of(CardColor.GREEN)))),
                 new MayEffect(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                        "Put a +1/+1 counter on Bloodhall Ooze?")));
+                        "Put a +1/+1 counter on Bloodhall Ooze?"));
     }
 }

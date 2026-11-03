@@ -6,11 +6,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ISD", collectorNumber = "193")
@@ -26,7 +26,8 @@ public class MayorOfAvabruck extends Card {
 
         // At the beginning of each upkeep, if no spells were cast last turn, transform Mayor of Avabruck.
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),
-                new ConditionalEffect(new NoSpellsCastLastTurn(), new TransformSelfEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(new NoSpellsCastLastTurn()),
+                new TransformSelfEffect());
     }
 
     @Override

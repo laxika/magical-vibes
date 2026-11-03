@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.EnchantmentPutIntoGraveyardFromBattlefieldThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -29,15 +28,13 @@ public class KamiOfTransience extends Card {
                         List.of(new PutCountersOnSourceEffect(1, 1, 1))));
 
         addTrigger(new TriggerCondition(Triggers.endStep(ActivePlayer.ANY), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT,
-                new ConditionalEffect(
-                        new EnchantmentPutIntoGraveyardFromBattlefieldThisTurn(),
-                        new MayEffect(
-                                ReturnCardFromGraveyardEffect.builder()
-                                        .destination(GraveyardChoiceDestination.HAND)
-                                        .filter(new CardIsSelfPredicate())
-                                        .returnAll(true)
-                                        .build(),
-                                "Return Kami of Transience from your graveyard to your hand?")));
+                TriggerOptions.DEFAULT.withInterveningIf(new EnchantmentPutIntoGraveyardFromBattlefieldThisTurn()),
+                new MayEffect(
+                        ReturnCardFromGraveyardEffect.builder()
+                                .destination(GraveyardChoiceDestination.HAND)
+                                .filter(new CardIsSelfPredicate())
+                                .returnAll(true)
+                                .build(),
+                        "Return Kami of Transience from your graveyard to your hand?"));
     }
 }

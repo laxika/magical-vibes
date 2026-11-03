@@ -9,12 +9,12 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -30,7 +30,8 @@ public class InventorsFair extends Card {
 
     public InventorsFair() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new ConditionalEffect(new Metalcraft(), new GainLifeEffect(1)));
+                TriggerOptions.DEFAULT.withInterveningIf(new Metalcraft()),
+                new GainLifeEffect(1));
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
 

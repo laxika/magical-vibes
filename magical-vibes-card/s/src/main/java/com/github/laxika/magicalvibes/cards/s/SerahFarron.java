@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsOtherPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForFirstMatchingSpellEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -32,12 +32,13 @@ public class SerahFarron extends Card {
 
         addStaticEffect(new ReduceCastCostForFirstMatchingSpellEachTurnEffect(
                 legendaryCreatureSpell(), 2));
-        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
-                new AllOf(List.of(new ControlsOtherPermanentCount(2, new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)
-                ))))),
-                new MayEffect(new TransformSelfEffect(), "Transform Serah Farron?")));
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AllOf(List.of(new ControlsOtherPermanentCount(2, new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)
+                                )))))),
+                new MayEffect(new TransformSelfEffect(), "Transform Serah Farron?"));
     }
 
     private static CardPredicate legendaryCreatureSpell() {

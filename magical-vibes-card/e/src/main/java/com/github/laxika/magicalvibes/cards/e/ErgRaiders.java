@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "5ED", collectorNumber = "158")
@@ -23,10 +24,10 @@ public class ErgRaiders extends Card {
     public ErgRaiders() {
         // At the beginning of your end step, if this creature didn't attack this turn, it deals
         // 2 damage to you unless it came under your control this turn.
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new DidntAttack(),
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new DidntAttack()),
                 ConditionalEffect.unless(
                         new NotCondition(new CameUnderControlThisTurn()),
-                        new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER))));
+                        new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER)));
     }
 }

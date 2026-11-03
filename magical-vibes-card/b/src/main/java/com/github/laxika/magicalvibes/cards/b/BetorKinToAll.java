@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TDM", collectorNumber = "172")
@@ -18,15 +19,15 @@ public class BetorKinToAll extends Card {
 
     public BetorKinToAll() {
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(new ControlledCreaturesTotalToughnessAtLeast(10),
-                        SequenceEffect.of(
-                                new DrawCardEffect(1),
-                                new ConditionalEffect(
-                                        new ControlledCreaturesTotalToughnessAtLeast(20),
-                                        new UntapPermanentsEffect(TapUntapScope.CONTROLLED,
-                                                new PermanentIsCreaturePredicate())),
-                                new ConditionalEffect(
-                                        new ControlledCreaturesTotalToughnessAtLeast(40),
-                                        EachPlayerLosesFractionOfLifeRoundedUpEffect.opponentsOnly(2)))));
+                TriggerOptions.DEFAULT.withInterveningIf(new ControlledCreaturesTotalToughnessAtLeast(10)),
+                SequenceEffect.of(
+                        new DrawCardEffect(1),
+                        new ConditionalEffect(
+                                new ControlledCreaturesTotalToughnessAtLeast(20),
+                                new UntapPermanentsEffect(TapUntapScope.CONTROLLED,
+                                        new PermanentIsCreaturePredicate())),
+                        new ConditionalEffect(
+                                new ControlledCreaturesTotalToughnessAtLeast(40),
+                                EachPlayerLosesFractionOfLifeRoundedUpEffect.opponentsOnly(2))));
     }
 }

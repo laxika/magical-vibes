@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -23,16 +23,17 @@ import java.util.List;
 public class FaeOffering extends Card {
 
     public FaeOffering() {
-        addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(
-                new AllOf(List.of(
-                        new ControllerCastSpellThisTurn(new CardTypePredicate(CardType.CREATURE)),
-                        new ControllerCastSpellThisTurn(
-                                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)))
-                )),
+        addTrigger(Triggers.endStep(ActivePlayer.ANY),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AllOf(List.of(
+                                        new ControllerCastSpellThisTurn(new CardTypePredicate(CardType.CREATURE)),
+                                        new ControllerCastSpellThisTurn(
+                                                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)))
+                                ))),
                 SequenceEffect.of(
                         CreateTokenEffect.ofClueToken(1).withInvestigate(false),
                         foodToken(),
-                        CreateTokenEffect.ofTreasureToken(1))));
+                        CreateTokenEffect.ofTreasureToken(1)));
     }
 
     private static CreateTokenEffect foodToken() {

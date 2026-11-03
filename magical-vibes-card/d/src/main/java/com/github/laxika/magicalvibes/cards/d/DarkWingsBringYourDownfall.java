@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.condition.CreatureDeathsThisTurnAtLeast;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.TurnFaceDownCommandZoneCardEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -28,9 +27,7 @@ public class DarkWingsBringYourDownfall extends Card {
                         List.of(CardSubtype.DEMON), Set.of(Keyword.FLYING), true, false));
 
         addTrigger(new TriggerCondition(Triggers.endStep(ActivePlayer.ANY), AbilityZones.COMMAND),
-                TriggerOptions.DEFAULT,
-                new ConditionalEffect(
-                        new CreatureDeathsThisTurnAtLeast(2, CountScope.CONTROLLER),
-                        new TurnFaceDownCommandZoneCardEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(new CreatureDeathsThisTurnAtLeast(2, CountScope.CONTROLLER)),
+                new TurnFaceDownCommandZoneCardEffect());
     }
 }

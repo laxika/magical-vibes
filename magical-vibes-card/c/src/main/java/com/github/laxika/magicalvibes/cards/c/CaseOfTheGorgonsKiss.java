@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -38,10 +39,12 @@ public class CaseOfTheGorgonsKiss extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new DestroyTargetPermanentEffect());
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(new AllOf(List.of(
-                        new CreatureCardsPutIntoGraveyardThisTurnAtLeast(3),
-                        new NotCondition(new SourceIsSolved())
-                )), new SolveSourceEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AllOf(List.of(
+                                        new CreatureCardsPutIntoGraveyardThisTurnAtLeast(3),
+                                        new NotCondition(new SourceIsSolved())
+                                ))),
+                new SolveSourceEffect());
 
         addStaticEffect(new ConditionalEffect(new SourceIsSolved(),
                         new AnimatePermanentsEffect(4, 4,

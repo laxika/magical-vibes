@@ -11,10 +11,10 @@ import com.github.laxika.magicalvibes.model.condition.ControllerIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.NoMonarch;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -30,11 +30,12 @@ public class QueenMarchesa extends Card {
     public QueenMarchesa() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new BecomeMonarchEffect());
 
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                new AllConditions(List.of(
-                        new NotCondition(new ControllerIsMonarch()),
-                        new NotCondition(new NoMonarch()))),
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AllConditions(List.of(
+                                new NotCondition(new ControllerIsMonarch()),
+                                new NotCondition(new NoMonarch())))),
                 new CreateTokenEffect("Assassin", 1, 1, CardColor.BLACK,
-                        List.of(CardSubtype.ASSASSIN), Set.of(Keyword.DEATHTOUCH, Keyword.HASTE), Set.of())));
+                        List.of(CardSubtype.ASSASSIN), Set.of(Keyword.DEATHTOUCH, Keyword.HASTE), Set.of()));
     }
 }

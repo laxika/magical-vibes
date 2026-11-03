@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -41,12 +42,12 @@ public class MightMakesRight extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Target must be a creature an opponent controls"
-        )).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
-                new ControlsEachCreatureWithGreatestPower(),
+        )).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new ControlsEachCreatureWithGreatestPower()),
                 SequenceEffect.of(
-                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)
-                )));
+                                new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                                new UntapPermanentsEffect(TapUntapScope.TARGET),
+                                new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)
+                        ));
     }
 }

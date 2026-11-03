@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,10 +26,10 @@ public class WindcragSiege extends Card {
         addStaticEffect(AdditionalTriggeredAbilityEffect.forAttackTriggers(
                         new PermanentTruePredicate(), new SourceHasChosenMode("Mardu")));
 
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                new SourceHasChosenMode("Jeskai"),
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode("Jeskai")),
                 new CreateTokenEffect(
                         1, "Goblin", 1, 1, CardColor.RED, Set.of(CardColor.RED),
-                        List.of(CardSubtype.GOBLIN), Set.of(), Set.of(Keyword.LIFELINK, Keyword.HASTE))));
+                        List.of(CardSubtype.GOBLIN), Set.of(), Set.of(Keyword.LIFELINK, Keyword.HASTE)));
     }
 }

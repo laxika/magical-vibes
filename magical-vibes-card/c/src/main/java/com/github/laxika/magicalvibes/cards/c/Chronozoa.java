@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PLC", collectorNumber = "37")
@@ -23,8 +24,8 @@ public class Chronozoa extends Card {
     public Chronozoa() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new ConditionalEffect(new SourceCounterThreshold(1, CounterType.TIME),
-                        new RemoveCounterFromSourceEffect(CounterType.TIME, 1)));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, CounterType.TIME)),
+                new RemoveCounterFromSourceEffect(CounterType.TIME, 1));
         addTrigger(Triggers.timeCountersRemovedFromThis(),
                 new ConditionalEffect(new NotCondition(new SourceCounterThreshold(1, CounterType.TIME)),
                         new SacrificeSelfEffect()));

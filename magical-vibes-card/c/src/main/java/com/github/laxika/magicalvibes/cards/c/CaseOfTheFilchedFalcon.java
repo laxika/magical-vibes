@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSolved;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -26,6 +25,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -38,10 +38,12 @@ public class CaseOfTheFilchedFalcon extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.ofClueToken(1));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(new AllOf(List.of(
-                        new ControlsPermanentCount(3, new PermanentIsArtifactPredicate()),
-                        new NotCondition(new SourceIsSolved())
-                )), new SolveSourceEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AllOf(List.of(
+                                        new ControlsPermanentCount(3, new PermanentIsArtifactPredicate()),
+                                        new NotCondition(new SourceIsSolved())
+                                ))),
+                new SolveSourceEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

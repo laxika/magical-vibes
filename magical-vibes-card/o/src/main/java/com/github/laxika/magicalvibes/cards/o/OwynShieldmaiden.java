@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,8 +27,9 @@ import java.util.Set;
 public class OwynShieldmaiden extends Card {
 
     public OwynShieldmaiden() {
-        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
-                new AnotherPermanentEnteredThisTurn(new CardSubtypePredicate(CardSubtype.HUMAN)),
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AnotherPermanentEnteredThisTurn(new CardSubtypePredicate(CardSubtype.HUMAN))),
                 SequenceEffect.of(
                         new CreateTokenEffect(
                                 2, "Human Knight", 2, 2, CardColor.RED,
@@ -36,6 +38,6 @@ public class OwynShieldmaiden extends Card {
                         new ConditionalEffect(
                                 new ControlsPermanentCount(6,
                                         new PermanentHasSubtypePredicate(CardSubtype.HUMAN)),
-                                new DrawCardEffect()))));
+                                new DrawCardEffect())));
     }
 }

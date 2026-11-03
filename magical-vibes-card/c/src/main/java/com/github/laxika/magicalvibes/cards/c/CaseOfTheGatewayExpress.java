@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -28,10 +29,12 @@ public class CaseOfTheGatewayExpress extends Card {
                         new ControlledCreaturesDealDamageToTargetEffect(1, new PermanentIsCreaturePredicate()));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(new AllOf(List.of(
-                        new AttackedWithCreaturesThisTurn(3),
-                        new NotCondition(new SourceIsSolved())
-                )), new SolveSourceEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AllOf(List.of(
+                                        new AttackedWithCreaturesThisTurn(3),
+                                        new NotCondition(new SourceIsSolved())
+                                ))),
+                new SolveSourceEffect());
 
         addStaticEffect(new ConditionalEffect(new SourceIsSolved(),
                         new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES)));

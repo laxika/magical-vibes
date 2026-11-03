@@ -12,11 +12,11 @@ import com.github.laxika.magicalvibes.model.amount.UnlockedRoomDoorsCount;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -35,11 +35,9 @@ public class SmokyLoungeMistySalon extends Card {
                         .withManaCost("{3}{U}")
         )));
 
-        addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU), new ConditionalEffect(
-                new SourceRoomDoorUnlocked(0),
-                new AwardRestrictedManaEffect(
-                        ManaColor.RED, 2,
-                        new ManaRestriction.RoomSpellsOrUnlocks())));
+        addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceRoomDoorUnlocked(0)),
+                new AwardRestrictedManaEffect(ManaColor.RED, 2, new ManaRestriction.RoomSpellsOrUnlocks()));
 
         DynamicAmount unlockedDoors = new UnlockedRoomDoorsCount(CountScope.CONTROLLER);
         addTrigger(Triggers.doorUnlocked(),

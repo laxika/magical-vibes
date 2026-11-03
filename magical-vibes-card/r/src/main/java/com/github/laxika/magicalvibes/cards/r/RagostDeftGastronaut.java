@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -41,8 +41,9 @@ public class RagostDeftGastronaut extends Card {
                         new DealDamageToPlayersEffect(3, DamageRecipient.EACH_OPPONENT)),
                 "{1}, {T}, Sacrifice a Food: Ragost deals 3 damage to each opponent."));
 
-        addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(
-                new GainedLifeThisTurn(), new UntapPermanentsEffect(TapUntapScope.SELF)));
+        addTrigger(Triggers.endStep(ActivePlayer.ANY),
+                TriggerOptions.DEFAULT.withInterveningIf(new GainedLifeThisTurn()),
+                new UntapPermanentsEffect(TapUntapScope.SELF));
     }
 
     private static ActivatedAbility foodAbility() {

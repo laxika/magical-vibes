@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.CardDirectlyAboveSelfInGraveyard;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -30,15 +29,14 @@ public class DeathSpark extends Card {
         // directly above it, you may pay {1}. If you do, return this card to your hand.
         // Intervening-if on the ordered graveyard is checked at trigger time.
         addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT,
-                new ConditionalEffect(
-                        new CardDirectlyAboveSelfInGraveyard(new CardTypePredicate(CardType.CREATURE)),
-                        new MayPayManaEffect("{1}",
-                                ReturnCardFromGraveyardEffect.builder()
-                                        .destination(GraveyardChoiceDestination.HAND)
-                                        .filter(new CardIsSelfPredicate())
-                                        .returnAll(true)
-                                        .build(),
-                                "Pay {1} to return Death Spark from your graveyard to your hand?")));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new CardDirectlyAboveSelfInGraveyard(new CardTypePredicate(CardType.CREATURE))),
+                new MayPayManaEffect("{1}",
+                        ReturnCardFromGraveyardEffect.builder()
+                                .destination(GraveyardChoiceDestination.HAND)
+                                .filter(new CardIsSelfPredicate())
+                                .returnAll(true)
+                                .build(),
+                        "Pay {1} to return Death Spark from your graveyard to your hand?"));
     }
 }

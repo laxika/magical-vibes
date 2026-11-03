@@ -4,12 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtMost;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -19,9 +19,9 @@ import java.util.List;
 public class DavrielRogueShadowmage extends Card {
 
     public DavrielRogueShadowmage() {
-        addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT), new ConditionalEffect(
-                new ActivePlayerHandAtMost(1),
-                new DealDamageToPlayersEffect(2, DamageRecipient.ACTIVE_PLAYER)));
+        addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT),
+                TriggerOptions.DEFAULT.withInterveningIf(new ActivePlayerHandAtMost(1)),
+                new DealDamageToPlayersEffect(2, DamageRecipient.ACTIVE_PLAYER));
 
         addActivatedAbility(new ActivatedAbility(
                 -1,

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTarget
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,10 +27,8 @@ public class MonasterySiege extends Card {
         addStaticEffect(new ChooseModeOnEnterEffect(List.of(KHANS, DRAGONS)));
 
         addTrigger(Triggers.drawStep(ActivePlayer.YOU),
-                new ConditionalEffect(new SourceHasChosenMode(KHANS),
-                        SequenceEffect.of(
-                                new DrawCardEffect(1),
-                                new DiscardEffect(1, DiscardRecipient.CONTROLLER))));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(KHANS)),
+                SequenceEffect.of(new DrawCardEffect(1), new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
 
         addStaticEffect(new ConditionalEffect(new SourceHasChosenMode(DRAGONS),
                         IncreaseOpponentCostForTargetingControlledPermanentEffect

@@ -6,11 +6,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEndStepPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,9 +22,9 @@ public class TitanHunter extends Card {
     public TitanHunter() {
         // At the beginning of each player's end step, if no creatures died this turn,
         // this creature deals 4 damage to that player.
-        addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(
-                new NotCondition(new Morbid()),
-                new DealDamageToEndStepPlayerEffect(new Fixed(4))));
+        addTrigger(Triggers.endStep(ActivePlayer.ANY),
+                TriggerOptions.DEFAULT.withInterveningIf(new NotCondition(new Morbid())),
+                new DealDamageToEndStepPlayerEffect(new Fixed(4)));
 
         // {1}{B}, Sacrifice a creature: You gain 4 life.
         addActivatedAbility(new ActivatedAbility(

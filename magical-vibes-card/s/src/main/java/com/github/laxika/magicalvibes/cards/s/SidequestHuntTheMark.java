@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FIN", collectorNumber = "119")
@@ -28,14 +29,13 @@ public class SidequestHuntTheMark extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new DestroyTargetPermanentEffect());
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(
-                        new CreatureDiedUnderOpponentControlThisTurn(),
-                        SequenceEffect.of(
-                                CreateTokenEffect.ofTreasureToken(1),
-                                new ConditionalEffect(
-                                        new ControlsPermanentCount(3,
-                                                new PermanentHasSubtypePredicate(CardSubtype.TREASURE)),
-                                        new TransformSelfEffect()))));
+                TriggerOptions.DEFAULT.withInterveningIf(new CreatureDiedUnderOpponentControlThisTurn()),
+                SequenceEffect.of(
+                        CreateTokenEffect.ofTreasureToken(1),
+                        new ConditionalEffect(
+                                new ControlsPermanentCount(3,
+                                        new PermanentHasSubtypePredicate(CardSubtype.TREASURE)),
+                                new TransformSelfEffect())));
     }
 
     @Override

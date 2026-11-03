@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCountAtMost;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -27,12 +27,13 @@ public class SpiritMirror extends Card {
     public SpiritMirror() {
         // At the beginning of your upkeep, if there are no Reflection tokens on the battlefield,
         // create a 2/2 white Reflection creature token.
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                new AnyPlayerControlsPermanentCountAtMost(0, new PermanentAllOfPredicate(List.of(
-                        new PermanentHasSubtypePredicate(CardSubtype.REFLECTION),
-                        new PermanentIsTokenPredicate()))),
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AnyPlayerControlsPermanentCountAtMost(0, new PermanentAllOfPredicate(List.of(
+                                new PermanentHasSubtypePredicate(CardSubtype.REFLECTION),
+                                new PermanentIsTokenPredicate())))),
                 new CreateTokenEffect("Reflection", 2, 2, CardColor.WHITE,
-                        List.of(CardSubtype.REFLECTION), Set.of(), Set.of())));
+                        List.of(CardSubtype.REFLECTION), Set.of(), Set.of()));
 
         // {0}: Destroy target Reflection.
         addActivatedAbility(new ActivatedAbility(

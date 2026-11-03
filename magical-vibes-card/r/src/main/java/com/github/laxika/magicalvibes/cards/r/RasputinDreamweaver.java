@@ -8,13 +8,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.SourceStartedTurnUntapped;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterLimitEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -49,8 +49,7 @@ public class RasputinDreamweaver extends Card {
         ));
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new ConditionalEffect(
-                        new SourceStartedTurnUntapped(),
-                        new PutCountersOnSourceCardEffect(CounterType.DREAM)));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceStartedTurnUntapped()),
+                new PutCountersOnSourceCardEffect(CounterType.DREAM));
     }
 }

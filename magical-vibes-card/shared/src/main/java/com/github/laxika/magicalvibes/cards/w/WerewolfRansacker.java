@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndDama
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
@@ -36,6 +36,7 @@ public class WerewolfRansacker extends Card {
         // At the beginning of each upkeep, if a player cast two or more spells last turn,
         // transform Werewolf Ransacker.
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),
-                new ConditionalEffect(new TwoOrMoreSpellsCastLastTurn(), new TransformSelfEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(new TwoOrMoreSpellsCastLastTurn()),
+                new TransformSelfEffect());
     }
 }

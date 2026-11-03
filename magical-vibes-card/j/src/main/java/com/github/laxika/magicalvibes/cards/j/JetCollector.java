@@ -9,11 +9,11 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardNamedIntoHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.OnceOnlyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,9 +22,10 @@ import java.util.List;
 public class JetCollector extends Card {
 
     public JetCollector() {
-        addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU), new ConditionalEffect(
-                new GraveyardCardThreshold(4, null),
-                new OnceOnlyTriggerEffect(new ConjureCardNamedIntoHandEffect("LEA", "262", false))));
+        addTrigger(Triggers.secondMainPhase(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new GraveyardCardThreshold(4, null)).withLimit(TriggerLimit.ONCE),
+                new ConjureCardNamedIntoHandEffect("LEA", "262", false));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

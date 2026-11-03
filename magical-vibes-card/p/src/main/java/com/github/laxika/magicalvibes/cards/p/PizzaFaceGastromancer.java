@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -50,22 +51,22 @@ public class PizzaFaceGastromancer extends Card {
                 otherArtifactOrCreature,
                 "Target must be another artifact or creature"), 0, 1)
                 .addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                        new ConditionalEffect(
-                                new PermanentLeftBattlefieldUnderYourControlThisTurn(),
-                                SequenceEffect.of(
-                                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3),
-                                        new ConditionalEffect(
-                                                new NotCondition(new TargetPermanentMatches(
-                                                        new PermanentIsCreaturePredicate())),
-                                                new AnimatePermanentsEffect(
-                                                        0,
-                                                        0,
-                                                        List.of(CardSubtype.MUTANT),
-                                                        Set.of(),
-                                                        null,
-                                                        Set.of(CardType.CREATURE),
-                                                        GrantScope.TARGET,
-                                                        EffectDuration.PERMANENT)))));
+                        TriggerOptions.DEFAULT.withInterveningIf(
+                                new PermanentLeftBattlefieldUnderYourControlThisTurn()),
+                        SequenceEffect.of(
+                                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3),
+                                new ConditionalEffect(
+                                        new NotCondition(new TargetPermanentMatches(
+                                                new PermanentIsCreaturePredicate())),
+                                        new AnimatePermanentsEffect(
+                                                0,
+                                                0,
+                                                List.of(CardSubtype.MUTANT),
+                                                Set.of(),
+                                                null,
+                                                Set.of(CardType.CREATURE),
+                                                GrantScope.TARGET,
+                                                EffectDuration.PERMANENT))));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

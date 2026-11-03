@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastThreeOrMoreSpellsThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -26,9 +25,7 @@ public class ArclightPhoenix extends Card {
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
         addTrigger(new TriggerCondition(Triggers.beginningOfCombat(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT,
-                new ConditionalEffect(
-                        new ControllerCastThreeOrMoreSpellsThisTurn(instantOrSorcery),
-                        new ReturnSourceCardFromGraveyardToBattlefieldEffect(false)));
+                TriggerOptions.DEFAULT.withInterveningIf(new ControllerCastThreeOrMoreSpellsThisTurn(instantOrSorcery)),
+                new ReturnSourceCardFromGraveyardToBattlefieldEffect(false));
     }
 }

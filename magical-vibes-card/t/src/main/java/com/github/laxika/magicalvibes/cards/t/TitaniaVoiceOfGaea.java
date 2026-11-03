@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MeldWithNamedCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -39,17 +38,18 @@ public class TitaniaVoiceOfGaea extends Card {
 
         // At the beginning of your upkeep, if there are four or more land cards in your graveyard
         // and you both own and control Titania and Argoth, exile them, then meld them.
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                new AllOf(List.of(
-                        new GraveyardCardThreshold(4, new CardTypePredicate(CardType.LAND)),
-                        new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
-                                new PermanentIsSourceCardPredicate(),
-                                new PermanentOwnedBySourceControllerPredicate()))),
-                        new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
-                                new PermanentNamedPredicate(ARGOTH_NAME),
-                                new PermanentIsLandPredicate(),
-                                new PermanentOwnedBySourceControllerPredicate()))))),
-                new MeldWithNamedCreatureEffect(ARGOTH_NAME, new PermanentIsLandPredicate())));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AllOf(List.of(
+                                new GraveyardCardThreshold(4, new CardTypePredicate(CardType.LAND)),
+                                new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsSourceCardPredicate(),
+                                        new PermanentOwnedBySourceControllerPredicate()))),
+                                new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
+                                        new PermanentNamedPredicate(ARGOTH_NAME),
+                                        new PermanentIsLandPredicate(),
+                                        new PermanentOwnedBySourceControllerPredicate())))))),
+                new MeldWithNamedCreatureEffect(ARGOTH_NAME, new PermanentIsLandPredicate()));
     }
 
     @Override

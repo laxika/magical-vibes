@@ -7,13 +7,13 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -27,10 +27,10 @@ public class CetaSanctuary extends Card {
         var controlsGreen = new ControlsPermanent(new PermanentColorInPredicate(Set.of(CardColor.GREEN)));
         var controlsRedAndGreen = new AllOf(List.of(controlsRed, controlsGreen));
 
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                new AnyOf(List.of(controlsRed, controlsGreen)),
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new AnyOf(List.of(controlsRed, controlsGreen))),
                 SequenceEffect.of(
                         new DrawCardEffect(new FixedIfCondition(controlsRedAndGreen, 2, 1)),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER))));
+                        new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
     }
 }

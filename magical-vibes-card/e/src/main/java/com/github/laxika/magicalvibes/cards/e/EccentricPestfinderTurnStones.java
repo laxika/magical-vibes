@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.cards.t.TurnStones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /** Eccentric Pestfinder // Turn Stones (SOC 46). */
@@ -19,7 +19,8 @@ public class EccentricPestfinderTurnStones extends Card {
 
         // At the beginning of each end step, if you gained life this turn, this creature becomes prepared.
         addTrigger(Triggers.endStep(ActivePlayer.ANY),
-                new ConditionalEffect(new GainedLifeThisTurn(), new BecomePreparedEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(new GainedLifeThisTurn()),
+                new BecomePreparedEffect());
     }
 
     @Override

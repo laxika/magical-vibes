@@ -104,7 +104,7 @@ public class PermanentCounterSupport {
             return;
         }
         for (CardEffect effect : source.getCard()
-                .getTriggerEffects(Triggers.upkeep(ActivePlayer.YOU), Zone.BATTLEFIELD)) {
+                .getLegacyTriggerEffects(Triggers.upkeep(ActivePlayer.YOU), Zone.BATTLEFIELD)) {
             if (effect instanceof com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenEffect removal
                     && removal.counterType() == counterType && removal.onlyIfLastCounterRemoved()
                     && removal.thenEffect() instanceof com.github.laxika.magicalvibes.model.effect.DrawGameEffect) {

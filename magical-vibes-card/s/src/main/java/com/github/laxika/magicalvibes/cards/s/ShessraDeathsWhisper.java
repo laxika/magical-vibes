@@ -4,13 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AFR", collectorNumber = "231")
@@ -20,8 +20,8 @@ public class ShessraDeathsWhisper extends Card {
         target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_BLOCK));
 
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(new Morbid(),
-                new MayPayManaEffect("{0}", 2, new DrawCardEffect(1),
-                        "Pay 2 life to draw a card?")));
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new Morbid()),
+                new MayPayManaEffect("{0}", 2, new DrawCardEffect(1), "Pay 2 life to draw a card?"));
     }
 }

@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,10 +24,10 @@ public class AnaSanctuary extends Card {
         var controlsBlack = new ControlsPermanent(new PermanentColorInPredicate(Set.of(CardColor.BLACK)));
         var controlsBlueAndBlack = new AllOf(List.of(controlsBlue, controlsBlack));
 
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                new AnyOf(List.of(controlsBlue, controlsBlack)),
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new AnyOf(List.of(controlsBlue, controlsBlack))),
                 new BoostTargetCreatureEffect(
                         new FixedIfCondition(controlsBlueAndBlack, 5, 1),
-                        new FixedIfCondition(controlsBlueAndBlack, 5, 1))));
+                        new FixedIfCondition(controlsBlueAndBlack, 5, 1)));
     }
 }

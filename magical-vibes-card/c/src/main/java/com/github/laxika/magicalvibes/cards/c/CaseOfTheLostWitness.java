@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -36,12 +37,14 @@ public class CaseOfTheLostWitness extends Card {
                 new DrawCardEffect(1)));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(new AllOf(List.of(
-                        new ControlsPermanent(new PermanentAllOfPredicate(List.of(
-                                new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
-                                new PermanentHasSubtypePredicate(CardSubtype.HOMUNCULUS)))),
-                        new NotCondition(new SourceIsSolved())
-                )), new SolveSourceEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AllOf(List.of(
+                                        new ControlsPermanent(new PermanentAllOfPredicate(List.of(
+                                                new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
+                                                new PermanentHasSubtypePredicate(CardSubtype.HOMUNCULUS)))),
+                                        new NotCondition(new SourceIsSolved())
+                                ))),
+                new SolveSourceEffect());
 
         addStaticEffect(new ConditionalEffect(new SourceIsSolved(), new LookAtTopCardOfOwnLibraryEffect()));
         addStaticEffect(new ConditionalEffect(new SourceIsSolved(), new PlayLandsFromTopOfLibraryEffect()));

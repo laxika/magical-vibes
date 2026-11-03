@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastFourOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSolved;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -31,10 +31,12 @@ public class CaseOfTheRansackedLab extends Card {
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(instantOrSorcery, 1, CostModificationScope.SELF));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(new AllOf(List.of(
-                        new ControllerCastFourOrMoreSpellsThisTurn(instantOrSorcery),
-                        new NotCondition(new SourceIsSolved())
-                )), new SolveSourceEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AllOf(List.of(
+                                        new ControllerCastFourOrMoreSpellsThisTurn(instantOrSorcery),
+                                        new NotCondition(new SourceIsSolved())
+                                ))),
+                new SolveSourceEffect());
 
         addTrigger(Triggers.youCastSpell(),
                 SpellCastTriggerEffect.withIntervening(

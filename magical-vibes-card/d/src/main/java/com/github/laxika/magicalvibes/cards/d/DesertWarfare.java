@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -48,8 +47,8 @@ public class DesertWarfare extends Card {
 
         PermanentHasSubtypePredicate desertPermanent = new PermanentHasSubtypePredicate(CardSubtype.DESERT);
         PermanentCount deserts = new PermanentCount(desertPermanent, CountScope.CONTROLLER);
-        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
-                new ControlsPermanentCount(5, desertPermanent),
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new ControlsPermanentCount(5, desertPermanent)),
                 new CreateTokenEffect(
                         CardType.CREATURE,
                         deserts,
@@ -69,6 +68,6 @@ public class DesertWarfare extends Card {
                         false,
                         false,
                         0,
-                        Set.of())));
+                        Set.of()));
     }
 }

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.PermanentLeftBattlefieldUnderYourControlThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureAndSameNameCardsFromGraveyardToBattlefieldEffect;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCo
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,12 +26,11 @@ public class RatKingVerminister extends Card {
 
     public RatKingVerminister() {
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(
-                        new PermanentLeftBattlefieldUnderYourControlThisTurn(),
-                        SequenceEffect.of(
-                                new CreateTokenEffect(1, "Rat", 1, 1, CardColor.BLACK,
-                                        List.of(CardSubtype.RAT), Set.of(), Set.of()),
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))));
+                TriggerOptions.DEFAULT.withInterveningIf(new PermanentLeftBattlefieldUnderYourControlThisTurn()),
+                SequenceEffect.of(
+                        new CreateTokenEffect(1, "Rat", 1, 1, CardColor.BLACK,
+                                List.of(CardSubtype.RAT), Set.of(), Set.of()),
+                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

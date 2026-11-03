@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedOrBlockedThisCombat;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCappedCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -36,8 +36,8 @@ public class ClockworkBeast extends Card {
         // At end of combat, if this creature attacked or blocked this combat, remove a +1/+0 counter
         // from it. Scheduling only from Triggers.attacks()/Triggers.blocks() encodes the "attacked or blocked" condition.
         addTrigger(Triggers.endOfCombat(),
-                new ConditionalEffect(new SourceAttackedOrBlockedThisCombat(),
-                        new RemoveCounterFromSourceAtEndOfCombatEffect(CounterType.PLUS_ONE_PLUS_ZERO)));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceAttackedOrBlockedThisCombat()),
+                new RemoveCounterFromSourceAtEndOfCombatEffect(CounterType.PLUS_ONE_PLUS_ZERO));
 
         // {X}, {T}: Put up to X +1/+0 counters on this creature. This ability can't cause the total
         // number of +1/+0 counters on this creature to be greater than seven. Activate only during

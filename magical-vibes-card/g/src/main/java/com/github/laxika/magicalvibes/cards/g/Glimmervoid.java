@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MRD", collectorNumber = "281")
@@ -18,9 +18,10 @@ public class Glimmervoid extends Card {
 
     public Glimmervoid() {
         // At the beginning of the end step, if you control no artifacts, sacrifice this land.
-        addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(
-                new NotCondition(new ControlsPermanent(new PermanentIsArtifactPredicate())),
-                new SacrificeSelfEffect()));
+        addTrigger(Triggers.endStep(ActivePlayer.ANY),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new NotCondition(new ControlsPermanent(new PermanentIsArtifactPredicate()))),
+                new SacrificeSelfEffect());
 
         // {T}: Add one mana of any color.
         addActivatedAbility(ManaAbilities.tapForAnyColor());

@@ -6,11 +6,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySourceThenDealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,9 +22,9 @@ public class VoodooDoll extends Card {
 
     public VoodooDoll() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCountersOnSelfEffect(CounterType.PIN));
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new SourceUntapped(),
-                new DestroySourceThenDealDamageToControllerEffect(new CountersOnSource(CounterType.PIN))));
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceUntapped()),
+                new DestroySourceThenDealDamageToControllerEffect(new CountersOnSource(CounterType.PIN)));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

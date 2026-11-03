@@ -6,8 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardNamedIntoHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.OnceOnlyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordsToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -16,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -25,9 +25,9 @@ import java.util.Set;
 public class PearlCollector extends Card {
 
     public PearlCollector() {
-        addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU), new ConditionalEffect(
-                new GainedLifeThisTurn(4),
-                new OnceOnlyTriggerEffect(new ConjureCardNamedIntoHandEffect("LEA", "263", false))));
+        addTrigger(Triggers.secondMainPhase(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new GainedLifeThisTurn(4)).withLimit(TriggerLimit.ONCE),
+                new ConjureCardNamedIntoHandEffect("LEA", "263", false));
 
         PermanentPredicate anotherCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

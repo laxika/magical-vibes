@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.LifeGainedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeAndCreateTokenEqualToAmountEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -28,8 +28,8 @@ public class TivashGloomSummoner extends Card {
         CreateTokenEffect demon = new CreateTokenEffect(
                 "Demon", lifeGained, lifeGained, CardColor.BLACK,
                 List.of(CardSubtype.DEMON), Set.of(Keyword.FLYING), Set.of());
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new GainedLifeThisTurn(),
-                new MayPayLifeAndCreateTokenEqualToAmountEffect(lifeGained, demon)));
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new GainedLifeThisTurn()),
+                new MayPayLifeAndCreateTokenEqualToAmountEffect(lifeGained, demon));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.Raid;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardWithDiscoveryCounterMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -31,6 +31,7 @@ public class LaraCroftTombRaider extends Card {
                 new ExileTargetCardFromGraveyardWithDiscoveryCounterMayPlayThisTurnEffect(
                         legendaryArtifactOrLand));
         addTrigger(Triggers.endOfCombat(),
-                new ConditionalEffect(new Raid(), CreateTokenEffect.ofTreasureToken(1)));
+                TriggerOptions.DEFAULT.withInterveningIf(new Raid()),
+                CreateTokenEffect.ofTreasureToken(1));
     }
 }

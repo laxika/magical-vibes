@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.b.BriselaVoiceOfNightmares;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MeldWithNamedCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -32,16 +32,17 @@ public class GiselaTheBrokenBlade extends Card {
 
         // At the beginning of your end step, if you both own and control Gisela and a creature
         // named Bruna, the Fading Light, exile them, then meld them into Brisela, Voice of Nightmares.
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new AllOf(List.of(
-                        new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
-                                new PermanentIsSourceCardPredicate(),
-                                new PermanentOwnedBySourceControllerPredicate()))),
-                        new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
-                                new PermanentNamedPredicate(BRUNA_NAME),
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentOwnedBySourceControllerPredicate()))))),
-                new MeldWithNamedCreatureEffect(BRUNA_NAME)));
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AllOf(List.of(
+                                new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsSourceCardPredicate(),
+                                        new PermanentOwnedBySourceControllerPredicate()))),
+                                new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
+                                        new PermanentNamedPredicate(BRUNA_NAME),
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentOwnedBySourceControllerPredicate())))))),
+                new MeldWithNamedCreatureEffect(BRUNA_NAME));
     }
 
     @Override

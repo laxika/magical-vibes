@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.condition.SourceExiledCardsMatchingAtLeast;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.PutRandomCardExiledWithSourceIntoOwnersHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -29,9 +29,10 @@ public class NegativeZonePortal extends Card {
                         GraveyardSearchScope.OPPONENT_GRAVEYARD)),
                 "{2}, {T}: Exile target card from an opponent's graveyard. If it's a creature card, draw a card."));
 
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                new SourceExiledCardsMatchingAtLeast(4, new CardTypePredicate(CardType.CREATURE)),
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new SourceExiledCardsMatchingAtLeast(4, new CardTypePredicate(CardType.CREATURE))),
                 new FlipCoinWinEffect(null, new SacrificeSelfThenEffect(
-                        new PutRandomCardExiledWithSourceIntoOwnersHandEffect()))));
+                        new PutRandomCardExiledWithSourceIntoOwnersHandEffect())));
     }
 }

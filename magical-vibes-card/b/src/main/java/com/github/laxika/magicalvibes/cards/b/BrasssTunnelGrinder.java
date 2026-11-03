@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.cards.t.TecutlanTheSearingRift;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.DescendedThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfThenTransformIfThresholdEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LCI", collectorNumber = "135")
@@ -22,8 +22,8 @@ public class BrasssTunnelGrinder extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new DiscardUpToThenDrawThatManyEffect(DiscardUpToThenDrawThatManyEffect.ANY_NUMBER, 1));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(new DescendedThisTurn(),
-                        new PutCounterOnSelfThenTransformIfThresholdEffect(CounterType.BORE, 3)));
+                TriggerOptions.DEFAULT.withInterveningIf(new DescendedThisTurn()),
+                new PutCounterOnSelfThenTransformIfThresholdEffect(CounterType.BORE, 3));
     }
 
     @Override

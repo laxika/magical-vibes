@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerDealtCombatDamageBySubtypeThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -20,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DRC", collectorNumber = "11")
@@ -36,8 +36,9 @@ public class LostMonarchOfIfnir extends Card {
                 GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)));
 
-        addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU), new ConditionalEffect(
-                new AnyPlayerDealtCombatDamageBySubtypeThisTurn(CardSubtype.ZOMBIE),
+        addTrigger(Triggers.secondMainPhase(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AnyPlayerDealtCombatDamageBySubtypeThisTurn(CardSubtype.ZOMBIE)),
                 SequenceEffect.of(
                         new MillEffect(3, MillRecipient.CONTROLLER),
                         new MayEffect(
@@ -45,6 +46,6 @@ public class LostMonarchOfIfnir extends Card {
                                         .destination(GraveyardChoiceDestination.HAND)
                                         .filter(new CardTypePredicate(CardType.CREATURE))
                                         .build(),
-                                "Return a creature card from your graveyard to your hand?"))));
+                                "Return a creature card from your graveyard to your hand?")));
     }
 }

@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureFromGraveyardToBattlefieldOrHandByManaValueEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FIC", collectorNumber = "76")
@@ -20,9 +20,9 @@ public class AerithLastAncient extends Card {
         // to the battlefield instead. The existing battlefield-or-hand effect uses a dynamic
         // mana-value bound; the two bounds make the threshold branch independent of the target's
         // mana value while preserving one graveyard target.
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new GainedLifeThisTurn(),
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new GainedLifeThisTurn()),
                 new ReturnTargetCreatureFromGraveyardToBattlefieldOrHandByManaValueEffect(
-                        new FixedIfCondition(new GainedLifeThisTurn(7), Integer.MAX_VALUE, -1))));
+                        new FixedIfCondition(new GainedLifeThisTurn(7), Integer.MAX_VALUE, -1)));
     }
 }

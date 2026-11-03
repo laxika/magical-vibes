@@ -2,13 +2,12 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SurvivalTriggerEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -28,11 +27,8 @@ public class GlimmerHoarder extends Card {
                 new DraftFromSpellbookEffect.SpellbookCard("YMID", "31"),
                 new DraftFromSpellbookEffect.SpellbookCard("LCI", "123")),
                 DraftFromSpellbookEffect.DraftMode.PERPETUALLY_BECOMES_ENCHANTMENT);
-        addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU),
-                new SurvivalTriggerEffect(new ConditionalEffect(
-                        new SourceIsTapped(),
-                        SequenceEffect.of(
-                                new LoseLifeEffect(1),
-                                spellbook))));
+        addTrigger(Triggers.secondMainPhase(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped()),
+                SequenceEffect.of(new LoseLifeEffect(1), spellbook));
     }
 }

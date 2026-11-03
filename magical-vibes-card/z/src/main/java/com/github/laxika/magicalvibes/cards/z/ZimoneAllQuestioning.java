@@ -11,13 +11,13 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsPrimeNumberOfLands;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnCreatedPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -34,8 +34,8 @@ public class ZimoneAllQuestioning extends Card {
                 new PermanentEnteredThisTurn(new CardTypePredicate(CardType.LAND), 1),
                 new ControllerControlsPrimeNumberOfLands()));
 
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                triggerCondition,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(triggerCondition),
                 SequenceEffect.of(
                         new CreateTokenEffect(
                                 CardType.CREATURE, 1, "Primo, the Indivisible", 0, 0,
@@ -43,6 +43,6 @@ public class ZimoneAllQuestioning extends Card {
                                 List.of(CardSubtype.FRACTAL), Set.of(), Set.of(),
                                 false, false, List.of(), List.of(), false, false, true, 0, Set.of()),
                         new PutCountersOnCreatedPermanentsEffect(
-                                CounterType.PLUS_ONE_PLUS_ONE, landsYouControl))));
+                                CounterType.PLUS_ONE_PLUS_ONE, landsYouControl)));
     }
 }

@@ -7,13 +7,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -40,7 +40,8 @@ public class DaybreakRanger extends Card {
 
         // At the beginning of each upkeep, if no spells were cast last turn, transform Daybreak Ranger.
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),
-                new ConditionalEffect(new NoSpellsCastLastTurn(), new TransformSelfEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(new NoSpellsCastLastTurn()),
+                new TransformSelfEffect());
     }
 
     @Override

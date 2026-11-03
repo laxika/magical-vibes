@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -36,11 +37,11 @@ public class MastersGuidance extends Card {
                                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(
+                TriggerOptions.DEFAULT.withInterveningIf(
                         new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentPowerAtLeastPredicate(4)
-                        ))),
-                        new DrawCardEffect()));
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentPowerAtLeastPredicate(4)
+                                )))),
+                new DrawCardEffect());
     }
 }

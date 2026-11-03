@@ -11,20 +11,19 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
-import com.github.laxika.magicalvibes.model.effect.SurvivalTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DSK", collectorNumber = "40")
 public class VeteranSurvivor extends Card {
 
     public VeteranSurvivor() {
-        addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU),
-                new SurvivalTriggerEffect(new ConditionalEffect(
-                        new SourceIsTapped(),
-                        new ExileGraveyardCardsEffect(
-                                1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
-                                null, null, false, true, false, null, false, true))));
+        addTrigger(Triggers.secondMainPhase(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped()),
+                new ExileGraveyardCardsEffect(
+                        1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
+                        null, null, false, true, false, null, false, true));
 
         addStaticEffect(new ConditionalEffect(
                 new SourceExiledCardsThreshold(3),

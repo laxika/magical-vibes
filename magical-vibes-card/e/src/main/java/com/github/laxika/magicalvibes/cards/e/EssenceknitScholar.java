@@ -7,12 +7,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourControlThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -33,8 +33,8 @@ public class EssenceknitScholar extends Card {
                 List.of(), false, false, false, 0, Set.of()));
 
         // At the beginning of your end step, if a creature died under your control this turn, draw a card.
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new CreatureDiedUnderYourControlThisTurn(),
-                new DrawCardEffect(1)));
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new CreatureDiedUnderYourControlThisTurn()),
+                new DrawCardEffect(1));
     }
 }

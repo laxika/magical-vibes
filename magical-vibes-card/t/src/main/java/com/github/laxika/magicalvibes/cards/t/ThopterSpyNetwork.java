@@ -7,13 +7,13 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -31,11 +31,12 @@ public class ThopterSpyNetwork extends Card {
     public ThopterSpyNetwork() {
         // "if you control an artifact" is an intervening-if (CR 603.4): checked as the upkeep
         // trigger would go on the stack and again on resolution.
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                new ControlsPermanentCount(1, new PermanentIsArtifactPredicate()),
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new ControlsPermanentCount(1, new PermanentIsArtifactPredicate())),
                 new CreateTokenEffect("Thopter", 1, 1,
                         null, List.of(CardSubtype.THOPTER),
-                        Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT))));
+                        Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT)));
 
         // Batched trigger: "one or more artifact creatures" is one event, so the draw happens once
         // per combat damage step per damaged player regardless of how many of them connected.

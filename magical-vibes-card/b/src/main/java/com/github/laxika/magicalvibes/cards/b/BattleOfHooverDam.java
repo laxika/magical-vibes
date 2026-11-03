@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -34,8 +33,9 @@ public class BattleOfHooverDam extends Card {
     public BattleOfHooverDam() {
         addStaticEffect(new ChooseModeOnEnterEffect(List.of(NCR, LEGION)));
 
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new SourceHasChosenMode(NCR), ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(NCR)),
+                ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
@@ -44,7 +44,7 @@ public class BattleOfHooverDam extends Card {
                         .targetGraveyard(true)
                         .enterWithCounter(CounterType.FINALITY)
                         .enterWithCounterCount(1)
-                        .build()));
+                        .build());
 
         target(TargetFilters.creatureYouControl())
                 .addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),

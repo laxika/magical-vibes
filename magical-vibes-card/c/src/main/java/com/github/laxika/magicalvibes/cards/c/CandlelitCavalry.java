@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Coven;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MID", collectorNumber = "175")
@@ -17,7 +17,8 @@ public class CandlelitCavalry extends Card {
     public CandlelitCavalry() {
         // Coven — At the beginning of combat on your turn, if you control three or more creatures
         // with different powers, this creature gains trample until end of turn.
-        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
-                new Coven(), new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new Coven()),
+                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF));
     }
 }

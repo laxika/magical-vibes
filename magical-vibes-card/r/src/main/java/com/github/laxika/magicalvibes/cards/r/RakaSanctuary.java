@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,8 +24,8 @@ public class RakaSanctuary extends Card {
         var controlsBlue = new ControlsPermanent(new PermanentColorInPredicate(Set.of(CardColor.BLUE)));
         var controlsWhiteAndBlue = new AllOf(List.of(controlsWhite, controlsBlue));
 
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                new AnyOf(List.of(controlsWhite, controlsBlue)),
-                new DealDamageToTargetCreatureEffect(new FixedIfCondition(controlsWhiteAndBlue, 3, 1))));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new AnyOf(List.of(controlsWhite, controlsBlue))),
+                new DealDamageToTargetCreatureEffect(new FixedIfCondition(controlsWhiteAndBlue, 3, 1)));
     }
 }

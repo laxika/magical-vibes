@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "40K", collectorNumber = "60")
@@ -19,12 +20,12 @@ public class TallymanOfNurgle extends Card {
         // lose 1 life. If seven or more creatures died this turn, instead you draw seven cards and you
         // lose 7 life.
         CreaturesDiedThisTurnAtLeast sevenDeaths = new CreaturesDiedThisTurnAtLeast(7);
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new CreaturesDiedThisTurnAtLeast(1),
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new CreaturesDiedThisTurnAtLeast(1)),
                 SequenceEffect.of(
                         new ConditionalEffect(sevenDeaths,
                                 SequenceEffect.of(new DrawCardEffect(7), new LoseLifeEffect(7))),
                         new ConditionalEffect(new NotCondition(sevenDeaths),
-                                SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1))))));
+                                SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1)))));
     }
 }

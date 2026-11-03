@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MeldWithNamedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -21,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -44,18 +44,19 @@ public class VanilleCheerfulLCie extends Card {
                         .mandatory(true)
                         .build()));
 
-        addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU), new ConditionalEffect(
-                new AllOf(List.of(
-                        new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
-                                new PermanentIsSourceCardPredicate(),
-                                new PermanentOwnedBySourceControllerPredicate()))),
-                        new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
-                                new PermanentNamedPredicate(PARTNER_NAME),
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentOwnedBySourceControllerPredicate()))))),
+        addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AllOf(List.of(
+                                new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsSourceCardPredicate(),
+                                        new PermanentOwnedBySourceControllerPredicate()))),
+                                new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
+                                        new PermanentNamedPredicate(PARTNER_NAME),
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentOwnedBySourceControllerPredicate())))))),
                 new MayPayManaEffect("{3}{B}{G}",
                         new MeldWithNamedCreatureEffect(PARTNER_NAME),
-                        "Pay {3}{B}{G} to meld Vanille and Fang?")));
+                        "Pay {3}{B}{G} to meld Vanille and Fang?"));
     }
 
     @Override

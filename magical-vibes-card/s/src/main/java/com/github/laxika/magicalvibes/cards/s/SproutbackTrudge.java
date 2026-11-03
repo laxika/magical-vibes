@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.LifeGainedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CastSourceCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -20,7 +19,7 @@ public class SproutbackTrudge extends Card {
     public SproutbackTrudge() {
         addStaticEffect(new ReduceOwnCastCostEffect(new LifeGainedThisTurn(CountScope.CONTROLLER)));
         addTrigger(new TriggerCondition(Triggers.endStep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT,
-                new ConditionalEffect(new GainedLifeThisTurn(), new CastSourceCardFromGraveyardEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(new GainedLifeThisTurn()),
+                new CastSourceCardFromGraveyardEffect());
     }
 }

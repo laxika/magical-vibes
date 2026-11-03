@@ -10,11 +10,11 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongSpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -30,12 +30,12 @@ public class RoothaMasteringTheMoment extends Card {
         GreatestManaValueAmongSpellsCastThisTurn greatestManaValue =
                 new GreatestManaValueAmongSpellsCastThisTurn(instantOrSorcery, CountScope.CONTROLLER);
 
-        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
-                new ControllerCastSpellThisTurn(instantOrSorcery),
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new ControllerCastSpellThisTurn(instantOrSorcery)),
                 new CreateTokenEffect(
                         CardType.CREATURE, new Fixed(1), "Elemental", greatestManaValue, greatestManaValue,
                         CardColor.BLUE, Set.of(CardColor.BLUE, CardColor.RED),
                         List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.FLYING, Keyword.HASTE), Set.of(),
-                        false, false, List.of(), List.of(), false, false, false, 0, Set.of())));
+                        false, false, List.of(), List.of(), false, false, false, 0, Set.of()));
     }
 }

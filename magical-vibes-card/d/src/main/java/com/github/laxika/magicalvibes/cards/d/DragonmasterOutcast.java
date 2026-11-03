@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -28,9 +28,9 @@ public class DragonmasterOutcast extends Card {
 
     public DragonmasterOutcast() {
         // At the beginning of your upkeep, if you control six or more lands, create a 5/5 red Dragon creature token with flying.
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                new ControlsPermanentCount(6, new PermanentIsLandPredicate()),
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new ControlsPermanentCount(6, new PermanentIsLandPredicate())),
                 new CreateTokenEffect("Dragon", 5, 5, CardColor.RED, List.of(CardSubtype.DRAGON),
-                        Set.of(Keyword.FLYING), Set.of())));
+                        Set.of(Keyword.FLYING), Set.of()));
     }
 }

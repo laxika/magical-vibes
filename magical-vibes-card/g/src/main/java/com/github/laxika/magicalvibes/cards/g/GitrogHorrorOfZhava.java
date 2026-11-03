@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeNontokenCreatureTapAndSeekLandSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantActivatedAbilityToTriggeringCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SeekCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -25,10 +25,9 @@ public class GitrogHorrorOfZhava extends Card {
         // At the beginning of each combat, if Gitrog is untapped, any opponent may sacrifice a
         // nontoken creature. If they do, tap Gitrog, then seek a land card onto the battlefield tapped.
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY),
-                new ConditionalEffect(
-                        new SourceUntapped(),
-                        new AnyOpponentMaySacrificeNontokenCreatureTapAndSeekLandSourceEffect(
-                                new SeekCardToBattlefieldEffect(new CardTypePredicate(CardType.LAND), true))));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceUntapped()),
+                new AnyOpponentMaySacrificeNontokenCreatureTapAndSeekLandSourceEffect(
+                        new SeekCardToBattlefieldEffect(new CardTypePredicate(CardType.LAND), true)));
 
         // Whenever a land enters under your control, it perpetually gains the activated ability.
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),

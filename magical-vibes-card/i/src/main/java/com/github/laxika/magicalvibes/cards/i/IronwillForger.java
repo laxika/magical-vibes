@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsOwnCommander;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -30,10 +30,9 @@ public class IronwillForger extends Card {
                 )),
                 "Target must be a nonlegendary creature you control"
         )).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new ConditionalEffect(
-                        new ControllerControlsOwnCommander(),
-                        new GrantEffectToTargetUntilEndOfTurnEffect(
-                                new TriggeredAbility(Triggers.attacks(),
-                                CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect.myriad()))));
+                TriggerOptions.DEFAULT.withInterveningIf(new ControllerControlsOwnCommander()),
+                new GrantEffectToTargetUntilEndOfTurnEffect(
+                        new TriggeredAbility(Triggers.attacks(),
+                        CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect.myriad())));
     }
 }

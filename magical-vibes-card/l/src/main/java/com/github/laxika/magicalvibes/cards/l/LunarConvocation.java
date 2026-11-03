@@ -10,13 +10,13 @@ import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.ControllerDidntLoseLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,17 +26,18 @@ import java.util.Set;
 public class LunarConvocation extends Card {
 
     public LunarConvocation() {
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new GainedLifeThisTurn(),
-                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT)));
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new GainedLifeThisTurn()),
+                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
 
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new AllConditions(List.of(
-                        new GainedLifeThisTurn(),
-                        new NotCondition(new ControllerDidntLoseLifeThisTurn())
-                )),
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AllConditions(List.of(
+                                        new GainedLifeThisTurn(),
+                                        new NotCondition(new ControllerDidntLoseLifeThisTurn())
+                                ))),
                 new CreateTokenEffect("Bat", 1, 1, CardColor.BLACK,
-                        List.of(CardSubtype.BAT), Set.of(Keyword.FLYING), Set.of())));
+                        List.of(CardSubtype.BAT), Set.of(Keyword.FLYING), Set.of()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

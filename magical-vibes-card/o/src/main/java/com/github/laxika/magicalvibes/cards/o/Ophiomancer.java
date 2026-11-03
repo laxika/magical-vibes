@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -25,9 +25,10 @@ public class Ophiomancer extends Card {
     public Ophiomancer() {
         // At the beginning of each upkeep, if you control no Snakes, create a 1/1 black Snake
         // creature token with deathtouch.
-        addTrigger(Triggers.upkeep(ActivePlayer.ANY), new ConditionalEffect(
-                new ControlsPermanentCountAtMost(0, new PermanentHasSubtypePredicate(CardSubtype.SNAKE)),
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new ControlsPermanentCountAtMost(0, new PermanentHasSubtypePredicate(CardSubtype.SNAKE))),
                 new CreateTokenEffect("Snake", 1, 1, CardColor.BLACK,
-                        List.of(CardSubtype.SNAKE), Set.of(Keyword.DEATHTOUCH), Set.of())));
+                        List.of(CardSubtype.SNAKE), Set.of(Keyword.DEATHTOUCH), Set.of()));
     }
 }

@@ -8,12 +8,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsOwnCommander;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,8 +26,8 @@ public class SiegeGangLieutenant extends Card {
     public SiegeGangLieutenant() {
         // Lieutenant — At the beginning of combat on your turn, if you control your commander,
         // create two 1/1 red Goblin creature tokens. Those tokens gain haste until end of turn.
-        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
-                new ControllerControlsOwnCommander(),
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new ControllerControlsOwnCommander()),
                 new CreateTokenEffect(
                         CardType.CREATURE,
                         2,
@@ -47,7 +47,7 @@ public class SiegeGangLieutenant extends Card {
                         false,
                         false,
                         0,
-                        Set.of(Keyword.HASTE))));
+                        Set.of(Keyword.HASTE)));
 
         // {2}, Sacrifice a Goblin: This creature deals 1 damage to any target.
         addActivatedAbility(new ActivatedAbility(

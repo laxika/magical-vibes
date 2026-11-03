@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -23,10 +23,11 @@ public class SunseedNurturer extends Card {
     public SunseedNurturer() {
         // At the beginning of your end step, if you control a creature with power 5 or greater,
         // you may gain 2 life.
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(), new PermanentPowerAtLeastPredicate(5)))),
-                new MayEffect(new GainLifeEffect(2), "Gain 2 life?")));
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(), new PermanentPowerAtLeastPredicate(5))))),
+                new MayEffect(new GainLifeEffect(2), "Gain 2 life?"));
 
         // {T}: Add {C}.
         addActivatedAbility(new ActivatedAbility(

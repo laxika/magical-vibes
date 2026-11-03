@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.effect.AnyOpponentMayTapCreatureTapAndCreateTokenSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 import java.util.Set;
@@ -20,9 +20,9 @@ import java.util.Set;
 public class ReservoirKraken extends Card {
 
     public ReservoirKraken() {
-        addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY), new ConditionalEffect(
-                new SourceUntapped(),
-                new AnyOpponentMayTapCreatureTapAndCreateTokenSourceEffect(fishToken())));
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceUntapped()),
+                new AnyOpponentMayTapCreatureTapAndCreateTokenSourceEffect(fishToken()));
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
     }
 

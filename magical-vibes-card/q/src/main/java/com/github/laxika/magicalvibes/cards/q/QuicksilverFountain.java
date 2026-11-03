@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetWhileHasCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -39,9 +39,9 @@ public class QuicksilverFountain extends Card {
         var nonIslandLand = new PermanentAllOfPredicate(List.of(
                 new PermanentIsLandPredicate(),
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.ISLAND))));
-        addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(
-                new NotCondition(new AnyPlayerControlsPermanent(nonIslandLand)),
-                new RemoveAllCountersOfTypeFromAllPermanentsEffect(CounterType.FLOOD,
-                        new PermanentIsLandPredicate())));
+        addTrigger(Triggers.endStep(ActivePlayer.ANY),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new NotCondition(new AnyPlayerControlsPermanent(nonIslandLand))),
+                new RemoveAllCountersOfTypeFromAllPermanentsEffect(CounterType.FLOOD, new PermanentIsLandPredicate()));
     }
 }

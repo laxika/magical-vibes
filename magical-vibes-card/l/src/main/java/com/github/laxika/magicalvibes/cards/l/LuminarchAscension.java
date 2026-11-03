@@ -8,11 +8,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerDidntLoseLifeThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -25,10 +25,10 @@ public class LuminarchAscension extends Card {
     public LuminarchAscension() {
         // At the beginning of each opponent's end step, if you didn't lose life this turn,
         // you may put a quest counter on this enchantment.
-        addTrigger(Triggers.endStep(ActivePlayer.OPPONENT), new ConditionalEffect(
-                new ControllerDidntLoseLifeThisTurn(),
+        addTrigger(Triggers.endStep(ActivePlayer.OPPONENT),
+                TriggerOptions.DEFAULT.withInterveningIf(new ControllerDidntLoseLifeThisTurn()),
                 new MayEffect(new PutCountersOnSelfEffect(CounterType.QUEST),
-                        "Put a quest counter on Luminarch Ascension?")));
+                        "Put a quest counter on Luminarch Ascension?"));
 
         // {1}{W}: Create a 4/4 white Angel creature token with flying. Activate only if this
         // enchantment has four or more quest counters on it.

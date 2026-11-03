@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.EachOpponentDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerRadCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -31,11 +32,11 @@ public class StruggleForProjectPurity extends Card {
     public StruggleForProjectPurity() {
         addStaticEffect(new ChooseModeOnEnterEffect(List.of(BROTHERHOOD, ENCLAVE)));
 
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                new SourceHasChosenMode(BROTHERHOOD),
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(BROTHERHOOD)),
                 SequenceEffect.of(
                         new EachOpponentDrawsCardEffect(1),
-                        new DrawCardEffect(new CardsDrawnThisResolution()))));
+                        new DrawCardEffect(new CardsDrawnThisResolution())));
 
         // "Whenever a player attacks you with one or more creatures" is the trigger event itself, so the
         // attack is judged once when it is declared. Rechecking it on resolution would wrongly stop the

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.CreaturesDiedThisTurnAtLeast;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -30,12 +29,11 @@ public class PerennialGravewarden extends Card {
         // At the beginning of your end step, if a creature entered and a creature died this turn,
         // return this card from your graveyard to the battlefield tapped.
         addTrigger(new TriggerCondition(Triggers.endStep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT,
-                new ConditionalEffect(
+                TriggerOptions.DEFAULT.withInterveningIf(
                         new AllOf(List.of(
                                 new PermanentEnteredThisTurn(
                                         new CardTypePredicate(CardType.CREATURE), 1, CountScope.ANY_PLAYER),
-                                new CreaturesDiedThisTurnAtLeast(1))),
-                        new ReturnSourceCardFromGraveyardToBattlefieldEffect(true)));
+                                new CreaturesDiedThisTurnAtLeast(1)))),
+                new ReturnSourceCardFromGraveyardToBattlefieldEffect(true));
     }
 }

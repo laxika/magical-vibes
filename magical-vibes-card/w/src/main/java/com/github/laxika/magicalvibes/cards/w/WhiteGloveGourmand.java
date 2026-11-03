@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.CreatureOfSubtypeDiedUnderYourControlThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -23,8 +23,8 @@ public class WhiteGloveGourmand extends Card {
                 new CreateTokenEffect(2, "Human Soldier", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of()));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(
-                        new CreatureOfSubtypeDiedUnderYourControlThisTurn(CardSubtype.HUMAN),
-                        CreateTokenEffect.ofFoodToken(1)));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new CreatureOfSubtypeDiedUnderYourControlThisTurn(CardSubtype.HUMAN)),
+                CreateTokenEffect.ofFoodToken(1));
     }
 }

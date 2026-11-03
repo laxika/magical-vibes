@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMo
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSolved;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -23,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSuspectedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -41,12 +41,12 @@ public class CaseOfTheStashedSkeleton extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.SKELETON),
                 new PermanentIsSuspectedPredicate()));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(
+                TriggerOptions.DEFAULT.withInterveningIf(
                         new AllOf(List.of(
-                                new ControlsPermanentCountAtMost(0, suspectedSkeleton),
-                                new NotCondition(new SourceIsSolved())
-                        )),
-                        new SolveSourceEffect()));
+                                        new ControlsPermanentCountAtMost(0, suspectedSkeleton),
+                                        new NotCondition(new SourceIsSolved())
+                                ))),
+                new SolveSourceEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

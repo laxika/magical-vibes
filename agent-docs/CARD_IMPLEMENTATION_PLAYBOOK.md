@@ -517,9 +517,9 @@ boolean sharesType = (aIsChangeling && (bIsChangeling || !typesB.isEmpty()))
    - Add front face abilities/effects
    - Override `getBackFaceClassName()` returning `"BackFaceName"`
 3. **Transform trigger** — Choose the right pattern:
-   - Werewolf: `Triggers.upkeep(ActivePlayer.ANY)` + `ConditionalEffect(new NoSpellsCastLastTurn(), wrapped)` (front) / `ConditionalEffect(new TwoOrMoreSpellsCastLastTurn(), wrapped)` (back)
-   - Life threshold: `ConditionalEffect(new ControllerLifeAtLeast(N), TransformSelfEffect())` or `ConditionalEffect(new ControllerLifeAtMost(N), MayEffect(TransformSelfEffect(), "..."))`
-   - Every player's life: `ConditionalEffect(new EachPlayerLifeAtMost(N), TransformSelfEffect())` on `Triggers.upkeep(ActivePlayer.YOU)` (Cryptolith Fragment)
+   - Werewolf: `addTrigger(Triggers.upkeep(ActivePlayer.ANY), TriggerOptions.DEFAULT.withInterveningIf(new NoSpellsCastLastTurn()), wrapped)` (front) / `withInterveningIf(new TwoOrMoreSpellsCastLastTurn())` (back)
+   - Life threshold: `ConditionalEffect(new ControllerLifeAtLeast(N), TransformSelfEffect())` or `ConditionalEffect(new ControllerLifeAtMost(N), MayEffect(TransformSelfEffect(), "..."))`; on an "At the beginning of …, if …" ability the condition is the option `TriggerOptions.DEFAULT.withInterveningIf(condition)` instead (Arguel's Blood Fast)
+   - Every player's life: `addTrigger(Triggers.upkeep(ActivePlayer.YOU), TriggerOptions.DEFAULT.withInterveningIf(new EachPlayerLifeAtMost(N)), TransformSelfEffect())` (Cryptolith Fragment)
    - Counter threshold: `PutCounterOnSelfThenTransformIfThresholdEffect(counterType, N, optional, onTransformEffects)`
    - Creature count: `ConditionalEffect(new ControlsPermanentCount(N, PermanentIsCreaturePredicate), TransformSelfEffect())`
    - Activated ability: `ActivatedAbility(tap, null, List.of(TransformSelfEffect()), "...")` with optional subtype restriction
@@ -611,7 +611,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new CardDirectlyAboveSelfInGraveyard(filter), wrapped)` | - | yes | yes (graveyard upkeep / graveyard end step) | like the above but matches only the single card *immediately* above self in the ordered graveyard. Krovikan Horror: `new CardTypePredicate(CardType.CREATURE)` |
 | `ConditionalEffect(new CardsInLibraryAtLeast(threshold), wrapped)` | - | yes | yes (upkeep) |
 | `ConditionalEffect(new CardsInHandAtLeast(threshold), wrapped)` | - | yes | yes (upkeep) |
-| `ConditionalEffect(new SourceIsTapped(), wrapped)` | - | yes | - | intervening-if "if this permanent is tapped" — reads `source.isTapped()`. Mana Vault's `Triggers.drawStep(ActivePlayer.YOU)` deals 1 damage to controller only while tapped |
+| `ConditionalEffect(new SourceIsTapped(), wrapped)` | - | yes | - | intervening-if "if this permanent is tapped" — reads `source.isTapped()`. Mana Vault's `Triggers.drawStep(ActivePlayer.YOU)` ability, authored with `TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped())`, deals 1 damage to controller only while tapped |
 | `ConditionalEffect(new SourceStartedTurnUntapped(), wrapped)` | - | yes | - | intervening-if "if this permanent started the turn untapped" — reads the source's status before its controller's untap step; use for Rasputin Dreamweaver's upkeep trigger |
 | `ConditionalEffect(new SourceIsCreature(), wrapped)` | - | yes | - | intervening-if "if this permanent is a creature" — reads the source's effective creature type |
 | `ConditionalEffect(new SourceIsToken(), wrapped)` | - | yes | - | intervening-if "if this permanent is a token" — reads `source.getCard().isToken()`. Wrap in `NotCondition` for Progenitor Mimic's "if this creature isn't a token" |
@@ -628,7 +628,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new NotControllerTurn(), wrapped)` | yes | - | - |
 | `ConditionalEffect(new OpponentControlsPermanent(filter), wrapped)` | yes | yes | - |
 | `ConditionalEffect(new AnyPlayerControlsPermanent(filter), wrapped)` | yes | - | - |
-| `ConditionalEffect(new ActivePlayerControlsPermanent(filter), wrapped)` | - | yes | yes (each-player upkeep) | "if **that player** controls a [filter]" on `Triggers.upkeep(ActivePlayer.ANY)` — scoped to `gameData.activePlayerId`, not the source's controller (Urborg Stalker). Checked as intervening-if in `StepTriggerService` and re-checked at resolution |
+| `ConditionalEffect(new ActivePlayerControlsPermanent(filter), wrapped)` | - | yes | yes (each-player upkeep) | "if **that player** controls a [filter]" on `Triggers.upkeep(ActivePlayer.ANY)`, authored as the option `TriggerOptions.DEFAULT.withInterveningIf(...)` — scoped to `gameData.activePlayerId`, not the source's controller (Urborg Stalker). Checked as intervening-if in `StepTriggerService` and re-checked at resolution |
 | `ConditionalEffect(new SelfHasKeyword(keyword), wrapped)` | yes | - | - |
 | `ConditionalEffect(new TopCardOfLibraryColor(color), wrapped)` | yes | - | - |
 | `ConditionalEffect(new BlockedByMinCreatures(minBlockers), wrapped)` | yes | - | - |

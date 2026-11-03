@@ -4,13 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M21", collectorNumber = "109")
@@ -26,8 +26,9 @@ public class LilianasDevotee extends Card {
 
         // At the beginning of your end step, if a creature died this turn, you may pay {1}{B}.
         // If you do, create a 2/2 black Zombie creature token.
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(new Morbid(),
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new Morbid()),
                 new MayPayManaEffect("{1}{B}", CreateTokenEffect.blackZombie(1),
-                        "Pay {1}{B} to create a Zombie token?")));
+                        "Pay {1}{B} to create a Zombie token?"));
     }
 }

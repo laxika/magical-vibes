@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "JUD", collectorNumber = "29")
@@ -15,6 +15,7 @@ public class TestOfEndurance extends Card {
 
     public TestOfEndurance() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new ConditionalEffect(new ControllerLifeAtLeast(50), new WinGameEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(new ControllerLifeAtLeast(50)),
+                new WinGameEffect());
     }
 }

@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -40,11 +41,12 @@ public class OverlordOfTheFloodpits extends Card {
         addStaticEffect(new ConditionalEffect(
                 new CastForAlternateCost(),
                 new EnterWithCountersEffect(CounterType.TIME, new Fixed(4))));
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new AllOf(List.of(
-                        new CastForAlternateCost(),
-                        new SourceCounterThreshold(1, CounterType.TIME))),
-                new RemoveCounterFromSourceEffect(CounterType.TIME, 1)));
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AllOf(List.of(
+                                new CastForAlternateCost(),
+                                new SourceCounterThreshold(1, CounterType.TIME)))),
+                new RemoveCounterFromSourceEffect(CounterType.TIME, 1));
         addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new CastForAlternateCost(),

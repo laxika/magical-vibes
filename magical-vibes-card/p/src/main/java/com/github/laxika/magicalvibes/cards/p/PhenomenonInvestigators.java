@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -40,12 +39,12 @@ public class PhenomenonInvestigators extends Card {
                 believeHorror);
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(new SourceHasChosenMode(DOUBT),
-                        new MayEffect(
-                                new ReturnPermanentOwnedByPlayerToHandThenEffect(
-                                        new PermanentNotPredicate(new PermanentIsLandPredicate()),
-                                        new DrawCardEffect(),
-                                        "nonland permanent"),
-                                "Return a nonland permanent you own to your hand?")));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(DOUBT)),
+                new MayEffect(
+                        new ReturnPermanentOwnedByPlayerToHandThenEffect(
+                                new PermanentNotPredicate(new PermanentIsLandPredicate()),
+                                new DrawCardEffect(),
+                                "nonland permanent"),
+                        "Return a nonland permanent you own to your hand?"));
     }
 }

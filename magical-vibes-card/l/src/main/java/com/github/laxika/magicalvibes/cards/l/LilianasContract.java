@@ -4,13 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithDifferentNames;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M19", collectorNumber = "107")
@@ -26,9 +26,9 @@ public class LilianasContract extends Card {
         // At the beginning of your upkeep, if you control four or more Demons with different names,
         // you win the game.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new ConditionalEffect(
+                TriggerOptions.DEFAULT.withInterveningIf(
                         new ControlsPermanentsWithDifferentNames(4,
-                                new PermanentHasSubtypePredicate(CardSubtype.DEMON)),
-                        new WinGameEffect()));
+                                new PermanentHasSubtypePredicate(CardSubtype.DEMON))),
+                new WinGameEffect());
     }
 }

@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDiscardsTwoUnlessNonlandEffect;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -50,12 +50,13 @@ public class BanditsTalent extends Card {
                         new NotCondition(new SourceCounterThreshold(2, CounterType.LEVEL)))),
                 "This Class must be level 2."));
 
-        addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT), new ConditionalEffect(
-                new AllOf(List.of(new SourceCounterThreshold(1, CounterType.LEVEL),
-                        new ActivePlayerHandAtMost(1))),
-                new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER)));
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                new SourceCounterThreshold(2, CounterType.LEVEL),
-                new DrawCardEffect(new PlayersWithCardsInHandAtMost(CountScope.OPPONENTS, 1))));
+        addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AllOf(List.of(new SourceCounterThreshold(1, CounterType.LEVEL),
+                                new ActivePlayerHandAtMost(1)))),
+                new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(2, CounterType.LEVEL)),
+                new DrawCardEffect(new PlayersWithCardsInHandAtMost(CountScope.OPPONENTS, 1)));
     }
 }

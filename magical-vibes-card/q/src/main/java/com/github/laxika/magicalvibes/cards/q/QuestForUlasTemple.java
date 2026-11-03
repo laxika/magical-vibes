@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealMatchingAndPutCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -37,13 +37,13 @@ public class QuestForUlasTemple extends Card {
                         new CardSubtypePredicate(CardSubtype.SERPENT)
                 ))
         ));
-        addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(
-                new SourceCounterThreshold(3, CounterType.QUEST),
+        addTrigger(Triggers.endStep(ActivePlayer.ANY),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(3, CounterType.QUEST)),
                 new MayEffect(
                         new PutCardToBattlefieldEffect(
                                 seaCreature,
                                 "Kraken, Leviathan, Octopus, or Serpent creature"),
                         "Put a Kraken, Leviathan, Octopus, or Serpent creature card from your hand "
-                                + "onto the battlefield?")));
+                                + "onto the battlefield?"));
     }
 }

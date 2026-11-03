@@ -7,13 +7,13 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -31,9 +31,10 @@ public class SerratedArrows extends Card {
 
         // At the beginning of your upkeep, if there are no arrowhead counters on this artifact,
         // sacrifice it.
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                new NotCondition(new SourceCounterThreshold(1, CounterType.ARROWHEAD)),
-                new SacrificeSelfEffect()));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new NotCondition(new SourceCounterThreshold(1, CounterType.ARROWHEAD))),
+                new SacrificeSelfEffect());
 
         // {T}, Remove an arrowhead counter from this artifact: Put a -1/-1 counter on target creature.
         addActivatedAbility(new ActivatedAbility(

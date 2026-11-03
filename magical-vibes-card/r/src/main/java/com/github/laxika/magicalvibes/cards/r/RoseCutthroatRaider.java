@@ -9,12 +9,12 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.OpponentsAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -27,7 +27,8 @@ public class RoseCutthroatRaider extends Card {
 
     public RoseCutthroatRaider() {
         addTrigger(Triggers.endOfCombat(),
-                new ConditionalEffect(new Raid(), junkToken(new OpponentsAttackedThisTurn())));
+                TriggerOptions.DEFAULT.withInterveningIf(new Raid()),
+                junkToken(new OpponentsAttackedThisTurn()));
 
         addTrigger(Triggers.sacrificed(new PermanentHasSubtypePredicate(CardSubtype.JUNK), ObjectRelation.YOU_CONTROL),
                 new AwardManaEffect(ManaColor.RED));

@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.cards.s.SecretRendezvous;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreCardsInHandThanController;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
@@ -21,8 +21,9 @@ public class JoinedResearchers extends Card {
     public JoinedResearchers() {
         setBackFaceCard(new SecretRendezvous());
 
-        addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(
-                new AnOpponentHasMoreCardsInHandThanController(), new BecomePreparedEffect()));
+        addTrigger(Triggers.endStep(ActivePlayer.ANY),
+                TriggerOptions.DEFAULT.withInterveningIf(new AnOpponentHasMoreCardsInHandThanController()),
+                new BecomePreparedEffect());
     }
 
     @Override

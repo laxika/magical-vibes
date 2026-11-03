@@ -6,11 +6,11 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongControlledCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MAT", collectorNumber = "30")
@@ -20,13 +20,13 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class FeastOfTheVictoriousDead extends Card {
 
     public FeastOfTheVictoriousDead() {
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new Morbid(),
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new Morbid()),
                 SequenceEffect.of(
-                        new GainLifeEffect(new CreatureDeathsThisTurn(CountScope.ANY_PLAYER)),
-                        new DistributeCountersAmongControlledCreaturesEffect(
-                                CounterType.PLUS_ONE_PLUS_ONE,
-                                new CreatureDeathsThisTurn(CountScope.ANY_PLAYER))
-                )));
+                                new GainLifeEffect(new CreatureDeathsThisTurn(CountScope.ANY_PLAYER)),
+                                new DistributeCountersAmongControlledCreaturesEffect(
+                                        CounterType.PLUS_ONE_PLUS_ONE,
+                                        new CreatureDeathsThisTurn(CountScope.ANY_PLAYER))
+                        ));
     }
 }

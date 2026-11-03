@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -20,8 +20,9 @@ import java.util.List;
 public class SeanceBoard extends Card {
 
     public SeanceBoard() {
-        addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(
-                new Morbid(), new PutCountersOnSelfEffect(CounterType.SOUL)));
+        addTrigger(Triggers.endStep(ActivePlayer.ANY),
+                TriggerOptions.DEFAULT.withInterveningIf(new Morbid()),
+                new PutCountersOnSelfEffect(CounterType.SOUL));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

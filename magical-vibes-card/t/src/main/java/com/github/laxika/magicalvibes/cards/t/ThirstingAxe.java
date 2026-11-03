@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import java.util.List;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.condition.EquippedCreatureDidntDealCombatDamageToCreatureThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -22,12 +22,13 @@ public class ThirstingAxe extends Card {
         addStaticEffect(new StaticBoostEffect(4, 0, GrantScope.EQUIPPED_CREATURE));
         // You can only sacrifice a permanent you control (CR 701.21a), so an opponent's equipped
         // creature is left alone.
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new AllConditions(List.of(
-                        new EquippedCreatureDidntDealCombatDamageToCreatureThisTurn(),
-                        new EnchantedPermanentMatches(new PermanentControlledBySourceControllerPredicate(),
-                                "you control equipped creature"))),
-                new SacrificeEnchantedCreatureEffect()));
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AllConditions(List.of(
+                                new EquippedCreatureDidntDealCombatDamageToCreatureThisTurn(),
+                                new EnchantedPermanentMatches(new PermanentControlledBySourceControllerPredicate(),
+                                        "you control equipped creature")))),
+                new SacrificeEnchantedCreatureEffect());
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

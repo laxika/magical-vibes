@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControllerDidntLoseLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -17,10 +17,11 @@ import java.util.List;
 public class StarlitSoothsayer extends Card {
 
     public StarlitSoothsayer() {
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new AnyOf(List.of(
-                        new GainedLifeThisTurn(),
-                        new NotCondition(new ControllerDidntLoseLifeThisTurn()))),
-                new SurveilEffect(1)));
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AnyOf(List.of(
+                                new GainedLifeThisTurn(),
+                                new NotCondition(new ControllerDidntLoseLifeThisTurn())))),
+                new SurveilEffect(1));
     }
 }

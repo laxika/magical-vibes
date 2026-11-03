@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "HOC", collectorNumber = "15")
@@ -17,8 +17,8 @@ public class TheGaffer extends Card {
 
     public TheGaffer() {
         // At the beginning of each end step, if you gained 3 or more life this turn, draw a card.
-        addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(
-                new GainedLifeThisTurn(3),
-                new DrawCardEffect(1)));
+        addTrigger(Triggers.endStep(ActivePlayer.ANY),
+                TriggerOptions.DEFAULT.withInterveningIf(new GainedLifeThisTurn(3)),
+                new DrawCardEffect(1));
     }
 }

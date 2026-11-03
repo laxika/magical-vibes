@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "KLD", collectorNumber = "32")
@@ -22,13 +23,13 @@ public class ToolcraftExemplar extends Card {
         // At the beginning of combat on your turn, if you control an artifact, this creature
         // gets +2/+1 until end of turn. If you control three or more artifacts, it also gains
         // first strike until end of turn.
-        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
-                new ControlsPermanentCount(1, new PermanentIsArtifactPredicate()),
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new ControlsPermanentCount(1, new PermanentIsArtifactPredicate())),
                 SequenceEffect.of(
-                        new BoostSelfEffect(2, 1),
-                        new ConditionalEffect(new Metalcraft(),
-                                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF))
-                )
-        ));
+                                new BoostSelfEffect(2, 1),
+                                new ConditionalEffect(new Metalcraft(),
+                                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF))
+                        ));
     }
 }

@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.i.ItThatRidesAsOne;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "EMN", collectorNumber = "33")
@@ -17,7 +17,8 @@ public class LoneRider extends Card {
         setBackFaceCard(new ItThatRidesAsOne());
 
         addTrigger(Triggers.endStep(ActivePlayer.ANY),
-                new ConditionalEffect(new GainedLifeThisTurn(3), new TransformSelfEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(new GainedLifeThisTurn(3)),
+                new TransformSelfEffect());
     }
 
     @Override

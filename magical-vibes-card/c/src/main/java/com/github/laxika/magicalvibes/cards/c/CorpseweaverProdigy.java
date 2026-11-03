@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCreaturesInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YSOS", collectorNumber = "5")
@@ -18,7 +18,8 @@ public class CorpseweaverProdigy extends Card {
 
         // Infusion — At the beginning of your second main phase, if you gained life this turn,
         // conjure a card named Bridge from Below into your graveyard.
-        addTrigger(Triggers.secondMainPhase(ActivePlayer.YOU), new ConditionalEffect(
-                new GainedLifeThisTurn(), new ConjureCardToGraveyardEffect("FUT", "81")));
+        addTrigger(Triggers.secondMainPhase(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new GainedLifeThisTurn()),
+                new ConjureCardToGraveyardEffect("FUT", "81"));
     }
 }

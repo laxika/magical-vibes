@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEf
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "VOW", collectorNumber = "12")
@@ -20,9 +21,10 @@ public class FaithboundJudge extends Card {
     public FaithboundJudge() {
         setBackFaceCard(new SinnersJudgment());
 
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                new NotCondition(new SourceCounterThreshold(3, CounterType.JUDGMENT)),
-                new PutCountersOnSelfEffect(CounterType.JUDGMENT)));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new NotCondition(new SourceCounterThreshold(3, CounterType.JUDGMENT))),
+                new PutCountersOnSelfEffect(CounterType.JUDGMENT));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.JUDGMENT),
                 new CanAttackAsThoughNoDefenderEffect()));

@@ -6,11 +6,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.ControlsOtherPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -21,9 +21,9 @@ public class PlatoonDispenser extends Card {
 
     public PlatoonDispenser() {
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(
-                        new ControlsOtherPermanentCount(2, new PermanentIsCreaturePredicate()),
-                        new DrawCardEffect(1)));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new ControlsOtherPermanentCount(2, new PermanentIsCreaturePredicate())),
+                new DrawCardEffect(1));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

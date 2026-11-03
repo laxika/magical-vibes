@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceHasColor;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantRandomColorToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Arrays;
@@ -23,10 +23,11 @@ public class OpulentClomper extends Card {
         ColorsAmongControlledPermanents colorsAmongControlledPermanents = new ColorsAmongControlledPermanents();
         addStaticEffect(new SetPowerToughnessToAmountEffect(colorsAmongControlledPermanents, colorsAmongControlledPermanents));
 
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                new NotCondition(new AllOf(Arrays.stream(CardColor.values())
-                        .map(color -> (Condition) new SourceHasColor(color))
-                        .toList())),
-                new GrantRandomColorToSourceEffect()));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new NotCondition(new AllOf(Arrays.stream(CardColor.values())
+                                .map(color -> (Condition) new SourceHasColor(color))
+                                .toList()))),
+                new GrantRandomColorToSourceEffect());
     }
 }

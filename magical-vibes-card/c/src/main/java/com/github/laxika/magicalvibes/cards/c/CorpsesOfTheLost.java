@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.DescendedThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -33,9 +33,10 @@ public class CorpsesOfTheLost extends Card {
                         List.of(CardSubtype.SKELETON, CardSubtype.PIRATE), Set.of(), Set.of()));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(new DescendedThisTurn(), new MayPayLifeEffect(
+                TriggerOptions.DEFAULT.withInterveningIf(new DescendedThisTurn()),
+                new MayPayLifeEffect(
                         1,
                         ReturnToHandEffect.self(),
-                        "Pay 1 life to return Corpses of the Lost to its owner's hand?")));
+                        "Pay 1 life to return Corpses of the Lost to its owner's hand?"));
     }
 }

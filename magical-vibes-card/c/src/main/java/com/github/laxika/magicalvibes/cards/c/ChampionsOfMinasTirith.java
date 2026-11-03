@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.condition.ControllerIsMonarch;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.OpponentCantAttackSourceControllerThisCombatEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LTC", collectorNumber = "10")
@@ -23,11 +23,12 @@ public class ChampionsOfMinasTirith extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new BecomeMonarchEffect());
 
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.OPPONENT),
-                new ConditionalEffect(new ControllerIsMonarch(), MayPayManaEffect.dynamic(
+                TriggerOptions.DEFAULT.withInterveningIf(new ControllerIsMonarch()),
+                MayPayManaEffect.dynamic(
                         new CardsInHand(CountScope.CONTROLLER),
                         null,
                         "Pay {X}, where X is the number of cards in your hand?",
                         MayPayPayer.ACTIVE_PLAYER,
-                        new OpponentCantAttackSourceControllerThisCombatEffect())));
+                        new OpponentCantAttackSourceControllerThisCombatEffect()));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.PreviousActivePlayerCastTwoOrMoreSpellsLastTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -20,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -31,7 +31,8 @@ public class TovolarsPackleader extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), wolfTokens());
         addTrigger(Triggers.attacks(), wolfTokens());
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),
-                new ConditionalEffect(new PreviousActivePlayerCastTwoOrMoreSpellsLastTurn(), new TransformSelfEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(new PreviousActivePlayerCastTwoOrMoreSpellsLastTurn()),
+                new TransformSelfEffect());
 
         TargetFilter wolfOrWerewolfYouControl = new ControlledPermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.CardsAboveSelfInGraveyard;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
@@ -28,15 +27,14 @@ public class NetherShadow extends Card {
 
     public NetherShadow() {
         addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT,
-                new ConditionalEffect(
-                        new CardsAboveSelfInGraveyard(3, new CardTypePredicate(CardType.CREATURE)),
-                        new MayEffect(
-                                ReturnCardFromGraveyardEffect.builder()
-                                        .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                                        .filter(new CardIsSelfPredicate())
-                                        .returnAll(true)
-                                        .build(),
-                                "Put Nether Shadow onto the battlefield from your graveyard?")));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new CardsAboveSelfInGraveyard(3, new CardTypePredicate(CardType.CREATURE))),
+                new MayEffect(
+                        ReturnCardFromGraveyardEffect.builder()
+                                .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                                .filter(new CardIsSelfPredicate())
+                                .returnAll(true)
+                                .build(),
+                        "Put Nether Shadow onto the battlefield from your graveyard?"));
     }
 }

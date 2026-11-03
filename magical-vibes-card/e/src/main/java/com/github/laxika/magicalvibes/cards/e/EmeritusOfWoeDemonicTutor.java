@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.cards.d.DemonicTutor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreCreaturesDiedThisTurn;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /** Emeritus of Woe // Demonic Tutor (SOS 80). */
@@ -17,8 +17,9 @@ public class EmeritusOfWoeDemonicTutor extends Card {
         setBackFaceCard(new DemonicTutor());
 
         addStaticEffect(new BecomePreparedEffect());
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new TwoOrMoreCreaturesDiedThisTurn(), new BecomePreparedEffect()));
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new TwoOrMoreCreaturesDiedThisTurn()),
+                new BecomePreparedEffect());
     }
 
     @Override

@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -5276,6 +5276,114 @@ effects; the nested `ConditionalEffect`s.
   `ETBTokenTargetServiceTest` 4, `ValidTargetServiceTest` 2, `CreatureControlServiceTest` 1,
   `SimulationCopyCompletenessTest` 1) and `EtbEffectResolverTest`'s 3 above.
 - AI: `GameDataDeepCopyTest` passes; `TargetPolarityGuardTest` has its 2 known failures.
+- The full suite was not run here.
+
+#### Run 5: steps and phases
+
+Step 13 family 1: every "at the beginning of [step or phase]" ability (`Triggers.upkeep`, `drawStep`,
+`precombatMainPhase`, `beginningOfCombat`, `endOfCombat()`, `postcombatMainPhase`, `secondMainPhase`, `endStep`, in any
+zone, collected by `StepTriggerService`) is authored with its trigger-level properties as `TriggerOptions`, and
+`SurvivalTriggerEffect` is gone.
+
+**Authoring.**
+
+- "At the beginning of …, if …" (CR 603.4, checked) is `addTrigger(<step trigger>[, TriggerMode.X],
+  TriggerOptions.DEFAULT.withInterveningIf(condition), effect…)`, on the card or its target group; a
+  `new TriggerCondition(…)` ability's `TriggerOptions.DEFAULT` gains the option. So are the intervening "if"s keywords
+  and card types define: vanishing (CR 702.63a, checked: "if this permanent has a time counter on it"), impending
+  (CR 702.176a, checked), a Case's "To solve" ability and its "Solved —" step abilities (CR 719.3c, checked), and the
+  abilities a permanent has only at a Class level, in a chosen mode, with a door unlocked, at max speed or harnessed
+  (as runs 2 and 3a made those conditions options in their families).
+- "This ability triggers only once" is `.withLimit(TriggerLimit.ONCE)` (Acrobatic Cheerleader, Jet Collector, Pearl
+  Collector), no longer an `OnceOnlyTriggerEffect` under the wrapper.
+- "At the beginning of your second main phase" is `Triggers.secondMainPhase(ActivePlayer.YOU)`, the turn's second main
+  phase (CR 505.1 and 505.1a, checked: every main phase after the first is a postcombat main phase, but only one is the
+  second), never `postcombatMainPhase`. That covers Survival, which was `postcombatMainPhase` +
+  `SurvivalTriggerEffect`.
+- Which wrappers are intervening "if"s was decided by the Oracle text: the card has an "At …, if" ability, or it is in
+  the script's `INTERVENING_CARDS` (the keywords above; one Oracle ability split over two abilities, as Arvad, Asylum
+  Visitor and Kjeldoran Home Guard are; werewolf and day/night back faces, which have no Oracle text of their own in the
+  cache, and Marchesa, Resolute Monarch).
+
+**The engine.** The readers see what they saw before, as in run 4a:
+
+- `Card.getLegacyTriggerEffects(Trigger, Zone)` / `getLegacyTriggerEffectRegistrations(Trigger, Zone)` give the
+  abilities with that trigger functioning in the zone, each effect wrapped in its ability's options by
+  `TriggeredAbility.legacyEffects()` (from the slot index, so an effect keeps its identity across calls);
+  `GameQueryService.getEffectiveGraveyardLegacyTriggerEffects` is their graveyard form. `legacyEffects()` now also
+  gives the limit `ONCE` as an `OnceOnlyTriggerEffect` inside the intervening "if", the form the step cards wrote; its
+  only other user, Sleuth Instructor (turned face up), is collected through the trigger pipeline, which reads the
+  options and not this view.
+- `scripts/step14-step-readers.py` moved every card-ability reader of a step trigger to the legacy view:
+  `StepTriggerService` (all but the Saga chapter reader), `Permanent.hasCumulativeUpkeep`, `GameSetupService`'s
+  conspiracy filter, `PermanentRemovalService` (Wall of Nets' end-of-combat exile), `PermanentCounterSupport`,
+  `TargetLegalityService`'s active-player Oath check and `PlanechaseService.trigger`, which reads every planar trigger
+  that way, so a plane's intervening-if option is checked as its wrapper was.
+- `StepTriggerService.handleMainPhaseTriggers` no longer unwraps Survival: `SurvivalTriggerEffect` and
+  `SurvivalTriggerSupport` are deleted, with `GameData.survivalTriggersEvaluated`, which nothing read or wrote any more.
+
+**Cards.** `scripts/step14-step-options.py` (per letter module; `--dry-run` prints the diffs, `--report` the decision
+of each ability) converted 660 abilities in 647 card classes; it stops on any wrapped step ability it has no decision
+for, so none is decided silently. An effect passed as a local variable is followed to its one definition.
+`scripts/step14-step-scan.py` lists the step abilities that still carry a wrapper. Curse of Obsession's and Tenuous
+Truce's `TargetPlayerIsActive` wrapper was always true on `endStep(ENCHANTED_PLAYER)` and is dropped.
+`scripts/step14-step-docs.py` rewrote the agent-docs rows of the converted cards (`ORACLE_TEXT_EFFECT_MAP.md`, six
+`CARD_PATTERNS_*` files); the `SurvivalTriggerEffect` entries of `EFFECTS_INDEX.md` and `EFFECTS_QUICK_REFERENCE.md`
+are gone, their `OnceOnlyTriggerEffect` entries name the `ONCE` limit, and `CARD_IMPLEMENTATION_PLAYBOOK.md`'s
+transform-trigger and condition rows show the option (by hand).
+
+**Kept, with their reason (the script's `NOT_INTERVENING`).** The wrapper is the effect text's own "if", not an
+intervening "if"; the step collectors check a wrapper's condition as the ability triggers whatever its flag says, so
+`unless` would change when it is checked, and run 16 decides them with the `interveningIf` flag: Aggression ("destroy
+that creature if it didn't attack this turn"), Clockwork Dragon and Clockwork Vorrac (a delayed "at end of combat"
+removal written as an end-of-combat ability gated on having attacked or blocked), Kjeldoran Frostbeast (gated on
+having been in combat), Laboratory Drudge and Ludevic, Necro-Alchemist ("draw a card if …"), Throat Wolf, and Does
+Machines' "If it isn't a creature" (its Level 3 condition is an option). The nested `ConditionalEffect`s (inside a
+`SequenceEffect`, `MayEffect` and so on: Glimmer Seeker's two branches, Search for Azcanta's transform) are effect-text
+conditions and stay, as in run 4b. Ashling, Rimebound's `TriggerMode.INDEPENDENT` is run 16's; granted abilities
+(Tawnos Endures, Okoye's attacks ability) belong to their families.
+
+**Behaviour changes.**
+
+- Survival (Cautious Survivor, Cynical Loner, Defiant Survivor, Glimmer Hoarder, Glimmer Seeker, House Cartographer,
+  Improvising Aerialist, Kona, Rescue Beastie, Reluctant Role Model, Rip, Spawn Hunter, Rootwise Survivor, Savior of the
+  Small, Shrewd Storyteller, Veteran Survivor, Wary Zone Guard, Effie, Fast Learner): after an
+  additional combat phase with no main phase between the two combats, the main phase that follows is the turn's second
+  and the ability triggers; before, any additional combat this turn stopped it.
+- Acrobatic Cheerleader, Amber-Plate Ainok, Jet Collector, Lost Monarch of Ifnir, Pearl Collector and Scheming
+  Silvertongue (the other "second main phase" cards, which were on `postcombatMainPhase` without the Survival wrapper):
+  they trigger only in the turn's second main phase, not in an additional main phase after it.
+
+**Tests changed.**
+
+- `StepTriggerServiceTest`: the Survival wrapper test is now "a second-main-phase ability triggers in the turn's second
+  main phase and no later one", plus "a 'triggers only once' limit is read from the ability's options"; the two Survival
+  queueing tests author the plain ability; the graveyard stub reads `getEffectiveGraveyardLegacyTriggerEffects`.
+- `AcrobaticCheerleaderTest`: its helper moved to the postcombat main phase several times in one turn and counted
+  each as a new turn's second main phase; it now starts each move in a new turn whose first main phase has begun
+  (`mainPhasesBegunThisTurn = 1`), as its tests' names say (3 tests failed before: the later moves were the turn's
+  third and fourth main phases).
+- `WaryZoneGuardTest.survivalDoesNotTriggerDuringLaterMainPhaseOfSameTurn` modelled the later main phase with
+  `combatPhasesThisTurn = 2` only, which is the turn's second main phase after an additional combat; it now sets
+  `mainPhasesBegunThisTurn = 2` (a third main phase). New: `survivalTriggersInTheSecondMainPhaseAfterAnAdditionalCombat`.
+  The official Survival rulings (2024-09-20) agree: the ability triggers at the second main phase a player takes in
+  a turn and not in any later main phase.
+
+**Test runs.**
+
+- Card: the test class of every changed card and every card test that constructs one (944 classes, 9,130 tests):
+  the 4 failures above, which pass after the test changes, with Sleuth Instructor's (the other `ONCE` user).
+- Application: `StepTriggerServiceTest`, `TriggerPipelineTest`, `CardAbilitiesTest`, `LegacyTriggerBindingsTest`,
+  `TriggeredAbilityTest`, `TriggerOptionsTest`, `TriggerConditionTest`, `CardFreezeTest`, `GrantedAbilitiesTest`,
+  `TargetLegalityServiceTest`, `PermanentRemovalServiceTest`, `GameQueryServiceTest`, `SimulationCopyCompletenessTest`,
+  `TurnProgressionServiceTest`, `PlanechaseServiceTest`, `MiscTriggerTest` (947 tests): per class the failures at
+  HEAD (`StepTriggerServiceTest` 16, `TargetLegalityServiceTest` 14, `PlanechaseServiceTest` 2,
+  `SimulationCopyCompletenessTest` 1) and 57 in `PermanentRemovalServiceTest` (46), `TurnProgressionServiceTest` (10)
+  and `GameQueryServiceTest` (1), mock-wiring failures that fail by the same names at HEAD `daa7858aff` (checked in a
+  worktree with the main tree's `card-data-cache`).
+- AI: `GameDataDeepCopyTest` passes; `TargetPolarityGuardTest` has its 2 known failures.
+- `magical-vibes-webservice`'s test sources don't compile at HEAD (`CardBrowserServiceTest`'s anonymous `CardCatalog`
+  lacks `findLoadedPrintingByName`, added in run 3a); unrelated to this run, not fixed here.
 - The full suite was not run here.
 
 ## Prompt

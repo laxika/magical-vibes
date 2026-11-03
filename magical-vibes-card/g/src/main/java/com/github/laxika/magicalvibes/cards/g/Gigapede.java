@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
@@ -19,14 +18,12 @@ public class Gigapede extends Card {
 
     public Gigapede() {
         addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT,
-                new ConditionalEffect(
-                        new SourceCardInGraveyard(),
-                        new MayEffect(
-                                DiscardCardThenEffect.continuing(
-                                        null,
-                                        new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
-                                        "a card"),
-                                "Discard a card to return Gigapede from your graveyard to your hand?")));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCardInGraveyard()),
+                new MayEffect(
+                        DiscardCardThenEffect.continuing(
+                                null,
+                                new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
+                                "a card"),
+                        "Discard a card to return Gigapede from your graveyard to your hand?"));
     }
 }

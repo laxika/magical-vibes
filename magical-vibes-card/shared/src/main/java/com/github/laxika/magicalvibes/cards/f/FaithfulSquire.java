@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -38,9 +38,8 @@ public class FaithfulSquire extends Card {
         // so it is checked both on trigger and on resolution. This is a flip card (rule 710), so the
         // flip flag keeps it from counting as a transformation for "transforms" triggers.
         addTrigger(Triggers.endStep(ActivePlayer.ANY),
-                new ConditionalEffect(
-                        new SourceCounterThreshold(2, CounterType.KI),
-                        new MayEffect(new TransformToBackFaceEffect(true), "Flip Faithful Squire?")));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(2, CounterType.KI)),
+                new MayEffect(new TransformToBackFaceEffect(true), "Flip Faithful Squire?"));
     }
 
     @Override

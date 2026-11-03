@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -44,7 +45,8 @@ public class RoaringFurnaceSteamingSauna extends Card {
 
         addStaticEffect(new ConditionalEffect(new SourceRoomDoorUnlocked(1),
                 new NoMaximumHandSizeEffect()));
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new SourceRoomDoorUnlocked(1), new DrawCardEffect(1)));
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceRoomDoorUnlocked(1)),
+                new DrawCardEffect(1));
     }
 }

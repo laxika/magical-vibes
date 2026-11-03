@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DSC", collectorNumber = "360")
@@ -25,8 +25,8 @@ public class YouCannotHideFromMe extends Card {
                         new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET))
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new MakeCreatureUnblockableEffect());
         addTrigger(Triggers.endStep(ActivePlayer.OPPONENT),
-                new ConditionalEffect(
-                        new TargetPlayerLifeAtMost(GameData.STARTING_LIFE_TOTAL / 2 - 1),
-                        new SacrificeSelfEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new TargetPlayerLifeAtMost(GameData.STARTING_LIFE_TOTAL / 2 - 1)),
+                new SacrificeSelfEffect());
     }
 }

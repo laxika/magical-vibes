@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsOwnCommander;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MSC", collectorNumber = "176")
@@ -19,10 +19,9 @@ public class LoyalGuardian extends Card {
 
     public LoyalGuardian() {
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new ConditionalEffect(
-                        new ControllerControlsOwnCommander(),
-                        new PutCounterOnEachControlledPermanentEffect(
-                                CounterType.PLUS_ONE_PLUS_ONE, 1,
-                                new PermanentIsCreaturePredicate())));
+                TriggerOptions.DEFAULT.withInterveningIf(new ControllerControlsOwnCommander()),
+                new PutCounterOnEachControlledPermanentEffect(
+                        CounterType.PLUS_ONE_PLUS_ONE, 1,
+                        new PermanentIsCreaturePredicate()));
     }
 }

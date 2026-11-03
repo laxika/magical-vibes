@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
@@ -22,8 +22,7 @@ public class HomicidalBrute extends Card {
         // At the beginning of your end step, if this creature didn't attack this turn,
         // tap it, then transform it.
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(new DidntAttack(), SequenceEffect.of(
-                        new TapPermanentsEffect(TapUntapScope.SELF),
-                        new TransformSelfEffect())));
+                TriggerOptions.DEFAULT.withInterveningIf(new DidntAttack()),
+                SequenceEffect.of(new TapPermanentsEffect(TapUntapScope.SELF), new TransformSelfEffect()));
     }
 }

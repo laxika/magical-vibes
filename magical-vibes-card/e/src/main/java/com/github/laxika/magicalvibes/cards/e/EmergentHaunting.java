@@ -11,12 +11,12 @@ import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTur
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,19 +26,20 @@ import java.util.Set;
 public class EmergentHaunting extends Card {
 
     public EmergentHaunting() {
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new AllOf(List.of(
-                        new NotCondition(new ControllerCastSpellThisTurn(new CardTruePredicate(), true)),
-                        new NotCondition(new SourceIsCreature()))),
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AllOf(List.of(
+                                new NotCondition(new ControllerCastSpellThisTurn(new CardTruePredicate(), true)),
+                                new NotCondition(new SourceIsCreature())))),
                 new AnimatePermanentsEffect(
-                        3, 3,
-                        List.of(CardSubtype.SPIRIT),
-                        Set.of(Keyword.FLYING),
-                        null,
-                        Set.of(CardType.CREATURE),
-                        GrantScope.SELF,
-                        EffectDuration.PERMANENT
-                )));
+                                3, 3,
+                                List.of(CardSubtype.SPIRIT),
+                                Set.of(Keyword.FLYING),
+                                null,
+                                Set.of(CardType.CREATURE),
+                                GrantScope.SELF,
+                                EffectDuration.PERMANENT
+                        ));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

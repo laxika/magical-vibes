@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
@@ -27,8 +28,9 @@ public class EpharaGodOfThePolis extends Card {
                 new NotCondition(new DevotionToColorsAtLeast(
                         Set.of(ManaColor.WHITE, ManaColor.BLUE), 7)),
                 new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), GrantScope.SELF)));
-        addTrigger(Triggers.upkeep(ActivePlayer.ANY), new ConditionalEffect(
-                new AnotherPermanentEnteredLastTurn(new CardTypePredicate(CardType.CREATURE)),
-                new DrawCardEffect(1)));
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AnotherPermanentEnteredLastTurn(new CardTypePredicate(CardType.CREATURE))),
+                new DrawCardEffect(1));
     }
 }

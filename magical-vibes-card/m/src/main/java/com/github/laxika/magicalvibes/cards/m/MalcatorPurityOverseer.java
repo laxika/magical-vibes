@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,8 +26,8 @@ public class MalcatorPurityOverseer extends Card {
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), golem);
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(
-                        new PermanentEnteredThisTurn(new CardTypePredicate(CardType.ARTIFACT), 3),
-                        golem));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new PermanentEnteredThisTurn(new CardTypePredicate(CardType.ARTIFACT), 3)),
+                golem);
     }
 }

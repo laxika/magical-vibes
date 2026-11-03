@@ -5,13 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.Raid;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -25,12 +25,13 @@ public class AleshaWhoLaughsAtFate extends Card {
     public AleshaWhoLaughsAtFate() {
         addTrigger(Triggers.attacks(), new PutCountersOnSourceEffect(1, 1, 1));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(new Raid(), ReturnCardFromGraveyardEffect.builder()
+                TriggerOptions.DEFAULT.withInterveningIf(new Raid()),
+                ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardManaValueAtMostSourcePowerPredicate())))
                         .targetGraveyard(true)
-                        .build()));
+                        .build());
     }
 }

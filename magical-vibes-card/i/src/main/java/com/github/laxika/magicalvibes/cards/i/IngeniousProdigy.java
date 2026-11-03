@@ -5,13 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WOE", collectorNumber = "56")
@@ -23,12 +23,11 @@ public class IngeniousProdigy extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new ConditionalEffect(
-                        new SourceCounterThreshold(1, CounterType.PLUS_ONE_PLUS_ONE),
-                        new MayEffect(
-                                SequenceEffect.of(
-                                        new RemoveCounterFromSourceEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
-                                        new DrawCardEffect()),
-                                "Remove a +1/+1 counter from Ingenious Prodigy?")));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, CounterType.PLUS_ONE_PLUS_ONE)),
+                new MayEffect(
+                        SequenceEffect.of(
+                                new RemoveCounterFromSourceEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
+                                new DrawCardEffect()),
+                        "Remove a +1/+1 counter from Ingenious Prodigy?"));
     }
 }

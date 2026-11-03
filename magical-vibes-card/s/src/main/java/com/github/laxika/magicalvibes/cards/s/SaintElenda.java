@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.LifeGainedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -31,9 +31,9 @@ public class SaintElenda extends Card {
                 DraftFromSpellbookEffect.DraftMode.MAY_CAST_WITHOUT_PAYING_MANA_COST_TO_CONTROLLER));
 
         LifeGainedThisTurn lifeGained = new LifeGainedThisTurn(CountScope.CONTROLLER);
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new GainedLifeThisTurn(),
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new GainedLifeThisTurn()),
                 new CreateTokenEffect("Avatar", lifeGained, lifeGained, CardColor.WHITE,
-                        List.of(CardSubtype.AVATAR), Set.of(), Set.of())));
+                        List.of(CardSubtype.AVATAR), Set.of(), Set.of()));
     }
 }

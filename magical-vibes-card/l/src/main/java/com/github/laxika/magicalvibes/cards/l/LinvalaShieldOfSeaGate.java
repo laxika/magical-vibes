@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.FullParty;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,11 +24,10 @@ public class LinvalaShieldOfSeaGate extends Card {
 
     public LinvalaShieldOfSeaGate() {
         target(TargetFilters.nonlandPermanentAnOpponentControls())
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
-                        new FullParty(),
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                        TriggerOptions.DEFAULT.withInterveningIf(new FullParty()),
                         new LockTargetPermanentEffect(true, true, true,
-                                EffectDuration.UNTIL_YOUR_NEXT_TURN, TargetPredicates.permanent())
-                ));
+                                EffectDuration.UNTIL_YOUR_NEXT_TURN, TargetPredicates.permanent()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

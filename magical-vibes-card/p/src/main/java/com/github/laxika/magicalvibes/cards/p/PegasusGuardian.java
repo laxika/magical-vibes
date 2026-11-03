@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.PermanentLeftBattlefieldUnderYourControlThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -23,10 +23,10 @@ public class PegasusGuardian extends Card {
         setBackFaceCard(new RescueTheFoal());
         addCastingOption(new AdventureCast("{1}{W}"));
 
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new PermanentLeftBattlefieldUnderYourControlThisTurn(),
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new PermanentLeftBattlefieldUnderYourControlThisTurn()),
                 new CreateTokenEffect("Pegasus", 1, 1, CardColor.WHITE,
-                        List.of(CardSubtype.PEGASUS), Set.of(Keyword.FLYING), Set.of())));
+                        List.of(CardSubtype.PEGASUS), Set.of(Keyword.FLYING), Set.of()));
     }
 
     @Override

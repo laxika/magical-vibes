@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.CardDirectlyAboveSelfInGraveyard;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -30,16 +29,15 @@ public class KrovikanHorror extends Card {
         // directly above it, you may return this card to your hand. Intervening-if on the ordered
         // graveyard is checked both as the ability triggers and as it resolves.
         addTrigger(new TriggerCondition(Triggers.endStep(ActivePlayer.ANY), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT,
-                new ConditionalEffect(
-                        new CardDirectlyAboveSelfInGraveyard(new CardTypePredicate(CardType.CREATURE)),
-                        new MayEffect(
-                                ReturnCardFromGraveyardEffect.builder()
-                                        .destination(GraveyardChoiceDestination.HAND)
-                                        .filter(new CardIsSelfPredicate())
-                                        .returnAll(true)
-                                        .build(),
-                                "Return Krovikan Horror from your graveyard to your hand?")));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new CardDirectlyAboveSelfInGraveyard(new CardTypePredicate(CardType.CREATURE))),
+                new MayEffect(
+                        ReturnCardFromGraveyardEffect.builder()
+                                .destination(GraveyardChoiceDestination.HAND)
+                                .filter(new CardIsSelfPredicate())
+                                .returnAll(true)
+                                .build(),
+                        "Return Krovikan Horror from your graveyard to your hand?"));
 
         // {1}, Sacrifice a creature: Krovikan Horror deals 1 damage to any target.
         addActivatedAbility(new ActivatedAbility(

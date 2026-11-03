@@ -10,11 +10,11 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerDiscardedCardThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,7 +26,8 @@ public class TheRavenMan extends Card {
 
     public TheRavenMan() {
         addTrigger(Triggers.endStep(ActivePlayer.ANY),
-                new ConditionalEffect(new AnyPlayerDiscardedCardThisTurn(), birdToken()));
+                TriggerOptions.DEFAULT.withInterveningIf(new AnyPlayerDiscardedCardThisTurn()),
+                birdToken());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

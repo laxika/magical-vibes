@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackersThisCombat;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisCombat;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,9 +26,10 @@ public class KytheonHeroOfAkros extends Card {
 
         // At end of combat, if Kytheon and at least two other creatures attacked this combat, exile
         // Kytheon, then return him to the battlefield transformed under his owner's control.
-        addTrigger(Triggers.endOfCombat(), new ConditionalEffect(
-                new AllOf(List.of(new SourceAttackedThisCombat(), new MinimumAttackersThisCombat(3))),
-                new ExileSelfAndReturnTransformedEffect()));
+        addTrigger(Triggers.endOfCombat(),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AllOf(List.of(new SourceAttackedThisCombat(), new MinimumAttackersThisCombat(3)))),
+                new ExileSelfAndReturnTransformedEffect());
 
         // {2}{W}: Kytheon gains indestructible until end of turn.
         addActivatedAbility(new ActivatedAbility(

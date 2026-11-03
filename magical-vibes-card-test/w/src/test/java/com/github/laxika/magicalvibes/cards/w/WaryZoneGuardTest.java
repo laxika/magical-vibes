@@ -214,13 +214,25 @@ class WaryZoneGuardTest extends BaseCardTest {
     @Test
     void survivalDoesNotTriggerDuringLaterMainPhaseOfSameTurn() {
         Permanent guard = harness.enterBattlefieldAndReturn(player1, new WaryZoneGuard());
-        gd.combatPhasesThisTurn = 2;
+        gd.mainPhasesBegunThisTurn = 2;
 
         advanceToPostcombatMain(player1);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gqs.getEffectivePower(gd, guard)).isEqualTo(3);
+    }
+
+    @Test
+    void survivalTriggersInTheSecondMainPhaseAfterAnAdditionalCombat() {
+        Permanent guard = harness.enterBattlefieldAndReturn(player1, new WaryZoneGuard());
+        gd.combatPhasesThisTurn = 2;
+
+        advanceToPostcombatMain(player1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, guard)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, guard)).isEqualTo(4);
     }
 
     private void advanceToPostcombatMain(Player activePlayer) {

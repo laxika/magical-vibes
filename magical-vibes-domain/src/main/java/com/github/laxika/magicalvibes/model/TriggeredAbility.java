@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.OnceOnlyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
@@ -117,20 +118,23 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * An intervening "if" is a {@link ConditionalEffect} of it, checked as the ability triggers and again as it
      * resolves (CR 603.4); "triggers only once each turn" is a {@link OncePerTurnTriggerEffect} keyed by
      * {@link #limitKey()}, the key the trigger pipeline marks; "do this only once each turn" one marked as the action
-     * is taken (CR 603.2h). The limit {@code ONCE} isn't represented. An ability without options returns its
-     * registrations as they are.
+     * is taken (CR 603.2h); "this ability triggers only once" ({@code ONCE}) an {@link OnceOnlyTriggerEffect} inside
+     * the intervening "if", as the "at the beginning of [step or phase]" cards wrote it. An ability without options
+     * returns its registrations as they are.
      */
     public List<EffectRegistration> legacyEffects() {
         Condition interveningIf = options.interveningIf();
         TriggerLimit limit = options.limit();
-        if (interveningIf == null && limit != TriggerLimit.ONCE_EACH_TURN
-                && limit != TriggerLimit.DO_ONLY_ONCE_EACH_TURN) {
+        if (interveningIf == null && limit == TriggerLimit.NONE) {
             return effects;
         }
         String key = limit == TriggerLimit.ONCE_EACH_TURN ? limitKey() : null;
         List<EffectRegistration> wrapped = new ArrayList<>(effects.size());
         for (EffectRegistration registration : effects) {
             CardEffect effect = registration.effect();
+            if (limit == TriggerLimit.ONCE) {
+                effect = new OnceOnlyTriggerEffect(effect);
+            }
             if (interveningIf != null) {
                 effect = new ConditionalEffect(interveningIf, effect, true);
             }

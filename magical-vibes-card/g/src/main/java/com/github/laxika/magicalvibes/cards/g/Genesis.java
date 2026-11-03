@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -23,15 +22,13 @@ public class Genesis extends Card {
 
     public Genesis() {
         addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT,
-                new ConditionalEffect(
-                        new SourceCardInGraveyard(),
-                        new MayPayManaEffect("{2}{G}",
-                                ReturnCardFromGraveyardEffect.builder()
-                                        .destination(GraveyardChoiceDestination.HAND)
-                                        .filter(new CardTypePredicate(CardType.CREATURE))
-                                        .targetGraveyard(true)
-                                        .build(),
-                                "Pay {2}{G} to return target creature card from your graveyard to your hand?")));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCardInGraveyard()),
+                new MayPayManaEffect("{2}{G}",
+                        ReturnCardFromGraveyardEffect.builder()
+                                .destination(GraveyardChoiceDestination.HAND)
+                                .filter(new CardTypePredicate(CardType.CREATURE))
+                                .targetGraveyard(true)
+                                .build(),
+                        "Pay {2}{G} to return target creature card from your graveyard to your hand?"));
     }
 }

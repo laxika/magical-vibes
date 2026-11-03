@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
@@ -33,13 +32,11 @@ public class FrontierSiege extends Card {
         addStaticEffect(new ChooseModeOnEnterEffect(List.of(KHANS, DRAGONS)));
 
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
-                new ConditionalEffect(
-                        new SourceHasChosenMode(KHANS),
-                        new AwardManaEffect(ManaColor.GREEN, 2)));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(KHANS)),
+                new AwardManaEffect(ManaColor.GREEN, 2));
         addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU),
-                new ConditionalEffect(
-                        new SourceHasChosenMode(KHANS),
-                        new AwardManaEffect(ManaColor.GREEN, 2)));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(KHANS)),
+                new AwardManaEffect(ManaColor.GREEN, 2));
 
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.enters(

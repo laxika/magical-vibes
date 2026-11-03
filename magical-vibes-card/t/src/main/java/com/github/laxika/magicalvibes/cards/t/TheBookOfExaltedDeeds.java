@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -27,10 +27,10 @@ import java.util.Set;
 public class TheBookOfExaltedDeeds extends Card {
 
     public TheBookOfExaltedDeeds() {
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new GainedLifeThisTurn(3),
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new GainedLifeThisTurn(3)),
                 new CreateTokenEffect("Angel", 3, 3, CardColor.WHITE,
-                        List.of(CardSubtype.ANGEL), Set.of(Keyword.FLYING), Set.of())));
+                        List.of(CardSubtype.ANGEL), Set.of(Keyword.FLYING), Set.of()));
 
         var angel = new PermanentHasSubtypePredicate(CardSubtype.ANGEL);
         addActivatedAbility(new ActivatedAbility(

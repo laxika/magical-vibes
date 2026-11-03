@@ -10,13 +10,13 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -39,10 +39,10 @@ public class VentifactBottle extends Card {
         // this way. One SequenceEffect so the three steps share a stack entry: the removal
         // snapshots the removed count as the entry's event value, which the mana award reads back.
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
-                new ConditionalEffect(new SourceCounterThreshold(1, CounterType.CHARGE),
-                        SequenceEffect.of(
-                                new TapPermanentsEffect(TapUntapScope.SELF),
-                                new RemoveAllCountersEffect(CounterType.CHARGE),
-                                new AwardManaEffect(ManaColor.COLORLESS, new EventValue()))));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, CounterType.CHARGE)),
+                SequenceEffect.of(
+                        new TapPermanentsEffect(TapUntapScope.SELF),
+                        new RemoveAllCountersEffect(CounterType.CHARGE),
+                        new AwardManaEffect(ManaColor.COLORLESS, new EventValue())));
     }
 }

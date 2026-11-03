@@ -9,13 +9,13 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -31,8 +31,8 @@ public class LightningCoils extends Card {
 
         // At the beginning of your upkeep, if this artifact has five or more charge counters on it,
         // remove all of them and create that many hasty Elemental tokens that are exiled next end step.
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                new SourceCounterThreshold(5, CounterType.CHARGE),
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(5, CounterType.CHARGE)),
                 SequenceEffect.of(
                         new RemoveAllCountersEffect(CounterType.CHARGE),
                         new CreateTokenEffect(
@@ -54,6 +54,6 @@ public class LightningCoils extends Card {
                                 true,
                                 false,
                                 0,
-                                Set.of()))));
+                                Set.of())));
     }
 }

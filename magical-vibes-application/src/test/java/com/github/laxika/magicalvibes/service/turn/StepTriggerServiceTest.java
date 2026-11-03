@@ -69,7 +69,6 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.SurvivalTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
@@ -122,6 +121,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.DrawService;
@@ -322,10 +322,10 @@ class StepTriggerServiceTest {
         lenient().when(gameQueryService.computeStaticBonus(eq(gd), any(Permanent.class)))
                 .thenReturn(new com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator()
                         .toStaticBonus(0, 0, false));
-        lenient().when(gameQueryService.getEffectiveGraveyardTriggerEffects(
+        lenient().when(gameQueryService.getEffectiveGraveyardLegacyTriggerEffects(
                         eq(gd), any(Card.class), any(Trigger.class)))
                 .thenAnswer(invocation -> ((Card) invocation.getArgument(1))
-                        .getTriggerEffects(invocation.getArgument(2), Zone.GRAVEYARD));
+                        .getLegacyTriggerEffects(invocation.getArgument(2), Zone.GRAVEYARD));
     }
 
     @Nested
@@ -2800,11 +2800,32 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("Survival wrappers are evaluated only once for the same permanent")
-        void survivalWrapperIsEvaluatedOnlyOnce() {
+        @DisplayName("A second-main-phase ability triggers in the turn's second main phase and no later one")
+        void secondMainPhaseAbilityTriggersOnlyInTheSecondMainPhase() {
+            Card card = createCardWithName("Cautious Survivor");
+            card.addTrigger(Triggers.secondMainPhase(ActivePlayer.YOU),
+                    TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped()), new GainLifeEffect(2));
+            Permanent perm = new Permanent(card);
+            perm.tap();
+            gd.playerBattlefields.get(player1Id).add(perm);
+            gd.mainPhasesBegunThisTurn = 1;
+
+            sut.handlePostcombatMainTriggers(gd);
+            assertThat(gd.stack).hasSize(1);
+
+            gd.stack.clear();
+            sut.handlePostcombatMainTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("A \"triggers only once\" limit is read from the ability's options")
+        void onceLimitIsReadFromTheOptions() {
             Card card = createCardWithName("Acrobatic Cheerleader");
             card.addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU),
-                    new SurvivalTriggerEffect(new GainLifeEffect(1)));
+                    TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped()).withLimit(TriggerLimit.ONCE),
+                    new GainLifeEffect(1));
             Permanent perm = new Permanent(card);
             perm.tap();
             gd.playerBattlefields.get(player1Id).add(perm);
@@ -2828,7 +2849,7 @@ class StepTriggerServiceTest {
                     .targetGraveyard(true)
                     .build();
             card.addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU),
-                    new SurvivalTriggerEffect(new ConditionalEffect(new SourceIsTapped(), returnEffect)));
+                    new ConditionalEffect(new SourceIsTapped(), returnEffect));
             Permanent perm = new Permanent(card);
             perm.tap();
             gd.playerBattlefields.get(player1Id).add(perm);
@@ -2845,8 +2866,7 @@ class StepTriggerServiceTest {
         void queuesPermanentTargetedTrigger() {
             Card card = createCardWithName("Rootwise Survivor");
             card.target(TargetFilters.landYouControl(), 0, 1).addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU),
-                    new SurvivalTriggerEffect(new ConditionalEffect(
-                            new SourceIsTapped(), new EarthbendTargetLandEffect(3))));
+                    new ConditionalEffect(new SourceIsTapped(), new EarthbendTargetLandEffect(3)));
             Permanent source = new Permanent(card);
             source.tap();
 

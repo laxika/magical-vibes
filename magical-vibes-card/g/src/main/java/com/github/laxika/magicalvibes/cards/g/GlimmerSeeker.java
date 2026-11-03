@@ -12,11 +12,11 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SurvivalTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -33,11 +33,10 @@ public class GlimmerSeeker extends Card {
                 "Glimmer", 1, 1, CardColor.WHITE, List.of(CardSubtype.GLIMMER),
                 Set.of(), Set.of(CardType.ENCHANTMENT));
 
-        addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU), new SurvivalTriggerEffect(
-                new ConditionalEffect(
-                        new SourceIsTapped(),
-                        SequenceEffect.of(
-                                new ConditionalEffect(new ControlsPermanent(glimmerCreature), new DrawCardEffect()),
-                                new ConditionalEffect(new NotCondition(new ControlsPermanent(glimmerCreature)), glimmerToken)))));
+        addTrigger(Triggers.secondMainPhase(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped()),
+                SequenceEffect.of(
+                        new ConditionalEffect(new ControlsPermanent(glimmerCreature), new DrawCardEffect()),
+                        new ConditionalEffect(new NotCondition(new ControlsPermanent(glimmerCreature)), glimmerToken)));
     }
 }

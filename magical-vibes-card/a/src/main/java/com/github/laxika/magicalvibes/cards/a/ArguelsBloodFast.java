@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.cards.t.TempleOfAclazotz;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -32,7 +32,8 @@ public class ArguelsBloodFast extends Card {
         // At the beginning of your upkeep, if you have 5 or less life,
         // you may transform Arguel's Blood Fast.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new ConditionalEffect(new ControllerLifeAtMost(5), new MayEffect(new TransformSelfEffect(), "Transform Arguel's Blood Fast?")));
+                TriggerOptions.DEFAULT.withInterveningIf(new ControllerLifeAtMost(5)),
+                new MayEffect(new TransformSelfEffect(), "Transform Arguel's Blood Fast?"));
     }
 
     @Override

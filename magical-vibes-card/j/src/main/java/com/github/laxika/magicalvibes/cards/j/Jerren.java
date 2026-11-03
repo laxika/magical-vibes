@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -24,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -59,10 +59,9 @@ public class Jerren extends Card {
                         "Target must be a Human you control")));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(
-                        new AllOf(List.of(new ControllerLifeAtLeast(13), new ControllerLifeAtMost(13))),
-                        new MayPayManaEffect("{4}{B}{B}", new TransformSelfEffect(),
-                                "Pay {4}{B}{B} to transform Jerren?")));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AllOf(List.of(new ControllerLifeAtLeast(13), new ControllerLifeAtMost(13)))),
+                new MayPayManaEffect("{4}{B}{B}", new TransformSelfEffect(), "Pay {4}{B}{B} to transform Jerren?"));
     }
 
     @Override

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.effect.AddClueTokenToTokenCreationEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -42,12 +42,13 @@ public class CaseOfThePilferedProof extends Card {
                         PermanentReference.TRIGGERING, CounterType.PLUS_ONE_PLUS_ONE));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(
+                TriggerOptions.DEFAULT.withInterveningIf(
                         new AllOf(List.of(
-                                new ControlsPermanentCount(3,
-                                        new PermanentHasSubtypePredicate(CardSubtype.DETECTIVE)),
-                                new NotCondition(new SourceIsSolved())
-                        )), new SolveSourceEffect()));
+                                        new ControlsPermanentCount(3,
+                                                new PermanentHasSubtypePredicate(CardSubtype.DETECTIVE)),
+                                        new NotCondition(new SourceIsSolved())
+                                ))),
+                new SolveSourceEffect());
 
         addStaticEffect(new AddClueTokenToTokenCreationEffect());
     }

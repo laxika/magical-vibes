@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -23,11 +24,11 @@ public class DaredevilDragster extends Card {
 
     public DaredevilDragster() {
         addTrigger(Triggers.endOfCombat(),
-                new ConditionalEffect(new SourceAttackedOrBlockedThisCombat(),
-                        SequenceEffect.of(
-                                new PutCountersOnSelfEffect(CounterType.VELOCITY),
-                                new ConditionalEffect(new SourceCounterThreshold(2, CounterType.VELOCITY),
-                                        SequenceEffect.of(new SacrificeSelfEffect(), new DrawCardEffect(2))))));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceAttackedOrBlockedThisCombat()),
+                SequenceEffect.of(
+                        new PutCountersOnSelfEffect(CounterType.VELOCITY),
+                        new ConditionalEffect(new SourceCounterThreshold(2, CounterType.VELOCITY),
+                                SequenceEffect.of(new SacrificeSelfEffect(), new DrawCardEffect(2)))));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

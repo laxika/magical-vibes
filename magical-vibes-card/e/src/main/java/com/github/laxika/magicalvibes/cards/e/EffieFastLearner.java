@@ -5,11 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SurvivalTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
@@ -17,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlledTappedCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -25,18 +24,17 @@ import java.util.List;
 public class EffieFastLearner extends Card {
 
     public EffieFastLearner() {
-        addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU),
-                new SurvivalTriggerEffect(new ConditionalEffect(
-                        new SourceIsTapped(),
-                        SequenceEffect.of(
-                                new PutCounterOnEachControlledPermanentEffect(
-                                        CounterType.PLUS_ONE_PLUS_ONE,
-                                        1,
-                                        new PermanentAllOfPredicate(List.of(
-                                                new PermanentIsCreaturePredicate(),
-                                                new PermanentIsTappedPredicate()))),
-                                new SeekEffect(new CardAllOfPredicate(List.of(
-                                        new CardSubtypePredicate(CardSubtype.SURVIVOR),
-                                        new CardManaValueAtMostControlledTappedCreaturesPredicate())))))));
+        addTrigger(Triggers.secondMainPhase(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped()),
+                SequenceEffect.of(
+                        new PutCounterOnEachControlledPermanentEffect(
+                                CounterType.PLUS_ONE_PLUS_ONE,
+                                1,
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentIsTappedPredicate()))),
+                        new SeekEffect(new CardAllOfPredicate(List.of(
+                                new CardSubtypePredicate(CardSubtype.SURVIVOR),
+                                new CardManaValueAtMostControlledTappedCreaturesPredicate())))));
     }
 }

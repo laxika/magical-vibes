@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -20,11 +20,12 @@ import java.util.Set;
 public class GargoyleFlock extends Card {
 
     public GargoyleFlock() {
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new PermanentEnteredThisTurn(new CardTypePredicate(CardType.CREATURE), 1),
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new PermanentEnteredThisTurn(new CardTypePredicate(CardType.CREATURE), 1)),
                 new CreateTokenEffect(
                         "Tyranid Gargoyle", 1, 1, CardColor.BLUE,
                         List.of(CardSubtype.TYRANID, CardSubtype.GARGOYLE),
-                        Set.of(Keyword.FLYING), Set.of())));
+                        Set.of(Keyword.FLYING), Set.of()));
     }
 }

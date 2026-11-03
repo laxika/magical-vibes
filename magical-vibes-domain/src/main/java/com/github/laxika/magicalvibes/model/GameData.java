@@ -4013,10 +4013,6 @@ public class GameData {
     public final Map<UUID, Set<String>> keyedOncePerTurnTriggersFiredThisTurn = new ConcurrentHashMap<>();
     /** Tracks source permanent IDs to opponents whose first life loss during their turn has fired. */
     public final Map<UUID, Set<UUID>> firstOpponentLifeLossTriggersFiredThisTurn = new ConcurrentHashMap<>();
-    /** Tracks source permanent object IDs whose Survival ability has been evaluated. A new object
-     *  created when the card leaves and returns can evaluate again. */
-    public final Set<UUID> survivalTriggersEvaluated = ConcurrentHashMap.newKeySet();
-
     /** Tracks source permanent object IDs whose one-shot triggered ability has fired. */
     public final Set<UUID> onceOnlyTriggersFired = ConcurrentHashMap.newKeySet();
     /**
@@ -10411,7 +10407,6 @@ public class GameData {
         });
         this.firstOpponentLifeLossTriggersFiredThisTurn.forEach((k, v) ->
                 copy.firstOpponentLifeLossTriggersFiredThisTurn.put(k, new HashSet<>(v)));
-        copy.survivalTriggersEvaluated.addAll(this.survivalTriggersEvaluated);
         this.oncePerCreatureTriggersFiredThisTurn.forEach((k, v) ->
                 copy.oncePerCreatureTriggersFiredThisTurn.put(k, new HashSet<>(v)));
         copy.creaturesThatReceivedCountersThisTurn.addAll(this.creaturesThatReceivedCountersThisTurn);

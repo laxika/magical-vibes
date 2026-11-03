@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSolved;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SolveSourceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -30,16 +30,12 @@ public class CaseOfTheCrimsonPulse extends Card {
                         new DrawCardEffect(2)));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(
-                        new AllOf(List.of(
-                                new ControllerHandEmpty(),
-                                new NotCondition(new SourceIsSolved())
-                        )),
-                        new SolveSourceEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AllOf(List.of(new ControllerHandEmpty(), new NotCondition(new SourceIsSolved())))),
+                new SolveSourceEffect());
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new ConditionalEffect(
-                        new SourceIsSolved(),
-                        new DiscardOwnHandThenDrawEffect(new Fixed(2))));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSolved()),
+                new DiscardOwnHandThenDrawEffect(new Fixed(2)));
     }
 }

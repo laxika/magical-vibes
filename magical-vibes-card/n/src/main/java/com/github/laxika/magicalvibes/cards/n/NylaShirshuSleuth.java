@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndTrackWithSourceThenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TLE", collectorNumber = "109")
@@ -36,9 +36,8 @@ public class NylaShirshuSleuth extends Card {
                                 new LoseLifeEffect(manaValue, LoseLifeRecipient.CONTROLLER),
                                 CreateTokenEffect.ofClueToken(manaValue))));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(
-                        new ControlsPermanentCountAtMost(0,
-                                new PermanentHasSubtypePredicate(CardSubtype.CLUE)),
-                        new PutTargetCardExiledWithSourceIntoOwnersHandEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new ControlsPermanentCountAtMost(0, new PermanentHasSubtypePredicate(CardSubtype.CLUE))),
+                new PutTargetCardExiledWithSourceIntoOwnersHandEffect());
     }
 }

@@ -355,7 +355,7 @@ public class PlanechaseService {
 
     /** Puts the planar object's abilities with {@code trigger} on the stack, under {@code controller}. */
     public void trigger(GameData game, PlanarObject object, Trigger trigger, UUID controller) {
-        trigger(game, object, object.getCard().getTriggerEffects(trigger), controller);
+        trigger(game, object, object.getCard().getLegacyTriggerEffects(trigger), controller);
     }
 
     private void trigger(GameData game, PlanarObject object, List<CardEffect> abilityEffects, UUID controller) {

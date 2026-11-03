@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEf
 import com.github.laxika.magicalvibes.model.effect.SolveSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -27,12 +28,12 @@ public class CaseOfTheLockedHothouse extends Card {
         addStaticEffect(new PlaysAdditionalLandEachTurnEffect(1));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(
+                TriggerOptions.DEFAULT.withInterveningIf(
                         new AllOf(List.of(
-                                new ControlsPermanentCount(7, new PermanentIsLandPredicate()),
-                                new NotCondition(new SourceIsSolved())
-                        )),
-                        new SolveSourceEffect()));
+                                        new ControlsPermanentCount(7, new PermanentIsLandPredicate()),
+                                        new NotCondition(new SourceIsSolved())
+                                ))),
+                new SolveSourceEffect());
 
         addStaticEffect(new ConditionalEffect(new SourceIsSolved(), new LookAtTopCardOfOwnLibraryEffect()));
         addStaticEffect(new ConditionalEffect(new SourceIsSolved(), new PlayLandsFromTopOfLibraryEffect()));

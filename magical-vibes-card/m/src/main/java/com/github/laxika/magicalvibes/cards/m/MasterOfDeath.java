@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
@@ -21,12 +20,10 @@ public class MasterOfDeath extends Card {
     public MasterOfDeath() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new SurveilEffect(2));
         addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT,
-                new ConditionalEffect(
-                        new SourceCardInGraveyard(),
-                        new MayPayLifeEffect(
-                                1,
-                                new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
-                                "Pay 1 life to return Master of Death to your hand?")));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCardInGraveyard()),
+                new MayPayLifeEffect(
+                        1,
+                        new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
+                        "Pay 1 life to return Master of Death to your hand?"));
     }
 }

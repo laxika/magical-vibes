@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.CreatureDeathsThisTurnAtLeast;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOK", collectorNumber = "78")
@@ -14,9 +14,9 @@ public class Kuon extends Card {
     public Kuon() {
         setBackFaceCard(new KuonsEssence());
 
-        addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(
-                new CreatureDeathsThisTurnAtLeast(3),
-                new TransformToBackFaceEffect(true)));
+        addTrigger(Triggers.endStep(ActivePlayer.ANY),
+                TriggerOptions.DEFAULT.withInterveningIf(new CreatureDeathsThisTurnAtLeast(3)),
+                new TransformToBackFaceEffect(true));
     }
 
     @Override

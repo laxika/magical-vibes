@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackThisTurnEffect;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -29,12 +29,12 @@ public class Kookus extends Card {
     public Kookus() {
         // At the beginning of your upkeep, if you don't control a creature named Keeper of Kookus,
         // this creature deals 3 damage to you and attacks this turn if able.
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                new ControlsPermanentCountAtMost(0, KEEPER_OF_KOOKUS),
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new ControlsPermanentCountAtMost(0, KEEPER_OF_KOOKUS)),
                 SequenceEffect.of(
-                        new DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER),
-                        new MatchingCreaturesMustAttackThisTurnEffect(new PermanentIsSourceCardPredicate(), true)
-                )));
+                                new DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER),
+                                new MatchingCreaturesMustAttackThisTurnEffect(new PermanentIsSourceCardPredicate(), true)
+                        ));
 
         // {R}: This creature gets +1/+0 until end of turn.
         addActivatedAbility(new ActivatedAbility(

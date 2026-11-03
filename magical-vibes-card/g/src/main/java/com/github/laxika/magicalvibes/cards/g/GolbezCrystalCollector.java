@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FIN", collectorNumber = "225")
@@ -36,13 +37,13 @@ public class GolbezCrystalCollector extends Card {
                 .build();
         PermanentIsArtifactPredicate artifact = new PermanentIsArtifactPredicate();
 
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new ControlsPermanentCount(4, artifact),
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new ControlsPermanentCount(4, artifact)),
                 SequenceEffect.of(
                         returnCreature,
                         new RecordReturnedGraveyardCardValueEffect(ReturnedGraveyardCardValue.POWER),
                         new ConditionalEffect(
                                 new ControlsPermanentCount(8, artifact),
-                                new LoseLifeEffect(new EventValue(), LoseLifeRecipient.EACH_OPPONENT)))));
+                                new LoseLifeEffect(new EventValue(), LoseLifeRecipient.EACH_OPPONENT))));
     }
 }

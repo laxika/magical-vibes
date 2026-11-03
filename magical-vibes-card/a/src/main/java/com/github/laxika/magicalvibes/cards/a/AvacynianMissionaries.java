@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.l.LunarchInquisitors;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Equipped;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOI", collectorNumber = "6")
@@ -15,7 +15,8 @@ public class AvacynianMissionaries extends Card {
     public AvacynianMissionaries() {
         setBackFaceCard(new LunarchInquisitors());
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(new Equipped(), new TransformSelfEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(new Equipped()),
+                new TransformSelfEffect());
     }
 
     @Override

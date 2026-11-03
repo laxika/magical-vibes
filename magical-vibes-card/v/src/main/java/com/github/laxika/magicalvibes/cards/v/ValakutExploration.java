@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.SourceExiledCardsThreshold;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourc
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ZNR", collectorNumber = "175")
@@ -24,10 +24,9 @@ public class ValakutExploration extends Card {
         addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                         false, null, false, false, 0, null, false, false, false, true));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(
-                        new SourceExiledCardsThreshold(1),
-                        SequenceEffect.of(
-                                new ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect(),
-                                new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.EACH_OPPONENT))));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceExiledCardsThreshold(1)),
+                SequenceEffect.of(
+                        new ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect(),
+                        new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.EACH_OPPONENT)));
     }
 }

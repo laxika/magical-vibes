@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.cards.w.WheelOfFortune;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerHandAtMost;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /** Naktamun Lorespinner // Wheel of Fortune (SOC 33). */
@@ -18,8 +18,9 @@ public class NaktamunLorespinnerWheelOfFortune extends Card {
         setBackFaceCard(new WheelOfFortune());
 
         // At the beginning of your upkeep, if a player has one or fewer cards in hand, this creature becomes prepared.
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                new AnyPlayerHandAtMost(1), new BecomePreparedEffect()));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new AnyPlayerHandAtMost(1)),
+                new BecomePreparedEffect());
     }
 
     @Override

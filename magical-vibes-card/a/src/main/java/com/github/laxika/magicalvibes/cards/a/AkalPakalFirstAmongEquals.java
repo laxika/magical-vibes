@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LCI", collectorNumber = "44")
@@ -15,8 +15,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class AkalPakalFirstAmongEquals extends Card {
 
     public AkalPakalFirstAmongEquals() {
-        addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(
-                new PermanentEnteredThisTurn(new CardTypePredicate(CardType.ARTIFACT), 1),
-                LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(2, 1)));
+        addTrigger(Triggers.endStep(ActivePlayer.ANY),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new PermanentEnteredThisTurn(new CardTypePredicate(CardType.ARTIFACT), 1)),
+                LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(2, 1));
     }
 }

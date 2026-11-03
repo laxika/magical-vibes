@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -35,7 +35,8 @@ public class HuntmasterOfTheFells extends Card {
 
         // At the beginning of each upkeep, if no spells were cast last turn, transform Huntmaster.
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),
-                new ConditionalEffect(new NoSpellsCastLastTurn(), new TransformSelfEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(new NoSpellsCastLastTurn()),
+                new TransformSelfEffect());
     }
 
     private static CreateTokenEffect wolfToken() {

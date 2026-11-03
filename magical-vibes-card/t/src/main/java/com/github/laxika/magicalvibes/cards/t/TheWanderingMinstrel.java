@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentsEnterUntappedEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -34,10 +34,10 @@ public class TheWanderingMinstrel extends Card {
     public TheWanderingMinstrel() {
         addStaticEffect(new ControlledPermanentsEnterUntappedEffect(new PermanentIsLandPredicate()));
 
-        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
-                new ControlsPermanentCount(5, new PermanentHasSubtypePredicate(CardSubtype.TOWN)),
-                new CreateTokenEffect(
-                        "Elemental", 2, 2, null, ALL_COLORS, List.of(CardSubtype.ELEMENTAL))));
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new ControlsPermanentCount(5, new PermanentHasSubtypePredicate(CardSubtype.TOWN))),
+                new CreateTokenEffect("Elemental", 2, 2, null, ALL_COLORS, List.of(CardSubtype.ELEMENTAL)));
 
         PermanentCount towns = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.TOWN), CountScope.CONTROLLER);

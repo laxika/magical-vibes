@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.VoidCondition;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -29,8 +29,8 @@ public class ElegyAcolyte extends Card {
                         true));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(new VoidCondition(),
-                        new CreateTokenEffect(1, "Robot", 2, 2, null,
-                                List.of(CardSubtype.ROBOT), Set.of(), Set.of(CardType.ARTIFACT))));
+                TriggerOptions.DEFAULT.withInterveningIf(new VoidCondition()),
+                new CreateTokenEffect(1, "Robot", 2, 2, null,
+                        List.of(CardSubtype.ROBOT), Set.of(), Set.of(CardType.ARTIFACT)));
     }
 }

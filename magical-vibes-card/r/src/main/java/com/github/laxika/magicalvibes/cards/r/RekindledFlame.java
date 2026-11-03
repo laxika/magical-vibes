@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHandEmpty;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -25,13 +24,12 @@ public class RekindledFlame extends Card {
         // this card from your graveyard to your hand. The intervening-"if" is checked at trigger
         // time in StepTriggerService; the MayEffect prompt is offered only when the gate is met.
         addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT,
-                new ConditionalEffect(new AnOpponentHandEmpty(),
-                        new MayEffect(ReturnCardFromGraveyardEffect.builder()
-                                .destination(GraveyardChoiceDestination.HAND)
-                                .filter(new CardIsSelfPredicate())
-                                .returnAll(true)
-                                .build(),
-                                "Return Rekindled Flame from your graveyard to your hand?")));
+                TriggerOptions.DEFAULT.withInterveningIf(new AnOpponentHandEmpty()),
+                new MayEffect(ReturnCardFromGraveyardEffect.builder()
+                        .destination(GraveyardChoiceDestination.HAND)
+                        .filter(new CardIsSelfPredicate())
+                        .returnAll(true)
+                        .build(),
+                        "Return Rekindled Flame from your graveyard to your hand?"));
     }
 }

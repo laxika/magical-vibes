@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardUnlessAttackedThisTurnEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchBlueOrBlackCreatureToBa
 import com.github.laxika.magicalvibes.model.condition.SourceEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -27,8 +27,8 @@ public class KaitoShizuki extends Card {
 
     public KaitoShizuki() {
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(new SourceEnteredBattlefieldThisTurn(),
-                        new PhaseOutEffect(PhaseOutSubject.SOURCE)));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceEnteredBattlefieldThisTurn()),
+                new PhaseOutEffect(PhaseOutSubject.SOURCE));
 
         addActivatedAbility(new ActivatedAbility(
                 +1,

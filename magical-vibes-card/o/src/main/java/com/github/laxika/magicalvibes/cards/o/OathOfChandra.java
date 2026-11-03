@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OGW", collectorNumber = "113")
@@ -21,8 +21,9 @@ public class OathOfChandra extends Card {
     public OathOfChandra() {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToTargetCreatureEffect(3));
-        addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(
-                new PermanentEnteredThisTurn(new CardTypePredicate(CardType.PLANESWALKER), 1),
-                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT)));
+        addTrigger(Triggers.endStep(ActivePlayer.ANY),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new PermanentEnteredThisTurn(new CardTypePredicate(CardType.PLANESWALKER), 1)),
+                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
     }
 }
