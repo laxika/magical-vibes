@@ -5,13 +5,13 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringSpellControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -20,9 +20,9 @@ import java.util.List;
 public class NettleGuard extends Card {
 
     public NettleGuard() {
-        addTrigger(Triggers.becomesTargetOfSpellOrAbility(),
-                new TriggeringSpellControllerConditionalEffect(new OncePerTurnTriggerEffect(
-                        new BoostSelfEffect(0, 2))));
+        addTrigger(Triggers.becomesTargetOfYourSpellOrAbility(),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new BoostSelfEffect(0, 2));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -1,8 +1,13 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 /**
  * Which of the old becomes-the-target slot collectors reads a triggered ability, now that the ability has a real
@@ -11,6 +16,13 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
  * {@code TriggerCollectionService} still decide when the ability triggers, how its effects group into stack objects,
  * which wrappers filter it and which event data it is bound to, as the slot's did, until steps 14 and 15 of the
  * refactor replace them with trigger options and effects that read the event.
+ * <p>
+ * The collectors read the abilities in the form the cards wrote them before step 14
+ * ({@link Card#getLegacyTriggerEffects(Trigger, Zone)}): a limit wrapped around each effect, a target trigger's filter
+ * as the {@code TriggeringPermanentConditionalEffect} they judge, "this becomes the target of a spell [or ability] you
+ * control" as the {@code TriggeringSpellControllerConditionalEffect} and "a player or permanent becomes the target of
+ * an ability you control" as the {@code AbilityTargetChoiceTriggerEffect} the collectors of the events about anyone
+ * judge.
  */
 public enum TargetWatch implements TriggerWatch {
     /** "Whenever a player chooses one or more targets" for a spell or ability. */
@@ -90,5 +102,15 @@ public enum TargetWatch implements TriggerWatch {
     @Override
     public Zone zone() {
         return zone;
+    }
+
+    @Override
+    public List<CardEffect> effectsOf(Card card) {
+        return card.getLegacyTriggerEffects(trigger, zone);
+    }
+
+    @Override
+    public List<EffectRegistration> registrationsOf(Card card) {
+        return card.getLegacyTriggerEffectRegistrations(trigger, zone);
     }
 }

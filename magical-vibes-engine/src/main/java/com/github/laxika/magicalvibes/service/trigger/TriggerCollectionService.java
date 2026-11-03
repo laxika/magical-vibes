@@ -279,7 +279,6 @@ import com.github.laxika.magicalvibes.model.effect.TapChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.TemporaryGlobalTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringSpellOpponentControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -7354,8 +7353,8 @@ public class TriggerCollectionService {
                 || gameQueryService.hasLostPrintedAbilities(gameData, source)
                 ? List.<CardEffect>of()
                 : TargetWatch.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY.effectsOf(source.getCard()));
-        effects.addAll(source.getTemporaryTriggerEffects(TargetWatch.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY.trigger()));
-        effects.addAll(source.getPersistentTriggerEffects(TargetWatch.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY.trigger()));
+        effects.addAll(source.getLegacyTemporaryTriggerEffects(TargetWatch.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY.trigger()));
+        effects.addAll(source.getLegacyPersistentTriggerEffects(TargetWatch.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY.trigger()));
         // Dismiss into Dream continuously grants "When this creature becomes the target of a spell
         // or ability, sacrifice it" to each creature its controller's opponents control.
         effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
@@ -7369,7 +7368,9 @@ public class TriggerCollectionService {
         }
         if (effects.isEmpty()) return;
 
-        boolean oncePerTurn = false;
+        // "Triggers only once each turn" / "for the first time each turn" limits of the effects queued below,
+        // marked once the ability is put on the stack.
+        List<CardEffect> limits = new ArrayList<>();
         List<CardEffect> resolvedEffects = new ArrayList<>(effects.size());
         for (CardEffect effect : effects) {
             CardEffect resolved = effect;
@@ -7377,14 +7378,10 @@ public class TriggerCollectionService {
                 if (!controllerId.equals(triggeringEntry.getControllerId())) continue;
                 resolved = conditional.wrapped();
             }
-            if (resolved instanceof TriggeringSpellOpponentControllerConditionalEffect conditional) {
-                if (controllerId.equals(triggeringEntry.getControllerId())) continue;
-                resolved = conditional.wrapped();
-            }
             if (resolved instanceof OncePerTurnTriggerEffect once) {
-                if (gameData.oncePerTurnTriggersFiredThisTurn.contains(source.getId())) continue;
+                if (OncePerTurnTriggerSupport.isFired(gameData, source, once)) continue;
+                limits.add(once);
                 resolved = once.wrapped();
-                oncePerTurn = true;
             }
             resolvedEffects.add(resolved);
         }
@@ -7416,7 +7413,7 @@ public class TriggerCollectionService {
                     null
             );
             enqueueTargetTriggeredAbility(gameData, source, controllerId, source, counterEntry);
-            if (oncePerTurn) gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
+            limits.forEach(limit -> OncePerTurnTriggerSupport.markIfNeeded(gameData, source, limit));
 
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
                     "'s triggered ability triggers — counter that spell or ability."));
@@ -7460,7 +7457,7 @@ public class TriggerCollectionService {
                 entry.setNonTargeting(true);
             }
             enqueueTargetTriggeredAbility(gameData, source, controllerId, source, entry);
-            if (oncePerTurn) gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
+            limits.forEach(limit -> OncePerTurnTriggerSupport.markIfNeeded(gameData, source, limit));
 
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
             log.info("Game {} - {} becomes-target-of-spell-or-ability trigger queued against the triggering object",
@@ -7477,7 +7474,7 @@ public class TriggerCollectionService {
                     source.getCard(), controllerId, new ArrayList<>(resolvedEffects),
                     targetsPlayer && !targetsPermanent, source.getCard().getTargetFilter(),
                     0, source.getId()));
-            if (oncePerTurn) gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
+            limits.forEach(limit -> OncePerTurnTriggerSupport.markIfNeeded(gameData, source, limit));
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
                     "'s triggered ability triggers — choose a target."));
             log.info("Game {} - {} becomes-target-of-spell-or-ability trigger queued for target selection",
@@ -7498,7 +7495,7 @@ public class TriggerCollectionService {
             entry.setSourcePermanentSnapshot(new Permanent(source));
         }
         enqueueTargetTriggeredAbility(gameData, source, controllerId, source, entry);
-        if (oncePerTurn) gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
+        limits.forEach(limit -> OncePerTurnTriggerSupport.markIfNeeded(gameData, source, limit));
 
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
         log.info("Game {} - {} becomes-target-of-spell-or-ability trigger queued", gameData.id, source.getCard().getName());
@@ -7557,8 +7554,8 @@ public class TriggerCollectionService {
                 && (sourceIsTarget || !source.getCard().getKeywords().contains(Keyword.WARD))) {
             effects.addAll(TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL.effectsOf(source.getCard()));
         }
-        effects.addAll(source.getTemporaryTriggerEffects(TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL.trigger()));
-        effects.addAll(source.getPersistentTriggerEffects(TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL.trigger()));
+        effects.addAll(source.getLegacyTemporaryTriggerEffects(TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL.trigger()));
+        effects.addAll(source.getLegacyPersistentTriggerEffects(TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL.trigger()));
         // Granted ward ("each legendary permanent you control has ward {2}") is a "this permanent becomes
         // the target" trigger, so an attached permanent only gets it when it is itself the target.
         List<CardEffect> grantedEffects = grantedTriggeredAbilitySupport.grantedTriggerEffects(
@@ -7782,20 +7779,23 @@ public class TriggerCollectionService {
      * Handles the non-counter effects in {@link TargetWatch#ON_BECOMES_TARGET_OF_OPPONENT_SPELL} (e.g. "you may
      * draw a card"). Counter/Ward effects on that slot are handled separately by
      * {@link #collectBecomesTargetOfOpponentCounterTriggers}. Called from both the spell and
-     * ability paths so the "or ability" clause is honored. Used by Tenured Concocter.
+     * ability paths so the "or ability" clause is honored. Used by Tenured Concocter, and by the ability Lae'zel,
+     * Githyanki Warrior grants the creature it becomes.
      */
     private void collectBecomesTargetOfOpponentSpellOrAbilityNonCounterTriggers(
             GameData gameData, Permanent source, UUID controllerId, UUID spellOrAbilityControllerId) {
         // Only trigger if the spell/ability is controlled by an opponent
         if (controllerId.equals(spellOrAbilityControllerId)) return;
-        if (source.isCloaked()) return;
-        if (source.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, source)) return;
 
-        List<CardEffect> effects = TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL.effectsOf(source.getCard()).stream()
-                .filter(e -> !(e instanceof CounterUnlessEffect)
-                        && !(e instanceof ConditionalEffect conditional
-                        && conditional.wrapped() instanceof CounterUnlessEffect))
-                .toList();
+        List<CardEffect> effects = new ArrayList<>();
+        if (!source.isCloaked() && !source.isFaceDown()
+                && !gameQueryService.hasLostPrintedAbilities(gameData, source)) {
+            effects.addAll(TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL.effectsOf(source.getCard()));
+        }
+        // Abilities granted to this permanent itself still apply when its printed ones don't.
+        effects.addAll(source.getLegacyTemporaryTriggerEffects(TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL.trigger()));
+        effects.addAll(source.getLegacyPersistentTriggerEffects(TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL.trigger()));
+        effects.removeIf(this::isCounterUnlessTrigger);
         if (effects.isEmpty()) return;
 
         if (effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)

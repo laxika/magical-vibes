@@ -223,7 +223,7 @@ combat damage step is processed.
 | `Triggers.youDiscardOneOrMoreCards()` | `TriggerCollectionService.checkDiscardEventTriggers` → `DiscardTriggerCollectorService` | One trigger for a one-or-more-card discard event; the count is carried by the trigger context and stack entry |
 | `Triggers.becomesTargetOfSpell()` / `becomesTargetOfSpellOrAbility()` / `becomesTargetOfOpponentSpellOrAbility()` / `becomesTargetOfOpponentSpell()` | `TriggerCollectionService.checkBecomesTargetOfSpell*` | Spell-target |
 | `Triggers.youBecomeTargetOfSpell()` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers` (targeted player; spell path only) | Spell-target |
-| `Triggers.playerChoosesTargets()` | `TriggerCollectionService.checkTargetChoiceTriggers` after spell/ability target selection | Target-choice event; the chosen spell/ability is carried as non-targeting `triggeringCardId`. `AbilityTargetChoiceTriggerEffect` narrows this event to an activated or triggered ability controlled by the source controller that targets a player or permanent |
+| `Triggers.playerChoosesTargets()` | `TriggerCollectionService.checkTargetChoiceTriggers` after spell/ability target selection | Target-choice event; the chosen spell/ability is carried as non-targeting `triggeringCardId`. `Triggers.playerOrPermanentBecomesTargetOfYourAbility()` (Loki) narrows this event to an activated or triggered ability controlled by the source controller that targets a player or permanent; this collector reads it |
 | `Triggers.youCastSpell()` / `Triggers.playerCastsSpell()` (targeting variants) | `SpellCastTriggerCollectorService` | Spell-target |
 | `Triggers.youCopySpell()` / `Triggers.opponentCopiesSpell()` (targeting variants) | `TriggerCollectionService.checkSpellCopyTriggers` + `SpellCastTriggerCollectorService` | Spell-target when the copy ability is bound to a target group (`target(filter[, 0, 1]).addTrigger(Triggers.youCopySpell().withFilter(spellFilter), …)`; the collector reads the group's filter and an "up to one" minimum); otherwise non-targeting |
 | `Triggers.youCastThisSpell()` (targeting variants) | `TriggerCollectionService.checkSpellCastTriggers` | Spell-target (single); multi-target (`maxTargets > 1`) reuses `ETBTokenMultiTargetTrigger` |
@@ -796,10 +796,11 @@ For `Triggers.becomesTargetOfSpellOrAbility()`, effects implementing `Triggering
 also carry the triggering spell or activated ability as an internal `STACK` reference. The source
 permanent id remains available so an Aura effect can re-derive its host at resolution.
 
-For `Triggers.becomesTargetOfSpell()`, wrap an effect in `TriggeringSpellControllerConditionalEffect`
-when the trigger should fire only for spells controlled by the source permanent's controller. The
-wrapper is evaluated while the becomes-target trigger is collected and then removed before the
-effect is put on the stack.
+"Whenever this permanent becomes the target of a spell [or ability] you control" is
+`Triggers.becomesTargetOfYourSpell()` / `Triggers.becomesTargetOfYourSpellOrAbility()` (valiant, with
+`TriggerLimit.ONCE_EACH_TURN` for "for the first time each turn"). The collectors of
+`becomesTargetOfSpell()` / `becomesTargetOfSpellOrAbility()` read them, and the legacy view hands them
+the `TriggeringSpellControllerConditionalEffect` those collectors judge as the trigger is collected.
 
 `Triggers.youDrawSecondCardEachTurn()` is checked by `DrawService.checkControllerDrawTriggers` after
 the controller's per-turn draw count reaches exactly two. It uses the same stack and any-target

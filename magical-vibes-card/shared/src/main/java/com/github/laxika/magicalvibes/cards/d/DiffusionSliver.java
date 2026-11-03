@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -13,9 +12,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class DiffusionSliver extends Card {
 
     public DiffusionSliver() {
-        addTrigger(Triggers.creatureYouControlBecomesTargetOfOpponentSpellOrAbility(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.SLIVER),
-                        new CounterUnlessPaysEffect(2)));
+        addTrigger(Triggers.creatureYouControlBecomesTargetOfOpponentSpellOrAbility()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.SLIVER)),
+                new CounterUnlessPaysEffect(2));
     }
 }

@@ -1207,9 +1207,20 @@ public final class Triggers {
         return new TargetTrigger(TargetTrigger.TargetEvent.PLAYER_CHOOSES_TARGETS, ObjectRelation.ANY);
     }
 
+    /** "Whenever a player or permanent becomes the target of an ability you control" */
+    public static TargetTrigger playerOrPermanentBecomesTargetOfYourAbility() {
+        return new TargetTrigger(TargetTrigger.TargetEvent.PLAYER_OR_PERMANENT_BECOMES_TARGET_OF_YOUR_ABILITY,
+                ObjectRelation.ANY);
+    }
+
     /** "Whenever this permanent becomes the target of a spell" */
     public static TargetTrigger becomesTargetOfSpell() {
         return new TargetTrigger(TargetTrigger.TargetEvent.BECOMES_TARGET_OF_SPELL, ObjectRelation.THIS);
+    }
+
+    /** "Whenever this permanent becomes the target of a spell you control" */
+    public static TargetTrigger becomesTargetOfYourSpell() {
+        return new TargetTrigger(TargetTrigger.TargetEvent.BECOMES_TARGET_OF_YOUR_SPELL, ObjectRelation.THIS);
     }
 
     /** "Whenever this permanent becomes the target of an Aura spell" */
@@ -1242,6 +1253,12 @@ public final class Triggers {
     /** "Whenever this permanent becomes the target of a spell or ability" */
     public static TargetTrigger becomesTargetOfSpellOrAbility() {
         return new TargetTrigger(TargetTrigger.TargetEvent.BECOMES_TARGET_OF_SPELL_OR_ABILITY, ObjectRelation.THIS);
+    }
+
+    /** "Whenever this permanent becomes the target of a spell or ability you control" (valiant) */
+    public static TargetTrigger becomesTargetOfYourSpellOrAbility() {
+        return new TargetTrigger(TargetTrigger.TargetEvent.BECOMES_TARGET_OF_YOUR_SPELL_OR_ABILITY,
+                ObjectRelation.THIS);
     }
 
     /** "Whenever a creature you control becomes the target of a spell or ability an opponent controls" */

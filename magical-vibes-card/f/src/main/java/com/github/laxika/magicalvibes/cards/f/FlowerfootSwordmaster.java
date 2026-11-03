@@ -7,10 +7,9 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringSpellControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,9 +21,9 @@ public class FlowerfootSwordmaster extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
                 new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1));
-        addTrigger(Triggers.becomesTargetOfSpellOrAbility(),
-                new TriggeringSpellControllerConditionalEffect(new OncePerTurnTriggerEffect(
-                        new BoostAllOwnCreaturesEffect(1, 0,
-                                new PermanentHasSubtypePredicate(CardSubtype.MOUSE)))));
+        addTrigger(Triggers.becomesTargetOfYourSpellOrAbility(),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new BoostAllOwnCreaturesEffect(1, 0,
+                        new PermanentHasSubtypePredicate(CardSubtype.MOUSE)));
     }
 }

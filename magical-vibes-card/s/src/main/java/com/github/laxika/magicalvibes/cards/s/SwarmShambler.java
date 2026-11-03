@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,11 +21,10 @@ public class SwarmShambler extends Card {
 
     public SwarmShambler() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));
-        addTrigger(Triggers.creatureYouControlBecomesTargetOfOpponentSpell(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE),
-                        new CreateTokenEffect("Insect", 1, 1, CardColor.GREEN,
-                                List.of(CardSubtype.INSECT), Set.of(), Set.of())));
+        addTrigger(Triggers.creatureYouControlBecomesTargetOfOpponentSpell()
+                        .withFilter(new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)),
+                new CreateTokenEffect("Insect", 1, 1, CardColor.GREEN,
+                        List.of(CardSubtype.INSECT), Set.of(), Set.of()));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",

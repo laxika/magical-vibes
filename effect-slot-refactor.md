@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -4535,8 +4535,9 @@ the own enters abilities' intervening "if"s, run 4c the rules fixes: every own e
 as the ability triggers, run 5 the steps and phases, run 6a the spell, land-play and activation abilities' generic
 wrappers, run 6b `SpellCastTriggerEffect`, as the cast trigger's filter, the ability's options and its effects, run
 6c the other spell, copy and land-play condition-as-effect classes, as the trigger's filter, run 7 the combat
-abilities (step 13's family 3), all of their wrapper kinds in one run, with the user, and run 8 the damage abilities
-(step 13's family 4) the same way.
+abilities (step 13's family 3), all of their wrapper kinds in one run, with the user; run 8 the damage abilities
+(step 13's family 4), run 9 the counter abilities (family 5) and run 10 the becomes-the-target abilities (family 6)
+the same way.
 
 #### Run 1: the source's own zone changes
 
@@ -6192,6 +6193,134 @@ Ant-Man, Colony Commander's and Ichor Aberration's split halves were merged into
   `card-data-cache`: run 8's counts, plus the mock wiring of `ActivatedAbilityExecutionServiceTest` (35),
   `BattlefieldPlacementServiceTest` (24), `CombatServiceTest` (5), `PermanentTimestampTest` (5) and
   `PutTargetCardsFromGraveyardOnBottomOfLibraryEffectHandlerTest` (1).
+- AI: the whole module (1,620 tests), with the same 10 failures as before.
+- The full suite was not run here.
+
+#### Run 10: becomes the target
+
+Step 13 family 6, every wrapper kind in one run: every becomes-the-target ability that the `TargetWatch` collectors
+read is authored without trigger-only wrappers, but the two kept below. The family is small: 36 card classes were
+changed, 26 of them converted and 10 of them losing an ability that never triggered (below).
+
+**Authoring.**
+
+- A restriction on the permanent is the trigger's filter: `TargetTrigger.withFilter(PermanentPredicate)`, kept in the
+  new `qualifier` component because `filter` already holds the creature type the watch is keyed by:
+  `Triggers.creatureYouControlBecomesTargetOfOpponentSpellOrAbility().withFilter(dragon)` (Thunderbreak Regent, Scalelord
+  Reckoner), Diffusion Sliver, Silverfur Partisan, Swarm Shambler, Fey Steed, Daru Spiritualist. A second filter is
+  rejected.
+- "Whose spell" is the event, as run 9 made "you put": new `TargetEvent.BECOMES_TARGET_OF_YOUR_SPELL` and
+  `PLAYER_OR_PERMANENT_BECOMES_TARGET_OF_YOUR_ABILITY`, and the existing `BECOMES_TARGET_OF_YOUR_SPELL_OR_ABILITY` with
+  `THIS`, with new factories: `becomesTargetOfYourSpell()` (Stormchaser Drake, Illuminator Virtuoso),
+  `becomesTargetOfYourSpellOrAbility()` (the eleven valiant cards) and `playerOrPermanentBecomesTargetOfYourAbility()`
+  (Loki, God of Mischief). "Of a spell or ability an opponent controls" on this permanent is ward's trigger,
+  `becomesTargetOfOpponentSpellOrAbility()`, whatever its effect: Lae'zel, Githyanki Warrior's cast-time grant and
+  Dragon's Disciple's "Dragons you control have ward {1}" (now the usual ward grant,
+  `new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(1))`).
+- "For the first time each turn" (valiant) and "this ability triggers only once each turn" (Professor Hojo, Loki,
+  Niambi's perpetual grant) are `ONCE_EACH_TURN`. Catch of the Day's chosen-mode ward is an
+  intervening "if" (CR 603.4, checked), as run 7 and run 9 made chosen modes.
+
+**The engine.**
+
+- `TargetTrigger.watchKey()` drops the qualifier and gives the three narrowed events the event whose collector reads
+  them (`TargetTrigger.watchedEvent()`): `BECOMES_TARGET_OF_SPELL`, `BECOMES_TARGET_OF_SPELL_OR_ABILITY` (both only with
+  `THIS`) and `PLAYER_CHOOSES_TARGETS`.
+- `TriggeredAbility.legacyEffects()` rebuilds the target wrappers in the order the cards nested them, outermost first:
+  the event's wrapper (`TriggeringSpellControllerConditionalEffect`, `AbilityTargetChoiceTriggerEffect`), the filter as
+  a `TriggeringPermanentConditionalEffect`, the limit (keyed `OncePerTurnTriggerEffect`), the intervening "if". A
+  multiplicity other than `EACH`, and target conditions of one ability with different filters or watched events, throw.
+- `TargetWatch.effectsOf` and `registrationsOf` read the legacy view, and the spell-or-ability and ward collectors read
+  the temporary and persistent grants through `getLegacyTemporaryTriggerEffects` / `getLegacyPersistentTriggerEffects`
+  (four calls, by hand). The static-grant reader (`grantedTriggerEffects`) already gave the legacy view.
+- The "this becomes the target of a spell or ability" collector checked and set the unkeyed once-each-turn mark; it
+  checks and marks the ability's key through `OncePerTurnTriggerSupport` now, so the keyed limit of the legacy view still
+  stops it. The Hojo and target-choice collectors already did.
+- The ward watch's non-counter collector (`collectBecomesTargetOfOpponentSpellOrAbilityNonCounterTriggers`) reads the
+  abilities granted to the permanent itself (temporary and persistent) as well as its printed ones, and reads them while
+  the printed ones are suppressed (face down, cloaked, abilities lost), as the spell-or-ability collector did for
+  Lae'zel's grant. No such grant with a non-counter effect existed before this run.
+- `TriggeringSpellOpponentControllerConditionalEffect` is deleted (no card, and the legacy view doesn't build it),
+  with its check in the spell-or-ability collector. `TriggeringSpellControllerConditionalEffect` and
+  `AbilityTargetChoiceTriggerEffect` stay for the legacy view; run 16 deletes them.
+
+**Cards.**
+
+- `scripts/step14-target-scan.py` (run 9's scan on the target factories) lists the family's wrapped abilities.
+- `scripts/step14-target-options.py` (`--dry-run`, `--report`) did the conversion: it peels the wrappers of each
+  family ability, outermost first, into the event, filter and options, re-indents what is left and stops on a wrapper
+  it can't decide. Its tables: `INTERVENING` (Catch of the Day), `DELETE` (the disguise abilities below),
+  `NOT_INTERVENING` and `KEEP`. A second pass (`--reformat-filters`, now part of the conversion) moved the filters the
+  first pass wrote on the trigger's line to a line of their own. Running it again changes nothing.
+- The ten disguise cards' `addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new ConditionalEffect(new
+  SourceIsFaceDown(), new CounterUnlessPaysEffect(2)))` are deleted: Sanguine Savior, Rakish Scoundrel, Mistway Spy,
+  Museum Nightwatch, Faerie Snoop, Exit Specialist, Defenestrated Phantom, Bayek of Siwa, Alley Assailant, Aveline de
+  Grandpré. The ability never triggered: the ward collector skips a face-down permanent's printed abilities, and the
+  condition is false face up. A permanent cast face down with disguise gets ward {2} from the engine
+  (`Permanent.setFaceDownAsDisguised`, `enqueueCloakedWardTrigger`), as Rampaging Ursaguana already relied on.
+  `SourceIsFaceDown` stays (an activation condition uses it).
+- `scripts/step14-target-docs.py` rewrote 16 agent-docs lines (exact replacements): the target rows, the "don't author"
+  entries of `TriggeringSpellControllerConditionalEffect` and `AbilityTargetChoiceTriggerEffect`, the deleted class's
+  entries, and the disguise pattern row. The two classes' Javadoc, `ARCHITECTURE.md` and the implement-card and
+  review-card skills were edited by hand.
+
+**Kept, with their reason.**
+
+- Skophos Maze-Warden: `TriggeringAbilityFromNamedLandConditionalEffect` is a condition on the targeting ability's
+  source (an ability of a land you control named Labyrinth of Skophos, targeting another creature), which no
+  `TargetTrigger` field holds. A source filter on the trigger can replace it.
+- Rayne, Academy Chancellor's `ConditionalEffect(new Enchanted(), …)` is effect text ("you may draw an additional card
+  if Rayne is enchanted"), still a second ability of the one Oracle ability, as before.
+- Event-reading effects (step 15): `DealDamageToTriggeringSpellControllerEffect` (Thunderbreak Regent, Retromancer,
+  Bonecrusher Giant), `TriggeringSpellControllerSacrificesPermanentsEffect` (Lava Runner) and
+  `TriggeringObjectControllerGainsControlOfEnchantedPermanentEffect` (Fractured Loyalty).
+- Fey Steed keeps "you or a permanent you control" with a creature-or-planeswalker filter, and Daru Spiritualist "a
+  creature" with a "you control" filter: their collectors judge the filter as before. `YOU_CONTROL` watches of those
+  events would say it directly.
+
+**Behaviour changes.**
+
+- Dragon's Disciple: "Dragons you control have ward {1}" was a "becomes the target of a spell or ability" grant with
+  an opponent-controller wrapper, so effects that stop ward abilities from triggering didn't see it. It is ward's
+  trigger now. Rules fix, with a card test (Nowhere to Run stops it).
+- Lae'zel, Githyanki Warrior: its granted ability is collected by the ward watch's non-counter collector instead of
+  the spell-or-ability collector; it triggers on the same events and goes on the stack the same way.
+- The valiant "first time each turn" limit is keyed by the ability, where the unkeyed mark was shared with the source's
+  other unkeyed once-each-turn abilities. None of the converted cards has another.
+- Nothing else changed: the legacy view hands every other collector the wrappers it read before.
+
+**For later runs.**
+
+- Skophos Maze-Warden's source condition (above), and the Aura/Equipment readings of the `THIS` forms (step 13 run 6).
+- The ward collector checks Catch of the Day's intervening "if" only as the ability triggers (it unwraps the
+  condition), not again as it resolves (CR 603.4); the chosen mode can't change, so nothing is observable. No other
+  target ability has an intervening "if" left.
+- Step 15: as step 13 run 6 listed.
+
+**Tests changed.**
+
+- `TargetTriggerTest`, six new tests: a filter is dropped from the watch key and a second one rejected; the narrowed
+  events are watched by the events about anyone; the legacy view gives the controller wrapper outside the keyed limit,
+  with a stable identity, and the filter outside the intervening "if"; the other narrowed events' wrappers; an
+  unreadable multiplicity or two readings are rejected; granted abilities are read in the legacy form.
+- `DragonsDiscipleTest`: new test, Nowhere to Run stops the granted ward from triggering. This is the rules fix above.
+  The old grant was collected by the spell-or-ability collector, which doesn't check ward suppression (reasoned from
+  the code, not run against the old grant: its wrapper class is deleted).
+- No other test changed.
+
+**Test runs.**
+
+- Card: the test class of every card that uses a becomes-the-target factory (converted or not, ward included), Nowhere
+  to Run, and every card test that constructs one of them (553 classes, 5,080 tests): all passing, the new Dragon's
+  Disciple test included.
+- Application: the `model.trigger` and `service.trigger` packages and the freeze, architecture, simulation-copy,
+  deep-copy, triggered-ability, target-legality, counter-spell, counter-unless, granted-ability, targeting-consistency
+  and legacy-slot classes (885 tests): 36 failures, all known from HEAD: `TargetLegalityServiceTest` 14,
+  `DamageTriggerCollectorServiceTest` 6, `DeathTriggerCollectorServiceTest` 6, `SpellCastTriggerCollectorServiceTest` 3,
+  `LandTapTriggerCollectorServiceTest` 2, the known one each in `SimulationCopyCompletenessTest`,
+  `CardImmutabilityArchTest` and `CardEffectTargetingConsistencyTest`, and `CounterSpellEffectHandlerTest` 2 (the
+  Mockito wiring step 13 run 6 listed as failing at HEAD; the handler reads nothing this run changed; not rerun at HEAD
+  here).
 - AI: the whole module (1,620 tests), with the same 10 failures as before.
 - The full suite was not run here.
 

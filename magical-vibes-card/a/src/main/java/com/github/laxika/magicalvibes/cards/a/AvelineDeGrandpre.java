@@ -5,10 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.condition.SourceIsFaceDown;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,8 +16,6 @@ public class AvelineDeGrandpre extends Card {
 
     public AvelineDeGrandpre() {
         addMorph("{B}{G}");
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new ConditionalEffect(new SourceIsFaceDown(), new CounterUnlessPaysEffect(2)));
         // Whenever a creature you control with deathtouch deals combat damage to a player,
         // put that many +1/+1 counters on that creature.
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()

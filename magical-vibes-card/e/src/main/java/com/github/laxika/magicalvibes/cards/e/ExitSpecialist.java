@@ -2,10 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.condition.SourceIsFaceDown;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -23,8 +20,6 @@ public class ExitSpecialist extends Card {
 
     public ExitSpecialist() {
         addMorph("{1}{U}");
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new ConditionalEffect(new SourceIsFaceDown(), new CounterUnlessPaysEffect(2)));
         addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentPowerAtLeastPredicate(3)));
         target(new PermanentPredicateTargetFilter(

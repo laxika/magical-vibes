@@ -48,7 +48,8 @@ public class CatchOfTheDay extends Card {
                 new GrantKeywordEffect(Keyword.ISLANDWALK, GrantScope.SELF)));
 
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new ConditionalEffect(new SourceHasChosenMode(WARD), new CounterUnlessPaysEffect(3)));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(WARD)),
+                new CounterUnlessPaysEffect(3));
 
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(SCRY)),

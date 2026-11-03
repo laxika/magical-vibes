@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -38,11 +37,10 @@ public class FeySteed extends Card {
                 .addTrigger(Triggers.attacks(),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
 
-        addTrigger(Triggers.youOrPermanentYouControlBecomesTargetOfOpponentSpellOrAbility(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentAnyOfPredicate(List.of(
+        addTrigger(Triggers.youOrPermanentYouControlBecomesTargetOfOpponentSpellOrAbility()
+                        .withFilter(new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
-                                new PermanentIsPlaneswalkerPredicate())),
-                        new MayEffect(new DrawCardEffect(), "Draw a card?")));
+                                new PermanentIsPlaneswalkerPredicate()))),
+                new MayEffect(new DrawCardEffect(), "Draw a card?"));
     }
 }

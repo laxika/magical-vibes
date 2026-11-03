@@ -24,7 +24,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.ReturnTiming;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeLaezelEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringSpellOpponentControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -46,12 +45,11 @@ public class LaezelGithyankiWarrior extends Card {
     public LaezelGithyankiWarrior() {
         addTrigger(Triggers.youCastThisSpell(),
                 new GrantTriggeredAbilityToCastSpellEffect(
-                        new TriggeredAbility(Triggers.becomesTargetOfSpellOrAbility(),
-                        new TriggeringSpellOpponentControllerConditionalEffect(
+                        new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                                 new MayEffect(
                                         new FlickerEffect(FlickerScope.SELF, null, ReturnTiming.IMMEDIATE,
                                                 TurnStep.END_STEP, false, null, null, 0, false, false),
-                                        "Exile this creature, then return it to the battlefield under its owner's control?")))));
+                                        "Exile this creature, then return it to the battlefield under its owner's control?"))));
 
         addSpecializeAbility(CardColor.WHITE, CardSubtype.PLAINS);
         addSpecializeAbility(CardColor.BLUE, CardSubtype.ISLAND);

@@ -2,9 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.condition.SourceIsFaceDown;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -20,8 +17,6 @@ public class AlleyAssailant extends Card {
 
     public AlleyAssailant() {
         addMorph("{4}{B}{B}");
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new ConditionalEffect(new SourceIsFaceDown(), new CounterUnlessPaysEffect(2)));
         addStaticEffect(new EntersTappedEffect());
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

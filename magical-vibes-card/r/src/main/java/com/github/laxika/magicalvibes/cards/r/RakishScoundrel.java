@@ -3,9 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.condition.SourceIsFaceDown;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -17,8 +14,6 @@ public class RakishScoundrel extends Card {
 
     public RakishScoundrel() {
         addMorph("{4}{B/G}{B/G}");
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new ConditionalEffect(new SourceIsFaceDown(), new CounterUnlessPaysEffect(2)));
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET))

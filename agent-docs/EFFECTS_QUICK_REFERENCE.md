@@ -189,7 +189,6 @@
 - `PerpetuallyGrantKeywordsToTargetCreatureEffect(Set<Keyword>[, PermanentPredicate filter][, EffectSlot, CardEffect])` - records perpetual keyword grants, plus an optional persistent triggered ability, on a targeted creature card identity. The optional filter narrows legal targets and defaults to creatures controlled by the source controller. Used by Wilson, Bear Comrade (HBG 19) and By Elspeth's Command (YBRO 1).
 - `PerpetuallyGrantStaticEffectToTargetCreatureEffect(CardEffect)` - adds a static effect to a targeted creature's runtime card, preserving it through zone changes. Used by Wilson, Bear Comrade (HBG 19).
 - `SeekLibraryAndConjureDuplicatesInGraveyardEffect(CardPredicate)` - randomly seeks one matching library card into the graveyard, then conjures two fresh duplicates of it there (Sarevok, Deadly Usurper, HBG 9).
-- `TriggeringSpellOpponentControllerConditionalEffect(CardEffect)` - trigger-only wrapper for `Triggers.becomesTargetOfSpellOrAbility()`; fires only when the triggering spell or ability was controlled by an opponent (Lae'zel, Githyanki Warrior, HBG 2)
 - `SourceIntensity()` - `DynamicAmount` that reads the persistent intensity of the source permanent's physical card; pair with `DrawCardEffect` and `LoseLifeEffect` for intensity-scaled draw/life-loss abilities (Chittering Skullspeaker, YBLB 9).
 - `IntensifySourceCardEffect(int amount)` - increases the persistent intensity of the exact physical source card; use for source-specific digital triggers such as Summitfest Closing Ceremony's Covercast (YSOS 28).
 - `IntensifySourceCardByAmountEffect(DynamicAmount amount)` - same as `IntensifySourceCardEffect` with a dynamic amount evaluated at resolution (Quickbeast Amulet uses `ChosenPermanentPower`).
@@ -2353,7 +2352,7 @@ Core wrappers (all take `CardEffect wrapped` as first/only effect arg):
 - `TriggeringTapAbilityConditionalEffect(CardEffect)` — **don't author**: “with {T} in its activation cost” is `.withKind(AbilityTrigger.AbilityKind.WITH_TAP_COST)` on the activation trigger (Imprison); the collectors get this wrapper from the legacy view
 - `TriggeringNonTapAbilityConditionalEffect(CardEffect)` — **don't author**: “without {T} in its activation cost” is `Triggers.youActivateAbility().withKind(AbilityTrigger.AbilityKind.WITHOUT_TAP_COST)` (Artifact Possession); the collectors get this wrapper from the legacy view
 - `TriggeringLoyaltyAbilityConditionalEffect(CardEffect)` — **don't author**: “whenever you activate a loyalty ability” is `Triggers.youActivateAbility().withKind(AbilityTrigger.AbilityKind.LOYALTY)`
-- `TriggeringSpellControllerConditionalEffect(CardEffect)` — trigger-only wrapper for `Triggers.becomesTargetOfSpell()`; fires only when the triggering spell was controlled by the source's controller (Stormchaser Drake)
+- `TriggeringSpellControllerConditionalEffect(CardEffect)` — **Don't author** (step 14 of effect-slot-refactor.md): "of a spell [or ability] you control" is the trigger `Triggers.becomesTargetOfYourSpell()` / `becomesTargetOfYourSpellOrAbility()`; the legacy view gives this wrapper to the collectors that still judge it (Stormchaser Drake, the valiant cards)
 - `ConditionalEffect(new ControlsAnotherPermanent(filter), wrapped)` — controls another matching permanent
 - `ConditionalEffect(new ControllerLifeAtLeast(threshold), wrapped)` — life >= N. Pass `true` as the second condition argument to compare against the format's starting life total plus N.
 - `EachPlayerAttackedBySourceLosesGameEffect()` — `Triggers.endStep(ActivePlayer.YOU)`: each player directly attacked by the source permanent this turn loses the game through the central loss-outcome gate. Uses `GameData.playersAttackedThisTurn`, so attacking a planeswalker does not count.
@@ -5813,7 +5812,7 @@ The `CONTROLLER` form of `GivePoisonCountersEffect` is also supported as a mana-
 - `ChooseNewTargetsForTargetSpellEffect()` — choose new targets
 - `ChooseNewTargetsForAnyNumberOfOtherSpellsAndAbilitiesEffect()` — queues optional choices to retarget any number of other targeted spells and abilities on the stack, one target occurrence at a time (Boltbender)
 - `PsychicBattleEffect()` — global target-choice trigger: reveal each library's top card and, on a unique highest mana value, let that player change any legal target(s); ties do nothing
-- `AbilityTargetChoiceTriggerEffect(CardEffect)` — trigger-only wrapper for an ability controlled by this permanent's controller targeting a player or permanent; the wrapper is consumed by `checkTargetChoiceTriggers` and queues its wrapped effect. Loki, God of Mischief pairs it with `OncePerTurnTriggerEffect(DrawCardEffect())`
+- `AbilityTargetChoiceTriggerEffect(CardEffect)` — **Don't author** (step 14 of effect-slot-refactor.md): "a player or permanent becomes the target of an ability you control" is the trigger `Triggers.playerOrPermanentBecomesTargetOfYourAbility()`; the legacy view gives this wrapper to `checkTargetChoiceTriggers` (Loki, God of Mischief, with `TriggerLimit.ONCE_EACH_TURN`)
 - `PsychicBattleRetargetEffect(UUID spellCardId, int targetIndex)` — internal may-choice payload used by `PsychicBattleEffect`
 
 ## Spell copies

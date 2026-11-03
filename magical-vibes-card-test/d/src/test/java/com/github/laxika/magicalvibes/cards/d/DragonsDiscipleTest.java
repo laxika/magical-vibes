@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.b.BlueDragon;
 import com.github.laxika.magicalvibes.cards.b.BullsStrength;
+import com.github.laxika.magicalvibes.cards.n.NowhereToRun;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DragonsDisciple.class, BlueDragon.class, BullsStrength.class})
+@CardUsed({DragonsDisciple.class, BlueDragon.class, BullsStrength.class, NowhereToRun.class})
 class DragonsDiscipleTest extends BaseCardTest {
 
     @Test
@@ -123,6 +124,18 @@ class DragonsDiscipleTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
         assertThat(dragon.getPowerModifier()).isZero();
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    void grantedWardIsWardForAbilitiesThatStopWardTriggering() {
+        Permanent dragon = harness.addToBattlefieldAndReturn(player1, new BlueDragon());
+        harness.addToBattlefield(player1, new DragonsDisciple());
+        harness.addToBattlefield(player2, new NowhereToRun());
+
+        castBullsStrengthAt(player2, dragon, 3);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(dragon.getPowerModifier()).isEqualTo(2);
     }
 
     @Test

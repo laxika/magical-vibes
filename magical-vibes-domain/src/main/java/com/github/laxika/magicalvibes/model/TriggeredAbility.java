@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.effect.AbilityTargetChoiceTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.BatchedCombatDamageToYouTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -24,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringNonTapAbilityCondit
 import com.github.laxika.magicalvibes.model.effect.TriggeringOutlastAbilityConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPowerUpAbilityConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringSpellControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringTapAbilityConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.YouPutCounterOnControlledCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.YouRemoveTimeCounterFromExiledCardTriggerEffect;
@@ -37,6 +39,7 @@ import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.SpellFilter;
 import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
+import com.github.laxika.magicalvibes.model.trigger.TargetTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
@@ -204,8 +207,13 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * another event reads ({@link CounterTrigger#watchedEvent()}) are that collector's wrapper outside that: "you put
      * counters" a {@link YouPutCounterOnControlledCreatureTriggerEffect}, "you remove a time counter" a
      * {@link YouRemoveTimeCounterFromExiledCardTriggerEffect}, and "a +1/+1 counter is put on this", once for each
-     * counter, the registrations' {@link TriggerMode#PER_COUNTER}, as the counter cards wrote them. An ability without
-     * options or such filters returns its registrations as they are.
+     * counter, the registrations' {@link TriggerMode#PER_COUNTER}, as the counter cards wrote them. A becomes-the-target
+     * trigger's filter ({@link TargetTrigger#qualifier()}) is a {@link TriggeringPermanentConditionalEffect} outside the
+     * limit, and the target triggers the collector of another event reads ({@link TargetTrigger#watchedEvent()}) that
+     * collector's wrapper outside that: "this becomes the target of a spell [or ability] you control" a
+     * {@link TriggeringSpellControllerConditionalEffect}, "a player or permanent becomes the target of an ability you
+     * control" an {@link AbilityTargetChoiceTriggerEffect}, as the target cards wrote them. An ability without options
+     * or such filters returns its registrations as they are.
      */
     public List<EffectRegistration> legacyEffects() {
         SpellTrigger spell = filteredTrigger(SpellTrigger.class);
@@ -229,9 +237,10 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         CombatView combat = combatView();
         DamageView damage = damageView();
         CounterView counter = counterView();
+        TargetView target = targetView();
         if (interveningIf == null && limit == TriggerLimit.NONE && landPlay == null && activation == null
                 && (combat == null || combat.plain()) && (damage == null || damage.plain())
-                && (counter == null || counter.plain())) {
+                && (counter == null || counter.plain()) && (target == null || target.plain())) {
             return effects;
         }
         String key = limit == TriggerLimit.ONCE_EACH_TURN ? limitKey() : null;
@@ -275,6 +284,9 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             }
             if (counter != null) {
                 effect = counter.wrap(effect);
+            }
+            if (target != null) {
+                effect = target.wrap(effect);
             }
             if (activation != null && activation.kind() != null) {
                 effect = legacyKindWrapper(activation.kind(), effect);
@@ -436,6 +448,61 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
                         + " on a trigger that is once for each counter");
             }
             return TriggerMode.PER_COUNTER;
+        }
+    }
+
+    /**
+     * What the legacy view adds for this ability's becomes-the-target conditions, or {@code null} when it has none:
+     * their filter (the {@link TargetTrigger#qualifier()} {@link TargetTrigger#watchKey()} drops) and the event the
+     * collector that reads them judges in a wrapper. The conditions must agree on both. The becomes-the-target
+     * collectors have no multiplicity option.
+     */
+    private TargetView targetView() {
+        List<TargetTrigger> target = conditions.stream().map(TriggerCondition::trigger)
+                .filter(TargetTrigger.class::isInstance).map(TargetTrigger.class::cast).toList();
+        if (target.isEmpty()) {
+            return null;
+        }
+        List<TargetView> views = target.stream()
+                .map(trigger -> new TargetView(trigger.qualifier(),
+                        trigger.watchedEvent() == trigger.event() ? null : trigger.event()))
+                .distinct().toList();
+        if (views.size() > 1) {
+            throw new IllegalStateException("The becomes-the-target conditions of one ability must have the same "
+                    + "filter and watched event: " + conditions);
+        }
+        if (options.multiplicity() != TriggerMultiplicity.EACH) {
+            throw new IllegalStateException("The legacy view has no " + options.multiplicity() + " form for "
+                    + conditions);
+        }
+        return views.getFirst();
+    }
+
+    /**
+     * The legacy view of an ability's becomes-the-target conditions, as {@link #targetView()} builds it.
+     *
+     * @param filter   the conditions' filter, or {@code null}
+     * @param narrowed the event read by another event's collector, which judges it as a wrapper, or {@code null}
+     */
+    private record TargetView(PermanentPredicate filter, TargetTrigger.TargetEvent narrowed) {
+
+        /** Whether the legacy view adds nothing to the effects. */
+        boolean plain() {
+            return filter == null && narrowed == null;
+        }
+
+        CardEffect wrap(CardEffect effect) {
+            CardEffect filtered = filter != null ? new TriggeringPermanentConditionalEffect(filter, effect) : effect;
+            if (narrowed == null) {
+                return filtered;
+            }
+            return switch (narrowed) {
+                case BECOMES_TARGET_OF_YOUR_SPELL, BECOMES_TARGET_OF_YOUR_SPELL_OR_ABILITY ->
+                        new TriggeringSpellControllerConditionalEffect(filtered);
+                case PLAYER_OR_PERMANENT_BECOMES_TARGET_OF_YOUR_ABILITY ->
+                        new AbilityTargetChoiceTriggerEffect(filtered);
+                default -> throw new IllegalStateException("No legacy wrapper for " + narrowed);
+            };
         }
     }
 
