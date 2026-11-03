@@ -11,10 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.RemoveReferencedPermanentFrom
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringTapAbilityConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.AbilityTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LEG", collectorNumber = "107")
@@ -22,16 +21,19 @@ public class Imprison extends Card {
 
     public Imprison() {
         target(TargetFilters.creature());
-        CardEffect activationTrigger = new TriggeringTapAbilityConditionalEffect(
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsHostOfSourceAuraPredicate(),
-                        new MayPayManaEffect(
-                                "{1}",
-                                new CounterSpellEffect(),
-                                "Pay {1} to counter that ability?",
-                                new DestroyReferencedPermanentEffect(PermanentReference.SOURCE))));
-        addTrigger(Triggers.youActivateNonManaAbility(), activationTrigger);
-        addTrigger(Triggers.opponentActivatesNonManaAbility(), activationTrigger);
+        CardEffect activationTrigger = new MayPayManaEffect(
+                "{1}",
+                new CounterSpellEffect(),
+                "Pay {1} to counter that ability?",
+                new DestroyReferencedPermanentEffect(PermanentReference.SOURCE));
+        addTrigger(Triggers.youActivateNonManaAbility()
+                        .withKind(AbilityTrigger.AbilityKind.WITH_TAP_COST)
+                        .withSource(new PermanentIsHostOfSourceAuraPredicate()),
+                activationTrigger);
+        addTrigger(Triggers.opponentActivatesNonManaAbility()
+                        .withKind(AbilityTrigger.AbilityKind.WITH_TAP_COST)
+                        .withSource(new PermanentIsHostOfSourceAuraPredicate()),
+                activationTrigger);
 
         CardEffect combatTrigger = new MayPayManaEffect(
                 "{1}",

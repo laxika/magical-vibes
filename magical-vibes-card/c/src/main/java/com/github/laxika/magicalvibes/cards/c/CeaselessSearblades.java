@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -13,8 +12,7 @@ public class CeaselessSearblades extends Card {
 
     public CeaselessSearblades() {
         // Whenever you activate an ability of an Elemental, this creature gets +1/+0 until end of turn.
-        addTrigger(Triggers.youActivateAbility(), new TriggeringPermanentConditionalEffect(
-                new PermanentHasSubtypePredicate(CardSubtype.ELEMENTAL),
-                new BoostSelfEffect(1, 0)));
+        addTrigger(Triggers.youActivateAbility().withSource(new PermanentHasSubtypePredicate(CardSubtype.ELEMENTAL)),
+                new BoostSelfEffect(1, 0));
     }
 }

@@ -29,9 +29,7 @@ public class CemeteryGatekeeper extends Card {
 
         addTrigger(Triggers.playerCastsSpell(),
                 new SpellCastTriggerEffect(sharedType, List.of(conditionalDamage)));
-        addTrigger(Triggers.youPlayLand(),
-                new TriggeringCardConditionalEffect(sharedType, damage));
-        addTrigger(Triggers.opponentPlaysLand(),
-                new TriggeringCardConditionalEffect(sharedType, damage));
+        addTrigger(Triggers.youPlayLand().withFilter(sharedType), damage);
+        addTrigger(Triggers.opponentPlaysLand().withFilter(sharedType), damage);
     }
 }

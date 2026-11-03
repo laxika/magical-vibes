@@ -1965,7 +1965,9 @@ public class Card {
      * the form the code that still reads effects instead of abilities takes them: each effect wrapped in its ability's
      * options ({@link TriggeredAbility#legacyEffects()}), so an intervening "if" is a {@code ConditionalEffect}. The
      * "when this enters" collector and the code that inspects "when this enters" abilities read these until they read
-     * abilities. The wrapped effects are built once, with the index, so they keep their identity across calls.
+     * abilities. The wrapped effects are built once, with the index, so they keep their identity across calls. An
+     * ability is found by its trigger's {@link Trigger#watchKey()}, so a land-play or activation ability with a filter
+     * is found by the unfiltered trigger, with the filter as a wrapper.
      */
     public List<CardEffect> getLegacyTriggerEffects(Trigger trigger) {
         TriggerView view = slotIndex().legacyByTrigger().get(trigger);
@@ -2011,7 +2013,9 @@ public class Card {
     /**
      * The effects of this card's triggered abilities that have {@code trigger} as a trigger condition functioning in
      * {@code zone}, each wrapped in its ability's options as {@link #getLegacyTriggerEffects(Trigger)} says: the form
-     * the "at the beginning of [step or phase]" collectors read them in. The wrapped effects are the ones
+     * the "at the beginning of [step or phase]" and the spell, land-play and activation collectors read them in (by
+     * the trigger's {@link Trigger#watchKey()}, as {@link #getLegacyTriggerEffects(Trigger)} says). The wrapped
+     * effects are the ones
      * {@link #getLegacyTriggerEffects(Trigger)} gives, so they keep their identity across calls.
      */
     public List<CardEffect> getLegacyTriggerEffects(Trigger trigger, Zone zone) {
@@ -2025,12 +2029,12 @@ public class Card {
      */
     public List<EffectRegistration> getLegacyTriggerEffectRegistrations(Trigger trigger, Zone zone) {
         SlotIndex index = slotIndex();
-        if (!index.byTrigger().containsKey(trigger)) {
+        if (!index.legacyByTrigger().containsKey(trigger)) {
             return List.of();
         }
         List<EffectRegistration> registrations = new ArrayList<>();
         for (TriggeredAbility ability : getTriggeredAbilities()) {
-            if (ability.hasTrigger(trigger, zone)) {
+            if (ability.hasWatchedTrigger(trigger, zone)) {
                 List<EffectRegistration> legacy = index.legacyByAbility().get(ability);
                 registrations.addAll(legacy != null ? legacy : ability.legacyEffects());
             }
@@ -2260,12 +2264,12 @@ public class Card {
                 } else if (ability instanceof TriggeredAbility triggered) {
                     List<EffectRegistration> legacy = triggered.legacyEffects();
                     legacyByAbility.put(triggered, legacy);
-                    triggered.conditions().stream().map(TriggerCondition::trigger).distinct().forEach(trigger -> {
-                        registrationsByTrigger.computeIfAbsent(trigger, ignored -> new ArrayList<>())
-                                .addAll(triggered.effects());
-                        legacyRegistrationsByTrigger.computeIfAbsent(trigger, ignored -> new ArrayList<>())
-                                .addAll(legacy);
-                    });
+                    triggered.conditions().stream().map(TriggerCondition::trigger).distinct().forEach(trigger ->
+                            registrationsByTrigger.computeIfAbsent(trigger, ignored -> new ArrayList<>())
+                                    .addAll(triggered.effects()));
+                    triggered.conditions().stream().map(condition -> condition.trigger().watchKey()).distinct()
+                            .forEach(trigger -> legacyRegistrationsByTrigger
+                                    .computeIfAbsent(trigger, ignored -> new ArrayList<>()).addAll(legacy));
                 }
             }
             Map<Trigger, TriggerView> byTrigger = viewsByTrigger(registrationsByTrigger);

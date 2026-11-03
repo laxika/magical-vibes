@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -17,10 +16,10 @@ import java.util.List;
 public class RunicArmasaur extends Card {
 
     public RunicArmasaur() {
-        addTrigger(Triggers.opponentActivatesNonManaAbility(), new TriggeringPermanentConditionalEffect(
-                new PermanentAnyOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentIsLandPredicate())),
-                new MayEffect(new DrawCardEffect(), "Draw a card?")));
+        addTrigger(Triggers.opponentActivatesNonManaAbility()
+                        .withSource(new PermanentAnyOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentIsLandPredicate()))),
+                new MayEffect(new DrawCardEffect(), "Draw a card?"));
     }
 }

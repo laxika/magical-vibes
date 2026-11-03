@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -580,7 +580,8 @@ classes, `TriggerMode` and `LegacyTriggerOptions`.
 This step was split, with the user, by family, as step 13 was; run 3 was split again into 3a and 3b, with the user,
 because of its size (690 abilities), run 4 into 4a and 4b, with the user, for the same reason (about 600 wrapped
 abilities in 941 card classes, and about 60 engine and AI readers that inspect the own enters effects), and 4b again
-into 4b and 4c, as the user allowed, so that 4b stays a conversion that keeps behaviour and 4c holds the rules fixes. Each run converts every wrapper kind of one
+into 4b and 4c, as the user allowed, so that 4b stays a conversion that keeps behaviour and 4c holds the rules fixes; run 6 into 6a, 6b and 6c,
+with the user, because of its size (about 1,190 card classes, 980 of them `SpellCastTriggerEffect` abilities). Each run converts every wrapper kind of one
 family's abilities, makes that family's collectors read options and filters instead, and deletes the wrapper classes
 no other family still uses. The order:
 
@@ -593,7 +594,11 @@ no other family still uses. The order:
 | 4a | The source's own enters abilities (step 12b's `EtbTriggerService`): the collector and every reader of them read the abilities' options, the 60 "this or another" enters cards merged, the cards 3b left for run 4 |
 | 4b | The rest of the own enters abilities' wrappers: the intervening-if `ConditionalEffect`s (about 520), by script; the Oracle wording decides which are intervening "if"s |
 | 4c | The own enters intervening "if"s the collector checks only as they resolve (CR 603.4): the collector checks every option condition as the ability triggers, with what it needs to know then (the sacrificed card), and the run 4b `KEEP` cards |
-| 5 to 15 | Step 13's families 1 to 11, in its order |
+| 5 | Step 13's family 1: steps and phases |
+| 6a | Step 13's family 2 (spells, land plays, activations): the generic wrappers around its abilities (intervening-if `ConditionalEffect`, `OncePerTurnTriggerEffect`, the land-play `TriggeringCardConditionalEffect`, the activation `TriggeringPermanentConditionalEffect` and `Triggering…AbilityConditionalEffect`s) |
+| 6b | Family 2: `SpellCastTriggerEffect`'s spell filter and conditions become `SpellTrigger` filters and options, its target filter a target group, its mana cost a `MayPayManaEffect`, with the wrappers nested inside it |
+| 6c | Family 2: the other condition-as-effect classes (`NthSpellCastTriggerEffect`, `SpellCopyTriggerEffect`, `KickedSpellCastTriggerEffect`, the `First…SpellCastTriggerEffect`s, `SpellCastFromHandTriggerEffect`, `PlayFromOutsideHandTriggerEffect`, …) |
+| 7 to 15 | Step 13's families 3 to 11, in its order |
 | 16 | What no family owns: the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags, the `onlyIfSacrificed` flags, and the wrapper classes left |
 
 Mark the step `done` only after run 16.
@@ -4526,8 +4531,9 @@ was re-rendered with `--keep-baseline`.
 Step 14 is repeatable by family (its section has the order). Run 1 converted the source's own zone changes, run 2
 the creature-death family, run 3a the other zone and permanent changes but "another object enters", run 3b "another
 object enters", run 4a the reading of the own enters abilities' options and the "this or another" enters merges, run 4b
-the own enters abilities' intervening "if"s, and run 4c the rules fixes: every own enters intervening "if" checked
-as the ability triggers.
+the own enters abilities' intervening "if"s, run 4c the rules fixes: every own enters intervening "if" checked
+as the ability triggers, run 5 the steps and phases, and run 6a the spell, land-play and activation abilities' generic
+wrappers.
 
 #### Run 1: the source's own zone changes
 
@@ -5384,6 +5390,111 @@ conditions and stay, as in run 4b. Ashling, Rimebound's `TriggerMode.INDEPENDENT
 - AI: `GameDataDeepCopyTest` passes; `TargetPolarityGuardTest` has its 2 known failures.
 - `magical-vibes-webservice`'s test sources don't compile at HEAD (`CardBrowserServiceTest`'s anonymous `CardCatalog`
   lacks `findLoadedPrintingByName`, added in run 3a); unrelated to this run, not fixed here.
+- The full suite was not run here.
+
+#### Run 6a: spells, land plays and activations, the generic wrappers
+
+Run 6 (step 13 family 2) was split, with the user, into 6a (this run), 6b (`SpellCastTriggerEffect`'s filter and
+conditions, 980 abilities) and 6c (the other condition-as-effect classes). Every spell, land-play and activation
+ability (`Triggers.youCastSpell`, `opponentCastsSpell`, …, `youPlayLand`, `youActivateAbility`, …,
+`thisManaAbilityResolves`, read by the `SpellAbilityWatch` collectors) is authored without the generic trigger-only
+wrappers around its effect, but for the six cards kept below.
+
+**Authoring.**
+
+- The land played is the trigger's filter: `Triggers.youPlayLand().withFilter(cardPredicate)` (`LandPlayTrigger` gained
+  a nullable `CardPredicate filter`), for "whenever you play an Island / a Desert / a legendary land / a land that shares
+  a card type with the exiled card".
+- The activated ability is the activation trigger's filter: `youActivateAbility().withSource(permanentPredicate)` ("an
+  ability of an artifact", "of enchanted artifact") and `.withKind(AbilityTrigger.AbilityKind.X)` ("a loyalty /
+  ninjutsu / outlast / power-up / boast ability", "with / without {T} in its activation cost": `LOYALTY`, `NINJUTSU`,
+  `OUTLAST`, `POWER_UP`, `BOAST`, `WITH_TAP_COST`, `WITHOUT_TAP_COST`). `AbilityTrigger` gained nullable `source` and
+  `kind`.
+- An intervening "if" (CR 603.4, checked) is `TriggerOptions.DEFAULT.withInterveningIf(c)`: "when you cast this spell,
+  if it was kicked / if you have fewer than seven cards in hand / Descend 8", a cast-from-zone condition, a mode's
+  ability (Mirrodin Besieged, Glacierwood Siege), Pardic Dragon's "if this card is suspended", Vazi's Treasure mana,
+  Hidden Herd's and Hidden Stag's type checks, Fastbond's "if it wasn't the first land". "This ability triggers only
+  once each turn" is `ONCE_EACH_TURN` (a keyed wrapper's key is dropped: the limit is keyed by the ability), "do this
+  only once each turn" `DO_ONLY_ONCE_EACH_TURN` (CR 603.2h, checked).
+- A `TriggeringCardConditionalEffect(new CardTruePredicate(), …)` (Fastbond, Hidden Stag) is dropped.
+
+**The engine.**
+
+- `Trigger.watchKey()` (new, default `this`) is the trigger without the filters the collectors still judge from
+  wrappers; `LandPlayTrigger` and `AbilityTrigger` drop their filters. `Card`'s legacy view is keyed by it
+  (`getLegacyTriggerEffects(trigger)` / `(trigger, zone)` find a filtered ability by its unfiltered trigger, through
+  `TriggeredAbility.hasWatchedTrigger`); the plain view (`getTriggerEffects`) still matches exactly.
+- `TriggeredAbility.legacyEffects()` also gives the filters as the wrappers the collectors judged, in the order the
+  cards nested them: the ability kind's `Triggering…AbilityConditionalEffect` outermost (the activation collectors
+  call `resolveForActivatedAbility` first), then the limit's `OncePerTurnTriggerEffect`, then the land-play
+  `TriggeringCardConditionalEffect` or activation `TriggeringPermanentConditionalEffect`, then the intervening "if"'s
+  `ConditionalEffect` (inside the land-play filter, where `handleConditionalLandPlay` looks for it). The conditions of
+  one ability must agree on those filters (`IllegalStateException` otherwise), so "you or an opponent plays a Desert"
+  can be one ability, but a filtered and an unfiltered land-play condition can't share one.
+- `SpellAbilityWatch.effectsOf` / `registrationsOf` read the legacy view, so every collector and handler of the family
+  sees what it saw. So do the graveyard cast and exhaust readers (`getEffectiveGraveyardLegacyTriggerEffects`) and
+  `EffectResolution.hasManaSpentToCastAmount`'s "when you cast this spell" scan.
+- The land-play default handlers (`PlayedCardNameTriggerCollectorService`) check an intervening "if" as the ability
+  triggers (CR 603.4), as `handleConditionalLandPlay` already did; without that, Fastbond and Hidden Stag, whose
+  always-true filter wrapper routed them to the conditional handler, would have been checked only on resolution.
+- The wrapper classes stay for the legacy view; run 16 deletes them.
+
+**Cards.** `scripts/step14-spell-scan.py` lists the family's abilities with their wrappers and Oracle text (`--all`,
+`--summary`); `scripts/step14-spell-options.py` (per letter module; `--dry-run`, `--report`) converted 65 abilities in
+58 card classes (`scripts/step14-spell-converted.txt`), following local variables to their one definition (Haunting
+Wind, Artifact Possession, Imprison). `scripts/step14-spell-docs.py` rewrote the agent-docs rows of the converted cards
+and marked the `Triggering…AbilityConditionalEffect` entries "don't author"; the implement-card and review-card skills
+and `ARCHITECTURE.md` were edited by hand.
+
+**Kept, with their reason (the script's `KEEP`).**
+
+- Bill Potts: one Oracle ability ("cast … or activate …", "triggers only once each turn") over two conditions with
+  different effects (a spell copy and an ability copy), which one `TriggeredAbility` can't hold; its two unkeyed
+  wrappers share the source's mark.
+- The Fourth Doctor: "When you do, create a Food token" is the play permission's reflexive trigger, modelled as two
+  abilities (cast, land) sharing one unkeyed once-each-turn mark.
+- Folk Hero, Tyvar the Bellicose: granted abilities with `OncePerTurnTriggerEffect.perGrant` (one limit per granting
+  permanent), which no `TriggerLimit` says.
+- Bloodbraid Marauder: "has cascade as long as …" is a condition on having the ability, checked only as the spell is
+  cast (`ConditionalEffect.atTriggerTime`); an intervening "if" would check it again on resolution. Run 16, with the
+  `triggerTimeOnly` flag.
+- Apex Devastator: four `TriggerMode.INDEPENDENT` cascades, run 16's.
+
+**For runs 6b and 6c.**
+
+- The wrappers nested inside a `SpellCastTriggerEffect` (Edgar Markov's eminence "if", the Cemetery Gatekeeper and
+  Cemetery Protector cast halves' `TriggeringCardConditionalEffect`, Sapphire Collector's `OnceOnlyTriggerEffect` inside
+  `SpellCastTriggerEffect.nth`, the effect-text `ConditionalEffect`s in `resolvedEffects`) and
+  `SpellCastTriggerEffect.withIntervening` / its `intervening` field (36 abilities) are 6b's. The `intervening` field is
+  checked with the spell's mana spent and mana value as context (`SpellManaSpentAtLeast`,
+  `SpellManaValueEqualsSourceCounters`), which the option's check will need.
+- Readers that still match the family's triggers exactly on the plain view: `TriggeredAbilityQueueService`'s stack
+  label (a `SpellCastTriggerEffect` with a color filter), `ChoiceHandlerService`'s subtype-choice activation copy and
+  `PredicateEvaluationService`'s cascade check. They see the same effects as before (no converted ability is one of
+  theirs), but a filtered trigger or an option would hide an ability from them.
+- Cemetery Gatekeeper's and Cemetery Protector's land halves could merge with their cast halves once 6b gives the
+  cast trigger a filter ("whenever a player plays a land or casts a spell, if it shares a card type …").
+
+**Behaviour changes.** None intended: the collectors read the same wrappers. A once-each-turn limit is now keyed by
+its ability instead of the source's unkeyed mark, which matters only for a source with two such abilities (none among
+the converted cards: Jin-Gitaxias's were already keyed apart).
+
+**Tests changed.** `SpellAbilityTriggerTest`: five new tests: a filtered land-play or activation trigger is watched by
+its unfiltered trigger (and null filters are rejected); the legacy view gives a land-play filter inside the limit and
+outside the intervening "if", with a stable identity; it gives an ability kind outside the limit and a source filter
+inside it; the conditions of one ability share their land-play filter, and a filtered and an unfiltered condition
+can't. No card test changed; Hidden Stag's `doesNotTriggerControllerLandPlayWhileEnchantment` covers the land-play
+default handler's trigger-time check through the engine.
+
+**Test runs.**
+
+- Card: the test class of every converted card and every card test that constructs one (91 classes, 947 tests): all
+  passing.
+- Application: the trigger-model, collector, registry, step, pipeline, watch, freeze, architecture and copy classes
+  (532 tests): 23 failures, all failing at HEAD: `StepTriggerServiceTest` 16, `SpellCastTriggerCollectorServiceTest` 4
+  (the same names at HEAD `edf279f06f`, checked in a worktree), and the known ones in `SimulationCopyCompletenessTest`,
+  `CardImmutabilityArchTest` and `CardEffectTargetingConsistencyTest`.
+- AI: the whole module (1,620 tests), the same 10 failures as before.
 - The full suite was not run here.
 
 ## Prompt

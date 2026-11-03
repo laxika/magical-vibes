@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
@@ -16,10 +17,11 @@ import java.util.Set;
 public class IronManBleedingEdge extends Card {
 
     public IronManBleedingEdge() {
-        addTrigger(Triggers.youCastSpell(), OncePerTurnTriggerEffect.markOnAcceptance(
+        addTrigger(Triggers.youCastSpell(),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.DO_ONLY_ONCE_EACH_TURN),
                 new MayEffect(
                         CopyControllerCastSpellOnSpellCastEffect.permanentSpellToken(
                                 new CardTypePredicate(CardType.ARTIFACT), Set.of(CardSupertype.LEGENDARY)),
-                        "Copy that spell?")));
+                        "Copy that spell?"));
     }
 }

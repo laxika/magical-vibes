@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleForControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SPM", collectorNumber = "93")
@@ -16,9 +17,10 @@ public class SpiderVerse extends Card {
 
     public SpiderVerse() {
         addStaticEffect(new IgnoreLegendRuleForControlledSubtypeEffect(CardSubtype.SPIDER));
-        addTrigger(Triggers.youCastSpell(), OncePerTurnTriggerEffect.markOnAcceptance(
+        addTrigger(Triggers.youCastSpell(),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.DO_ONLY_ONCE_EACH_TURN),
                 new MayEffect(
                         CopyControllerCastSpellOnSpellCastEffect.fromOutsideHandWithPermanentSpellHaste(null),
-                        "Copy that spell?")));
+                        "Copy that spell?"));
     }
 }

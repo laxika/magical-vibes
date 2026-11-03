@@ -7,12 +7,11 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -21,13 +20,12 @@ import java.util.List;
 public class HiddenHerd extends Card {
 
     public HiddenHerd() {
-        addTrigger(Triggers.opponentPlaysLand(), new TriggeringCardConditionalEffect(
-                new CardAllOfPredicate(List.of(
-                        new CardTypePredicate(CardType.LAND),
-                        new CardNotPredicate(new CardSupertypePredicate(CardSupertype.BASIC))
-                )),
-                new ConditionalEffect(new SourceIsEnchantment(),
-                        new BecomeCreatureEffect(3, 3, CardSubtype.BEAST))
-        ));
+        addTrigger(Triggers.opponentPlaysLand()
+                        .withFilter(new CardAllOfPredicate(List.of(
+                                new CardTypePredicate(CardType.LAND),
+                                new CardNotPredicate(new CardSupertypePredicate(CardSupertype.BASIC))
+                        ))),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsEnchantment()),
+                new BecomeCreatureEffect(3, 3, CardSubtype.BEAST));
     }
 }

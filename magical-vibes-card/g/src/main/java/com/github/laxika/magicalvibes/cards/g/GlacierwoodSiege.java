@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,14 +23,14 @@ public class GlacierwoodSiege extends Card {
     public GlacierwoodSiege() {
         addStaticEffect(new ChooseModeOnEnterEffect(List.of("Temur", "Sultai")));
 
-        addTrigger(Triggers.youCastSpell(), new ConditionalEffect(
-                new SourceHasChosenMode("Temur"),
+        addTrigger(Triggers.youCastSpell(),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode("Temur")),
                 new SpellCastTriggerEffect(
                         new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),
                                 new CardTypePredicate(CardType.SORCERY))),
                         List.of(new MillEffect(4, MillRecipient.TARGET_PLAYER))
-                )));
+                ));
 
         addStaticEffect(new ConditionalEffect(
                 new SourceHasChosenMode("Sultai"),

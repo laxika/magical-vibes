@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -33,13 +34,14 @@ public class ThoughtstealSprites extends Card {
 
     public ThoughtstealSprites() {
         addTrigger(Triggers.youCastSpell(),
-                new OncePerTurnTriggerEffect(new SpellCastTriggerEffect(
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new SpellCastTriggerEffect(
                         null,
                         List.of(
                                 new DraftFromSpellbookEffect(
                                         SPELLBOOK,
                                         DraftFromSpellbookEffect.DraftMode.CONJURE_TO_HAND),
                                 new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
-                        true)));
+                        true));
     }
 }

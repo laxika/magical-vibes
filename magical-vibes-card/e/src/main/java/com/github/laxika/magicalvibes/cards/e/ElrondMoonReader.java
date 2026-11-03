@@ -5,8 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -15,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -23,9 +23,9 @@ import java.util.List;
 public class ElrondMoonReader extends Card {
 
     public ElrondMoonReader() {
-        addTrigger(Triggers.youActivateAbility(),
-                new OncePerTurnTriggerEffect(new TriggeringPermanentConditionalEffect(
-                        new PermanentIsCreaturePredicate(), new DrawCardEffect())));
+        addTrigger(Triggers.youActivateAbility().withSource(new PermanentIsCreaturePredicate()),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new DrawCardEffect());
 
         PermanentPredicate targetFilter = new PermanentAllOfPredicate(List.of(
                 new PermanentControlledBySourceControllerPredicate(),

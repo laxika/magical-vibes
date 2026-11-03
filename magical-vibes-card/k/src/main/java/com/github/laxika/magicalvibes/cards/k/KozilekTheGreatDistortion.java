@@ -10,10 +10,10 @@ import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfManaValueEqualsXEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -28,11 +28,9 @@ public class KozilekTheGreatDistortion extends Card {
 
     public KozilekTheGreatDistortion() {
         CardsInHand cardsInHand = new CardsInHand(CountScope.CONTROLLER);
-        addTrigger(Triggers.youCastThisSpell(), new ConditionalEffect(
-                new CardsInHandAtMost(6),
-                new DrawCardEffect(new Max(
-                        new Fixed(0),
-                        new Sum(new Fixed(7), new Scaled(cardsInHand, -1))))));
+        addTrigger(Triggers.youCastThisSpell(),
+                TriggerOptions.DEFAULT.withInterveningIf(new CardsInHandAtMost(6)),
+                new DrawCardEffect(new Max(new Fixed(0), new Sum(new Fixed(7), new Scaled(cardsInHand, -1)))));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

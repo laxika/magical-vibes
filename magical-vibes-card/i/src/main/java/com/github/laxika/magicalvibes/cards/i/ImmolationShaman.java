@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -22,12 +21,12 @@ import java.util.List;
 public class ImmolationShaman extends Card {
 
     public ImmolationShaman() {
-        addTrigger(Triggers.opponentActivatesNonManaAbility(), new TriggeringPermanentConditionalEffect(
-                new PermanentAnyOfPredicate(List.of(
-                        new PermanentIsArtifactPredicate(),
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentIsLandPredicate())),
-                new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER)));
+        addTrigger(Triggers.opponentActivatesNonManaAbility()
+                        .withSource(new PermanentAnyOfPredicate(List.of(
+                                new PermanentIsArtifactPredicate(),
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentIsLandPredicate()))),
+                new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

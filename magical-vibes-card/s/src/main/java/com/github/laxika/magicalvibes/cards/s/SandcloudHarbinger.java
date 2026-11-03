@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,11 +20,9 @@ public class SandcloudHarbinger extends Card {
                 new ConjureCardsIntoTopOfLibrariesEffect("AKH", "249", 3, 10));
 
         CardSubtypePredicate desert = new CardSubtypePredicate(CardSubtype.DESERT);
-        addTrigger(Triggers.youPlayLand(),
-                new TriggeringCardConditionalEffect(desert,
-                        SequenceEffect.of(new DrawCardEffect(1), new GainLifeEffect(3))));
-        addTrigger(Triggers.opponentPlaysLand(),
-                new TriggeringCardConditionalEffect(desert,
-                        SequenceEffect.of(new DrawCardForTargetPlayerEffect(1), new GainLifeEffect(3))));
+        addTrigger(Triggers.youPlayLand().withFilter(desert),
+                SequenceEffect.of(new DrawCardEffect(1), new GainLifeEffect(3)));
+        addTrigger(Triggers.opponentPlaysLand().withFilter(desert),
+                SequenceEffect.of(new DrawCardForTargetPlayerEffect(1), new GainLifeEffect(3)));
     }
 }

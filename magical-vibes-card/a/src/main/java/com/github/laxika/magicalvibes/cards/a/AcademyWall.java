@@ -7,11 +7,12 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -20,7 +21,8 @@ import java.util.List;
 public class AcademyWall extends Card {
 
     public AcademyWall() {
-        addTrigger(Triggers.youCastSpell(), new OncePerTurnTriggerEffect(
+        addTrigger(Triggers.youCastSpell(),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
                 new SpellCastTriggerEffect(
                         new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),
@@ -33,7 +35,6 @@ public class AcademyWall extends Card {
                                 ),
                                 "Draw a card, then discard a card?"
                         ))
-                )
-        ));
+                ));
     }
 }

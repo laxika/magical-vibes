@@ -10,12 +10,11 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringLoyaltyAbilityConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.AbilityTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -37,14 +36,13 @@ public class ElspethsTalent extends Card {
                 GrantScope.ENCHANTED_PERMANENT,
                 new PermanentIsPlaneswalkerPredicate()));
 
-        addTrigger(Triggers.youActivateAbility(),
-                new TriggeringLoyaltyAbilityConditionalEffect(
-                        new TriggeringPermanentConditionalEffect(
-                                new PermanentAllOfPredicate(List.of(
-                                        new PermanentIsPlaneswalkerPredicate(),
-                                        new PermanentIsHostOfSourceAuraPredicate())),
-                                SequenceEffect.of(
-                                        new BoostAllOwnCreaturesEffect(2, 2),
-                                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES)))));
+        addTrigger(Triggers.youActivateAbility()
+                        .withKind(AbilityTrigger.AbilityKind.LOYALTY)
+                        .withSource(new PermanentAllOfPredicate(List.of(
+                                new PermanentIsPlaneswalkerPredicate(),
+                                new PermanentIsHostOfSourceAuraPredicate()))),
+                SequenceEffect.of(
+                        new BoostAllOwnCreaturesEffect(2, 2),
+                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES)));
     }
 }

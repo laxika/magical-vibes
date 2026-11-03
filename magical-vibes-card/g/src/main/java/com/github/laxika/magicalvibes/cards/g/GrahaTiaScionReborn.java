@@ -9,10 +9,11 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEqualToAmountEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -27,11 +28,12 @@ public class GrahaTiaScionReborn extends Card {
 
     public GrahaTiaScionReborn() {
         addTrigger(Triggers.youCastSpell(),
-                OncePerTurnTriggerEffect.markOnAcceptance(new SpellCastTriggerEffect(
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.DO_ONLY_ONCE_EACH_TURN),
+                new SpellCastTriggerEffect(
                         new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                         List.of(new MayPayLifeEqualToAmountEffect(
                                 new EventValue(), heroToken(),
-                                "Pay life equal to that spell's mana value to create a Hero token?")))));
+                                "Pay life equal to that spell's mana value to create a Hero token?"))));
     }
 
     private static CreateXTokenWithXCountersEffect heroToken() {

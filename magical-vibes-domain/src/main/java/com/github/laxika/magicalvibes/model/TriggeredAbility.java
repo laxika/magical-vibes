@@ -5,6 +5,17 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.OnceOnlyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringBoastAbilityConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringLoyaltyAbilityConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringNinjutsuAbilityConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringNonTapAbilityConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringOutlastAbilityConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPowerUpAbilityConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringTapAbilityConditionalEffect;
+import com.github.laxika.magicalvibes.model.trigger.AbilityTrigger;
+import com.github.laxika.magicalvibes.model.trigger.LandPlayTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -95,6 +106,15 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
     }
 
     /**
+     * Whether one of this ability's trigger conditions has {@code trigger} as its {@link Trigger#watchKey()} and
+     * functions in {@code zone}: the abilities a collector that still reads effects by trigger reads.
+     */
+    public boolean hasWatchedTrigger(Trigger trigger, Zone zone) {
+        return conditions.stream().anyMatch(condition -> condition.trigger().watchKey().equals(trigger)
+                && condition.zones().functionsIn(zone));
+    }
+
+    /**
      * Whether {@code trigger} is one of this ability's trigger conditions and that condition functions in
      * {@code zone}.
      */
@@ -119,13 +139,18 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * resolves (CR 603.4); "triggers only once each turn" is a {@link OncePerTurnTriggerEffect} keyed by
      * {@link #limitKey()}, the key the trigger pipeline marks; "do this only once each turn" one marked as the action
      * is taken (CR 603.2h); "this ability triggers only once" ({@code ONCE}) an {@link OnceOnlyTriggerEffect} inside
-     * the intervening "if", as the "at the beginning of [step or phase]" cards wrote it. An ability without options
-     * returns its registrations as they are.
+     * the intervening "if", as the "at the beginning of [step or phase]" cards wrote it. A land-play trigger's filter
+     * is a {@link TriggeringCardConditionalEffect} inside the limit, an activation trigger's source filter a
+     * {@link TriggeringPermanentConditionalEffect} there and its ability kind the matching
+     * {@code Triggering…AbilityConditionalEffect} outside everything, as the spell, land-play and activation cards
+     * wrote them. An ability without options or such filters returns its registrations as they are.
      */
     public List<EffectRegistration> legacyEffects() {
         Condition interveningIf = options.interveningIf();
         TriggerLimit limit = options.limit();
-        if (interveningIf == null && limit == TriggerLimit.NONE) {
+        LandPlayTrigger landPlay = filteredTrigger(LandPlayTrigger.class);
+        AbilityTrigger activation = filteredTrigger(AbilityTrigger.class);
+        if (interveningIf == null && limit == TriggerLimit.NONE && landPlay == null && activation == null) {
             return effects;
         }
         String key = limit == TriggerLimit.ONCE_EACH_TURN ? limitKey() : null;
@@ -138,15 +163,60 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             if (interveningIf != null) {
                 effect = new ConditionalEffect(interveningIf, effect, true);
             }
+            if (landPlay != null && landPlay.filter() != null) {
+                effect = new TriggeringCardConditionalEffect(landPlay.filter(), effect);
+            }
+            if (activation != null && activation.source() != null) {
+                effect = new TriggeringPermanentConditionalEffect(activation.source(), effect);
+            }
             if (limit == TriggerLimit.ONCE_EACH_TURN) {
                 effect = OncePerTurnTriggerEffect.keyed(effect, key);
             } else if (limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN) {
                 effect = OncePerTurnTriggerEffect.markOnAcceptance(effect);
             }
+            if (activation != null && activation.kind() != null) {
+                effect = legacyKindWrapper(activation.kind(), effect);
+            }
             wrapped.add(new EffectRegistration(effect, registration.triggerMode(),
                     registration.simultaneousWithPrevious()));
         }
         return List.copyOf(wrapped);
+    }
+
+    /**
+     * The first trigger of {@code type} with filters among this ability's conditions, or {@code null} for none. The
+     * legacy view wraps every effect in one set of filters, so every condition of that type must have the same
+     * filters.
+     */
+    private <T extends Trigger> T filteredTrigger(Class<T> type) {
+        List<T> ofType = conditions.stream().map(TriggerCondition::trigger).filter(type::isInstance)
+                .map(type::cast).toList();
+        T filtered = ofType.stream().filter(trigger -> !trigger.watchKey().equals(trigger)).findFirst().orElse(null);
+        if (filtered != null && ofType.stream().anyMatch(t -> !filters(t).equals(filters(filtered)))) {
+            throw new IllegalStateException("The " + type.getSimpleName()
+                    + " conditions of one ability must have the same filters: " + ofType);
+        }
+        return filtered;
+    }
+
+    private static List<Object> filters(Trigger trigger) {
+        return switch (trigger) {
+            case LandPlayTrigger landPlay -> Arrays.asList(landPlay.filter());
+            case AbilityTrigger activation -> Arrays.asList(activation.source(), activation.kind());
+            default -> List.of();
+        };
+    }
+
+    private static CardEffect legacyKindWrapper(AbilityTrigger.AbilityKind kind, CardEffect effect) {
+        return switch (kind) {
+            case LOYALTY -> new TriggeringLoyaltyAbilityConditionalEffect(effect);
+            case NINJUTSU -> new TriggeringNinjutsuAbilityConditionalEffect(effect);
+            case OUTLAST -> new TriggeringOutlastAbilityConditionalEffect(effect);
+            case POWER_UP -> new TriggeringPowerUpAbilityConditionalEffect(effect);
+            case BOAST -> new TriggeringBoastAbilityConditionalEffect(effect);
+            case WITH_TAP_COST -> new TriggeringTapAbilityConditionalEffect(effect);
+            case WITHOUT_TAP_COST -> new TriggeringNonTapAbilityConditionalEffect(effect);
+        };
     }
 
     /** This ability with {@code effects} in place of its effects. */

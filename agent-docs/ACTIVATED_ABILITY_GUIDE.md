@@ -875,8 +875,8 @@ resolution (CR 702.49c). The ninja was never declared as an attacker, so no atta
 legality checks run.
 
 `Card.ninjutsuAbility(cost)` builds the same flagged ability for static grants to creature cards in
-hand. A battlefield trigger watching those grants can use
-`TriggeringNinjutsuAbilityConditionalEffect` in `Triggers.youActivateAbility()`; the hand-ninjutsu
+hand. A battlefield trigger watching those grants is
+`Triggers.youActivateAbility().withKind(AbilityTrigger.AbilityKind.NINJUTSU)`; the hand-ninjutsu
 activation path collects that trigger after the activation costs are paid.
 
 Only a creature matching `PermanentIsUnblockedAttackingPredicate` **on the activating player's own

@@ -35,12 +35,12 @@ public class MirrodinBesieged extends Card {
     public MirrodinBesieged() {
         addStaticEffect(new ChooseModeOnEnterEffect(List.of(MIRRAN, PHYREXIAN)));
 
-        addTrigger(Triggers.youCastSpell(), new ConditionalEffect(
-                new SourceHasChosenMode(MIRRAN),
+        addTrigger(Triggers.youCastSpell(),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(MIRRAN)),
                 new SpellCastTriggerEffect(
                         new CardTypePredicate(CardType.ARTIFACT),
                         List.of(new CreateTokenEffect("Myr", 1, 1, null,
-                                List.of(CardSubtype.MYR), Set.of(), Set.of(CardType.ARTIFACT))))));
+                                List.of(CardSubtype.MYR), Set.of(), Set.of(CardType.ARTIFACT)))));
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

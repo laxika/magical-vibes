@@ -7,9 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
 import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeEnchantmentEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -18,14 +16,11 @@ import java.util.List;
 public class HiddenStag extends Card {
 
     public HiddenStag() {
-        addTrigger(Triggers.opponentPlaysLand(), new TriggeringCardConditionalEffect(
-                new CardTruePredicate(),
-                new ConditionalEffect(new SourceIsEnchantment(),
-                        new BecomeCreatureEffect(3, 2, List.of(CardSubtype.ELK, CardSubtype.BEAST))
-                )));
-        addTrigger(Triggers.youPlayLand(), new TriggeringCardConditionalEffect(
-                new CardTruePredicate(),
-                new ConditionalEffect(new SourceIsCreature(), new BecomeEnchantmentEffect(true))
-        ));
+        addTrigger(Triggers.opponentPlaysLand(),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsEnchantment()),
+                new BecomeCreatureEffect(3, 2, List.of(CardSubtype.ELK, CardSubtype.BEAST)));
+        addTrigger(Triggers.youPlayLand(),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsCreature()),
+                new BecomeEnchantmentEffect(true));
     }
 }

@@ -5,10 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -23,9 +24,11 @@ public class JinGitaxiasProgressTyrant extends Card {
                 new CardTypePredicate(CardType.SORCERY)
         ));
 
-        addTrigger(Triggers.youCastSpell(), OncePerTurnTriggerEffect.keyed(
-                new CopyControllerCastSpellOnSpellCastEffect(artifactInstantOrSorcery, null, null), "copy"));
-        addTrigger(Triggers.opponentCastsSpell(), OncePerTurnTriggerEffect.keyed(
-                new SpellCastTriggerEffect(artifactInstantOrSorcery, List.of(new CounterSpellEffect())), "counter"));
+        addTrigger(Triggers.youCastSpell(),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new CopyControllerCastSpellOnSpellCastEffect(artifactInstantOrSorcery, null, null));
+        addTrigger(Triggers.opponentCastsSpell(),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new SpellCastTriggerEffect(artifactInstantOrSorcery, List.of(new CounterSpellEffect())));
     }
 }

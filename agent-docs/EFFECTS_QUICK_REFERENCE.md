@@ -2159,10 +2159,10 @@ a code change. Branching on one of these interfaces is fine anywhere — it is t
   the effective hand abilities by `AbilityActivationService` + `CardViewFactory`. Impl
   `GrantHandActivatedAbilityToCardsEffect` (Homing Sliver — Slivercycling); its `controllerHandOnly`
   variant restricts the grant to the source permanent's controller's hand (Satoru Umezawa — ninjutsu)
-- `TriggeringNinjutsuAbilityConditionalEffect` — trigger-only wrapper that exposes its payload when
-  the activated ability is ninjutsu (Satoru Umezawa)
-- `TriggeringPowerUpAbilityConditionalEffect` — trigger-only wrapper that exposes its payload when
-  the activated ability is marked as Power-up (Marvel Boy, Noh-Varr)
+- “Whenever you activate a ninjutsu / power-up / boast / outlast / loyalty ability” is
+  `Triggers.youActivateAbility().withKind(AbilityTrigger.AbilityKind.NINJUTSU)` (`POWER_UP`, `BOAST`,
+  `OUTLAST`, `LOYALTY`; Satoru Umezawa, Marvel Boy, Noh-Varr), not the `Triggering…AbilityConditionalEffect`
+  wrappers, which only the legacy view still builds
 - `CombatOpponentReferencingEffect` — marker for an effect that, when fired from an **Aura/Equipment**
   combat trigger (`Triggers.blocks()` / `Triggers.becomesBlocked() PER_BLOCKER`), acts on the enchanted/equipped
   creature's combat opponent. `CombatTriggerService` bakes that opponent in as the trigger's
@@ -2350,9 +2350,9 @@ Core wrappers (all take `CardEffect wrapped` as first/only effect arg):
 - `BoostBlockerWhenAttackerMatchesEffect(PermanentPredicate, int, int)` — `Triggers.creatureBecomesBlocked()` trigger marker; evaluates the attacker predicate at block declaration and materializes a non-targeting +X/+Y boost for the blocker once per matching attacker/blocker pair (Righteous Indignation)
 - `TriggeringArtifactControllerConditionalEffect(CardEffect[, boolean onlyIfNotSacrificed[, boolean onlyIfNontoken]])` — only for "if it wasn't sacrificed" (Urza's Miter); "an artifact you control" is `Triggers.dies(Triggers.ARTIFACT, ObjectRelation.YOU_CONTROL)` and "another" `ANOTHER_YOU_CONTROL`. Trigger-only wrapper for `Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY)`; fires only when the artifact was controlled by the source's controller, then resolves the wrapped effect through the player-target trigger pipeline. Pass `true` as the second argument to exclude sacrificed artifacts (Urza's Miter), or pass `true` as the third argument to exclude token artifacts (Ratchet); both default to `false`
 - `TriggeringPermanentControllerConditionalEffect(CardEffect)` — not for zone changes: "a permanent you control" is `Triggers.dies(null, ObjectRelation.YOU_CONTROL)` (Aetherworks Marvel), "another" `ANOTHER_YOU_CONTROL`. Trigger-only wrapper for `Triggers.dies(null, ObjectRelation.ANY)`; fires only when the triggering permanent was controlled by the source's controller, including tokens and the source itself (Aetherworks Marvel). `TriggeringPermanentControllerConditionalEffect.another(CardEffect)` excludes the source's own departure for "another ... you control" wording (Vat of Rebirth). It can wrap `OncePerTurnTriggerEffect` and be composed under `TriggeringCardConditionalEffect` for a controller- and card-filtered once-per-turn trigger (Teysa, Opulent Oligarch)
-- `TriggeringTapAbilityConditionalEffect(CardEffect)` — trigger-only wrapper that keeps the wrapped effect only when the activated ability requires tapping its source; use on ability-activation trigger slots for “with {T} in its activation cost” conditions (Imprison)
-- `TriggeringNonTapAbilityConditionalEffect(CardEffect)` — trigger-only wrapper that keeps the wrapped effect only when the activated ability does not require tapping its source; use on ability-activation trigger slots for “without {T} in its activation cost” conditions (Artifact Possession)
-- `TriggeringLoyaltyAbilityConditionalEffect(CardEffect)` — trigger-only wrapper that keeps the wrapped effect only when the activated ability has a loyalty cost; use for “whenever you activate a loyalty ability” conditions
+- `TriggeringTapAbilityConditionalEffect(CardEffect)` — **don't author**: “with {T} in its activation cost” is `.withKind(AbilityTrigger.AbilityKind.WITH_TAP_COST)` on the activation trigger (Imprison); the collectors get this wrapper from the legacy view
+- `TriggeringNonTapAbilityConditionalEffect(CardEffect)` — **don't author**: “without {T} in its activation cost” is `Triggers.youActivateAbility().withKind(AbilityTrigger.AbilityKind.WITHOUT_TAP_COST)` (Artifact Possession); the collectors get this wrapper from the legacy view
+- `TriggeringLoyaltyAbilityConditionalEffect(CardEffect)` — **don't author**: “whenever you activate a loyalty ability” is `Triggers.youActivateAbility().withKind(AbilityTrigger.AbilityKind.LOYALTY)`
 - `TriggeringSpellControllerConditionalEffect(CardEffect)` — trigger-only wrapper for `Triggers.becomesTargetOfSpell()`; fires only when the triggering spell was controlled by the source's controller (Stormchaser Drake)
 - `ConditionalEffect(new ControlsAnotherPermanent(filter), wrapped)` — controls another matching permanent
 - `ConditionalEffect(new ControllerLifeAtLeast(threshold), wrapped)` — life >= N. Pass `true` as the second condition argument to compare against the format's starting life total plus N.

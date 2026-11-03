@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,8 +19,7 @@ public class AvalancheOfSector7 extends Card {
         PermanentCount opponentArtifacts =
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.OPPONENTS);
         addStaticEffect(new SetPowerToughnessToAmountEffect(opponentArtifacts, new Fixed(3)));
-        addTrigger(Triggers.opponentActivatesAbility(), new TriggeringPermanentConditionalEffect(
-                new PermanentIsArtifactPredicate(),
-                new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER)));
+        addTrigger(Triggers.opponentActivatesAbility().withSource(new PermanentIsArtifactPredicate()),
+                new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER));
     }
 }

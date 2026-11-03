@@ -8,11 +8,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -25,10 +26,11 @@ public class VenatHeartOfHydaelyn extends Card {
     public VenatHeartOfHydaelyn() {
         setBackFaceCard(new HydaelynTheMothercrystal());
 
-        addTrigger(Triggers.youCastSpell(), new OncePerTurnTriggerEffect(
+        addTrigger(Triggers.youCastSpell(),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
                 new SpellCastTriggerEffect(
                         new CardSupertypePredicate(CardSupertype.LEGENDARY),
-                        List.of(new DrawCardEffect()))));
+                        List.of(new DrawCardEffect())));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

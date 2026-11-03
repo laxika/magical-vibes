@@ -1,8 +1,13 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 /**
  * Which of the old spell, land-play and activation slot collectors reads a triggered ability, now that the ability has
@@ -11,6 +16,11 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
  * {@link CollectsSpellAbilityTrigger} handlers bind the event data the effects need and choose how the ability reaches
  * the stack, as the slot's handlers did, until steps 14 and 15 of the refactor replace them with trigger options and
  * effects that read the event.
+ * <p>
+ * The collectors read the abilities in the form the cards wrote them before step 14
+ * ({@link Card#getLegacyTriggerEffects(com.github.laxika.magicalvibes.model.trigger.Trigger, Zone)}): an intervening
+ * "if" and a limit wrapped around each effect, and a land-play or activation trigger's filters as the
+ * {@code Triggering…ConditionalEffect} wrappers they judge.
  */
 public enum SpellAbilityWatch implements TriggerWatch {
     /** "Whenever a mana ability of this creature resolves" (granted only: Tyvar the Bellicose). */
@@ -78,5 +88,15 @@ public enum SpellAbilityWatch implements TriggerWatch {
     @Override
     public Zone zone() {
         return zone;
+    }
+
+    @Override
+    public List<CardEffect> effectsOf(Card card) {
+        return card.getLegacyTriggerEffects(trigger, zone);
+    }
+
+    @Override
+    public List<EffectRegistration> registrationsOf(Card card) {
+        return card.getLegacyTriggerEffectRegistrations(trigger, zone);
     }
 }

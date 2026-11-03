@@ -210,9 +210,7 @@ public class PlayedCardNameTriggerCollectorService {
 
         CardEffect resolved = conditional.predicate() instanceof CardSharesCardTypeWithImprintedCardPredicate imprint
                 && imprint.requireImprintedCard() ? conditional : conditional.wrapped();
-        if (resolved instanceof ConditionalEffect gate && gate.interveningIf()
-                && !conditionEvaluationService.isMet(match.gameData(), gate.condition(),
-                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+        if (!interveningIfMet(match, resolved)) {
             return false;
         }
 
@@ -258,6 +256,9 @@ public class PlayedCardNameTriggerCollectorService {
         if (effect instanceof TriggeringCardConditionalEffect) {
             return false;
         }
+        if (!interveningIfMet(match, effect)) {
+            return false;
+        }
         return enqueueLandPlayTrigger(match, effect, ((TriggerContext.LandPlayed) ctx).playingPlayerId());
     }
 
@@ -271,7 +272,20 @@ public class PlayedCardNameTriggerCollectorService {
         if (effect instanceof TriggeringCardConditionalEffect) {
             return false;
         }
+        if (!interveningIfMet(match, effect)) {
+            return false;
+        }
         return enqueueLandPlayTrigger(match, effect, ((TriggerContext.LandPlayed) ctx).playingPlayerId());
+    }
+
+    /**
+     * An intervening "if" is checked as the ability triggers (CR 603.4): the ability doesn't trigger while it is
+     * false, and the {@link ConditionalEffect} checks it again as the ability resolves.
+     */
+    private boolean interveningIfMet(TriggerMatchContext match, CardEffect effect) {
+        return !(effect instanceof ConditionalEffect gate) || !gate.interveningIf()
+                || conditionEvaluationService.isMet(match.gameData(), gate.condition(),
+                ConditionContext.forPermanent(match.permanent(), match.controllerId()));
     }
 
     private boolean enqueueLandPlayTrigger(TriggerMatchContext match, CardEffect effect,

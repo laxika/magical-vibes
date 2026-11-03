@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.amount.HighestLifeTotalAmongPlayers;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesFractionOfLifeRoundedUpEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ZNR", collectorNumber = "122")
@@ -18,8 +18,9 @@ public class ScourgeOfTheSkyclaves extends Card {
 
     public ScourgeOfTheSkyclaves() {
         addStaticEffect(new KickerEffect("{4}{B}"));
-        addTrigger(Triggers.youCastThisSpell(), new ConditionalEffect(new Kicked(),
-                new EachPlayerLosesFractionOfLifeRoundedUpEffect(2)));
+        addTrigger(Triggers.youCastThisSpell(),
+                TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
+                new EachPlayerLosesFractionOfLifeRoundedUpEffect(2));
 
         var powerAndToughness = new Sum(
                 new Fixed(20),

@@ -1350,7 +1350,7 @@ public class TriggerCollectionService {
         List<Card> castingPlayerGraveyard = gameData.playerGraveyards.get(castingPlayerId);
         if (castingPlayerGraveyard != null) {
             for (Card card : new ArrayList<>(castingPlayerGraveyard)) {
-                List<CardEffect> graveyardEffects = gameQueryService.getEffectiveGraveyardTriggerEffects(
+                List<CardEffect> graveyardEffects = gameQueryService.getEffectiveGraveyardLegacyTriggerEffects(
                         gameData, card, SpellAbilityWatch.GRAVEYARD_ON_CONTROLLER_CASTS_SPELL.trigger());
                 if (graveyardEffects == null || graveyardEffects.isEmpty()) continue;
 
@@ -10651,7 +10651,7 @@ public class TriggerCollectionService {
         if (graveyard == null) return;
 
         for (Card card : new ArrayList<>(graveyard)) {
-            for (CardEffect effect : gameQueryService.getEffectiveGraveyardTriggerEffects(
+            for (CardEffect effect : gameQueryService.getEffectiveGraveyardLegacyTriggerEffects(
                     gameData, card, SpellAbilityWatch.GRAVEYARD_ON_CONTROLLER_ACTIVATES_EXHAUST_ABILITY.trigger())) {
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,

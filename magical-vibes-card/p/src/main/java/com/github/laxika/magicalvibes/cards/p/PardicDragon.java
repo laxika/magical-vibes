@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTimeCountersOnSuspendedCardEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -35,14 +35,13 @@ public class PardicDragon extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withSuspendsSourceFromHand(2));
 
-        addTrigger(Triggers.opponentCastsSpell(), new ConditionalEffect(
-                new SourceCardSuspended(),
+        addTrigger(Triggers.opponentCastsSpell(),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCardSuspended()),
                 new MayEffect(
                         new PutTimeCountersOnSuspendedCardEffect(1),
                         "Put a time counter on Pardic Dragon?",
                         null,
                         MayChoicePlayer.TRIGGERING_SPELL_CONTROLLER
-                )
-        ));
+                ));
     }
 }

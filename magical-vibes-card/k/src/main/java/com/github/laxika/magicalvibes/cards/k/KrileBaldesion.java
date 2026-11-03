@@ -5,11 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -21,7 +22,8 @@ public class KrileBaldesion extends Card {
     public KrileBaldesion() {
         // Trace Aether — whenever you cast a noncreature spell, you may return a creature card
         // with mana value equal to that spell's mana value from your graveyard to your hand.
-        addTrigger(Triggers.youCastSpell(), OncePerTurnTriggerEffect.markOnAcceptance(
+        addTrigger(Triggers.youCastSpell(),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.DO_ONLY_ONCE_EACH_TURN),
                 new SpellCastTriggerEffect(
                         new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                         List.of(new MayEffect(
@@ -32,7 +34,6 @@ public class KrileBaldesion extends Card {
                                         .requiresManaValueEqualsX(true)
                                         .build(),
                                 "Return target creature card with mana value equal to that spell's mana value from your graveyard to your hand?"))
-                )
-        ));
+                ));
     }
 }

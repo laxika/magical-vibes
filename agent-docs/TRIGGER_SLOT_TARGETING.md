@@ -490,10 +490,10 @@ creatures that entered from that graveyard or were cast from it; Prized Amalgam)
 `Triggers.transformsToBackFace(ObjectRelation.THIS)`, `Triggers.transformsToFrontFace(ObjectRelation.THIS)`,
 `Triggers.youActivateAbility()` (Ceaseless Searblades; fires on every permanent with this slot on
 the activating player's battlefield, once per activated-ability activation incl. mana abilities;
-wrap in `TriggeringPermanentConditionalEffect` to filter by the permanent whose ability was activated),
+`.withSource(filter)` filters by the permanent whose ability was activated),
 `Triggers.opponentActivatesNonManaAbility()` (Harsh Mentor; the opponent-scoped mirror — fires on every
 permanent NOT controlled by the activating player, only on the non-mana activation path so mana
-abilities never trigger it; wrap in `TriggeringPermanentConditionalEffect` to filter by the activated
+abilities never trigger it; `.withSource(filter)` filters by the activated
 permanent's type; the activating opponent is baked as the non-targeting `targetId`),
 `Triggers.youActivateEternalizeOrEmbalm()` (Vizier of the Anointed; fires once per activation on
 every permanent with this slot on the activating player's battlefield when the activated graveyard

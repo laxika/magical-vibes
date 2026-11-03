@@ -1,0 +1,65 @@
+AcademyWall.java	youCastSpell		ONCE_EACH_TURN	
+AceFlockbringer.java	youCastSpell		ONCE_EACH_TURN	
+AncientCornucopia.java	youCastSpell		DO_ONLY_ONCE_EACH_TURN	
+ArtifactPossession.java	youActivateAbility	.withKind(AbilityTrigger.AbilityKind.WITHOUT_TAP_COST).withSource(new PermanentIsHostOfSourceAuraPredicate())		
+ArtifactPossession.java	opponentActivatesAbility	.withKind(AbilityTrigger.AbilityKind.WITHOUT_TAP_COST).withSource(new PermanentIsHostOfSourceAuraPredicate())		
+AvalancheOfSector7.java	opponentActivatesAbility	.withSource(new PermanentIsArtifactPredicate())		
+BasimIbnIshaq.java	youCastSpell		ONCE_EACH_TURN	
+BygoneMarvels.java	youCastThisSpell			descendEight
+CeaselessSearblades.java	youActivateAbility	.withSource(new PermanentHasSubtypePredicate(CardSubtype.ELEMENTAL))		
+CemeteryGatekeeper.java	youPlayLand	.withFilter(sharedType)		
+CemeteryGatekeeper.java	opponentPlaysLand	.withFilter(sharedType)		
+CemeteryProtector.java	youPlayLand	.withFilter(sharedType)		
+ChandraHopesBeacon.java	youCastSpell		ONCE_EACH_TURN	
+CosmicCrucible.java	youCastSpell		DO_ONLY_ONCE_EACH_TURN	
+CrackdownConstruct.java	youActivateNonManaAbility	.withSource(new PermanentAnyOfPredicate(List.of(new PermanentIsArtifactPredicate(),new PermanentIsCreaturePredicate())))		
+DonalHeraldOfWings.java	youCastSpell		ONCE_EACH_TURN	
+DragonsoulProdigy.java	youCastSpell		ONCE_EACH_TURN	
+ElrondMoonReader.java	youActivateAbility	.withSource(new PermanentIsCreaturePredicate())	ONCE_EACH_TURN	
+ElspethsTalent.java	youActivateAbility	.withKind(AbilityTrigger.AbilityKind.LOYALTY).withSource(new PermanentAllOfPredicate(List.of(new PermanentIsPlaneswalkerPredicate(),new PermanentIsHostOfSourceAuraPredicate())))		
+Fastbond.java	youPlayLand			new ControllerPlayedAtLeastLandsThisTurn(2)
+FrenziedRaider.java	youActivateAbility	.withKind(AbilityTrigger.AbilityKind.BOAST)		
+GlacierwoodSiege.java	youCastSpell			new SourceHasChosenMode("Temur")
+GrahaTiaScionReborn.java	youCastSpell		DO_ONLY_ONCE_EACH_TURN	
+HarnesserOfStorms.java	youCastSpell		ONCE_EACH_TURN	
+HarshMentor.java	opponentActivatesNonManaAbility	.withSource(new PermanentAnyOfPredicate(List.of(new PermanentIsArtifactPredicate(),new PermanentIsCreaturePredicate(),new PermanentIsLandPredicate())))		
+HauntingWind.java	youActivateAbility	.withKind(AbilityTrigger.AbilityKind.WITHOUT_TAP_COST).withSource(new PermanentIsArtifactPredicate())		
+HauntingWind.java	opponentActivatesAbility	.withKind(AbilityTrigger.AbilityKind.WITHOUT_TAP_COST).withSource(new PermanentIsArtifactPredicate())		
+HeraldOfAnafenza.java	youActivateAbility	.withKind(AbilityTrigger.AbilityKind.OUTLAST).withSource(new PermanentIsSourceCardPredicate())		
+HiddenHerd.java	opponentPlaysLand	.withFilter(new CardAllOfPredicate(List.of(new CardTypePredicate(CardType.LAND),new CardNotPredicate(new CardSupertypePredicate(CardSupertype.BASIC)))))		new SourceIsEnchantment()
+HiddenStag.java	opponentPlaysLand			new SourceIsEnchantment()
+HiddenStag.java	youPlayLand			new SourceIsCreature()
+ImmolationShaman.java	opponentActivatesNonManaAbility	.withSource(new PermanentAnyOfPredicate(List.of(new PermanentIsArtifactPredicate(),new PermanentIsCreaturePredicate(),new PermanentIsLandPredicate())))		
+IronManBleedingEdge.java	youCastSpell		DO_ONLY_ONCE_EACH_TURN	
+Jokulmorder.java	youPlayLand	.withFilter(new CardSubtypePredicate(CardSubtype.ISLAND))		
+KeralKeepDisciples.java	youActivateAbility	.withKind(AbilityTrigger.AbilityKind.LOYALTY).withSource(new PermanentHasSubtypePredicate(CardSubtype.CHANDRA))		
+KozilekTheGreatDistortion.java	youCastThisSpell			new CardsInHandAtMost(6)
+KrileBaldesion.java	youCastSpell		DO_ONLY_ONCE_EACH_TURN	
+MarvelBoyNohVarr.java	youActivateAbility	.withKind(AbilityTrigger.AbilityKind.POWER_UP)		
+MirrodinBesieged.java	youCastSpell			new SourceHasChosenMode(MIRRAN)
+NeeraWildMage.java	youCastSpell		ONCE_EACH_TURN	
+PardicDragon.java	opponentCastsSpell			new SourceCardSuspended()
+PoeticIngenuity.java	youCastSpell		ONCE_EACH_TURN	
+Powerleech.java	opponentActivatesAbility	.withKind(AbilityTrigger.AbilityKind.WITHOUT_TAP_COST).withSource(new PermanentIsArtifactPredicate())		
+RendmawCreakingNest.java	youPlayLand	.withFilter(twoOrMoreCardTypesLand())		
+RunicArmasaur.java	opponentActivatesNonManaAbility	.withSource(new PermanentAnyOfPredicate(List.of(new PermanentIsCreaturePredicate(),new PermanentIsLandPredicate())))		
+SandcloudHarbinger.java	youPlayLand	.withFilter(desert)		
+SandcloudHarbinger.java	opponentPlaysLand	.withFilter(desert)		
+SarahJaneSmith.java	youCastSpell		ONCE_EACH_TURN	
+SarkhansWhelp.java	youActivateAbility	.withSource(new PermanentAllOfPredicate(List.of(new PermanentHasSubtypePredicate(CardSubtype.SARKHAN),new PermanentIsPlaneswalkerPredicate())))		
+SatoruUmezawa.java	youActivateAbility	.withKind(AbilityTrigger.AbilityKind.NINJUTSU)	ONCE_EACH_TURN	
+ScourgeOfTheSkyclaves.java	youCastThisSpell			new Kicked()
+ShanidSleepersScourge.java	youPlayLand	.withFilter(legendaryCard)		
+SpiderVerse.java	youCastSpell		DO_ONLY_ONCE_EACH_TURN	
+JinGitaxiasProgressTyrant.java	youCastSpell		ONCE_EACH_TURN	
+JinGitaxiasProgressTyrant.java	opponentCastsSpell		ONCE_EACH_TURN	
+TheSixthDoctor.java	youCastSpell		ONCE_EACH_TURN	
+ThoughtstealSprites.java	youCastSpell		ONCE_EACH_TURN	
+UnbreakableRemnant.java	youCastThisSpell			new CastFromZone(Zone.GRAVEYARD)
+VarisSilverymoonRanger.java	youCastSpell		ONCE_EACH_TURN	
+VaziKeenNegotiator.java	opponentActivatesAbility			new TreasureManaSpentToActivate()
+VenatHeartOfHydaelyn.java	youCastSpell		ONCE_EACH_TURN	
+WhisperingWizard.java	youCastSpell		ONCE_EACH_TURN	
+WizenedMentor.java	opponentActivatesNonManaAbility		ONCE_EACH_TURN	
+Imprison.java	youActivateNonManaAbility	.withKind(AbilityTrigger.AbilityKind.WITH_TAP_COST).withSource(new PermanentIsHostOfSourceAuraPredicate())		
+Imprison.java	opponentActivatesNonManaAbility	.withKind(AbilityTrigger.AbilityKind.WITH_TAP_COST).withSource(new PermanentIsHostOfSourceAuraPredicate())		

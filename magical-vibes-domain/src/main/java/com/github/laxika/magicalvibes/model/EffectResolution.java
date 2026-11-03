@@ -660,7 +660,7 @@ public final class EffectResolution {
      */
     public static boolean hasManaSpentToCastAmount(Card card) {
         return java.util.stream.Stream.of(card.getCastingCostsAndSpellEffects(),
-                        card.getTriggerEffects(Triggers.youCastThisSpell()), card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)),
+                        card.getLegacyTriggerEffects(Triggers.youCastThisSpell()), card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)),
                         card.getStaticEffects())
                 .flatMap(List::stream)
                 .anyMatch(EffectResolution::effectUsesManaSpentToCast);

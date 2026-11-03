@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.trigger;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+
 import java.util.Objects;
 
 /**
@@ -7,12 +9,37 @@ import java.util.Objects;
  *
  * @param event  which abilities it triggers on
  * @param player the player who activates the ability
+ * @param source what the permanent whose ability is activated must be ("an ability of a creature", "of an artifact"),
+ *               or {@code null} for any
+ * @param kind   what kind of activated ability it must be ("a loyalty ability", "a ninjutsu ability"), or
+ *               {@code null} for any
  */
-public record AbilityTrigger(AbilityEvent event, PlayerRelation player) implements Trigger {
+public record AbilityTrigger(AbilityEvent event, PlayerRelation player, PermanentPredicate source, AbilityKind kind)
+        implements Trigger {
 
     public AbilityTrigger {
         Objects.requireNonNull(event, "event");
         Objects.requireNonNull(player, "player");
+    }
+
+    public AbilityTrigger(AbilityEvent event, PlayerRelation player) {
+        this(event, player, null, null);
+    }
+
+    /** This trigger for an ability of a permanent that matches {@code source} only. */
+    public AbilityTrigger withSource(PermanentPredicate source) {
+        return new AbilityTrigger(event, player, Objects.requireNonNull(source, "source"), kind);
+    }
+
+    /** This trigger for an activated ability of {@code kind} only. */
+    public AbilityTrigger withKind(AbilityKind kind) {
+        return new AbilityTrigger(event, player, source, Objects.requireNonNull(kind, "kind"));
+    }
+
+    /** The activation collectors read every ability of an event by its player; the filters are judged by them. */
+    @Override
+    public Trigger watchKey() {
+        return source == null && kind == null ? this : new AbilityTrigger(event, player);
     }
 
     /** The activations an {@link AbilityTrigger} triggers on. */
@@ -27,5 +54,23 @@ public record AbilityTrigger(AbilityEvent event, PlayerRelation player) implemen
         ETERNALIZE_OR_EMBALM_ACTIVATED,
         /** A mana ability of this permanent resolves: "whenever a mana ability of this creature resolves". */
         THIS_MANA_ABILITY_RESOLVES
+    }
+
+    /** A kind of activated ability an {@link AbilityTrigger} can be restricted to. */
+    public enum AbilityKind {
+        /** An ability with a loyalty cost: "whenever you activate a loyalty ability". */
+        LOYALTY,
+        /** A ninjutsu ability. */
+        NINJUTSU,
+        /** An outlast ability. */
+        OUTLAST,
+        /** A power-up ability. */
+        POWER_UP,
+        /** A boast ability. */
+        BOAST,
+        /** An ability with {T} in its activation cost. */
+        WITH_TAP_COST,
+        /** An ability without {T} in its activation cost. */
+        WITHOUT_TAP_COST
     }
 }
