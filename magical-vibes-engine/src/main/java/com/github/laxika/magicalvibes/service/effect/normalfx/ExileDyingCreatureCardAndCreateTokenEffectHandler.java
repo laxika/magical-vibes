@@ -96,7 +96,7 @@ public class ExileDyingCreatureCardAndCreateTokenEffectHandler implements Normal
         boolean changed = false;
         for (Ability ability : tokenEffects) {
             if (ability instanceof TriggeredAbility triggered
-                    && triggered.hasTrigger(Triggers.dealsCombatDamageToPlayer())) {
+                    && triggered.hasWatchedTrigger(Triggers.dealsCombatDamageToPlayer())) {
                 CardEffect combatDamageEffect = LegacySlots.effectsOf(ability).getFirst();
                 CardEffect bound = bindReturn(combatDamageEffect, exiledCardId);
                 if (bound != combatDamageEffect) {

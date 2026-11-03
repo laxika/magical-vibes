@@ -2,14 +2,16 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.GreatestToughnessAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "SNC", collectorNumber = "147")
 public class FreelanceMuscle extends Card {
@@ -20,9 +22,8 @@ public class FreelanceMuscle extends Card {
         var greatestPowerOrToughness = new Max(
                 new GreatestPowerAmongControlled(otherCreatures),
                 new GreatestToughnessAmongControlled(otherCreatures));
-        addTrigger(Triggers.attacks(),
-                new BoostSelfEffect(greatestPowerOrToughness, greatestPowerOrToughness));
-        addTrigger(Triggers.blocks(), TriggerMode.ONCE_PER_BLOCK,
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()),
+                TriggerOptions.ONE_OR_MORE,
                 new BoostSelfEffect(greatestPowerOrToughness, greatestPowerOrToughness));
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesLandAndPutCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.TurfWarCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -29,10 +29,10 @@ public class TurfWar extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new EachPlayerChoosesLandAndPutCounterEffect(CounterType.CONTESTED));
         addTrigger(Triggers.creatureDealsCombatDamageToYou(),
-                new ConditionalEffect(new ControlsPermanent(CONTESTED_LAND),
-                        new TurfWarCombatDamageEffect(true), true));
+                TriggerOptions.DEFAULT.withInterveningIf(new ControlsPermanent(CONTESTED_LAND)),
+                new TurfWarCombatDamageEffect(true));
         addTrigger(Triggers.creatureDealsCombatDamageToOpponent(),
-                new ConditionalEffect(new TargetPlayerControlsPermanent(CONTESTED_LAND),
-                        new TurfWarCombatDamageEffect(false), true));
+                TriggerOptions.DEFAULT.withInterveningIf(new TargetPlayerControlsPermanent(CONTESTED_LAND)),
+                new TurfWarCombatDamageEffect(false));
     }
 }

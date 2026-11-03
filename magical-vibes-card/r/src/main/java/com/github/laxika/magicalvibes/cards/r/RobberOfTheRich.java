@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryScope;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ELD", collectorNumber = "138")
@@ -19,9 +20,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class RobberOfTheRich extends Card {
 
     public RobberOfTheRich() {
-        addTrigger(Triggers.attacks(), new ConditionalEffect(
-                new DefendingPlayerHasMoreCardsInHandThanController(),
-                new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.TARGET_OPPONENT)));
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(new DefendingPlayerHasMoreCardsInHandThanController()),
+                new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.TARGET_OPPONENT));
         addStaticEffect(new ConditionalEffect(
                 new AttackedWithCreaturesOfSubtypeThisTurn(1, CardSubtype.ROGUE),
                 new AllowCastFromCardsExiledWithSourceEffect(

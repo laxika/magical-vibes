@@ -22,8 +22,7 @@ import java.util.Set;
 public class WandOfOrcus extends Card {
 
     public WandOfOrcus() {
-        addTrigger(Triggers.attacks(), deathtouchGrant());
-        addTrigger(Triggers.blocks(), deathtouchGrant());
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), deathtouchGrant());
         addTrigger(Triggers.equippedCreatureDealsCombatDamageToPlayer(),
                 new CreateTokenEffect(new EventValue(), "Zombie", 2, 2, CardColor.BLACK,
                         List.of(CardSubtype.ZOMBIE), Set.of(), Set.of()));

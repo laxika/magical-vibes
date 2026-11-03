@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ZNR", collectorNumber = "236")
@@ -21,8 +22,9 @@ public class SoaringThoughtThief extends Card {
                 new OpponentGraveyardAtLeast(8),
                 new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES,
                         new PermanentHasSubtypePredicate(CardSubtype.ROGUE))));
-        addTrigger(Triggers.youAttack(), new ConditionalEffect(
-                new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.ROGUE)),
-                new MillEffect(2, MillRecipient.EACH_OPPONENT)));
+        addTrigger(Triggers.youAttack(),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.ROGUE))),
+                new MillEffect(2, MillRecipient.EACH_OPPONENT));
     }
 }

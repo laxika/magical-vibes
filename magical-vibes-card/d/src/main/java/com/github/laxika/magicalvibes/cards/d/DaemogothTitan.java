@@ -7,13 +7,14 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
+
 @CardRegistration(set = "STX", collectorNumber = "174")
 public class DaemogothTitan extends Card {
 
     public DaemogothTitan() {
         // Whenever this creature attacks or blocks, sacrifice a creature.
-        addTrigger(Triggers.attacks(), sacrificeCreature());
-        addTrigger(Triggers.blocks(), sacrificeCreature());
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), sacrificeCreature());
     }
 
     private SacrificePermanentsEffect sacrificeCreature() {

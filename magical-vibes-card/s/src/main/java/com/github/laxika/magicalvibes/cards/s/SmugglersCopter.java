@@ -22,20 +22,14 @@ import java.util.List;
 public class SmugglersCopter extends Card {
 
     public SmugglersCopter() {
-        addTrigger(Triggers.attacks(), new MayEffect(
-                SequenceEffect.of(
-                        new DrawCardEffect(1),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER)
-                ),
-                "Draw a card, then discard a card?"
-        ));
-        addTrigger(Triggers.blocks(), new MayEffect(
-                SequenceEffect.of(
-                        new DrawCardEffect(1),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER)
-                ),
-                "Draw a card, then discard a card?"
-        ));
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()),
+                new MayEffect(
+                                SequenceEffect.of(
+                                        new DrawCardEffect(1),
+                                        new DiscardEffect(1, DiscardRecipient.CONTROLLER)
+                                ),
+                                "Draw a card, then discard a card?"
+                        ));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

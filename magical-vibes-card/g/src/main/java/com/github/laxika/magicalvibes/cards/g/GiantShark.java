@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
@@ -13,10 +12,10 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentCountAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -34,11 +33,11 @@ public class GiantShark extends Card {
                 new BoostSelfEffect(2, 0),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)
         );
-        addTrigger(Triggers.blocks(), new TriggeringPermanentConditionalEffect(
-                new PermanentDealtDamageThisTurnPredicate(), damagedCombatOpponentBonus));
-        addTrigger(Triggers.becomesBlocked(), TriggerMode.PER_BLOCKER,
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentDealtDamageThisTurnPredicate(), damagedCombatOpponentBonus));
+        addTrigger(Triggers.blocks().withFilter(new PermanentDealtDamageThisTurnPredicate()),
+                damagedCombatOpponentBonus);
+        addTrigger(Triggers.becomesBlocked().withFilter(new PermanentDealtDamageThisTurnPredicate()),
+                TriggerOptions.EACH_BLOCKER,
+                damagedCombatOpponentBonus);
 
         addTrigger(Triggers.state(), new StateTriggerEffect(
                 new PermanentControllerControlsPermanentCountAtMostPredicate(

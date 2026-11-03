@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.d.DeadlyDancer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ExactlyAttackers;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "VOW", collectorNumber = "141")
@@ -16,7 +16,8 @@ public class AlluringSuitor extends Card {
         setBackFaceCard(new DeadlyDancer());
 
         addTrigger(Triggers.youAttack(),
-                new ConditionalEffect(new ExactlyAttackers(2), new TransformSelfEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(new ExactlyAttackers(2)),
+                new TransformSelfEffect());
     }
 
     @Override

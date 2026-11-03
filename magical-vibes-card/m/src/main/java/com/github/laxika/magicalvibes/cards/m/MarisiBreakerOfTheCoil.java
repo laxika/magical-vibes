@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadCreaturesTargetPlayerControlsUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsDuringCombatEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -13,7 +12,6 @@ public class MarisiBreakerOfTheCoil extends Card {
     public MarisiBreakerOfTheCoil() {
         addStaticEffect(new OpponentsCantCastSpellsDuringCombatEffect());
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(null,
-                        new GoadCreaturesTargetPlayerControlsUntilNextTurnEffect()));
+                new GoadCreaturesTargetPlayerControlsUntilNextTurnEffect());
     }
 }

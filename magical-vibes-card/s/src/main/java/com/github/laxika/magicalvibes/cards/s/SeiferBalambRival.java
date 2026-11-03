@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -30,8 +31,7 @@ public class SeiferBalambRival extends Card {
                         new GoadTargetCreatureUntilNextTurnEffect());
 
         addTrigger(Triggers.creatureYouControlBecomesBlocked(),
-                new ConditionalEffect(new AttackedTargetIsOpponent(),
-                        new ConditionalEffect(new BlockedByMinCreatures(2),
-                                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF))));
+                TriggerOptions.DEFAULT.withInterveningIf(new AttackedTargetIsOpponent()),
+                new ConditionalEffect(new BlockedByMinCreatures(2), new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)));
     }
 }

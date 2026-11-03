@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.SourceEnteredBattlefieldThisTurn;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnOneOfCombatDamageDealersToHandThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MOM", collectorNumber = "258")
@@ -26,16 +26,14 @@ public class ZurgoAndOjutai extends Card {
                 new SourceEnteredBattlefieldThisTurn(),
                 new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)));
 
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayerOrBattle(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.DRAGON),
-                        SequenceEffect.of(
-                                LookAtTopCardsEffect.chooseOneToHandRestOnBottom(new Fixed(3)),
-                                new MayEffect(
-                                        new ReturnOneOfCombatDamageDealersToHandThenEffect(
-                                                null, "one of those Dragons"),
-                                        "Return one of those Dragons to its owner's hand?")),
-                        false,
-                        true));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayerOrBattle()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.DRAGON)),
+                TriggerOptions.ONE_OR_MORE,
+                SequenceEffect.of(
+                        LookAtTopCardsEffect.chooseOneToHandRestOnBottom(new Fixed(3)),
+                        new MayEffect(
+                                new ReturnOneOfCombatDamageDealersToHandThenEffect(
+                                        null, "one of those Dragons"),
+                                "Return one of those Dragons to its owner's hand?")));
     }
 }

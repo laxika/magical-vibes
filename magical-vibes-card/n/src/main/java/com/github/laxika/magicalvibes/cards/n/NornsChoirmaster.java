@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,8 +16,7 @@ public class NornsChoirmaster extends Card {
         // Whenever a commander you control enters or attacks, proliferate.
         addTrigger(Triggers.enters(new PermanentIsCommanderPredicate(), ObjectRelation.ANOTHER_YOU_CONTROL),
                 new ProliferateEffect());
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsCommanderPredicate(), new ProliferateEffect()));
+        addTrigger(Triggers.creatureYouControlAttacks().withFilter(new PermanentIsCommanderPredicate()),
+                new ProliferateEffect());
     }
 }

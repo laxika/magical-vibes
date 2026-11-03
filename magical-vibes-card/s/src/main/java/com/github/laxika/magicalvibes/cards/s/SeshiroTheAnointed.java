@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -21,9 +20,8 @@ public class SeshiroTheAnointed extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.SNAKE)));
 
         // Whenever a Snake you control deals combat damage to a player, you may draw a card.
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.SNAKE),
-                        new MayEffect(new DrawCardEffect(1), "draw a card")));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.SNAKE)),
+                new MayEffect(new DrawCardEffect(1), "draw a card"));
     }
 }

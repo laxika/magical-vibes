@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -39,12 +40,12 @@ public class ZurzothChaosRider extends Card {
                         new ConditionalEffect(new NotCondition(new TargetPlayerIsActive()), devilToken)));
 
         addTrigger(Triggers.youAttackPlayer(),
-                new ConditionalEffect(
-                        new MinimumMatchingAttackers(1, new PermanentHasSubtypePredicate(CardSubtype.DEVIL)),
-                        SequenceEffect.of(
-                                new DrawCardEffect(),
-                                new DrawCardForDefendingPlayerEffect(),
-                                new DiscardEffect(1, DiscardRecipient.CONTROLLER, true),
-                                new DiscardEffect(1, DiscardRecipient.DEFENDING_PLAYER, true))));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new MinimumMatchingAttackers(1, new PermanentHasSubtypePredicate(CardSubtype.DEVIL))),
+                SequenceEffect.of(
+                        new DrawCardEffect(),
+                        new DrawCardForDefendingPlayerEffect(),
+                        new DiscardEffect(1, DiscardRecipient.CONTROLLER, true),
+                        new DiscardEffect(1, DiscardRecipient.DEFENDING_PLAYER, true)));
     }
 }

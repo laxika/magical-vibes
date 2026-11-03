@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSuspectedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -33,9 +33,7 @@ public class ClandestineMeddler extends Card {
                 new SuspectEffect(GrantScope.TARGET));
 
         addTrigger(Triggers.youAttack(),
-                new ConditionalEffect(
-                        new HasAttacker(new PermanentIsSuspectedPredicate()),
-                        new SurveilEffect(1)
-                ));
+                TriggerOptions.DEFAULT.withInterveningIf(new HasAttacker(new PermanentIsSuspectedPredicate())),
+                new SurveilEffect(1));
     }
 }

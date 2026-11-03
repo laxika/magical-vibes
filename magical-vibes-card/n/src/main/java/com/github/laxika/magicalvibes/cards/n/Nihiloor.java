@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.NihiloorAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.NihiloorEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -15,8 +14,8 @@ public class Nihiloor extends Card {
 
     public Nihiloor() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new NihiloorEnterEffect());
-        addTrigger(Triggers.creatureYouControlAttacks(), new TriggeringPermanentConditionalEffect(
-                new PermanentNotPredicate(new PermanentOwnedBySourceControllerPredicate()),
-                new NihiloorAttackEffect()));
+        addTrigger(Triggers.creatureYouControlAttacks()
+                        .withFilter(new PermanentNotPredicate(new PermanentOwnedBySourceControllerPredicate())),
+                new NihiloorAttackEffect());
     }
 }

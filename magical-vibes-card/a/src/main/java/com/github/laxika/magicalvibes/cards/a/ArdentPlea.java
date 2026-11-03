@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ARB", collectorNumber = "1")
@@ -16,7 +16,8 @@ public class ArdentPlea extends Card {
         // of turn. Same wiring as Akrasan Squire — Triggers.creatureYouControlAttacks() records the lone attacker
         // as the (non-targeting) trigger target and AttacksAlone restricts it to solo attackers.
         addTrigger(Triggers.creatureYouControlAttacks(),
-                new ConditionalEffect(new AttacksAlone(), new BoostTargetCreatureEffect(1, 1)));
+                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                new BoostTargetCreatureEffect(1, 1));
 
         // Cascade: when you cast this spell, dig the library until a nonland card with lesser mana
         // value, may cast it for free, rest to the bottom in a random order (CascadeEffectHandler).

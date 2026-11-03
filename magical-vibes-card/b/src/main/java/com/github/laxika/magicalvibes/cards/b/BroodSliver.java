@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,11 +25,11 @@ public class BroodSliver extends Card {
                 "Create a 1/1 colorless Sliver creature token?",
                 null,
                 MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER);
-        addTrigger(Triggers.creatureDealsCombatDamageToYou(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.SLIVER), createToken));
-        addTrigger(Triggers.creatureDealsCombatDamageToOpponent(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.SLIVER), createToken));
+        addTrigger(Triggers.creatureDealsCombatDamageToYou()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.SLIVER)),
+                createToken);
+        addTrigger(Triggers.creatureDealsCombatDamageToOpponent()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.SLIVER)),
+                createToken);
     }
 }

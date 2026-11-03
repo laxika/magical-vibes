@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CreaturesBlockingSource;
 import com.github.laxika.magicalvibes.model.effect.BoostReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
@@ -19,9 +18,9 @@ public class BeastmastersMagemark extends Card {
         target(TargetFilters.creature())
                 .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                         new PermanentIsEnchantedPredicate()))
-                .addTrigger(Triggers.creatureYouControlBecomesBlocked(),
-                        new TriggeringPermanentConditionalEffect(new PermanentIsEnchantedPredicate(),
-                                new BoostReferencedPermanentEffect(PermanentReference.TRIGGERING,
-                                        new CreaturesBlockingSource(true), new CreaturesBlockingSource(true))));
+                .addTrigger(Triggers.creatureYouControlBecomesBlocked()
+                                .withFilter(new PermanentIsEnchantedPredicate()),
+                        new BoostReferencedPermanentEffect(PermanentReference.TRIGGERING,
+                                new CreaturesBlockingSource(true), new CreaturesBlockingSource(true)));
     }
 }

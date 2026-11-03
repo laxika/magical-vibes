@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksNotController;
 import com.github.laxika.magicalvibes.model.effect.AttackingPlayerChoosesCreatureToBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LTC", collectorNumber = "62")
@@ -20,7 +20,7 @@ public class MirkwoodTrapper extends Card {
                         new BoostTargetCreatureEffect(-2, 0));
 
         addTrigger(Triggers.playerAttacks(),
-                new ConditionalEffect(new PlayerAttacksNotController(),
-                        new AttackingPlayerChoosesCreatureToBoostEffect(2, 0)));
+                TriggerOptions.DEFAULT.withInterveningIf(new PlayerAttacksNotController()),
+                new AttackingPlayerChoosesCreatureToBoostEffect(2, 0));
     }
 }

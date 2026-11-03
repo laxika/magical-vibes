@@ -14,9 +14,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import java.util.List;
 import java.util.Set;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "USG", collectorNumber = "298")
@@ -25,7 +25,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class KarnSilverGolem extends Card {
 
     public KarnSilverGolem() {
-        addTrigger(Triggers.blocks(), TriggerMode.ONCE_PER_BLOCK, new BoostSelfEffect(-4, 4));
+        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, new BoostSelfEffect(-4, 4));
         addTrigger(Triggers.becomesBlocked(), new BoostSelfEffect(-4, 4));
 
         addActivatedAbility(new ActivatedAbility(

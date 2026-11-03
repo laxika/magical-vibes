@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AttachAurasToSourceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
+
 /**
  * Bruna, Light of Alabaster — "Whenever Bruna attacks or blocks, you may attach to it any number of
  * Auras on the battlefield and you may put onto the battlefield attached to it any number of Aura
@@ -16,7 +18,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class BrunaLightOfAlabaster extends Card {
 
     public BrunaLightOfAlabaster() {
-        addTrigger(Triggers.attacks(), new AttachAurasToSourceEffect());
-        addTrigger(Triggers.blocks(), new AttachAurasToSourceEffect());
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), new AttachAurasToSourceEffect());
     }
 }

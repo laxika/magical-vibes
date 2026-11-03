@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -28,12 +29,12 @@ public class AyarasOathsworn extends Card {
         // Whenever this creature deals combat damage to a player, if it has fewer than four +1/+1
         // counters on it, put a +1/+1 counter on it. Then if it has exactly four +1/+1 counters on
         // it, search your library for a card, put it into your hand, then shuffle.
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), new ConditionalEffect(
-                new NotCondition(fourCounters),
+        addTrigger(Triggers.dealsCombatDamageToPlayer(),
+                TriggerOptions.DEFAULT.withInterveningIf(new NotCondition(fourCounters)),
                 SequenceEffect.of(
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
                         new ConditionalEffect(
                                 new AllConditions(List.of(fourCounters, new NotCondition(fiveCounters))),
-                                new SearchLibraryEffect()))));
+                                new SearchLibraryEffect())));
     }
 }

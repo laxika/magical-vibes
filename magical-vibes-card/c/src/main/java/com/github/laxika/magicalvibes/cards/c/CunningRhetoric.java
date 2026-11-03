@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfAttackingPlayerLibraryAndGrantControllerPlayPermissionEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "C21", collectorNumber = "38")
@@ -13,7 +13,7 @@ public class CunningRhetoric extends Card {
 
     public CunningRhetoric() {
         addTrigger(Triggers.playerAttacks(),
-                new ConditionalEffect(new OpponentAttacksWithAtLeastCreatures(1),
-                        new ExileTopCardOfAttackingPlayerLibraryAndGrantControllerPlayPermissionEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(new OpponentAttacksWithAtLeastCreatures(1)),
+                new ExileTopCardOfAttackingPlayerLibraryAndGrantControllerPlayPermissionEffect());
     }
 }

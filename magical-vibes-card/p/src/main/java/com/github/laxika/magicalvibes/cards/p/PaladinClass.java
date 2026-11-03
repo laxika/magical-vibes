@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -52,12 +53,12 @@ public class PaladinClass extends Card {
                 new PermanentCount(new PermanentIsAttackingPredicate(), CountScope.CONTROLLER),
                 new Fixed(-1));
         target(TargetFilters.attackingCreature())
-                .addTrigger(Triggers.youAttack(), new ConditionalEffect(
-                        new SourceCounterThreshold(2, CounterType.LEVEL),
-                        new BoostTargetCreatureEffect(otherAttackingCreatures, otherAttackingCreatures)))
-                .addTrigger(Triggers.youAttack(), new ConditionalEffect(
-                        new SourceCounterThreshold(2, CounterType.LEVEL),
-                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET)));
+                .addTrigger(Triggers.youAttack(),
+                        TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(2, CounterType.LEVEL)),
+                        new BoostTargetCreatureEffect(otherAttackingCreatures, otherAttackingCreatures))
+                .addTrigger(Triggers.youAttack(),
+                        TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(2, CounterType.LEVEL)),
+                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET));
 
         addActivatedAbility(new ActivatedAbility(
                 false, "{4}{W}", List.of(new ClassLevelUpEffect(3)),

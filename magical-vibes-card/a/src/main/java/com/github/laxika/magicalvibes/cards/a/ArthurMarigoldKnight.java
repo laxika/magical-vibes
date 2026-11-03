@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.MakeChosenPermanentAttackingE
 import com.github.laxika.magicalvibes.model.effect.ReturnSelectedPermanentToHandAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -65,7 +65,6 @@ public class ArthurMarigoldKnight extends Card {
                 false,
                 0,
                 CREATURE_ATTACK_AND_RETURN_FOLLOW_UP);
-        addTrigger(Triggers.attacks(),
-                new ConditionalEffect(new MinimumAttackers(2), ability));
+        addTrigger(Triggers.attacks(), TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(2)), ability);
     }
 }

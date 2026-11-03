@@ -20,8 +20,7 @@ public class TimeElemental extends Card {
 
     public TimeElemental() {
         // When this creature attacks or blocks, at end of combat, sacrifice it and it deals 5 damage to you.
-        addTrigger(Triggers.attacks(), new SacrificeAtEndOfCombatEffect(5));
-        addTrigger(Triggers.blocks(), new SacrificeAtEndOfCombatEffect(5));
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), new SacrificeAtEndOfCombatEffect(5));
 
         // {2}{U}{U}, {T}: Return target permanent that isn't enchanted to its owner's hand.
         addActivatedAbility(new ActivatedAbility(

@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.condition.ControllerHasCityBlessing;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasInitiative;
 import com.github.laxika.magicalvibes.model.condition.ControllerIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,18 +22,20 @@ public class WowzerTheAspirational extends Card {
 
     public WowzerTheAspirational() {
         addTrigger(Triggers.attacks(),
-                new ConditionalEffect(new AllOf(List.of(
-                        new ControllerEnergyAtLeast(1),
-                        controlsToken(CardSubtype.BLOOD),
-                        controlsToken(CardSubtype.CLUE),
-                        controlsToken(CardSubtype.FOOD),
-                        controlsToken(CardSubtype.MAP),
-                        controlsToken(CardSubtype.POWERSTONE),
-                        controlsToken(CardSubtype.TREASURE),
-                        new ControllerIsMonarch(),
-                        new ControllerHasCityBlessing(),
-                        new ControllerHasInitiative()
-                )), new WinGameEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AllOf(List.of(
+                                        new ControllerEnergyAtLeast(1),
+                                        controlsToken(CardSubtype.BLOOD),
+                                        controlsToken(CardSubtype.CLUE),
+                                        controlsToken(CardSubtype.FOOD),
+                                        controlsToken(CardSubtype.MAP),
+                                        controlsToken(CardSubtype.POWERSTONE),
+                                        controlsToken(CardSubtype.TREASURE),
+                                        new ControllerIsMonarch(),
+                                        new ControllerHasCityBlessing(),
+                                        new ControllerHasInitiative()
+                                ))),
+                new WinGameEffect());
     }
 
     private static ControlsPermanent controlsToken(CardSubtype subtype) {

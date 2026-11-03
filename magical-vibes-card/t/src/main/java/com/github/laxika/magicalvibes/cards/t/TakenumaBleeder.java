@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
+
 /**
  * Takenuma Bleeder — {2}{B} Creature — Ogre Shaman 3/3.
  * <p>
@@ -22,8 +24,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class TakenumaBleeder extends Card {
 
     public TakenumaBleeder() {
-        addTrigger(Triggers.attacks(), bleedUnlessDemon());
-        addTrigger(Triggers.blocks(), bleedUnlessDemon());
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), bleedUnlessDemon());
     }
 
     private ConditionalEffect bleedUnlessDemon() {

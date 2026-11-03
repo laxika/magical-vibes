@@ -11,13 +11,13 @@ import com.github.laxika.magicalvibes.model.effect.SaddleCost;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -28,14 +28,14 @@ public class GuardianSunmare extends Card {
     public GuardianSunmare() {
         // Ward {2}.
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
-        addTrigger(Triggers.attacks(), new ConditionalEffect(
-                new SourceIsSaddled(),
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
                 new SearchLibraryEffect(
                         new CardAllOfPredicate(List.of(
                                 new CardIsPermanentPredicate(),
                                 new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
                                 new CardMaxManaValuePredicate(3))),
-                        LibrarySearchDestination.BATTLEFIELD)));
+                        LibrarySearchDestination.BATTLEFIELD));
         addActivatedAbility(new ActivatedAbility(false, null,
                 List.of(new SaddleCost(4), new BecomeSaddledUntilEndOfTurnEffect(GrantScope.SELF)),
                 "Saddle 4", ActivationTimingRestriction.SORCERY_SPEED));

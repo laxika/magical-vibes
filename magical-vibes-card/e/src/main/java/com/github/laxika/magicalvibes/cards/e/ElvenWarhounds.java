@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TMP", collectorNumber = "225")
@@ -13,6 +13,6 @@ public class ElvenWarhounds extends Card {
         // Whenever this creature becomes blocked by a creature, put that creature on top of its
         // owner's library. Fires once per blocker; the blocker is carried as the trigger's
         // (non-targeting) target.
-        addTrigger(Triggers.becomesBlocked(), TriggerMode.PER_BLOCKER, new PutTargetOnTopOfLibraryEffect());
+        addTrigger(Triggers.becomesBlocked(), TriggerOptions.EACH_BLOCKER, new PutTargetOnTopOfLibraryEffect());
     }
 }

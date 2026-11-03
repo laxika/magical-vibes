@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -29,19 +29,17 @@ public class SoundwaveSonicSpy extends Card {
         CardAnyOfPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentAllOfPredicate(List.of(
                                 new PermanentControlledBySourceControllerPredicate(),
                                 new PermanentIsCreaturePredicate(),
-                                new PermanentIsTokenPredicate())),
-                        new ExileTargetCardFromGraveyardAndMayCastCopyEffect(
-                                instantOrSorcery,
-                                GraveyardSearchScope.OPPONENT_GRAVEYARD,
-                                true,
-                                new TransformSelfEffect()),
-                        false,
-                        true));
+                                new PermanentIsTokenPredicate()))),
+                TriggerOptions.ONE_OR_MORE,
+                new ExileTargetCardFromGraveyardAndMayCastCopyEffect(
+                        instantOrSorcery,
+                        GraveyardSearchScope.OPPONENT_GRAVEYARD,
+                        true,
+                        new TransformSelfEffect()));
     }
 
     @Override

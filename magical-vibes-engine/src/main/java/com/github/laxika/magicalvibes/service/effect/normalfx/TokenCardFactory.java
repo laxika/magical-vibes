@@ -110,7 +110,7 @@ final class TokenCardFactory {
         }
         if (token.tokenEffects() != null
                 && token.tokenEffects().stream().anyMatch(ability -> ability instanceof TriggeredAbility triggered
-                        && triggered.hasTrigger(Triggers.attacks()))
+                        && triggered.hasWatchedTrigger(Triggers.attacks()))
                 && token.subtypes() != null && token.subtypes().contains(CardSubtype.AURA)) {
             tokenCard.setAttackTriggerOwnedByAura(true);
         }

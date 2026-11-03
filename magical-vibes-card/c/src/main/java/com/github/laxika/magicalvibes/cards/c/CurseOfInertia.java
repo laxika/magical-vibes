@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.condition.AttacksEnchantedPlayer;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "C13", collectorNumber = "36")
@@ -14,10 +14,12 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class CurseOfInertia extends Card {
 
     public CurseOfInertia() {
-        addTrigger(Triggers.playerAttacks(), new ConditionalEffect(new AttacksEnchantedPlayer(), new MayEffect(
-                new TapOrUntapTargetPermanentEffect(),
-                "Tap or untap target permanent?",
-                null,
-                MayChoicePlayer.ACTIVE_PLAYER)));
+        addTrigger(Triggers.playerAttacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(new AttacksEnchantedPlayer()),
+                new MayEffect(
+                        new TapOrUntapTargetPermanentEffect(),
+                        "Tap or untap target permanent?",
+                        null,
+                        MayChoicePlayer.ACTIVE_PLAYER));
     }
 }

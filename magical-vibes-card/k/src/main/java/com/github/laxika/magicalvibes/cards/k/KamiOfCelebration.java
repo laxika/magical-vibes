@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -17,10 +16,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class KamiOfCelebration extends Card {
 
     public KamiOfCelebration() {
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsModifiedPredicate(),
-                        new ExileTopCardMayPlayThisTurnEffect(false)));
+        addTrigger(Triggers.creatureYouControlAttacks().withFilter(new PermanentIsModifiedPredicate()),
+                new ExileTopCardMayPlayThisTurnEffect(false));
 
         target(TargetFilters.creatureYouControl()).addTrigger(Triggers.youCastSpell()
                         .withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.EXILE)),

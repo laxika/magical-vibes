@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
@@ -24,10 +23,9 @@ public class SetzerWanderingGambler extends Card {
 
     public SetzerWanderingGambler() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), blackjackToken());
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.VEHICLE),
-                        new FlipCoinWinEffect(null)));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)),
+                new FlipCoinWinEffect(null));
         addTrigger(Triggers.youWinCoinFlip(), CreateTokenEffect.ofTappedTreasureToken(2));
     }
 

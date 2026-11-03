@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceClassLevelAtLeast;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
@@ -59,11 +58,10 @@ public class PartyDude extends Card {
 
         target(TargetFilters.attackingCreature(), 0, 1)
                 .addTrigger(Triggers.youAttackPlayer(),
-                        new ConditionalEffect(
-                                new SourceClassLevelAtLeast(3),
-                                new BoostTargetCreatureEffect(
-                                        new CardsInHand(CountScope.CONTROLLER),
-                                        new CardsInHand(CountScope.CONTROLLER))));
+                        TriggerOptions.DEFAULT.withInterveningIf(new SourceClassLevelAtLeast(3)),
+                        new BoostTargetCreatureEffect(
+                                new CardsInHand(CountScope.CONTROLLER),
+                                new CardsInHand(CountScope.CONTROLLER)));
     }
 
     private static CreateTokenEffect foodToken() {

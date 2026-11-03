@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -40,9 +40,7 @@ public class AlibouAncientWitness extends Card {
                 CountScope.CONTROLLER);
 
         addTrigger(Triggers.youAttack(),
-                new ConditionalEffect(new HasAttacker(artifactCreature),
-                        SequenceEffect.of(
-                                new DealDamageToAnyTargetEffect(tappedArtifacts),
-                                new ScryEffect(tappedArtifacts))));
+                TriggerOptions.DEFAULT.withInterveningIf(new HasAttacker(artifactCreature)),
+                SequenceEffect.of(new DealDamageToAnyTargetEffect(tappedArtifacts), new ScryEffect(tappedArtifacts)));
     }
 }

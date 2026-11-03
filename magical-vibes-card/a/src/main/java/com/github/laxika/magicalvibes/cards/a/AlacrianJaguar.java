@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SaddleCost;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -19,7 +19,8 @@ public class AlacrianJaguar extends Card {
 
     public AlacrianJaguar() {
         addTrigger(Triggers.attacks(),
-                new ConditionalEffect(new SourceIsSaddled(), new BoostSelfEffect(2, 2)));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                new BoostSelfEffect(2, 2));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

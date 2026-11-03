@@ -73,4 +73,12 @@ public record TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard
     public CardEffect effect() {
         return ability.effects().getFirst().effect();
     }
+
+    /**
+     * The effect of {@link #ability} wrapped in its options and filters ({@link TriggeredAbility#legacyEffects()}): the
+     * form the combat collectors read it in.
+     */
+    public CardEffect legacyEffect() {
+        return ability.legacyEffects().getFirst().effect();
+    }
 }

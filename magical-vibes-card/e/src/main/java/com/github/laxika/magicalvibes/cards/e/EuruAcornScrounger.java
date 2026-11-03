@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ForageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YBLB", collectorNumber = "24")
@@ -27,18 +27,16 @@ public class EuruAcornScrounger extends Card {
                         new ConjureCardToBattlefieldEffect("MH2", "153"))),
                 "Forage?"));
 
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.SQUIRREL),
-                        new MayEffect(
-                                new SacrificePermanentThenEffect(
-                                        new PermanentIsTokenPredicate(),
-                                        new PutCounterOnEachControlledPermanentEffect(
-                                                CounterType.ACORN, 1,
-                                                new PermanentNamedPredicate("Chitterspitter")),
-                                        "a token"),
-                                "Sacrifice a token?"),
-                        false,
-                        true));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.SQUIRREL)),
+                TriggerOptions.ONE_OR_MORE,
+                new MayEffect(
+                        new SacrificePermanentThenEffect(
+                                new PermanentIsTokenPredicate(),
+                                new PutCounterOnEachControlledPermanentEffect(
+                                        CounterType.ACORN, 1,
+                                        new PermanentNamedPredicate("Chitterspitter")),
+                                "a token"),
+                        "Sacrifice a token?"));
     }
 }

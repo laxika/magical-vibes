@@ -1150,8 +1150,8 @@ public class CombatAttackService {
             // A granted triggered ability is an ability of the creature, so losing all abilities removes it.
             List<CardEffect> temporaryAttackEffects = new ArrayList<>();
             if (!gameQueryService.hasLostAllAbilities(gameData, attacker)) {
-                temporaryAttackEffects.addAll(attacker.getTemporaryTriggerEffects(CombatWatch.ON_ATTACK.trigger()));
-                temporaryAttackEffects.addAll(attacker.getPersistentTriggerEffects(CombatWatch.ON_ATTACK.trigger()));
+                temporaryAttackEffects.addAll(attacker.getLegacyTemporaryTriggerEffects(CombatWatch.ON_ATTACK.trigger()));
+                temporaryAttackEffects.addAll(attacker.getLegacyPersistentTriggerEffects(CombatWatch.ON_ATTACK.trigger()));
             }
             // Continuously granted ON_ATTACK abilities (Thorncaster Sliver giving every Sliver
             // "Whenever this creature attacks, it deals 1 damage to any target").
@@ -1638,11 +1638,11 @@ public class CombatAttackService {
             // Delayed triggers watching this specific creature (Okoye, Mighty and Adored): the
             // registering card is the source and its controller controls the trigger (CR 603.7).
             for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-                if (!watcher.ability().hasTrigger(CombatWatch.ON_ATTACK.trigger())
+                if (!watcher.ability().hasWatchedTrigger(CombatWatch.ON_ATTACK.trigger())
                         || !attacker.getId().equals(watcher.watchedPermanentId())) {
                     continue;
                 }
-                CardEffect watcherEffect = watcher.effect();
+                CardEffect watcherEffect = watcher.legacyEffect();
                 if (watcherEffect instanceof TriggeringPermanentConditionalEffect conditional) {
                     if (!predicateEvaluationService.matchesPermanentPredicate(
                             gameData, attacker, conditional.predicate())) {
@@ -2355,9 +2355,9 @@ public class CombatAttackService {
                     perCreatureAttackEffects.addAll(printedAttackEffects);
                 }
                 List<CardEffect> temporaryAttackEffects =
-                        perm.getTemporaryTriggerEffects(CombatWatch.ON_ALLY_CREATURE_ATTACKS.trigger());
+                        perm.getLegacyTemporaryTriggerEffects(CombatWatch.ON_ALLY_CREATURE_ATTACKS.trigger());
                 List<CardEffect> persistentAttackEffects =
-                        perm.getPersistentTriggerEffects(CombatWatch.ON_ALLY_CREATURE_ATTACKS.trigger());
+                        perm.getLegacyPersistentTriggerEffects(CombatWatch.ON_ALLY_CREATURE_ATTACKS.trigger());
                 if ((!temporaryAttackEffects.isEmpty() || !persistentAttackEffects.isEmpty())
                         && !gameQueryService.hasLostAllAbilities(gameData, perm)) {
                     perCreatureAttackEffects.addAll(temporaryAttackEffects);
@@ -2633,7 +2633,7 @@ public class CombatAttackService {
             if (graveyard == null) continue;
             boolean attackingPlayersGraveyard = graveyardOwnerId.equals(playerId);
             for (Card card : new ArrayList<>(graveyard)) {
-                List<CardEffect> gyAttackEffects = gameQueryService.getEffectiveGraveyardTriggerEffects(
+                List<CardEffect> gyAttackEffects = gameQueryService.getEffectiveGraveyardLegacyTriggerEffects(
                         gameData, card, CombatWatch.GRAVEYARD_ON_ALLY_CREATURES_ATTACK.trigger());
                 if (gyAttackEffects.isEmpty()) continue;
 
@@ -4662,7 +4662,7 @@ public class CombatAttackService {
                 boolean grantsEffect = source.getCard().getStaticEffects().stream()
                         .anyMatch(e -> e instanceof GrantTriggeredAbilityEffect grant
                                 && grant.grantedAbility() instanceof TriggeredAbility granted
-                                && granted.hasTrigger(CombatWatch.ON_ATTACK.trigger())
+                                && granted.hasWatchedTrigger(CombatWatch.ON_ATTACK.trigger())
                                 && grant.grantedEffect().equals(effect));
                 if (grantsEffect) {
                     usedGrantingPermanents.add(source.getId());

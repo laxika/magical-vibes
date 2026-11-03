@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToCombatOpponentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "EMN", collectorNumber = "117")
@@ -17,7 +17,8 @@ public class AssembledAlphas extends Card {
                 new DealDamageToCombatOpponentControllerEffect(new Fixed(3)),
                 new DealDamageToTargetCreatureEffect(3));
 
-        addSimultaneousTrigger(Triggers.becomesBlocked(), TriggerMode.PER_BLOCKER,
+        addSimultaneousTrigger(Triggers.becomesBlocked(),
+                TriggerOptions.EACH_BLOCKER,
                 new DealDamageToCombatOpponentControllerEffect(new Fixed(3)),
                 new DealDamageToTargetCreatureEffect(3));
     }

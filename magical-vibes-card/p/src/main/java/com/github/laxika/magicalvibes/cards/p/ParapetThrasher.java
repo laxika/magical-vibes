@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOtherOpponentEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendin
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,25 +24,23 @@ import java.util.List;
 public class ParapetThrasher extends Card {
 
     public ParapetThrasher() {
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.DRAGON),
-                        new ChooseModeNotYetChosenThisTurnEffect(List.of(
-                                new ChooseOneEffect.ChooseOneOption(
-                                        "Destroy target artifact that opponent controls",
-                                        new DestroyTargetPermanentEffect(),
-                                        new PermanentPredicateTargetFilter(
-                                                new PermanentAllOfPredicate(List.of(
-                                                        new PermanentIsArtifactPredicate(),
-                                                        new PermanentControlledByDefendingPlayerPredicate())),
-                                                "Target must be an artifact that opponent controls")),
-                                new ChooseOneEffect.ChooseOneOption(
-                                        "This creature deals 4 damage to each other opponent",
-                                        new DealDamageToEachOtherOpponentEffect(4)),
-                                new ChooseOneEffect.ChooseOneOption(
-                                        "Exile the top card of your library. You may play it this turn",
-                                        new ExileTopCardMayPlayThisTurnEffect(false)))),
-                        false,
-                        true));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.DRAGON)),
+                TriggerOptions.ONE_OR_MORE,
+                new ChooseModeNotYetChosenThisTurnEffect(List.of(
+                        new ChooseOneEffect.ChooseOneOption(
+                                "Destroy target artifact that opponent controls",
+                                new DestroyTargetPermanentEffect(),
+                                new PermanentPredicateTargetFilter(
+                                        new PermanentAllOfPredicate(List.of(
+                                                new PermanentIsArtifactPredicate(),
+                                                new PermanentControlledByDefendingPlayerPredicate())),
+                                        "Target must be an artifact that opponent controls")),
+                        new ChooseOneEffect.ChooseOneOption(
+                                "This creature deals 4 damage to each other opponent",
+                                new DealDamageToEachOtherOpponentEffect(4)),
+                        new ChooseOneEffect.ChooseOneOption(
+                                "Exile the top card of your library. You may play it this turn",
+                                new ExileTopCardMayPlayThisTurnEffect(false)))));
     }
 }

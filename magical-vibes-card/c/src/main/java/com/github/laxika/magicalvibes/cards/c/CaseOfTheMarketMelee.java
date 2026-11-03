@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSolved;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageNotRemovedDuringCleanupEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
@@ -55,7 +54,7 @@ public class CaseOfTheMarketMelee extends Card {
                 TargetPredicates.anyTarget().permanentRestriction().orElseThrow(),
                 new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be any target"),
                 0, Integer.MAX_VALUE).addTrigger(Triggers.youAttack(),
-                new ConditionalEffect(new SourceIsSolved(),
-                        DealDividedDamageEffect.chosenAmongAnyTargetsAtResolution(new XValue())));
+                        TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSolved()),
+                        DealDividedDamageEffect.chosenAmongAnyTargetsAtResolution(new XValue()));
     }
 }

@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -50,11 +49,8 @@ public class TheMasterMesmerist extends Card {
                         "Target must be a creature an opponent controls with power less than or equal to The Master's power")
         ));
 
-        addTrigger(Triggers.creatureDealsCombatDamageToOpponent(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasKeywordPredicate(Keyword.SKULK),
-                        SequenceEffect.of(
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                                new DrawCardEffect())));
+        addTrigger(Triggers.creatureDealsCombatDamageToOpponent()
+                        .withFilter(new PermanentHasKeywordPredicate(Keyword.SKULK)),
+                SequenceEffect.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE), new DrawCardEffect()));
     }
 }

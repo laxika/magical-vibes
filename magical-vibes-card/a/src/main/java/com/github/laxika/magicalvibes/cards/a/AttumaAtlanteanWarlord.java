@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
@@ -20,8 +20,8 @@ public class AttumaAtlanteanWarlord extends Card {
         addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.MERFOLK))));
         addTrigger(Triggers.youAttackPlayer(),
-                new ConditionalEffect(
-                        new MinimumMatchingAttackers(1, new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.MERFOLK))),
-                        new DrawCardEffect(1)));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new MinimumMatchingAttackers(1, new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.MERFOLK)))),
+                new DrawCardEffect(1));
     }
 }

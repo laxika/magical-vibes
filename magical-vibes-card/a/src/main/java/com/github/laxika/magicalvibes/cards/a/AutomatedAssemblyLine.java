@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -25,11 +25,12 @@ import java.util.Set;
 public class AutomatedAssemblyLine extends Card {
 
     public AutomatedAssemblyLine() {
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(), new AllyCombatDamageTriggerEffect(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsArtifactPredicate(),
-                        new PermanentIsCreaturePredicate())),
-                new EnergyCountersEffect(1), false, true));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentAllOfPredicate(List.of(
+                                new PermanentIsArtifactPredicate(),
+                                new PermanentIsCreaturePredicate()))),
+                TriggerOptions.ONE_OR_MORE,
+                new EnergyCountersEffect(1));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

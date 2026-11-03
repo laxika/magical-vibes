@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "10E", collectorNumber = "132")
@@ -19,7 +19,8 @@ public class ContaminatedBond extends Card {
 
         target(TargetFilters.creature())
                 .addTrigger(Triggers.attacks(), new EnchantedCreatureControllerLosesLifeEffect(3))
-                .addTrigger(Triggers.blocks(), TriggerMode.ONCE_PER_BLOCK,
+                .addTrigger(Triggers.blocks(),
+                        TriggerOptions.ONE_OR_MORE,
                         new EnchantedCreatureControllerLosesLifeEffect(3));
     }
 }

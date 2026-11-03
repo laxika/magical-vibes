@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -33,10 +32,8 @@ public class RaggadraggaGoregutsBoss extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasManaAbilityPredicate()))));
 
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasManaAbilityPredicate(),
-                        new UntapTriggeringPermanentEffect()));
+        addTrigger(Triggers.creatureYouControlAttacks().withFilter(new PermanentHasManaAbilityPredicate()),
+                new UntapTriggeringPermanentEffect());
 
         target(TargetFilters.creature()).addTrigger(Triggers.youCastSpell().anySpell(),
                 TriggerOptions.DEFAULT.withInterveningIf(new SpellManaSpentAtLeast(7)),

@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSpellCastingAbilityToSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -49,7 +48,6 @@ public class WeRideAtDawn extends Card {
                 )),
                 false, false, false, 0, Set.of());
 
-        addTrigger(Triggers.creatureAttacks(), new TriggeringPermanentConditionalEffect(
-                new PermanentIsCommanderPredicate(true), mercenaryToken));
+        addTrigger(Triggers.creatureAttacks().withFilter(new PermanentIsCommanderPredicate(true)), mercenaryToken);
     }
 }

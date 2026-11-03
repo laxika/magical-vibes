@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.GoadEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsGoadedPredicate;
@@ -46,10 +45,8 @@ public class TheRani extends Card {
                 .addTrigger(Triggers.attacks(),
                         new CreateTokenAttachedToTargetEffect(markOfTheRaniToken(), PlayerRelation.ANY));
 
-        addTrigger(Triggers.creatureDealsCombatDamageToOpponent(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsGoadedPredicate(),
-                        CreateTokenEffect.ofClueToken(1)));
+        addTrigger(Triggers.creatureDealsCombatDamageToOpponent().withFilter(new PermanentIsGoadedPredicate()),
+                CreateTokenEffect.ofClueToken(1));
     }
 
     private static CreateTokenEffect markOfTheRaniToken() {

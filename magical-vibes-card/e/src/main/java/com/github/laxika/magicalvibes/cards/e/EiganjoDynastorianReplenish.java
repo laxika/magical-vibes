@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.cards.r.Replenish;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /** Eiganjo Dynastorian // Replenish (SOC 13). */
@@ -17,7 +17,8 @@ public class EiganjoDynastorianReplenish extends Card {
         setBackFaceCard(new Replenish());
 
         addTrigger(Triggers.youAttack(),
-                new ConditionalEffect(new MinimumAttackers(2), new BecomePreparedEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(2)),
+                new BecomePreparedEffect());
     }
 
     @Override

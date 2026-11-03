@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SaddleCost;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -41,8 +41,9 @@ public class DistrictMascot extends Card {
                 )
         ));
 
-        addTrigger(Triggers.attacks(), new ConditionalEffect(
-                new SourceIsSaddled(), new PutCountersOnSourceEffect(1, 1, 1)));
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                new PutCountersOnSourceEffect(1, 1, 1));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -11629,6 +11629,21 @@ public class GameData {
         return effects;
     }
 
+    /**
+     * Like {@link #perpetualTriggerEffects}, found by the trigger's {@code watchKey()} and with each effect wrapped in
+     * its ability's options and filters ({@link TriggeredAbility#legacyEffects()}): the form the collectors that still
+     * read effects take them in.
+     */
+    public List<CardEffect> perpetualLegacyTriggerEffects(UUID cardId, Trigger trigger, Zone zone) {
+        List<CardEffect> effects = new ArrayList<>();
+        for (Ability ability : perpetualAbilities(cardId)) {
+            if (ability instanceof TriggeredAbility triggered && triggered.hasWatchedTrigger(trigger, zone)) {
+                triggered.legacyEffects().forEach(registration -> effects.add(registration.effect()));
+            }
+        }
+        return effects;
+    }
+
     /** The effects of the static abilities perpetually granted to the card {@code cardId}, in grant order. */
     public List<CardEffect> perpetualStaticEffects(UUID cardId) {
         return LegacySlots.staticEffectsIn(perpetualAbilities(cardId));

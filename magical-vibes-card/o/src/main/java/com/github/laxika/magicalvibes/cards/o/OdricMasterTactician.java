@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.effect.ChooseBlockersThisCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
@@ -22,8 +22,8 @@ public class OdricMasterTactician extends Card {
     public OdricMasterTactician() {
         // First strike is loaded from Scryfall keywords.
         // Odric + 3 others = 4 attackers total; Triggers.attacks() ensures Odric himself is attacking.
-        addTrigger(Triggers.attacks(), new ConditionalEffect(
-                new MinimumAttackers(4),
-                new ChooseBlockersThisCombatEffect()));
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(4)),
+                new ChooseBlockersThisCombatEffect());
     }
 }

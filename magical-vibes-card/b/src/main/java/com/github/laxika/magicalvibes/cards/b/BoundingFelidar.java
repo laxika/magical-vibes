@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -27,8 +27,9 @@ import java.util.List;
 public class BoundingFelidar extends Card {
 
     public BoundingFelidar() {
-        addTrigger(Triggers.attacks(), new ConditionalEffect(
-                new SourceIsSaddled(), SequenceEffect.of(
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                SequenceEffect.of(
                         new PutCounterOnEachControlledPermanentEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE,
                                 1,
@@ -36,7 +37,7 @@ public class BoundingFelidar extends Card {
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())))),
                         new GainLifeEffect(new PermanentCount(
-                                new PermanentIsCreaturePredicate(), CountScope.CONTROLLER, true)))));
+                                new PermanentIsCreaturePredicate(), CountScope.CONTROLLER, true))));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

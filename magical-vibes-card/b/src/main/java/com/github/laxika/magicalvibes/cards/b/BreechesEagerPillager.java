@@ -9,8 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,17 +21,17 @@ import java.util.List;
 public class BreechesEagerPillager extends Card {
 
     public BreechesEagerPillager() {
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.PIRATE),
-                        new ChooseModeNotYetChosenThisTurnEffect(List.of(
-                                new ChooseOneEffect.ChooseOneOption(
-                                        "Create a Treasure token", CreateTokenEffect.ofTreasureToken(1)),
-                                new ChooseOneEffect.ChooseOneOption(
-                                        "Target creature can't block this turn",
-                                        new CantBlockThisTurnEffect(TapUntapScope.TARGET),
-                                        TargetFilters.creature()),
-                                new ChooseOneEffect.ChooseOneOption(
-                                        "Exile the top card of your library. You may play it this turn.",
-                                        new ExileTopCardMayPlayThisTurnEffect(false))))));
+        addTrigger(Triggers.creatureYouControlAttacks()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.PIRATE)),
+                new ChooseModeNotYetChosenThisTurnEffect(List.of(
+                        new ChooseOneEffect.ChooseOneOption(
+                                "Create a Treasure token", CreateTokenEffect.ofTreasureToken(1)),
+                        new ChooseOneEffect.ChooseOneOption(
+                                "Target creature can't block this turn",
+                                new CantBlockThisTurnEffect(TapUntapScope.TARGET),
+                                TargetFilters.creature()),
+                        new ChooseOneEffect.ChooseOneOption(
+                                "Exile the top card of your library. You may play it this turn.",
+                                new ExileTopCardMayPlayThisTurnEffect(false)))));
     }
 }

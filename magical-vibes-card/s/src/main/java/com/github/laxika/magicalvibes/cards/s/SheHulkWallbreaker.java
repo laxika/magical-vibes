@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.amount.CreaturesBlockingSource;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,10 +21,8 @@ public class SheHulkWallbreaker extends Card {
                 Keyword.TRAMPLE,
                 GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.HERO)));
-        addTrigger(Triggers.creatureYouControlBecomesBlocked(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.HERO),
-                        new PutCountersOnSelfEffect(
-                                CounterType.PLUS_ONE_PLUS_ONE, new CreaturesBlockingSource())));
+        addTrigger(Triggers.creatureYouControlBecomesBlocked()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.HERO)),
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new CreaturesBlockingSource()));
     }
 }

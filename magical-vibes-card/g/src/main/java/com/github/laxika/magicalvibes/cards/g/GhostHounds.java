@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenCombatOpponentMatchesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
@@ -20,7 +20,8 @@ public class GhostHounds extends Card {
         PermanentColorInPredicate white = new PermanentColorInPredicate(Set.of(CardColor.WHITE));
         addTrigger(Triggers.blocks(), new BoostSelfWhenCombatOpponentMatchesEffect(
                 white, 0, 0, Set.of(Keyword.FIRST_STRIKE)));
-        addTrigger(Triggers.becomesBlocked(), TriggerMode.PER_BLOCKER, new BoostSelfWhenCombatOpponentMatchesEffect(
-                white, 0, 0, Set.of(Keyword.FIRST_STRIKE)));
+        addTrigger(Triggers.becomesBlocked(),
+                TriggerOptions.EACH_BLOCKER,
+                new BoostSelfWhenCombatOpponentMatchesEffect(white, 0, 0, Set.of(Keyword.FIRST_STRIKE)));
     }
 }

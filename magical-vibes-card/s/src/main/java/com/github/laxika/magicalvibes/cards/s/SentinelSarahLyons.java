@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PIP", collectorNumber = "118")
@@ -33,10 +34,9 @@ public class SentinelSarahLyons extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player")).addTrigger(Triggers.attacks(),
-                new ConditionalEffect(
-                        new MinimumAttackers(3),
+                        TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
                         new DealDamageToPlayersEffect(
                                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER),
-                                DamageRecipient.TARGET_PLAYER)));
+                                DamageRecipient.TARGET_PLAYER));
     }
 }

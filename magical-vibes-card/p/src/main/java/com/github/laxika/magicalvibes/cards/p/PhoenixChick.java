@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
@@ -21,8 +20,9 @@ public class PhoenixChick extends Card {
     public PhoenixChick() {
         addStaticEffect(new CantBlockEffect());
 
-        addTrigger(new TriggerCondition(Triggers.youAttack(), AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
-                new ConditionalEffect(new MinimumAttackers(3), new MayPayManaEffect("{R}{R}",
+        addTrigger(new TriggerCondition(Triggers.youAttack(), AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                new MayPayManaEffect("{R}{R}",
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                                 .filter(new CardIsSelfPredicate())
@@ -32,6 +32,6 @@ public class PhoenixChick extends Card {
                                 .enterWithCounter(CounterType.PLUS_ONE_PLUS_ONE)
                                 .enterWithCounterCount(1)
                                 .build(),
-                        "Pay {R}{R} to return Phoenix Chick from your graveyard to the battlefield tapped and attacking with a +1/+1 counter on it?")));
+                        "Pay {R}{R} to return Phoenix Chick from your graveyard to the battlefield tapped and attacking with a +1/+1 counter on it?"));
     }
 }

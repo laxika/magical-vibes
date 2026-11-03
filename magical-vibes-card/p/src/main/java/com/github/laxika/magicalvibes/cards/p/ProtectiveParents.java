@@ -14,10 +14,10 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -49,9 +49,9 @@ public class ProtectiveParents extends Card {
                 List.of(
                         StaticAbility.of(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.attacks(),
-                        new ConditionalEffect(
-                                new SourceMatchesPermanentPredicate(new PermanentToughnessAtMostPredicate(3)),
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE), true)),
+                                TriggerOptions.DEFAULT.withInterveningIf(
+                                        new SourceMatchesPermanentPredicate(new PermanentToughnessAtMostPredicate(3))),
+                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
                         GrantScope.ENCHANTED_CREATURE))),
                 List.of(),
                 false,

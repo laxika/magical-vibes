@@ -22,8 +22,8 @@ public class SpiderMobile extends Card {
     public SpiderMobile() {
         PermanentCount spidersYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.SPIDER), CountScope.CONTROLLER);
-        addTrigger(Triggers.attacks(), new BoostSelfEffect(spidersYouControl, spidersYouControl));
-        addTrigger(Triggers.blocks(), new BoostSelfEffect(spidersYouControl, spidersYouControl));
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()),
+                new BoostSelfEffect(spidersYouControl, spidersYouControl));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

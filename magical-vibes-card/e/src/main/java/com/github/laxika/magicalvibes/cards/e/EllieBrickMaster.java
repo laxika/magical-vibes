@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOfYourOpponents;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -20,8 +20,7 @@ public class EllieBrickMaster extends Card {
                 1, "Cordyceps Infected", 1, 1, CardColor.BLACK,
                 List.of(CardSubtype.FUNGUS, CardSubtype.ZOMBIE), true);
         addTrigger(Triggers.playerAttacks(),
-                new ConditionalEffect(
-                        new PlayerAttacksOneOfYourOpponents(),
-                        new CreateTokenForTriggeringPlayerEffect(cordycepsInfected, true)));
+                TriggerOptions.DEFAULT.withInterveningIf(new PlayerAttacksOneOfYourOpponents()),
+                new CreateTokenForTriggeringPlayerEffect(cordycepsInfected, true));
     }
 }

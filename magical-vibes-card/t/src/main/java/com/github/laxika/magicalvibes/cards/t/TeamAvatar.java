@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -23,8 +23,8 @@ public class TeamAvatar extends Card {
         PermanentCount creaturesYouControl =
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
         addTrigger(Triggers.creatureYouControlAttacks(),
-                new ConditionalEffect(new AttacksAlone(), new BoostTargetCreatureEffect(
-                        creaturesYouControl, creaturesYouControl)));
+                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                new BoostTargetCreatureEffect(creaturesYouControl, creaturesYouControl));
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{2}{W}",
                 List.of(new DealDamageToTargetCreatureEffect(creaturesYouControl)),
                 "{2}{W}, Discard this card: It deals damage equal to the number of creatures you control to target creature.",

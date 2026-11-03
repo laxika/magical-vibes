@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -19,7 +19,8 @@ public class NettlingCurse extends Card {
     public NettlingCurse() {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.attacks(), new EnchantedCreatureControllerLosesLifeEffect(3))
-                .addTrigger(Triggers.blocks(), TriggerMode.ONCE_PER_BLOCK,
+                .addTrigger(Triggers.blocks(),
+                        TriggerOptions.ONE_OR_MORE,
                         new EnchantedCreatureControllerLosesLifeEffect(3));
 
         addActivatedAbility(new ActivatedAbility(

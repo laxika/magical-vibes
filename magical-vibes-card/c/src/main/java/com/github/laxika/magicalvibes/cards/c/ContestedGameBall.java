@@ -8,11 +8,11 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.BatchedCombatDamageToYouTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,8 +22,8 @@ public class ContestedGameBall extends Card {
 
     public ContestedGameBall() {
         addTrigger(Triggers.creatureDealsCombatDamageToYou(),
-                new BatchedCombatDamageToYouTriggerEffect(
-                        new DamageSourceControllerGainsControlOfThisPermanentEffect(true, true, true)));
+                TriggerOptions.ONE_OR_MORE,
+                new DamageSourceControllerGainsControlOfThisPermanentEffect(true, true, true));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

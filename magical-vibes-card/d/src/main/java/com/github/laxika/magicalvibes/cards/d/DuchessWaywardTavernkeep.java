@@ -24,8 +24,7 @@ public class DuchessWaywardTavernkeep extends Card {
 
     public DuchessWaywardTavernkeep() {
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(null,
-                        new PutCountersOnSelfEffect(CounterType.QUEST), true));
+                AllyCombatDamageTriggerEffect.boundToDealer(new PutCountersOnSelfEffect(CounterType.QUEST)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.amount.TargetToughness;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardToughnessGreaterThanPowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -38,7 +37,6 @@ public class DoranBesiegedByTime extends Card {
                 new Sum(new TargetToughness(), new Scaled(new TargetPower(true), -1)));
         BoostTargetCreatureEffect boost = new BoostTargetCreatureEffect(difference, difference);
         addTrigger(Triggers.creatureYouControlAttacks(), boost);
-        addTrigger(Triggers.creatureBlocks(), new TriggeringPermanentConditionalEffect(
-                new PermanentControlledBySourceControllerPredicate(), boost));
+        addTrigger(Triggers.creatureBlocks().withFilter(new PermanentControlledBySourceControllerPredicate()), boost);
     }
 }

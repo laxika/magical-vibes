@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -24,9 +23,8 @@ public class LabyrinthRaptor extends Card {
         PermanentAllOfPredicate blockingCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(), new PermanentBlockingSourcePredicate()));
 
-        addTrigger(Triggers.creatureYouControlBecomesBlocked(),
-                new TriggeringPermanentConditionalEffect(menace,
-                        new SacrificePermanentsEffect(1, blockingCreature, SacrificeRecipient.DEFENDING_PLAYER)));
+        addTrigger(Triggers.creatureYouControlBecomesBlocked().withFilter(menace),
+                new SacrificePermanentsEffect(1, blockingCreature, SacrificeRecipient.DEFENDING_PLAYER));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -23,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -32,17 +32,15 @@ import java.util.Set;
 public class KaitoDancingShadow extends Card {
 
     public KaitoDancingShadow() {
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentIsCreaturePredicate(),
-                        new MayEffect(
-                                new ReturnOneOfCombatDamageDealersToHandThenEffect(
-                                        new MayEffect(new GrantExtraLoyaltyActivationToSourceEffect(true),
-                                                "Activate Kaito's loyalty abilities twice this turn?"),
-                                        "a creature that dealt combat damage"),
-                                "Return one of them to its owner's hand?"),
-                        false,
-                        true));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentIsCreaturePredicate()),
+                TriggerOptions.ONE_OR_MORE,
+                new MayEffect(
+                        new ReturnOneOfCombatDamageDealersToHandThenEffect(
+                                new MayEffect(new GrantExtraLoyaltyActivationToSourceEffect(true),
+                                        "Activate Kaito's loyalty abilities twice this turn?"),
+                                "a creature that dealt combat damage"),
+                        "Return one of them to its owner's hand?"));
 
         addActivatedAbility(new ActivatedAbility(
                 false, null,

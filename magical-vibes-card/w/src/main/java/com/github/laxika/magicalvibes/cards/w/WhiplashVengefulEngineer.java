@@ -4,12 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.condition.Equipped;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MSH", collectorNumber = "121")
@@ -18,9 +18,10 @@ public class WhiplashVengefulEngineer extends Card {
     public WhiplashVengefulEngineer() {
         addStaticEffect(new EntersTappedEffect());
         AttachmentsOnSource equipmentCount = new AttachmentsOnSource(false, true);
-        addTrigger(Triggers.attacks(), new ConditionalEffect(new Equipped(),
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(new Equipped()),
                 SequenceEffect.of(
                         new LoseLifeEffect(equipmentCount, LoseLifeRecipient.EACH_OPPONENT),
-                        new GainLifeEffect(equipmentCount))));
+                        new GainLifeEffect(equipmentCount)));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
@@ -24,8 +23,7 @@ public class ReyavMasterSmith extends Card {
                 new PermanentIsEnchantedPredicate(),
                 new PermanentIsEquippedPredicate()));
 
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new TriggeringPermanentConditionalEffect(enchantedOrEquipped,
-                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TRIGGERING_PERMANENT)));
+        addTrigger(Triggers.creatureYouControlAttacks().withFilter(enchantedOrEquipped),
+                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TRIGGERING_PERMANENT));
     }
 }

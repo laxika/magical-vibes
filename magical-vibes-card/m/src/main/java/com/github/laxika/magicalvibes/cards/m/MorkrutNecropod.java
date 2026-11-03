@@ -22,8 +22,7 @@ public class MorkrutNecropod extends Card {
         // Menace is auto-loaded from Scryfall.
 
         // Whenever this creature attacks or blocks, sacrifice another creature or land.
-        addTrigger(Triggers.attacks(), sacrificeAnotherCreatureOrLand());
-        addTrigger(Triggers.blocks(), sacrificeAnotherCreatureOrLand());
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), sacrificeAnotherCreatureOrLand());
     }
 
     private SacrificePermanentsEffect sacrificeAnotherCreatureOrLand() {

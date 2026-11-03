@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.FullParty;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -41,15 +41,12 @@ public class TheDestinedThief extends Card {
                         "Target must be another creature you control")));
 
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        null,
-                        new ConditionalReplacementEffect(
-                                new FullParty(),
-                                SequenceEffect.of(
-                                        new DrawCardEffect(1),
-                                        new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
-                                new DrawCardEffect(3)),
-                        false,
-                        true));
+                TriggerOptions.ONE_OR_MORE,
+                new ConditionalReplacementEffect(
+                        new FullParty(),
+                        SequenceEffect.of(
+                                new DrawCardEffect(1),
+                                new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
+                        new DrawCardEffect(3)));
     }
 }

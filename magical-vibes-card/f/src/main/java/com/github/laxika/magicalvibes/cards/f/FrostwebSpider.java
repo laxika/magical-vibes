@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DelayedEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -15,8 +14,7 @@ public class FrostwebSpider extends Card {
 
     public FrostwebSpider() {
         // Whenever this creature blocks a creature with flying, put a +1/+1 counter on it at end of combat.
-        addTrigger(Triggers.blocks(), new TriggeringPermanentConditionalEffect(
-                new PermanentHasKeywordPredicate(Keyword.FLYING),
-                new DelayedEndOfCombatEffect(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))));
+        addTrigger(Triggers.blocks().withFilter(new PermanentHasKeywordPredicate(Keyword.FLYING)),
+                new DelayedEndOfCombatEffect(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
     }
 }

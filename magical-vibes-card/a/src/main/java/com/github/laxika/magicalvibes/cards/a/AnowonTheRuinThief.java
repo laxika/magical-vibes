@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerAndDrawIfTypeMilledEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SLD", collectorNumber = "1568")
@@ -25,11 +25,9 @@ public class AnowonTheRuinThief extends Card {
         // Whenever one or more Rogues you control deal combat damage to a player, that player mills
         // a card for each 1 damage dealt. If the player mills at least one creature card this way,
         // draw a card.
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.ROGUE),
-                        new MillTargetPlayerAndDrawIfTypeMilledEffect(new EventValue(), CardType.CREATURE),
-                        false,
-                        true));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.ROGUE)),
+                TriggerOptions.ONE_OR_MORE,
+                new MillTargetPlayerAndDrawIfTypeMilledEffect(new EventValue(), CardType.CREATURE));
     }
 }

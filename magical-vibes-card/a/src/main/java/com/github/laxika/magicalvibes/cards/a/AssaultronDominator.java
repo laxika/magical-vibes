@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -42,11 +41,10 @@ public class AssaultronDominator extends Card {
                         "Put a trample counter on that creature",
                         new PutCountersOnSelfEffect(CounterType.TRAMPLE))));
 
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new TriggeringPermanentConditionalEffect(artifactCreature,
-                        new MayEffect(
-                                ConditionalEffect.unless(new ControllerEnergyAtLeast(1),
-                                        SequenceEffect.of(new EnergyCountersEffect(-1), counterChoice)),
-                                "Pay {E} to put your choice of a +1/+1, first strike, or trample counter on that creature?")));
+        addTrigger(Triggers.creatureYouControlAttacks().withFilter(artifactCreature),
+                new MayEffect(
+                        ConditionalEffect.unless(new ControllerEnergyAtLeast(1),
+                                SequenceEffect.of(new EnergyCountersEffect(-1), counterChoice)),
+                        "Pay {E} to put your choice of a +1/+1, first strike, or trample counter on that creature?"));
     }
 }

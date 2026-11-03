@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /** Back face of Starscream, Power Hungry. */
@@ -19,8 +20,9 @@ public class StarscreamSeekerLeader extends Card {
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new NotControllerTurn()),
                 new GrantCardTypeEffect(CardType.CREATURE, GrantScope.SELF)));
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), new ConditionalEffect(
-                new NoMonarch(), new DamagedPlayerBecomesMonarchEffect()));
+        addTrigger(Triggers.dealsCombatDamageToPlayer(),
+                TriggerOptions.DEFAULT.withInterveningIf(new NoMonarch()),
+                new DamagedPlayerBecomesMonarchEffect());
         addTrigger(Triggers.youBecomeMonarch(), new TransformSelfEffect());
     }
 }

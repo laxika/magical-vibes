@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -21,7 +21,8 @@ public class SightedCasteSorcerer extends Card {
         // end of turn. Triggers.creatureYouControlAttacks() records the attacker as the trigger's target;
         // AttacksAlone (checked at resolution) restricts it to lone attackers.
         addTrigger(Triggers.creatureYouControlAttacks(),
-                new ConditionalEffect(new AttacksAlone(), new BoostTargetCreatureEffect(1, 1)));
+                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                new BoostTargetCreatureEffect(1, 1));
 
         // {U}: This creature gains shroud until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{U}",

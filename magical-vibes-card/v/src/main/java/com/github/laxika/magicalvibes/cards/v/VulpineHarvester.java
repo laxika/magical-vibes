@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.amount.TotalPowerOfControlledCreatures;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MOC", collectorNumber = "19")
@@ -19,8 +19,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class VulpineHarvester extends Card {
 
     public VulpineHarvester() {
-        addTrigger(Triggers.youAttack(), new ConditionalEffect(
-                new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.PHYREXIAN)),
+        addTrigger(Triggers.youAttack(),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.PHYREXIAN))),
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardTypePredicate(CardType.ARTIFACT))
@@ -28,6 +29,6 @@ public class VulpineHarvester extends Card {
                         .targetGraveyard(true)
                         .dynamicMaxManaValue(TotalPowerOfControlledCreatures.declaredAttackers(
                                 new PermanentHasSubtypePredicate(CardSubtype.PHYREXIAN)))
-                        .build()));
+                        .build());
     }
 }

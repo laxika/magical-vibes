@@ -24,11 +24,9 @@ public class ShamanOfTheGreatHunt extends Card {
                 new PermanentPowerAtLeastPredicate(4)
         ));
 
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentIsCreaturePredicate(),
-                        new PutCountersOnSourceEffect(1, 1, 1),
-                        true));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentIsCreaturePredicate()),
+                AllyCombatDamageTriggerEffect.boundToDealer(new PutCountersOnSourceEffect(1, 1, 1)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

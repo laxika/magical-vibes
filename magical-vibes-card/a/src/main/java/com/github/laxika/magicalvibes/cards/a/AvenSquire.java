@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CON", collectorNumber = "3")
@@ -18,6 +18,7 @@ public class AvenSquire extends Card {
         // BoostTargetCreatureEffect boosts "that creature"; AttacksAlone (checked at resolution)
         // restricts it to lone attackers.
         addTrigger(Triggers.creatureYouControlAttacks(),
-                new ConditionalEffect(new AttacksAlone(), new BoostTargetCreatureEffect(1, 1)));
+                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                new BoostTargetCreatureEffect(1, 1));
     }
 }

@@ -20,10 +20,7 @@ public class SphereGrid extends Card {
     public SphereGrid() {
         // Whenever a creature you control deals combat damage to a player, put a +1/+1 counter on that creature.
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        null,
-                        new PutCountersOnSourceEffect(1, 1, 1),
-                        true));
+                AllyCombatDamageTriggerEffect.boundToDealer(new PutCountersOnSourceEffect(1, 1, 1)));
 
         // Creatures you control with +1/+1 counters on them have reach and trample.
         addStaticEffect(new GrantKeywordEffect(

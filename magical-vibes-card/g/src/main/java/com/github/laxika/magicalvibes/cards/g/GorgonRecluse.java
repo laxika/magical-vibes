@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.MadnessCast;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
@@ -23,7 +23,8 @@ public class GorgonRecluse extends Card {
         PermanentNotPredicate nonblack = new PermanentNotPredicate(
                 new PermanentColorInPredicate(Set.of(CardColor.BLACK)));
         addTrigger(Triggers.blocks(), new DestroyCombatOpponentAtEndOfCombatEffect(nonblack, false));
-        addTrigger(Triggers.becomesBlocked(), TriggerMode.PER_BLOCKER,
+        addTrigger(Triggers.becomesBlocked(),
+                TriggerOptions.EACH_BLOCKER,
                 new DestroyCombatOpponentAtEndOfCombatEffect(nonblack, false));
 
         // Madness {B}{B}

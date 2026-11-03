@@ -3,16 +3,16 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveCounterFromTargetCreatureToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FIC", collectorNumber = "5")
@@ -29,13 +29,11 @@ public class TidusYunasGuardian extends Card {
                                 new MoveCounterFromTargetCreatureToTargetCreatureEffect(),
                                 "Move a counter?"));
 
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new OncePerTurnTriggerEffect(new AllyCombatDamageTriggerEffect(
-                        new PermanentHasCountersPredicate(CounterType.ANY),
-                        new MayEffect(
-                                SequenceEffect.of(new DrawCardEffect(), new ProliferateEffect()),
-                                "Draw a card and proliferate?"),
-                        false,
-                        true), true));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentHasCountersPredicate(CounterType.ANY)),
+                TriggerOptions.ONE_OR_MORE.withLimit(TriggerLimit.DO_ONLY_ONCE_EACH_TURN),
+                new MayEffect(
+                        SequenceEffect.of(new DrawCardEffect(), new ProliferateEffect()),
+                        "Draw a card and proliferate?"));
     }
 }

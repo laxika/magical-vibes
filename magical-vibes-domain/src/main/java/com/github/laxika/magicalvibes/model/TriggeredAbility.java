@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.BatchedCombatDamageToYouTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LandPlayFromExileTriggerEffect;
@@ -21,15 +23,20 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringOutlastAbilityCondi
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPowerUpAbilityConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringTapAbilityConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.AbilityTrigger;
+import com.github.laxika.magicalvibes.model.trigger.CombatTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LandPlayTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.SpellFilter;
 import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -101,6 +108,15 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
     }
 
     /**
+     * An ability with one trigger condition, which functions from {@code trigger}'s default zones, and
+     * {@code options}: a granted "whenever this creature attacks, if it's modified, …" is
+     * {@code new TriggeredAbility(Triggers.attacks(), TriggerOptions.DEFAULT.withInterveningIf(…), effect)}.
+     */
+    public TriggeredAbility(Trigger trigger, TriggerOptions options, CardEffect... effects) {
+        this(trigger, options, Arrays.stream(effects).map(EffectRegistration::new).toList());
+    }
+
+    /**
      * An ability with one trigger condition, which functions from the zones {@code condition} names, and no
      * options: "while this card is in your graveyard, whenever a creature you control dies".
      */
@@ -164,8 +180,16 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * effects, as {@link #legacySpellCastEffects} says, and a copy trigger's one {@link SpellCopyTriggerEffect}, as
      * {@link #legacySpellCopyEffects} says. A land-play trigger's zone makes the ability one
      * {@link LandPlayFromExileTriggerEffect} ("a land from exile") or {@link PlayFromOutsideHandTriggerEffect} ("from
-     * anywhere other than your hand") of all its effects, the records the land-play collectors judge. An ability
-     * without options or such filters returns its registrations as they are.
+     * anywhere other than your hand") of all its effects, the records the land-play collectors judge. A combat
+     * trigger's filter is a {@link TriggeringPermanentConditionalEffect} inside the limit, as the combat cards wrote
+     * it, but on "a creature you control deals combat damage to a player [or battle]", whose collectors read every
+     * effect as an {@link AllyCombatDamageTriggerEffect}: there the filter, and "one or more"
+     * ({@link TriggerMultiplicity#ONE_OR_MORE}), are that record's, wrapped around the intervening "if" (an authored
+     * record takes them in). "One or more creatures deal combat damage to you" wraps each effect in a
+     * {@link BatchedCombatDamageToYouTriggerEffect} there. "Whenever this creature blocks" once each combat
+     * ({@code ONE_OR_MORE}, CR 509.3a) and "becomes blocked by a creature" ({@link TriggerMultiplicity#EACH_BLOCKER},
+     * CR 509.3d) are the registrations' {@link TriggerMode#ONCE_PER_BLOCK} and {@link TriggerMode#PER_BLOCKER}. An
+     * ability without options or such filters returns its registrations as they are.
      */
     public List<EffectRegistration> legacyEffects() {
         SpellTrigger spell = filteredTrigger(SpellTrigger.class);
@@ -186,18 +210,33 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             return legacyLandPlayZoneEffects(landPlay);
         }
         AbilityTrigger activation = filteredTrigger(AbilityTrigger.class);
-        if (interveningIf == null && limit == TriggerLimit.NONE && landPlay == null && activation == null) {
+        CombatView combat = combatView();
+        if (interveningIf == null && limit == TriggerLimit.NONE && landPlay == null && activation == null
+                && (combat == null || combat.plain())) {
             return effects;
         }
         String key = limit == TriggerLimit.ONCE_EACH_TURN ? limitKey() : null;
         List<EffectRegistration> wrapped = new ArrayList<>(effects.size());
         for (EffectRegistration registration : effects) {
             CardEffect effect = registration.effect();
+            // An authored ally combat damage record (an event binding) is the outermost of the effect's own
+            // wrappers: the intervening "if" goes inside it, as the cards wrote it.
+            AllyCombatDamageTriggerEffect authoredAlly = combat != null && combat.allyDamage()
+                    && effect instanceof AllyCombatDamageTriggerEffect ally ? ally : null;
+            if (authoredAlly != null) {
+                effect = authoredAlly.effect();
+            }
             if (limit == TriggerLimit.ONCE) {
                 effect = new OnceOnlyTriggerEffect(effect);
             }
             if (interveningIf != null) {
                 effect = new ConditionalEffect(interveningIf, effect, true);
+            }
+            if (authoredAlly != null) {
+                effect = effect == authoredAlly.effect() ? authoredAlly : authoredAlly.withEffect(effect);
+            }
+            if (combat != null) {
+                effect = combat.wrap(effect);
             }
             if (landPlay != null && landPlay.filter() != null) {
                 effect = new TriggeringCardConditionalEffect(landPlay.filter(), effect);
@@ -213,10 +252,107 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             if (activation != null && activation.kind() != null) {
                 effect = legacyKindWrapper(activation.kind(), effect);
             }
-            wrapped.add(new EffectRegistration(effect, registration.triggerMode(),
-                    registration.simultaneousWithPrevious()));
+            TriggerMode mode = combat != null ? combat.mode(registration.triggerMode()) : registration.triggerMode();
+            wrapped.add(new EffectRegistration(effect, mode, registration.simultaneousWithPrevious()));
         }
         return List.copyOf(wrapped);
+    }
+
+    /**
+     * What the legacy view adds for this ability's combat conditions, or {@code null} when it has none: their filter
+     * (the one {@link CombatTrigger#watchKey()} drops; the conditions must agree on it), whether the collectors read
+     * the effects as {@link AllyCombatDamageTriggerEffect}s or {@link BatchedCombatDamageToYouTriggerEffect}s, and
+     * the trigger mode the multiplicity is.
+     */
+    private CombatView combatView() {
+        List<CombatTrigger> combat = conditions.stream().map(TriggerCondition::trigger)
+                .filter(CombatTrigger.class::isInstance).map(CombatTrigger.class::cast).toList();
+        if (combat.isEmpty()) {
+            return null;
+        }
+        List<PermanentPredicate> filters = combat.stream()
+                .map(trigger -> trigger.watchKey().equals(trigger) ? null : trigger.filter()).distinct().toList();
+        if (filters.size() > 1) {
+            throw new IllegalStateException("The combat conditions of one ability must have the same filter: "
+                    + conditions);
+        }
+        boolean allyDamage = combat.stream().anyMatch(TriggeredAbility::readAsAllyCombatDamage);
+        if (allyDamage && combat.size() > 1) {
+            throw new IllegalStateException("A \"creature you control deals combat damage to a player\" ability has no "
+                    + "other combat condition in the legacy view: " + conditions);
+        }
+        boolean damageToYou = combat.stream()
+                .anyMatch(trigger -> trigger.event() == CombatTrigger.CombatEvent.COMBAT_DAMAGE_TO_YOU);
+        boolean block = combat.stream().anyMatch(trigger -> trigger.event() == CombatTrigger.CombatEvent.BLOCKS
+                || trigger.event() == CombatTrigger.CombatEvent.BECOMES_BLOCKED);
+        TriggerMultiplicity multiplicity = options.multiplicity();
+        boolean oneOrMore = multiplicity == TriggerMultiplicity.ONE_OR_MORE;
+        if (oneOrMore && !allyDamage && !damageToYou && !block) {
+            throw new IllegalStateException("The legacy view has no \"one or more\" form for " + conditions);
+        }
+        if (multiplicity == TriggerMultiplicity.EACH_BLOCKER && combat.stream()
+                .noneMatch(trigger -> trigger.event() == CombatTrigger.CombatEvent.BECOMES_BLOCKED)) {
+            throw new IllegalStateException("\"Each blocker\" is a multiplicity of \"becomes blocked\": " + conditions);
+        }
+        return new CombatView(filters.getFirst(), allyDamage, oneOrMore && !allyDamage && damageToYou,
+                oneOrMore && !allyDamage, multiplicity);
+    }
+
+    /**
+     * The combat triggers whose collectors read every effect as an {@link AllyCombatDamageTriggerEffect}: a creature
+     * you control (or one with the same name as the source) deals combat damage to a player, a player or battle, or a
+     * player or planeswalker.
+     */
+    private static boolean readAsAllyCombatDamage(CombatTrigger trigger) {
+        CombatTrigger.CombatEvent event = trigger.event();
+        boolean toPlayer = event == CombatTrigger.CombatEvent.COMBAT_DAMAGE_TO_PLAYER
+                || event == CombatTrigger.CombatEvent.COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE
+                || event == CombatTrigger.CombatEvent.COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER;
+        return toPlayer && (trigger.relation() == ObjectRelation.YOU_CONTROL
+                || trigger.equals(Triggers.creatureWithSameNameDealsCombatDamageToPlayer()));
+    }
+
+    /**
+     * The legacy view of an ability's combat conditions, as {@link #combatView()} builds it.
+     *
+     * @param filter       the conditions' filter, or {@code null}
+     * @param allyDamage   the effects are read as {@link AllyCombatDamageTriggerEffect}s
+     * @param damageToYou  each effect is wrapped in a {@link BatchedCombatDamageToYouTriggerEffect}
+     * @param oneOrMore    "one or more" that isn't the ally record's: once per block, or the batched wrapper
+     * @param multiplicity the ability's multiplicity
+     */
+    private record CombatView(PermanentPredicate filter, boolean allyDamage, boolean damageToYou, boolean oneOrMore,
+                              TriggerMultiplicity multiplicity) {
+
+        /** Whether the legacy view adds nothing to the effects and modes. */
+        boolean plain() {
+            return filter == null && !allyDamage && multiplicity == TriggerMultiplicity.EACH;
+        }
+
+        CardEffect wrap(CardEffect effect) {
+            if (allyDamage) {
+                boolean oncePerStep = multiplicity == TriggerMultiplicity.ONE_OR_MORE;
+                return effect instanceof AllyCombatDamageTriggerEffect authored
+                        ? authored.withTriggerOptions(filter, oncePerStep)
+                        : new AllyCombatDamageTriggerEffect(filter, effect, false, oncePerStep);
+            }
+            CardEffect wrapped = damageToYou ? new BatchedCombatDamageToYouTriggerEffect(effect) : effect;
+            return filter != null ? new TriggeringPermanentConditionalEffect(filter, wrapped) : wrapped;
+        }
+
+        TriggerMode mode(TriggerMode authored) {
+            if (authored != TriggerMode.NORMAL) {
+                if (!plain() && multiplicity != TriggerMultiplicity.EACH) {
+                    throw new IllegalStateException("A registration's trigger mode " + authored
+                            + " and the ability's multiplicity " + multiplicity + " are two multiplicities");
+                }
+                return authored;
+            }
+            if (multiplicity == TriggerMultiplicity.EACH_BLOCKER) {
+                return TriggerMode.PER_BLOCKER;
+            }
+            return oneOrMore && !damageToYou ? TriggerMode.ONCE_PER_BLOCK : TriggerMode.NORMAL;
+        }
     }
 
     /**

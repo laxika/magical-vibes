@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -47,8 +46,8 @@ public class EndlessRanksOfHYDRA extends Card {
                         AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT,
                 returnToHand);
-        addTrigger(new TriggerCondition(Triggers.youAttack(), AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
-                new ConditionalEffect(
-                        new HasAttacker(new PermanentIsCommanderPredicate(true)), returnToHand));
+        addTrigger(new TriggerCondition(Triggers.youAttack(), AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT.withInterveningIf(new HasAttacker(new PermanentIsCommanderPredicate(true))),
+                returnToHand);
     }
 }

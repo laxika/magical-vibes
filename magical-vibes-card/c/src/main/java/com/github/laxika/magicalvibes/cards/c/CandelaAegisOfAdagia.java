@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -66,13 +67,13 @@ public class CandelaAegisOfAdagia extends Card {
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
 
         // Station 8+ also grants the combat damage trigger
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), new ConditionalEffect(
-                new SourceCounterThreshold(8, CounterType.CHARGE),
+        addTrigger(Triggers.dealsCombatDamageToPlayer(),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(8, CounterType.CHARGE)),
                 new PutCardToBattlefieldEffect(
                         new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardMaxManaValuePredicate(3)
                         )),
-                        "creature")));
+                        "creature"));
     }
 }

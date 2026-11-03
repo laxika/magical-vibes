@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -29,8 +29,9 @@ public class OliviaOpulentOutlaw extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.WARLOCK)
         ));
 
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(outlaw, CreateTokenEffect.ofTreasureToken(1), false, true));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer().withFilter(outlaw),
+                TriggerOptions.ONE_OR_MORE,
+                CreateTokenEffect.ofTreasureToken(1));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

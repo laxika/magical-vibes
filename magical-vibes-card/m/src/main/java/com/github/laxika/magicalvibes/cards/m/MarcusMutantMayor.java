@@ -23,9 +23,9 @@ public class MarcusMutantMayor extends Card {
         // One trigger; the dealing creature's counters are checked as it resolves ("draw a card if
         // that creature has a +1/+1 counter on it. If it doesn't, put a +1/+1 counter on it").
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(null, SequenceEffect.of(
+                AllyCombatDamageTriggerEffect.boundToDealer(SequenceEffect.of(
                         ConditionalEffect.unless(hasCounter, new DrawCardEffect(1)),
                         ConditionalEffect.unless(new NotCondition(hasCounter),
-                                new PutCountersOnSourceEffect(1, 1, 1))), true));
+                                new PutCountersOnSourceEffect(1, 1, 1)))));
     }
 }

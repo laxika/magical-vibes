@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,14 +18,13 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class IanTheReckless extends Card {
 
     public IanTheReckless() {
-        addTrigger(Triggers.attacks(), new TriggeringPermanentConditionalEffect(
-                new PermanentIsModifiedPredicate(),
+        addTrigger(Triggers.attacks().withFilter(new PermanentIsModifiedPredicate()),
                 new MayEffect(
                         new ConditionalEffect(
                                 new SourceMatchesPermanentPredicate(new PermanentIsModifiedPredicate()),
                                 SequenceEffect.of(
                                         new DealDamageToPlayersEffect(new SourcePower(), DamageRecipient.CONTROLLER),
                                         new DealDamageToAnyTargetEffect(new SourcePower()))),
-                        "Have Ian the Reckless deal damage equal to its power to you and any target?")));
+                        "Have Ian the Reckless deal damage equal to its power to you and any target?"));
     }
 }

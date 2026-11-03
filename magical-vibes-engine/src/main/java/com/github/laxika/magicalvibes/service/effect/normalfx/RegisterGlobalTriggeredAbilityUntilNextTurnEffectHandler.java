@@ -35,7 +35,7 @@ public class RegisterGlobalTriggeredAbilityUntilNextTurnEffectHandler implements
         // "Whenever a creature attacks you or <this permanent>" (Tasha, Unholy Archmage) watches the
         // registering permanent, so attacks on other planeswalkers the player controls don't count.
         TriggeredAbility ability = (TriggeredAbility) registration.grantedAbility();
-        UUID watchedPermanentId = ability.hasTrigger(Triggers.creatureAttacksYouOrYourPlaneswalker())
+        UUID watchedPermanentId = ability.hasWatchedTrigger(Triggers.creatureAttacksYouOrYourPlaneswalker())
                 ? entry.getSourcePermanentId() : null;
         gameData.temporaryGlobalTriggeredAbilities.add(new TemporaryGlobalTriggeredAbility(
                 entry.getControllerId(), entry.getCard(), ability,

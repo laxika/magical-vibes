@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscoverEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class AloySaviorOfMeridian extends Card {
                 new PermanentIsArtifactPredicate(),
                 new PermanentIsAttackingPredicate()));
         addTrigger(Triggers.youAttack(),
-                new ConditionalEffect(new HasAttacker(new PermanentIsArtifactPredicate()),
-                        new DiscoverEffect(new GreatestPowerAmongControlled(artifactAttacker, true, true))));
+                TriggerOptions.DEFAULT.withInterveningIf(new HasAttacker(new PermanentIsArtifactPredicate())),
+                new DiscoverEffect(new GreatestPowerAmongControlled(artifactAttacker, true, true)));
     }
 }

@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.cards.r.Regrowth;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /** Emeritus of Abundance // Regrowth (SOS 145). */
@@ -17,9 +17,9 @@ public class EmeritusOfAbundanceRegrowth extends Card {
         setBackFaceCard(new Regrowth());
 
         addStaticEffect(new BecomePreparedEffect());
-        addTrigger(Triggers.attacks(), new ConditionalEffect(
-                new ControlsPermanentCount(8, new PermanentIsLandPredicate()),
-                new BecomePreparedEffect()));
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(new ControlsPermanentCount(8, new PermanentIsLandPredicate())),
+                new BecomePreparedEffect());
     }
 
     @Override

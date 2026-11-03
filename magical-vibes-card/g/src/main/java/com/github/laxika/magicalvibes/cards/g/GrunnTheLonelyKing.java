@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleSelfPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DOM", collectorNumber = "165")
@@ -19,6 +20,8 @@ public class GrunnTheLonelyKing extends Card {
         addStaticEffect(new KickerEffect("{3}"));
         addStaticEffect(new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(5))));
-        addTrigger(Triggers.attacks(), new ConditionalEffect(new AttacksAlone(), new DoubleSelfPowerToughnessEffect()));
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                new DoubleSelfPowerToughnessEffect());
     }
 }

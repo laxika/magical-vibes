@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingMonarchPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -29,12 +28,11 @@ public class OkoyeMightyAndAdored extends Card {
                 SequenceEffect.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                         new GrantEffectToTargetUntilEndOfTurnEffect(
-                                new TriggeredAbility(Triggers.attacks(),
-                                new TriggeringPermanentConditionalEffect(
-                                        new PermanentIsAttackingMonarchPredicate(),
+                                new TriggeredAbility(Triggers.attacks()
+                                                .withFilter(new PermanentIsAttackingMonarchPredicate()),
                                         SequenceEffect.of(
                                                 new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF),
-                                                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)))),
+                                                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF))),
                                 true)));
     }
 }

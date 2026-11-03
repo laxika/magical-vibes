@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -31,12 +30,11 @@ import java.util.List;
 public class TanukiTransplanter extends Card {
 
     public TanukiTransplanter() {
-        addTrigger(Triggers.creatureAttacks(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentAnyOfPredicate(List.of(
+        addTrigger(Triggers.creatureAttacks()
+                        .withFilter(new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsSourcePermanentPredicate(),
-                                new PermanentIsHostOfSourceAuraPredicate())),
-                        new AwardPersistentManaEffect(ManaColor.GREEN, new TargetPower())));
+                                new PermanentIsHostOfSourceAuraPredicate()))),
+                new AwardPersistentManaEffect(ManaColor.GREEN, new TargetPower()));
         addStaticEffect(new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, GrantScope.SELF,
                 EffectDuration.WHILE_ATTACHED));
 

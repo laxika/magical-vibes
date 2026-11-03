@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyPermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -28,8 +28,8 @@ public class PolisCrusher extends Card {
                 List.of(new MonstrosityEffect(3)),
                 "{4}{R}{G}: Monstrosity 3."
         ));
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), new ConditionalEffect(
-                monstrous,
-                new DestroyPermanentDamagedPlayerControlsEffect(new PermanentIsEnchantmentPredicate(), 0)));
+        addTrigger(Triggers.dealsCombatDamageToPlayer(),
+                TriggerOptions.DEFAULT.withInterveningIf(monstrous),
+                new DestroyPermanentDamagedPlayerControlsEffect(new PermanentIsEnchantmentPredicate(), 0));
     }
 }

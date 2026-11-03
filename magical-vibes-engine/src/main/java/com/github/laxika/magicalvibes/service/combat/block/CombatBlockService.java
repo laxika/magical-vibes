@@ -717,8 +717,8 @@ public class CombatBlockService {
             List<CardEffect> blockEffects = blocker.isFaceDown() || blockerLostAbilities
                     ? new ArrayList<>() : new ArrayList<>(CombatWatch.ON_BLOCK.effectsOf(blocker.getCard()));
             if (!blockerLostAbilities) {
-                blockEffects.addAll(blocker.getTemporaryTriggerEffects(CombatWatch.ON_BLOCK.trigger()));
-                blockEffects.addAll(blocker.getPersistentTriggerEffects(CombatWatch.ON_BLOCK.trigger()));
+                blockEffects.addAll(blocker.getLegacyTemporaryTriggerEffects(CombatWatch.ON_BLOCK.trigger()));
+                blockEffects.addAll(blocker.getLegacyPersistentTriggerEffects(CombatWatch.ON_BLOCK.trigger()));
                 blockEffects.addAll(triggerCollectionService.grantedTriggerEffects(gameData, blocker, CombatWatch.ON_BLOCK.trigger()));
             }
             if (!blockersWithBushidoTrigger.add(blocker.getId())) {
@@ -1087,8 +1087,8 @@ public class CombatBlockService {
         List<CardEffect> blockEffects = blocker.isFaceDown()
             ? new ArrayList<>() : new ArrayList<>(CombatWatch.ON_BLOCK.effectsOf(blocker.getCard()));
         if (!blockerLostAbilities) {
-            blockEffects.addAll(blocker.getTemporaryTriggerEffects(CombatWatch.ON_BLOCK.trigger()));
-            blockEffects.addAll(blocker.getPersistentTriggerEffects(CombatWatch.ON_BLOCK.trigger()));
+            blockEffects.addAll(blocker.getLegacyTemporaryTriggerEffects(CombatWatch.ON_BLOCK.trigger()));
+            blockEffects.addAll(blocker.getLegacyPersistentTriggerEffects(CombatWatch.ON_BLOCK.trigger()));
             blockEffects.addAll(triggerCollectionService.grantedTriggerEffects(gameData, blocker, CombatWatch.ON_BLOCK.trigger()));
         }
         if (blockEffects.isEmpty()) {
@@ -1173,9 +1173,9 @@ public class CombatBlockService {
         boolean lostAbilities = gameQueryService.hasLostPrintedAbilities(gameData, attacker);
         List<EffectRegistration> registrations = lostAbilities ? List.of() : CombatWatch.ON_BECOMES_BLOCKED.registrationsOf(attacker.getCard());
         List<CardEffect> grantedEffects = new ArrayList<>(lostAbilities ? List.of()
-                : attacker.getTemporaryTriggerEffects(CombatWatch.ON_BECOMES_BLOCKED.trigger()));
+                : attacker.getLegacyTemporaryTriggerEffects(CombatWatch.ON_BECOMES_BLOCKED.trigger()));
         if (!lostAbilities) {
-            grantedEffects.addAll(attacker.getPersistentTriggerEffects(CombatWatch.ON_BECOMES_BLOCKED.trigger()));
+            grantedEffects.addAll(attacker.getLegacyPersistentTriggerEffects(CombatWatch.ON_BECOMES_BLOCKED.trigger()));
         }
         List<CardEffect> blockerSpecificEffects = new ArrayList<>(registrations.stream()
                 .filter(registration -> registration.triggerMode() == TriggerMode.PER_BLOCKER)
@@ -2095,11 +2095,11 @@ public class CombatBlockService {
                 .map(EffectRegistration::effect)
                 .toList());
         if (!lostAbilities) {
-            regularEffects.addAll(attacker.getTemporaryTriggerEffects(CombatWatch.ON_BECOMES_BLOCKED.trigger()).stream()
+            regularEffects.addAll(attacker.getLegacyTemporaryTriggerEffects(CombatWatch.ON_BECOMES_BLOCKED.trigger()).stream()
                     .filter(e -> !(e instanceof CombatOpponentReferencingEffect c)
                             || !c.referencesCombatOpponent())
                     .toList());
-            regularEffects.addAll(attacker.getPersistentTriggerEffects(CombatWatch.ON_BECOMES_BLOCKED.trigger()).stream()
+            regularEffects.addAll(attacker.getLegacyPersistentTriggerEffects(CombatWatch.ON_BECOMES_BLOCKED.trigger()).stream()
                     .filter(e -> !(e instanceof CombatOpponentReferencingEffect c)
                             || !c.referencesCombatOpponent())
                     .toList());
@@ -2213,14 +2213,14 @@ public class CombatBlockService {
 
     private void checkDelayedBecomesBlockedTriggers(GameData gameData, Permanent attacker) {
         for (var delayed : gameData.temporaryGlobalTriggeredAbilities) {
-            if (!delayed.ability().hasTrigger(CombatWatch.ON_BECOMES_BLOCKED.trigger())
+            if (!delayed.ability().hasWatchedTrigger(CombatWatch.ON_BECOMES_BLOCKED.trigger())
                     || !attacker.getId().equals(delayed.watchedPermanentId())) {
                 continue;
             }
             StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
                     delayed.sourceCard(), delayed.controllerId(),
                     delayed.sourceCard().getName() + "'s delayed becomes-blocked trigger",
-                    List.of(delayed.effect()), attacker.getId(), (UUID) null);
+                    List.of(delayed.legacyEffect()), attacker.getId(), (UUID) null);
             trigger.setNonTargeting(true);
             gameData.stack.add(trigger);
         }
@@ -2235,9 +2235,9 @@ public class CombatBlockService {
         List<EffectRegistration> becomesBlockedRegs = lostAbilities ? List.of()
                 : CombatWatch.ON_BECOMES_BLOCKED.registrationsOf(attacker.getCard());
         List<CardEffect> grantedBecomesBlockedEffects = new ArrayList<>(lostAbilities ? List.of()
-                : attacker.getTemporaryTriggerEffects(CombatWatch.ON_BECOMES_BLOCKED.trigger()));
+                : attacker.getLegacyTemporaryTriggerEffects(CombatWatch.ON_BECOMES_BLOCKED.trigger()));
         if (!lostAbilities) {
-            grantedBecomesBlockedEffects.addAll(attacker.getPersistentTriggerEffects(CombatWatch.ON_BECOMES_BLOCKED.trigger()));
+            grantedBecomesBlockedEffects.addAll(attacker.getLegacyPersistentTriggerEffects(CombatWatch.ON_BECOMES_BLOCKED.trigger()));
         }
         List<CardEffect> continuouslyGrantedEffects = lostAbilities ? List.of()
                 : triggerCollectionService.grantedTriggerEffects(gameData, attacker, CombatWatch.ON_BECOMES_BLOCKED.trigger());

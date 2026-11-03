@@ -2728,16 +2728,16 @@ public class GameQueryService {
     }
 
     /**
-     * Like {@link #getEffectiveGraveyardTriggerEffects}, with the card's own abilities wrapped in their options
-     * ({@link Card#getLegacyTriggerEffects(Trigger, Zone)}): the form the "at the beginning of [step or phase]"
-     * collectors read them in.
+     * Like {@link #getEffectiveGraveyardTriggerEffects}, with the card's own and its perpetual abilities wrapped in
+     * their options and filters ({@link Card#getLegacyTriggerEffects(Trigger, Zone)}): the form the "at the beginning
+     * of [step or phase]" and combat collectors read them in.
      */
     public List<CardEffect> getEffectiveGraveyardLegacyTriggerEffects(GameData gameData, Card card, Trigger trigger) {
         if (graveyardCardsHaveLostAllAbilities(gameData)) {
             return List.of();
         }
         List<CardEffect> effects = new ArrayList<>(card.getLegacyTriggerEffects(trigger, Zone.GRAVEYARD));
-        effects.addAll(gameData.perpetualTriggerEffects(card.getId(), trigger, Zone.GRAVEYARD));
+        effects.addAll(gameData.perpetualLegacyTriggerEffects(card.getId(), trigger, Zone.GRAVEYARD));
         return List.copyOf(effects);
     }
 

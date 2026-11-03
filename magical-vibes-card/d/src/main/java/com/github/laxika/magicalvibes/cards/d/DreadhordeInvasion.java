@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -33,8 +32,7 @@ public class DreadhordeInvasion extends Card {
                 new PermanentIsTokenPredicate(),
                 new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE),
                 new PermanentPowerAtLeastPredicate(6)));
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new TriggeringPermanentConditionalEffect(qualifyingZombieToken,
-                        new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TRIGGERING_PERMANENT)));
+        addTrigger(Triggers.creatureYouControlAttacks().withFilter(qualifyingZombieToken),
+                new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TRIGGERING_PERMANENT));
     }
 }

@@ -6,12 +6,10 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.NoMonarch;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerBecomesMonarchEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOpponentOfSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -32,14 +30,11 @@ public class MBakuJabariChieftain extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new NoMonarch()),
                 new TargetPlayerBecomesMonarchEffect());
 
-        addTrigger(Triggers.creatureAttacks(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsAttackingOpponentOfSourceControllerPredicate(),
-                        new ConditionalEffect(
-                                new AttackedTargetIsMonarch(),
-                                SequenceEffect.of(
-                                        new BoostTargetCreatureEffect(1, 1),
-                                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)),
-                                true)));
+        addTrigger(Triggers.creatureAttacks()
+                        .withFilter(new PermanentIsAttackingOpponentOfSourceControllerPredicate()),
+                TriggerOptions.DEFAULT.withInterveningIf(new AttackedTargetIsMonarch()),
+                SequenceEffect.of(
+                        new BoostTargetCreatureEffect(1, 1),
+                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)));
     }
 }

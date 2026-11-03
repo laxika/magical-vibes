@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MOC", collectorNumber = "243")
@@ -17,13 +17,13 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class VedalkenHumiliator extends Card {
 
     public VedalkenHumiliator() {
-        addTrigger(Triggers.attacks(), new ConditionalEffect(
-                new Metalcraft(),
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(new Metalcraft()),
                 SequenceEffect.of(
-                        new LosesAllAbilitiesEffect(GrantScope.OPPONENT_CREATURES,
-                                EffectDuration.UNTIL_END_OF_TURN),
-                        new SetBasePowerToughnessEffect(1, 1, GrantScope.OPPONENT_CREATURES,
-                                EffectDuration.UNTIL_END_OF_TURN)
-                )));
+                                new LosesAllAbilitiesEffect(GrantScope.OPPONENT_CREATURES,
+                                        EffectDuration.UNTIL_END_OF_TURN),
+                                new SetBasePowerToughnessEffect(1, 1, GrantScope.OPPONENT_CREATURES,
+                                        EffectDuration.UNTIL_END_OF_TURN)
+                        ));
     }
 }

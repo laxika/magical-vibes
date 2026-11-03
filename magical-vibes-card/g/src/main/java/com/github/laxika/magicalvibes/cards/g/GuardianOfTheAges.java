@@ -4,13 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetSelfKeywordIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M14", collectorNumber = "211")
@@ -21,10 +21,10 @@ public class GuardianOfTheAges extends Card {
         // When a creature attacks you or a planeswalker you control, if this creature has
         // defender, it loses defender and gains trample (both indefinitely).
         addTrigger(Triggers.creatureAttacksYouOrYourPlaneswalker(),
-                new ConditionalEffect(
-                        new SourceMatchesPermanentPredicate(new PermanentHasKeywordPredicate(Keyword.DEFENDER)),
-                        SequenceEffect.of(
-                                new RemoveKeywordEffect(Keyword.DEFENDER, GrantScope.SELF, EffectDuration.PERMANENT),
-                                new SetSelfKeywordIndefinitelyEffect(Keyword.TRAMPLE, true))));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new SourceMatchesPermanentPredicate(new PermanentHasKeywordPredicate(Keyword.DEFENDER))),
+                SequenceEffect.of(
+                        new RemoveKeywordEffect(Keyword.DEFENDER, GrantScope.SELF, EffectDuration.PERMANENT),
+                        new SetSelfKeywordIndefinitelyEffect(Keyword.TRAMPLE, true)));
     }
 }

@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.effect.BoostTriggeringAttackersEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -41,6 +40,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.EnumSet;
@@ -105,7 +105,8 @@ public class LuluForgetfulHollyphant extends Card {
             default -> throw new IllegalStateException("Unsupported Lulu specialization color: " + color);
         };
         card.addTrigger(Triggers.youAttack(),
-                new ConditionalEffect(new MinimumMatchingAttackers(1, otherFlyers), effect));
+                TriggerOptions.DEFAULT.withInterveningIf(new MinimumMatchingAttackers(1, otherFlyers)),
+                effect);
     }
 
     public static void setSpecializedBaseCharacteristics(Card card) {

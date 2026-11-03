@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
@@ -19,7 +18,6 @@ public class ToskiBearerOfSecrets extends Card {
     public ToskiBearerOfSecrets() {
         addStaticEffect(new CantBeCounteredEffect());
         addStaticEffect(new MustAttackEffect());
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(null, new DrawCardEffect(1)));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(), new DrawCardEffect(1));
     }
 }

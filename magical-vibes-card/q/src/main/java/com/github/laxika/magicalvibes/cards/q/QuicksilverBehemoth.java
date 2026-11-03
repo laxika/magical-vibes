@@ -9,13 +9,14 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandAtEndOfCombat
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
+
 @CardRegistration(set = "DST", collectorNumber = "30")
 public class QuicksilverBehemoth extends Card {
 
     public QuicksilverBehemoth() {
         addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER)));
-        addTrigger(Triggers.attacks(), new ReturnSelfToHandAtEndOfCombatEffect());
-        addTrigger(Triggers.blocks(), new ReturnSelfToHandAtEndOfCombatEffect());
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), new ReturnSelfToHandAtEndOfCombatEffect());
     }
 }

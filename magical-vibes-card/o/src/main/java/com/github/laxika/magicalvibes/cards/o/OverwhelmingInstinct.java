@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ONS", collectorNumber = "276")
@@ -14,6 +14,7 @@ public class OverwhelmingInstinct extends Card {
     public OverwhelmingInstinct() {
         // Whenever you attack with three or more creatures, draw a card.
         addTrigger(Triggers.youAttack(),
-                new ConditionalEffect(new MinimumAttackers(3), new DrawCardEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                new DrawCardEffect());
     }
 }

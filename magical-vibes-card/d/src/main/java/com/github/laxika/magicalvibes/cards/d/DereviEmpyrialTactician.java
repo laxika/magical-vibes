@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInCommandZone;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSourceFromCommandZoneOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
@@ -25,11 +24,9 @@ public class DereviEmpyrialTactician extends Card {
                 new MayEffect(new TapOrUntapTargetPermanentEffect(),
                         "You may tap or untap that permanent?"));
 
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentIsCreaturePredicate(),
-                        new MayEffect(new TapOrUntapTargetPermanentEffect(),
-                                "You may tap or untap that permanent?")));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentIsCreaturePredicate()),
+                new MayEffect(new TapOrUntapTargetPermanentEffect(), "You may tap or untap that permanent?"));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

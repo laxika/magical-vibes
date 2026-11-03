@@ -7,14 +7,13 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.EnchantedCreaturePowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -32,16 +31,12 @@ public class WritOfPassage extends Card {
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
         ));
-        addTrigger(Triggers.creatureAttacks(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.creatureAttacks()
+                        .withFilter(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsHostOfSourceAuraPredicate(),
-                                powerAtMostTwoCreature
-                        )),
-                        new ConditionalEffect(
-                                new NotCondition(new EnchantedCreaturePowerAtLeast(3)),
-                                new MakeCreatureUnblockableEffect()
-                        )));
+                                powerAtMostTwoCreature))),
+                TriggerOptions.DEFAULT.withInterveningIf(new NotCondition(new EnchantedCreaturePowerAtLeast(3))),
+                new MakeCreatureUnblockableEffect());
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,

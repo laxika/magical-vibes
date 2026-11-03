@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesGreaterThanSourceCounters;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,9 +22,9 @@ public class EDELonesomeEyebot extends Card {
 
     public EDELonesomeEyebot() {
         addTrigger(Triggers.youAttack(),
-                new ConditionalEffect(
-                        new AttackingCreaturesGreaterThanSourceCounters(CounterType.QUEST),
-                        new PutCountersOnSelfEffect(CounterType.QUEST)));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AttackingCreaturesGreaterThanSourceCounters(CounterType.QUEST)),
+                new PutCountersOnSelfEffect(CounterType.QUEST));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

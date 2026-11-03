@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ECL", collectorNumber = "38")
@@ -19,7 +19,7 @@ public class ThoughtweftImbuer extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.KITHKIN), CountScope.CONTROLLER);
 
         addTrigger(Triggers.creatureYouControlAttacks(),
-                new ConditionalEffect(new AttacksAlone(),
-                        new BoostTargetCreatureEffect(kithkinYouControl, kithkinYouControl)));
+                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                new BoostTargetCreatureEffect(kithkinYouControl, kithkinYouControl));
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantPlayerStaticEffectsUntilEndOfTurnEffect;
@@ -30,9 +29,7 @@ public class BidentOfThassa extends Card {
 
         // Whenever a creature you control deals combat damage to a player, you may draw a card.
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        null,
-                        new MayEffect(new DrawCardEffect(1), "Draw a card?")));
+                new MayEffect(new DrawCardEffect(1), "Draw a card?"));
 
         // {1}{U}, {T}: Creatures your opponents control attack this turn if able.
         addActivatedAbility(new ActivatedAbility(

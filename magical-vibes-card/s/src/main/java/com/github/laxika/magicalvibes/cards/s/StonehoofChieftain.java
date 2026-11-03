@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,10 +19,8 @@ public class StonehoofChieftain extends Card {
     public StonehoofChieftain() {
         // Whenever another creature you control attacks, it gains trample and indestructible until
         // end of turn.
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()),
-                        new GrantKeywordEffect(
-                                Set.of(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE), GrantScope.TARGET)));
+        addTrigger(Triggers.creatureYouControlAttacks()
+                        .withFilter(new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())),
+                new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE), GrantScope.TARGET));
     }
 }

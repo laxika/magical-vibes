@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -40,8 +39,11 @@ public class ThopterSpyNetwork extends Card {
 
         // Batched trigger: "one or more artifact creatures" is one event, so the draw happens once
         // per combat damage step per damaged player regardless of how many of them connected.
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(), new AllyCombatDamageTriggerEffect(
-                new PermanentAllOfPredicate(List.of(new PermanentIsArtifactPredicate(), new PermanentIsCreaturePredicate())),
-                new DrawCardEffect(1), false, true));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentAllOfPredicate(List.of(
+                                new PermanentIsArtifactPredicate(),
+                                new PermanentIsCreaturePredicate()))),
+                TriggerOptions.ONE_OR_MORE,
+                new DrawCardEffect(1));
     }
 }

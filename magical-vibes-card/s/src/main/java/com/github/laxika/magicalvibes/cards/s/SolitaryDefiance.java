@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -43,9 +44,10 @@ public class SolitaryDefiance extends Card {
                         new CounterUnlessPaysEffect(2)), GrantScope.OWN_CREATURES)));
 
         addTrigger(Triggers.creatureYouControlAttacks(),
-                new ConditionalEffect(new AttacksAlone(), SequenceEffect.of(
+                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                SequenceEffect.of(
                         new SeekCardsToHandEffect(new Fixed(2),
                                 new CardNotPredicate(new CardTypePredicate(CardType.LAND))),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER))));
+                        new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
     }
 }

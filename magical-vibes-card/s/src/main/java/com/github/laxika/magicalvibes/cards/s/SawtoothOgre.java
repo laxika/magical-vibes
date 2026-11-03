@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WTH", collectorNumber = "114")
@@ -15,6 +15,6 @@ public class SawtoothOgre extends Card {
         DealDamageToTargetCreatureAtEndOfCombatEffect damage =
                 new DealDamageToTargetCreatureAtEndOfCombatEffect(1);
         addTrigger(Triggers.blocks(), damage);
-        addTrigger(Triggers.becomesBlocked(), TriggerMode.PER_BLOCKER, damage);
+        addTrigger(Triggers.becomesBlocked(), TriggerOptions.EACH_BLOCKER, damage);
     }
 }

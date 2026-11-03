@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -23,10 +22,9 @@ public class NecrogenRotpriest extends Card {
 
     public NecrogenRotpriest() {
         addStaticEffect(new ToxicEffect(2));
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentHasKeywordPredicate(Keyword.TOXIC),
-                        new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER)));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentHasKeywordPredicate(Keyword.TOXIC)),
+                new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

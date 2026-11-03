@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -27,8 +27,8 @@ public class AmazingAlliance extends Card {
                 new PermanentIsAttackingPredicate(),
                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)));
         addTrigger(Triggers.youAttack(),
-                new ConditionalEffect(
-                        new HasAttacker(new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)),
-                        new GainLifeEffect(new PermanentCount(attackingLegendary, CountScope.CONTROLLER, false, true))));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new HasAttacker(new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))),
+                new GainLifeEffect(new PermanentCount(attackingLegendary, CountScope.CONTROLLER, false, true)));
     }
 }

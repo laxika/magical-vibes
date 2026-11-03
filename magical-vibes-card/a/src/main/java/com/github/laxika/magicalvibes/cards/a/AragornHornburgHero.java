@@ -27,10 +27,8 @@ public class AragornHornburgHero extends Card {
                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                 new RenownEffect(1)), GrantScope.ALL_OWN_CREATURES, attacking));
 
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentIsRenownedPredicate(),
-                        new DoublePlusOneCountersOnSourceEffect(),
-                        true));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentIsRenownedPredicate()),
+                AllyCombatDamageTriggerEffect.boundToDealer(new DoublePlusOneCountersOnSourceEffect()));
     }
 }

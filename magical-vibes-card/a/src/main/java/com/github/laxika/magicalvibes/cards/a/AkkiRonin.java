@@ -4,10 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -16,13 +18,11 @@ import java.util.List;
 public class AkkiRonin extends Card {
 
     public AkkiRonin() {
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect(
-                        new com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate(List.of(
-                                new com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate(CardSubtype.SAMURAI),
-                                new com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate(CardSubtype.WARRIOR))),
-                        new ConditionalEffect(new AttacksAlone(), new MayEffect(
-                                new DiscardAndDrawCardEffect(),
-                                "Discard a card to draw a card?"))));
+        addTrigger(Triggers.creatureYouControlAttacks()
+                        .withFilter(new PermanentAnyOfPredicate(List.of(
+                                new PermanentHasSubtypePredicate(CardSubtype.SAMURAI),
+                                new PermanentHasSubtypePredicate(CardSubtype.WARRIOR)))),
+                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                new MayEffect(new DiscardAndDrawCardEffect(), "Discard a card to draw a card?"));
     }
 }

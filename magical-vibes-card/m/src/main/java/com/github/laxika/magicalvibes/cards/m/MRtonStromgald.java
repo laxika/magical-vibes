@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -36,12 +36,14 @@ public class MRtonStromgald extends Card {
         // until end of turn for each blocking creature other than Marton Stromgald.
         PermanentCount otherBlockers = new PermanentCount(
                 new PermanentIsBlockingPredicate(), CountScope.ANY_PLAYER, true);
-        addTrigger(Triggers.blocks(), TriggerMode.ONCE_PER_BLOCK, new BoostAllCreaturesEffect(
-                otherBlockers,
-                otherBlockers,
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsBlockingPredicate(),
-                        new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
-                ))));
+        addTrigger(Triggers.blocks(),
+                TriggerOptions.ONE_OR_MORE,
+                new BoostAllCreaturesEffect(
+                        otherBlockers,
+                        otherBlockers,
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsBlockingPredicate(),
+                                new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
+                        ))));
     }
 }

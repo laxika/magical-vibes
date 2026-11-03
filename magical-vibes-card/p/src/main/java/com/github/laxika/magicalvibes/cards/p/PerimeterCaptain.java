@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -17,11 +16,10 @@ import java.util.List;
 public class PerimeterCaptain extends Card {
 
     public PerimeterCaptain() {
-        addTrigger(Triggers.creatureBlocks(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.creatureBlocks()
+                        .withFilter(new PermanentAllOfPredicate(List.of(
                                 new PermanentControlledBySourceControllerPredicate(),
-                                new PermanentHasKeywordPredicate(Keyword.DEFENDER))),
-                        new MayEffect(new GainLifeEffect(2), "Gain 2 life?")));
+                                new PermanentHasKeywordPredicate(Keyword.DEFENDER)))),
+                new MayEffect(new GainLifeEffect(2), "Gain 2 life?"));
     }
 }

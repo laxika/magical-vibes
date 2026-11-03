@@ -9,13 +9,15 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
+
 @CardRegistration(set = "LCI", collectorNumber = "138")
 public class BurningSunCavalry extends Card {
 
     public BurningSunCavalry() {
         ControlsPermanent controlsDinosaur = new ControlsPermanent(
                 new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR));
-        addTrigger(Triggers.attacks(), ConditionalEffect.atTriggerTime(controlsDinosaur, new BoostSelfEffect(1, 1)));
-        addTrigger(Triggers.blocks(), ConditionalEffect.atTriggerTime(controlsDinosaur, new BoostSelfEffect(1, 1)));
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()),
+                ConditionalEffect.atTriggerTime(controlsDinosaur, new BoostSelfEffect(1, 1)));
     }
 }

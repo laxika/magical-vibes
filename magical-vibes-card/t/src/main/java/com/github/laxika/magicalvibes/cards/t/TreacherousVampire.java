@@ -26,8 +26,7 @@ public class TreacherousVampire extends Card {
                 new ExileCardFromGraveyardCost((CardType) null),
                 List.of(new SacrificeSelfEffect()),
                 true);
-        addTrigger(Triggers.attacks(), sacrificeUnlessExile);
-        addTrigger(Triggers.blocks(), sacrificeUnlessExile);
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), sacrificeUnlessExile);
 
         GraveyardCardThreshold threshold = new GraveyardCardThreshold(7, null);
         addStaticEffect(new ConditionalEffect(threshold,

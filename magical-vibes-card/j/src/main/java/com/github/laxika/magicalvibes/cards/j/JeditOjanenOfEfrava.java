@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,7 +22,6 @@ public class JeditOjanenOfEfrava extends Card {
                 List.of(CardSubtype.CAT, CardSubtype.WARRIOR),
                 Set.of(Keyword.FORESTWALK), Set.of()
         );
-        addTrigger(Triggers.attacks(), catWarriorToken);
-        addTrigger(Triggers.blocks(), TriggerMode.ONCE_PER_BLOCK, catWarriorToken);
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), TriggerOptions.ONE_OR_MORE, catWarriorToken);
     }
 }

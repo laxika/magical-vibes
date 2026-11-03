@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,8 +16,8 @@ public class KragmaWarcaller extends Card {
     public KragmaWarcaller() {
         addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.MINOTAUR)));
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new TriggeringPermanentConditionalEffect(new PermanentHasSubtypePredicate(CardSubtype.MINOTAUR),
-                        new BoostTargetCreatureEffect(2, 0)));
+        addTrigger(Triggers.creatureYouControlAttacks()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.MINOTAUR)),
+                new BoostTargetCreatureEffect(2, 0));
     }
 }

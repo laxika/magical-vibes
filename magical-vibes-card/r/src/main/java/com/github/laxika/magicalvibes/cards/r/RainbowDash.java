@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.CoolnessEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ResetCoolnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,12 +22,11 @@ import java.util.List;
 public class RainbowDash extends Card {
 
     public RainbowDash() {
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentAnyOfPredicate(List.of(
+        addTrigger(Triggers.creatureYouControlAttacks()
+                        .withFilter(new PermanentAnyOfPredicate(List.of(
                                 new PermanentHasKeywordPredicate(Keyword.FLYING),
-                                new PermanentHasKeywordPredicate(Keyword.HASTE))),
-                        new CoolnessEffect(20)));
+                                new PermanentHasKeywordPredicate(Keyword.HASTE)))),
+                new CoolnessEffect(20));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

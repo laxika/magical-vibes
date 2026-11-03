@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasCityBlessing;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.AscendEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MOC", collectorNumber = "52")
@@ -20,14 +20,12 @@ public class TheGoldenCityOfOrazca extends Card {
 
     public TheGoldenCityOfOrazca() {
         addStaticEffect(new AscendEffect());
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentIsCreaturePredicate(),
-                        SequenceEffect.of(
-                                CreateTokenEffect.ofTreasureToken(1),
-                                new ConditionalEffect(new ControllerHasCityBlessing(), new DrawCardEffect(1))),
-                        false,
-                        true));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentIsCreaturePredicate()),
+                TriggerOptions.ONE_OR_MORE,
+                SequenceEffect.of(
+                        CreateTokenEffect.ofTreasureToken(1),
+                        new ConditionalEffect(new ControllerHasCityBlessing(), new DrawCardEffect(1))));
         addTrigger(Triggers.chaosEnsues(), new MayEffect(
                 new PutCardToBattlefieldEffect(new CardIsPermanentPredicate(), "permanent", true),
                 "Put a permanent card from your hand onto the battlefield tapped?"));

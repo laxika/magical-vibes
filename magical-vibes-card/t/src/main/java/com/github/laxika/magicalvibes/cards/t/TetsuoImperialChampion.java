@@ -6,11 +6,11 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongAttachedEquipment;
 import com.github.laxika.magicalvibes.model.condition.Equipped;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -25,16 +25,16 @@ public class TetsuoImperialChampion extends Card {
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
 
-        addTrigger(Triggers.attacks(), new ConditionalEffect(
-                new Equipped(),
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(new Equipped()),
                 new ChooseOneEffect(List.of(
-                        new ChooseOneEffect.ChooseOneOption(
-                                "Tetsuo deals damage equal to the greatest mana value among Equipment attached to it to any target",
-                                new DealDamageToAnyTargetEffect(greatestEquipmentManaValue)),
-                        new ChooseOneEffect.ChooseOneOption(
-                                "You may cast an instant or sorcery spell from your hand with mana value less than or equal to the greatest mana value among Equipment attached to Tetsuo without paying its mana cost",
-                                new MayCastAnySpellFromHandWithoutPayingManaCostEffect(
-                                        instantOrSorcery, greatestEquipmentManaValue))
-                ))));
+                                new ChooseOneEffect.ChooseOneOption(
+                                        "Tetsuo deals damage equal to the greatest mana value among Equipment attached to it to any target",
+                                        new DealDamageToAnyTargetEffect(greatestEquipmentManaValue)),
+                                new ChooseOneEffect.ChooseOneOption(
+                                        "You may cast an instant or sorcery spell from your hand with mana value less than or equal to the greatest mana value among Equipment attached to Tetsuo without paying its mana cost",
+                                        new MayCastAnySpellFromHandWithoutPayingManaCostEffect(
+                                                instantOrSorcery, greatestEquipmentManaValue))
+                        )));
     }
 }

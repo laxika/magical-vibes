@@ -2144,6 +2144,34 @@ public class Permanent {
         return effectsWithTrigger(getPersistentTriggeredAbilities(), trigger);
     }
 
+    /**
+     * The effects of the triggered abilities granted until end of turn, end of combat or next upkeep whose trigger has
+     * {@code trigger} as its {@link Trigger#watchKey()}, each wrapped in its ability's options
+     * ({@link TriggeredAbility#legacyEffects()}): the form the combat collectors read them in.
+     */
+    public List<CardEffect> getLegacyTemporaryTriggerEffects(Trigger trigger) {
+        return legacyEffectsWithTrigger(getTemporaryTriggeredAbilities(), trigger);
+    }
+
+    /**
+     * The effects of the triggered abilities granted until it leaves the battlefield whose trigger has
+     * {@code trigger} as its {@link Trigger#watchKey()}, each wrapped in its ability's options, as
+     * {@link #getLegacyTemporaryTriggerEffects(Trigger)} says.
+     */
+    public List<CardEffect> getLegacyPersistentTriggerEffects(Trigger trigger) {
+        return legacyEffectsWithTrigger(getPersistentTriggeredAbilities(), trigger);
+    }
+
+    private static List<CardEffect> legacyEffectsWithTrigger(List<TriggeredAbility> abilities, Trigger trigger) {
+        List<CardEffect> effects = new ArrayList<>();
+        for (TriggeredAbility ability : abilities) {
+            if (ability.hasWatchedTrigger(trigger)) {
+                ability.legacyEffects().forEach(registration -> effects.add(registration.effect()));
+            }
+        }
+        return effects;
+    }
+
     private static List<CardEffect> effectsWithTrigger(List<TriggeredAbility> abilities, Trigger trigger) {
         List<CardEffect> effects = new ArrayList<>();
         for (TriggeredAbility ability : abilities) {

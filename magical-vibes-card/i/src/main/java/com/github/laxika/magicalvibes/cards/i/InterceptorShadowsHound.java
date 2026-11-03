@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -30,17 +29,17 @@ public class InterceptorShadowsHound extends Card {
                 GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.ASSASSIN)));
 
-        addTrigger(new TriggerCondition(Triggers.youAttack(), AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
-                new ConditionalEffect(
-                        new HasAttacker(new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)),
-                        new MayPayManaEffect("{2}{B}",
-                                ReturnCardFromGraveyardEffect.builder()
-                                        .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                                        .filter(new CardIsSelfPredicate())
-                                        .returnAll(true)
-                                        .enterTapped(true)
-                                        .enterAttacking(true)
-                                        .build(),
-                                "Pay {2}{B} to return Interceptor, Shadow's Hound from your graveyard to the battlefield tapped and attacking?")));
+        addTrigger(new TriggerCondition(Triggers.youAttack(), AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new HasAttacker(new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))),
+                new MayPayManaEffect("{2}{B}",
+                        ReturnCardFromGraveyardEffect.builder()
+                                .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                                .filter(new CardIsSelfPredicate())
+                                .returnAll(true)
+                                .enterTapped(true)
+                                .enterAttacking(true)
+                                .build(),
+                        "Pay {2}{B} to return Interceptor, Shadow's Hound from your graveyard to the battlefield tapped and attacking?"));
     }
 }

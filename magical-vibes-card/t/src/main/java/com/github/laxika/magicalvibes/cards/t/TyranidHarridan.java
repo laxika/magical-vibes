@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -25,14 +24,13 @@ public class TyranidHarridan extends Card {
 
         // Whenever this creature or another Tyranid you control deals combat damage to a player,
         // create a 1/1 blue Tyranid Gargoyle creature token with flying.
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentAnyOfPredicate(List.of(
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsSourceCardPredicate(),
-                                new PermanentHasSubtypePredicate(CardSubtype.TYRANID))),
-                        new CreateTokenEffect(
-                                "Tyranid Gargoyle", 1, 1, CardColor.BLUE,
-                                List.of(CardSubtype.TYRANID, CardSubtype.GARGOYLE),
-                                Set.of(Keyword.FLYING), Set.of())));
+                                new PermanentHasSubtypePredicate(CardSubtype.TYRANID)))),
+                new CreateTokenEffect(
+                        "Tyranid Gargoyle", 1, 1, CardColor.BLUE,
+                        List.of(CardSubtype.TYRANID, CardSubtype.GARGOYLE),
+                        Set.of(Keyword.FLYING), Set.of()));
     }
 }

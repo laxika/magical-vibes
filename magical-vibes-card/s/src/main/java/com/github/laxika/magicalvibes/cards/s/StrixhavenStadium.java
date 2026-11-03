@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -36,14 +35,12 @@ public class StrixhavenStadium extends Card {
                 new RemoveCounterFromSourceEffect(CounterType.POINT, 1));
 
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        null,
-                        SequenceEffect.of(
-                                new PutCountersOnSelfEffect(CounterType.POINT),
-                                new ConditionalEffect(
-                                        new SourceCounterThreshold(10, CounterType.POINT),
-                                        SequenceEffect.of(
-                                                new RemoveAllCountersEffect(CounterType.POINT),
-                                                new TargetPlayerLosesGameEffect(null))))));
+                SequenceEffect.of(
+                        new PutCountersOnSelfEffect(CounterType.POINT),
+                        new ConditionalEffect(
+                                new SourceCounterThreshold(10, CounterType.POINT),
+                                SequenceEffect.of(
+                                        new RemoveAllCountersEffect(CounterType.POINT),
+                                        new TargetPlayerLosesGameEffect(null)))));
     }
 }

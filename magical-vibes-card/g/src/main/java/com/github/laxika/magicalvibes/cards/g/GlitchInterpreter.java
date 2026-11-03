@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManifestDreadEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -32,7 +31,8 @@ public class GlitchInterpreter extends Card {
         var colorlessCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentIsColorlessPredicate()));
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(colorlessCreature, new DrawCardEffect(1), false, true));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer().withFilter(colorlessCreature),
+                TriggerOptions.ONE_OR_MORE,
+                new DrawCardEffect(1));
     }
 }

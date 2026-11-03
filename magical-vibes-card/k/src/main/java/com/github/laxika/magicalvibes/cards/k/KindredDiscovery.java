@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -30,8 +29,7 @@ public class KindredDiscovery extends Card {
                                 new PermanentHasSourceChosenSubtypePredicate())),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
                 new DrawCardEffect());
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasSourceChosenSubtypePredicate(), new DrawCardEffect()));
+        addTrigger(Triggers.creatureYouControlAttacks().withFilter(new PermanentHasSourceChosenSubtypePredicate()),
+                new DrawCardEffect());
     }
 }

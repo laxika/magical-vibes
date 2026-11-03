@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -19,9 +18,7 @@ public class DeepfathomSkulker extends Card {
     public DeepfathomSkulker() {
         // Whenever a creature you control deals combat damage to a player, you may draw a card.
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        null,
-                        new MayEffect(new DrawCardEffect(1), "Draw a card?")));
+                new MayEffect(new DrawCardEffect(1), "Draw a card?"));
 
         // {3}{C}: Target creature can't be blocked this turn.
         addActivatedAbility(new ActivatedAbility(

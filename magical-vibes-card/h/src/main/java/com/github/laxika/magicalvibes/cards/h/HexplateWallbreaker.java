@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.FirstCombatPhase;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -33,10 +33,11 @@ public class HexplateWallbreaker extends Card {
                         List.of(CardSubtype.REBEL), Set.of(), Set.of())));
         addStaticEffect(new AttachedBoostEffect(new Fixed(2), new Fixed(2), GrantScope.EQUIPPED_CREATURE));
         addTrigger(Triggers.attacks(),
-                new ConditionalEffect(new FirstCombatPhase(), SequenceEffect.of(
+                TriggerOptions.DEFAULT.withInterveningIf(new FirstCombatPhase()),
+                SequenceEffect.of(
                         new UntapPermanentsEffect(TapUntapScope.ALL_CREATURES,
                                 new PermanentIsAttackingPredicate()),
-                        new AdditionalCombatPhaseEffect(1))));
+                        new AdditionalCombatPhaseEffect(1)));
         addActivatedAbility(new EquipActivatedAbility("{3}{R}"));
     }
 }

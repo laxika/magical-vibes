@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 
+import java.util.List;
+
 /**
  * Binds effects to a target group a card constructor has just declared. The group itself is a
  * {@link TargetGroup} value on the card; this builder only knows the card and the group's index.
@@ -107,6 +109,24 @@ public final class SpellTarget {
      */
     public SpellTarget addTrigger(Trigger trigger, TriggerOptions options, CardEffect... effects) {
         return addTrigger(new TriggerCondition(trigger), options, effects);
+    }
+
+    /**
+     * Adds one triggered ability with several trigger conditions and {@code options}
+     * ({@link Card#addTrigger(List, TriggerOptions, CardEffect...)}) and binds the effects to this group: "whenever
+     * this creature attacks or blocks, tap target creature".
+     */
+    public SpellTarget addTrigger(List<? extends Trigger> triggers, TriggerOptions options, CardEffect... effects) {
+        card.addTrigger(triggers, options, effects);
+        for (CardEffect effect : effects) {
+            card.registerEffectTargetIndex(effect, this.index);
+        }
+        return this;
+    }
+
+    /** Adds one triggered ability with several trigger conditions and no options, as the method above says. */
+    public SpellTarget addTrigger(List<? extends Trigger> triggers, CardEffect... effects) {
+        return addTrigger(triggers, TriggerOptions.DEFAULT, effects);
     }
 
     /**

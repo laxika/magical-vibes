@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -36,14 +36,14 @@ public class SiegeDragon extends Card {
         // Whenever this creature attacks, if defending player controls no Walls, it deals 2 damage
         // to each creature without flying that player controls.
         addTrigger(Triggers.attacks(),
-                new ConditionalEffect(
+                TriggerOptions.DEFAULT.withInterveningIf(
                         new NotCondition(new DefendingPlayerControlsPermanent(
-                                new PermanentHasSubtypePredicate(CardSubtype.WALL))),
-                        new DealDamageToEachMatchingPermanentEffect(2,
-                                new PermanentAllOfPredicate(List.of(
-                                        new PermanentControlledByDefendingPlayerPredicate(),
-                                        new PermanentNotPredicate(
-                                                new PermanentHasKeywordPredicate(Keyword.FLYING)))),
-                                EachPermanentScope.ALL_PLAYERS)));
+                                new PermanentHasSubtypePredicate(CardSubtype.WALL)))),
+                new DealDamageToEachMatchingPermanentEffect(2,
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentControlledByDefendingPlayerPredicate(),
+                                new PermanentNotPredicate(
+                                        new PermanentHasKeywordPredicate(Keyword.FLYING)))),
+                        EachPermanentScope.ALL_PLAYERS));
     }
 }

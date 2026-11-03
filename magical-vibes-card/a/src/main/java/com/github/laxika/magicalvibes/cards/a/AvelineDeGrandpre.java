@@ -23,10 +23,8 @@ public class AvelineDeGrandpre extends Card {
                 new ConditionalEffect(new SourceIsFaceDown(), new CounterUnlessPaysEffect(2)));
         // Whenever a creature you control with deathtouch deals combat damage to a player,
         // put that many +1/+1 counters on that creature.
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue()),
-                        true));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH)),
+                AllyCombatDamageTriggerEffect.boundToDealer(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue())));
     }
 }

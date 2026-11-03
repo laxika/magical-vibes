@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,9 +22,8 @@ public class StinkdrinkerBandit extends Card {
                 Set.of(CardSubtype.GOBLIN, CardSubtype.ROGUE)));
 
         // Whenever a Rogue you control attacks and isn't blocked, it gets +2/+1 until end of turn.
-        addTrigger(Triggers.creatureYouControlAttacksUnblocked(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ROGUE)),
-                        new BoostSelfEffect(2, 1)));
+        addTrigger(Triggers.creatureYouControlAttacksUnblocked()
+                        .withFilter(new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ROGUE))),
+                new BoostSelfEffect(2, 1));
     }
 }

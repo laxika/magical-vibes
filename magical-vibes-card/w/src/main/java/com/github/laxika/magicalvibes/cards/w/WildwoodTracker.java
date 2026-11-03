@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,8 +22,9 @@ public class WildwoodTracker extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.HUMAN))
         )));
-        var boost = new ConditionalEffect(anotherNonHumanCreature, new BoostSelfEffect(1, 1));
-        addTrigger(Triggers.attacks(), boost);
-        addTrigger(Triggers.blocks(), boost);
+        var boost = new BoostSelfEffect(1, 1);
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()),
+                TriggerOptions.DEFAULT.withInterveningIf(anotherNonHumanCreature),
+                boost);
     }
 }

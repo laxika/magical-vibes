@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceClassLevelAtLeast;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerScope;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
@@ -23,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -60,28 +60,23 @@ public class GossipsTalent extends Card {
                         new PermanentIsAttackingPredicate(),
                         new PermanentPowerAtMostPredicate(3))),
                 "Target must be an attacking creature with power 3 or less")).addTrigger(Triggers.youAttack(),
-                new ConditionalEffect(
-                        new SourceClassLevelAtLeast(2),
-                        new MakeCreatureUnblockableEffect()));
+                        TriggerOptions.DEFAULT.withInterveningIf(new SourceClassLevelAtLeast(2)),
+                        new MakeCreatureUnblockableEffect());
 
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        null,
-                        new ConditionalEffect(
-                                new SourceClassLevelAtLeast(3),
-                                new MayEffect(
-                                        new FlickerEffect(
-                                                FlickerScope.SELF,
-                                                null,
-                                                ReturnTiming.IMMEDIATE,
-                                                TurnStep.END_STEP,
-                                                false,
-                                                null,
-                                                null,
-                                                0,
-                                                false,
-                                                false),
-                                        "Exile it, then return it to the battlefield under its owner's control?")),
-                        true));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceClassLevelAtLeast(3)),
+                AllyCombatDamageTriggerEffect.boundToDealer(new MayEffect(
+                        new FlickerEffect(
+                                FlickerScope.SELF,
+                                null,
+                                ReturnTiming.IMMEDIATE,
+                                TurnStep.END_STEP,
+                                false,
+                                null,
+                                null,
+                                0,
+                                false,
+                                false),
+                        "Exile it, then return it to the battlefield under its owner's control?")));
     }
 }

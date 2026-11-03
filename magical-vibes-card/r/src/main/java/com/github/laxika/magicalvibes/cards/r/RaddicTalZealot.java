@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackingCreaturesOfSubtype;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookToHandEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -31,8 +31,8 @@ public class RaddicTalZealot extends Card {
             new DraftCardFromSpellbookToHandEffect.CardPrintingReference("ELD", "9"));
 
     public RaddicTalZealot() {
-        addTrigger(Triggers.youAttack(), new ConditionalEffect(
-                new MinimumAttackingCreaturesOfSubtype(1, CardSubtype.KNIGHT),
-                new DraftCardFromSpellbookToHandEffect(SPELLBOOK)));
+        addTrigger(Triggers.youAttack(),
+                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackingCreaturesOfSubtype(1, CardSubtype.KNIGHT)),
+                new DraftCardFromSpellbookToHandEffect(SPELLBOOK));
     }
 }

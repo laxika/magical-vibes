@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -48,7 +49,9 @@ public class DollmakersShopPorcelainGallery extends Card {
                 new SourceRoomDoorUnlocked(0),
                 new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.youAttackPlayer(),
-                        new ConditionalEffect(new MinimumMatchingAttackers(1, nonToyCreature), toyToken)),
+                                TriggerOptions.DEFAULT.withInterveningIf(
+                                        new MinimumMatchingAttackers(1, nonToyCreature)),
+                                toyToken),
                         GrantScope.SELF)));
 
         PermanentCount creaturesYouControl = new PermanentCount(

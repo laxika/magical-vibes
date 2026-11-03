@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.cards.l.LukkaWaywardBonder;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksPlaneswalker;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,9 +24,9 @@ public class MilaCraftyCompanion extends Card {
         setModalDoubleFaced(true);
 
         addTrigger(Triggers.playerAttacks(),
-                new ConditionalEffect(new OpponentAttacksPlaneswalker(),
-                        new PutCounterOnEachControlledPermanentEffect(
-                                CounterType.LOYALTY, 1, new PermanentIsPlaneswalkerPredicate())));
+                TriggerOptions.DEFAULT.withInterveningIf(new OpponentAttacksPlaneswalker()),
+                new PutCounterOnEachControlledPermanentEffect(
+                        CounterType.LOYALTY, 1, new PermanentIsPlaneswalkerPredicate()));
         addTrigger(Triggers.permanentYouControlBecomesTargetOfOpponentSpellOrAbility(),
                 new MayEffect(new DrawCardEffect(), "Draw a card?"));
 

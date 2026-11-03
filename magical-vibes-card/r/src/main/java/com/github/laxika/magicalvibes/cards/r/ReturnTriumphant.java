@@ -18,11 +18,11 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -62,9 +62,9 @@ public class ReturnTriumphant extends Card {
                 List.of(
                         StaticAbility.of(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.attacks(),
-                        new ConditionalEffect(
-                                new NotCondition(new SourceToughnessAtLeast(4)),
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))),
+                                TriggerOptions.DEFAULT.withInterveningIf(
+                                        new NotCondition(new SourceToughnessAtLeast(4))),
+                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
                         GrantScope.ENCHANTED_CREATURE))),
                 List.of(),
                 false,

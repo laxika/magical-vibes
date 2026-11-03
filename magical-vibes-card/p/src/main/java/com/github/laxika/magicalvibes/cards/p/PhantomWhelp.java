@@ -5,11 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
+
 @CardRegistration(set = "ODY", collectorNumber = "93")
 public class PhantomWhelp extends Card {
 
     public PhantomWhelp() {
-        addTrigger(Triggers.attacks(), new ReturnSelfToHandAtEndOfCombatEffect());
-        addTrigger(Triggers.blocks(), new ReturnSelfToHandAtEndOfCombatEffect());
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), new ReturnSelfToHandAtEndOfCombatEffect());
     }
 }

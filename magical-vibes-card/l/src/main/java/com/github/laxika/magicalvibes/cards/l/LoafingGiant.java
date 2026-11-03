@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
+
 @CardRegistration(set = "INV", collectorNumber = "153")
 public class LoafingGiant extends Card {
 
@@ -16,7 +18,6 @@ public class LoafingGiant extends Card {
                 1,
                 new CardTypePredicate(CardType.LAND),
                 PreventDamageEffect.allCombatBySelf());
-        addTrigger(Triggers.attacks(), effect);
-        addTrigger(Triggers.blocks(), effect);
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), effect);
     }
 }

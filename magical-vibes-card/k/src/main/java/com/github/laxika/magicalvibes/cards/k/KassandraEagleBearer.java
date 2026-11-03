@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchZonesForCardNamedToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -31,7 +30,7 @@ public class KassandraEagleBearer extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentHasAttachedPermanentPredicate(legendaryEquipment)));
 
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(qualifyingCreature, new DrawCardEffect(1)));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer().withFilter(qualifyingCreature),
+                new DrawCardEffect(1));
     }
 }

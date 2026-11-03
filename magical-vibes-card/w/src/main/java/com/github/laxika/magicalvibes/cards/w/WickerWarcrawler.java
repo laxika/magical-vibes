@@ -5,12 +5,13 @@ import com.github.laxika.magicalvibes.model.effect.PutMinusOneCounterOnSourceAtE
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
+
 @CardRegistration(set = "SHM", collectorNumber = "269")
 public class WickerWarcrawler extends Card {
 
     public WickerWarcrawler() {
         // Whenever this creature attacks or blocks, put a -1/-1 counter on it at end of combat.
-        addTrigger(Triggers.attacks(), new PutMinusOneCounterOnSourceAtEndOfCombatEffect());
-        addTrigger(Triggers.blocks(), new PutMinusOneCounterOnSourceAtEndOfCombatEffect());
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), new PutMinusOneCounterOnSourceAtEndOfCombatEffect());
     }
 }

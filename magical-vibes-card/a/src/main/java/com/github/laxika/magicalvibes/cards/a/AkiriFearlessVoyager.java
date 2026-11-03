@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.effect.ChooseEquipmentToUnattachEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -18,9 +18,8 @@ public class AkiriFearlessVoyager extends Card {
 
     public AkiriFearlessVoyager() {
         addTrigger(Triggers.youAttackPlayer(),
-                new ConditionalEffect(
-                        new HasAttacker(new PermanentIsEquippedPredicate()),
-                        new DrawCardEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(new HasAttacker(new PermanentIsEquippedPredicate())),
+                new DrawCardEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -29,7 +29,8 @@ public class LegionsLanding extends Card {
 
         // When you attack with three or more creatures, transform Legion's Landing.
         addTrigger(Triggers.youAttack(),
-                new ConditionalEffect(new MinimumAttackers(3), new TransformSelfEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                new TransformSelfEffect());
     }
 
     @Override

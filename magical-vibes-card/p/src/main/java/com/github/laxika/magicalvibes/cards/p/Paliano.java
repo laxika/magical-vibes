@@ -6,10 +6,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.NoMonarch;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -20,10 +19,8 @@ public class Paliano extends Card {
 
     public Paliano() {
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(null,
-                        new ConditionalEffect(new NoMonarch(), new BecomeMonarchEffect()),
-                        false,
-                        true));
+                TriggerOptions.ONE_OR_MORE.withInterveningIf(new NoMonarch()),
+                new BecomeMonarchEffect());
 
         addTrigger(Triggers.chaosEnsues(),
                 new CreateTokenEffect("Assassin", 1, 1, CardColor.BLACK,

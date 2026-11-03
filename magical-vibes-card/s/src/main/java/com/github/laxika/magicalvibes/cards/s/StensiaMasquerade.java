@@ -25,11 +25,9 @@ public class StensiaMasquerade extends Card {
                 Keyword.FIRST_STRIKE, GrantScope.ALL_OWN_CREATURES, new PermanentIsAttackingPredicate()));
 
         // Whenever a Vampire you control deals combat damage to a player, put a +1/+1 counter on it.
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE),
-                        new PutCountersOnSourceEffect(1, 1, 1),
-                        true));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE)),
+                AllyCombatDamageTriggerEffect.boundToDealer(new PutCountersOnSourceEffect(1, 1, 1)));
 
         // Madness {2}{R}
         addCastingOption(new MadnessCast("{2}{R}"));

@@ -8,9 +8,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
@@ -25,11 +24,8 @@ public class AsariCaptain extends Card {
         PermanentCount samuraiOrWarriorsYouControl =
                 new PermanentCount(samuraiOrWarriorPredicate, CountScope.CONTROLLER);
 
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new TriggeringPermanentConditionalEffect(
-                        samuraiOrWarriorPredicate,
-                        new ConditionalEffect(new AttacksAlone(),
-                                new BoostTargetCreatureEffect(
-                                        samuraiOrWarriorsYouControl, new Fixed(0)))));
+        addTrigger(Triggers.creatureYouControlAttacks().withFilter(samuraiOrWarriorPredicate),
+                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                new BoostTargetCreatureEffect(samuraiOrWarriorsYouControl, new Fixed(0)));
     }
 }

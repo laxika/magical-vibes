@@ -16,14 +16,12 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class HoodedBlightfang extends Card {
 
     public HoodedBlightfang() {
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH),
-                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT)));
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH),
-                        new GainLifeEffect(1)));
+        addTrigger(Triggers.creatureYouControlAttacks()
+                        .withFilter(new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH)),
+                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
+        addTrigger(Triggers.creatureYouControlAttacks()
+                        .withFilter(new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH)),
+                new GainLifeEffect(1));
         addTrigger(Triggers.creatureYouControlDealsDamageToPlaneswalker(),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH),

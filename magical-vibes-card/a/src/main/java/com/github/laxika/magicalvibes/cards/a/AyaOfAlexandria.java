@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -20,12 +19,11 @@ import java.util.Set;
 public class AyaOfAlexandria extends Card {
 
     public AyaOfAlexandria() {
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
-                                new PermanentIsHistoricPredicate())),
-                        new CreateTokenEffect("Assassin", 1, 1, CardColor.BLACK,
-                                List.of(CardSubtype.ASSASSIN), Set.of(Keyword.MENACE), Set.of())));
+                                new PermanentIsHistoricPredicate()))),
+                new CreateTokenEffect("Assassin", 1, 1, CardColor.BLACK,
+                        List.of(CardSubtype.ASSASSIN), Set.of(Keyword.MENACE), Set.of()));
     }
 }

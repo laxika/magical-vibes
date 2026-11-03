@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -20,7 +19,8 @@ public class UltimeciaTemporalThreat extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(
                 TapUntapScope.ALL_CREATURES,
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(new PermanentIsCreaturePredicate(), new DrawCardEffect()));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentIsCreaturePredicate()),
+                new DrawCardEffect());
     }
 }

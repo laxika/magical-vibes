@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedBySourceControllerAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOC", collectorNumber = "4")
@@ -25,9 +25,8 @@ public class KillianDecisiveMentor extends Card {
                         new GoadTargetCreatureUntilNextTurnEffect()));
 
         addTrigger(Triggers.playerAttacks(),
-                new ConditionalEffect(
-                        new MinimumMatchingAttackers(1,
-                                new PermanentIsEnchantedBySourceControllerAuraPredicate()),
-                        new DrawCardEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new MinimumMatchingAttackers(1, new PermanentIsEnchantedBySourceControllerAuraPredicate())),
+                new DrawCardEffect());
     }
 }

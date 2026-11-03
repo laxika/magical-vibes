@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -47,8 +46,7 @@ public class DogmeatEverLoyal extends Card {
         PermanentPredicate enchantedOrEquipped = new PermanentAnyOfPredicate(List.of(
                 new PermanentIsEnchantedPredicate(),
                 new PermanentIsEquippedPredicate()));
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new TriggeringPermanentConditionalEffect(enchantedOrEquipped, junkToken()));
+        addTrigger(Triggers.creatureYouControlAttacks().withFilter(enchantedOrEquipped), junkToken());
     }
 
     private static CreateTokenEffect junkToken() {

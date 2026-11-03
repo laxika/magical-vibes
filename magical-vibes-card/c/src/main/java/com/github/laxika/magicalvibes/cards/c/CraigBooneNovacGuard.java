@@ -6,11 +6,11 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureUnlessControllerTakesDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfThenReflexiveEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
@@ -22,13 +22,13 @@ public class CraigBooneNovacGuard extends Card {
     public CraigBooneNovacGuard() {
         addStaticEffect(new GrantKeywordEffect(Set.of(Keyword.LIFELINK, Keyword.REACH), GrantScope.SELF));
         addTrigger(Triggers.youAttack(),
-                new ConditionalEffect(new MinimumAttackers(2),
-                        new PutCountersOnSelfThenReflexiveEffect(
-                                CounterType.QUEST,
-                                2,
-                                new DealDamageToTargetCreatureUnlessControllerTakesDamageEffect(
-                                        new CountersOnSource(CounterType.QUEST),
-                                        new CountersOnSource(CounterType.QUEST)),
-                                true)));
+                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(2)),
+                new PutCountersOnSelfThenReflexiveEffect(
+                        CounterType.QUEST,
+                        2,
+                        new DealDamageToTargetCreatureUnlessControllerTakesDamageEffect(
+                                new CountersOnSource(CounterType.QUEST),
+                                new CountersOnSource(CounterType.QUEST)),
+                        true));
     }
 }

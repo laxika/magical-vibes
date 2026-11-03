@@ -7,12 +7,12 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PIP", collectorNumber = "17")
@@ -28,8 +28,8 @@ public class Idolized extends Card {
         target(TargetFilters.creature())
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.attacks(),
-                        new ConditionalEffect(new AttacksAlone(),
-                                new BoostSelfEffect(nonlandPermanents, nonlandPermanents))),
+                                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                                new BoostSelfEffect(nonlandPermanents, nonlandPermanents)),
                         GrantScope.ENCHANTED_CREATURE));
     }
 }

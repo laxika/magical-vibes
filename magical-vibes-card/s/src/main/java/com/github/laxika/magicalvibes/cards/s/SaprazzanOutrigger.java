@@ -5,11 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.PutSelfOnTopOfLibraryAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
+
 @CardRegistration(set = "MMQ", collectorNumber = "101")
 public class SaprazzanOutrigger extends Card {
 
     public SaprazzanOutrigger() {
-        addTrigger(Triggers.attacks(), new PutSelfOnTopOfLibraryAtEndOfCombatEffect());
-        addTrigger(Triggers.blocks(), new PutSelfOnTopOfLibraryAtEndOfCombatEffect());
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), new PutSelfOnTopOfLibraryAtEndOfCombatEffect());
     }
 }

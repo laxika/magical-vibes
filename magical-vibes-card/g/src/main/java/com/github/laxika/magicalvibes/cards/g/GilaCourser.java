@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SaddleCost;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -18,8 +18,9 @@ import java.util.List;
 public class GilaCourser extends Card {
 
     public GilaCourser() {
-        addTrigger(Triggers.attacks(), new ConditionalEffect(
-                new SourceIsSaddled(), new ExileTopCardsMayPlayUntilNextTurnEffect(1)));
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                new ExileTopCardsMayPlayUntilNextTurnEffect(1));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

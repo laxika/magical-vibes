@@ -26,7 +26,6 @@ public class HamletCaptain extends Card {
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
         ));
         var boostOtherHumans = new BoostAllOwnCreaturesEffect(1, 1, otherHumansFilter);
-        addTrigger(Triggers.attacks(), boostOtherHumans);
-        addTrigger(Triggers.blocks(), boostOtherHumans);
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), boostOtherHumans);
     }
 }

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardNamedIntoHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.OnceOnlyTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -16,9 +16,9 @@ import java.util.List;
 public class RubyCollector extends Card {
 
     public RubyCollector() {
-        addTrigger(Triggers.youAttack(), new ConditionalEffect(
-                new MinimumAttackers(3),
-                new OnceOnlyTriggerEffect(new ConjureCardNamedIntoHandEffect("LEA", "264", false))));
+        addTrigger(Triggers.youAttack(),
+                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)).withLimit(TriggerLimit.ONCE),
+                new ConjureCardNamedIntoHandEffect("LEA", "264", false));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

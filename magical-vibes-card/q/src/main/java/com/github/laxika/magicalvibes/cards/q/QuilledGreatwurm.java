@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.RemoveCountersFromControlledCreaturesCastingCost;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -21,10 +21,10 @@ import java.util.List;
 public class QuilledGreatwurm extends Card {
 
     public QuilledGreatwurm() {
-        addTrigger(Triggers.creatureYouControlDealsCombatDamage(), new ConditionalEffect(
-                new ControllerTurn(),
+        addTrigger(Triggers.creatureYouControlDealsCombatDamage(),
+                TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()),
                 new PutCounterOnReferencedPermanentEffect(PermanentReference.TRIGGERING,
-                        CounterType.PLUS_ONE_PLUS_ONE, new EventValue())));
+                        CounterType.PLUS_ONE_PLUS_ONE, new EventValue()));
         addCastingOption(new GraveyardCast(List.of(
                 RemoveCountersFromControlledCreaturesCastingCost.anyKind(6))));
     }

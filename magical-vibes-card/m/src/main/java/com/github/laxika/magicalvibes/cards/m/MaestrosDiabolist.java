@@ -8,13 +8,13 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,13 +26,14 @@ public class MaestrosDiabolist extends Card {
     public MaestrosDiabolist() {
         List<Ability> devilTokenEffects =
                 List.of(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(1)));
-        addTrigger(Triggers.attacks(), new ConditionalEffect(
-                new ControlsPermanentCountAtMost(0, new PermanentAllOfPredicate(List.of(
-                        new PermanentHasSubtypePredicate(CardSubtype.DEVIL),
-                        new PermanentIsTokenPredicate()))),
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new ControlsPermanentCountAtMost(0, new PermanentAllOfPredicate(List.of(
+                                new PermanentHasSubtypePredicate(CardSubtype.DEVIL),
+                                new PermanentIsTokenPredicate())))),
                 new CreateTokenEffect(
                         CardType.CREATURE, 1, "Devil", 1, 1, CardColor.RED, null,
                         List.of(CardSubtype.DEVIL), Set.of(), Set.of(), true, false,
-                        devilTokenEffects, List.of(), false, false, false, 0, Set.of())));
+                        devilTokenEffects, List.of(), false, false, false, 0, Set.of()));
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.cards.a.Arachnoform;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({UtvaraHellkite.class, ShivanDragon.class, GrizzlyBears.class, UltimatePrice.class})
+@CardUsed({UtvaraHellkite.class, ShivanDragon.class, GrizzlyBears.class, UltimatePrice.class, Arachnoform.class})
 class UtvaraHellkiteTest extends BaseCardTest {
 
     private List<Permanent> dragonTokens() {
@@ -67,6 +68,21 @@ class UtvaraHellkiteTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(dragonTokens()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A creature that is a Dragon only through an effect triggers the ability as it attacks")
+    void creatureThatIsADragonThroughAnEffectTriggers() {
+        addCreatureReady(player1, new UtvaraHellkite());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        // Arachnoform gives the enchanted creature all creature types, Dragon among them.
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Arachnoform());
+        aura.setAttachedTo(bears.getId());
+
+        declareAttackers(List.of(1));
+        harness.passBothPriorities();
+
+        assertThat(dragonTokens()).hasSize(1);
     }
 
     @Test

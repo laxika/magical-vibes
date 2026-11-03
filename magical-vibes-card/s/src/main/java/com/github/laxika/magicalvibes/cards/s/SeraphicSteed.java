@@ -9,10 +9,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SaddleCost;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,10 +22,11 @@ import java.util.Set;
 public class SeraphicSteed extends Card {
 
     public SeraphicSteed() {
-        addTrigger(Triggers.attacks(), new ConditionalEffect(
-                new SourceIsSaddled(), new CreateTokenEffect(
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                new CreateTokenEffect(
                         "Angel", 3, 3, CardColor.WHITE,
-                        List.of(CardSubtype.ANGEL), Set.of(Keyword.FLYING), Set.of())));
+                        List.of(CardSubtype.ANGEL), Set.of(Keyword.FLYING), Set.of()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

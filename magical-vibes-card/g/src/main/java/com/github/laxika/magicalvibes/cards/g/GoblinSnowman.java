@@ -4,12 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,8 +22,8 @@ import java.util.List;
 public class GoblinSnowman extends Card {
 
     public GoblinSnowman() {
-        addTrigger(Triggers.blocks(), TriggerMode.ONCE_PER_BLOCK, PreventDamageEffect.allCombatToSelf());
-        addTrigger(Triggers.blocks(), TriggerMode.ONCE_PER_BLOCK, PreventDamageEffect.allCombatBySelf());
+        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, PreventDamageEffect.allCombatToSelf());
+        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, PreventDamageEffect.allCombatBySelf());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

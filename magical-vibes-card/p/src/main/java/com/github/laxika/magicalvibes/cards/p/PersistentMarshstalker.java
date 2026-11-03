@@ -30,19 +30,17 @@ public class PersistentMarshstalker extends Card {
         addStaticEffect(new DynamicStaticBoostEffect(
                 otherRats, new Fixed(0), GrantScope.SELF));
 
-        addTrigger(new TriggerCondition(Triggers.youAttack(), AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
-                new ConditionalEffect(
-                        new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.RAT)),
-                        new ConditionalEffect(
-                                new GraveyardCardThreshold(7, null),
-                                new MayPayManaEffect("{2}{B}",
-                                        ReturnCardFromGraveyardEffect.builder()
-                                                .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                                                .filter(new CardIsSelfPredicate())
-                                                .returnAll(true)
-                                                .enterTapped(true)
-                                                .enterAttacking(true)
-                                                .build(),
-                                        "Pay {2}{B} to return Persistent Marshstalker from your graveyard to the battlefield tapped and attacking?"))));
+        addTrigger(new TriggerCondition(Triggers.youAttack(), AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.RAT))),
+                new ConditionalEffect(new GraveyardCardThreshold(7, null), new MayPayManaEffect("{2}{B}",
+                        ReturnCardFromGraveyardEffect.builder()
+                                .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                                .filter(new CardIsSelfPredicate())
+                                .returnAll(true)
+                                .enterTapped(true)
+                                .enterAttacking(true)
+                                .build(),
+                        "Pay {2}{B} to return Persistent Marshstalker from your graveyard to the battlefield tapped and attacking?")));
     }
 }

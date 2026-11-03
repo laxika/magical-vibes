@@ -35,8 +35,7 @@ public class AshcoatOfTheShadowSwarm extends Card {
                 rat,
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())));
         var attackOrBlockBoost = new BoostAllOwnCreaturesEffect(ratsYouControl, ratsYouControl, otherRats);
-        addTrigger(Triggers.attacks(), attackOrBlockBoost);
-        addTrigger(Triggers.blocks(), attackOrBlockBoost);
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), attackOrBlockBoost);
 
         var ratCreatureCard = new CardAllOfPredicate(List.of(
                 new CardTypePredicate(CardType.CREATURE),

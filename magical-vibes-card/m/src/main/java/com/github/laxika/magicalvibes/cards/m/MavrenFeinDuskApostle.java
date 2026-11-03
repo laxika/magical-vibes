@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -25,10 +25,12 @@ public class MavrenFeinDuskApostle extends Card {
         // Whenever one or more nontoken Vampires you control attack,
         // create a 1/1 white Vampire creature token with lifelink.
         addTrigger(Triggers.youAttack(),
-                new ConditionalEffect(new HasAttacker(new PermanentAllOfPredicate(List.of(
-                                new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE),
-                                new PermanentNotPredicate(new PermanentIsTokenPredicate())
-                        ))), new CreateTokenEffect("Vampire", 1, 1, CardColor.WHITE,
-                                List.of(CardSubtype.VAMPIRE), Set.of(Keyword.LIFELINK), Set.of())));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new HasAttacker(new PermanentAllOfPredicate(List.of(
+                                        new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE),
+                                        new PermanentNotPredicate(new PermanentIsTokenPredicate())
+                                )))),
+                new CreateTokenEffect("Vampire", 1, 1, CardColor.WHITE,
+                        List.of(CardSubtype.VAMPIRE), Set.of(Keyword.LIFELINK), Set.of()));
     }
 }

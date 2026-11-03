@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttacksPlayerWithMostLifePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttacksWhileSourceControllerHasMostLifePredicate;
@@ -27,21 +26,19 @@ public class PreacherOfTheSchism extends Card {
     public PreacherOfTheSchism() {
         // Whenever this creature attacks the player with the most life or tied for most life, create a
         // 1/1 white Vampire creature token with lifelink.
-        addTrigger(Triggers.creatureYouControlAttacks(), TriggerMode.INDEPENDENT,
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.creatureYouControlAttacks()
+                        .withFilter(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsSourcePermanentPredicate(),
-                                new PermanentAttacksPlayerWithMostLifePredicate())),
-                        new CreateTokenEffect("Vampire", 1, 1, CardColor.WHITE,
-                                List.of(CardSubtype.VAMPIRE), Set.of(Keyword.LIFELINK), Set.of())));
+                                new PermanentAttacksPlayerWithMostLifePredicate()))),
+                TriggerMode.INDEPENDENT,
+                new CreateTokenEffect("Vampire", 1, 1, CardColor.WHITE,
+                        List.of(CardSubtype.VAMPIRE), Set.of(Keyword.LIFELINK), Set.of()));
         // Whenever this creature attacks while you have the most life or are tied for most life, you
         // draw a card and you lose 1 life.
         PermanentPredicate attacksWhileLeading = new PermanentAllOfPredicate(List.of(
                 new PermanentIsSourcePermanentPredicate(),
                 new PermanentAttacksWhileSourceControllerHasMostLifePredicate()));
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new TriggeringPermanentConditionalEffect(attacksWhileLeading, new DrawCardEffect()));
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new TriggeringPermanentConditionalEffect(attacksWhileLeading, new LoseLifeEffect(1)));
+        addTrigger(Triggers.creatureYouControlAttacks().withFilter(attacksWhileLeading), new DrawCardEffect());
+        addTrigger(Triggers.creatureYouControlAttacks().withFilter(attacksWhileLeading), new LoseLifeEffect(1));
     }
 }

@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPerma
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -28,15 +27,13 @@ import java.util.Set;
 public class IbHalfheartGoblinTactician extends Card {
 
     public IbHalfheartGoblinTactician() {
-        addTrigger(Triggers.creatureYouControlBecomesBlocked(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.creatureYouControlBecomesBlocked()
+                        .withFilter(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
-                                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
-                        )),
-                        new SacrificeSelfThenEffect(new DealDamageToEachMatchingPermanentEffect(
-                                4, new PermanentBlockingSourcePredicate(), EachPermanentScope.ALL_PLAYERS))));
+                                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())))),
+                new SacrificeSelfThenEffect(new DealDamageToEachMatchingPermanentEffect(
+                        4, new PermanentBlockingSourcePredicate(), EachPermanentScope.ALL_PLAYERS)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

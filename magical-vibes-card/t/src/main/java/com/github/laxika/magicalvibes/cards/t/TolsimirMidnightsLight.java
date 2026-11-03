@@ -7,13 +7,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisCombat;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockTriggeringAttackerEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -31,10 +30,9 @@ public class TolsimirMidnightsLight extends Card {
                 List.of(), List.of(), false, false, true, 0, Set.of()));
 
         target(TargetFilters.creatureAnOpponentControls())
-                .addTrigger(Triggers.creatureYouControlAttacks(),
-                        new TriggeringCardConditionalEffect(
-                                new CardSubtypePredicate(CardSubtype.WOLF),
-                                new ConditionalEffect(new SourceAttackedThisCombat(),
-                                        new MustBlockTriggeringAttackerEffect())));
+                .addTrigger(Triggers.creatureYouControlAttacks()
+                                .withFilter(new PermanentHasSubtypePredicate(CardSubtype.WOLF)),
+                        TriggerOptions.DEFAULT.withInterveningIf(new SourceAttackedThisCombat()),
+                        new MustBlockTriggeringAttackerEffect());
     }
 }

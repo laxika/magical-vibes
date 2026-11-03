@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.f.FlameheartWerewolf;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -19,7 +18,7 @@ public class KessigForgemaster extends Card {
 
         DealDamageToTargetCreatureEffect damage = new DealDamageToTargetCreatureEffect(1);
         addTrigger(Triggers.blocks(), damage);
-        addTrigger(Triggers.becomesBlocked(), TriggerMode.PER_BLOCKER, damage);
+        addTrigger(Triggers.becomesBlocked(), TriggerOptions.EACH_BLOCKER, damage);
 
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                 TriggerOptions.DEFAULT.withInterveningIf(new NoSpellsCastLastTurn()),

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -24,9 +23,9 @@ public class PoeticIngenuity extends Card {
 
     public PoeticIngenuity() {
         addTrigger(Triggers.youAttack(),
-                new ConditionalEffect(
-                        new MinimumMatchingAttackers(1, new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR)),
-                        CreateTokenEffect.ofTreasureToken(new EventValue())));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new MinimumMatchingAttackers(1, new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR))),
+                CreateTokenEffect.ofTreasureToken(new EventValue()));
 
         addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.ARTIFACT)),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),

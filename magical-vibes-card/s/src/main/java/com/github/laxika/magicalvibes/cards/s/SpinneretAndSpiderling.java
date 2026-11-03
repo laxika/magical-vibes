@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.MinimumAttackingCreaturesO
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SPM", collectorNumber = "94")
@@ -17,9 +18,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SpinneretAndSpiderling extends Card {
 
     public SpinneretAndSpiderling() {
-        addTrigger(Triggers.youAttack(), new ConditionalEffect(
-                new MinimumAttackingCreaturesOfSubtype(2, CardSubtype.SPIDER),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
+        addTrigger(Triggers.youAttack(),
+                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackingCreaturesOfSubtype(2, CardSubtype.SPIDER)),
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
         addTrigger(Triggers.dealsDamage(), new ConditionalEffect(
                 new EventValueAtLeast(4), new ExileTopCardsMayPlayUntilNextTurnEffect(1)));
     }

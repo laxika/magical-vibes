@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCre
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOpponentOfSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -21,9 +20,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class KharashaFoothills extends Card {
 
     public KharashaFoothills() {
-        addTrigger(Triggers.creatureYouControlAttacks(), new TriggeringPermanentConditionalEffect(
-                new PermanentIsAttackingOpponentOfSourceControllerPredicate(),
-                new CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect()));
+        addTrigger(Triggers.creatureYouControlAttacks()
+                        .withFilter(new PermanentIsAttackingOpponentOfSourceControllerPredicate()),
+                new CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect());
         target(TargetFilters.creature()).addTrigger(Triggers.chaosEnsues(), SequenceEffect.of(
                 new SacrificeAnyNumberOfPermanentsEffect(new PermanentIsCreaturePredicate()),
                 new ConditionalEffect(

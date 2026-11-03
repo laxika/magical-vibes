@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -4533,8 +4533,9 @@ the creature-death family, run 3a the other zone and permanent changes but "anot
 object enters", run 4a the reading of the own enters abilities' options and the "this or another" enters merges, run 4b
 the own enters abilities' intervening "if"s, run 4c the rules fixes: every own enters intervening "if" checked
 as the ability triggers, run 5 the steps and phases, run 6a the spell, land-play and activation abilities' generic
-wrappers, run 6b `SpellCastTriggerEffect`, as the cast trigger's filter, the ability's options and its effects, and run
-6c the other spell, copy and land-play condition-as-effect classes, as the trigger's filter.
+wrappers, run 6b `SpellCastTriggerEffect`, as the cast trigger's filter, the ability's options and its effects, run
+6c the other spell, copy and land-play condition-as-effect classes, as the trigger's filter, and run 7 the combat
+abilities (step 13's family 3), all of their wrapper kinds in one run, with the user.
 
 #### Run 1: the source's own zone changes
 
@@ -5762,6 +5763,182 @@ user).
   `DamageTriggerCollectorServiceTest` 6, `DeathTriggerCollectorServiceTest` 6 and `LandTapTriggerCollectorServiceTest`
   2 (mock wiring; the same names fail at HEAD `2410096d0b`, checked in a worktree).
 - AI: not run (no new `GameData`, `StackEntry` or `Permanent` state).
+- The full suite was not run here.
+
+#### Run 7: combat
+
+Step 13 family 3, every wrapper kind in one run (with the user): every attack, block, becomes-blocked, unblocked and
+combat damage ability that the `CombatWatch` collectors read is authored without trigger-only wrappers, but for the
+abilities kept below. 818 abilities in 805 card classes were converted, and 48 "attacks or blocks" pairs were merged.
+
+**Authoring.**
+
+- A restriction on the creature is the trigger's filter: `CombatTrigger.withFilter(PermanentPredicate)`, as in
+  `Triggers.creatureYouControlAttacks().withFilter(dragon)`, `Triggers.becomesBlocked().withFilter(white)` or
+  `Triggers.creatureYouControlDealsCombatDamageToPlayer().withFilter(vampire)`. For "this creature blocks / becomes
+  blocked" the filter is the creature on the other side (CR 509.3f, checked); for every other event it is the
+  attacking, blocking, blocked or damage-dealing creature, judged as the collectors judged the wrapper. A second filter
+  is rejected. `CombatTrigger.watchKey()` drops the filter but keeps the same-name and goaded filters, whose own
+  collectors read them.
+- Multiplicity is a `TriggerOptions` value:
+  - "Whenever this creature blocks", once each combat (CR 509.3a, checked), and "whenever one or more creatures you
+    control deal combat damage to a player / deal combat damage to you" are `TriggerOptions.ONE_OR_MORE`.
+  - "Becomes blocked by a creature", once for each blocker (CR 509.3d, checked), is the new
+    `TriggerMultiplicity.EACH_BLOCKER` (`TriggerOptions.EACH_BLOCKER`).
+  - The defaults stay "blocks a creature", once per creature blocked (509.3b), and "becomes blocked", once (509.3c).
+  - `TriggerMode.ONCE_PER_BLOCK` and `PER_BLOCKER` are no longer authored. `INDEPENDENT` stays (run 16).
+- An intervening "if" is `TriggerOptions.DEFAULT.withInterveningIf(c)` (CR 603.4, checked). So is a condition that
+  belongs to the trigger event: "attacks alone", "with three or more creatures", "attacks a player who …", "a player who
+  is afraid of you", "during your turn", saddled, a Class level, a station threshold, a chosen mode. The other limits:
+  "triggers only once each turn" and "attacks for the first time each turn" are `ONCE_EACH_TURN`, "do this only once
+  each turn" is `DO_ONLY_ONCE_EACH_TURN` (CR 603.2h), "this ability triggers only once" is `ONCE`.
+- "Whenever this creature attacks or blocks" is one ability with both trigger conditions:
+  `Card.addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), [options,] effects…)`. A `SpellTarget` form exists
+  too, and the new `addSimultaneousTrigger(trigger, options, effects…)` and `TriggeredAbility(trigger, options,
+  effects…)` take options.
+- On the ally combat damage triggers a plain effect is the usual form. `AllyCombatDamageTriggerEffect` is authored only
+  for how the effect reads the event: `boundToDealer(effect)` ("put a +1/+1 counter on it") and
+  `opponentsDealtDamage(effect)` (Mindblade Render). Step 15 replaces both with event references.
+
+**The engine.**
+
+- `TriggeredAbility.legacyEffects()` rebuilds the combat wrappers in the order the cards nested them, outermost first:
+  the limit, the filter as a `TriggeringPermanentConditionalEffect`, a `BatchedCombatDamageToYouTriggerEffect`, the
+  intervening "if", then `OnceOnlyTriggerEffect`.
+  - On "a creature you control (or one with this one's name) deals combat damage to a player, a player or battle, or a
+    player or planeswalker", every effect is given as an `AllyCombatDamageTriggerEffect` carrying the filter and
+    "one or more". An authored record takes these in (`withTriggerOptions`) and keeps the intervening "if" inside it.
+    With nothing to take in, it keeps its identity.
+  - The multiplicity becomes the registrations' `ONCE_PER_BLOCK` / `PER_BLOCKER`.
+  - A multiplicity the collectors can't read (`ONE_OR_MORE` on an attack, `EACH_BLOCKER` off "becomes blocked", a
+    registration mode next to a multiplicity) throws, as do combat conditions with different filters.
+- `CombatWatch.effectsOf` and `registrationsOf` read the legacy view (`Card.getLegacyTriggerEffects(trigger, zone)`).
+  `scripts/step14-combat-readers.py` moved every other combat reader to it:
+  - `Permanent.getLegacyTemporaryTriggerEffects` and `getLegacyPersistentTriggerEffects` (new);
+  - `TemporaryGlobalTriggeredAbility.legacyEffect()` (new) in the loops over the registered global abilities;
+  - `hasWatchedTrigger` in place of `hasTrigger`;
+  - `getEffectiveGraveyardLegacyTriggerEffects`, which now also reads the perpetual grants through the new
+    `GameData.perpetualLegacyTriggerEffects` (Forgeborn Phoenix's perpetually granted ability).
+  - By hand: the token-factory Aura attack check, the Imoen binding, the until-next-turn registration and the
+    source-deals-combat-damage dispatcher. `TriggerCollectionService.watches` finds a registered ability by watch key.
+- `collectTemporaryGlobalTriggers` keeps the plain effect for `ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER`: a registered
+  global "creature you control deals combat damage" ability (Mistway Spy, Surge to Victory) is collected there with
+  its plain effect, not as the ally record.
+- Raphael, Tag Team Tough's "first time each turn" marker (`markFirstTimeEachTurnSelfCombatDamageSpent`) marks through
+  `OncePerTurnTriggerSupport.markIfNeeded`, so it also marks the keyed limit the legacy view gives.
+- No wrapper class is deleted: the legacy view still builds them. Run 16 deletes what is left.
+
+**Cards.**
+
+- `scripts/step14-combat-scan.py` lists the family's wrapped abilities; `scripts/step14-combat-chains.py` counts their
+  wrapper chains.
+- `scripts/step14-combat-options.py` (per letter module; `--dry-run`, `--report`) did the conversion and the merges. It
+  follows local variables to their one definition and converts a card-predicate variable to its permanent form
+  (Raiyuu was finished by hand). It stops on any wrapped ability it can't decide. Its tables:
+  - `INTERVENING_CARDS`: one Oracle ability split over two abilities, Class and station levels, trigger-event
+    conditions, double team, a back face without Oracle text.
+  - `NOT_INTERVENING`, the effect-text "if"s, which stay effects: Canoptek Wraith, Family's Favor, Karai, Twenty-Toed
+    Toad, Mishra, Claimed by Gix.
+- A nested `ConditionalEffect` under the intervening one stays an effect (Firemane Commando).
+- `scripts/step14-combat-converted.txt` lists every decision.
+- Tidus, Yuna's Guardian was done by hand: its `new OncePerTurnTriggerEffect(ally, true)` is `ONE_OR_MORE` with
+  `DO_ONLY_ONCE_EACH_TURN` and the filter.
+- Script fixes, applied by hand to the cards already written: fully qualified names inside a converted expression
+  lost their import (Akki Ronin, Ainok Strike Leader, Choco).
+- Aurelia's, Godo's and Gilded Cerodon's comments were edited by script.
+- `scripts/step14-combat-docs.py` rewrote 129 agent-docs lines. It turns the wrappers in combat rows into the filter,
+  the options and the effect; it adds "don't author" notes to the class entries of `AllyCombatDamageTriggerEffect`,
+  `BatchedCombatDamageToYouTriggerEffect`, `TriggeringPermanentConditionalEffect` and
+  `TriggeringCardConditionalEffect`; and it replaces `TriggerMode.PER_BLOCKER` / `ONCE_PER_BLOCK`. Rows of the kept
+  cards are left alone.
+- `ARCHITECTURE.md`, `TRIGGER_SLOT_TARGETING.md` and the implement-card and review-card skills were edited by hand.
+
+**Kept, with their reason.**
+
+- `TriggeringPermanentControllerConditionalEffect` ("a creature you control" on a watch of any creature's), whose
+  collectors unwrap it before the permanent filter: Edward Kenway, Etrata, Kestia, Nahiri, Forged in Fury, Swordsman,
+  Sharp Scoundrel, and the registered abilities of The Last Ronin, The Revelations of Ezio and Harald Unites the Elves.
+  The step that moves combat onto rules events can make them `YOU_CONTROL` relations.
+- Card filters whose collector judges the card and queues the effect once per blocked attacker
+  (`BlockedCreatureTriggerEffect`): Spined Sliver, Berserk Murlodont (`creatureBecomesBlocked`), Tattered Ratter
+  (`creatureYouControlBecomesBlocked`), and Senu, Keen-Eyed Protector (`creatureYouControlAttacksUnblocked`, from exile).
+- Flagged `TriggeringPermanentConditionalEffect`s: Mirror Shield's two granted abilities.
+- Desert Werewurm: "triggers only once each turn" is written inside its intervening "if". The legacy view would put the
+  limit outside, and the `youAttack` collector marks the limit as it unwraps it.
+- Pirated Copy: a granted same-name ability that authors its dealer filter in the ally record. The legacy view reads it
+  unchanged.
+- Effects shared with another family's ability: Bloodhall Priest and Omnivorous Flytrap ("enters or attacks, if …"),
+  Naomi, Pillar of Order. One ability with an enters and an attacks condition needs the enters readers to take it.
+- The 70 `blocks()` abilities on `TriggerMode.NORMAL` mostly say "whenever this blocks", which is once each combat
+  (CR 509.3a), but they trigger once for each creature blocked. This is a pre-existing deviation; it matters only for a
+  creature that blocks several. Not changed here.
+- Most combat collectors check an intervening "if" only as the ability resolves, not as it triggers. The any-creature
+  attack collector, for example, checks only `AttackedTargetIsMonarch` at trigger time. The legacy view rebuilds the
+  same wrappers, so nothing changed. A run like 4c's would make every combat collector check the option as the
+  ability triggers.
+
+**For later runs.**
+
+- The Aura/Equipment and Curse readings of the `THIS` forms (run 3) are still in place. Splitting them into `ENCHANTED`
+  / `EQUIPPED` relations needs the attack-trigger ownership flags (`attackTriggerOwnedByAura`,
+  `attackTriggerGrantedByEquipment`) moved onto the trigger. That belongs to the step that moves combat onto rules
+  events.
+- "Blocks or becomes blocked by a creature" pairs (Arrogant Bloodlord, Giant Shark, the Basilisks) stay two abilities:
+  their halves have different multiplicities, and options are per ability.
+- Raiyuu, Storm's Edge, Raph & Leo and Godo split one Oracle ability over several abilities with one limit or "if"
+  each, as before.
+- The once-each-turn limit is keyed by the ability, where the unkeyed wrappers shared the source's mark. Aurelia's and
+  Godo's halves now have one limit each; they all trigger on the first attack and none later, as before. Several
+  combat collectors still check and set the unkeyed mark whatever the key (the `youAttack` and attack collectors), so
+  behaviour is unchanged there.
+
+**Behaviour changes.**
+
+- The 25 "whenever a [quality] creature you control attacks" abilities that filtered on the card
+  (`TriggeringCardConditionalEffect` on `creatureYouControlAttacks`) now filter on the attacking permanent, layered:
+  the ability triggers when the creature is declared as an attacker (CR 508.3a, checked) and the trigger event matches
+  then (CR 603.2, checked), so its characteristics as it attacks count, not its printed card's. A creature that is a Dragon only
+  through an effect now triggers Utvara Hellkite; a printed Dragon that lost the type no longer does. The cards: Akki
+  Ronin's and the other Samurai-or-Warrior "attacks alone" cards, Utvara Hellkite, Kolaghan, Ojutai, Silumgar, Atarka,
+  Sanctum Seeker, Knight's Charge, Mardu Ascendancy, Militia's Pride, Linden, Zoraline, Breeches, Putrefying Rotboar
+  and Tolsimir. See `scripts/step14-combat-converted.txt` (`C`).
+- "Attacks or blocks" merged cards are one ability each. Only one of the two events can happen to a creature in one
+  combat, so nothing observable changed.
+- Nothing else changed: the legacy view hands every collector the wrappers and modes it read before.
+
+**Tests changed.**
+
+- `CombatTriggerTest`, eight new tests:
+  - a filter is dropped from the watch key but the same-name and goaded filters stay, and a second filter is rejected;
+  - the legacy view gives the filter inside the limit and outside the intervening "if", with a stable identity;
+  - an ally combat damage ability is read as the ally record, plain, filtered with "one or more", or authored with
+    `boundToDealer`;
+  - an authored record without options keeps its identity;
+  - the multiplicities become `ONCE_PER_BLOCK`, `PER_BLOCKER` and the batched wrapper;
+  - an unreadable multiplicity is rejected;
+  - an attacks-or-blocks ability is read by both watches;
+  - granted and registered abilities are read in the legacy form.
+- `UtvaraHellkiteTest`: new test, a Grizzly Bears that is a Dragon through Arachnoform triggers the ability as it
+  attacks. This is the behaviour change above.
+- No other test changed.
+
+**Test runs.**
+
+- Card: the test class of every converted card and every card test that constructs one (1,258 classes, 10,830 tests).
+  The first run had 8 failures in 3 classes, all fixed above: Forgeborn Phoenix (the perpetual reader), Gossip's
+  Talent (the intervening "if" inside an authored ally record) and Raphael, Tag Team Tough (the keyed marker).
+- After the engine fixes, every card that names an ally or same-name combat damage trigger or a perpetual triggered
+  grant, plus the changed cards (194 classes, 1,568 tests), was rerun. One more fix came out of it (Mistway Spy and
+  Surge to Victory, the registered-global reader), and the run after that passed.
+- Application: the `service.trigger` package and the trigger-model, watch, legacy-slot, freeze, granted-ability,
+  combat damage, step, targeting, query, text-change and architecture classes. All failures also fail at HEAD:
+  - `StepTriggerServiceTest` 16, `TargetLegalityServiceTest` 14, `SpellCastTriggerCollectorServiceTest` 3,
+    `DamageTriggerCollectorServiceTest` 6, `DeathTriggerCollectorServiceTest` 6, `LandTapTriggerCollectorServiceTest` 2,
+    and the known one each in `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and
+    `CardEffectTargetingConsistencyTest`, as in run 6c.
+  - `CombatDamageServiceTest` 40 and `GameQueryServiceTest` 1 (mock wiring). The same counts fail at HEAD
+    `bb17de13b7`, checked in a worktree.
+- AI: the whole module, with the same 10 failures as before.
 - The full suite was not run here.
 
 ## Prompt

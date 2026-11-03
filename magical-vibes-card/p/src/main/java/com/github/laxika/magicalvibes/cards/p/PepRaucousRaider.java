@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPermissionWithPerpetualCharacteristicsEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantCardCharacteristicsEffect;
@@ -29,11 +28,9 @@ public class PepRaucousRaider extends Card {
                 "{T}, Sacrifice an artifact: Add three mana of any one color.");
 
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        null,
-                        new ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPermissionWithPerpetualCharacteristicsEffect(
-                                new PerpetuallyGrantCardCharacteristicsEffect(
-                                        Set.of(CardType.ARTIFACT), Set.of(), List.of()))));
+                new ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPermissionWithPerpetualCharacteristicsEffect(
+                        new PerpetuallyGrantCardCharacteristicsEffect(
+                                Set.of(CardType.ARTIFACT), Set.of(), List.of())));
         addActivatedAbility(artifactManaAbility);
     }
 }

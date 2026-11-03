@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -28,15 +27,14 @@ public class ShardingSphinx extends Card {
     public ShardingSphinx() {
         // Whenever an artifact creature you control deals combat damage to a player, you may create
         // a 1/1 blue Thopter artifact creature token with flying.
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),
-                                new PermanentIsCreaturePredicate())),
-                        new MayEffect(
-                                new CreateTokenEffect("Thopter", 1, 1, CardColor.BLUE,
-                                        List.of(CardSubtype.THOPTER), Set.of(Keyword.FLYING),
-                                        Set.of(CardType.ARTIFACT)),
-                                "create a 1/1 blue Thopter artifact creature token with flying")));
+                                new PermanentIsCreaturePredicate()))),
+                new MayEffect(
+                        new CreateTokenEffect("Thopter", 1, 1, CardColor.BLUE,
+                                List.of(CardSubtype.THOPTER), Set.of(Keyword.FLYING),
+                                Set.of(CardType.ARTIFACT)),
+                        "create a 1/1 blue Thopter artifact creature token with flying"));
     }
 }

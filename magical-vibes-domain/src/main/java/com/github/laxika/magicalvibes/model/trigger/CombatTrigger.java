@@ -14,8 +14,16 @@ import java.util.Objects;
  *                 for "a creature you control", {@link ObjectRelation#ANY} for "a creature",
  *                 {@link ObjectRelation#EQUIPPED} or {@link ObjectRelation#ENCHANTED} for the creature the source is
  *                 attached to, {@link ObjectRelation#OPPONENT_CONTROLS} for "a creature an opponent controls"
- * @param filter   what that creature must be, or {@code null} for any creature: "a creature with the same name as
- *                 this", "one or more goaded creatures". The engine's combat collectors check it
+ * @param filter   what the creature must be, or {@code null} for any creature: "whenever a Dragon you control attacks"
+ *                 is {@code Triggers.creatureYouControlAttacks().withFilter(new PermanentHasSubtypePredicate(DRAGON))}.
+ *                 For "this creature blocks" and "this creature becomes blocked" it is the creature on the other side
+ *                 of the block, "blocks a creature with flying", "becomes blocked by a white creature" (CR 509.3f);
+ *                 for every other event it is the creature that attacks, blocks, becomes blocked or deals the
+ *                 damage, as the engine's combat collectors judge it. "A creature with the same name as this" and "one
+ *                 or more goaded creatures" are filters their own collectors read
+ *                 ({@link Triggers#creatureWithSameNameDealsCombatDamageToPlayer()},
+ *                 {@link Triggers#goadedCreaturesDealCombatDamageToOpponent()}); any other filter the collectors read
+ *                 from the legacy view ({@code TriggeredAbility.legacyEffects()}), so {@link #watchKey()} drops it
  */
 public record CombatTrigger(CombatEvent event, ObjectRelation relation, PermanentPredicate filter) implements Trigger {
 
@@ -27,6 +35,32 @@ public record CombatTrigger(CombatEvent event, ObjectRelation relation, Permanen
     /** A trigger on any creature that relates to the source as {@code relation} says. */
     public CombatTrigger(CombatEvent event, ObjectRelation relation) {
         this(event, relation, null);
+    }
+
+    /**
+     * This trigger narrowed to a creature that matches {@code filter}, as {@link #filter} says: "whenever a Dragon you
+     * control attacks", "whenever this creature becomes blocked by a white creature".
+     */
+    public CombatTrigger withFilter(PermanentPredicate filter) {
+        Objects.requireNonNull(filter, "filter");
+        if (this.filter != null) {
+            throw new IllegalStateException("This combat trigger already has a filter: " + this);
+        }
+        return new CombatTrigger(event, relation, filter);
+    }
+
+    /**
+     * The trigger without the filter the combat collectors read from the legacy view, so the {@code CombatWatch} of
+     * the unfiltered trigger finds the ability. The same-name and goaded filters name collectors of their own and
+     * stay.
+     */
+    @Override
+    public Trigger watchKey() {
+        if (filter == null || equals(Triggers.creatureWithSameNameDealsCombatDamageToPlayer())
+                || equals(Triggers.goadedCreaturesDealCombatDamageToOpponent())) {
+            return this;
+        }
+        return new CombatTrigger(event, relation);
     }
 
     /**

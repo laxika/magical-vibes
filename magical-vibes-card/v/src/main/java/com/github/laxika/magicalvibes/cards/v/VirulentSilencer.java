@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -18,12 +17,11 @@ import java.util.List;
 public class VirulentSilencer extends Card {
 
     public VirulentSilencer() {
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),
                                 new PermanentIsCreaturePredicate(),
-                                new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
-                        new GivePoisonCountersEffect(2, PoisonRecipient.TARGET_PLAYER)));
+                                new PermanentNotPredicate(new PermanentIsTokenPredicate())))),
+                new GivePoisonCountersEffect(2, PoisonRecipient.TARGET_PLAYER));
     }
 }

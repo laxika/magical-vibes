@@ -20,7 +20,6 @@ public class VelukanDragon extends Card {
                 new BoostSelfEffect(4, 0),
                 new BoostSelfEffect(5, 0)
         ));
-        addTrigger(Triggers.attacks(), roll);
-        addTrigger(Triggers.blocks(), roll);
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), roll);
     }
 }

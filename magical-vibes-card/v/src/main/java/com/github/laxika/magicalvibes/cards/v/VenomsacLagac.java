@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SaddleCost;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -19,7 +19,8 @@ public class VenomsacLagac extends Card {
 
     public VenomsacLagac() {
         addTrigger(Triggers.attacks(),
-                new ConditionalEffect(new SourceIsSaddled(), new BoostSelfEffect(0, 3)));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                new BoostSelfEffect(0, 3));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -23,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -51,12 +51,10 @@ public class JacobFrye extends Card {
 
         GraveyardSearchScope ownGraveyard = GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
         target(new GraveyardCardPredicateTargetFilter(ASSASSIN_OR_FREERUNNING, ownGraveyard), 0, 1)
-                .addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                        new AllyCombatDamageTriggerEffect(
-                                new PermanentHasSubtypePredicate(CardSubtype.ASSASSIN),
-                                new ExileTargetCardFromGraveyardAndMayCastCopyEffect(
-                                        ASSASSIN_OR_FREERUNNING, ownGraveyard, false),
-                                false,
-                                true));
+                .addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                                .withFilter(new PermanentHasSubtypePredicate(CardSubtype.ASSASSIN)),
+                        TriggerOptions.ONE_OR_MORE,
+                        new ExileTargetCardFromGraveyardAndMayCastCopyEffect(
+                                ASSASSIN_OR_FREERUNNING, ownGraveyard, false));
     }
 }

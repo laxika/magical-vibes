@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
@@ -26,9 +25,8 @@ public class RogueClass extends Card {
 
     public RogueClass() {
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(null,
-                        new ExileTopCardsToSourceEffect(1, true, false, LibraryScope.TARGET_OPPONENT,
-                                false, null, false, true, true)));
+                new ExileTopCardsToSourceEffect(1, true, false, LibraryScope.TARGET_OPPONENT,
+                        false, null, false, true, true));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

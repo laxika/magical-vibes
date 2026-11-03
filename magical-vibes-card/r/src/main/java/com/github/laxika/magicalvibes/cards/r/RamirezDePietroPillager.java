@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LCC", collectorNumber = "285")
@@ -27,12 +27,10 @@ public class RamirezDePietroPillager extends Card {
                 new LoseLifeEffect(2),
                 CreateTokenEffect.ofTreasureToken(2)));
 
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.PIRATE),
-                        new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.TARGET_OPPONENT),
-                        false,
-                        true));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.PIRATE)),
+                TriggerOptions.ONE_OR_MORE,
+                new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.TARGET_OPPONENT));
 
         addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 false, new CardNotPredicate(new CardTypePredicate(CardType.LAND)),

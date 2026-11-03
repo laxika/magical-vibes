@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourcePowerAtLeast;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -39,8 +38,9 @@ public class AngelicSellSword extends Card {
                                 ObjectRelation.ANOTHER_YOU_CONTROL))),
                 TriggerOptions.DEFAULT, List.of(new EffectRegistration(mercenaryToken()))));
 
-        addTrigger(Triggers.attacks(), new ConditionalEffect(
-                new SourcePowerAtLeast(6), new DrawCardEffect(1)));
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourcePowerAtLeast(6)),
+                new DrawCardEffect(1));
     }
 
     private static CreateTokenEffect mercenaryToken() {

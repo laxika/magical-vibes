@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -35,11 +35,9 @@ public class AlelaCunningConqueror extends Card {
         target(new PermanentPredicateTargetFilter(
                 defendingPlayerCreature,
                 "Target must be a creature that player controls"))
-                .addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                        new AllyCombatDamageTriggerEffect(
-                                new PermanentHasSubtypePredicate(CardSubtype.FAERIE),
-                                new GoadTargetCreatureUntilNextTurnEffect(),
-                                false,
-                                true));
+                .addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                                .withFilter(new PermanentHasSubtypePredicate(CardSubtype.FAERIE)),
+                        TriggerOptions.ONE_OR_MORE,
+                        new GoadTargetCreatureUntilNextTurnEffect());
     }
 }

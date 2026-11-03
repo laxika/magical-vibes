@@ -9,11 +9,11 @@ import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeAttackedWhileAttachedToCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,8 +24,8 @@ public class TheAetherspark extends Card {
     public TheAetherspark() {
         addStaticEffect(new CantBeAttackedWhileAttachedToCreatureEffect());
         addTrigger(Triggers.equippedCreatureDealsCombatDamage(),
-                new ConditionalEffect(new ControllerTurn(),
-                        new PutCountersOnSelfEffect(CounterType.LOYALTY, new EventValue())));
+                TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()),
+                new PutCountersOnSelfEffect(CounterType.LOYALTY, new EventValue()));
 
         addActivatedAbility(new ActivatedAbility(
                 false, null,

@@ -7,12 +7,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOfYourOpponents;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -27,11 +27,11 @@ public class CombatCalligrapher extends Card {
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.INKLING)), true));
 
         addTrigger(Triggers.playerAttacks(),
-                new ConditionalEffect(new PlayerAttacksOneOfYourOpponents(),
+                TriggerOptions.DEFAULT.withInterveningIf(new PlayerAttacksOneOfYourOpponents()),
                 new CreateTokenForTriggeringPlayerEffect(new CreateTokenEffect(
                         CardType.CREATURE, 1, "Inkling", 2, 1, CardColor.WHITE,
                         Set.of(CardColor.WHITE, CardColor.BLACK), List.of(CardSubtype.INKLING),
                         Set.of(Keyword.FLYING), Set.of(), true, false, List.of(), List.of(),
-                        false, false, false, 0, Set.of()), true)));
+                        false, false, false, 0, Set.of()), true));
     }
 }

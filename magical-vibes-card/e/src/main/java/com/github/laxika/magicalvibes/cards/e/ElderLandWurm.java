@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "4ED", collectorNumber = "24")
@@ -19,7 +19,8 @@ public class ElderLandWurm extends Card {
         // When this creature blocks, it loses defender (no duration — the loss lasts as long
         // as it stays on the battlefield, so it can attack on later turns). Blocking several
         // creatures in one declaration fires this once.
-        addTrigger(Triggers.blocks(), TriggerMode.ONCE_PER_BLOCK,
+        addTrigger(Triggers.blocks(),
+                TriggerOptions.ONE_OR_MORE,
                 new RemoveKeywordEffect(Keyword.DEFENDER, GrantScope.SELF, EffectDuration.PERMANENT));
     }
 }

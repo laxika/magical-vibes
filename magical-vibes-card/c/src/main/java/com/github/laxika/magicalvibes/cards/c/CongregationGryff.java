@@ -10,10 +10,10 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SaddleCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,8 +24,9 @@ public class CongregationGryff extends Card {
     public CongregationGryff() {
         PermanentCount mounts = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.MOUNT), CountScope.CONTROLLER);
-        addTrigger(Triggers.attacks(), new ConditionalEffect(
-                new SourceIsSaddled(), new BoostSelfEffect(mounts, mounts)));
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                new BoostSelfEffect(mounts, mounts));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

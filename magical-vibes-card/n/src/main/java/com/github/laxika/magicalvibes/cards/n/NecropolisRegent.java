@@ -19,10 +19,8 @@ public class NecropolisRegent extends Card {
         // Whenever a creature you control deals combat damage to a player, put that many
         // +1/+1 counters on it. The trigger's event value is the damage dealt, and the
         // dealing creature is bound as the stack entry's source so the counters land on it.
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentIsCreaturePredicate(),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue()),
-                        true));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentIsCreaturePredicate()),
+                AllyCombatDamageTriggerEffect.boundToDealer(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue())));
     }
 }

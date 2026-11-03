@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
+
 @CardRegistration(set = "LGN", collectorNumber = "69")
 public class EmbalmedBrawler extends Card {
 
@@ -18,11 +20,7 @@ public class EmbalmedBrawler extends Card {
         addStaticEffect(new AmplifyEffect(
                 1, new CardSubtypePredicate(CardSubtype.ZOMBIE)));
 
-        addTrigger(Triggers.attacks(),
-                new LoseLifeEffect(new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE),
-                        LoseLifeRecipient.CONTROLLER));
-        addTrigger(Triggers.blocks(),
-                new LoseLifeEffect(new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE),
-                        LoseLifeRecipient.CONTROLLER));
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()),
+                new LoseLifeEffect(new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE), LoseLifeRecipient.CONTROLLER));
     }
 }

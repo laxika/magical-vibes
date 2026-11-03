@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "9ED", collectorNumber = "213")
@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class RogueKavu extends Card {
 
     public RogueKavu() {
-        addTrigger(Triggers.attacks(), new ConditionalEffect(new AttacksAlone(), new BoostSelfEffect(2, 0)));
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                new BoostSelfEffect(2, 0));
     }
 }

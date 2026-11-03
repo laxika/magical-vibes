@@ -6,10 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenPermanentYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -23,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -53,12 +52,11 @@ public class CalixGuidedByFate extends Card {
                         TriggerOptions.DEFAULT, List.of(new EffectRegistration(
                                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)))));
 
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                OncePerTurnTriggerEffect.markOnAcceptance(new AllyCombatDamageTriggerEffect(
-                        CALIX_OR_ENCHANTED_CREATURE,
-                        new MayEffect(
-                                new CreateTokenCopyOfChosenPermanentYouControlEffect(
-                                        NONLEGENDARY_ENCHANTMENT, true),
-                                "Create a token copy of a nonlegendary enchantment you control?"))));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer().withFilter(CALIX_OR_ENCHANTED_CREATURE),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.DO_ONLY_ONCE_EACH_TURN),
+                new MayEffect(
+                        new CreateTokenCopyOfChosenPermanentYouControlEffect(
+                                NONLEGENDARY_ENCHANTMENT, true),
+                        "Create a token copy of a nonlegendary enchantment you control?"));
     }
 }

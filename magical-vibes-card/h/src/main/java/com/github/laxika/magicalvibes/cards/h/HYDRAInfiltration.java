@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MSH", collectorNumber = "100")
@@ -27,9 +27,9 @@ public class HYDRAInfiltration extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER))
                 .addTrigger(Triggers.creatureYouControlAttacks(),
-                        new ConditionalEffect(new AttacksAlone(),
-                                SequenceEffect.of(
-                                        new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),
-                                        new GainLifeEffect(1))));
+                        TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                        SequenceEffect.of(
+                                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),
+                                new GainLifeEffect(1)));
     }
 }

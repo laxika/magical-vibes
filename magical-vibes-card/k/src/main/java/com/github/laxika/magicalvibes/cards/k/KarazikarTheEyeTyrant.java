@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksAnotherOpponent;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -37,13 +37,12 @@ public class KarazikarTheEyeTyrant extends Card {
                         new GoadTargetCreatureUntilNextTurnEffect());
 
         addTrigger(Triggers.playerAttacks(),
-                new ConditionalEffect(
-                        new OpponentAttacksAnotherOpponent(),
-                        SequenceEffect.of(
+                TriggerOptions.DEFAULT.withInterveningIf(new OpponentAttacksAnotherOpponent()),
+                SequenceEffect.of(
                                 new DrawCardEffect(),
                                 new LoseLifeEffect(1),
                                 new DrawCardForTargetPlayerEffect(1),
                                 new LoseLifeEffect(1, LoseLifeRecipient.TRIGGERING_PLAYER)
-                        )));
+                        ));
     }
 }

@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsInGraveyar
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MH2", collectorNumber = "220")
@@ -21,8 +21,9 @@ public class AltarOfTheGoyf extends Card {
     public AltarOfTheGoyf() {
         CardTypesAmongCardsInGraveyard cardTypes =
                 new CardTypesAmongCardsInGraveyard(CountScope.ANY_PLAYER);
-        addTrigger(Triggers.creatureYouControlAttacks(), new ConditionalEffect(new AttacksAlone(),
-                new BoostTargetCreatureEffect(cardTypes, cardTypes)));
+        addTrigger(Triggers.creatureYouControlAttacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                new BoostTargetCreatureEffect(cardTypes, cardTypes));
 
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.TRAMPLE, GrantScope.OWN_CREATURES,

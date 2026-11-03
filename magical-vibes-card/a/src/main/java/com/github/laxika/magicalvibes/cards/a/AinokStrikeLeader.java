@@ -8,15 +8,17 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensAttackingEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -27,16 +29,16 @@ public class AinokStrikeLeader extends Card {
 
     public AinokStrikeLeader() {
         addTrigger(Triggers.youAttack(),
-                new ConditionalEffect(
+                TriggerOptions.DEFAULT.withInterveningIf(
                         new AnyOf(List.of(
-                                new HasAttacker(new PermanentIsSourcePermanentPredicate()),
-                                new HasAttacker(new com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate(List.of(
-                                        new PermanentIsCommanderPredicate(),
-                                        new com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate())))
-                        )),
-                        new CreateTokensAttackingEachOpponentEffect(
-                                new CreateTokenEffect(1, "Goblin", 1, 1, CardColor.RED,
-                                        List.of(CardSubtype.GOBLIN), true))));
+                                        new HasAttacker(new PermanentIsSourcePermanentPredicate()),
+                                        new HasAttacker(new PermanentAllOfPredicate(List.of(
+                                                new PermanentIsCommanderPredicate(),
+                                                new PermanentOwnedBySourceControllerPredicate())))
+                                ))),
+                new CreateTokensAttackingEachOpponentEffect(
+                        new CreateTokenEffect(1, "Goblin", 1, 1, CardColor.RED,
+                                List.of(CardSubtype.GOBLIN), true)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

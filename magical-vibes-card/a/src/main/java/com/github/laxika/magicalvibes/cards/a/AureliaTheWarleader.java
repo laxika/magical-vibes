@@ -3,10 +3,11 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "GTC", collectorNumber = "143")
@@ -21,11 +22,13 @@ public class AureliaTheWarleader extends Card {
 
     public AureliaTheWarleader() {
         // Flying, vigilance and haste are auto-loaded keywords. "Whenever Aurelia attacks for the
-        // first time each turn": both halves are wrapped in OncePerTurnTriggerEffect, which the
-        // Triggers.attacks() collector unwraps at most once per turn per permanent — so attacking again in
-        // the extra combat phase this grants doesn't re-trigger and loop.
-        addTrigger(Triggers.attacks(), new OncePerTurnTriggerEffect(
-                new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate())));
-        addTrigger(Triggers.attacks(), new OncePerTurnTriggerEffect(new AdditionalCombatPhaseEffect(1)));
+        // first time each turn": both halves are limited to once each turn (TriggerLimit.ONCE_EACH_TURN), so
+        // attacking again in the extra combat phase this grants doesn't re-trigger and loop.
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate()));
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new AdditionalCombatPhaseEffect(1));
     }
 }

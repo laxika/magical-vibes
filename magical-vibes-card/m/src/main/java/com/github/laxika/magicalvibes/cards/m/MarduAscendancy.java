@@ -8,9 +8,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -19,11 +18,9 @@ import java.util.List;
 public class MarduAscendancy extends Card {
 
     public MarduAscendancy() {
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new TriggeringCardConditionalEffect(
-                        new CardNotPredicate(new CardIsTokenPredicate()),
-                        new CreateTokenEffect(1, "Goblin", 1, 1, CardColor.RED,
-                                List.of(CardSubtype.GOBLIN), true)));
+        addTrigger(Triggers.creatureYouControlAttacks()
+                        .withFilter(new PermanentNotPredicate(new PermanentIsTokenPredicate())),
+                new CreateTokenEffect(1, "Goblin", 1, 1, CardColor.RED, List.of(CardSubtype.GOBLIN), true));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

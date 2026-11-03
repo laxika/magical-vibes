@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -19,10 +19,10 @@ import java.util.List;
 public class MinionOfTheMighty extends Card {
 
     public MinionOfTheMighty() {
-        addTrigger(Triggers.attacks(), new ConditionalEffect(
-                new AttackingCreaturesTotalPowerAtLeast(6),
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(new AttackingCreaturesTotalPowerAtLeast(6)),
                 PutCardToBattlefieldEffect.tappedAndAttacking(new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
-                        new CardSubtypePredicate(CardSubtype.DRAGON))), "Dragon creature")));
+                        new CardSubtypePredicate(CardSubtype.DRAGON))), "Dragon creature"));
     }
 }

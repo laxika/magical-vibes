@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.CardsLeftGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,7 +24,7 @@ public class LivingHistory extends Card {
                 List.of(CardSubtype.SPIRIT), Set.of(), Set.of()));
 
         target(TargetFilters.attackingCreature()).addTrigger(Triggers.youAttack(),
-                new ConditionalEffect(new CardsLeftGraveyardThisTurn(),
-                        new BoostTargetCreatureEffect(2, 0)));
+                TriggerOptions.DEFAULT.withInterveningIf(new CardsLeftGraveyardThisTurn()),
+                new BoostTargetCreatureEffect(2, 0));
     }
 }

@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AnyPlayerMayExileCardFromGraveyardAndAssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
+
 @CardRegistration(set = "TOR", collectorNumber = "55")
 public class CarrionWurm extends Card {
 
     public CarrionWurm() {
-        addTrigger(Triggers.attacks(), new AnyPlayerMayExileCardFromGraveyardAndAssignNoCombatDamageEffect(3));
-        addTrigger(Triggers.blocks(), new AnyPlayerMayExileCardFromGraveyardAndAssignNoCombatDamageEffect(3));
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()),
+                new AnyPlayerMayExileCardFromGraveyardAndAssignNoCombatDamageEffect(3));
     }
 }

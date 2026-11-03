@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,10 +17,9 @@ import java.util.Set;
 public class ZeriamGoldenWind extends Card {
 
     public ZeriamGoldenWind() {
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.GRIFFIN),
-                        new CreateTokenEffect("Griffin", 2, 2, CardColor.WHITE,
-                                List.of(CardSubtype.GRIFFIN), Set.of(Keyword.FLYING), Set.of())));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.GRIFFIN)),
+                new CreateTokenEffect("Griffin", 2, 2, CardColor.WHITE,
+                        List.of(CardSubtype.GRIFFIN), Set.of(Keyword.FLYING), Set.of()));
     }
 }

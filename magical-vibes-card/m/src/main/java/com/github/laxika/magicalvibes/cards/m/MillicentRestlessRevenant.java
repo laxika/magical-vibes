@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -30,12 +29,12 @@ public class MillicentRestlessRevenant extends Card {
 
         addTrigger(Triggers.dealsCombatDamageToPlayer(), SPIRIT_TOKEN);
 
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(new PermanentAllOfPredicate(List.of(
-                        new PermanentHasSubtypePredicate(CardSubtype.SPIRIT),
-                        new PermanentNotPredicate(new PermanentIsTokenPredicate()),
-                        new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
-                )), SPIRIT_TOKEN));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentAllOfPredicate(List.of(
+                                new PermanentHasSubtypePredicate(CardSubtype.SPIRIT),
+                                new PermanentNotPredicate(new PermanentIsTokenPredicate()),
+                                new PermanentNotPredicate(new PermanentIsSourceCardPredicate())))),
+                SPIRIT_TOKEN);
 
         addTrigger(Triggers.nontokenCreatureDies(
                         new PermanentHasSubtypePredicate(CardSubtype.SPIRIT),

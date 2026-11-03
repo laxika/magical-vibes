@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,11 +19,10 @@ public class OjutaiSoulOfWinter extends Card {
         // Whenever a Dragon you control attacks, tap target nonland permanent an opponent controls.
         // That permanent doesn't untap during its controller's next untap step.
         target(TargetFilters.nonlandPermanentAnOpponentControls())
-                .addTrigger(Triggers.creatureYouControlAttacks(),
-                        new TriggeringCardConditionalEffect(
-                                new CardSubtypePredicate(CardSubtype.DRAGON),
-                                SequenceEffect.of(
-                                        new TapPermanentsEffect(TapUntapScope.TARGET),
-                                        new SkipNextUntapEffect(TapUntapScope.TARGET))));
+                .addTrigger(Triggers.creatureYouControlAttacks()
+                                .withFilter(new PermanentHasSubtypePredicate(CardSubtype.DRAGON)),
+                        SequenceEffect.of(
+                                new TapPermanentsEffect(TapUntapScope.TARGET),
+                                new SkipNextUntapEffect(TapUntapScope.TARGET)));
     }
 }

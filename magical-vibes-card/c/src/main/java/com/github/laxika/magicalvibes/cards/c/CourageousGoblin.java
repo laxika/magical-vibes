@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -20,14 +19,11 @@ import java.util.List;
 public class CourageousGoblin extends Card {
 
     public CourageousGoblin() {
-        addTrigger(Triggers.attacks(), new TriggeringPermanentConditionalEffect(
-                new PermanentControllerControlsPermanentPredicate(new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentPowerAtLeastPredicate(4)
-                ))),
-                SequenceEffect.of(
-                        new BoostSelfEffect(1, 0),
-                        new GrantKeywordEffect(Keyword.MENACE, GrantScope.SELF)
-                )));
+        addTrigger(Triggers.attacks()
+                        .withFilter(new PermanentControllerControlsPermanentPredicate(new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentPowerAtLeastPredicate(4)
+                                )))),
+                SequenceEffect.of(new BoostSelfEffect(1, 0), new GrantKeywordEffect(Keyword.MENACE, GrantScope.SELF)));
     }
 }

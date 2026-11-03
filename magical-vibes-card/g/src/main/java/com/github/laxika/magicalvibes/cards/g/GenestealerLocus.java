@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOpponentOfSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -15,8 +14,8 @@ public class GenestealerLocus extends Card {
         addTrigger(Triggers.creatureAttacksYou(), new BoostTargetCreatureEffect(-1, 0));
 
         // Whenever a creature attacks one of your opponents, it gets +0/+1 until end of turn.
-        addTrigger(Triggers.creatureAttacks(), new TriggeringPermanentConditionalEffect(
-                new PermanentIsAttackingOpponentOfSourceControllerPredicate(),
-                new BoostTargetCreatureEffect(0, 1)));
+        addTrigger(Triggers.creatureAttacks()
+                        .withFilter(new PermanentIsAttackingOpponentOfSourceControllerPredicate()),
+                new BoostTargetCreatureEffect(0, 1));
     }
 }

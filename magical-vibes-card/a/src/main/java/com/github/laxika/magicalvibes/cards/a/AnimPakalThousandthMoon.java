@@ -7,12 +7,12 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -44,11 +44,9 @@ public class AnimPakalThousandthMoon extends Card {
                 0,
                 Set.of()
         );
-        addTrigger(Triggers.youAttack(), new ConditionalEffect(
-                new HasAttacker(new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.GNOME))),
-                SequenceEffect.of(
-                        new PutCountersOnSourceEffect(1, 1, 1),
-                        gnome
-                )));
+        addTrigger(Triggers.youAttack(),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new HasAttacker(new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.GNOME)))),
+                SequenceEffect.of(new PutCountersOnSourceEffect(1, 1, 1), gnome));
     }
 }

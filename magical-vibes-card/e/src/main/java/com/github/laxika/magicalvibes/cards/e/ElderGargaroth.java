@@ -4,12 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -33,6 +33,6 @@ public class ElderGargaroth extends Card {
         ));
 
         addTrigger(Triggers.attacks(), new ChooseOneAtTriggerTimeEffect(attackOrBlockEffect));
-        addTrigger(Triggers.blocks(), TriggerMode.ONCE_PER_BLOCK, attackOrBlockEffect);
+        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, attackOrBlockEffect);
     }
 }

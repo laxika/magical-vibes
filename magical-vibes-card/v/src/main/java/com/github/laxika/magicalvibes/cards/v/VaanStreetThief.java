@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfDamagedPlayerLibraryMayCastOrCreateTreasureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.CardControllerDoesNotOwnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
@@ -22,12 +22,10 @@ public class VaanStreetThief extends Card {
     public VaanStreetThief() {
         Set<CardSubtype> thiefSubtypes = Set.of(CardSubtype.SCOUT, CardSubtype.PIRATE, CardSubtype.ROGUE);
 
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentHasAnySubtypePredicate(thiefSubtypes),
-                        new ExileTopCardOfDamagedPlayerLibraryMayCastOrCreateTreasureEffect(),
-                        false,
-                        true));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentHasAnySubtypePredicate(thiefSubtypes)),
+                TriggerOptions.ONE_OR_MORE,
+                new ExileTopCardOfDamagedPlayerLibraryMayCastOrCreateTreasureEffect());
         addTrigger(Triggers.youCastSpell().withFilter(new CardControllerDoesNotOwnPredicate()),
                 new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, 1,

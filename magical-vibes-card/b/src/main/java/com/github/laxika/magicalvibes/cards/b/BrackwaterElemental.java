@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
+
 
 @CardRegistration(set = "CON", collectorNumber = "21")
 @CardRegistration(set = "DDH", collectorNumber = "46")
@@ -12,8 +14,7 @@ public class BrackwaterElemental extends Card {
 
     public BrackwaterElemental() {
         // When this creature attacks or blocks, sacrifice it at the beginning of the next end step.
-        addTrigger(Triggers.attacks(), new SacrificeSelfAtEndStepEffect());
-        addTrigger(Triggers.blocks(), new SacrificeSelfAtEndStepEffect());
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), new SacrificeSelfAtEndStepEffect());
 
         // Unearth {2}{U}: Return this card from your graveyard to the battlefield. It gains haste.
         // Exile it at the beginning of the next end step or if it would leave the battlefield.

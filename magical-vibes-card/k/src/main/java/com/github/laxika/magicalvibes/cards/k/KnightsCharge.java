@@ -11,10 +11,10 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardsFromControllerGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,12 +24,12 @@ import java.util.List;
 public class KnightsCharge extends Card {
 
     public KnightsCharge() {
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.KNIGHT),
-                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT)));
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.KNIGHT),
-                        new GainLifeEffect(1)));
+        addTrigger(Triggers.creatureYouControlAttacks()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.KNIGHT)),
+                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
+        addTrigger(Triggers.creatureYouControlAttacks()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.KNIGHT)),
+                new GainLifeEffect(1));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

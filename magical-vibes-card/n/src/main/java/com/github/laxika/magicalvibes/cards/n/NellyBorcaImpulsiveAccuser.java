@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnSna
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSuspectedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -26,11 +25,8 @@ public class NellyBorcaImpulsiveAccuser extends Card {
         addTrigger(Triggers.attacks(),
                 new GoadCreaturesUntilNextTurnSnapshotEffect(new PermanentIsSuspectedPredicate()));
 
-        addTrigger(Triggers.creatureDealsCombatDamageToOpponent(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
-                        SequenceEffect.of(
-                                new DrawCardEffect(1),
-                                new DrawCardForTriggeringPermanentControllerEffect())));
+        addTrigger(Triggers.creatureDealsCombatDamageToOpponent()
+                        .withFilter(new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())),
+                SequenceEffect.of(new DrawCardEffect(1), new DrawCardForTriggeringPermanentControllerEffect()));
     }
 }

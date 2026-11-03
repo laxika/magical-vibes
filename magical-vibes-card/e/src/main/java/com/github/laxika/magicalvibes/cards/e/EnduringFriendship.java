@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SelfHasKeyword;
 import com.github.laxika.magicalvibes.model.condition.SourceIsToken;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfSourceCardIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -23,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -32,13 +32,12 @@ import java.util.Set;
 public class EnduringFriendship extends Card {
 
     public EnduringFriendship() {
-        addTrigger(Triggers.attacks(), new ConditionalEffect(
-                new AllOf(List.of(
-                        new SelfHasKeyword(Keyword.DOUBLE),
-                        new NotCondition(new SourceIsToken()))),
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AllOf(List.of(new SelfHasKeyword(Keyword.DOUBLE), new NotCondition(new SourceIsToken())))),
                 SequenceEffect.of(
                         new ConjureDuplicateOfSourceCardIntoHandEffect("YDSK", "20", Set.of(Keyword.DOUBLE)),
-                        new RemoveKeywordEffect(Keyword.DOUBLE, GrantScope.SELF, null, EffectDuration.PERMANENT))));
+                        new RemoveKeywordEffect(Keyword.DOUBLE, GrantScope.SELF, null, EffectDuration.PERMANENT)));
 
         addTrigger(Triggers.youCastSpell()
                         .withFilter(new CardAnyOfPredicate(List.of(

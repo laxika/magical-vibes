@@ -8,12 +8,12 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsMoreLandsThanController;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -23,12 +23,12 @@ import java.util.List;
 public class AerialSurveyor extends Card {
 
     public AerialSurveyor() {
-        addTrigger(Triggers.attacks(), new ConditionalEffect(
-                new DefendingPlayerControlsMoreLandsThanController(),
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(new DefendingPlayerControlsMoreLandsThanController()),
                 new SearchLibraryEffect(new CardAllOfPredicate(List.of(
                         new CardSupertypePredicate(CardSupertype.BASIC),
                         new CardSubtypePredicate(CardSubtype.PLAINS))),
-                        LibrarySearchDestination.BATTLEFIELD_TAPPED)));
+                        LibrarySearchDestination.BATTLEFIELD_TAPPED));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

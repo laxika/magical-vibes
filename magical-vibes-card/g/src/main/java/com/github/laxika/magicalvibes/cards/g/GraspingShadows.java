@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LCI", collectorNumber = "108")
@@ -22,13 +23,14 @@ public class GraspingShadows extends Card {
         setBackFaceCard(new ShadowsLair());
 
         addTrigger(Triggers.creatureYouControlAttacks(),
-                new ConditionalEffect(new AttacksAlone(), SequenceEffect.of(
+                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                SequenceEffect.of(
                         new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET),
                         new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET),
                         new PutCountersOnSelfEffect(CounterType.DREAD),
                         new ConditionalEffect(
                                 new SourceCounterThreshold(3, CounterType.DREAD),
-                                new TransformSelfEffect()))));
+                                new TransformSelfEffect())));
     }
 
     @Override

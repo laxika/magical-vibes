@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -46,17 +45,15 @@ public class ArahboRoarOfTheWorld extends Card {
                         new AnyOf(List.of(new SourceCardInCommandZone(), new SourceCardOnBattlefield()))),
                 new BoostTargetCreatureEffect(3, 3));
 
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.creatureYouControlAttacks()
+                        .withFilter(new PermanentAllOfPredicate(List.of(
                                 new PermanentHasSubtypePredicate(CardSubtype.CAT),
-                                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
-                        )),
-                        new MayPayManaEffect(
-                                "{1}{G}{W}",
-                                SequenceEffect.of(
-                                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET),
-                                        new BoostTargetCreatureEffect(new TargetPower(), new TargetPower())),
-                                "Pay {1}{G}{W} to give it trample and +X/+X until end of turn?")));
+                                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())))),
+                new MayPayManaEffect(
+                        "{1}{G}{W}",
+                        SequenceEffect.of(
+                                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET),
+                                new BoostTargetCreatureEffect(new TargetPower(), new TargetPower())),
+                        "Pay {1}{G}{W} to give it trample and +X/+X until end of turn?"));
     }
 }

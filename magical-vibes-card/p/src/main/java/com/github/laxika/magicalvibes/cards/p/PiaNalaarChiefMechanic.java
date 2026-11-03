@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -30,8 +30,9 @@ public class PiaNalaarChiefMechanic extends Card {
                 new PermanentIsArtifactPredicate(),
                 new PermanentIsCreaturePredicate()));
 
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(artifactCreature, new EnergyCountersEffect(2), false, true));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer().withFilter(artifactCreature),
+                TriggerOptions.ONE_OR_MORE,
+                new EnergyCountersEffect(2));
 
         var aetherjet = new CreateTokenEffect(
                 CardType.ARTIFACT, new EventValue(), "Nalaar Aetherjet", new EventValue(), new EventValue(),

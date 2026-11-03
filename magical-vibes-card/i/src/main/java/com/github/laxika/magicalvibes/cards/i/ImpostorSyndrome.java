@@ -18,13 +18,10 @@ import java.util.List;
 public class ImpostorSyndrome extends Card {
 
     public ImpostorSyndrome() {
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
-                                new PermanentNotPredicate(new PermanentIsTokenPredicate())
-                        )),
-                        new CreateTokenCopyOfSourceEffect(true, 1),
-                        true));
+                                new PermanentNotPredicate(new PermanentIsTokenPredicate())))),
+                AllyCombatDamageTriggerEffect.boundToDealer(new CreateTokenCopyOfSourceEffect(true, 1)));
     }
 }

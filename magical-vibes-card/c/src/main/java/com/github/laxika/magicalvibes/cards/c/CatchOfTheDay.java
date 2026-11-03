@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -49,16 +50,17 @@ public class CatchOfTheDay extends Card {
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                 new ConditionalEffect(new SourceHasChosenMode(WARD), new CounterUnlessPaysEffect(3)));
 
-        addTrigger(Triggers.attacks(), new ConditionalEffect(new SourceHasChosenMode(SCRY),
-                new ScryEffect(2)));
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(SCRY)),
+                new ScryEffect(2));
 
         var opponentCreature = TargetFilters.creatureAnOpponentControls();
         target(opponentCreature).addTrigger(Triggers.attacks(),
-                new ConditionalEffect(new SourceHasChosenMode(GOAD),
-                        new GoadTargetCreatureUntilNextTurnEffect(opponentCreature.predicate())))
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(GOAD)),
+                new GoadTargetCreatureUntilNextTurnEffect(opponentCreature.predicate()))
                 .addTrigger(Triggers.attacks(),
-                        new ConditionalEffect(new SourceHasChosenMode(TAP),
-                                new TapPermanentsEffect(TapUntapScope.TARGET, opponentCreature.predicate())));
+                        TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(TAP)),
+                        new TapPermanentsEffect(TapUntapScope.TARGET, opponentCreature.predicate()));
 
         addStaticEffect(new ConditionalEffect(new SourceHasChosenMode(SIX_TWO),
                 new SetBasePowerToughnessEffect(6, 2, GrantScope.SELF)));

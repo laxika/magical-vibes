@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -28,12 +28,13 @@ public class TheEarthKing extends Card {
                 new CreateTokenEffect("Bear", 4, 4, CardColor.GREEN,
                         List.of(CardSubtype.BEAR), Set.of(), Set.of()));
 
-        addTrigger(Triggers.youAttack(), new ConditionalEffect(
-                new MinimumMatchingAttackers(1, new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentPowerAtLeastPredicate(4)
-                ))),
+        addTrigger(Triggers.youAttack(),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new MinimumMatchingAttackers(1, new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentPowerAtLeastPredicate(4)
+                                )))),
                 new SearchLibraryEffect(new EventValue(), CardPredicateUtils.basicLand(),
-                        LibrarySearchDestination.BATTLEFIELD_TAPPED)));
+                        LibrarySearchDestination.BATTLEFIELD_TAPPED));
     }
 }

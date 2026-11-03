@@ -6,11 +6,11 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PopulateEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,8 +24,9 @@ public class ArborealAlliance extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
                 "Treefolk", new XValue(), new XValue(), CardColor.GREEN,
                 List.of(CardSubtype.TREEFOLK), Set.of(), Set.of()));
-        addTrigger(Triggers.youAttack(), new ConditionalEffect(
-                new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.ELF)),
-                new PopulateEffect()));
+        addTrigger(Triggers.youAttack(),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.ELF))),
+                new PopulateEffect());
     }
 }

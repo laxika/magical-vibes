@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -36,9 +35,8 @@ public class NajeelaTheBladeBlossom extends Card {
                         new CreateTokenEffect(1, "Warrior", 1, 1, CardColor.WHITE,
                                 List.of(CardSubtype.WARRIOR), true), false, true),
                 "Have its controller create a 1/1 white Warrior creature token that's tapped and attacking?");
-        addTrigger(Triggers.creatureAttacks(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.WARRIOR), createToken));
+        addTrigger(Triggers.creatureAttacks().withFilter(new PermanentHasSubtypePredicate(CardSubtype.WARRIOR)),
+                createToken);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

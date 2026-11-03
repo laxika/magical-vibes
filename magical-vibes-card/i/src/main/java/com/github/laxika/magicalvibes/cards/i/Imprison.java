@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.AbilityTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
+
 @CardRegistration(set = "LEG", collectorNumber = "107")
 public class Imprison extends Card {
 
@@ -42,7 +44,6 @@ public class Imprison extends Card {
                         new RemoveReferencedPermanentFromCombatEffect(PermanentReference.TRIGGERING, true)),
                 "Pay {1} to tap and remove the creature from combat?",
                 new DestroyReferencedPermanentEffect(PermanentReference.SOURCE));
-        addTrigger(Triggers.attacks(), combatTrigger);
-        addTrigger(Triggers.blocks(), combatTrigger);
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), combatTrigger);
     }
 }

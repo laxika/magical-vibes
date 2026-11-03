@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -27,14 +27,14 @@ public class CaptainAmericaSkybound extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentIsAttackingPredicate()));
 
-        addTrigger(Triggers.attacks(), new ConditionalEffect(
-                new MinimumAttackers(3),
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
                 SequenceEffect.of(
                         new PutCounterOnEachMatchingPermanentEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE, 1, attackingCreature,
                                 EachPermanentScope.ALL_PLAYERS),
                         new GrantKeywordEffect(
                                 Keyword.INDESTRUCTIBLE, GrantScope.ALL_CREATURES,
-                                new PermanentIsAttackingPredicate()))));
+                                new PermanentIsAttackingPredicate())));
     }
 }

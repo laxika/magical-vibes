@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -23,8 +24,8 @@ public class JinSakaiGhostOfTsushima extends Card {
         // Whenever a creature you control attacks a player, if no other creatures are attacking that player,
         // choose one. The condition is also re-checked when the chosen mode resolves (CR 603.4).
         addTrigger(Triggers.creatureYouControlAttacks(),
-                new ConditionalEffect(new AttacksPlayerAlone(),
-                        new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
+                TriggerOptions.DEFAULT.withInterveningIf(new AttacksPlayerAlone()),
+                new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Standoff — It gains double strike until end of turn",
                                         new ConditionalEffect(new AttacksPlayerAlone(),
@@ -33,6 +34,6 @@ public class JinSakaiGhostOfTsushima extends Card {
                                         "Ghost — It can't be blocked this turn",
                                         new ConditionalEffect(new AttacksPlayerAlone(),
                                                 MakeCreatureUnblockableEffect.forTriggeringPermanent()))
-                        )))));
+                        ))));
     }
 }

@@ -4,11 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -33,13 +31,8 @@ public class PyrewildShaman extends Card {
         // Whenever one or more creatures you control deal combat damage to a player, if this card is
         // in your graveyard, you may pay {3}. If you do, return this card to your hand.
         addTrigger(new TriggerCondition(Triggers.creatureYouControlDealsCombatDamageToPlayer(), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT,
-                new AllyCombatDamageTriggerEffect(
-                        null,
-                        new ConditionalEffect(new SourceCardInGraveyard(),
-                                new MayPayManaEffect("{3}", new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
-                                        "Pay {3} to return Pyrewild Shaman from your graveyard to your hand?")),
-                        false,
-                        true));
+                TriggerOptions.ONE_OR_MORE.withInterveningIf(new SourceCardInGraveyard()),
+                new MayPayManaEffect("{3}", new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
+                        "Pay {3} to return Pyrewild Shaman from your graveyard to your hand?"));
     }
 }

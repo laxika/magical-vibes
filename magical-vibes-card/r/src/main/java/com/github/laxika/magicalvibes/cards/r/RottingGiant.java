@@ -18,7 +18,6 @@ public class RottingGiant extends Card {
                 new ExileCardFromGraveyardCost((CardType) null),
                 List.of(new SacrificeSelfEffect()),
                 true);
-        addTrigger(Triggers.attacks(), sacrificeUnlessExile);
-        addTrigger(Triggers.blocks(), sacrificeUnlessExile);
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), sacrificeUnlessExile);
     }
 }

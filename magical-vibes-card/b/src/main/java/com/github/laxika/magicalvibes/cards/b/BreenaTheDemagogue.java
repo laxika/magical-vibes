@@ -4,13 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.AttackedOpponentHasMoreLifeThanAnotherOpponent;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,14 +26,14 @@ public class BreenaTheDemagogue extends Card {
         // another of your opponents, that attacking player draws a card and you put two +1/+1
         // counters on a creature you control.
         addTrigger(Triggers.playerAttacks(),
-                new ConditionalEffect(new AttackedOpponentHasMoreLifeThanAnotherOpponent(),
-                        SequenceEffect.of(
-                                new DrawCardForTriggeringPlayerEffect(),
-                                new PutCounterOnChosenPermanentEffect(
-                                        CounterType.PLUS_ONE_PLUS_ONE,
-                                        2,
-                                        new PermanentAllOfPredicate(List.of(
-                                                new PermanentIsCreaturePredicate(),
-                                                new PermanentControlledBySourceControllerPredicate()))))));
+                TriggerOptions.DEFAULT.withInterveningIf(new AttackedOpponentHasMoreLifeThanAnotherOpponent()),
+                SequenceEffect.of(
+                        new DrawCardForTriggeringPlayerEffect(),
+                        new PutCounterOnChosenPermanentEffect(
+                                CounterType.PLUS_ONE_PLUS_ONE,
+                                2,
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentControlledBySourceControllerPredicate())))));
     }
 }

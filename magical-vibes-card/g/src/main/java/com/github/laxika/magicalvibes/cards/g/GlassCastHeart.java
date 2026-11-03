@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -31,8 +31,9 @@ public class GlassCastHeart extends Card {
     public GlassCastHeart() {
         // Whenever one or more Vampires you control attack, create a Blood token.
         addTrigger(Triggers.youAttack(),
-                new ConditionalEffect(new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE)),
-                        CreateTokenEffect.ofBloodToken(1)));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE))),
+                CreateTokenEffect.ofBloodToken(1));
 
         // {B}, {T}, Pay 1 life: Create a 1/1 white and black Vampire creature token with lifelink.
         addActivatedAbility(new ActivatedAbility(

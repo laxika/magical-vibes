@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOpponentOfSourceControllerPredicate;
@@ -33,11 +32,10 @@ public class SkyboonEvangelist extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
 
-        addTrigger(Triggers.creatureAttacks(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.creatureAttacks()
+                        .withFilter(new PermanentAllOfPredicate(List.of(
                                 new PermanentHasCountersPredicate(CounterType.ANY),
-                                new PermanentIsAttackingOpponentOfSourceControllerPredicate())),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.TRIGGERING_PERMANENT)));
+                                new PermanentIsAttackingOpponentOfSourceControllerPredicate()))),
+                new GrantKeywordEffect(Keyword.FLYING, GrantScope.TRIGGERING_PERMANENT));
     }
 }

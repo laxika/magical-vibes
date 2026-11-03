@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.DisturbCast;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
+
 @CardRegistration(set = "VOW", collectorNumber = "235")
 @CardRegistration(set = "DBL", collectorNumber = "502")
 public class DorotheaVengefulVictim extends Card {
@@ -13,8 +15,7 @@ public class DorotheaVengefulVictim extends Card {
     public DorotheaVengefulVictim() {
         setBackFaceCard(new DorotheasRetribution());
 
-        addTrigger(Triggers.attacks(), new SacrificeAtEndOfCombatEffect());
-        addTrigger(Triggers.blocks(), new SacrificeAtEndOfCombatEffect());
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), new SacrificeAtEndOfCombatEffect());
         addCastingOption(new DisturbCast("{1}{W}{U}"));
     }
 

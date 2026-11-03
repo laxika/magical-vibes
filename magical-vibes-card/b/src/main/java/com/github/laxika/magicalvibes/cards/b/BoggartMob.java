@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ChampionCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -24,12 +23,11 @@ public class BoggartMob extends Card {
 
         // Whenever a Goblin you control deals combat damage to a player, you may create a
         // 1/1 black Goblin Rogue creature token.
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
-                        new MayEffect(
-                                new CreateTokenEffect("Goblin Rogue", 1, 1, CardColor.BLACK,
-                                        List.of(CardSubtype.GOBLIN, CardSubtype.ROGUE), Set.of(), Set.of()),
-                                "create a 1/1 black Goblin Rogue creature token")));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)),
+                new MayEffect(
+                        new CreateTokenEffect("Goblin Rogue", 1, 1, CardColor.BLACK,
+                                List.of(CardSubtype.GOBLIN, CardSubtype.ROGUE), Set.of(), Set.of()),
+                        "create a 1/1 black Goblin Rogue creature token"));
     }
 }

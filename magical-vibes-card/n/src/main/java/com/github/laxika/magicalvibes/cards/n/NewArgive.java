@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -14,10 +13,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class NewArgive extends Card {
 
     public NewArgive() {
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsHistoricPredicate(),
-                        new BoostTargetCreatureEffect(2, 2)));
+        addTrigger(Triggers.creatureYouControlAttacks().withFilter(new PermanentIsHistoricPredicate()),
+                new BoostTargetCreatureEffect(2, 2));
         addTrigger(Triggers.chaosEnsues(),
                 new RevealUntilCardPredicateRestOnBottomRandomEffect(
                         new CardIsHistoricPredicate(), LibrarySearchDestination.HAND));

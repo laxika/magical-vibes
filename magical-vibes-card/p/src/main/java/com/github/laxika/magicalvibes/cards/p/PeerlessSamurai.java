@@ -4,12 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForNextMatchingSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -18,12 +17,11 @@ import java.util.List;
 public class PeerlessSamurai extends Card {
 
     public PeerlessSamurai() {
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new TriggeringCardConditionalEffect(
-                        new CardAnyOfPredicate(List.of(
-                                new CardSubtypePredicate(CardSubtype.SAMURAI),
-                                new CardSubtypePredicate(CardSubtype.WARRIOR))),
-                        new ConditionalEffect(new AttacksAlone(),
-                                new ReduceCastCostForNextMatchingSpellEffect(new CardTruePredicate(), 1))));
+        addTrigger(Triggers.creatureYouControlAttacks()
+                        .withFilter(new PermanentAnyOfPredicate(List.of(
+                                new PermanentHasSubtypePredicate(CardSubtype.SAMURAI),
+                                new PermanentHasSubtypePredicate(CardSubtype.WARRIOR)))),
+                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                new ReduceCastCostForNextMatchingSpellEffect(new CardTruePredicate(), 1));
     }
 }

@@ -26,9 +26,7 @@ public class VeteransArmaments extends Card {
         setAttackTriggerGrantedByEquipment(true);
         PermanentCount attackingCreatures = new PermanentCount(
                 new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER);
-        addTrigger(Triggers.attacks(),
-                new BoostEquippedCreatureUntilEndOfTurnEffect(attackingCreatures, attackingCreatures));
-        addTrigger(Triggers.blocks(),
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()),
                 new BoostEquippedCreatureUntilEndOfTurnEffect(attackingCreatures, attackingCreatures));
 
         // Whenever a Soldier creature enters, you may attach this Equipment to it.

@@ -5,13 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.FirstCombatPhase;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SLD", collectorNumber = "1802")
@@ -19,13 +19,13 @@ public class KarlachFuryOfAvernus extends Card {
 
     public KarlachFuryOfAvernus() {
         addTrigger(Triggers.youAttack(),
-                new ConditionalEffect(new FirstCombatPhase(),
-                        SequenceEffect.of(
-                                new UntapPermanentsEffect(TapUntapScope.ALL_CREATURES,
-                                        new PermanentIsAttackingPredicate()),
-                                new GrantKeywordEffect(Keyword.FIRST_STRIKE,
-                                        GrantScope.ALL_CREATURES_INCLUDING_SELF,
-                                        new PermanentIsAttackingPredicate()),
-                                new AdditionalCombatPhaseEffect(1))));
+                TriggerOptions.DEFAULT.withInterveningIf(new FirstCombatPhase()),
+                SequenceEffect.of(
+                        new UntapPermanentsEffect(TapUntapScope.ALL_CREATURES,
+                                new PermanentIsAttackingPredicate()),
+                        new GrantKeywordEffect(Keyword.FIRST_STRIKE,
+                                GrantScope.ALL_CREATURES_INCLUDING_SELF,
+                                new PermanentIsAttackingPredicate()),
+                        new AdditionalCombatPhaseEffect(1)));
     }
 }

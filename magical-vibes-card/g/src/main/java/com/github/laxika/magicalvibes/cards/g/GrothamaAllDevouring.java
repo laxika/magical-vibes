@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.amount.DamageDealtToSourceByControll
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceFightsTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -17,14 +16,13 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class GrothamaAllDevouring extends Card {
 
     public GrothamaAllDevouring() {
-        addTrigger(Triggers.creatureAttacks(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()),
-                        new MayEffect(
-                                new SourceFightsTargetCreatureEffect(),
-                                "Have it fight Grothama, All-Devouring?",
-                                null,
-                                MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER)));
+        addTrigger(Triggers.creatureAttacks()
+                        .withFilter(new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())),
+                new MayEffect(
+                        new SourceFightsTargetCreatureEffect(),
+                        "Have it fight Grothama, All-Devouring?",
+                        null,
+                        MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER));
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new EachPlayerDrawsCardEffect(new DamageDealtToSourceByControllerThisTurn()));
     }

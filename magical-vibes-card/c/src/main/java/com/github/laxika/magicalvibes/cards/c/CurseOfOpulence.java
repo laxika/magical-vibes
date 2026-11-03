@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,13 +27,12 @@ public class CurseOfOpulence extends Card {
     public CurseOfOpulence() {
         CreateTokenEffect gold = goldToken();
         addTrigger(Triggers.playerAttacks(),
-                new ConditionalEffect(
-                        new AttacksEnchantedPlayer(),
-                        SequenceEffect.of(
-                                gold,
-                                new ConditionalEffect(
-                                        new AllOf(java.util.List.of(new AttackingPlayerIsOpponent(), new AttacksEnchantedPlayer())),
-                                        new CreateTokenForTriggeringPlayerEffect(gold)))));
+                TriggerOptions.DEFAULT.withInterveningIf(new AttacksEnchantedPlayer()),
+                SequenceEffect.of(
+                        gold,
+                        new ConditionalEffect(
+                                new AllOf(java.util.List.of(new AttackingPlayerIsOpponent(), new AttacksEnchantedPlayer())),
+                                new CreateTokenForTriggeringPlayerEffect(gold))));
     }
 
     private static CreateTokenEffect goldToken() {

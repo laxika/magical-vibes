@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ORI", collectorNumber = "239")
@@ -21,8 +21,9 @@ public class SigilOfValor extends Card {
         // excludeSource models "each other creature".
         PermanentCount otherCreatures = new PermanentCount(
                 new PermanentIsCreaturePredicate(), CountScope.CONTROLLER, true);
-        addTrigger(Triggers.attacks(), new ConditionalEffect(new AttacksAlone(),
-                new BoostEquippedCreatureUntilEndOfTurnEffect(otherCreatures, otherCreatures)));
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                new BoostEquippedCreatureUntilEndOfTurnEffect(otherCreatures, otherCreatures));
 
         // Equip {1}
         addActivatedAbility(new EquipActivatedAbility("{1}"));

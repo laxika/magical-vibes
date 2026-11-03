@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -38,7 +37,7 @@ public class JolraelVoiceOfZhalfir extends Card {
                         new PermanentIsLandPredicate(), Set.of(CardColor.GREEN, CardColor.BLUE)
                 ));
 
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(new PermanentIsLandPredicate(), new DrawCardEffect()));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer().withFilter(new PermanentIsLandPredicate()),
+                new DrawCardEffect());
     }
 }

@@ -8,11 +8,11 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SaddleCost;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -25,7 +25,7 @@ public class AutarchMammoth extends Card {
         CreateTokenEffect elephant = new CreateTokenEffect(
                 "Elephant", 3, 3, CardColor.GREEN, List.of(CardSubtype.ELEPHANT), Set.of(), Set.of());
         addTrigger(Triggers.enters(ObjectRelation.THIS), elephant);
-        addTrigger(Triggers.attacks(), new ConditionalEffect(new SourceIsSaddled(), elephant));
+        addTrigger(Triggers.attacks(), TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()), elephant);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

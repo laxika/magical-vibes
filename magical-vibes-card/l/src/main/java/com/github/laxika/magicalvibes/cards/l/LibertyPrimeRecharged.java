@@ -23,8 +23,7 @@ public class LibertyPrimeRecharged extends Card {
     public LibertyPrimeRecharged() {
         var sacrificeUnlessPayEnergy = new ForcedCostOrElseEffect(
                 new PayEnergyCost(2), List.of(new SacrificeSelfEffect()), true);
-        addTrigger(Triggers.attacks(), sacrificeUnlessPayEnergy);
-        addTrigger(Triggers.blocks(), sacrificeUnlessPayEnergy);
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), sacrificeUnlessPayEnergy);
 
         addActivatedAbility(new ActivatedAbility(
                 true,

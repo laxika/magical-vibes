@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AFC", collectorNumber = "82")
@@ -17,10 +18,9 @@ public class CurseOfVerbosity extends Card {
 
     public CurseOfVerbosity() {
         addTrigger(Triggers.playerAttacks(),
-                new ConditionalEffect(
-                        new AttacksEnchantedPlayer(),
-                        SequenceEffect.of(
-                                new DrawCardEffect(),
-                                new ConditionalEffect(new AllOf(java.util.List.of(new AttackingPlayerIsOpponent(), new AttacksEnchantedPlayer())), new DrawCardForTriggeringPlayerEffect()))));
+                TriggerOptions.DEFAULT.withInterveningIf(new AttacksEnchantedPlayer()),
+                SequenceEffect.of(
+                        new DrawCardEffect(),
+                        new ConditionalEffect(new AllOf(java.util.List.of(new AttackingPlayerIsOpponent(), new AttacksEnchantedPlayer())), new DrawCardForTriggeringPlayerEffect())));
     }
 }

@@ -16,12 +16,10 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ExsanguinatorCavalry extends Card {
 
     public ExsanguinatorCavalry() {
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.KNIGHT),
-                        SequenceEffect.of(
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                                CreateTokenEffect.ofBloodToken(1)),
-                        true));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.KNIGHT)),
+                AllyCombatDamageTriggerEffect.boundToDealer(SequenceEffect.of(
+                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                        CreateTokenEffect.ofBloodToken(1))));
     }
 }

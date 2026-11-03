@@ -25,10 +25,8 @@ public class CazurRuthlessStalker extends Card {
                 MayChoicePlayer.TARGET_PLAYER));
 
         // Whenever a creature you control deals combat damage to a player, put a +1/+1 counter on that creature.
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentIsCreaturePredicate(),
-                        new PutCountersOnSourceEffect(1, 1, 1),
-                        true));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentIsCreaturePredicate()),
+                AllyCombatDamageTriggerEffect.boundToDealer(new PutCountersOnSourceEffect(1, 1, 1)));
     }
 }

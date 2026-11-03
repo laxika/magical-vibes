@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -18,13 +17,11 @@ public class OrochiColony extends Card {
 
     public OrochiColony() {
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        null,
-                        new MayEffect(
-                                new SearchLibraryEffect(
-                                        CardPredicateUtils.basicLand(),
-                                        LibrarySearchDestination.BATTLEFIELD_TAPPED),
-                                "Search your library for a basic land card?")));
+                new MayEffect(
+                        new SearchLibraryEffect(
+                                CardPredicateUtils.basicLand(),
+                                LibrarySearchDestination.BATTLEFIELD_TAPPED),
+                        "Search your library for a basic land card?"));
 
         target(TargetFilters.creature()).addTrigger(Triggers.chaosEnsues(),
                 new MakeCreatureUnblockableEffect());

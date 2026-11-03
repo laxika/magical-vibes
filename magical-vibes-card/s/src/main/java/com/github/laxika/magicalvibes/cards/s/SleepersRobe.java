@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "INV", collectorNumber = "273")
@@ -19,7 +19,7 @@ public class SleepersRobe extends Card {
         target(TargetFilters.creature())
                 .addStaticEffect(new GrantKeywordEffect(Keyword.FEAR, GrantScope.ENCHANTED_CREATURE))
                 .addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                        new ConditionalEffect(new AttackedTargetIsOpponent(),
-                                new MayEffect(new DrawCardEffect(1), "Draw a card?")));
+                        TriggerOptions.DEFAULT.withInterveningIf(new AttackedTargetIsOpponent()),
+                        new MayEffect(new DrawCardEffect(1), "Draw a card?"));
     }
 }

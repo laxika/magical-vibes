@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.FirstCombatPhase;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -25,15 +25,13 @@ import java.util.List;
 public class TifaMartialArtist extends Card {
 
     public TifaMartialArtist() {
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentPowerAtLeastPredicate(7),
-                        SequenceEffect.of(
-                                new UntapPermanentsEffect(TapUntapScope.CONTROLLED,
-                                        new PermanentIsCreaturePredicate()),
-                                new ConditionalEffect(new AllConditions(List.of(new ControllerTurn(), new FirstCombatPhase())),
-                                        new AdditionalCombatPhaseEffect(1))),
-                        false,
-                        true));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentPowerAtLeastPredicate(7)),
+                TriggerOptions.ONE_OR_MORE,
+                SequenceEffect.of(
+                        new UntapPermanentsEffect(TapUntapScope.CONTROLLED,
+                                new PermanentIsCreaturePredicate()),
+                        new ConditionalEffect(new AllConditions(List.of(new ControllerTurn(), new FirstCombatPhase())),
+                                new AdditionalCombatPhaseEffect(1))));
     }
 }

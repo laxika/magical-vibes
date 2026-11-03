@@ -6,8 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -22,22 +20,20 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class JocastaAutomatonAvenger extends Card {
 
     public JocastaAutomatonAvenger() {
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentIsCommanderPredicate(true),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentIsCommanderPredicate(true)),
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
-        addTrigger(new TriggerCondition(Triggers.youAttack(), AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
-                new ConditionalEffect(
-                        new HasAttacker(new PermanentIsCommanderPredicate(true)),
-                        new MayEffect(
-                                ReturnCardFromGraveyardEffect.builder()
-                                        .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                                        .filter(new CardIsSelfPredicate())
-                                        .returnAll(true)
-                                        .enterTapped(true)
-                                        .enterAttacking(true)
-                                        .build(),
-                                "Return Jocasta, Automaton Avenger from your graveyard to the battlefield tapped and attacking?")));
+        addTrigger(new TriggerCondition(Triggers.youAttack(), AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT.withInterveningIf(new HasAttacker(new PermanentIsCommanderPredicate(true))),
+                new MayEffect(
+                        ReturnCardFromGraveyardEffect.builder()
+                                .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                                .filter(new CardIsSelfPredicate())
+                                .returnAll(true)
+                                .enterTapped(true)
+                                .enterAttacking(true)
+                                .build(),
+                        "Return Jocasta, Automaton Avenger from your graveyard to the battlefield tapped and attacking?"));
     }
 }

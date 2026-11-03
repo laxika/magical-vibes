@@ -15,10 +15,8 @@ public class RakishHeir extends Card {
 
     public RakishHeir() {
         // Whenever a Vampire you control deals combat damage to a player, put a +1/+1 counter on it.
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE),
-                        new PutCountersOnSourceEffect(1, 1, 1),
-                        true));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE)),
+                AllyCombatDamageTriggerEffect.boundToDealer(new PutCountersOnSourceEffect(1, 1, 1)));
     }
 }

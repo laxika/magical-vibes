@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,7 +26,8 @@ public class NickFurySpymaster extends Card {
             new CardMaxManaValuePredicate(3)));
 
     public NickFurySpymaster() {
-        addTrigger(Triggers.creatureYouControlAttacks(), new ConditionalEffect(new AttacksAlone(),
+        addTrigger(Triggers.creatureYouControlAttacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
                 SequenceEffect.of(
                         new DrawCardEffect(1),
                         new MayEffect(
@@ -38,6 +39,6 @@ public class NickFurySpymaster extends Card {
                                         null,
                                         new GrantKeywordToChosenCreatureUntilEndOfTurnEffect(
                                                 Keyword.INDESTRUCTIBLE, null)),
-                                "Put a creature card with mana value 3 or less from your hand onto the battlefield tapped and attacking?"))));
+                                "Put a creature card with mana value 3 or less from your hand onto the battlefield tapped and attacking?")));
     }
 }

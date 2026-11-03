@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BatchedCombatDamageToYouTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtCombatDamageToSourceControllerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -32,10 +32,11 @@ public class WitchKingOfAngmar extends Card {
                 new PermanentDealtCombatDamageToSourceControllerThisTurnPredicate()));
 
         addTrigger(Triggers.creatureDealsCombatDamageToYou(),
-                new BatchedCombatDamageToYouTriggerEffect(SequenceEffect.of(
+                TriggerOptions.ONE_OR_MORE,
+                SequenceEffect.of(
                         new SacrificePermanentsEffect(
                                 1, creatureThatDealtCombatDamage, SacrificeRecipient.EACH_OPPONENT),
-                        new RingTemptsYouEffect())));
+                        new RingTemptsYouEffect()));
 
         // Discard a card: Witch-king of Angmar gains indestructible until end of turn. Tap him.
         addActivatedAbility(new ActivatedAbility(

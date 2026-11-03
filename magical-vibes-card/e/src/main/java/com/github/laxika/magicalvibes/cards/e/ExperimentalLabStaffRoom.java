@@ -43,13 +43,13 @@ public class ExperimentalLabStaffRoom extends Card {
                 new SourceRoomDoorUnlocked(1),
                 new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                        new AllyCombatDamageTriggerEffect(null, new ChooseOneEffect(List.of(
-                                new ChooseOneEffect.ChooseOneOption(
-                                        "Turn that creature face up", new TurnSourceFaceUpEffect()),
-                                new ChooseOneEffect.ChooseOneOption(
-                                        "Put a +1/+1 counter on it",
-                                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))
-                        )), true)),
+                                AllyCombatDamageTriggerEffect.boundToDealer(new ChooseOneEffect(List.of(
+                                                new ChooseOneEffect.ChooseOneOption(
+                                                        "Turn that creature face up", new TurnSourceFaceUpEffect()),
+                                                new ChooseOneEffect.ChooseOneOption(
+                                                        "Put a +1/+1 counter on it",
+                                                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))
+                                        )))),
                         GrantScope.SELF)));
     }
 }

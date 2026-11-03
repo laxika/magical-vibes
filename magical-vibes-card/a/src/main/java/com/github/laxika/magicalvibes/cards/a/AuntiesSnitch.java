@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
@@ -34,14 +33,11 @@ public class AuntiesSnitch extends Card {
 
         // Whenever a Goblin or Rogue you control deals combat damage to a player, if this card is in
         // your graveyard, you may return this card to your hand.
-        addTrigger(new TriggerCondition(Triggers.creatureYouControlDealsCombatDamageToPlayer(), AbilityZones.GRAVEYARD),
+        addTrigger(new TriggerCondition(Triggers.creatureYouControlDealsCombatDamageToPlayer().withFilter(new PermanentAnyOfPredicate(List.of(new PermanentHasSubtypePredicate(CardSubtype.GOBLIN), new PermanentHasSubtypePredicate(CardSubtype.ROGUE)))),
+                        AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT,
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentAnyOfPredicate(List.of(
-                                new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
-                                new PermanentHasSubtypePredicate(CardSubtype.ROGUE))),
-                        new MayEffect(
-                                new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
-                                "return this card from your graveyard to your hand")));
+                new MayEffect(
+                        new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
+                        "return this card from your graveyard to your hand"));
     }
 }

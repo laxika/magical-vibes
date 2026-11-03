@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "GTC", collectorNumber = "7")
@@ -14,6 +14,7 @@ public class BorosElite extends Card {
 
     public BorosElite() {
         addTrigger(Triggers.attacks(),
-                new ConditionalEffect(new MinimumAttackers(3), new BoostSelfEffect(2, 2)));
+                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                new BoostSelfEffect(2, 2));
     }
 }

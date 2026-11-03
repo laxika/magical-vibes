@@ -16,7 +16,6 @@ public class IkraShidiqiTheUsurper extends Card {
         // Whenever a creature you control deals combat damage to a player, you gain life equal to
         // that creature's toughness.
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        null, new GainLifeEffect(new SourceToughness()), true));
+                AllyCombatDamageTriggerEffect.boundToDealer(new GainLifeEffect(new SourceToughness())));
     }
 }

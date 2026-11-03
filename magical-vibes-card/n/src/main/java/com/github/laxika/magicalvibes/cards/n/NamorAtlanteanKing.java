@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -32,12 +31,10 @@ public class NamorAtlanteanKing extends Card {
 
         // Whenever Namor attacks a player who has more life than you, other creatures you control
         // attacking that player get +2/+0 until end of turn.
-        addTrigger(Triggers.attacks(), new TriggeringPermanentConditionalEffect(
-                new PermanentAttacksPlayerWithMoreLifeThanControllerPredicate(),
+        addTrigger(Triggers.attacks().withFilter(new PermanentAttacksPlayerWithMoreLifeThanControllerPredicate()),
                 new BoostAllOwnCreaturesEffect(2, 0, new PermanentAllOfPredicate(List.of(
-                        new PermanentIsAttackingSameTargetAsSourcePredicate(),
-                        new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
-                )))
-        ));
+                                new PermanentIsAttackingSameTargetAsSourcePredicate(),
+                                new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
+                        ))));
     }
 }

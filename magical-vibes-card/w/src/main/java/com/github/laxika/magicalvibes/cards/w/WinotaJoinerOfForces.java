@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.effect.MakeChosenPermanentAttackingEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -62,8 +61,8 @@ public class WinotaJoinerOfForces extends Card {
                 LibrarySearchDestination.BATTLEFIELD_TAPPED, true,
                 false, null, null, false, 0,
                 false, false, false, false, 0, HUMAN_ATTACK_FOLLOW_UP);
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)), ability));
+        addTrigger(Triggers.creatureYouControlAttacks()
+                        .withFilter(new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.HUMAN))),
+                ability);
     }
 }

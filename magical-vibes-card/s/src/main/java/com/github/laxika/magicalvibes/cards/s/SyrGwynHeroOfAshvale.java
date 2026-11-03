@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,10 +17,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SyrGwynHeroOfAshvale extends Card {
 
     public SyrGwynHeroOfAshvale() {
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsEquippedPredicate(),
-                        SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1))));
+        addTrigger(Triggers.creatureYouControlAttacks().withFilter(new PermanentIsEquippedPredicate()),
+                SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1)));
 
         addStaticEffect(new GrantActivatedAbilityEffect(
                 new EquipActivatedAbility("{0}",

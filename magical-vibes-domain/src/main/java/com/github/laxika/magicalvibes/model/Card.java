@@ -1856,6 +1856,22 @@ public class Card {
     }
 
     /**
+     * Adds one triggered ability with several trigger conditions, each functioning from its trigger's default zones,
+     * and {@code options}: "whenever this creature attacks or blocks" is
+     * {@code addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), TriggerOptions.DEFAULT, effect)}. It triggers
+     * when any of them is met, and each time it is one object on the stack (CR 603.3).
+     */
+    public void addTrigger(List<? extends Trigger> triggers, TriggerOptions options, CardEffect... effects) {
+        addTriggeredAbility(new TriggeredAbility(triggers.stream().map(TriggerCondition::new).toList(), options,
+                Arrays.stream(effects).map(effect -> new EffectRegistration(effect, TriggerMode.NORMAL)).toList()));
+    }
+
+    /** Adds one triggered ability with several trigger conditions and no options, as the method above says. */
+    public void addTrigger(List<? extends Trigger> triggers, CardEffect... effects) {
+        addTrigger(triggers, TriggerOptions.DEFAULT, effects);
+    }
+
+    /**
      * Adds a triggered ability with {@code trigger} whose effects happen at the same time, as
      * {@link #addSimultaneousEffects} adds them: "it deals 1 damage to any target and 1 damage to you".
      */
@@ -1872,6 +1888,15 @@ public class Card {
     public void addSimultaneousTrigger(Trigger trigger, TriggerMode triggerMode, CardEffect... effects) {
         addTriggeredAbility(new TriggeredAbility(trigger, TriggerOptions.DEFAULT,
                 simultaneousGroup(effects, triggerMode, null)));
+    }
+
+    /**
+     * Adds a triggered ability like {@link #addSimultaneousTrigger(Trigger, CardEffect...)} with {@code options}:
+     * "whenever this becomes blocked by a creature, it deals 3 damage to that creature's controller and 3 damage to
+     * that creature" is {@link TriggerOptions#EACH_BLOCKER} (CR 509.3d).
+     */
+    public void addSimultaneousTrigger(Trigger trigger, TriggerOptions options, CardEffect... effects) {
+        addTriggeredAbility(new TriggeredAbility(trigger, options, simultaneousGroup(effects, TriggerMode.NORMAL, null)));
     }
 
     /**

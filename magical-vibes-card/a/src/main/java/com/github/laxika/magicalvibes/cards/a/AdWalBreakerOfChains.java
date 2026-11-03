@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -35,12 +34,11 @@ public class AdWalBreakerOfChains extends Card {
                 LookDestination.BOTTOM_OF_LIBRARY_RANDOM,
                 true));
 
-        addTrigger(new TriggerCondition(Triggers.creatureYouControlDealsCombatDamageToPlayer(), AbilityZones.GRAVEYARD),
+        addTrigger(new TriggerCondition(Triggers.creatureYouControlDealsCombatDamageToPlayer().withFilter(new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)),
+                        AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT,
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.VEHICLE),
-                        new MayEffect(
-                                new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
-                                "return this card from your graveyard to your hand")));
+                new MayEffect(
+                        new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
+                        "return this card from your graveyard to your hand"));
     }
 }

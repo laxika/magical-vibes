@@ -14,10 +14,8 @@ public class WhiteWidowYelenaBelova extends Card {
     public WhiteWidowYelenaBelova() {
         // Whenever a creature you control with deathtouch deals combat damage to a player,
         // put a +1/+1 counter on it.
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH),
-                        new PutCountersOnSourceEffect(1, 1, 1),
-                        true));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH)),
+                AllyCombatDamageTriggerEffect.boundToDealer(new PutCountersOnSourceEffect(1, 1, 1)));
     }
 }

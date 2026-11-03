@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayedEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndSaddledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SaddleCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
@@ -22,9 +22,9 @@ public class FortuneLoyalSteed extends Card {
 
     public FortuneLoyalSteed() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(2));
-        addTrigger(Triggers.attacks(), new ConditionalEffect(
-                new SourceIsSaddled(), new DelayedEndOfCombatEffect(
-                        new ExileSelfAndSaddledCreatureEffect())));
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                new DelayedEndOfCombatEffect(new ExileSelfAndSaddledCreatureEffect()));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,

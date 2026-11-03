@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.AmassGoblinsEffect;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessSacrificesEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawEffect;
@@ -43,8 +42,7 @@ public class SauronTheDarkLord extends Card {
         PermanentPredicate army = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentHasSubtypePredicate(CardSubtype.ARMY)));
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(army, new RingTemptsYouEffect()));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer().withFilter(army), new RingTemptsYouEffect());
 
         CardEffect discardAndDraw = new DiscardOwnHandThenDrawEffect(new Fixed(4));
         addTrigger(Triggers.ringTemptsYou(),

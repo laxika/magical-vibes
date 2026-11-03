@@ -229,7 +229,7 @@ public class CombatSimulator {
     private boolean hasOwnAttackTrigger(GameData gameData, Permanent perm) {
         if (!CombatWatch.ON_ATTACK.effectsOf(perm.getCard()).isEmpty()
                 || !CombatWatch.ON_ATTACKS_UNBLOCKED.effectsOf(perm.getCard()).isEmpty()
-                || !perm.getTemporaryTriggerEffects(CombatWatch.ON_ATTACK.trigger()).isEmpty()) {
+                || !perm.getLegacyTemporaryTriggerEffects(CombatWatch.ON_ATTACK.trigger()).isEmpty()) {
             return true;
         }
         // Aura-granted attack triggers (e.g. an aura with an ON_ATTACK registration)

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MOC", collectorNumber = "69")
@@ -19,10 +20,9 @@ public class ValorsReach extends Card {
 
     public ValorsReach() {
         addTrigger(Triggers.youAttack(),
-                new ConditionalEffect(
-                        new ExactlyAttackers(2),
-                        new GrantKeywordToTriggeringAttackersEffect(
-                                new PermanentIsAttackingPredicate(), Keyword.DOUBLE_STRIKE)));
+                TriggerOptions.DEFAULT.withInterveningIf(new ExactlyAttackers(2)),
+                new GrantKeywordToTriggeringAttackersEffect(
+                        new PermanentIsAttackingPredicate(), Keyword.DOUBLE_STRIKE));
         target(TargetFilters.creatureYouControl(), 0, 2)
                 .addTrigger(Triggers.chaosEnsues(),
                         new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS));

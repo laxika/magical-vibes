@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -18,10 +17,9 @@ import java.util.List;
 public class ThorinCompanysLeader extends Card {
 
     public ThorinCompanysLeader() {
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayerOrBattle(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.DWARF),
-                        CreateTokenEffect.ofTreasureToken(2)));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayerOrBattle()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.DWARF)),
+                CreateTokenEffect.ofTreasureToken(2));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

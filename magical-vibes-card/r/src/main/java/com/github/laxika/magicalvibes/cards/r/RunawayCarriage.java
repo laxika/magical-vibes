@@ -5,11 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
+
 @CardRegistration(set = "SOI", collectorNumber = "261")
 public class RunawayCarriage extends Card {
 
     public RunawayCarriage() {
-        addTrigger(Triggers.attacks(), new SacrificeAtEndOfCombatEffect());
-        addTrigger(Triggers.blocks(), new SacrificeAtEndOfCombatEffect());
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), new SacrificeAtEndOfCombatEffect());
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -19,11 +18,10 @@ public class SlaughterSinger extends Card {
 
     public SlaughterSinger() {
         addStaticEffect(new ToxicEffect(2));
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.creatureYouControlAttacks()
+                        .withFilter(new PermanentAllOfPredicate(List.of(
                                 new PermanentHasKeywordPredicate(Keyword.TOXIC),
-                                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))),
-                        new BoostTargetCreatureEffect(1, 1)));
+                                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())))),
+                new BoostTargetCreatureEffect(1, 1));
     }
 }

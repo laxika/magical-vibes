@@ -49,8 +49,8 @@ public class BoostByBushidoEffectHandler implements StaticEffectHandlerBean {
             return 0;
         }
         List<CardEffect> effects = new ArrayList<>(CombatWatch.ON_BLOCK.effectsOf(permanent.getCard()));
-        effects.addAll(permanent.getPersistentTriggerEffects(CombatWatch.ON_BLOCK.trigger()));
-        effects.addAll(permanent.getTemporaryTriggerEffects(CombatWatch.ON_BLOCK.trigger()));
+        effects.addAll(permanent.getLegacyPersistentTriggerEffects(CombatWatch.ON_BLOCK.trigger()));
+        effects.addAll(permanent.getLegacyTemporaryTriggerEffects(CombatWatch.ON_BLOCK.trigger()));
         AmountContext amountContext = AmountContext.forStaticEffect(
                 permanent, context.gameData().findControllerOf(permanent));
         return effects.stream()

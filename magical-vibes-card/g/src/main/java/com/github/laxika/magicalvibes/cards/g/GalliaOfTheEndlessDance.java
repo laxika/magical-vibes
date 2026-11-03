@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
@@ -22,9 +22,8 @@ public class GalliaOfTheEndlessDance extends Card {
     public GalliaOfTheEndlessDance() {
         addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.HASTE), GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SATYR))));
-        addTrigger(Triggers.youAttack(), new ConditionalEffect(
-                new MinimumAttackers(3),
-                new MayEffect(new DiscardAndDrawCardEffect(1, 2, true),
-                        "Discard a card at random to draw two cards?")));
+        addTrigger(Triggers.youAttack(),
+                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                new MayEffect(new DiscardAndDrawCardEffect(1, 2, true), "Discard a card at random to draw two cards?"));
     }
 }

@@ -7,12 +7,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOrMoreOfYourOpponents;
 import com.github.laxika.magicalvibes.model.effect.AddTokenCreationEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -23,9 +23,8 @@ public class JoleneThePlunderQueen extends Card {
 
     public JoleneThePlunderQueen() {
         addTrigger(Triggers.playerAttacks(),
-                new ConditionalEffect(
-                        new PlayerAttacksOneOrMoreOfYourOpponents(),
-                        new CreateTokenForTriggeringPlayerEffect(CreateTokenEffect.ofTreasureToken(1))));
+                TriggerOptions.DEFAULT.withInterveningIf(new PlayerAttacksOneOrMoreOfYourOpponents()),
+                new CreateTokenForTriggeringPlayerEffect(CreateTokenEffect.ofTreasureToken(1)));
         addStaticEffect(new AddTokenCreationEffect(1, CardSubtype.TREASURE));
 
         addActivatedAbility(new ActivatedAbility(

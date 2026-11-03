@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
+
 @CardRegistration(set = "MRD", collectorNumber = "154")
 @CardRegistration(set = "DDF", collectorNumber = "50")
 public class ClockworkCondor extends Card {
@@ -17,9 +19,7 @@ public class ClockworkCondor extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3)));
 
         // Whenever this creature attacks or blocks, remove a +1/+1 counter from it at end of combat.
-        addTrigger(Triggers.attacks(),
-                new RemoveCounterFromSourceAtEndOfCombatEffect(CounterType.PLUS_ONE_PLUS_ONE));
-        addTrigger(Triggers.blocks(),
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()),
                 new RemoveCounterFromSourceAtEndOfCombatEffect(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

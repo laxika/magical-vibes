@@ -4,16 +4,16 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DSK", collectorNumber = "136")
@@ -22,9 +22,8 @@ public class FearOfMissingOut extends Card {
     public FearOfMissingOut() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new DiscardEffect(1, DiscardRecipient.CONTROLLER));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
-        target(TargetFilters.creature()).addTrigger(Triggers.attacks(), new OncePerTurnTriggerEffect(
-                new ConditionalEffect(new Delirium(), SequenceEffect.of(
-                        new UntapPermanentsEffect(TapUntapScope.TARGET),
-                        new AdditionalCombatPhaseEffect(1)))));
+        target(TargetFilters.creature()).addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(new Delirium()).withLimit(TriggerLimit.ONCE_EACH_TURN),
+                SequenceEffect.of(new UntapPermanentsEffect(TapUntapScope.TARGET), new AdditionalCombatPhaseEffect(1)));
     }
 }

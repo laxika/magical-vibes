@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -48,14 +49,14 @@ public class FrodoAdventurousHobbit extends Card {
                 MayChoicePlayer.TARGET_PLAYER
         ));
 
-        addTrigger(Triggers.attacks(), new ConditionalEffect(
-                new GainedLifeThisTurn(3),
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(new GainedLifeThisTurn(3)),
                 SequenceEffect.of(
                         new RingTemptsYouEffect(),
                         new ConditionalEffect(
                                 new AllOf(List.of(
                                         new SourceIsRingBearer(),
                                         new ControllerRingLevelAtLeast(2))),
-                                new DrawCardEffect()))));
+                                new DrawCardEffect())));
     }
 }

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,14 +23,14 @@ public class GildedCerodon extends Card {
 
     public GildedCerodon() {
         // Whenever this creature attacks, if you control a Desert or there is a Desert card in your
-        // graveyard, target creature can't block this turn. The intervening-if is modelled by a
-        // ConditionalEffect(AnyOf(...)): when neither Desert condition holds, the engine never queues
-        // the trigger (so no target is chosen).
-        target(TargetFilters.creature()).addTrigger(Triggers.attacks(), new ConditionalEffect(
-                new AnyOf(List.of(
-                        new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DESERT)),
-                        new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.DESERT))
-                )),
-                new CantBlockThisTurnEffect(TapUntapScope.TARGET)));
+        // graveyard, target creature can't block this turn. The intervening "if" is the ability's option: when
+        // neither Desert condition holds, the engine never queues the trigger (so no target is chosen).
+        target(TargetFilters.creature()).addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AnyOf(List.of(
+                                        new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DESERT)),
+                                        new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.DESERT))
+                                ))),
+                new CantBlockThisTurnEffect(TapUntapScope.TARGET));
     }
 }

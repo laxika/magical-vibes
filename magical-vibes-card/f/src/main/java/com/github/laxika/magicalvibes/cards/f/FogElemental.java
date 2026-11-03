@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
+
 @CardRegistration(set = "10E", collectorNumber = "85")
 @CardRegistration(set = "6ED", collectorNumber = "69")
 @CardRegistration(set = "WTH", collectorNumber = "40")
@@ -12,7 +14,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class FogElemental extends Card {
 
     public FogElemental() {
-        addTrigger(Triggers.attacks(), new SacrificeAtEndOfCombatEffect());
-        addTrigger(Triggers.blocks(), new SacrificeAtEndOfCombatEffect());
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), new SacrificeAtEndOfCombatEffect());
     }
 }

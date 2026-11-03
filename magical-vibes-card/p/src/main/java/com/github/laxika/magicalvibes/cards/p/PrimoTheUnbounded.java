@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.filter.PermanentBasePowerEqualsPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -27,15 +27,13 @@ public class PrimoTheUnbounded extends Card {
 
         // Whenever one or more creatures you control with base power 0 deal combat damage to a
         // player, create a Fractal token and put counters on it equal to the damage dealt.
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentBasePowerEqualsPredicate(0),
-                        new CreateXTokenWithXCountersEffect(
-                                "Fractal", 0, 0,
-                                CardColor.GREEN, Set.of(CardColor.GREEN, CardColor.BLUE),
-                                List.of(CardSubtype.FRACTAL),
-                                CounterType.PLUS_ONE_PLUS_ONE, new EventValue()),
-                        false,
-                        true));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentBasePowerEqualsPredicate(0)),
+                TriggerOptions.ONE_OR_MORE,
+                new CreateXTokenWithXCountersEffect(
+                        "Fractal", 0, 0,
+                        CardColor.GREEN, Set.of(CardColor.GREEN, CardColor.BLUE),
+                        List.of(CardSubtype.FRACTAL),
+                        CounterType.PLUS_ONE_PLUS_ONE, new EventValue()));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -27,7 +26,6 @@ public class SearchForDagger extends Card {
 
         // Whenever your commander enters or attacks, look at the top six cards of your library.
         addTrigger(Triggers.enters(commander, ObjectRelation.ANOTHER_YOU_CONTROL), search);
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                new TriggeringPermanentConditionalEffect(commander, search));
+        addTrigger(Triggers.creatureYouControlAttacks().withFilter(commander), search);
     }
 }

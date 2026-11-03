@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -69,11 +68,8 @@ public class SophiaDoggedDetective extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.DOG))),
                 "{1}, Sacrifice an artifact token: Put a +1/+1 counter on each Dog you control."));
 
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.DOG),
-                        SequenceEffect.of(
-                                CreateTokenEffect.ofFoodToken(1),
-                                CreateTokenEffect.ofClueToken(1))));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.DOG)),
+                SequenceEffect.of(CreateTokenEffect.ofFoodToken(1), CreateTokenEffect.ofClueToken(1)));
     }
 }

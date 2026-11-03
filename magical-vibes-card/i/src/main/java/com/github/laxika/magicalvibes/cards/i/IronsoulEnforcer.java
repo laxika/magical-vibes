@@ -7,12 +7,12 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -34,8 +34,9 @@ public class IronsoulEnforcer extends Card {
         // Whenever this creature or a commander you control attacks alone, return target artifact
         // card from your graveyard to the battlefield. The Enforcer itself is the ability's source,
         // so each Enforcer you control triggers separately when a commander attacks alone.
-        addTrigger(Triggers.youAttack(), new ConditionalEffect(
-                new AllOf(List.of(new AttacksAlone(), new HasAttacker(thisCreatureOrCommander))),
-                returnArtifact));
+        addTrigger(Triggers.youAttack(),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new AllOf(List.of(new AttacksAlone(), new HasAttacker(thisCreatureOrCommander)))),
+                returnArtifact);
     }
 }

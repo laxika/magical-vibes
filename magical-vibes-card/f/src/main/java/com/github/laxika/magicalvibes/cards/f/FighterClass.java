@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -40,9 +41,8 @@ public class FighterClass extends Card {
                 new ReduceEquipCostEffect(2)));
 
         target(TargetFilters.creature(), 0, 1).addTrigger(Triggers.creatureYouControlAttacks(),
-                new ConditionalEffect(
-                        new SourceCounterThreshold(2, CounterType.LEVEL),
-                        new MustBlockTriggeringAttackerEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(2, CounterType.LEVEL)),
+                new MustBlockTriggeringAttackerEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false, "{3}{R}{W}", List.of(new ClassLevelUpEffect(3)),

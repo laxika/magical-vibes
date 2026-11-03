@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -38,14 +37,11 @@ public class ForgebornPhoenix extends Card {
         addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF,
                 EffectDuration.WHILE_ATTACHED));
 
-        var returnTrigger = new AllyCombatDamageTriggerEffect(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentIsEquippedPredicate())),
-                new ReturnSourceCardFromGraveyardToBattlefieldEffect(true));
+        var returnTrigger = new ReturnSourceCardFromGraveyardToBattlefieldEffect(true);
         var perpetualGrant = new PerpetuallyGrantTriggeredAbilityToSourceCardEffect(
-                new TriggeredAbility(new TriggerCondition(Triggers.creatureYouControlDealsCombatDamageToPlayerOrPlaneswalker(), AbilityZones.GRAVEYARD),
-                returnTrigger));
+                new TriggeredAbility(new TriggerCondition(Triggers.creatureYouControlDealsCombatDamageToPlayerOrPlaneswalker().withFilter(new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(), new PermanentIsEquippedPredicate()))),
+                                AbilityZones.GRAVEYARD),
+                        returnTrigger));
         addTrigger(Triggers.dies(ObjectRelation.THIS), perpetualGrant);
         addTrigger(Triggers.creatureDies(ObjectRelation.EQUIPPED), perpetualGrant);
 
