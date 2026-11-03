@@ -20,8 +20,8 @@ public class UnwillingVessel extends Card {
 
     public UnwillingVessel() {
         PutCountersOnSelfEffect possessionCounter = new PutCountersOnSelfEffect(CounterType.POSSESSION);
-        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL), possessionCounter);
-        addTrigger(Triggers.youFullyUnlockRoom(), possessionCounter);
+        addTrigger(List.of(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
+                Triggers.youFullyUnlockRoom()), possessionCounter);
 
         addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenWithDyingSourceCounterPTEffect(
                 new CreateTokenEffect("Spirit", 0, 0, CardColor.BLUE, List.of(CardSubtype.SPIRIT),

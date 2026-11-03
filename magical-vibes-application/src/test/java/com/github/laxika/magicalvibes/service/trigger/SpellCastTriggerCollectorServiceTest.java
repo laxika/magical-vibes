@@ -2006,7 +2006,7 @@ class SpellCastTriggerCollectorServiceTest {
     class ControllerSameNameArtifactSearch {
 
         @Test
-        @DisplayName("snapshots the artifact spell name into the may ability")
+        @DisplayName("puts the ability on the stack with its may and the artifact spell name snapshotted (CR 603.5)")
         void snapshotsArtifactSpellName() {
             Permanent perm = createPermanent("Mishra, Artificer Prodigy");
             var inner = new SearchSameNameCardToBattlefieldOnArtifactSpellCastEffect();
@@ -2014,17 +2014,19 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createCard("Spellbook");
             spellCard.setType(CardType.ARTIFACT);
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+            when(gameQueryService.cardHasType(spellCard, CardType.ARTIFACT, gd, player1Id)).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
                     SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
 
             assertThat(result).isTrue();
-            assertThat(gd.pendingMayAbilities).hasSize(1);
-            var pending = gd.pendingMayAbilities.getFirst();
-            assertThat(pending.triggeringCardId()).isEqualTo(spellCard.getId());
-            assertThat(pending.effects()).containsExactly(
-                    new SearchZonesForCardNamedToBattlefieldEffect("Spellbook"));
+            assertThat(gd.pendingMayAbilities).isEmpty();
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getTriggeringCardId()).isEqualTo(spellCard.getId());
+            assertThat(entry.getEffectsToResolve()).containsExactly(new MayEffect(
+                    new SearchZonesForCardNamedToBattlefieldEffect("Spellbook"), "Search for a copy?"));
         }
 
         @Test

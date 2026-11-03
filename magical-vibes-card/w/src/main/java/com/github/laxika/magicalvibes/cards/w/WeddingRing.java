@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.condition.TargetPlayerControlsPerman
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerIsActive;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerTurn;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -51,8 +50,8 @@ public class WeddingRing extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new WasCast()),
                 new CreateTokenCopyOfSourceForTargetPlayerEffect(PlayerRelation.OPPONENT));
         addTrigger(Triggers.opponentDrawsCard(),
-                ConditionalEffect.atTriggerTime(opponentRingDuringTheirTurn, new DrawCardEffect()));
+                TriggerOptions.DEFAULT.withEventCondition(opponentRingDuringTheirTurn), new DrawCardEffect());
         addTrigger(Triggers.opponentGainsLife(),
-                ConditionalEffect.atTriggerTime(opponentRingDuringTheirTurn, new GainLifeEffect(new EventValue())));
+                TriggerOptions.DEFAULT.withEventCondition(opponentRingDuringTheirTurn), new GainLifeEffect(new EventValue()));
     }
 }

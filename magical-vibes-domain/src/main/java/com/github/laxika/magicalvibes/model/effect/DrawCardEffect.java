@@ -15,26 +15,21 @@ import com.github.laxika.magicalvibes.model.amount.SourceToughness;
  * Controller draws {@code amount} cards, one at a time (so draw-replacement effects and
  * "whenever you draw" triggers see each individual draw).
  */
-public record DrawCardEffect(DynamicAmount amount, boolean onlyIfSacrificed,
-                             DynamicAmount castTimeXValue, boolean rememberAmount)
+public record DrawCardEffect(DynamicAmount amount, DynamicAmount castTimeXValue, boolean rememberAmount)
         implements ManaAbilityCardDrawingEffect, CombatDamageTriggerContextEffect,
         CastTimeXValueEffect {
 
-    public DrawCardEffect(DynamicAmount amount, boolean onlyIfSacrificed, DynamicAmount castTimeXValue) {
-        this(amount, onlyIfSacrificed, castTimeXValue, false);
+    public DrawCardEffect(DynamicAmount amount, DynamicAmount castTimeXValue) {
+        this(amount, castTimeXValue, false);
     }
 
     /** Saves the evaluated count for subsequent effects before drawing can change the game state. */
     public static DrawCardEffect rememberingAmount(DynamicAmount amount) {
-        return new DrawCardEffect(amount, false, null, true);
-    }
-
-    public DrawCardEffect(DynamicAmount amount, boolean onlyIfSacrificed) {
-        this(amount, onlyIfSacrificed, null);
+        return new DrawCardEffect(amount, null, true);
     }
 
     public DrawCardEffect(DynamicAmount amount) {
-        this(amount, false);
+        this(amount, null);
     }
 
     public DrawCardEffect() {
@@ -51,11 +46,7 @@ public record DrawCardEffect(DynamicAmount amount, boolean onlyIfSacrificed,
      */
     public static DrawCardEffect withCastTimeXValue(DynamicAmount castTimeXValue,
                                                       DynamicAmount amount) {
-        return new DrawCardEffect(amount, false, castTimeXValue);
-    }
-
-    public static DrawCardEffect sacrificeOnly(int amount) {
-        return new DrawCardEffect(new Fixed(amount), true);
+        return new DrawCardEffect(amount, castTimeXValue);
     }
 
     @Override
@@ -66,11 +57,6 @@ public record DrawCardEffect(DynamicAmount amount, boolean onlyIfSacrificed,
     @Override
     public DynamicAmount castTimeXValue() {
         return castTimeXValue;
-    }
-
-    @Override
-    public boolean onlyTriggersOnSacrifice() {
-        return onlyIfSacrificed;
     }
 
     @Override

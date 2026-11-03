@@ -38,8 +38,7 @@ public class HuntingWilds extends Card {
                 new SearchLibraryEffect(new Fixed(2), forestFilter, LibrarySearchDestination.BATTLEFIELD_TAPPED),
                 new SearchLibraryEffect(new Fixed(2), forestFilter,
                         LibrarySearchDestination.BATTLEFIELD_TAPPED, null, 1, false,
-                        false, false, false, animation, LibrarySearchPlayer.CONTROLLER,
-                        false, false, true)));
+                        false, false, false, animation, LibrarySearchPlayer.CONTROLLER, false, true)));
         addSpellEffect(new ConditionalEffect(new Kicked(), new UntapSearchedPermanentsEffect()));
     }
 }

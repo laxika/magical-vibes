@@ -52,7 +52,6 @@ public class AxgardArmory extends Card {
                 null,
                 LibrarySearchPlayer.CONTROLLER,
                 false,
-                false,
                 false
         );
     }

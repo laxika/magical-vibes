@@ -7,12 +7,14 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
+
 @CardRegistration(set = "DSK", collectorNumber = "84")
 public class BalemurkLeech extends Card {
 
     public BalemurkLeech() {
         LoseLifeEffect lifeLoss = new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT);
-        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL), lifeLoss);
-        addTrigger(Triggers.youFullyUnlockRoom(), lifeLoss);
+        addTrigger(List.of(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
+                Triggers.youFullyUnlockRoom()), lifeLoss);
     }
 }

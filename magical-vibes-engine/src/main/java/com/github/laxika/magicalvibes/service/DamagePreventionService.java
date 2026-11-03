@@ -1881,7 +1881,7 @@ public class DamagePreventionService {
                 card,
                 shield.playerId(),
                 card.getName() + "'s triggered ability",
-                List.of(new DealDamageToAnyTargetEffect(new Fixed(damage), false, false, -1, null, false, false, false),
+                List.of(new DealDamageToAnyTargetEffect(new Fixed(damage), false, false, -1, null, false, false),
                         new DrawCardEffect(new Fixed(damage))),
                 sourceControllerId,
                 (UUID) null));

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsAttacking;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -28,13 +28,13 @@ public class ValorsReachTagTeam extends Card {
                 Set.of(CardColor.RED, CardColor.WHITE), List.of(CardSubtype.WARRIOR), Set.of(), Set.of(),
                 false, false,
                 List.of(
-                        new TriggeredAbility(Triggers.youAttack(), ConditionalEffect.atTriggerTime(
+                        new TriggeredAbility(Triggers.youAttack(), TriggerOptions.DEFAULT.withEventCondition(
                                 new AllConditions(List.of(
                                         new SourceIsAttacking(),
                                         new MinimumMatchingAttackers(2, new PermanentAllOfPredicate(List.of(
                                                 new PermanentIsCreaturePredicate(),
-                                                new PermanentIsTokenPredicate()))))),
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)))),
+                                                new PermanentIsTokenPredicate())))))),
+                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))),
                 List.of(), false, false, false, 0, Set.of()));
     }
 }

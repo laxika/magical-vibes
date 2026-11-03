@@ -104,7 +104,7 @@ public class TriggeredAbilityStackService {
         TriggerOptions options = candidate.ability().options();
         Permanent source = candidate.sourceAsPermanent();
         Condition interveningIf = options.interveningIf();
-        if (interveningIf != null && !conditionEvaluationService.isMet(gameData, interveningIf,
+        if (!conditionsMet(gameData, options,
                 ConditionContext.forPermanent(source, candidate.controllerId()))) {
             return;
         }
@@ -142,7 +142,7 @@ public class TriggeredAbilityStackService {
         TriggerOptions options = candidate.ability().options();
         Permanent source = candidate.sourceAsPermanent();
         Condition interveningIf = options.interveningIf();
-        if (interveningIf != null && !conditionEvaluationService.isMet(gameData, interveningIf,
+        if (!conditionsMet(gameData, options,
                 triggeringContext(gameData, source, candidate.controllerId(), events.getFirst()))) {
             return;
         }
@@ -188,7 +188,7 @@ public class TriggeredAbilityStackService {
         }
         TriggerOptions options = candidate.ability().options();
         Condition interveningIf = options.interveningIf();
-        if (interveningIf != null && !conditionEvaluationService.isMet(gameData, interveningIf,
+        if (!conditionsMet(gameData, options,
                 ConditionContext.forPermanent(candidate.sourceAsPermanent(), candidate.controllerId()))) {
             return;
         }
@@ -205,6 +205,17 @@ public class TriggeredAbilityStackService {
         if (triggerCollectionService.triggerPermanentChange(gameData, watch, candidate, effects, events)) {
             markLimit(gameData, options.limit(), sourceId, limitKey);
         }
+    }
+
+    /**
+     * Whether the ability's intervening "if" (CR 603.4) and event condition (CR 603.2) let it trigger. Only the
+     * intervening "if" is checked again as the ability resolves; the event condition is part of the trigger event.
+     */
+    private boolean conditionsMet(GameData gameData, TriggerOptions options, ConditionContext context) {
+        return (options.interveningIf() == null
+                || conditionEvaluationService.isMet(gameData, options.interveningIf(), context))
+                && (options.eventCondition() == null
+                || conditionEvaluationService.isMet(gameData, options.eventCondition(), context));
     }
 
     /**

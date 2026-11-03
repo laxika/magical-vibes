@@ -7,13 +7,13 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
+
 @CardRegistration(set = "DSK", collectorNumber = "71")
 public class ScrabblingSkullcrab extends Card {
 
     public ScrabblingSkullcrab() {
-        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new MillEffect(2, MillRecipient.TARGET_PLAYER));
-        addTrigger(Triggers.youFullyUnlockRoom(),
-                new MillEffect(2, MillRecipient.TARGET_PLAYER));
+        addTrigger(List.of(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
+                Triggers.youFullyUnlockRoom()), new MillEffect(2, MillRecipient.TARGET_PLAYER));
     }
 }

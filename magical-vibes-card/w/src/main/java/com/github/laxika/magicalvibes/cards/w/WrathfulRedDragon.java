@@ -28,6 +28,6 @@ public class WrathfulRedDragon extends Card {
                 "Target must not be a Dragon"
         )).addTrigger(Triggers.permanentYouControlDealtDamage()
                         .withFilter(new PermanentHasSubtypePredicate(CardSubtype.DRAGON)),
-                new DealDamageToAnyTargetEffect(new XValue(), false, false, -1, null, false, false, false, true));
+                new DealDamageToAnyTargetEffect(new XValue(), false, false, -1, null, false, false, true));
     }
 }

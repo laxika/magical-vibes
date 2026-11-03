@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -50,8 +51,8 @@ public class SledgeClassSeedship extends Card {
                 new SourceCounterThreshold(7, CounterType.CHARGE),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
 
-        addTrigger(Triggers.attacks(), ConditionalEffect.atTriggerTime(
-                new SourceCounterThreshold(7, CounterType.CHARGE),
-                new PutCardToBattlefieldEffect(new CardTypePredicate(CardType.CREATURE), "creature")));
+        addTrigger(Triggers.attacks(), TriggerOptions.DEFAULT.withEventCondition(
+                new SourceCounterThreshold(7, CounterType.CHARGE)),
+                new PutCardToBattlefieldEffect(new CardTypePredicate(CardType.CREATURE), "creature"));
     }
 }

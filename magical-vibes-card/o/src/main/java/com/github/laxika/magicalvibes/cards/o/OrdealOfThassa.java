@@ -30,6 +30,6 @@ public class OrdealOfThassa extends Card {
                                                 CounterType.PLUS_ONE_PLUS_ONE, 3),
                                         "enchanted creature has three or more +1/+1 counters"),
                                 new SacrificeSelfEffect())))
-                .addTrigger(Triggers.sacrificed(ObjectRelation.THIS), DrawCardEffect.sacrificeOnly(2));
+                .addTrigger(Triggers.sacrificed(ObjectRelation.THIS), new DrawCardEffect(2));
     }
 }

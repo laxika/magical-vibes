@@ -25,11 +25,13 @@ class MishraArtificerProdigyTest extends BaseCardTest {
 
         harness.castArtifact(player1, 0);
 
+        // CR 603.5: the ability goes on the stack and the "you may" is chosen as it resolves.
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
-
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Spellbook");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -42,6 +44,7 @@ class MishraArtificerProdigyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Spellbook(), new Spellbook()));
 
         harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId())).extracting(card -> card.getName())
@@ -69,8 +72,8 @@ class MishraArtificerProdigyTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new Spellbook()));
 
         harness.castArtifact(player1, 0);
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertOnBattlefield(player1, "Spellbook");
         harness.assertNotInGraveyard(player1, "Spellbook");
@@ -85,8 +88,8 @@ class MishraArtificerProdigyTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Spellbook(), new GrizzlyBears()));
 
         harness.castArtifact(player1, 0);
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
 
         harness.assertOnBattlefield(player1, "Spellbook");
@@ -103,8 +106,8 @@ class MishraArtificerProdigyTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Spellbook()));
 
         harness.castArtifact(player1, 0);
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, -1);
 
         harness.assertNotOnBattlefield(player1, "Spellbook");
@@ -122,8 +125,8 @@ class MishraArtificerProdigyTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Spellbook()));
 
         harness.castArtifact(player1, 0);
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertNotOnBattlefield(player1, "Spellbook");
         harness.assertInGraveyard(player1, "Spellbook");
@@ -153,6 +156,7 @@ class MishraArtificerProdigyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
     }

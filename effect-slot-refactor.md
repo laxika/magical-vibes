@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16 left) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; runs 16b onward left: the legacy view's retirement, with the may-unwrapping, `TriggerMode`, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -581,7 +581,10 @@ This step was split, with the user, by family, as step 13 was; run 3 was split a
 because of its size (690 abilities), run 4 into 4a and 4b, with the user, for the same reason (about 600 wrapped
 abilities in 941 card classes, and about 60 engine and AI readers that inspect the own enters effects), and 4b again
 into 4b and 4c, as the user allowed, so that 4b stays a conversion that keeps behaviour and 4c holds the rules fixes; run 6 into 6a, 6b and 6c,
-with the user, because of its size (about 1,190 card classes, 980 of them `SpellCastTriggerEffect` abilities). Each run converts every wrapper kind of one
+with the user, because of its size (about 1,190 card classes, 980 of them `SpellCastTriggerEffect` abilities); run 16 into 16a and 16b
+onward, with the user, because deleting the wrapper classes, `TriggerMode` and the `interveningIf` flag means every
+collector reads options and groups effects by ability (681 legacy-view reads in about 60 main files, the 43,700
+lines of `service/trigger`). Each run converts every wrapper kind of one
 family's abilities, makes that family's collectors read options and filters instead, and deletes the wrapper classes
 no other family still uses. The order:
 
@@ -599,9 +602,10 @@ no other family still uses. The order:
 | 6b | Family 2: `SpellCastTriggerEffect`'s spell filter and conditions become `SpellTrigger` filters and options, its target filter a target group, its mana cost a `MayPayManaEffect`, with the wrappers nested inside it |
 | 6c | Family 2: the other condition-as-effect classes (`NthSpellCastTriggerEffect`, `SpellCopyTriggerEffect`, `KickedSpellCastTriggerEffect`, the `First…SpellCastTriggerEffect`s, `SpellCastFromHandTriggerEffect`, `PlayFromOutsideHandTriggerEffect`, …) |
 | 7 to 15 | Step 13's families 3 to 11, in its order |
-| 16 | What no family owns: the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags, the `onlyIfSacrificed` flags, and the wrapper classes left |
+| 16a | What no family owns and needs no collector rewritten: the `onlyIfSacrificed` flags, the `atTriggerTime` and die-result conditions as the trigger's event condition, the may questions asked before the stack (CR 603.5), the Eerie merges |
+| 16b onward | The legacy view's retirement, family by family: each family's collectors read the ability's options, filters and grouping (no `TriggerMode`), then the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
 
-Mark the step `done` only after run 16.
+Mark the step `done` only after the last run of 16.
 
 ### Step 15: Effects read the trigger event (repeatable)
 
@@ -4540,7 +4544,8 @@ abilities (step 13's family 3), all of their wrapper kinds in one run, with the 
 run 11 the library, draw and discard abilities (family 7), run 12 the tap and untap abilities (family 8), run 13 the
 life abilities (family 9), run 14 the Saga abilities (family 10) and run 15 everything else (family 11: actions,
 control change, attaching, crew, saddle and station, day and night, Rooms, Planechase, state triggers) the same way.
-Run 16, what no family owns, is the last.
+Run 16, what no family owns, is the last; it was split, with the user, into 16a (the leftovers that need no collector
+rewritten) and 16b onward (the legacy view's retirement).
 
 #### Run 1: the source's own zone changes
 
@@ -6955,6 +6960,148 @@ Run 16 is the last run of step 14.
   `LandTapTriggerCollectorServiceTest` 2, `PlanechaseServiceTest` 2, `CreatureControlServiceTest` 1, and the known one
   each in `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and `CardEffectTargetingConsistencyTest`.
 - AI: the whole module (1,620 tests), with the same 10 failures as before.
+- The full suite was not run here.
+
+#### Run 16a: the leftovers that need no collector rewritten
+
+Run 16 was split, with the user, into 16a and 16b onward. Everything run 16 was planned to delete (the wrapper classes,
+`TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags, the may-unwrapping) is still read by the
+collectors through the legacy view: 681 reads of `TriggeredAbility.legacyEffects()`, the `getLegacy…` getters and the
+watches' `effectsOf` / `registrationsOf` in about 60 main files (`TriggerCollectionService` 208, `CombatDamageService`
+51, `StepTriggerService` 40, the combat services, the AI), and the 43,700 lines of `service/trigger` pick handlers by
+wrapper class. Deleting them is the collectors reading options and grouping effects by ability, which is 16b onward.
+16a did what needs no collector rewritten. Step 14 isn't done.
+
+**Authoring.**
+
+- **The event condition** (**CR 603.2**, checked): `TriggerOptions` has a fourth component, `eventCondition` (with a
+  three-argument constructor and `withEventCondition(condition)`; the other withers keep it). It is a condition the
+  trigger event itself requires ("whenever this creature attacks while you control a Dinosaur", "attacks alone", "an
+  opponent who controls a Wedding Ring draws a card during their turn", "when the fourth plan counter is put on this",
+  "whenever you roll a 4 or higher") or the one under which the ability exists at all ("Max speed —", a station, level
+  or Spaceship threshold, an unlocked door, Struggle for Project Purity's chosen mode, Bloodbraid Marauder's delirium
+  cascade). It is checked as the event occurs and never again as the ability resolves, where an intervening "if" is
+  checked both times (CR 603.4). It replaces every authored `ConditionalEffect.atTriggerTime` but Typhoid Mary's.
+- "When you sacrifice this" is the trigger's cause (`Triggers.sacrificed(...)`); the `onlyIfSacrificed` record
+  components are gone from `DrawCardEffect`, `GainLifeEffect`, `DiscardEffect`, `DealDamageToAnyTargetEffect`,
+  `SearchLibraryEffect`, `SequenceEffect` and `RegisterDelayedReturnSourceTransformedEffect` (now
+  `(boolean underOwnerControl)`), with their `sacrificeOnly(…)` factories and `CardEffect.onlyTriggersOnSacrifice()`.
+  The Ordeals and Daemogoth Woe-Eater author the plain effects.
+- The Eerie abilities ("whenever an enchantment you control enters and whenever you fully unlock a Room", CR 709.5i,
+  checked) are one `TriggeredAbility` of both trigger conditions (CR 603.3, checked): 16 cards, Fear of Infinity's from
+  the graveyard. Fear of Sleep Paralysis already was.
+
+**The engine.**
+
+- `TriggeredAbility.legacyEffects()` gives the event condition as the `ConditionalEffect.atTriggerTime` the cards
+  wrote, innermost of the legacy view's wrappers (`legacyBaseEffects()`, which every legacy branch now reads instead of
+  the raw effects), so every collector that reads the legacy view judges it as before. The pipeline
+  (`TriggeredAbilityStackService`) checks it with the intervening "if" as the ability triggers and doesn't wrap the
+  effects in it.
+- `StepTriggerService` read granted upkeep and end-step abilities raw (`getTemporaryTriggerEffects` /
+  `getPersistentTriggerEffects`), which dropped every option of a granted step ability; it reads the legacy getters now.
+  Obsidian Fireheart's granted "at the beginning of your upkeep, this land deals 1 damage to you" (its blaze-counter
+  event condition) is the only granted step ability with options; its test caught it.
+- Teysa Karlov's "a creature dying causes a triggered ability to trigger an additional time" is skipped for the
+  collectors of a "whenever [a permanent] is sacrificed" watch, judged from the watch's trigger cause
+  (`TriggerCollectionService.triggeredBySacrifice`), where the effects' `onlyTriggersOnSacrifice()` said it for three
+  effect classes. The Teysa Karlov rulings (2019-01-25) say "whenever you sacrifice a creature" triggers only once.
+- CR 603.5 (checked): four abilities asked their "you may" before they were on the stack, through `pendingMayAbilities`
+  of the may-unwrapping path. They go on the stack with their `MayEffect` / `MayPayManaEffect` and ask as they
+  resolve: Mimic Vat (the imprint, its source permanent as the non-targeting entry target, so it still imprints after
+  the Vat leaves), Vraska the Silencer ("you may pay {1}"), Mishra, Artificer Prodigy and Bounteous Kirin. The
+  `DiscardAllCardsWithCastSpellManaValueEffect` handler's may branch asks before the stack too, but no card authors
+  it wrapped.
+
+**The may-unwrapping is not removed.** A temporary reflection scan (every registered card × every watch's legacy effects,
+against the `TriggerCollectorRegistry`, `DeathTriggerCollectorService` and `LegacyTriggerBindings` handler maps) found
+200 abilities whose `MayEffect` / `MayPayManaEffect` reaches a handler only by unwrapping:
+
+- 169 are the spell-cast legacy view's own `MayEffect(SpellCastTriggerEffect)` (its "plain may" form): they go when the
+  spell-cast collectors read the ability (16b).
+- 31 are event bindings keyed by the wrapped effect's class, which step 15 replaces with effects that read the event:
+  the cast-spell copy (Alania, Chancellor of Tales, Gorion, Mica, Owlin Spiralmancer, Pyromancer Ascension, Reality Is
+  Mine to Control, Spinerock Tyrant, Swarm Intelligence, Tawnos), the Kirins (Skyfire, Bounteous, Cloudhoof), Mishra,
+  Mold Adder (its color filter is a condition-as-effect: a `SpellFilter` would say it), Mana Echoes, Lazav, Screeching
+  Scorchbeast, and the creature-death Cemetery Puca, Koh, Mimic Vat, Nim Deathmantle, Vraska the Silencer and Lim-Dûl.
+  None asks before the stack any more; all keep their may.
+
+**Cards.**
+
+- `scripts/step14-only-if-sacrificed.py` dropped the flag argument from every call of a constructor arity that took it
+  (and the `this(…)` calls inside each record), only where it was `false`, the parameter or a getter read (Biolume Egg's
+  `true` on its `sacrificed(THIS)` trigger), and turned the `sacrificeOnly` factories into the plain constructors (8
+  card classes and 6 engine files changed; the records' declarations were edited by hand).
+- `scripts/step14-event-conditions.py` turned `ConditionalEffect.atTriggerTime(C, E)` into
+  `TriggerOptions.DEFAULT.withEventCondition(C), E` in place (or appended `.withEventCondition(C)` to the call's
+  options) when every effect of the call is one of the same condition: 56 card classes, plus its `MANUAL` table (Sidar
+  Jabari's local variable, Pompeii's "whenever you roll a blank" and Mr. House's "whenever you roll a 4 or higher",
+  which were intervening-if `ConditionalEffect`s around the effect). Running it again changes nothing.
+- `scripts/step14-eerie-merges.py` merged the 16 Eerie pairs.
+- `scripts/step14-only-if-sacrificed-docs.py` and `scripts/step14-event-conditions-docs.py` rewrote the agent-docs
+  and skill passages (exact replacements); `ARCHITECTURE.md` was edited by hand.
+
+**Kept, with their reason.**
+
+- Typhoid Mary, Fractured: "choose one at random. If you discarded a card this turn, you choose one instead" is the
+  effect's own "if", judged as the ability resolves; the card writes it as two attack abilities gated by
+  `atTriggerTime`, which is a modelling of its own (a later fix: one ability with a resolution-time choice).
+- Sidar Jabari's "if Sidar Jabari is in the command zone or on the battlefield" stays an intervening-if
+  `ConditionalEffect` effect, as earlier runs left it; only its knight condition is the event condition, so the legacy
+  view gives exactly the old wrapper.
+- `CreateTokenForEmergeSacrificeEffect` (Foul Emissary) is now a bare wrapper of a `CreateTokenEffect`, kept for its
+  `LegacyTriggerBindings` handler (step 15).
+
+**Behaviour changes.**
+
+- Rules fix (CR 603.5): Mimic Vat, Vraska the Silencer, Mishra, Artificer Prodigy and Bounteous Kirin put their
+  ability on the stack and ask as it resolves; their tests answer the may after the ability resolves, and the first
+  test of each asserts the ability is on the stack with no prompt yet.
+- Teysa Karlov doesn't double a "whenever you sacrifice" ability whatever its effects; the new Slaughter-Priest of Mogis
+  test passes on the old code too (the old path didn't double it either), so no card is known to change.
+- Granted step abilities read their options (Obsidian Fireheart's blaze-counter condition), as above.
+- The Eerie cards' two trigger conditions are one ability; nothing else is known to change (their tests pass).
+- Nothing else changed: the legacy view hands every collector the `atTriggerTime` wrapper it read before.
+
+**For 16b onward.**
+
+- Retire the legacy view family by family: each family's collectors read the ability's options (intervening "if",
+  limit, multiplicity, event condition) and filters, and group effects by ability, so `TriggerMode` (`INDEPENDENT` in
+  102 authored registrations of 73 card classes, and the legacy view's `PER_BLOCKER`, `ONCE_PER_BLOCK`, `PER_COUNTER`,
+  `ONCE_PER_BATCH`) goes; then the may-unwrapping in `TriggerCollectorRegistry.dispatch`,
+  `DeathTriggerCollectorService.dispatchCreatureDeath` and `LegacyTriggerBindings.dispatch` (the 169 spell-cast ones
+  go with the spell-cast view, the 31 bindings with step 15), the `interveningIf` / `triggerTimeOnly` flags and the
+  wrapper classes left.
+- The wrappers cards still author, kept by earlier runs for their reasons: `OncePerTurnTriggerEffect.perGrant` (Well
+  Rested, Folk Hero, Tyvar), the granted `TriggeringCardConditionalEffect` / `TriggeringPermanentConditionalEffect`
+  forms, the authored `AllyCombatDamageTriggerEffect` event bindings, Olivia's granted `StateTriggerEffect`, Typhoid Mary.
+- The explore collector's one stack object for several abilities; Freyalise's Winds' and Champions of the Shoal's
+  merges (run 12).
+
+**Tests changed.**
+
+- `MimicVatTest`, `VraskaTheSilencerTest`, `MishraArtificerProdigyTest`, `BounteousKirinTest`,
+  `EncroachingMycosynthTest#grantedArtifactSpellTriggersMishra`: the CR 603.5 flow (the ability resolves, then the may
+  is answered; the pass that used to resolve the accepted ability is gone).
+- `DeathTriggerCollectorServiceTest#imprintBakesDyingCardId`: the imprint goes on the stack with its may.
+- `SpellCastTriggerCollectorServiceTest#snapshotsArtifactSpellName` (Mishra): the stack form; it failed at HEAD on an
+  unstubbed `cardHasType` mock, which it stubs now.
+- New: `TriggerOptionsTest` (an event condition kept by the withers; the legacy view's innermost atTriggerTime inside
+  an intervening "if" and a limit), `TriggerPipelineTest#aFalseEventConditionKeepsItFromTriggeringAndATrueOneIsNotCheckedAgainOnResolution`,
+  `SlaughterPriestOfMogisTest#teysaKarlovDoesNotDoubleTheSacrificeTrigger`.
+
+**Test runs.**
+
+- Card: the test class of every changed card and of the cards whose collectors changed (97 classes), the front faces of
+  Blitzwing, Goldbug and Invasion of Kylem, and every card that grants an upkeep or end-step ability (49 classes): all
+  passing.
+- Application: the `service.trigger` and `model.trigger` packages and the step-trigger, trigger-pipeline, stack-resolution,
+  ETB resolver, freeze, architecture, simulation-copy and targeting-consistency classes (974 tests): 39 failures, all
+  failing at HEAD (`StepTriggerServiceTest` 16, `DamageTriggerCollectorServiceTest` 6, `DeathTriggerCollectorServiceTest`
+  6, `EtbEffectResolverTest` 3 (checked at HEAD in this run), `SpellCastTriggerCollectorServiceTest` 2,
+  `LandTapTriggerCollectorServiceTest` 2, `CounterSpellEffectHandlerTest` 1 and the known one each in
+  `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and `CardEffectTargetingConsistencyTest`).
+- AI: the whole module (1,620 tests), with the same 10 failures as before (two each in the four AI decision engine tests and `TargetPolarityGuardTest`).
 - The full suite was not run here.
 
 ## Prompt

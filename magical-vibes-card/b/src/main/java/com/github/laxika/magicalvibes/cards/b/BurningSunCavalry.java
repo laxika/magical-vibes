@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -18,6 +18,6 @@ public class BurningSunCavalry extends Card {
         ControlsPermanent controlsDinosaur = new ControlsPermanent(
                 new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR));
         addTrigger(List.of(Triggers.attacks(), Triggers.blocks()),
-                ConditionalEffect.atTriggerTime(controlsDinosaur, new BoostSelfEffect(1, 1)));
+                TriggerOptions.DEFAULT.withEventCondition(controlsDinosaur), new BoostSelfEffect(1, 1));
     }
 }

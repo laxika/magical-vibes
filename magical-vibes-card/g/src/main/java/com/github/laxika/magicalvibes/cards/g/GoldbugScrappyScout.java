@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -31,11 +32,11 @@ public class GoldbugScrappyScout extends Card {
                 new GrantCardTypeEffect(CardType.CREATURE, GrantScope.SELF)));
         addStaticEffect(new ControllerSpellsCantBeCounteredEffect(
                 new CardSubtypePredicate(CardSubtype.HUMAN)));
-        addTrigger(Triggers.youAttack(), ConditionalEffect.atTriggerTime(
+        addTrigger(Triggers.youAttack(), TriggerOptions.DEFAULT.withEventCondition(
                 new AllOf(List.of(
                         new SourceIsAttacking(),
                         new MinimumMatchingAttackers(1,
-                                new PermanentHasSubtypePredicate(CardSubtype.HUMAN)))),
-                SequenceEffect.of(new DrawCardEffect(), new TransformSelfEffect())));
+                                new PermanentHasSubtypePredicate(CardSubtype.HUMAN))))),
+                SequenceEffect.of(new DrawCardEffect(), new TransformSelfEffect()));
     }
 }

@@ -19,8 +19,9 @@ class BounteousKirinTest extends BaseCardTest {
         addBounteousKirin();
         harness.castFromHand(player1, new SpiritualVisit(), "{W}");
 
-        harness.handleMayAbilityChosen(player1, true);
+        // CR 603.5: the ability goes on the stack and the "you may" is chosen as it resolves.
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(21);
     }
@@ -31,8 +32,9 @@ class BounteousKirinTest extends BaseCardTest {
         addBounteousKirin();
         harness.castFromHand(player1, new DeathknellKami(), "{1}{B}");
 
-        harness.handleMayAbilityChosen(player1, true);
+        // CR 603.5: the ability goes on the stack and the "you may" is chosen as it resolves.
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(22);
     }
@@ -42,6 +44,7 @@ class BounteousKirinTest extends BaseCardTest {
     void decliningDoesNothing() {
         addBounteousKirin();
         harness.castFromHand(player1, new DeathknellKami(), "{1}{B}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);

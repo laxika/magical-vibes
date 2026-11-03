@@ -89,11 +89,6 @@ public record MayPayManaEffect(String manaCost, DynamicAmount dynamicManaCost, C
     }
 
     @Override
-    public boolean onlyTriggersOnSacrifice() {
-        return wrapped != null && wrapped.onlyTriggersOnSacrifice();
-    }
-
-    @Override
     public CardEffect boundToSacrificedPermanent(Card sacrificedCard) {
         CardEffect boundWrapped = wrapped instanceof SacrificedPermanentCardAwareEffect aware
                 ? aware.boundToSacrificedPermanent(sacrificedCard)

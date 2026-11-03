@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceClassLevelAtLeast;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -58,13 +57,13 @@ public class HuntersTalent extends Card {
 
         target(TargetFilters.attackingCreature())
                 .addTrigger(Triggers.youAttack(),
-                        ConditionalEffect.atTriggerTime(
-                                new SourceClassLevelAtLeast(2),
-                                new BoostTargetCreatureEffect(1, 0)))
+                        TriggerOptions.DEFAULT.withEventCondition(
+                                new SourceClassLevelAtLeast(2)),
+                                new BoostTargetCreatureEffect(1, 0))
                 .addTrigger(Triggers.youAttack(),
-                        ConditionalEffect.atTriggerTime(
-                                new SourceClassLevelAtLeast(2),
-                                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)));
+                        TriggerOptions.DEFAULT.withEventCondition(
+                                new SourceClassLevelAtLeast(2)),
+                                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(

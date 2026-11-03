@@ -15773,6 +15773,17 @@ public class TriggerCollectionService {
     }
 
     /**
+     * Whether {@code slot} collects "whenever [a permanent] is sacrificed" abilities. Sacrificing a creature makes
+     * it die, but such an ability triggers on the sacrifice, so an effect that makes "a creature dying" trigger an
+     * ability an additional time (Teysa Karlov) doesn't apply to it.
+     */
+    private static boolean triggeredBySacrifice(Object slot) {
+        return slot instanceof ZoneChangeWatch watch && watch.keys().stream()
+                .allMatch(key -> key.trigger() instanceof ZoneChangeTrigger move
+                        && move.causes().equals(Set.of(ZoneChangeCause.SACRIFICE)));
+    }
+
+    /**
      * {@link #dispatch} for an effect of a creature-death ability the trigger pipeline matched: the handler is
      * {@code watch}'s, not a slot's.
      */
@@ -15806,7 +15817,7 @@ public class TriggerCollectionService {
                 gameQueryService.countAdditionalTriggeredAbilityTriggers(
                         match.gameData(), match.controllerId(), match.permanent(),
                         isDirectAttackTrigger(slot), context)
-                + (context.causedByCreatureDying() && !effect.onlyTriggersOnSacrifice()
+                + (context.causedByCreatureDying() && !triggeredBySacrifice(slot)
                 ? gameQueryService.countAdditionalCreatureDeathTriggeredAbilityTriggers(
                         match.gameData(), match.controllerId(), match.permanent())
                 : 0));

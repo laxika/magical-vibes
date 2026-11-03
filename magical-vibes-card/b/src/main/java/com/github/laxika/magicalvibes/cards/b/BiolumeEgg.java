@@ -24,7 +24,7 @@ public class BiolumeEgg extends Card {
 
         // When you sacrifice this creature, return it to the battlefield transformed under its
         // owner's control at the beginning of the next end step.
-        addTrigger(Triggers.sacrificed(ObjectRelation.THIS), new RegisterDelayedReturnSourceTransformedEffect(true, true));
+        addTrigger(Triggers.sacrificed(ObjectRelation.THIS), new RegisterDelayedReturnSourceTransformedEffect(true));
     }
 
     @Override

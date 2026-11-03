@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareNameWithControlledRoomPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -37,12 +38,12 @@ public class CentralElevatorPromisingStairs extends Card {
                 new CardDoesNotShareNameWithControlledRoomPredicate())));
         addTrigger(Triggers.doorUnlocked(0), searchRoom);
 
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), ConditionalEffect.atTriggerTime(
-                new SourceRoomDoorUnlocked(1),
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), TriggerOptions.DEFAULT.withEventCondition(
+                new SourceRoomDoorUnlocked(1)),
                 SequenceEffect.of(
                         new SurveilEffect(1),
                         ConditionalEffect.unless(
                                 new ControlsDistinctUnlockedRoomNamesCount(8),
-                                new WinGameEffect()))));
+                                new WinGameEffect())));
     }
 }

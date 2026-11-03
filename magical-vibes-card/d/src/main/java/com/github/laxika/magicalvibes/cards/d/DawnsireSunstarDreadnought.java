@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -61,9 +62,9 @@ public class DawnsireSunstarDreadnought extends Card {
         target(new PermanentPredicateTargetFilter(
                 creatureOrPlaneswalker,
                 "Target must be a creature or planeswalker"
-        ), 0, 1).addTrigger(Triggers.youAttack(), ConditionalEffect.atTriggerTime(
-                new SourceCounterThreshold(10, CounterType.CHARGE),
+        ), 0, 1).addTrigger(Triggers.youAttack(), TriggerOptions.DEFAULT.withEventCondition(
+                new SourceCounterThreshold(10, CounterType.CHARGE)),
                 new DealDamageToTargetCreatureOrPlaneswalkerEffect(100, creatureOrPlaneswalker)
-        ));
+        );
     }
 }

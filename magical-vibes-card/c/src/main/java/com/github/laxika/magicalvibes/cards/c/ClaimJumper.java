@@ -25,7 +25,7 @@ public class ClaimJumper extends Card {
         SearchLibraryEffect searchPlains = new SearchLibraryEffect(
                 new Fixed(1), new CardSubtypePredicate(CardSubtype.PLAINS),
                 LibrarySearchDestination.BATTLEFIELD_TAPPED, null, 1, false,
-                false, false, false, null, LibrarySearchPlayer.CONTROLLER, false, false, false);
+                false, false, false, null, LibrarySearchPlayer.CONTROLLER, false, false);
         ConditionalEffect moreLands = new ConditionalEffect(new OpponentControlsMoreLands(),
                 new MayEffect(searchPlains, "Search your library for another Plains card?"));
         ConditionalEffect moreLandsAfterDecline = new ConditionalEffect(new OpponentControlsMoreLands(),

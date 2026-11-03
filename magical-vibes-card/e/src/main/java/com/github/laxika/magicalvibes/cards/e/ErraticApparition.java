@@ -6,12 +6,14 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
+
 @CardRegistration(set = "DSK", collectorNumber = "54")
 public class ErraticApparition extends Card {
 
     public ErraticApparition() {
         BoostSelfEffect boost = new BoostSelfEffect(1, 1);
-        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL), boost);
-        addTrigger(Triggers.youFullyUnlockRoom(), boost);
+        addTrigger(List.of(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
+                Triggers.youFullyUnlockRoom()), boost);
     }
 }

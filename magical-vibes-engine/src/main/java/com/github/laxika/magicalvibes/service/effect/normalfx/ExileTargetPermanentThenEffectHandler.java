@@ -98,8 +98,7 @@ public class ExileTargetPermanentThenEffectHandler implements NormalEffectHandle
                     var boundSearch = new SearchLibraryEffect(search.count(), search.filter(), search.destination(),
                             search.manaValueBound(), search.castFromGraveyardCount(), search.requireDifferentNames(),
                             search.grantHaste(), search.exileAtEndStep(), search.returnToHandAtEndStep(),
-                            search.animateFound(), LibrarySearchPlayer.TRIGGERING_PERMANENT_CONTROLLER,
-                            search.onlyIfSacrificed(), search.battlefieldIfChosenBeholdType(),
+                            search.animateFound(), LibrarySearchPlayer.TRIGGERING_PERMANENT_CONTROLLER, search.battlefieldIfChosenBeholdType(),
                             search.shuffleAfterSelection(), search.battlefieldCounter(), search.enterWithCounters(),
                             search.topLibraryPosition(), search.battlefieldIfOpponentControlsMoreLands(),
                             search.topLibraryFractionDenominator());

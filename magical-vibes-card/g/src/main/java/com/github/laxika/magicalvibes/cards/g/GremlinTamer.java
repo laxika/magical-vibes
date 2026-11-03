@@ -17,7 +17,7 @@ public class GremlinTamer extends Card {
     public GremlinTamer() {
         CreateTokenEffect gremlin = new CreateTokenEffect(
                 "Gremlin", 1, 1, CardColor.RED, List.of(CardSubtype.GREMLIN), Set.of(), Set.of());
-        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL), gremlin);
-        addTrigger(Triggers.youFullyUnlockRoom(), gremlin);
+        addTrigger(List.of(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
+                Triggers.youFullyUnlockRoom()), gremlin);
     }
 }

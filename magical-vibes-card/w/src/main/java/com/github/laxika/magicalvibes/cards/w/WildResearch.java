@@ -55,7 +55,6 @@ public class WildResearch extends Card {
                 null,
                 LibrarySearchPlayer.CONTROLLER,
                 false,
-                false,
                 false);
     }
 }

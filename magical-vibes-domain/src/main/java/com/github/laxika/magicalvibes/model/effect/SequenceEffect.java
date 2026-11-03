@@ -50,27 +50,22 @@ import java.util.UUID;
  * entry's {@code targetId}, allowing steps such as {@link DrawCardForTargetPlayerEffect} to act on
  * "that player".</p>
  */
-public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean onlyIfSacrificed,
-                             boolean optionalTarget, boolean simultaneous)
+public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean optionalTarget,
+                             boolean simultaneous)
         implements CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect,
         EndStepPlayerTargetedEffect, DyingCreatureCardAwareEffect, DyingCreatureCountersAwareEffect,
         DyingCreaturePermanentAwareEffect, CombatOpponentReferencingEffect, DamageSourceControllerAwareEffect {
 
     public SequenceEffect(List<CardEffect> steps) {
-        this(steps, 0, false, false);
+        this(steps, 0, false);
     }
 
     public SequenceEffect(List<CardEffect> steps, int controllerDrawCount) {
-        this(steps, controllerDrawCount, false, false);
+        this(steps, controllerDrawCount, false);
     }
 
-    public SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean onlyIfSacrificed) {
-        this(steps, controllerDrawCount, onlyIfSacrificed, false);
-    }
-
-    public SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean onlyIfSacrificed,
-                          boolean optionalTarget) {
-        this(steps, controllerDrawCount, onlyIfSacrificed, optionalTarget, false);
+    public SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean optionalTarget) {
+        this(steps, controllerDrawCount, optionalTarget, false);
     }
 
     public SequenceEffect {
@@ -94,11 +89,6 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
         return new SequenceEffect(List.of(steps), 2);
     }
 
-    /** Creates a sequence that triggers only when its source permanent was sacrificed. */
-    public static SequenceEffect sacrificeOnly(CardEffect... steps) {
-        return new SequenceEffect(List.of(steps), 0, true);
-    }
-
     /**
      * Creates a sequence whose steps happen at the same time ("deals 4 damage to any target and 2
      * damage to you"). The steps still resolve one after another, but the damage they deal is one
@@ -107,17 +97,17 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
      * events ("… Then …", or a second sentence).
      */
     public static SequenceEffect simultaneous(CardEffect... steps) {
-        return new SequenceEffect(List.of(steps), 0, false, false, true);
+        return new SequenceEffect(List.of(steps), 0, false, true);
     }
 
     /** Returns this sequence with its steps replaced, keeping every other setting. */
     public SequenceEffect withSteps(List<CardEffect> newSteps) {
-        return new SequenceEffect(newSteps, controllerDrawCount, onlyIfSacrificed, optionalTarget, simultaneous);
+        return new SequenceEffect(newSteps, controllerDrawCount, optionalTarget, simultaneous);
     }
 
     /** Creates a sequence whose single declared target may be omitted. */
     public static SequenceEffect upToOneTarget(CardEffect... steps) {
-        return new SequenceEffect(List.of(steps), 0, false, true);
+        return new SequenceEffect(List.of(steps), 0, true);
     }
 
     @Override
@@ -128,11 +118,6 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
     @Override
     public boolean hasAbilityResolutionCondition() {
         return steps.stream().anyMatch(CardEffect::hasAbilityResolutionCondition);
-    }
-
-    @Override
-    public boolean onlyTriggersOnSacrifice() {
-        return onlyIfSacrificed;
     }
 
     @Override

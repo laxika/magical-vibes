@@ -308,12 +308,12 @@ public class EtbEffectResolver {
     /** Retains the casting payment across the independent abilities of an entering permanent. */
     private CardEffect snapshotManaPairs(EtbEffectContext ctx, CardEffect effect) {
         if (effect instanceof DrawCardEffect draw && draw.amount() instanceof ColorManaPairsSpentToCast) {
-            return new DrawCardEffect(snapshotManaPairs(ctx, draw.amount()), draw.onlyIfSacrificed(),
+            return new DrawCardEffect(snapshotManaPairs(ctx, draw.amount()),
                     draw.castTimeXValue());
         }
         if (effect instanceof DiscardEffect discard && discard.amount() instanceof ColorManaPairsSpentToCast) {
             return new DiscardEffect(snapshotManaPairs(ctx, discard.amount()), discard.recipient(),
-                    discard.random(), discard.stopAfterDiscardingType(), discard.onlyIfSacrificed(),
+                    discard.random(), discard.stopAfterDiscardingType(),
                     discard.onlyCardsDrawnThisResolution(), discard.stopAfterDiscardingPredicate());
         }
         if (effect instanceof BoostSelfEffect boost

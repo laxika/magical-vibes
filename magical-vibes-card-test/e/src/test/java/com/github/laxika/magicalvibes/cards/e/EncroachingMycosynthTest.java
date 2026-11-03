@@ -109,6 +109,8 @@ class EncroachingMycosynthTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castCreature(player1, 0);
+        // Mishra's ability goes on the stack; its "you may" is asked as it resolves (CR 603.5).
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
     }

@@ -91,13 +91,6 @@ public interface CardEffect {
     default boolean notesManaValueOfExiledCards() { return false; }
 
     /**
-     * Returns {@code true} if this "when this dies" effect only triggers when the permanent was
-     * sacrificed ("When you sacrifice this…"), not when it dies by other means. Filtered out
-     * of the normal death-trigger path and collected from the sacrifice path instead.
-     */
-    default boolean onlyTriggersOnSacrifice() { return false; }
-
-    /**
      * Returns {@code true} if the card-level target group bound to this effect belongs to a
      * reflexive "when you do" ability it creates (CR 603.12), not to the ability carrying it. Those
      * targets are chosen as the reflexive ability is put on the stack, after the optional action,

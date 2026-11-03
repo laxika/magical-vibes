@@ -20,7 +20,7 @@ public class DaemogothWoeEater extends Card {
     public DaemogothWoeEater() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new SacrificePermanentsEffect(
                 1, new PermanentIsCreaturePredicate(), SacrificeRecipient.CONTROLLER));
-        addTrigger(Triggers.sacrificed(ObjectRelation.THIS), SequenceEffect.sacrificeOnly(
+        addTrigger(Triggers.sacrificed(ObjectRelation.THIS), SequenceEffect.of(
                 new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT),
                 new DrawCardEffect(1),
                 new GainLifeEffect(2)));

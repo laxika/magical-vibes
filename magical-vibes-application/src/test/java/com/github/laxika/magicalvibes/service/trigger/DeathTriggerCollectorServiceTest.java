@@ -1088,7 +1088,7 @@ class DeathTriggerCollectorServiceTest {
     class AnyNontokenCreatureDeathHandlers {
 
         @Test
-        @DisplayName("Imprint bakes dying card ID")
+        @DisplayName("Imprint goes on the stack with its may and the dying card ID baked in (CR 603.5)")
         void imprintBakesDyingCardId() {
             Card dying = createCreature("Dying Nontoken", 3, 3);
             Card watcher = createCreature("Mimic Vat", 0, 0);
@@ -1099,9 +1099,14 @@ class DeathTriggerCollectorServiceTest {
 
             svc.handleImprintDyingCreature(match(perm, PLAYER1_ID, rawMay), imprint, ctx);
 
-            assertThat(gd.pendingMayAbilities).hasSize(1);
-            var bakedImprint = (ImprintDyingCreatureEffect) gd.pendingMayAbilities.get(0).effects().get(0);
+            assertThat(gd.pendingMayAbilities).isEmpty();
+            assertThat(gd.stack).hasSize(1);
+            var may = (MayEffect) gd.stack.getFirst().getEffectsToResolve().getFirst();
+            assertThat(may.prompt()).isEqualTo("Exile and imprint?");
+            var bakedImprint = (ImprintDyingCreatureEffect) may.wrapped();
             assertThat(bakedImprint.dyingCardId()).isEqualTo(dying.getId());
+            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(perm.getId());
+            assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
         }
 
         @Test

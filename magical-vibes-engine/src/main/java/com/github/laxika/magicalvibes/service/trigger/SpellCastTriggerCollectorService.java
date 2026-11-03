@@ -1341,28 +1341,20 @@ public class SpellCastTriggerCollectorService {
 
         CardEffect searchEffect = new SearchZonesForCardNamedToBattlefieldEffect(sc.spellCard().getName());
         Card sourceCard = match.permanent().getCard();
-        if (match.rawEffect() instanceof MayEffect may) {
-            match.gameData().pendingMayAbilities.add(PendingMayAbility.forSpellCastTrigger(
-                    sourceCard,
-                    match.controllerId(),
-                    List.of(searchEffect),
-                    sourceCard.getName() + " — " + may.prompt(),
-                    null,
-                    match.permanent().getId(),
-                    sc.spellCard().getId()));
-            gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        } else {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    match.controllerId(),
-                    sourceCard.getName() + "'s ability",
-                    new ArrayList<>(List.of(searchEffect)));
-            entry.setTriggeringCardId(sc.spellCard().getId());
-            entry.setNonTargeting(true);
-            match.gameData().stack.add(entry);
-            gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        }
+        // CR 603.5: a "you may" goes on the stack with the ability and is chosen as it resolves.
+        CardEffect resolved = match.rawEffect() instanceof MayEffect may
+                ? new MayEffect(searchEffect, may.prompt())
+                : searchEffect;
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(resolved)));
+        entry.setTriggeringCardId(sc.spellCard().getId());
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         return true;
     }
 
@@ -2078,29 +2070,21 @@ public class SpellCastTriggerCollectorService {
                 match.gameData(), sc.castingPlayerId())) return false;
 
         int manaValue = spellManaValue(match.gameData(), sc.spellCard());
-        List<CardEffect> resolvedEffects = List.of(new GainLifeEffect(manaValue));
-        if (match.rawEffect() instanceof MayEffect may) {
-            match.gameData().pendingMayAbilities.add(PendingMayAbility.forSpellCastTrigger(
-                    match.permanent().getCard(),
-                    match.controllerId(),
-                    resolvedEffects,
-                    match.permanent().getCard().getName() + " - " + may.prompt(),
-                    null,
-                    match.permanent().getId(),
-                    sc.spellCard().getId()));
-            gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        } else {
-            match.gameData().stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    match.permanent().getCard(),
-                    match.controllerId(),
-                    match.permanent().getCard().getName() + "'s ability",
-                    resolvedEffects,
-                    null,
-                    match.permanent().getId()));
-            log.info("Game {} - {} spell-cast mana-value life-gain trigger queued ({})",
-                    match.gameData().id, match.permanent().getCard().getName(), manaValue);
-        }
+        // CR 603.5: a "you may" goes on the stack with the ability and is chosen as it resolves.
+        List<CardEffect> resolvedEffects = List.of(match.rawEffect() instanceof MayEffect may
+                ? new MayEffect(new GainLifeEffect(manaValue), may.prompt())
+                : new GainLifeEffect(manaValue));
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                resolvedEffects,
+                null,
+                match.permanent().getId()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} spell-cast mana-value life-gain trigger queued ({})",
+                match.gameData().id, match.permanent().getCard().getName(), manaValue);
         return true;
     }
 
@@ -3364,8 +3348,7 @@ public class SpellCastTriggerCollectorService {
         }
         if (effect instanceof DrawCardEffect draw && draw.amount() instanceof TriggeringSpellTargetCount targetCount) {
             return new DrawCardEffect(
-                    new Fixed(countMatchingSpellTargets(gameData, spellSnapshot, targetCount, sourceControllerId)),
-                    draw.onlyIfSacrificed(), draw.castTimeXValue(), draw.rememberAmount());
+                    new Fixed(countMatchingSpellTargets(gameData, spellSnapshot, targetCount, sourceControllerId)), draw.castTimeXValue(), draw.rememberAmount());
         }
         if (effect instanceof PutCountersOnSelfEffect putCounters
                 && putCounters.amount() instanceof TriggeringSpellTargetCount targetCount) {

@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
-import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -3226,12 +3225,18 @@ public class DeathTriggerCollectorService {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
         ImprintDyingCreatureEffect imprintEffect = new ImprintDyingCreatureEffect(cd.dyingCard().getId());
         MayEffect rawMay = (MayEffect) match.rawEffect();
-        match.gameData().pendingMayAbilities.add(new PendingMayAbility(
+        // CR 603.5: the ability goes on the stack and "you may exile that card" is chosen as it resolves. The
+        // source permanent is carried as the entry's (non-targeting) target: the imprint still happens if it left.
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
-                List.of(imprintEffect),
-                match.permanent().getCard().getName() + " — " + rawMay.prompt()
-        ));
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new MayEffect(imprintEffect, rawMay.prompt()))),
+                match.permanent().getId(),
+                match.permanent().getId());
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 "'s imprint ability triggers."));
         log.info("Game {} - {} imprint triggers (nontoken creature died)", match.gameData().id, match.permanent().getCard().getName());
@@ -3395,15 +3400,18 @@ public class DeathTriggerCollectorService {
 
         MayPayManaEffect rawMayPay = (MayPayManaEffect) match.rawEffect();
         CardEffect returnEffect = new ReturnDyingOpponentCreatureAsTreasureEffect(dyingCard.getId());
-        gameData.pendingMayAbilities.add(new PendingMayAbility(
+        // CR 603.5: the payment is decided as the ability resolves, so the trigger goes on the stack first.
+        gameData.stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
-                List.of(returnEffect),
-                match.permanent().getCard().getName() + " — Pay " + rawMayPay.manaCost()
-                        + " to return " + dyingCard.getName() + " to the battlefield under your control as a Treasure?",
-                dyingCard.getId(),
-                rawMayPay.manaCost()
-        ));
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new MayPayManaEffect(rawMayPay.manaCost(), returnEffect,
+                        match.permanent().getCard().getName() + " — Pay " + rawMayPay.manaCost()
+                                + " to return " + dyingCard.getName()
+                                + " to the battlefield under your control as a Treasure?"))),
+                null,
+                match.permanent().getId()));
         gameLogService.append(gameData, GameLog.cardTextCard(match.permanent().getCard(),
                 "'s ability triggers (", dyingCard, " died)."));
         logOpponentCreatureDeath(match);

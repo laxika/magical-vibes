@@ -243,8 +243,7 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
             var boundSearch = new SearchLibraryEffect(search.count(), search.filter(), search.destination(),
                     search.manaValueBound(), search.castFromGraveyardCount(), search.requireDifferentNames(),
                     search.grantHaste(), search.exileAtEndStep(), search.returnToHandAtEndStep(),
-                    search.animateFound(), LibrarySearchPlayer.TRIGGERING_PERMANENT_CONTROLLER,
-                    search.onlyIfSacrificed(), search.battlefieldIfChosenBeholdType(), search.shuffleAfterSelection(),
+                    search.animateFound(), LibrarySearchPlayer.TRIGGERING_PERMANENT_CONTROLLER, search.battlefieldIfChosenBeholdType(), search.shuffleAfterSelection(),
                     search.battlefieldCounter(), search.enterWithCounters(), search.topLibraryPosition(),
                     search.battlefieldIfOpponentControlsMoreLands(), search.topLibraryFractionDenominator());
             // The destroyed permanent's controller makes the choice by identity: the entry's triggering
@@ -283,7 +282,7 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
             return List.of(thenEffect);
         }
         if (!(thenEffect instanceof SequenceEffect sequence) || sequence.simultaneous()
-                || sequence.controllerDrawCount() != 0 || sequence.onlyIfSacrificed() || sequence.optionalTarget()
+                || sequence.controllerDrawCount() != 0 || sequence.optionalTarget()
                 || sequence.steps().stream().noneMatch(riderStepHandler::resolvesAsStep)
                 || !sequence.steps().stream().allMatch(step -> riderStepHandler.resolvesAsStep(step)
                         || !(step instanceof MayEffect || step instanceof SequenceEffect

@@ -212,7 +212,8 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * (the "when this enters" collector and the code that inspects "when this enters" abilities, until step 15 of
      * effect-slot-refactor.md): each effect wrapped in this ability's options as the cards wrote them before step 14.
      * An intervening "if" is a {@link ConditionalEffect} of it, checked as the ability triggers and again as it
-     * resolves (CR 603.4); "triggers only once each turn" is a {@link OncePerTurnTriggerEffect} keyed by
+     * resolves (CR 603.4); the event condition the {@link ConditionalEffect#atTriggerTime} inside every other wrapper,
+     * checked only as the ability triggers (CR 603.2); "triggers only once each turn" is a {@link OncePerTurnTriggerEffect} keyed by
      * {@link #limitKey()}, the key the trigger pipeline marks; "do this only once each turn" one marked as the action
      * is taken (CR 603.2h); "this ability triggers only once" ({@code ONCE}) an {@link OnceOnlyTriggerEffect} inside
      * the intervening "if", as the "at the beginning of [step or phase]" cards wrote it. A land-play trigger's filter
@@ -310,11 +311,11 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
                 && (combat == null || combat.plain()) && (damage == null || damage.plain())
                 && (counter == null || counter.plain()) && (target == null || target.plain())
                 && (tap == null || tap.plain()) && (life == null || life.plain()) && object == null) {
-            return effects;
+            return legacyBaseEffects();
         }
         String key = limit == TriggerLimit.ONCE_EACH_TURN ? limitKey() : null;
         List<EffectRegistration> wrapped = new ArrayList<>(effects.size());
-        for (EffectRegistration registration : effects) {
+        for (EffectRegistration registration : legacyBaseEffects()) {
             CardEffect effect = registration.effect();
             // An authored ally combat damage record (an event binding) is the outermost of the effect's own
             // wrappers: the intervening "if" goes inside it, as the cards wrote it.
@@ -393,7 +394,7 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             throw new IllegalStateException("The state-trigger reader reads only an intervening \"if\": " + options);
         }
         Condition interveningIf = options.interveningIf();
-        List<CardEffect> resolved = effects.stream()
+        List<CardEffect> resolved = legacyBaseEffects().stream()
                 .map(registration -> interveningIf == null ? registration.effect()
                         : (CardEffect) new ConditionalEffect(interveningIf, registration.effect(), true))
                 .toList();
@@ -411,7 +412,7 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         CardPredicate filter = conditions.stream().map(TriggerCondition::trigger)
                 .filter(PlayerActionTrigger.class::isInstance).map(PlayerActionTrigger.class::cast)
                 .map(PlayerActionTrigger::filter).filter(Objects::nonNull).findFirst().orElse(null);
-        List<CardEffect> resolved = effects.stream().map(EffectRegistration::effect).toList();
+        List<CardEffect> resolved = legacyBaseEffects().stream().map(EffectRegistration::effect).toList();
         return List.of(new EffectRegistration(new SchemeSetInMotionTriggerEffect(filter, resolved),
                 effects.getFirst().triggerMode(), false));
     }
@@ -893,7 +894,7 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
                     + "only as the ability's one condition: " + conditions);
         }
         requireNoOptions("first-life-loss");
-        List<CardEffect> resolved = effects.stream().map(EffectRegistration::effect).toList();
+        List<CardEffect> resolved = legacyBaseEffects().stream().map(EffectRegistration::effect).toList();
         return List.of(new EffectRegistration(new FirstOpponentLifeLossEachTurnTriggerEffect(resolved),
                 effects.getFirst().triggerMode(), false));
     }
@@ -960,7 +961,7 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             throw new IllegalStateException("No library collector reads " + limit + ": " + conditions);
         }
         List<EffectRegistration> wrapped = new ArrayList<>(effects.size());
-        for (EffectRegistration registration : effects) {
+        for (EffectRegistration registration : legacyBaseEffects()) {
             CardEffect effect = registration.effect();
             if (options.interveningIf() != null) {
                 effect = new ConditionalEffect(options.interveningIf(), effect, true);
@@ -1141,7 +1142,7 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         TriggerLimit limit = options.limit();
         boolean onStackPath = conditions.stream().anyMatch(condition -> condition.trigger() instanceof SpellTrigger
                 && (condition.zones().functionsIn(Zone.BATTLEFIELD) || condition.zones().functionsIn(Zone.EXILE)));
-        List<CardEffect> resolved = effects.stream().map(EffectRegistration::effect).toList();
+        List<CardEffect> resolved = legacyBaseEffects().stream().map(EffectRegistration::effect).toList();
         String manaCost = null;
         String optionalPrompt = null;
         if (resolved.size() == 1 && limit != TriggerLimit.ONCE) {
@@ -1184,7 +1185,7 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      */
     private List<EffectRegistration> legacySpellCopyEffects(SpellFilter filter) {
         requireNoOptions("copy");
-        List<CardEffect> resolved = effects.stream().map(EffectRegistration::effect).toList();
+        List<CardEffect> resolved = legacyBaseEffects().stream().map(EffectRegistration::effect).toList();
         return List.of(new EffectRegistration(new SpellCopyTriggerEffect(filter.spell(), resolved, null,
                 filter.stackEntry(), true, false), effects.getFirst().triggerMode(), false));
     }
@@ -1201,7 +1202,7 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             throw new IllegalStateException("The legacy view has no land-play record for a land filter with a zone: "
                     + landPlay);
         }
-        List<CardEffect> resolved = effects.stream().map(EffectRegistration::effect).toList();
+        List<CardEffect> resolved = legacyBaseEffects().stream().map(EffectRegistration::effect).toList();
         CardEffect effect;
         if (landPlay.playedFrom() == Zone.EXILE) {
             effect = new LandPlayFromExileTriggerEffect(resolved);
@@ -1240,6 +1241,23 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             case WITH_TAP_COST -> new TriggeringTapAbilityConditionalEffect(effect);
             case WITHOUT_TAP_COST -> new TriggeringNonTapAbilityConditionalEffect(effect);
         };
+    }
+
+    /**
+     * This ability's registrations with its event condition ({@link TriggerOptions#eventCondition()}) wrapped around
+     * each effect as the {@link ConditionalEffect#atTriggerTime} the cards wrote before step 14, innermost of the
+     * legacy view's wrappers: the collectors check it as the ability triggers and not as it resolves (CR 603.2).
+     */
+    private List<EffectRegistration> legacyBaseEffects() {
+        Condition eventCondition = options.eventCondition();
+        if (eventCondition == null) {
+            return effects;
+        }
+        return effects.stream()
+                .map(registration -> new EffectRegistration(
+                        ConditionalEffect.atTriggerTime(eventCondition, registration.effect()),
+                        registration.triggerMode(), registration.simultaneousWithPrevious()))
+                .toList();
     }
 
     /** This ability with {@code effects} in place of its effects. */

@@ -18,6 +18,6 @@ public class ExtraArms extends Card {
         // so its controller is the Aura's controller even when the enchanted creature is an opponent's.
         setAttackTriggerOwnedByAura(true);
         addTrigger(Triggers.attacks(), new DealDamageToAnyTargetEffect(
-                new Fixed(2), false, false, -1, null, false, false, false, true));
+                new Fixed(2), false, false, -1, null, false, false, true));
     }
 }

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerRadCountersEffect;
@@ -42,10 +41,10 @@ public class StruggleForProjectPurity extends Card {
         // attack is judged once when it is declared. Rechecking it on resolution would wrongly stop the
         // trigger when every declared attacker has since left combat.
         addTrigger(Triggers.playerAttacks(),
-                ConditionalEffect.atTriggerTime(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new AllOf(List.of(
                                 new SourceHasChosenMode(ENCLAVE),
-                                new OpponentAttacksWithAtLeastCreatures(1, false))),
-                        new GiveTargetPlayerRadCountersEffect(new Scaled(new XValue(), 2))));
+                                new OpponentAttacksWithAtLeastCreatures(1, false)))),
+                        new GiveTargetPlayerRadCountersEffect(new Scaled(new XValue(), 2)));
     }
 }

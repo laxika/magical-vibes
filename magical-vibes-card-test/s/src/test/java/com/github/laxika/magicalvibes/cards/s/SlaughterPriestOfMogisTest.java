@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.DiabolicEdict;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.OmenOfTheForge;
+import com.github.laxika.magicalvibes.cards.t.TeysaKarlov;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -37,6 +38,22 @@ class SlaughterPriestOfMogisTest extends BaseCardTest {
 
         assertThat(priest.getEffectivePower()).isEqualTo(4);
         assertThat(priest.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed({SlaughterPriestOfMogis.class, TeysaKarlov.class, DiabolicEdict.class, GrizzlyBears.class})
+    @DisplayName("Teysa Karlov doesn't make it trigger twice: a creature is sacrificed, not dying, for this ability")
+    void teysaKarlovDoesNotDoubleTheSacrificeTrigger() {
+        Permanent priest = addReadyPriest(player1);
+        harness.addToBattlefield(player1, new TeysaKarlov());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castEdictAt(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
+        resolveAllTriggers();
+
+        assertThat(priest.getEffectivePower()).isEqualTo(4);
     }
 
     @Test

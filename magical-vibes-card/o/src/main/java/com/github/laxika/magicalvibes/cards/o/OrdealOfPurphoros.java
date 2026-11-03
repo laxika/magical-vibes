@@ -48,6 +48,6 @@ public class OrdealOfPurphoros extends Card {
                         new PermanentIsBattlePredicate())),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Any target"))
-                .addTrigger(Triggers.sacrificed(ObjectRelation.THIS), DealDamageToAnyTargetEffect.sacrificeOnly(3));
+                .addTrigger(Triggers.sacrificed(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(3));
     }
 }

@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
+
 @CardRegistration(set = "DSK", collectorNumber = "238")
 public class VictorValgavothsSeneschal extends Card {
 
@@ -32,7 +34,7 @@ public class VictorValgavothsSeneschal extends Card {
                                 .mandatory(true)
                                 .build())
         );
-        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL), eerie);
-        addTrigger(Triggers.youFullyUnlockRoom(), eerie);
+        addTrigger(List.of(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
+                Triggers.youFullyUnlockRoom()), eerie);
     }
 }

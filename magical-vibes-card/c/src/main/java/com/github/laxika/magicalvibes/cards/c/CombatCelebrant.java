@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceExertedThisTurn;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AKH", collectorNumber = "125")
@@ -23,8 +23,8 @@ public class CombatCelebrant extends Card {
         // "If this creature hasn't been exerted this turn, you may exert it as it attacks. When you
         // do, untap all other creatures you control and after this phase, there is an additional
         // combat phase." The extra combat has no extra main phase.
-        addTrigger(Triggers.attacks(), ConditionalEffect.atTriggerTime(
-                new NotCondition(new SourceExertedThisTurn()),
+        addTrigger(Triggers.attacks(), TriggerOptions.DEFAULT.withEventCondition(
+                new NotCondition(new SourceExertedThisTurn())),
                 new MayEffect(
                         SequenceEffect.of(
                                 new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true),
@@ -32,6 +32,6 @@ public class CombatCelebrant extends Card {
                                 new AdditionalCombatPhaseEffect(1)
                         ),
                         "Exert Combat Celebrant as it attacks? (Untap all other creatures you control and take an additional combat phase.)"
-                )));
+                ));
     }
 }

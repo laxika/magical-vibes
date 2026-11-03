@@ -14,9 +14,4 @@ public record RegisterDelayedTokenCopyEffect(Card copiedCard)
     public CardEffect boundToSacrificedPermanent(Card sacrificedCard) {
         return new RegisterDelayedTokenCopyEffect(sacrificedCard);
     }
-
-    @Override
-    public boolean onlyTriggersOnSacrifice() {
-        return true;
-    }
 }

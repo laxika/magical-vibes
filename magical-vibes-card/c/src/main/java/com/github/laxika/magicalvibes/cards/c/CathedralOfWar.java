@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M13", collectorNumber = "221")
@@ -19,7 +19,7 @@ public class CathedralOfWar extends Card {
 
     public CathedralOfWar() {
         addTrigger(Triggers.creatureYouControlAttacks(),
-                ConditionalEffect.atTriggerTime(new AttacksAlone(), new BoostTargetCreatureEffect(1, 1)));
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()), new BoostTargetCreatureEffect(1, 1));
         addStaticEffect(new EntersTappedEffect());
 
         // {T}: Add {C}.

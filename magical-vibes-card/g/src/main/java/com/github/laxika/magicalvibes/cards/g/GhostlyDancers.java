@@ -37,7 +37,7 @@ public class GhostlyDancers extends Card {
         CreateTokenEffect spiritToken = new CreateTokenEffect(
                 "Spirit", 3, 1, CardColor.WHITE,
                 List.of(CardSubtype.SPIRIT), Set.of(Keyword.FLYING), Set.of());
-        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL), spiritToken);
-        addTrigger(Triggers.youFullyUnlockRoom(), spiritToken);
+        addTrigger(List.of(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
+                Triggers.youFullyUnlockRoom()), spiritToken);
     }
 }

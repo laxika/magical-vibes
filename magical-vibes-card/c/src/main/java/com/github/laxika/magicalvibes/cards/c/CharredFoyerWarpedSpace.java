@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -27,9 +28,9 @@ public class CharredFoyerWarpedSpace extends Card {
                         .withManaCost("{4}{R}{R}")
         )));
 
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), ConditionalEffect.atTriggerTime(
-                new SourceRoomDoorUnlocked(0),
-                new ExileTopCardMayPlayThisTurnEffect(false)));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), TriggerOptions.DEFAULT.withEventCondition(
+                new SourceRoomDoorUnlocked(0)),
+                new ExileTopCardMayPlayThisTurnEffect(false));
         addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(1),
                 new AlternativeCostForSpellsEffect(

@@ -32,6 +32,6 @@ public class WrathfulRaptors extends Card {
                 "Target must not be a Dinosaur"
         )).addTrigger(Triggers.permanentYouControlDealtDamage()
                         .withFilter(new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR)),
-                new DealDamageToAnyTargetEffect(new XValue(), false, false, -1, null, false, false, false, true));
+                new DealDamageToAnyTargetEffect(new XValue(), false, false, -1, null, false, false, true));
     }
 }

@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerControlsMoreLandsThanController;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CMM", collectorNumber = "18")
@@ -20,12 +20,12 @@ public class CartographersHawk extends Card {
     public CartographersHawk() {
         // "to a player who controls more lands than you" qualifies the event; it isn't rechecked
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                ConditionalEffect.atTriggerTime(
-                        new TargetPlayerControlsMoreLandsThanController(),
+                TriggerOptions.DEFAULT.withEventCondition(
+                        new TargetPlayerControlsMoreLandsThanController()),
                         new ReturnSelfToHandThenEffect(
                                 new MayEffect(
                                         new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.PLAINS),
                                                 LibrarySearchDestination.BATTLEFIELD_TAPPED),
-                                        "Search your library for a Plains card?"))));
+                                        "Search your library for a Plains card?")));
     }
 }

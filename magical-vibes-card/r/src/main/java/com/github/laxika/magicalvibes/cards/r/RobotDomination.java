@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -33,13 +32,13 @@ public class RobotDomination extends Card {
                         new LoseLifeEffect(1),
                         new PutCountersOnSelfEffect(CounterType.PLAN)));
 
-        addTrigger(Triggers.countersPutOnThis(), ConditionalEffect.atTriggerTime(
-                new SourceCounterThreshold(3, CounterType.PLAN),
+        addTrigger(Triggers.countersPutOnThis(), TriggerOptions.DEFAULT.withEventCondition(
+                new SourceCounterThreshold(3, CounterType.PLAN)),
                 SequenceEffect.of(
                         new SacrificeSelfEffect(),
                         new CreateTokenEffect(
                                 3, "Robot", 2, 2, null,
                                 List.of(CardSubtype.ROBOT, CardSubtype.VILLAIN), Set.of(),
-                                Set.of(CardType.ARTIFACT)))));
+                                Set.of(CardType.ARTIFACT))));
     }
 }

@@ -1062,8 +1062,8 @@ public class StepTriggerService {
                             .filter(effect -> !affectsEnchantedPermanentController(gameData, perm, effect))
                             .forEach(upkeepEffects::add);
                 }
-                upkeepEffects.addAll(perm.getTemporaryTriggerEffects(YOUR_UPKEEP));
-                upkeepEffects.addAll(perm.getPersistentTriggerEffects(YOUR_UPKEEP));
+                upkeepEffects.addAll(perm.getLegacyTemporaryTriggerEffects(YOUR_UPKEEP));
+                upkeepEffects.addAll(perm.getLegacyPersistentTriggerEffects(YOUR_UPKEEP));
             }
             if (upkeepEffects.stream().anyMatch(SoulEchoUpkeepEffect.class::isInstance)) {
                 perm.setEchoDamageRedirectionActive(false);
@@ -1753,8 +1753,8 @@ public class StepTriggerService {
             if (gameQueryService.hasLostAllAbilities(gameData, perm)) return;
             List<CardEffect> eachUpkeepEffects = new ArrayList<>(
                     perm.getCard().getLegacyTriggerEffects(EACH_UPKEEP, Zone.BATTLEFIELD));
-            eachUpkeepEffects.addAll(perm.getTemporaryTriggerEffects(EACH_UPKEEP));
-            eachUpkeepEffects.addAll(perm.getPersistentTriggerEffects(EACH_UPKEEP));
+            eachUpkeepEffects.addAll(perm.getLegacyTemporaryTriggerEffects(EACH_UPKEEP));
+            eachUpkeepEffects.addAll(perm.getLegacyPersistentTriggerEffects(EACH_UPKEEP));
             grantedUpkeepEffectSupport.appendGrantedEachUpkeepEffects(gameData, perm, eachUpkeepEffects);
             if (eachUpkeepEffects == null || eachUpkeepEffects.isEmpty()) return;
 
@@ -5918,7 +5918,7 @@ public class StepTriggerService {
                 if (!enchantsPlayer(gameData, perm)) {
                     endStepEffects.addAll(perm.getCard().getLegacyTriggerEffects(EACH_END_STEP, Zone.BATTLEFIELD));
                 }
-                endStepEffects.addAll(perm.getPersistentTriggerEffects(EACH_END_STEP));
+                endStepEffects.addAll(perm.getLegacyPersistentTriggerEffects(EACH_END_STEP));
                 if (endStepEffects.isEmpty()) continue;
 
                 for (CardEffect effect : endStepEffects) {
@@ -6457,8 +6457,8 @@ public class StepTriggerService {
                         controllerEndStepEffects.addAll(
                                 perm.getCard().getLegacyTriggerEffects(YOUR_END_STEP, Zone.BATTLEFIELD));
                     }
-                    controllerEndStepEffects.addAll(perm.getTemporaryTriggerEffects(YOUR_END_STEP));
-                    controllerEndStepEffects.addAll(perm.getPersistentTriggerEffects(YOUR_END_STEP));
+                    controllerEndStepEffects.addAll(perm.getLegacyTemporaryTriggerEffects(YOUR_END_STEP));
+                    controllerEndStepEffects.addAll(perm.getLegacyPersistentTriggerEffects(YOUR_END_STEP));
                 }
                 controllerEndStepEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
                         gameData, perm, YOUR_END_STEP));

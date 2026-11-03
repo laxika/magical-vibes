@@ -34,7 +34,6 @@ import java.util.List;
  *                           entry), this damage can't be prevented — e.g. Banefire's "If X is
  *                           5 or more, … the damage can't be prevented" uses
  *                           {@code new SpellXAtLeast(5)}. {@code null} = normal prevention.
- * @param onlyIfSacrificed   whether an on-death use triggers only when its source was sacrificed
  * @param cantBeRedirectedWhenUnpreventable when true, an event made unpreventable by
  *                           {@code unpreventableWhen} also can't be redirected
  * @param preventRegenerationWithoutDamage when true, the targeted creature cannot regenerate
@@ -44,7 +43,6 @@ import java.util.List;
 public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate,
                                           boolean exileInsteadOfDie, int targetGroup,
                                           Condition unpreventableWhen,
-                                          boolean onlyIfSacrificed,
                                           boolean cantBeRedirectedWhenUnpreventable,
                                           boolean preventRegenerationWithoutDamage,
                                           boolean sourceIsTriggeringPermanent,
@@ -53,66 +51,57 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
 
     public DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate,
                                        boolean exileInsteadOfDie, int targetGroup,
-                                       Condition unpreventableWhen, boolean onlyIfSacrificed,
+                                       Condition unpreventableWhen,
                                        boolean cantBeRedirectedWhenUnpreventable,
                                        boolean preventRegenerationWithoutDamage,
                                        boolean sourceIsTriggeringPermanent) {
         this(damage, cantRegenerate, exileInsteadOfDie, targetGroup, unpreventableWhen,
-                onlyIfSacrificed, cantBeRedirectedWhenUnpreventable,
-                preventRegenerationWithoutDamage, sourceIsTriggeringPermanent, false);
+                cantBeRedirectedWhenUnpreventable, preventRegenerationWithoutDamage, sourceIsTriggeringPermanent, false);
     }
 
     /** Returns the same effect with a different damage amount (for example one fixed at trigger time). */
     public DealDamageToAnyTargetEffect withDamage(DynamicAmount newDamage) {
         return new DealDamageToAnyTargetEffect(newDamage, cantRegenerate, exileInsteadOfDie, targetGroup,
-                unpreventableWhen, onlyIfSacrificed, cantBeRedirectedWhenUnpreventable,
+                unpreventableWhen, cantBeRedirectedWhenUnpreventable,
                 preventRegenerationWithoutDamage, sourceIsTriggeringPermanent, recordDamageDealt);
     }
 
     /** Stores the damage actually dealt in the stack entry for subsequent effects. */
     public DealDamageToAnyTargetEffect recordingDamageDealt() {
         return new DealDamageToAnyTargetEffect(damage, cantRegenerate, exileInsteadOfDie, targetGroup,
-                unpreventableWhen, onlyIfSacrificed, cantBeRedirectedWhenUnpreventable,
+                unpreventableWhen, cantBeRedirectedWhenUnpreventable,
                 preventRegenerationWithoutDamage, sourceIsTriggeringPermanent, true);
     }
 
     public DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate,
                                        boolean exileInsteadOfDie, int targetGroup,
-                                       Condition unpreventableWhen, boolean onlyIfSacrificed,
+                                       Condition unpreventableWhen,
                                        boolean cantBeRedirectedWhenUnpreventable,
                                        boolean preventRegenerationWithoutDamage) {
         this(damage, cantRegenerate, exileInsteadOfDie, targetGroup, unpreventableWhen,
-                onlyIfSacrificed, cantBeRedirectedWhenUnpreventable, preventRegenerationWithoutDamage, false);
+                cantBeRedirectedWhenUnpreventable, preventRegenerationWithoutDamage, false);
     }
 
     /** The entering permanent deals the damage, with its live characteristics or last known values. */
     public static DealDamageToAnyTargetEffect fromEnteringPermanent(DynamicAmount damage) {
-        return new DealDamageToAnyTargetEffect(damage, false, false, -1, null,
-                false, false, false, true);
+        return new DealDamageToAnyTargetEffect(damage, false, false, -1, null, false, false, true);
     }
 
     private static final int ANY_OTHER_TARGET = -2;
 
     public DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate,
                                        boolean exileInsteadOfDie, int targetGroup,
-                                       Condition unpreventableWhen, boolean onlyIfSacrificed,
+                                       Condition unpreventableWhen,
                                        boolean cantBeRedirectedWhenUnpreventable) {
         this(damage, cantRegenerate, exileInsteadOfDie, targetGroup, unpreventableWhen,
-                onlyIfSacrificed, cantBeRedirectedWhenUnpreventable, false);
+                cantBeRedirectedWhenUnpreventable, false);
     }
 
     /** Applies the no-regeneration rider to the targeted creature regardless of damage dealt. */
     public DealDamageToAnyTargetEffect withUnconditionalRegenerationPrevention() {
         return new DealDamageToAnyTargetEffect(damage, true, exileInsteadOfDie, targetGroup,
-                unpreventableWhen, onlyIfSacrificed, cantBeRedirectedWhenUnpreventable, true,
+                unpreventableWhen, cantBeRedirectedWhenUnpreventable, true,
                 sourceIsTriggeringPermanent, recordDamageDealt);
-    }
-
-    public DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate,
-                                       boolean exileInsteadOfDie, int targetGroup,
-                                       Condition unpreventableWhen, boolean onlyIfSacrificed) {
-        this(damage, cantRegenerate, exileInsteadOfDie, targetGroup, unpreventableWhen,
-                onlyIfSacrificed, false);
     }
 
     public DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate,
@@ -141,10 +130,6 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
         this(damage, false, false, -1, null);
     }
 
-    public static DealDamageToAnyTargetEffect sacrificeOnly(int damage) {
-        return new DealDamageToAnyTargetEffect(new Fixed(damage), false, false, -1, null, true);
-    }
-
     /** "Deals damage to any target; that damage can't be prevented while {@code unpreventableWhen} holds" (Banefire). */
     public DealDamageToAnyTargetEffect(DynamicAmount damage, Condition unpreventableWhen) {
         this(damage, false, false, -1, unpreventableWhen);
@@ -153,7 +138,7 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
     /** Damage that also can't be redirected while {@code unpreventableWhen} holds. */
     public DealDamageToAnyTargetEffect(DynamicAmount damage, Condition unpreventableWhen,
                                        boolean cantBeRedirectedWhenUnpreventable) {
-        this(damage, false, false, -1, unpreventableWhen, false,
+        this(damage, false, false, -1, unpreventableWhen,
                 cantBeRedirectedWhenUnpreventable);
     }
 
@@ -205,8 +190,4 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
         return true;
     }
 
-    @Override
-    public boolean onlyTriggersOnSacrifice() {
-        return onlyIfSacrificed;
-    }
 }

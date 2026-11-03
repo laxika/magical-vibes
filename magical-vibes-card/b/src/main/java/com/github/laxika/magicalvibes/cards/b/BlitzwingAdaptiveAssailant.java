@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantRandomKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.TransformToFrontFaceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,8 +27,8 @@ public class BlitzwingAdaptiveAssailant extends Card {
                 new GrantCardTypeEffect(CardType.CREATURE, GrantScope.SELF)));
 
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                ConditionalEffect.atTriggerTime(new ControllerTurn(),
-                        new GrantRandomKeywordEffect(List.of(Keyword.FLYING, Keyword.INDESTRUCTIBLE), GrantScope.SELF)));
+                TriggerOptions.DEFAULT.withEventCondition(new ControllerTurn()),
+                        new GrantRandomKeywordEffect(List.of(Keyword.FLYING, Keyword.INDESTRUCTIBLE), GrantScope.SELF));
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new TransformToFrontFaceEffect());
     }
 }

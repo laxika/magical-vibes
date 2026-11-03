@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
+
 @CardRegistration(set = "DSK", collectorNumber = "234")
 public class SkullsnapNuisance extends Card {
 
     public SkullsnapNuisance() {
-        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL), new SurveilEffect(1));
-        addTrigger(Triggers.youFullyUnlockRoom(), new SurveilEffect(1));
+        addTrigger(List.of(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
+                Triggers.youFullyUnlockRoom()), new SurveilEffect(1));
     }
 }

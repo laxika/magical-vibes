@@ -31,6 +31,6 @@ public class OrdealOfHeliod extends Card {
                                                 CounterType.PLUS_ONE_PLUS_ONE, 3),
                                         "enchanted creature has three or more +1/+1 counters"),
                                 new SacrificeSelfEffect())))
-                .addTrigger(Triggers.sacrificed(ObjectRelation.THIS), GainLifeEffect.sacrificeOnly(10));
+                .addTrigger(Triggers.sacrificed(ObjectRelation.THIS), new GainLifeEffect(10));
     }
 }

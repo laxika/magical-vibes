@@ -7,13 +7,13 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleControllerHandAndGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -42,11 +42,11 @@ public class MidnightClock extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                 new PutCountersOnSelfEffect(CounterType.HOUR));
 
-        addTrigger(Triggers.countersPutOnThis(), ConditionalEffect.atTriggerTime(
-                new SourceCounterThreshold(12, CounterType.HOUR),
+        addTrigger(Triggers.countersPutOnThis(), TriggerOptions.DEFAULT.withEventCondition(
+                new SourceCounterThreshold(12, CounterType.HOUR)),
                 SequenceEffect.of(
                         new ShuffleControllerHandAndGraveyardIntoLibraryEffect(),
                         new DrawCardEffect(7),
-                        new ExileSelfEffect())));
+                        new ExileSelfEffect()));
     }
 }

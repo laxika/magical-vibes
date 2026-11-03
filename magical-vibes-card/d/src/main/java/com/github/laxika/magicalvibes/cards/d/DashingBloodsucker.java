@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
+
 @CardRegistration(set = "DSK", collectorNumber = "90")
 public class DashingBloodsucker extends Card {
 
@@ -17,7 +19,7 @@ public class DashingBloodsucker extends Card {
         SequenceEffect eerie = SequenceEffect.of(
                 new BoostSelfEffect(2, 0),
                 new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF));
-        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL), eerie);
-        addTrigger(Triggers.youFullyUnlockRoom(), eerie);
+        addTrigger(List.of(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
+                Triggers.youFullyUnlockRoom()), eerie);
     }
 }

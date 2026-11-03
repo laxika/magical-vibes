@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 import java.util.Set;
@@ -41,9 +42,9 @@ public class EntropicBattlecruiser extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
-        addTrigger(Triggers.opponentDiscardsCard(), ConditionalEffect.atTriggerTime(
-                new SourceCounterThreshold(1, CounterType.CHARGE),
-                new LoseLifeEffect(3, LoseLifeRecipient.TRIGGERING_PLAYER)));
+        addTrigger(Triggers.opponentDiscardsCard(), TriggerOptions.DEFAULT.withEventCondition(
+                new SourceCounterThreshold(1, CounterType.CHARGE)),
+                new LoseLifeEffect(3, LoseLifeRecipient.TRIGGERING_PLAYER));
 
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(8, CounterType.CHARGE),
@@ -55,8 +56,8 @@ public class EntropicBattlecruiser extends Card {
                 new SourceCounterThreshold(8, CounterType.CHARGE),
                 new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.DEATHTOUCH), GrantScope.SELF)));
 
-        addTrigger(Triggers.attacks(), ConditionalEffect.atTriggerTime(
-                new SourceCounterThreshold(8, CounterType.CHARGE),
-                new EachOpponentDiscardsOrLosesLifeEffect(3)));
+        addTrigger(Triggers.attacks(), TriggerOptions.DEFAULT.withEventCondition(
+                new SourceCounterThreshold(8, CounterType.CHARGE)),
+                new EachOpponentDiscardsOrLosesLifeEffect(3));
     }
 }

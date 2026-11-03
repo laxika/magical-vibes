@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -23,11 +23,11 @@ public class PicnicRuiner extends Card {
         setBackFaceCard(new StolenGoodies());
         addCastingOption(new AdventureCast("{3}{G}"));
 
-        addTrigger(Triggers.attacks(), ConditionalEffect.atTriggerTime(
+        addTrigger(Triggers.attacks(), TriggerOptions.DEFAULT.withEventCondition(
                 new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentPowerAtLeastPredicate(4)))),
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF)));
+                        new PermanentPowerAtLeastPredicate(4))))),
+                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF));
     }
 
     @Override

@@ -14,37 +14,20 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
  * <p>{@code targetsPlayer} makes the effect target a player (the controller still gains the life);
  * this only establishes the target so a {@code CountScope.TARGET_PLAYER} amount can read it — e.g.
  * Renewing Dawn's "gain 2 life for each Mountain target opponent controls".
- *
- * <p>{@code onlyIfSacrificed} marks an "when this dies" effect as triggering only when its source
- * was sacrificed. Use {@link #sacrificeOnly(int)} or {@link #sacrificeOnly(DynamicAmount)} for that
- * form.
  */
 public record GainLifeEffect(DynamicAmount amount, GainLifeRecipient recipient,
-                             boolean targetsPlayer,
-                             boolean onlyIfSacrificed) implements LifeGainEffect, CombatDamageTriggerContextEffect {
+                             boolean targetsPlayer) implements LifeGainEffect, CombatDamageTriggerContextEffect {
 
     public GainLifeEffect(DynamicAmount amount, GainLifeRecipient recipient) {
-        this(amount, recipient, false, false);
+        this(amount, recipient, false);
     }
 
     public GainLifeEffect(DynamicAmount amount) {
-        this(amount, GainLifeRecipient.CONTROLLER, false, false);
+        this(amount, GainLifeRecipient.CONTROLLER, false);
     }
 
     public GainLifeEffect(int amount) {
         this(new Fixed(amount));
-    }
-
-    public GainLifeEffect(DynamicAmount amount, GainLifeRecipient recipient, boolean targetsPlayer) {
-        this(amount, recipient, targetsPlayer, false);
-    }
-
-    public static GainLifeEffect sacrificeOnly(int amount) {
-        return sacrificeOnly(new Fixed(amount));
-    }
-
-    public static GainLifeEffect sacrificeOnly(DynamicAmount amount) {
-        return new GainLifeEffect(amount, GainLifeRecipient.CONTROLLER, false, true);
     }
 
     @Override
@@ -55,11 +38,6 @@ public record GainLifeEffect(DynamicAmount amount, GainLifeRecipient recipient,
     @Override
     public TargetSpec targetSpec() {
         return targetsPlayer ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
-    }
-
-    @Override
-    public boolean onlyTriggersOnSacrifice() {
-        return onlyIfSacrificed;
     }
 
     @Override

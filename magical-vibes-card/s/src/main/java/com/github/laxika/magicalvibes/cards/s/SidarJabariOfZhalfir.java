@@ -38,13 +38,11 @@ public class SidarJabariOfZhalfir extends Card {
         ConditionalEffect eminenceGate = new ConditionalEffect(
                 new AnyOf(List.of(new SourceCardInCommandZone(), new SourceCardOnBattlefield())),
                 attackEffect);
-        ConditionalEffect knightAttacker = ConditionalEffect.atTriggerTime(
-                new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.KNIGHT)),
-                eminenceGate);
+        TriggerOptions withKnights = TriggerOptions.DEFAULT.withEventCondition(
+                new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.KNIGHT)));
 
-        addTrigger(Triggers.youAttack(), knightAttacker);
-        addTrigger(new TriggerCondition(Triggers.youAttack(), AbilityZones.COMMAND),
-                TriggerOptions.DEFAULT, knightAttacker);
+        addTrigger(Triggers.youAttack(), withKnights, eminenceGate);
+        addTrigger(new TriggerCondition(Triggers.youAttack(), AbilityZones.COMMAND), withKnights, eminenceGate);
 
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 ReturnCardFromGraveyardEffect.builder()

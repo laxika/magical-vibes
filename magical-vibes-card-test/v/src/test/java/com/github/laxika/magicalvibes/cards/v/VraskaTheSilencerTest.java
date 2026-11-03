@@ -31,9 +31,12 @@ class VraskaTheSilencerTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Llanowar Elves"));
 
+        // CR 603.5: the ability goes on the stack, and the payment is decided as it resolves
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         Permanent returned = findPermanent(player1, "Llanowar Elves");
         assertThat(returned.isTapped()).isTrue();
@@ -54,8 +57,8 @@ class VraskaTheSilencerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Llanowar Elves"));
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         Permanent returned = findPermanent(player1, "Llanowar Elves");
         returned.untap();
@@ -77,8 +80,8 @@ class VraskaTheSilencerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Llanowar Elves"));
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         Permanent returned = findPermanent(player1, "Llanowar Elves");
         returned.untap();
@@ -99,6 +102,7 @@ class VraskaTheSilencerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Llanowar Elves"));
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player2, "Llanowar Elves");
@@ -118,8 +122,8 @@ class VraskaTheSilencerTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, stolen.getId());
         harness.assertInGraveyard(player1, "Llanowar Elves");
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         Permanent returned = findPermanent(player1, "Llanowar Elves");
         assertThat(returned.isTapped()).isTrue();

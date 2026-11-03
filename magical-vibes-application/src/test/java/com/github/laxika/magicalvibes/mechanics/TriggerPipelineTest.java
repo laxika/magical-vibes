@@ -158,6 +158,20 @@ class TriggerPipelineTest extends BaseCardTest {
     }
 
     @Test
+    void aFalseEventConditionKeepsItFromTriggeringAndATrueOneIsNotCheckedAgainOnResolution() {
+        Permanent unmet = battlefieldCreatureWith(new TriggerCondition(Triggers.dies(ObjectRelation.THIS)),
+                TriggerOptions.DEFAULT.withEventCondition(new ControllerLifeAtLeast(40, false)), DRAW);
+        Permanent met = battlefieldCreatureWith(new TriggerCondition(Triggers.dies(ObjectRelation.THIS)),
+                TriggerOptions.DEFAULT.withEventCondition(new ControllerLifeAtLeast(1, false)), DRAW);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, unmet));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, met));
+
+        assertThat(triggersOf(unmet.getCard())).isEmpty();
+        assertThat(onlyTriggerOf(met.getCard()).getEffectsToResolve()).containsExactly(DRAW);
+    }
+
+    @Test
     void aTriggerLimitedToOnceEachTurnTriggersOnlyOnceThatTurn() {
         Card card = new GrizzlyBears();
         card.addTrigger(new TriggerCondition(Triggers.putIntoGraveyardFromAnywhere(ObjectRelation.THIS)),

@@ -8,12 +8,14 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
+
 @CardRegistration(set = "DSK", collectorNumber = "2")
 public class CultHealer extends Card {
 
     public CultHealer() {
         GrantKeywordEffect gainLifelink = new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF);
-        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL), gainLifelink);
-        addTrigger(Triggers.youFullyUnlockRoom(), gainLifelink);
+        addTrigger(List.of(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
+                Triggers.youFullyUnlockRoom()), gainLifelink);
     }
 }

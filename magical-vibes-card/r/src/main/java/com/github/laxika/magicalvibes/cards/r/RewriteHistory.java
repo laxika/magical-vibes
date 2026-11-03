@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -39,9 +38,9 @@ public class RewriteHistory extends Card {
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
         // "When the fourth plan counter is put" is an event trigger: removing counters in response does not stop it.
-        addTrigger(Triggers.countersPutOnThis(), ConditionalEffect.atTriggerTime(
-                new SourceCounterThreshold(4, CounterType.PLAN),
+        addTrigger(Triggers.countersPutOnThis(), TriggerOptions.DEFAULT.withEventCondition(
+                new SourceCounterThreshold(4, CounterType.PLAN)),
                 SacrificeSelfThenEffect.reflexive(
-                        ReturnTargetCardsFromGraveyardToHandEffect.forTriggeredAbility(instantOrSorcery, 2))));
+                        ReturnTargetCardsFromGraveyardToHandEffect.forTriggeredAbility(instantOrSorcery, 2)));
     }
 }

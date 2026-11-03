@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
@@ -23,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -48,8 +48,8 @@ public class DeathToOurEnemies extends Card {
                 2, true, false, true);
 
         target(anyTarget, 1, 2).addTrigger(Triggers.countersPutOnThis(),
-                ConditionalEffect.atTriggerTime(
-                        new SourceCounterThreshold(4, CounterType.PLAN),
-                        SacrificeSelfThenEffect.reflexive(damage)));
+                TriggerOptions.DEFAULT.withEventCondition(
+                        new SourceCounterThreshold(4, CounterType.PLAN)),
+                        SacrificeSelfThenEffect.reflexive(damage));
     }
 }

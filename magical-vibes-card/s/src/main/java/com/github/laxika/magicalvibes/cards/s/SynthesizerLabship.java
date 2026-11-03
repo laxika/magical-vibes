@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -57,13 +58,13 @@ public class SynthesizerLabship extends Card {
         target(new PermanentPredicateTargetFilter(
                 OTHER_ARTIFACT_YOU_CONTROL,
                 "Target must be another artifact you control"
-        ), 0, 1).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), ConditionalEffect.atTriggerTime(
-                new SourceCounterThreshold(2, CounterType.CHARGE),
+        ), 0, 1).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), TriggerOptions.DEFAULT.withEventCondition(
+                new SourceCounterThreshold(2, CounterType.CHARGE)),
                 new AnimatePermanentsEffect(
                         new Fixed(2), new Fixed(2), List.of(), Set.of(Keyword.FLYING), null,
                         Set.of(CardType.CREATURE), GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN,
                         OTHER_ARTIFACT_YOU_CONTROL
-                )));
+                ));
 
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(9, CounterType.CHARGE),

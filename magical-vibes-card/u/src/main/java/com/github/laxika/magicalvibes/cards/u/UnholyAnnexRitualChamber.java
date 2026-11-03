@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -37,13 +38,13 @@ public class UnholyAnnexRitualChamber extends Card {
         )));
 
         var controlsDemon = new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DEMON));
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), ConditionalEffect.atTriggerTime(
-                new SourceRoomDoorUnlocked(0), SequenceEffect.of(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), TriggerOptions.DEFAULT.withEventCondition(
+                new SourceRoomDoorUnlocked(0)), SequenceEffect.of(
                         new DrawCardEffect(),
                         new ConditionalEffect(controlsDemon, SequenceEffect.of(
                                 new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
                                 new GainLifeEffect(2))),
-                        new ConditionalEffect(new NotCondition(controlsDemon), new LoseLifeEffect(2)))));
+                        new ConditionalEffect(new NotCondition(controlsDemon), new LoseLifeEffect(2))));
 
         CreateTokenEffect demonToken = new CreateTokenEffect(
                 "Demon", 6, 6, CardColor.BLACK, List.of(CardSubtype.DEMON),
