@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,10 +24,10 @@ import java.util.Set;
 public class AttendedHealer extends Card {
 
     public AttendedHealer() {
-        addTrigger(Triggers.youGainLife(),
-                OncePerTurnTriggerEffect.firstLifeGain(new CreateTokenEffect(
-                        1, "Cat", 1, 1, CardColor.WHITE,
-                        List.of(CardSubtype.CAT), Set.of(), Set.of())));
+        addTrigger(Triggers.youGainLife().firstTimeEachTurn(),
+                new CreateTokenEffect(
+1, "Cat", 1, 1, CardColor.WHITE,
+List.of(CardSubtype.CAT), Set.of(), Set.of()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

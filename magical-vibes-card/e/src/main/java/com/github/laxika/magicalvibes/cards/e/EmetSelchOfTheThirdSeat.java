@@ -6,9 +6,10 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FIC", collectorNumber = "81")
@@ -20,8 +21,9 @@ public class EmetSelchOfTheThirdSeat extends Card {
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardTruePredicate(), 2, CostModificationScope.SELF, Zone.GRAVEYARD));
 
-        addTrigger(Triggers.opponentLosesLife(), OncePerTurnTriggerEffect.markOnAcceptance(
+        addTrigger(Triggers.opponentLosesLife(),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.DO_ONLY_ONCE_EACH_TURN),
                 new CastTargetInstantOrSorceryFromGraveyardEffect(
-                        GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, true)));
+                        GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, true));
     }
 }

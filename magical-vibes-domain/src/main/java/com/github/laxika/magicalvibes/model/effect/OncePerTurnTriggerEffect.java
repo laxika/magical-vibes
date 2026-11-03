@@ -32,7 +32,9 @@ public record OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAccepta
     /**
      * Triggers only for the controller's first life loss event each turn, counting events before the
      * source entered. The limit belongs to the controller rather than the source, so every copy
-     * present for that first event triggers and no copy triggers on later events (Gonti's Machinations).
+     * present for that first event triggers and no copy triggers on later events (Gonti's Machinations). Not authored
+     * on a card: the legacy view ({@code TriggeredAbility.legacyEffects()}) builds it from
+     * {@code Triggers.youLoseLife().firstTimeEachTurn()}.
      */
     public static OncePerTurnTriggerEffect firstLifeLoss(CardEffect wrapped) {
         return new OncePerTurnTriggerEffect(wrapped, false, null, false, false, false, true);
@@ -67,7 +69,11 @@ public record OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAccepta
         return new OncePerTurnTriggerEffect(wrapped, false, null, true);
     }
 
-    /** Triggers for the controller's first life gain event, including events before entry. */
+    /**
+     * Triggers for the controller's first life gain event, including events before entry. Not authored on a card: the
+     * legacy view ({@code TriggeredAbility.legacyEffects()}) builds it, keyed by the ability, from
+     * {@code Triggers.youGainLife().firstTimeEachTurn()}.
+     */
     public static OncePerTurnTriggerEffect firstLifeGain(CardEffect wrapped) {
         return new OncePerTurnTriggerEffect(wrapped, false, null, false, true);
     }

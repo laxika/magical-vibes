@@ -11251,7 +11251,7 @@ public class TriggerCollectionService {
                             if (gameData.lifeLostThisTurn.getOrDefault(playerId, 0) != lifeLostAmount) {
                                 continue;
                             }
-                        } else if (gameData.oncePerTurnTriggersFiredThisTurn.contains(perm.getId())) {
+                        } else if (OncePerTurnTriggerSupport.isFired(gameData, perm, once)) {
                             continue;
                         }
                         toDispatch = once.wrapped();
@@ -11264,7 +11264,7 @@ public class TriggerCollectionService {
                     if (registry.dispatch(match, LifeWatch.ON_CONTROLLER_LOSES_LIFE, toDispatch, ctx)) {
                         anyTriggered[0] = true;
                         if (effect instanceof OncePerTurnTriggerEffect once && !once.firstLifeLoss()) {
-                            gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
+                            OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, once);
                         }
                     }
                 }
@@ -11297,15 +11297,14 @@ public class TriggerCollectionService {
             for (CardEffect effect : effects) {
                 CardEffect toDispatch = effect;
                 if (effect instanceof OncePerTurnTriggerEffect once) {
-                    if (gameData.oncePerTurnTriggersFiredThisTurn.contains(perm.getId())) {
+                    if (OncePerTurnTriggerSupport.isFired(gameData, perm, once)) {
                         continue;
                     }
                     toDispatch = once.wrapped();
                 }
                 var match = new TriggerMatchContext(gameData, perm, payingPlayerId, effect);
-                if (dispatch(match, LifeWatch.ON_CONTROLLER_PAYS_LIFE, toDispatch, ctx)
-                        && effect instanceof OncePerTurnTriggerEffect) {
-                    gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
+                if (dispatch(match, LifeWatch.ON_CONTROLLER_PAYS_LIFE, toDispatch, ctx)) {
+                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, effect);
                 }
             }
         }
@@ -11519,7 +11518,7 @@ public class TriggerCollectionService {
             if (graveyard == null) continue;
 
             for (Card card : new ArrayList<>(graveyard)) {
-                for (CardEffect effect : gameQueryService.getEffectiveGraveyardTriggerEffects(
+                for (CardEffect effect : gameQueryService.getEffectiveGraveyardLegacyTriggerEffects(
                         gameData, card, LifeWatch.GRAVEYARD_ON_OPPONENT_GAINS_LIFE.trigger())) {
                     gameData.enqueueTrigger(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
@@ -11835,7 +11834,7 @@ public class TriggerCollectionService {
         if (graveyard == null) return;
 
         for (Card card : new ArrayList<>(graveyard)) {
-            for (CardEffect effect : gameQueryService.getEffectiveGraveyardTriggerEffects(
+            for (CardEffect effect : gameQueryService.getEffectiveGraveyardLegacyTriggerEffects(
                     gameData, card, LifeWatch.GRAVEYARD_ON_CONTROLLER_GAINS_LIFE.trigger())) {
                 CardEffect resolved = effect;
                 boolean oncePerTurn = effect instanceof OncePerTurnTriggerEffect;

@@ -8,13 +8,14 @@ import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
+
 @CardRegistration(set = "HOB", collectorNumber = "77")
 public class TheMasterOfLakeTown extends Card {
 
     public TheMasterOfLakeTown() {
-        MillOpponentOnLifeLossEffect millOnLifeLoss = new MillOpponentOnLifeLossEffect();
-        addTrigger(Triggers.opponentLosesLife(), millOnLifeLoss);
-        addTrigger(Triggers.youLoseLife(), millOnLifeLoss);
+        addTrigger(List.of(Triggers.opponentLosesLife(), Triggers.youLoseLife()),
+                new MillOpponentOnLifeLossEffect());
         addTrigger(Triggers.dies(ObjectRelation.THIS), new DrawCardEffect(new GraveyardsAtLeast(7)));
     }
 }

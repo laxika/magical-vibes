@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,6 +13,8 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.MayCastHandlerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 /**
  * Cast-from-graveyard — e.g. Chancellor of the Spires.
@@ -44,7 +47,9 @@ public class CastTargetInstantOrSorceryFromGraveyardHandler implements MayEffect
 
     /**
      * "Do this only once each turn" (Emet-Selch of the Third Seat): the source's opportunity is used up
-     * only when the player agrees to cast, so declining leaves it available for a later event.
+     * only when the player agrees to cast, so declining leaves it available for a later event. The limit is read from
+     * the source's abilities in the legacy form ({@code TriggeredAbility.legacyEffects()}), where
+     * {@code TriggerLimit.DO_ONLY_ONCE_EACH_TURN} is an {@link OncePerTurnTriggerEffect} marked on acceptance.
      */
     private void markOncePerTurnOnAcceptance(GameData gameData, PendingMayAbility ability,
                                              CastTargetInstantOrSorceryFromGraveyardEffect castEffect) {
@@ -55,7 +60,11 @@ public class CastTargetInstantOrSorceryFromGraveyardHandler implements MayEffect
         if (source == null) {
             return;
         }
-        for (CardEffect effect : source.getCard().getTriggeredEffects()) {
+        List<CardEffect> effects = source.getCard().getTriggeredAbilities().stream()
+                .flatMap(triggered -> triggered.legacyEffects().stream())
+                .map(EffectRegistration::effect)
+                .toList();
+        for (CardEffect effect : effects) {
             if (effect instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance()
                     && castEffect.equals(once.wrapped())) {
                 if (once.key() == null) {

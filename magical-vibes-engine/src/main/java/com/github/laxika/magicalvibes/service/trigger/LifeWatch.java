@@ -1,16 +1,22 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 /**
  * Which of the old life gain, loss and payment slot collectors reads a triggered ability, now that the ability has a
  * real trigger (effect-slot-refactor.md step 13, family 9). Each constant is named after the slot whose collector it
  * stands for and names the trigger its cards were converted to and the zone the collector reads them in. The
  * collectors in {@code TriggerCollectionService} still decide when the ability triggers, how its effects group into
- * stack objects, which wrappers filter it and which event data it is bound to, as the slot's did, until steps 14 and
- * 15 of the refactor replace them with trigger options and effects that read the event.
+ * stack objects and which event data it is bound to, as the slot's did, until step 15 of the refactor replaces them
+ * with effects that read the event. They read the abilities in the legacy form ({@code TriggeredAbility.legacyEffects()}):
+ * the options and "for the first time each turn" as the wrappers they judge (step 14, run 13).
  */
 public enum LifeWatch implements TriggerWatch {
     /** "Whenever an opponent loses life", damage included, once for each life-loss event. */
@@ -46,5 +52,15 @@ public enum LifeWatch implements TriggerWatch {
     @Override
     public Zone zone() {
         return zone;
+    }
+
+    @Override
+    public List<CardEffect> effectsOf(Card card) {
+        return card.getLegacyTriggerEffects(trigger, zone);
+    }
+
+    @Override
+    public List<EffectRegistration> registrationsOf(Card card) {
+        return card.getLegacyTriggerEffectRegistrations(trigger, zone);
     }
 }

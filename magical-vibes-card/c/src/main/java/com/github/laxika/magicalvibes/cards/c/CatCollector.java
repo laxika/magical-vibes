@@ -6,12 +6,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,11 +23,11 @@ public class CatCollector extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), foodToken());
         // "for the first time during each of your turns": the first life gain of the turn counts
         // even if it happened before this creature entered, and only on your own turn
-        addTrigger(Triggers.youGainLife(),
-                OncePerTurnTriggerEffect.firstLifeGain(new ConditionalEffect(new ControllerTurn(),
-                        new CreateTokenEffect(
-                                "Cat", 1, 1, CardColor.WHITE,
-                                List.of(CardSubtype.CAT), Set.of(), Set.of()))));
+        addTrigger(Triggers.youGainLife().firstTimeEachTurn(),
+                TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()),
+                new CreateTokenEffect(
+                        "Cat", 1, 1, CardColor.WHITE,
+                        List.of(CardSubtype.CAT), Set.of(), Set.of()));
     }
 
     private static CreateTokenEffect foodToken() {

@@ -1604,6 +1604,11 @@ public final class Triggers {
         return new LifeTrigger(LifeTrigger.LifeEvent.LOSES, PlayerRelation.OPPONENT);
     }
 
+    /** "Whenever an opponent loses life for the first time during each of their turns", damage included */
+    public static LifeTrigger opponentLosesLifeForFirstTimeDuringTheirTurn() {
+        return new LifeTrigger(LifeTrigger.LifeEvent.LOSES_FOR_FIRST_TIME_DURING_THEIR_TURN, PlayerRelation.OPPONENT);
+    }
+
     /** "Whenever you pay life" */
     public static LifeTrigger youPayLife() {
         return new LifeTrigger(LifeTrigger.LifeEvent.PAYS, PlayerRelation.YOU);

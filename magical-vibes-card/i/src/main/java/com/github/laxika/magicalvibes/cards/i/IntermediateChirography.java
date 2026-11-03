@@ -13,9 +13,7 @@ import com.github.laxika.magicalvibes.model.condition.ModifiedCreatureDiedUnderY
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -42,10 +40,9 @@ public class IntermediateChirography extends Card {
                 new NotCondition(new SourceCounterThreshold(1, CounterType.LEVEL)),
                 "this Class is level 1"));
 
-        target(TargetFilters.creatureYouControl()).addTrigger(Triggers.youLoseLife(),
-                OncePerTurnTriggerEffect.firstLifeLoss(new ConditionalEffect(
-                        new SourceCounterThreshold(1, CounterType.LEVEL),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))));
+        target(TargetFilters.creatureYouControl()).addTrigger(Triggers.youLoseLife().firstTimeEachTurn(),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, CounterType.LEVEL)),
+                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -95,9 +96,9 @@ public class SpecializeShadowheartEffectHandler implements NormalEffectHandlerBe
 
         specialized.addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new DealDamageToPlayersEffect(1, DamageRecipient.EACH_PLAYER));
-        CardEffect lifeLossTrigger = ShadowheartSharranCleric.specializedLifeLossTrigger(specialize.color());
-        if (lifeLossTrigger != null) {
-            specialized.addTrigger(Triggers.youLoseLife(), lifeLossTrigger);
+        TriggeredAbility lifeLossAbility = ShadowheartSharranCleric.specializedLifeLossAbility(specialize.color());
+        if (lifeLossAbility != null) {
+            specialized.addTriggeredAbility(lifeLossAbility);
         }
         source.exchangeCard(specialized);
     }

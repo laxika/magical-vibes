@@ -10,13 +10,13 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.EnumSet;
@@ -68,7 +69,11 @@ public class ShadowheartSharranCleric extends Card {
                         "Activate only if a player has 13 or less life"));
     }
 
-    public static CardEffect specializedLifeLossTrigger(CardColor color) {
+    /**
+     * The specialized card's "whenever you lose life during your turn" ability for {@code color}, or {@code null} for
+     * black, which has none. "During your turn" is the ability's intervening "if".
+     */
+    public static TriggeredAbility specializedLifeLossAbility(CardColor color) {
         CardEffect effect = switch (color) {
             case WHITE -> new CreateTokenEffect(1, "Knight", 2, 2, CardColor.WHITE,
                     List.of(CardSubtype.KNIGHT), Set.of(), Set.of());
@@ -77,7 +82,8 @@ public class ShadowheartSharranCleric extends Card {
             case RED -> new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.EACH_OPPONENT);
             case GREEN -> new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE);
         };
-        return effect == null ? null : new ConditionalEffect(new ControllerTurn(), effect);
+        return effect == null ? null : new TriggeredAbility(Triggers.youLoseLife(),
+                TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()), effect);
     }
 
     public static void setSpecializedBaseCharacteristics(Card card) {

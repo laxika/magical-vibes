@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -6588,6 +6588,126 @@ merged into one ability each.
   2, `UntapStepServiceTest` 1, the known one each in `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and
   `CardEffectTargetingConsistencyTest`, and `PermanentRemovalServiceTest` 46 and `ManaAbilityTriggerDeferralTest` 11:
   the same 57 cases fail at HEAD (`e73987ca4c`, run in a worktree with the main tree's `card-data-cache`).
+- AI: the whole module (1,620 tests), with the same 10 failures as before.
+- The full suite was not run here.
+
+#### Run 13: life
+
+Step 13 family 9, every wrapper kind in one run: every life gain, loss and payment ability that the `LifeWatch`
+collectors read is authored without trigger-only wrappers, but Wedding Ring's (kept below). 20 card classes were
+converted by script and Shadowheart's specialized ability by hand; Wax-Wane Witness's, Moonstone Harbinger's, The Master
+of Lake-town's and MACH-1's split halves were merged into one ability each.
+
+**Authoring.**
+
+- `LifeTrigger` has a new `firstEachTurn` component, dropped from `watchKey()`: `youGainLife().firstTimeEachTurn()`
+  and `youLoseLife().firstTimeEachTurn()` for "for the first time each turn" (Attended Healer, Cleric of Life's Bond,
+  Vanguard Seraph, Leech Collector, Gourmand's Talent, Cat Collector, Deathless Knight from the graveyard, Gonti's
+  Machinations, Vengeful Warchief, Intermediate Chirography). As run 11's count, it counts the player's events of the
+  turn, those before the source arrived included; it is not a limit.
+- New event `LifeEvent.LOSES_FOR_FIRST_TIME_DURING_THEIR_TURN`, `Triggers.opponentLosesLifeForFirstTimeDuringTheirTurn()`
+  (Valgavoth), read by the "an opponent loses life" collector; it can't also take `firstTimeEachTurn()`.
+- "During your turn" (Vampire Scrivener, Kefka, Cat Collector's "each of your turns", Wax-Wane Witness, Moonstone
+  Harbinger, Shadowheart's specialized ability) and the Class levels (Gourmand's Talent, Cleric Class, Intermediate
+  Chirography) are intervening "if"s (**CR 603.4**, checked), as earlier runs made them; "this ability triggers only once
+  each turn" is `ONCE_EACH_TURN` (Moonstone Harbinger, MACH-1), "do this only once each turn" (**CR 603.2h**, checked)
+  `DO_ONLY_ONCE_EACH_TURN` (Nykthos Paragon, Emet-Selch).
+- "Whenever you gain or lose life" (Wax-Wane Witness, Moonstone Harbinger) and "whenever a player loses life" (The
+  Master of Lake-town) are one ability with both conditions; MACH-1's "when this enters and whenever you gain life" is
+  one ability with an enters and a life condition, so its once-each-turn limit covers both, as run 4a left it to this
+  run.
+- `ShadowheartSharranCleric.specializedLifeLossTrigger` is `specializedLifeLossAbility`, which returns the whole
+  `TriggeredAbility` (the intervening "if" in its options); `SpecializeShadowheartEffectHandler` adds it with
+  `addTriggeredAbility`.
+
+**The engine.**
+
+- `TriggeredAbility.legacyEffects()` gains a life view (`lifeView()`): "for the first time each turn" is the counting
+  `OncePerTurnTriggerEffect` where the limits go (outside the intervening "if"): a gain's keyed by `limitKey()`, so two
+  such abilities of one source (Gourmand's Talent's levels 2 and 3, which wrote their own keys) don't share a mark, a
+  loss's `firstLifeLoss`, which marks nothing. "An opponent loses life for the first time during each of their turns" is
+  one `FirstOpponentLifeLossEachTurnTriggerEffect` of every effect (`legacyFirstOpponentLifeLossEffects()`), the only
+  condition, without options. A count on another player or on a payment, a limit next to a count, conditions that count
+  and don't, `ONCE`, `ONCE_EACH_TURN_FOR_EACH_CREATURE` and a multiplicity other than `EACH` throw.
+- `LifeWatch.effectsOf` and `registrationsOf` read the legacy view; the two graveyard life-gain collectors read
+  `getEffectiveGraveyardLegacyTriggerEffects`. Granted abilities were already read in the legacy form.
+- By hand: the "you lose life" and "you pay life" collectors marked the unkeyed once-each-turn mark whatever the
+  wrapper's key, so a keyed limit never stopped them; they check and mark through `OncePerTurnTriggerSupport` now
+  (Moonstone Harbinger's merged ability shares its limit between the gain and the loss collector that way). The other
+  life collectors already did, or read no limit. `CastTargetInstantOrSorceryFromGraveyardHandler`, which marks
+  Emet-Selch's "do this only once each turn" when the cast is accepted, looked for the `markOnAcceptance` wrapper among
+  the card's raw triggered effects; it reads the abilities' legacy view now (the card test caught it).
+- No wrapper class is deleted: the legacy view still builds them. Run 16 deletes what is left.
+
+**Cards.**
+
+- `scripts/step14-life-scan.py` (run 12's scan on the life factories) lists the family's wrapped abilities.
+- `scripts/step14-life-options.py` (`--dry-run`, `--report`) did the conversion: it peels each family ability's
+  wrappers, outermost first, into the trigger's count and the options, re-indents what is left and stops on a wrapper
+  it can't place. Only a two-argument `new ConditionalEffect(c, e)` (or Cleric Class's `atTriggerTime`) directly under
+  the trigger, on a card of its `INTERVENING` table, is the intervening "if"; the conditionals inside effects (The
+  Destined White Mage's full party, Prize Pig's and Marina Vendrell's Grimoire's "then if", Amalia's `unless`) stay.
+  Its `MANUAL` table holds the four merges, Valgavoth and Deathless Knight's graveyard condition. Running it again
+  changes nothing.
+- `scripts/step14-life-docs.py` rewrote 12 agent-docs passages (exact replacements): the Nykthos Paragon, Valgavoth
+  and Deathless Knight rows, The Master of Lake-town's pattern and `MillOpponentOnLifeLossEffect`'s entry, and "don't
+  author" notes on `FirstOpponentLifeLossEachTurnTriggerEffect` and `firstLifeGain` / `firstLifeLoss`. Those classes'
+  Javadoc, `ARCHITECTURE.md` and the implement-card and review-card skills were edited by hand.
+
+**Kept, with their reason.**
+
+- Wedding Ring: `ConditionalEffect.atTriggerTime` ("an opponent who controls a Wedding Ring gains life during their
+  turn"), a condition of the event, as its draw half (run 11). Run 16, with the `triggerTimeOnly` flag.
+- Ob Nixilis, Captive Kingpin's "one or more opponents each lose exactly 1 life" is no wrapper: the opponent-loses-life
+  collector's `SequenceEffect` handler checks the amount for any `SequenceEffect`. A trigger amount filter would say it,
+  but the handler judges it by effect class; it goes with the collectors (step 15 or 16).
+- Emet-Selch's "one or more opponents lose life" still triggers for each loss (its "do this only once each turn" caps
+  it); there is no batched life-loss event.
+
+**Behaviour changes.**
+
+- "Whenever you gain life for the first time each turn" is keyed by the ability, where the unkeyed wrapper marked the
+  source's shared mark (Attended Healer, Cleric of Life's Bond, Vanguard Seraph, Leech Collector, Cat Collector);
+  Gourmand's Talent's own keys are replaced by the abilities'. The count already let only the turn's first gain event
+  through, so only another unkeyed once-each-turn ability of the same source could notice, and none of them has one.
+- Moonstone Harbinger's once-each-turn limit is keyed by its ability, shared by its gain and loss conditions as the
+  two abilities shared the unkeyed mark; MACH-1's likewise between its enters and life-gain conditions.
+- Wax-Wane Witness, Moonstone Harbinger, The Master of Lake-town and MACH-1 have one ability where they had two; each
+  event triggers one of its conditions, as it triggered one of the two abilities.
+- Cleric Class's level-2 condition was `atTriggerTime`; it is an intervening "if" now, but the "you gain life"
+  collector strips every top-level `ConditionalEffect` as the ability triggers (`unwrapLifeChangeConditional`), so it is
+  still checked only then, as before.
+- Nothing else changed: the legacy view hands every collector the wrappers it read before. No may question moved.
+
+**For later runs.**
+
+- The "you gain life" and "you lose life" collectors check an intervening "if" only as the ability triggers
+  (`unwrapLifeChangeConditional` unwraps it), and the opponent collectors' `ConditionalEffect` handlers likewise; CR
+  603.4 wants it checked again on resolution. A run like 4c's would make them check it then (it changes behaviour, so
+  it is a rules fix with its own tests).
+- Ob Nixilis's amount condition and Emet-Selch's "one or more opponents", above.
+- Step 15: as step 13 run 9 listed.
+
+**Tests changed.**
+
+- `LifeTriggerTest`, seven new tests: "for the first time each turn" is dropped from the watch key and can't be added
+  twice; the opponent's first loss during their turn is watched by "an opponent loses life"; the legacy view gives the
+  count outside the intervening "if", keyed for a gain, with a stable identity; a graveyard count is read in the
+  graveyard; one ability with a gain and a loss condition shares its keyed limit; the first-loss-during-their-turn
+  record holds every effect; what no life collector reads is rejected. The factory list covers the new factory.
+- No card test changed.
+
+**Test runs.**
+
+- Card: the test class of every card that uses a life factory (converted or not), Shadowheart's, and every card test
+  that constructs one of them (162 classes, 1,368 tests). The first run had 1 failure,
+  `EmetSelchOfTheThirdSeatTest#successfulCastUsesOncePerTurnOpportunity` (the acceptance mark fixed above); its rerun
+  passed (7 tests).
+- Application: the `service.trigger` and `model.trigger` packages and the freeze, triggered-ability, card-ability,
+  granted-ability, simulation-copy, architecture and targeting-consistency classes (736 tests): 20 failures, all known
+  from HEAD (runs 11 and 12): `DamageTriggerCollectorServiceTest` 6, `DeathTriggerCollectorServiceTest` 6,
+  `SpellCastTriggerCollectorServiceTest` 3, `LandTapTriggerCollectorServiceTest` 2, and the known one each in
+  `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and `CardEffectTargetingConsistencyTest`.
 - AI: the whole module (1,620 tests), with the same 10 failures as before.
 - The full suite was not run here.
 

@@ -20,11 +20,11 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -59,8 +59,8 @@ public class GourmandsTalent extends Card {
                 new NotCondition(new SourceClassLevelAtLeast(2)),
                 "this Class is level 1"));
 
-        addTrigger(Triggers.youGainLife(), new OncePerTurnTriggerEffect(new ConditionalEffect(
-                new SourceClassLevelAtLeast(2),
+        addTrigger(Triggers.youGainLife().firstTimeEachTurn(),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceClassLevelAtLeast(2)),
                 new CreateTokenEffect(
                         1,
                         "Raccoon",
@@ -69,7 +69,7 @@ public class GourmandsTalent extends Card {
                         CardColor.GREEN,
                         List.of(CardSubtype.RACCOON),
                         Set.of(),
-                        Set.of())), false, "level-two-raccoon", false, true));
+                        Set.of()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
@@ -83,11 +83,11 @@ public class GourmandsTalent extends Card {
                         new NotCondition(new SourceClassLevelAtLeast(3)))),
                 "this Class is level 2"));
 
-        addTrigger(Triggers.youGainLife(), new OncePerTurnTriggerEffect(new ConditionalEffect(
-                new SourceClassLevelAtLeast(3),
+        addTrigger(Triggers.youGainLife().firstTimeEachTurn(),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceClassLevelAtLeast(3)),
                 new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE,
                         1,
-                        new PermanentIsCreaturePredicate())), false, "level-three-counters", false, true));
+                        new PermanentIsCreaturePredicate()));
     }
 }

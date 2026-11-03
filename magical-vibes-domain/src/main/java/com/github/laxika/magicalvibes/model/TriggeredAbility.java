@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CyclingTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExceptFirstDrawStepTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.FirstOpponentLifeLossEachTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstDrawStepDrawOnlyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstOrSecondCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.LandPlayFromExileTriggerEffect;
@@ -48,6 +49,7 @@ import com.github.laxika.magicalvibes.model.trigger.DamageTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LandPlayTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LibraryTrigger;
+import com.github.laxika.magicalvibes.model.trigger.LifeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.PlayerRelation;
 import com.github.laxika.magicalvibes.model.trigger.SpellFilter;
@@ -234,8 +236,11 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * global {@link OncePerTurnPerCreatureTriggerEffect} inside that filter, and "one or more" the registrations'
      * {@link TriggerMode#ONCE_PER_BATCH}, as {@link #tapView()} says and the tap cards wrote them. A library, draw or
      * discard trigger that its collectors read by another trigger ({@link LibraryTrigger#watchKey()}) is given in the
-     * order {@link #legacyLibraryEffects} says. An ability without options or such filters returns its registrations as
-     * they are.
+     * order {@link #legacyLibraryEffects} says. A life trigger's "for the first time each turn"
+     * ({@link LifeTrigger#firstEachTurn()}) is the counting {@link OncePerTurnTriggerEffect} the life collectors judge,
+     * where the limits go, as {@link #lifeView()} says, and "an opponent loses life for the first time during each of
+     * their turns" makes the ability one {@link FirstOpponentLifeLossEachTurnTriggerEffect} of all its effects. An
+     * ability without options or such filters returns its registrations as they are.
      */
     public List<EffectRegistration> legacyEffects() {
         SpellTrigger spell = filteredTrigger(SpellTrigger.class);
@@ -253,6 +258,10 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
                 && !library.watchKey().equals(library))) {
             return legacyLibraryEffects();
         }
+        if (conditions.stream().anyMatch(condition -> condition.trigger() instanceof LifeTrigger life
+                && life.event() == LifeTrigger.LifeEvent.LOSES_FOR_FIRST_TIME_DURING_THEIR_TURN)) {
+            return legacyFirstOpponentLifeLossEffects();
+        }
         Condition interveningIf = options.interveningIf();
         TriggerLimit limit = options.limit();
         LandPlayTrigger landPlay = filteredTrigger(LandPlayTrigger.class);
@@ -265,10 +274,11 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         CounterView counter = counterView();
         TargetView target = targetView();
         TapView tap = tapView();
+        LifeView life = lifeView();
         if (interveningIf == null && limit == TriggerLimit.NONE && landPlay == null && activation == null
                 && (combat == null || combat.plain()) && (damage == null || damage.plain())
                 && (counter == null || counter.plain()) && (target == null || target.plain())
-                && (tap == null || tap.plain())) {
+                && (tap == null || tap.plain()) && (life == null || life.plain())) {
             return effects;
         }
         String key = limit == TriggerLimit.ONCE_EACH_TURN ? limitKey() : null;
@@ -306,6 +316,9 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
                 effect = OncePerTurnTriggerEffect.markOnAcceptance(effect);
             } else if (limit == TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE) {
                 effect = new OncePerTurnPerCreatureTriggerEffect(effect);
+            }
+            if (life != null) {
+                effect = life.wrap(effect, limitKey());
             }
             if (damage != null) {
                 effect = damage.wrap(effect);
@@ -671,6 +684,88 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             }
             return TriggerMode.ONCE_PER_BATCH;
         }
+    }
+
+    /**
+     * What the legacy view adds for this ability's life conditions, or {@code null} when it has none: the event whose
+     * first occurrence each turn the conditions count ({@link LifeTrigger#firstEachTurn()}). Only the "you gain life"
+     * and "you lose life" collectors count; they read no "one or more", per-creature limit or "triggers only once", and
+     * a limit next to a count, conditions that count different events or that count and don't, throw.
+     */
+    private LifeView lifeView() {
+        List<LifeTrigger> life = conditions.stream().map(TriggerCondition::trigger)
+                .filter(LifeTrigger.class::isInstance).map(LifeTrigger.class::cast).toList();
+        if (life.isEmpty()) {
+            return null;
+        }
+        if (options.multiplicity() != TriggerMultiplicity.EACH) {
+            throw new IllegalStateException("The legacy view has no " + options.multiplicity() + " form for "
+                    + conditions);
+        }
+        TriggerLimit limit = options.limit();
+        if (limit == TriggerLimit.ONCE || limit == TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE) {
+            throw new IllegalStateException("No life collector reads " + limit + ": " + conditions);
+        }
+        List<LifeTrigger> counted = life.stream().filter(LifeTrigger::firstEachTurn).toList();
+        if (counted.isEmpty()) {
+            return new LifeView(null);
+        }
+        LifeTrigger first = counted.getFirst();
+        if (counted.size() != life.size() || counted.stream().anyMatch(trigger -> !trigger.equals(first))) {
+            throw new IllegalStateException("The life conditions of one ability must all count the same event: "
+                    + conditions);
+        }
+        if (first.player() != PlayerRelation.YOU || first.event() == LifeTrigger.LifeEvent.PAYS) {
+            throw new IllegalStateException("No life collector counts " + first);
+        }
+        if (limit != TriggerLimit.NONE) {
+            throw new IllegalStateException("The legacy view has one once-each-turn wrapper: " + conditions
+                    + " with " + limit);
+        }
+        return new LifeView(first.event());
+    }
+
+    /**
+     * The legacy view of an ability's life conditions, as {@link #lifeView()} builds it.
+     *
+     * @param firstTime the event whose first occurrence each turn the conditions count, or {@code null}
+     */
+    private record LifeView(LifeTrigger.LifeEvent firstTime) {
+
+        /** Whether the legacy view adds nothing to the effects. */
+        boolean plain() {
+            return firstTime == null;
+        }
+
+        /**
+         * {@code effect} in the counting wrapper of {@link #firstTime}: the "you gain life" collector's keyed by
+         * {@code key}, so it marks no other ability of the source, and the "you lose life" collector's, which marks
+         * nothing.
+         */
+        CardEffect wrap(CardEffect effect, String key) {
+            if (firstTime == null) {
+                return effect;
+            }
+            return firstTime == LifeTrigger.LifeEvent.GAINS
+                    ? new OncePerTurnTriggerEffect(effect, false, key, false, true)
+                    : OncePerTurnTriggerEffect.firstLifeLoss(effect);
+        }
+    }
+
+    /**
+     * The ability in the form the "an opponent loses life" collector judges a "whenever an opponent loses life for the
+     * first time during each of their turns" ability in: one {@link FirstOpponentLifeLossEachTurnTriggerEffect} of all
+     * its effects, one stack object (CR 603.3), the ability's only condition, without options.
+     */
+    private List<EffectRegistration> legacyFirstOpponentLifeLossEffects() {
+        if (conditions.size() > 1) {
+            throw new IllegalStateException("The legacy view takes \"loses life for the first time during their turn\" "
+                    + "only as the ability's one condition: " + conditions);
+        }
+        requireNoOptions("first-life-loss");
+        List<CardEffect> resolved = effects.stream().map(EffectRegistration::effect).toList();
+        return List.of(new EffectRegistration(new FirstOpponentLifeLossEachTurnTriggerEffect(resolved),
+                effects.getFirst().triggerMode(), false));
     }
 
     /** "A nonland card", the discarded card the "first nonland discard each turn" collector counts. */

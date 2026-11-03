@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -27,7 +26,7 @@ public class ClericOfLifesBond extends Card {
                 new GainLifeEffect(1));
 
         // Whenever you gain life for the first time each turn, put a +1/+1 counter on this creature.
-        addTrigger(Triggers.youGainLife(),
-                OncePerTurnTriggerEffect.firstLifeGain(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
+        addTrigger(Triggers.youGainLife().firstTimeEachTurn(),
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }
