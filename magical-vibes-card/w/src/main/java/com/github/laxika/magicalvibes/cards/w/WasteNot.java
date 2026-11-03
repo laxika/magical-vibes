@@ -29,16 +29,16 @@ import java.util.List;
 public class WasteNot extends Card {
 
     public WasteNot() {
-        addTrigger(Triggers.opponentDiscardsCard(), new TriggeringCardConditionalEffect(
-                new CardTypePredicate(CardType.CREATURE),
-                CreateTokenEffect.blackZombie(1)));
-        addTrigger(Triggers.opponentDiscardsCard(), new TriggeringCardConditionalEffect(
-                new CardTypePredicate(CardType.LAND),
-                new AwardManaEffect(ManaColor.BLACK, 2)));
-        addTrigger(Triggers.opponentDiscardsCard(), new TriggeringCardConditionalEffect(
-                new CardAllOfPredicate(List.of(
+        addTrigger(Triggers.opponentDiscardsCard()
+                .withFilter(new CardTypePredicate(CardType.CREATURE)),
+                CreateTokenEffect.blackZombie(1));
+        addTrigger(Triggers.opponentDiscardsCard()
+                .withFilter(new CardTypePredicate(CardType.LAND)),
+                new AwardManaEffect(ManaColor.BLACK, 2));
+        addTrigger(Triggers.opponentDiscardsCard()
+                .withFilter(new CardAllOfPredicate(List.of(
                         new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                        new CardNotPredicate(new CardTypePredicate(CardType.LAND)))),
-                new DrawCardEffect()));
+                        new CardNotPredicate(new CardTypePredicate(CardType.LAND))))),
+                new DrawCardEffect());
     }
 }

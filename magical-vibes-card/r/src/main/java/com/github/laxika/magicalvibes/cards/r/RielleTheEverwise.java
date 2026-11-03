@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,7 +23,7 @@ public class RielleTheEverwise extends Card {
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY))), CountScope.CONTROLLER);
         addStaticEffect(new BoostSelfEffect(instantsAndSorceries, new Fixed(0)));
-        addTrigger(Triggers.youDiscardOneOrMoreCards(),
-                OncePerTurnTriggerEffect.firstDiscardEvent(new DrawCardEffect(new EventValue())));
+        addTrigger(Triggers.youDiscardOneOrMoreCards().firstTimeEachTurn(),
+                new DrawCardEffect(new EventValue()));
     }
 }

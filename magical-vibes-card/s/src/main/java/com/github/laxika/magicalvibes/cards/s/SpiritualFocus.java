@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentCausedDiscardTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -13,9 +12,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SpiritualFocus extends Card {
 
     public SpiritualFocus() {
-        addTrigger(Triggers.youDiscardCard(), new OpponentCausedDiscardTriggerEffect(
+        addTrigger(Triggers.opponentCausesYouToDiscardCard(),
                 SequenceEffect.of(
                         new GainLifeEffect(2),
-                        new MayEffect(new DrawCardEffect(), "Draw a card?"))));
+                        new MayEffect(new DrawCardEffect(), "Draw a card?")));
     }
 }

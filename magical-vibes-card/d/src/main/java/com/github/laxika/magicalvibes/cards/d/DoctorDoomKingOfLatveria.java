@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -25,9 +24,9 @@ import java.util.List;
 public class DoctorDoomKingOfLatveria extends Card {
 
     public DoctorDoomKingOfLatveria() {
-        addTrigger(Triggers.youDiscardOneOrMoreCards(), new TriggeringCardConditionalEffect(
-                new CardTypePredicate(CardType.LAND),
-                new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT)));
+        addTrigger(Triggers.youDiscardOneOrMoreCards()
+                .withFilter(new CardTypePredicate(CardType.LAND)),
+                new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT));
 
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

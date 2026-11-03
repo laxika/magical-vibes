@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -6321,6 +6321,148 @@ changed, 26 of them converted and 10 of them losing an ability that never trigge
   `CardImmutabilityArchTest` and `CardEffectTargetingConsistencyTest`, and `CounterSpellEffectHandlerTest` 2 (the
   Mockito wiring step 13 run 6 listed as failing at HEAD; the handler reads nothing this run changed; not rerun at HEAD
   here).
+- AI: the whole module (1,620 tests), with the same 10 failures as before.
+- The full suite was not run here.
+
+#### Run 11: library, draw and discard
+
+Step 13 family 7, every wrapper kind in one run: every library, draw and discard ability that the `LibraryWatch`
+collectors read is authored without trigger-only wrappers, but the abilities kept below. 73 card classes were
+converted by script; Hostile Investigator's and Planetarium of Wan Shi Tong's split halves were merged into one
+ability each, and Lady Octopus's "first or second card" is one ability with two conditions.
+
+**Authoring.**
+
+- `LibraryTrigger` has two new components, both dropped from `watchKey()`:
+  - `qualifier`, the discarded card's restriction: `LibraryTrigger.withFilter(CardPredicate)`, as in
+    `Triggers.youDiscardCard().withFilter(new CardTypePredicate(CardType.CREATURE))` (Bone Miser, Waste Not, Surly
+    Badgersaur, Urza, Mishra, Doctor Doom's "one or more land cards", Anje Falkenrath's "if it has madness", …). Only
+    the discard events take one; a second filter is rejected.
+  - `nth`, the player's Nth such event this turn, counting the events before the source was on the battlefield:
+    `youDrawSecondCardEachTurn()` is `youDrawCard().nthTimeEachTurn(2)`, with new factories
+    `youDrawNthCardEachTurn(n)` and `opponentDrawsNthCardEachTurn(n)` (Emerald Collector's third card, Alandra's
+    fifth, Zurzoth's "first card each turn"), and `.firstTimeEachTurn()` for "for the first time each turn" (Valiant
+    Rescuer's cycling, Veronica's nonland discard, Rielle's discard event, Whispering Snitch's surveil). "First or
+    second card" is `List.of(youDrawNthCardEachTurn(1), youDrawSecondCardEachTurn())`. A count is a property of the
+    event, not a limit: it is not `ONCE_EACH_TURN`, which counts the ability's own triggers.
+- `LibraryEvent.DRAWS_SECOND_CARD` is gone (it is `DRAWS` with a count). New events, each read by another event's
+  collector (`LibraryTrigger.watchedEvent()`): `DRAWS_EXCEPT_FIRST_IN_DRAW_STEP`
+  (`opponentDrawsCardExceptFirstInDrawStep()`: Orcish Bowmasters, Xyris, Leela), `DRAWS_FIRST_IN_DRAW_STEP`
+  (`youDrawFirstCardInDrawStep()`: Wiretapping) and `DISCARDS_BY_OPPONENT` (`opponentCausesYouToDiscardCard()`:
+  Spiritual Focus), and `CYCLES` with `YOU` (`youCycleCard()`, "whenever you cycle [another] card": 12 cards), read
+  by the "you discard a card" collector.
+- An intervening "if" is `TriggerOptions.DEFAULT.withInterveningIf(c)` (**CR 603.4**, checked), as are the Class levels
+  (Wizard Class, Cool but Rude) and max speed (Aether Syphon), as earlier runs made them. "This ability triggers only
+  once each turn" is `ONCE_EACH_TURN`, "do this only once each turn" `DO_ONLY_ONCE_EACH_TURN`, "this ability triggers
+  only once" `ONCE`.
+
+**The engine.**
+
+- `TriggeredAbility.legacyEffects()` gives an ability any of whose library conditions is read by another trigger
+  (`legacyLibraryEffects()`) its wrappers in the order the cards nested them, outermost first: `OnceOnlyTriggerEffect`,
+  the filter as `TriggeringCardConditionalEffect`, the limit (`OncePerTurnTriggerEffect` keyed by the ability, or
+  marked on acceptance), the counting `OncePerTurnTriggerEffect` of "first time each turn" (`firstCycling`,
+  `firstNonlandDiscard`, `firstDiscardEvent`, `firstSurveil`), the event's wrapper (`CyclingTriggerEffect`,
+  `OpponentCausedDiscardTriggerEffect`, `NthCardDrawTriggerEffect`, `FirstOrSecondCardDrawTriggerEffect` for counts
+  1 and 2, `ExceptFirstDrawStepTriggerEffect`, `FirstDrawStepDrawOnlyTriggerEffect`), then the intervening "if".
+  `ONCE` is outermost here (Emerald Collector wrote it so), where other families put it innermost. The ability's
+  conditions must all be library triggers of one event, player and filter (only a draw's count may differ, as 1 and
+  2); a filter off a discard, a count no collector reads ("first" on a scry, an opponent's or a filtered one but
+  nonland), `ONE_OR_MORE`-style multiplicities, a limit next to a "first time" count and
+  `ONCE_EACH_TURN_FOR_EACH_CREATURE` throw.
+- `LibraryWatch.effectsOf` and `registrationsOf` read the legacy view. `ON_CONTROLLER_DRAWS_SECOND_CARD` is deleted:
+  every count is read by the `youDrawCard()` / `opponentDrawsCard()` collectors through the `NthCardDrawTriggerEffect`
+  they already unwrapped. `GRAVEYARD_ON_CONTROLLER_DRAWS_SECOND_CARD` and `GRAVEYARD_ON_OPPONENT_DRAWS_SECOND_CARD`
+  became `GRAVEYARD_ON_CONTROLLER_DRAWS` (`youDrawCard()`, graveyard) and `GRAVEYARD_ON_OPPONENT_DRAWS`
+  (`opponentDrawsCard()`, graveyard): `DrawService` runs both graveyard collectors on every draw now and unwraps the
+  count like the battlefield collectors (Wolfbat, Dogged Detective).
+- By hand: the "you discard a card" collector marked the unkeyed once-each-turn mark whatever the wrapper's key, so
+  with the keyed limit of the legacy view it never stopped triggering (Urza, Powerstone Prodigy; Mishra, Excavation
+  Prodigy); it marks through `OncePerTurnTriggerSupport.markIfNeeded` now. The graveyard surveil reader reads
+  `getEffectiveGraveyardLegacyTriggerEffects` (Blood Operative's intervening "if"). The other collectors of the
+  converted limits (draws, opponent discards, discard events, scry, surveil) already honoured the key.
+- No wrapper class is deleted: the legacy view still builds them. Run 16 deletes what is left.
+
+**Cards.**
+
+- `scripts/step14-library-scan.py` (run 10's scan on the library factories) lists the family's wrapped abilities.
+- `scripts/step14-library-options.py` (`--dry-run`, `--report`) did the conversion: it peels each family ability's
+  wrappers, outermost first, into the trigger, filter, count and options, re-indents what is left and stops on a
+  wrapper it can't place. Only a two-argument `new ConditionalEffect(c, e)` directly under the trigger is taken as the
+  intervening "if"; `unless`, `atTriggerTime` and conditionals inside other effects stay. Its `MANUAL` table holds the
+  two merges. Running it again changes nothing.
+- By hand: Crystalline Resonance's `BecomeCopyOfTargetPermanentUntilYourNextTurnEffect` retains `youCycleCard()` (the
+  script converted only the trigger argument; the handler reads and re-adds the ability by its exact trigger).
+- `scripts/step14-library-docs.py` rewrote 39 agent-docs passages (exact replacements): the converted rows, and
+  "don't author" notes on the entries of `CyclingTriggerEffect`, `OpponentCausedDiscardTriggerEffect`,
+  `FirstOrSecondCardDrawTriggerEffect` (with `NthCardDrawTriggerEffect`), `ExceptFirstDrawStepTriggerEffect`,
+  `FirstDrawStepDrawOnlyTriggerEffect` and the four counting `OncePerTurnTriggerEffect` factories. Those classes'
+  Javadoc, `ARCHITECTURE.md` and the implement-card and review-card skills were edited by hand.
+
+**Kept, with their reason.**
+
+- `ConditionalEffect.atTriggerTime`: Wedding Ring ("an opponent who controls a Wedding Ring draws a card during their
+  turn", a condition of the event) and Entropic Battlecruiser (its station 1+ ability, which exists only while the
+  threshold is met, so it isn't checked again on resolution). Run 16, with the `triggerTimeOnly` flag.
+- Effect-text conditions, which stay effects: Yidaro's two `ConditionalEffect.unless`, Wiretapping's "then if you have
+  nine or more cards in hand".
+- The first-draw reveal effects (`RevealFirstDraw…Effect`, `RevealEachDrawEffect`, through `FirstDrawRevealTriggerEffect`
+  / `DrawRevealTriggerEffect`): the reveal is a choice made as the card is drawn and the effect reads the drawn card;
+  step 15, or a reveal event.
+- "A player draws / discards" is still two abilities, "you" and "an opponent" (Sea of Sand, Phyrexian Tyranny, Spirit
+  Cairn, Telekinetic Bonds, Ian Malcolm, King T'Challa, Krang): there is no any-player draw or discard watch.
+- Event-reading effects (step 15): `LoseLifeUnlessPaysEffect.forTriggeringPlayer`, `CreateTokenCopyOfCardEffect
+  .fromTriggeringCard` (Hashaton), the `EventValue` discard counts, `DamageRecipient.TRIGGERING_PLAYER`.
+
+**Behaviour changes.**
+
+- The "your second card each turn" abilities are collected in the `youDrawCard()` pass, in their permanent's ability
+  order, where the old second-card pass ran after every permanent's "whenever you draw a card" abilities. This only
+  changes the engine's fixed order of simultaneous triggers one player controls, which that player chooses
+  (**CR 603.3b**, checked).
+- The once-each-turn limit of Urza, Mishra, Tataru Taru, Nimrodel Watcher, Diviner of Fates, Dying to Serve and Hostile
+  Investigator is keyed by the ability, where the unkeyed wrapper shared the source's mark. None of them has another
+  unkeyed once-each-turn ability. Hostile Investigator's and Planetarium's merged halves share their one limit, as they
+  shared the mark before.
+- Nothing else changed: the legacy view hands every collector the wrappers it read before.
+
+**For later runs.**
+
+- The `atTriggerTime` conditions above (run 16).
+- Pure Intentions' inverted temporary `opponentDiscardsCard()`, Psychogenic Probe's unchecked cause and
+  `EnterBattlefieldOnDiscardEffect` in a trigger, as step 13 run 7 listed.
+- `SequenceEffect.controllerDrawCount` and `PutCountersOnSourceEffect.controllerDrawCount`
+  (`CardEffect.triggersOnControllerDrawCount`) are a draw count inside an effect that no card sets; the count on the
+  trigger replaces them, and the step that deletes the legacy paths can drop them.
+- Most library collectors check an intervening "if" only as the ability resolves, or as it triggers only (the draw
+  collectors and the self-cycle and self-discard readers check it as it triggers and again on resolution); the legacy
+  view rebuilds the same wrappers, so nothing changed. A run like 4c's would make them uniform.
+- Step 15: as step 13 run 7 listed.
+
+**Tests changed.**
+
+- `LibraryTriggerTest`, eight new tests: a filter and a count are dropped from the watch key, and a second filter, a
+  second count or a count below one rejected; the cycle, opponent-caused and draw-step events are watched by the
+  collectors that read them; the legacy view gives the filter outside the keyed limit and the intervening "if" inside
+  the count, with a stable identity; "this ability triggers only once" outside the count; the four "first time each
+  turn" wrappers; the event wrappers and "first or second" from two conditions; an unreadable count, filter, pair of
+  counts, multiplicity or limit next to a count is rejected; granted abilities are read in the legacy form.
+- `LibraryWatchTest`: the second-card case reads the abilities through `ON_CONTROLLER_DRAWS` and
+  `GRAVEYARD_ON_CONTROLLER_DRAWS` with their `NthCardDrawTriggerEffect` (the second-card watch is gone).
+- No card test changed.
+
+**Test runs.**
+
+- Card: the test class of every card that uses a library factory (converted or not) and every card test that
+  constructs one (698 classes, 5,914 tests). The first run had 3 failures, all in `CrystallineResonanceTest` (the
+  retained trigger fixed by hand above); its rerun passed.
+- Application: the `service.trigger` and `model.trigger` packages and the draw, freeze, triggered-ability,
+  card-ability, granted-ability, deep-copy, simulation-copy, architecture, targeting-consistency, shuffle-hand and
+  grant-trigger classes (743 tests): 24 failures, all known from HEAD: `DamageTriggerCollectorServiceTest` 6,
+  `DeathTriggerCollectorServiceTest` 6, `SpellCastTriggerCollectorServiceTest` 3, `LandTapTriggerCollectorServiceTest` 2,
+  `ShuffleHandIntoLibraryAndDrawEffectHandlerTest` 3 and `DrawServiceTest`'s additional-trigger copy (step 13 run 7's
+  HEAD failures), and the known one each in `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and
+  `CardEffectTargetingConsistencyTest`.
 - AI: the whole module (1,620 tests), with the same 10 failures as before.
 - The full suite was not run here.
 

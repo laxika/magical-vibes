@@ -41,7 +41,8 @@ public record OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAccepta
     /**
      * Triggers only for the controller's first cycling event each turn, counting cycling events made
      * before the source entered. Every copy present for that first event triggers, and the limit
-     * belongs to the controller rather than the source (Valiant Rescuer).
+     * belongs to the controller rather than the source (Valiant Rescuer). Not authored on a card: the legacy view
+     * ({@code TriggeredAbility.legacyEffects()}) builds it from {@code Triggers.youCycleCard().firstTimeEachTurn()}.
      */
     public static OncePerTurnTriggerEffect firstCycling(CardEffect wrapped) {
         return new OncePerTurnTriggerEffect(wrapped, false, null, false, false, false, false, true);
@@ -91,7 +92,8 @@ public record OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAccepta
     /**
      * Triggers only when the controller discards a nonland card for the first time each turn, counting
      * nonland discards made before the source entered (Veronica, Dissident Scribe). Cards discarded
-     * together count as one event. Valid on the per-card discard slot.
+     * together count as one event. Valid on the per-card discard slot. Not authored on a card: the legacy view builds
+     * it from {@code Triggers.youDiscardCard().withFilter(nonland).firstTimeEachTurn()}.
      */
     public static OncePerTurnTriggerEffect firstNonlandDiscard(CardEffect wrapped) {
         return new OncePerTurnTriggerEffect(wrapped, false, FIRST_NONLAND_DISCARD_KEY);
@@ -99,7 +101,8 @@ public record OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAccepta
 
     /**
      * Triggers only for the controller's first discard event each turn, counting discards made before
-     * the source entered (Rielle, the Everwise).
+     * the source entered (Rielle, the Everwise). Not authored on a card: the legacy view builds it from
+     * {@code Triggers.youDiscardOneOrMoreCards().firstTimeEachTurn()}.
      */
     public static OncePerTurnTriggerEffect firstDiscardEvent(CardEffect wrapped) {
         return new OncePerTurnTriggerEffect(wrapped, false, FIRST_DISCARD_EVENT_KEY);
@@ -107,7 +110,8 @@ public record OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAccepta
 
     /**
      * Triggers only for the controller's first surveil each turn, counting surveils made before the
-     * source entered (Whispering Snitch). Valid on the controller-surveils slot.
+     * source entered (Whispering Snitch). Valid on the controller-surveils slot. Not authored on a card: the legacy
+     * view builds it from {@code Triggers.youSurveil().firstTimeEachTurn()}.
      */
     public static OncePerTurnTriggerEffect firstSurveil(CardEffect wrapped) {
         return new OncePerTurnTriggerEffect(wrapped, false, FIRST_SURVEIL_KEY);

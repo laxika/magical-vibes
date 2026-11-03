@@ -236,7 +236,7 @@ combat damage step is processed.
 | `Triggers.opponentGainsLife() from the graveyard` | `TriggerCollectionService.checkLifeGainTriggers` | None (graveyard-resident, non-targeting) |
 | `Triggers.youGainLife() from the graveyard` | `TriggerCollectionService.checkLifeGainTriggers` | None (graveyard-resident, non-targeting) |
 | `Triggers.milled(Triggers.NONLAND, ObjectRelation.OPPONENT_OWNS)` | `TriggerCollectionService.checkGraveyardOpponentNonlandCardMilledTriggers` | None (graveyard-resident, non-targeting; one trigger per nonland card milled) |
-| `Triggers.opponentDrawsSecondCardEachTurn() from the graveyard` | `DrawService.checkOpponentDrawTriggers` scans each non-drawing player's graveyard on that player's second draw of the turn | None (graveyard-resident, non-targeting) |
+| `Triggers.opponentDrawsSecondCardEachTurn() from the graveyard` | `DrawService.checkOpponentDrawTriggers` scans each non-drawing player's graveyard on every draw (`LibraryWatch.GRAVEYARD_ON_OPPONENT_DRAWS`); the legacy view's `NthCardDrawTriggerEffect` fires it on the second | None (graveyard-resident, non-targeting) |
 | `Triggers.youDrawCard()` (any-target effects) | `DrawService.checkControllerDrawTriggers` → `DrawTriggerAnyTarget` (queued when the effect's `targetSpec().declares(TargetPredicates.anyTarget())`, e.g. Niv-Mizzet, the Firemind's "deals 1 damage to any target"). Processed by `TriggeredAbilityQueueService.processNextDrawTriggerTarget` (creature/player any-target choice). Non–any-target draw triggers (Psychosis Crawler) still push a non-targeting entry straight to the stack. | Draw (any target) |
 | `Triggers.opponentDrawsCard()` (any-target effects) | `DrawService.checkOpponentDrawTriggers` → `DrawTriggerAnyTarget` (the source controller chooses the target before the ability goes on the stack). | Draw (any target) |
 | `Triggers.entersFrom(Zone.GRAVEYARD, Triggers.CREATURE, ObjectRelation.ANY)` | `TriggerCollectionService.checkEntersFromGraveyardTriggers` | Enters-from-graveyard (any target) |
@@ -802,9 +802,11 @@ permanent id remains available so an Aura effect can re-derive its host at resol
 `becomesTargetOfSpell()` / `becomesTargetOfSpellOrAbility()` read them, and the legacy view hands them
 the `TriggeringSpellControllerConditionalEffect` those collectors judge as the trigger is collected.
 
-`Triggers.youDrawSecondCardEachTurn()` is checked by `DrawService.checkControllerDrawTriggers` after
-the controller's per-turn draw count reaches exactly two. It uses the same stack and any-target
-handling as `Triggers.youDrawCard()`, but does not fire on later draws in the same turn.
+`Triggers.youDrawSecondCardEachTurn()` (and `youDrawNthCardEachTurn(n)`, the opponent forms and
+"first or second" as two conditions of one ability) is read by the `Triggers.youDrawCard()`
+collector in `DrawService.checkControllerDrawTriggers`: the legacy view hands it an
+`NthCardDrawTriggerEffect`, so the ability fires only when the controller's per-turn draw count
+reaches exactly that number, with the same stack and any-target handling.
 
 `Triggers.creatureDealtDamage()` also captures the damaged creature's controller as
 `triggeringPermanentControllerId`. Pair that capture with `MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER`

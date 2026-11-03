@@ -5,12 +5,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "BIG", collectorNumber = "10")
 public class HostileInvestigator extends Card {
@@ -22,9 +25,8 @@ public class HostileInvestigator extends Card {
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
 
-        OncePerTurnTriggerEffect investigate = new OncePerTurnTriggerEffect(
+        addTrigger(List.of(Triggers.youDiscardOneOrMoreCards(), Triggers.opponentDiscardsCard()),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
                 CreateTokenEffect.ofClueToken(1));
-        addTrigger(Triggers.youDiscardOneOrMoreCards(), investigate);
-        addTrigger(Triggers.opponentDiscardsCard(), investigate);
     }
 }

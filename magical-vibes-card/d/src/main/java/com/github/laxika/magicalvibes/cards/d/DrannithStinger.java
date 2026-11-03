@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CyclingTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -11,8 +10,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class DrannithStinger extends Card {
 
     public DrannithStinger() {
-        addTrigger(Triggers.youDiscardCard(),
-                new CyclingTriggerEffect(new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT)));
+        addTrigger(Triggers.youCycleCard(),
+                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
         addCycling("{1}");
     }
 }

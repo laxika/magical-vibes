@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentExtraTurnSkipReplacementEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,8 +20,8 @@ public class TroubleInPairs extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new OpponentAttacksWithAtLeastCreatures(2, false)),
                 new DrawCardEffect());
 
-        addTrigger(Triggers.opponentDrawsCard(),
-                new NthCardDrawTriggerEffect(2, new DrawCardEffect()));
+        addTrigger(Triggers.opponentDrawsSecondCardEachTurn(),
+                new DrawCardEffect());
 
         addTrigger(Triggers.opponentCastsSpell().nthThisTurn(2), new DrawCardEffect());
     }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,8 +15,7 @@ public class KrangTheAllPowerful extends Card {
         addStaticEffect(AdditionalTriggeredAbilityEffect.forDrawCausedTriggers());
         addTrigger(Triggers.youDrawSecondCardEachTurn(),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
-        addTrigger(Triggers.opponentDrawsCard(),
-                new NthCardDrawTriggerEffect(2,
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
+        addTrigger(Triggers.opponentDrawsSecondCardEachTurn(),
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

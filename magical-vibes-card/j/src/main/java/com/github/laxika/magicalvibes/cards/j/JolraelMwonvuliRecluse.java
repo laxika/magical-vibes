@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SetAllOwnCreaturesBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,9 +24,9 @@ import java.util.Set;
 public class JolraelMwonvuliRecluse extends Card {
 
     public JolraelMwonvuliRecluse() {
-        addTrigger(Triggers.youDrawCard(), new NthCardDrawTriggerEffect(2,
+        addTrigger(Triggers.youDrawSecondCardEachTurn(),
                 new CreateTokenEffect("Cat", 2, 2, CardColor.GREEN,
-                        List.of(CardSubtype.CAT), Set.of(), Set.of())));
+                        List.of(CardSubtype.CAT), Set.of(), Set.of()));
 
         CardsInHand cardsInHand = new CardsInHand(CountScope.CONTROLLER);
         addActivatedAbility(new ActivatedAbility(

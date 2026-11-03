@@ -5,6 +5,9 @@ import java.util.Optional;
 
 /**
  * Draw trigger payload that is suppressed for the first card drawn in a player's draw step.
+ * <p>
+ * Not authored on a card: the legacy view ({@code TriggeredAbility.legacyEffects()}) builds it for the collectors
+ * from {@code Triggers.opponentDrawsCardExceptFirstInDrawStep()}.
  */
 public record ExceptFirstDrawStepTriggerEffect(CardEffect resolvedEffect)
         implements DrawTriggerEffect {

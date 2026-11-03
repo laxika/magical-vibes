@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,9 +26,9 @@ public class MishraExcavationProdigy extends Card {
                 "{1}, {T}, Discard a card: Draw a card."
         ));
 
-        addTrigger(Triggers.youDiscardCard(),
-                new TriggeringCardConditionalEffect(
-                        new CardTypePredicate(CardType.ARTIFACT),
-                        new OncePerTurnTriggerEffect(new AwardManaEffect(ManaColor.RED, 2))));
+        addTrigger(Triggers.youDiscardCard()
+                .withFilter(new CardTypePredicate(CardType.ARTIFACT)),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new AwardManaEffect(ManaColor.RED, 2));
     }
 }

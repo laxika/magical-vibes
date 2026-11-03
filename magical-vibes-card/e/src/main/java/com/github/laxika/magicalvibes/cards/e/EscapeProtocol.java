@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CyclingTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
@@ -28,11 +27,11 @@ public class EscapeProtocol extends Card {
                 ))
         ));
 
-        addTrigger(Triggers.youDiscardCard(),
-                new CyclingTriggerEffect(new MayPayManaEffect(
+        addTrigger(Triggers.youCycleCard(),
+                new MayPayManaEffect(
                         "{1}",
                         new QueueReflexiveAbilityEffect(
                                 FlickerEffect.flickerTarget(targetArtifactOrCreatureYouControl)),
-                        "Pay {1} to exile an artifact or creature you control?")));
+                        "Pay {1} to exile an artifact or creature you control?"));
     }
 }

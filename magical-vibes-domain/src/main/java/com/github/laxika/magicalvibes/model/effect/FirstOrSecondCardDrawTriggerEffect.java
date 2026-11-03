@@ -5,6 +5,9 @@ import java.util.Optional;
 
 /**
  * Trigger payload for abilities that trigger on the first or second card drawn each turn.
+ * <p>
+ * Not authored on a card: the legacy view ({@code TriggeredAbility.legacyEffects()}) builds it for the collectors
+ * from an ability with the conditions {@code youDrawNthCardEachTurn(1)} and {@code youDrawSecondCardEachTurn()}.
  */
 public record FirstOrSecondCardDrawTriggerEffect(CardEffect resolvedEffect)
         implements DrawTriggerEffect {

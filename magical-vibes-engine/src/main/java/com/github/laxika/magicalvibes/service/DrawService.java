@@ -2838,12 +2838,7 @@ public class DrawService {
 
     public void checkControllerDrawTriggers(GameData gameData, UUID drawingPlayerId, Card drawn) {
         checkControllerDrawTriggerSlot(gameData, drawingPlayerId, LibraryWatch.ON_CONTROLLER_DRAWS, drawn);
-        if (gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0) == 2) {
-            checkControllerDrawTriggerSlot(
-                    gameData, drawingPlayerId, LibraryWatch.ON_CONTROLLER_DRAWS_SECOND_CARD, drawn);
-            checkGraveyardControllerDrawTriggerSlot(
-                    gameData, drawingPlayerId, LibraryWatch.GRAVEYARD_ON_CONTROLLER_DRAWS_SECOND_CARD);
-        }
+        checkGraveyardControllerDrawTriggerSlot(gameData, drawingPlayerId, LibraryWatch.GRAVEYARD_ON_CONTROLLER_DRAWS);
 
         // Emblem draw triggers (e.g. Teferi, Hero of Dominaria emblem)
         checkEmblemDrawTriggers(gameData, drawingPlayerId);
@@ -3024,7 +3019,12 @@ public class DrawService {
 
         int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
         for (Card card : new ArrayList<>(graveyard)) {
-            for (CardEffect effect : watch.effectsOf(card)) {
+            for (CardEffect authoredEffect : watch.effectsOf(card)) {
+                CardEffect effect = authoredEffect;
+                if (effect instanceof DrawTriggerEffect drawTrigger) {
+                    effect = drawTrigger.effectForDrawCount(cardsDrawnThisTurn).orElse(null);
+                    if (effect == null) continue;
+                }
                 if (!effect.triggersOnControllerDrawCount(cardsDrawnThisTurn)) continue;
 
                 StackEntry trigger = new StackEntry(
@@ -3039,7 +3039,7 @@ public class DrawService {
                 gameData.enqueueTrigger(trigger);
 
                 gameLogService.append(gameData, GameLog.abilityTriggers(card));
-                log.info("Game {} - {} graveyard ability triggers on second card draw",
+                log.info("Game {} - {} graveyard ability triggers on card draw",
                         gameData.id, card.getName());
             }
         }
@@ -3048,7 +3048,6 @@ public class DrawService {
     private void checkGraveyardOpponentDrawTriggerSlot(GameData gameData, UUID drawingPlayerId) {
         if (gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)) return;
         int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
-        if (cardsDrawnThisTurn != 2) return;
 
         for (UUID graveyardOwnerId : gameData.playerGraveyards.keySet()) {
             if (graveyardOwnerId.equals(drawingPlayerId)) continue;
@@ -3057,7 +3056,7 @@ public class DrawService {
             if (graveyard == null) continue;
 
             for (Card card : new ArrayList<>(graveyard)) {
-                List<CardEffect> effects = LibraryWatch.GRAVEYARD_ON_OPPONENT_DRAWS_SECOND_CARD.effectsOf(card);
+                List<CardEffect> effects = LibraryWatch.GRAVEYARD_ON_OPPONENT_DRAWS.effectsOf(card);
                 if (effects == null || effects.isEmpty()) continue;
 
                 for (CardEffect authoredEffect : effects) {
@@ -3076,7 +3075,7 @@ public class DrawService {
                     ));
 
                     gameLogService.append(gameData, GameLog.abilityTriggers(card));
-                    log.info("Game {} - {} graveyard ability triggers on opponent's second card draw",
+                    log.info("Game {} - {} graveyard ability triggers on opponent's card draw",
                             gameData.id, card.getName());
                 }
             }

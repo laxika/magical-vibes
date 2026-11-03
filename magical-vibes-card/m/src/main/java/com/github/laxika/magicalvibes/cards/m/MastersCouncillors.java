@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
-import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "HOB", collectorNumber = "47")
@@ -20,7 +19,7 @@ public class MastersCouncillors extends Card {
         addStaticEffect(new DynamicStaticBoostEffect(
                 new Scaled(sevenCardGraveyards, 2), new Fixed(0), GrantScope.SELF));
 
-        addTrigger(Triggers.youDrawCard(),
-                new NthCardDrawTriggerEffect(2, new MillEffect(3, MillRecipient.TARGET_PLAYER)));
+        addTrigger(Triggers.youDrawSecondCardEachTurn(),
+                new MillEffect(3, MillRecipient.TARGET_PLAYER));
     }
 }

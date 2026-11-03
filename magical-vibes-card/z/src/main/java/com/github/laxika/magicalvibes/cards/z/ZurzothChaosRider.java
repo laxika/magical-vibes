@@ -9,14 +9,12 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerIsActive;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForDefendingPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -35,9 +33,9 @@ public class ZurzothChaosRider extends Card {
                 1, "Devil", 1, 1, CardColor.RED,
                 List.of(CardSubtype.DEVIL), Set.of(), Set.of(), devilTokenEffects);
 
-        addTrigger(Triggers.opponentDrawsCard(),
-                new NthCardDrawTriggerEffect(1,
-                        new ConditionalEffect(new NotCondition(new TargetPlayerIsActive()), devilToken)));
+        addTrigger(Triggers.opponentDrawsNthCardEachTurn(1),
+                TriggerOptions.DEFAULT.withInterveningIf(new NotCondition(new TargetPlayerIsActive())),
+                devilToken);
 
         addTrigger(Triggers.youAttackPlayer(),
                 TriggerOptions.DEFAULT.withInterveningIf(

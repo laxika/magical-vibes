@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.trigger;
 
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 import java.util.Objects;
 
@@ -9,17 +10,71 @@ import java.util.Objects;
  * A player draws a card (CR 121.1), discards one (CR 701.9a) or cycles one, scries (CR 701.22a), surveils
  * (CR 701.25a), searches their library (CR 701.23a) or shuffles it (CR 701.24a). Build it through {@link Triggers}.
  *
- * @param event  what the player does
- * @param player who does it, relative to the ability's controller: the player who draws, discards, cycles, scries,
- *               surveils, searches or shuffles. For {@link LibraryEvent#THIS_DISCARDED} it is the controller of the
- *               spell or ability that causes the discard ({@link PlayerRelation#ANY} for any discard), and an event
- *               that names its player itself is {@link PlayerRelation#ANY}
+ * @param event     what the player does
+ * @param player    who does it, relative to the ability's controller: the player who draws, discards, cycles, scries,
+ *                  surveils, searches or shuffles. For {@link LibraryEvent#THIS_DISCARDED} it is the controller of the
+ *                  spell or ability that causes the discard ({@link PlayerRelation#ANY} for any discard), and an event
+ *                  that names its player itself is {@link PlayerRelation#ANY}
+ * @param qualifier what the discarded card must be, or {@code null} for any card: "whenever you discard a creature
+ *                  card" is {@code Triggers.youDiscardCard().withFilter(new CardTypePredicate(CardType.CREATURE))}.
+ *                  For "one or more cards" it is enough that one of them matches. The collectors read it from the
+ *                  legacy view ({@code TriggeredAbility.legacyEffects()}) as the {@code TriggeringCardConditionalEffect}
+ *                  they judge, so {@link #watchKey()} drops it
+ * @param nth       which of the player's events of this kind this turn triggers the ability, or {@code 0} for every
+ *                  one: "whenever you draw your second card each turn" is {@code 2}, "whenever you cycle a card for
+ *                  the first time each turn" {@code 1}. The count includes the events before the source was on the
+ *                  battlefield. With a {@link #qualifier} it counts the matching events ("whenever you discard one or
+ *                  more nonland cards for the first time each turn"). The collectors read it from the legacy view
+ *                  as the wrapper they judge, so {@link #watchKey()} drops it
  */
-public record LibraryTrigger(LibraryEvent event, PlayerRelation player) implements Trigger {
+public record LibraryTrigger(LibraryEvent event, PlayerRelation player, CardPredicate qualifier, int nth)
+        implements Trigger {
 
     public LibraryTrigger {
         Objects.requireNonNull(event, "event");
         Objects.requireNonNull(player, "player");
+        if (nth < 0) {
+            throw new IllegalArgumentException("nth must not be negative: " + nth);
+        }
+    }
+
+    /** A trigger on every such event, whatever the card. */
+    public LibraryTrigger(LibraryEvent event, PlayerRelation player) {
+        this(event, player, null, 0);
+    }
+
+    /**
+     * This trigger narrowed to a discarded card that matches {@code filter}, as {@link #qualifier} says: "whenever you
+     * discard a land card".
+     */
+    public LibraryTrigger withFilter(CardPredicate filter) {
+        Objects.requireNonNull(filter, "filter");
+        if (qualifier != null) {
+            throw new IllegalStateException("This library trigger already has a filter: " + this);
+        }
+        return new LibraryTrigger(event, player, filter, nth);
+    }
+
+    /**
+     * This trigger narrowed to the player's first such event each turn, as {@link #nth} says: "whenever you cycle a
+     * card for the first time each turn".
+     */
+    public LibraryTrigger firstTimeEachTurn() {
+        return nthTimeEachTurn(1);
+    }
+
+    /**
+     * This trigger narrowed to the player's {@code nth} such event each turn, as {@link #nth} says: "whenever you draw
+     * your third card each turn".
+     */
+    public LibraryTrigger nthTimeEachTurn(int nth) {
+        if (nth < 1) {
+            throw new IllegalArgumentException("nth must be positive: " + nth);
+        }
+        if (this.nth != 0) {
+            throw new IllegalStateException("This library trigger already counts its events: " + this);
+        }
+        return new LibraryTrigger(event, player, qualifier, nth);
     }
 
     /**
@@ -41,18 +96,48 @@ public record LibraryTrigger(LibraryEvent event, PlayerRelation player) implemen
     }
 
     /**
+     * The trigger the {@code LibraryWatch} collectors read this one's abilities by: without its {@link #qualifier} and
+     * {@link #nth}, and, for the events no collector of their own reads, with the event whose collector reads them.
+     * "You cycle a card" and "an opponent's spell or ability causes you to discard a card" are read by the "you discard
+     * a card" collector, and a draw in or out of a draw step by the collector of every draw. The legacy view ({@code
+     * TriggeredAbility.legacyEffects()}) gives them the wrapper those collectors judge.
+     */
+    @Override
+    public Trigger watchKey() {
+        LibraryEvent watched = watchedEvent();
+        if (watched == event && qualifier == null && nth == 0) {
+            return this;
+        }
+        return new LibraryTrigger(watched, player);
+    }
+
+    /** The event of {@link #watchKey()}: {@link #event}, or the event whose collector reads this one's abilities. */
+    public LibraryEvent watchedEvent() {
+        return switch (event) {
+            case CYCLES -> player == PlayerRelation.YOU ? LibraryEvent.DISCARDS : event;
+            case DISCARDS_BY_OPPONENT -> LibraryEvent.DISCARDS;
+            case DRAWS_EXCEPT_FIRST_IN_DRAW_STEP, DRAWS_FIRST_IN_DRAW_STEP -> LibraryEvent.DRAWS;
+            default -> event;
+        };
+    }
+
+    /**
      * What a player does that a {@link LibraryTrigger} triggers on. Draws and discards trigger once for each card;
      * the rest once for each time the player does it.
      */
     public enum LibraryEvent {
         /** The player draws a card. */
         DRAWS,
-        /** The player draws their second card of the turn. */
-        DRAWS_SECOND_CARD,
+        /** The player draws a card, except the first one they draw in each of their draw steps. */
+        DRAWS_EXCEPT_FIRST_IN_DRAW_STEP,
+        /** The player draws their first card during one of their draw steps. */
+        DRAWS_FIRST_IN_DRAW_STEP,
         /** The player the source is attached to draws a card. */
         ENCHANTED_PLAYER_DRAWS,
         /** The player discards a card, cycling included. */
         DISCARDS,
+        /** A spell or ability an opponent of the player controls causes the player to discard a card. */
+        DISCARDS_BY_OPPONENT,
         /** The player discards one or more cards at once, once for each such discard. */
         DISCARDS_ONE_OR_MORE,
         /** The player cycles a card. */

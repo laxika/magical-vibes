@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -30,9 +30,9 @@ public class AjanisLastStand extends Card {
         // When a spell or ability an opponent controls causes you to discard this card, if you
         // control a Plains, create a 4/4 white Avatar creature token with flying.
         addTrigger(Triggers.opponentCausesYouToDiscardThisCard(),
-                new ConditionalEffect(
-                        new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.PLAINS)),
-                        avatarToken()));
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.PLAINS))),
+                avatarToken());
     }
 
     private static CreateTokenEffect avatarToken() {

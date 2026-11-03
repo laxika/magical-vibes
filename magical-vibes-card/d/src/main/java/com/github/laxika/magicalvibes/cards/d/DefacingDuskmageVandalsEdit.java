@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.v.VandalsEdit;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
-import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOC", collectorNumber = "45")
@@ -14,8 +13,8 @@ public class DefacingDuskmageVandalsEdit extends Card {
     public DefacingDuskmageVandalsEdit() {
         setBackFaceCard(new VandalsEdit());
 
-        addTrigger(Triggers.opponentDrawsCard(),
-                new NthCardDrawTriggerEffect(2, new BecomePreparedEffect()));
+        addTrigger(Triggers.opponentDrawsSecondCardEachTurn(),
+                new BecomePreparedEffect());
     }
 
     @Override

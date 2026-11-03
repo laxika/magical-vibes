@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -23,12 +22,12 @@ public class MODOKEvilIntellect extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addTrigger(Triggers.youDrawCard(),
-                new NthCardDrawTriggerEffect(2, new SacrificePermanentsEffect(
+        )).addTrigger(Triggers.youDrawSecondCardEachTurn(),
+                new SacrificePermanentsEffect(
                         1,
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
-                        SacrificeRecipient.TARGET_PLAYER)));
+                        SacrificeRecipient.TARGET_PLAYER));
     }
 }

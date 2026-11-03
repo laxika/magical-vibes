@@ -6,6 +6,9 @@ import java.util.Optional;
 /**
  * Trigger payload for abilities that care about a player's Nth card draw each turn.
  * It is consumed by the controller- or opponent-draw trigger path and is not resolved directly.
+ * <p>
+ * Not authored on a card: the legacy view ({@code TriggeredAbility.legacyEffects()}) builds it for the collectors
+ * from {@code Triggers.youDrawNthCardEachTurn(n)} / {@code opponentDrawsNthCardEachTurn(n)}.
  */
 public record NthCardDrawTriggerEffect(int cardNumber, CardEffect resolvedEffect)
         implements DrawTriggerEffect {

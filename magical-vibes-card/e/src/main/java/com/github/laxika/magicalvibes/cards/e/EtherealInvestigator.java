@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,7 +17,7 @@ public class EtherealInvestigator extends Card {
     public EtherealInvestigator() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 CreateTokenEffect.ofClueToken(new Sum(new PlayersInGame(), new Fixed(-1))));
-        addTrigger(Triggers.youDrawCard(),
-                new NthCardDrawTriggerEffect(2, CreateTokenEffect.whiteSpirit(1)));
+        addTrigger(Triggers.youDrawSecondCardEachTurn(),
+                CreateTokenEffect.whiteSpirit(1));
     }
 }

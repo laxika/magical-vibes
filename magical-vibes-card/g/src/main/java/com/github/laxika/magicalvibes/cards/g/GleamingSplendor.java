@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -17,8 +16,8 @@ import java.util.List;
 public class GleamingSplendor extends Card {
 
     public GleamingSplendor() {
-        addTrigger(Triggers.opponentDrawsCard(),
-                new NthCardDrawTriggerEffect(2, CreateTokenEffect.ofTreasureToken(1)));
+        addTrigger(Triggers.opponentDrawsSecondCardEachTurn(),
+                CreateTokenEffect.ofTreasureToken(1));
 
         PlayerPredicateTargetFilter playerTarget = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),

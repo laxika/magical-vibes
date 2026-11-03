@@ -1350,17 +1350,38 @@ public final class Triggers {
 
     /** "Whenever you draw your second card each turn" */
     public static LibraryTrigger youDrawSecondCardEachTurn() {
-        return new LibraryTrigger(LibraryTrigger.LibraryEvent.DRAWS_SECOND_CARD, PlayerRelation.YOU);
+        return youDrawNthCardEachTurn(2);
+    }
+
+    /** "Whenever you draw your {@code nth} card each turn": "When you draw your third card in a turn" is 3 */
+    public static LibraryTrigger youDrawNthCardEachTurn(int nth) {
+        return youDrawCard().nthTimeEachTurn(nth);
+    }
+
+    /** "Whenever you draw your first card during each of your draw steps" */
+    public static LibraryTrigger youDrawFirstCardInDrawStep() {
+        return new LibraryTrigger(LibraryTrigger.LibraryEvent.DRAWS_FIRST_IN_DRAW_STEP, PlayerRelation.YOU);
     }
 
     /** "Whenever an opponent draws their second card each turn" */
     public static LibraryTrigger opponentDrawsSecondCardEachTurn() {
-        return new LibraryTrigger(LibraryTrigger.LibraryEvent.DRAWS_SECOND_CARD, PlayerRelation.OPPONENT);
+        return opponentDrawsNthCardEachTurn(2);
+    }
+
+    /** "Whenever an opponent draws their {@code nth} card each turn": "their first card each turn" is 1 */
+    public static LibraryTrigger opponentDrawsNthCardEachTurn(int nth) {
+        return opponentDrawsCard().nthTimeEachTurn(nth);
     }
 
     /** "Whenever an opponent draws a card", once for each card */
     public static LibraryTrigger opponentDrawsCard() {
         return new LibraryTrigger(LibraryTrigger.LibraryEvent.DRAWS, PlayerRelation.OPPONENT);
+    }
+
+    /** "Whenever an opponent draws a card except the first one they draw in each of their draw steps" */
+    public static LibraryTrigger opponentDrawsCardExceptFirstInDrawStep() {
+        return new LibraryTrigger(LibraryTrigger.LibraryEvent.DRAWS_EXCEPT_FIRST_IN_DRAW_STEP,
+                PlayerRelation.OPPONENT);
     }
 
     /** "Whenever enchanted player draws a card", once for each card */
@@ -1378,6 +1399,11 @@ public final class Triggers {
         return new LibraryTrigger(LibraryTrigger.LibraryEvent.DISCARDS, PlayerRelation.YOU);
     }
 
+    /** "Whenever a spell or ability an opponent controls causes you to discard a card", once for each card */
+    public static LibraryTrigger opponentCausesYouToDiscardCard() {
+        return new LibraryTrigger(LibraryTrigger.LibraryEvent.DISCARDS_BY_OPPONENT, PlayerRelation.YOU);
+    }
+
     /** "Whenever you discard one or more cards", once for each discard event */
     public static LibraryTrigger youDiscardOneOrMoreCards() {
         return new LibraryTrigger(LibraryTrigger.LibraryEvent.DISCARDS_ONE_OR_MORE, PlayerRelation.YOU);
@@ -1386,6 +1412,11 @@ public final class Triggers {
     /** "Whenever a player cycles a card" */
     public static LibraryTrigger playerCyclesCard() {
         return new LibraryTrigger(LibraryTrigger.LibraryEvent.CYCLES, PlayerRelation.ANY);
+    }
+
+    /** "Whenever you cycle a card" (or "another card", when the source can't be cycled from where it is) */
+    public static LibraryTrigger youCycleCard() {
+        return new LibraryTrigger(LibraryTrigger.LibraryEvent.CYCLES, PlayerRelation.YOU);
     }
 
     /** "When you cycle this card" */

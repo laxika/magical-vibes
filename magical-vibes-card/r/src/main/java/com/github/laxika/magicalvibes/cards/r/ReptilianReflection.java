@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.CyclingTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,10 +15,10 @@ import java.util.Set;
 public class ReptilianReflection extends Card {
 
     public ReptilianReflection() {
-        addTrigger(Triggers.youDiscardCard(),
-                new CyclingTriggerEffect(new MayEffect(
+        addTrigger(Triggers.youCycleCard(),
+                new MayEffect(
                         new AnimatePermanentsEffect(5, 4, List.of(CardSubtype.DINOSAUR),
                                 Set.of(Keyword.TRAMPLE, Keyword.HASTE)),
-                        "Have Reptilian Reflection become a 5/4 Dinosaur creature with trample and haste until end of turn?")));
+                        "Have Reptilian Reflection become a 5/4 Dinosaur creature with trample and haste until end of turn?"));
     }
 }

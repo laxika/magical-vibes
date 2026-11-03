@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -45,12 +44,11 @@ public class HashatonScarabsFist extends Card {
                 Set.of(),
                 false);
 
-        addTrigger(Triggers.youDiscardCard(),
-                new TriggeringCardConditionalEffect(
-                        new CardTypePredicate(CardType.CREATURE),
-                        new MayPayManaEffect(
-                                "{2}{U}",
-                                CreateTokenCopyOfCardEffect.fromTriggeringCard(zombieCopy),
-                                "Pay {2}{U} to create a tapped 4/4 black Zombie?")));
+        addTrigger(Triggers.youDiscardCard()
+                .withFilter(new CardTypePredicate(CardType.CREATURE)),
+                new MayPayManaEffect(
+                        "{2}{U}",
+                        CreateTokenCopyOfCardEffect.fromTriggeringCard(zombieCopy),
+                        "Pay {2}{U} to create a tapped 4/4 black Zombie?"));
     }
 }

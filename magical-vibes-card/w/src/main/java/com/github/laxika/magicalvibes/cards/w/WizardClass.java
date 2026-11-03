@@ -9,11 +9,11 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -47,8 +47,7 @@ public class WizardClass extends Card {
                 "this Class is level 2"));
 
         target(TargetFilters.creatureYouControl()).addTrigger(Triggers.youDrawCard(),
-                new ConditionalEffect(
-                        new SourceCounterThreshold(2, CounterType.LEVEL),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(2, CounterType.LEVEL)),
+                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
     }
 }

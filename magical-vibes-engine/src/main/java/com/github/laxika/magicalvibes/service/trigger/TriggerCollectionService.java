@@ -2721,14 +2721,16 @@ public class TriggerCollectionService {
                     } else if (firstCycling) {
                         if (!cycled || gameData.cardsCycledThisTurn.getOrDefault(discardingPlayerId, 0) != 1) continue;
                         resolved = ((OncePerTurnTriggerEffect) resolved).wrapped();
-                    } else {
+                    }
+                    CardEffect limited = resolved;
+                    if (oncePerTurn) {
                         resolved = unwrapOncePerTurnTrigger(gameData, perm, resolved);
                         if (resolved == null) continue;
                     }
                     var match = new TriggerMatchContext(gameData, perm, discardingPlayerId, resolved);
                     boolean triggered = dispatch(match, LibraryWatch.ON_CONTROLLER_DISCARDS, resolved, ctx);
                     if (triggered && oncePerTurn) {
-                        gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
+                        OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, limited);
                     }
                     if (triggered) {
                         anyTriggered[0] = true;
@@ -3174,7 +3176,7 @@ public class TriggerCollectionService {
         }
 
         for (Card card : List.copyOf(graveyard)) {
-            for (CardEffect effect : gameQueryService.getEffectiveGraveyardTriggerEffects(
+            for (CardEffect effect : gameQueryService.getEffectiveGraveyardLegacyTriggerEffects(
                     gameData, card, LibraryWatch.GRAVEYARD_ON_CONTROLLER_SURVEILS.trigger())) {
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,

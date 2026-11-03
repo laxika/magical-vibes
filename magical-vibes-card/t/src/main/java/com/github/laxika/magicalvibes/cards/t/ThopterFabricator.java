@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -20,9 +19,9 @@ import java.util.Set;
 public class ThopterFabricator extends Card {
 
     public ThopterFabricator() {
-        addTrigger(Triggers.youDrawCard(), new NthCardDrawTriggerEffect(2,
+        addTrigger(Triggers.youDrawSecondCardEachTurn(),
                 new CreateTokenEffect("Thopter", 1, 1, null,
-                        List.of(CardSubtype.THOPTER), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT))));
+                        List.of(CardSubtype.THOPTER), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

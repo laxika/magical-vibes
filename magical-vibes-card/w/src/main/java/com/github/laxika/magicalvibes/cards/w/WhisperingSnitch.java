@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,9 +13,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class WhisperingSnitch extends Card {
 
     public WhisperingSnitch() {
-        addTrigger(Triggers.youSurveil(), OncePerTurnTriggerEffect.firstSurveil(
+        addTrigger(Triggers.youSurveil().firstTimeEachTurn(),
                 SequenceEffect.of(
                         new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
-                        new GainLifeEffect(1))));
+                        new GainLifeEffect(1)));
     }
 }

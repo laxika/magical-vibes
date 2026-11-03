@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,11 +26,11 @@ public class MaryReadAndAnneBonny extends Card {
                 "{T}: Draw a card, then discard a card."
         ));
 
-        addTrigger(Triggers.youDiscardCard(), new TriggeringCardConditionalEffect(
-                new CardAnyOfPredicate(List.of(
+        addTrigger(Triggers.youDiscardCard()
+                .withFilter(new CardAnyOfPredicate(List.of(
                         new CardSubtypePredicate(CardSubtype.ISLAND),
                         new CardSubtypePredicate(CardSubtype.PIRATE),
-                        new CardSubtypePredicate(CardSubtype.VEHICLE))),
-                CreateTokenEffect.ofTappedTreasureToken(1)));
+                        new CardSubtypePredicate(CardSubtype.VEHICLE)))),
+                CreateTokenEffect.ofTappedTreasureToken(1));
     }
 }

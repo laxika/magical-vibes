@@ -10,9 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,10 +26,9 @@ public class VeronicaDissidentScribe extends Card {
     public VeronicaDissidentScribe() {
         addTrigger(Triggers.attacks(),
                 new MayEffect(new DiscardAndDrawCardEffect(), "Discard a card?"));
-        addTrigger(Triggers.youDiscardCard(),
-                new TriggeringCardConditionalEffect(
-                        new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
-                        OncePerTurnTriggerEffect.firstNonlandDiscard(junkToken())));
+        addTrigger(Triggers.youDiscardCard()
+                .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.LAND))).firstTimeEachTurn(),
+                junkToken());
     }
 
     private static CreateTokenEffect junkToken() {

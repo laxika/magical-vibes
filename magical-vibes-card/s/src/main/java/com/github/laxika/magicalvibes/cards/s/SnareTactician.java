@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CyclingTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -17,12 +16,12 @@ import java.util.List;
 public class SnareTactician extends Card {
 
     public SnareTactician() {
-        addTrigger(Triggers.youDiscardCard(),
-                new CyclingTriggerEffect(new TapPermanentsEffect(
+        addTrigger(Triggers.youCycleCard(),
+                new TapPermanentsEffect(
                         TapUntapScope.TARGET,
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
-                        )))));
+                        ))));
     }
 }

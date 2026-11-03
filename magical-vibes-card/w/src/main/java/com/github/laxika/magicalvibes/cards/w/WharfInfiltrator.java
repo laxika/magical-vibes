@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -28,12 +27,11 @@ public class WharfInfiltrator extends Card {
                 "Draw a card and discard a card?"
         ));
 
-        addTrigger(Triggers.youDiscardCard(), new TriggeringCardConditionalEffect(
-                new CardTypePredicate(CardType.CREATURE),
+        addTrigger(Triggers.youDiscardCard()
+                .withFilter(new CardTypePredicate(CardType.CREATURE)),
                 new MayPayManaEffect("{2}",
                         new CreateTokenEffect("Eldrazi Horror", 3, 2, null,
                                 List.of(CardSubtype.ELDRAZI, CardSubtype.HORROR), Set.of(), Set.of()),
-                        "Pay {2} to create a 3/2 colorless Eldrazi Horror creature token?")
-        ));
+                        "Pay {2} to create a 3/2 colorless Eldrazi Horror creature token?"));
     }
 }

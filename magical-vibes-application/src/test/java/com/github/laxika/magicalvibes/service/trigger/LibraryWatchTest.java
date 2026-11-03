@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.LibraryTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -49,10 +50,10 @@ class LibraryWatchTest {
                 TriggerOptions.DEFAULT, fromGraveyard);
         card.addTrigger(Triggers.youDrawCard(), everyDraw);
 
-        assertThat(LibraryWatch.ON_CONTROLLER_DRAWS_SECOND_CARD.effectsOf(card)).containsExactly(onBattlefield);
-        assertThat(LibraryWatch.GRAVEYARD_ON_CONTROLLER_DRAWS_SECOND_CARD.effectsOf(card))
-                .containsExactly(fromGraveyard);
-        assertThat(LibraryWatch.ON_CONTROLLER_DRAWS.effectsOf(card)).containsExactly(everyDraw);
+        assertThat(LibraryWatch.ON_CONTROLLER_DRAWS.effectsOf(card))
+                .containsExactly(new NthCardDrawTriggerEffect(2, onBattlefield), everyDraw);
+        assertThat(LibraryWatch.GRAVEYARD_ON_CONTROLLER_DRAWS.effectsOf(card))
+                .containsExactly(new NthCardDrawTriggerEffect(2, fromGraveyard));
         assertThat(LibraryWatch.ON_OPPONENT_DRAWS.effectsOf(card)).isEmpty();
     }
 

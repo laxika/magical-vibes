@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
-import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -16,8 +15,8 @@ import java.util.List;
 public class FaerieMastermind extends Card {
 
     public FaerieMastermind() {
-        addTrigger(Triggers.opponentDrawsCard(),
-                new NthCardDrawTriggerEffect(2, new DrawCardEffect()));
+        addTrigger(Triggers.opponentDrawsSecondCardEachTurn(),
+                new DrawCardEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -21,15 +20,15 @@ import java.util.List;
 public class GreenGoblinNemesis extends Card {
 
     public GreenGoblinNemesis() {
-        addTrigger(Triggers.youDiscardCard(), new TriggeringCardConditionalEffect(
-                new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
+        addTrigger(Triggers.youDiscardCard()
+                .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.LAND))),
                 PutCounterOnTargetPermanentEffect.withTargetRestriction(
                         CounterType.PLUS_ONE_PLUS_ONE, 1,
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
-                                new PermanentControlledBySourceControllerPredicate())))));
-        addTrigger(Triggers.youDiscardCard(), new TriggeringCardConditionalEffect(
-                new CardTypePredicate(CardType.LAND),
-                CreateTokenEffect.ofTappedTreasureToken(1)));
+                                new PermanentControlledBySourceControllerPredicate()))));
+        addTrigger(Triggers.youDiscardCard()
+                .withFilter(new CardTypePredicate(CardType.LAND)),
+                CreateTokenEffect.ofTappedTreasureToken(1));
     }
 }

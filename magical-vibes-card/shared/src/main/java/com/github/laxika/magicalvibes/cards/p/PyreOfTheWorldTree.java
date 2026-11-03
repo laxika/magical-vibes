@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,8 +20,8 @@ public class PyreOfTheWorldTree extends Card {
                         new DealDamageToAnyTargetEffect(2)),
                 "Discard a land card: This enchantment deals 2 damage to any target."));
 
-        addTrigger(Triggers.youDiscardCard(), new TriggeringCardConditionalEffect(
-                new CardTypePredicate(CardType.LAND),
-                new ExileTopCardMayPlayThisTurnEffect(false)));
+        addTrigger(Triggers.youDiscardCard()
+                .withFilter(new CardTypePredicate(CardType.LAND)),
+                new ExileTopCardMayPlayThisTurnEffect(false));
     }
 }

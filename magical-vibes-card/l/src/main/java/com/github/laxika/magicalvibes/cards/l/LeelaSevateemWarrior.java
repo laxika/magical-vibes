@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.ExceptFirstDrawStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -13,8 +12,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class LeelaSevateemWarrior extends Card {
 
     public LeelaSevateemWarrior() {
-        addTrigger(Triggers.opponentDrawsCard(),
-                new ExceptFirstDrawStepTriggerEffect(
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
+        addTrigger(Triggers.opponentDrawsCardExceptFirstInDrawStep(),
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

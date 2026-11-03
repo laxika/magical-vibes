@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,8 +21,8 @@ public class KingTChalla extends Card {
         setModalDoubleFaced(true);
 
         addTrigger(Triggers.youDrawSecondCardEachTurn(), new DrawCardEffect(1));
-        addTrigger(Triggers.opponentDrawsCard(),
-                new NthCardDrawTriggerEffect(2, new DrawCardEffect(1)));
+        addTrigger(Triggers.opponentDrawsSecondCardEachTurn(),
+                new DrawCardEffect(1));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}{W}{U}",

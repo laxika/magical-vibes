@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
@@ -28,11 +27,11 @@ public class TergridGodOfFright extends Card {
                 "Put that card onto the battlefield under your control?");
         addTrigger(Triggers.sacrificed(Triggers.NONTOKEN, ObjectRelation.OPPONENT_CONTROLS), returnSacrificedPermanent);
 
-        addTrigger(Triggers.opponentDiscardsCard(), new TriggeringCardConditionalEffect(
-                new CardAllOfPredicate(List.of(
+        addTrigger(Triggers.opponentDiscardsCard()
+                .withFilter(new CardAllOfPredicate(List.of(
                         new CardIsPermanentPredicate(),
-                        new CardNotPredicate(new CardIsTokenPredicate()))),
-                returnSacrificedPermanent));
+                        new CardNotPredicate(new CardIsTokenPredicate())))),
+                returnSacrificedPermanent);
 
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Tergrid, God of Fright", List.of())

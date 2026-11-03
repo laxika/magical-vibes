@@ -1,8 +1,13 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 /**
  * Which of the old library, draw and discard slot collectors reads a triggered ability, now that the ability has a
@@ -13,16 +18,21 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
  * wrappers filter it and which event data it is bound to, as the slot's did, until steps 14 and 15 of the refactor
  * replace them with trigger options and effects that read the event. A "this card is cycled or discarded" ability
  * functions from the zone the card winds up in; its collectors read it as a graveyard ability wherever the card is.
+ * <p>
+ * The collectors read the abilities in the form the cards wrote them before step 14
+ * ({@link Card#getLegacyTriggerEffects(Trigger, Zone)}): a limit wrapped around each effect, a discarded card's filter
+ * as the {@code TriggeringCardConditionalEffect} they judge, a draw's count as the {@code NthCardDrawTriggerEffect},
+ * "for the first time each turn" as the counting {@code OncePerTurnTriggerEffect}, and "you cycle a card", "an
+ * opponent causes you to discard a card" and the draw-step draws as the wrappers the "you discard" and draw collectors
+ * judge.
  */
 public enum LibraryWatch implements TriggerWatch {
     /** "Whenever you draw a card", once for each card. */
     ON_CONTROLLER_DRAWS(Triggers.youDrawCard(), Zone.BATTLEFIELD),
-    /** "Whenever you draw your second card each turn". */
-    ON_CONTROLLER_DRAWS_SECOND_CARD(Triggers.youDrawSecondCardEachTurn(), Zone.BATTLEFIELD),
-    /** "Whenever you draw your second card each turn", from the graveyard. */
-    GRAVEYARD_ON_CONTROLLER_DRAWS_SECOND_CARD(Triggers.youDrawSecondCardEachTurn(), Zone.GRAVEYARD),
-    /** "Whenever an opponent draws their second card each turn", from the graveyard. */
-    GRAVEYARD_ON_OPPONENT_DRAWS_SECOND_CARD(Triggers.opponentDrawsSecondCardEachTurn(), Zone.GRAVEYARD),
+    /** "Whenever you draw a card", from the graveyard: "your second card each turn" (Wolfbat). */
+    GRAVEYARD_ON_CONTROLLER_DRAWS(Triggers.youDrawCard(), Zone.GRAVEYARD),
+    /** "Whenever an opponent draws a card", from the graveyard: "their second card each turn" (Dogged Detective). */
+    GRAVEYARD_ON_OPPONENT_DRAWS(Triggers.opponentDrawsCard(), Zone.GRAVEYARD),
     /** "Whenever an opponent draws a card", once for each card. */
     ON_OPPONENT_DRAWS(Triggers.opponentDrawsCard(), Zone.BATTLEFIELD),
     /** "Whenever enchanted player draws a card", once for each card. */
@@ -79,5 +89,15 @@ public enum LibraryWatch implements TriggerWatch {
     @Override
     public Zone zone() {
         return zone;
+    }
+
+    @Override
+    public List<CardEffect> effectsOf(Card card) {
+        return card.getLegacyTriggerEffects(trigger, zone);
+    }
+
+    @Override
+    public List<EffectRegistration> registrationsOf(Card card) {
+        return card.getLegacyTriggerEffectRegistrations(trigger, zone);
     }
 }
