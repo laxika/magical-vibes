@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayReturnMilledPermanentToHandEffect;
@@ -15,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsDoubleFacedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -30,13 +34,13 @@ public class TetzinGnomeChampion extends Card {
     public TetzinGnomeChampion() {
         setBackFaceCard(new TheGoldenGearColossus());
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), MILL_ARTIFACT);
-        addTrigger(Triggers.enters(
-                        new PermanentAllOfPredicate(List.of(
+        addTriggeredAbility(new TriggeredAbility(List.of(
+                        new TriggerCondition(Triggers.enters(ObjectRelation.THIS)),
+                        new TriggerCondition(Triggers.enters(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),
                                 new PermanentIsDoubleFacedPredicate())),
-                        ObjectRelation.ANOTHER_YOU_CONTROL),
-                MILL_ARTIFACT);
+                                ObjectRelation.ANOTHER_YOU_CONTROL))),
+                TriggerOptions.DEFAULT, List.of(new EffectRegistration(MILL_ARTIFACT))));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

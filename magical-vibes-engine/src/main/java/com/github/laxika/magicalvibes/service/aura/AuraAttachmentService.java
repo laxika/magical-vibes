@@ -398,7 +398,7 @@ public class AuraAttachmentService {
                 .filter(permanent -> permanent.getCard().getId().equals(auraCard.getId()))
                 .findFirst().orElse(null);
         if (sourceAura != null && sourceAura.getChosenPermanentId() != null
-                && auraCard.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
+                && auraCard.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
                 .anyMatch(com.github.laxika.magicalvibes.model.effect.ReanimateEnchantedCreatureCardEffect.class::isInstance)
                 && !sourceAura.getChosenPermanentId().equals(host.getId())) {
             return false;

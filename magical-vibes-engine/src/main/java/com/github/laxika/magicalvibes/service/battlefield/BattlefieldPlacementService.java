@@ -491,7 +491,7 @@ public class BattlefieldPlacementService {
             creaturePositioningSupport.applyChosenPosition(gameData, controllerId, permanent);
         }
         applyEnterWithAttachedTokens(gameData, controllerId, permanent);
-        if (permanent.getCard().getTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
+        if (permanent.getCard().getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
                 .anyMatch(effect -> effect instanceof ExileTopCardsToSourceEffect exile
                         && exile.toGraveyardOnControlLoss())) {
             gameData.exiledCardsToGraveyardOnControlLossWatch.put(permanent.getId(),

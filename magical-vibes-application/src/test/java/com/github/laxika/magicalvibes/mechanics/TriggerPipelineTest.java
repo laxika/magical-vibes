@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
+import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGreaterThanSourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -640,6 +641,73 @@ class TriggerPipelineTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         assertThat(onlyTriggerOf(watcher.getCard()).getEffectsToResolve()).containsExactly(DRAW);
+    }
+
+    @Test
+    void aWhenThisEntersInterveningIfIsCheckedAsItTriggersAndAgainAsItResolves() {
+        Card first = new GrizzlyBears();
+        first.addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new ControllerLifeAtMost(10)), DRAW);
+        Card second = new GrizzlyBears();
+        second.addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new ControllerLifeAtMost(10)), DRAW);
+        harness.setHand(player1, List.of(first, second));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        // CR 603.4: with 20 life the ability doesn't trigger at all.
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(triggersOf(first)).isEmpty();
+
+        harness.setLife(player1, 10);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        onlyTriggerOf(second);
+        // It checks the condition again as it resolves.
+        harness.setLife(player1, 20);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void aThisOrAnotherCreatureEntersAbilityTriggersOnceForItsOwnEntryAndOnceForAnothers() {
+        Card watcher = new GrizzlyBears();
+        watcher.addTriggeredAbility(new TriggeredAbility(List.of(
+                        new TriggerCondition(Triggers.enters(ObjectRelation.THIS)),
+                        new TriggerCondition(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL))),
+                TriggerOptions.DEFAULT, List.of(new EffectRegistration(GAIN))));
+        harness.setHand(player1, List.of(watcher, new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(onlyTriggerOf(watcher).getEffectsToResolve()).containsExactly(GAIN);
+        harness.passBothPriorities();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(onlyTriggerOf(watcher).getEffectsToResolve()).containsExactly(GAIN);
+    }
+
+    @Test
+    void aLimitCoversAnAbilitysOwnEntryAndItsOtherTriggerCondition() {
+        Card watcher = new GrizzlyBears();
+        watcher.addTriggeredAbility(new TriggeredAbility(List.of(
+                        new TriggerCondition(Triggers.enters(ObjectRelation.THIS)),
+                        new TriggerCondition(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL))),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), List.of(new EffectRegistration(DRAW))));
+        harness.setHand(player1, List.of(watcher, new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        onlyTriggerOf(watcher);
+        harness.passBothPriorities();
+
+        // "This ability triggers only once each turn" covers both of its trigger conditions.
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(triggersOf(watcher)).isEmpty();
     }
 
     /** Moves {@code card} straight between two of {@code player}'s zone lists, which report the move. */

@@ -46,7 +46,7 @@ public class SpellweaverVoluteSupport {
     public boolean isSpellweaverVolute(Card card) {
         return card.getSpellEffects().stream()
                 .anyMatch(SpellweaverVoluteEnterEffect.class::isInstance)
-                || card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
+                || card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
                 .anyMatch(SpellweaverVoluteEnterEffect.class::isInstance);
     }
 

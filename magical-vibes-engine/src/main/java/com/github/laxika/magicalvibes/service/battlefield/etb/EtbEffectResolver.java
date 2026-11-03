@@ -203,6 +203,12 @@ public class EtbEffectResolver {
                 case EnteredFromZone enteredFromZone ->
                         conditionEvaluationService.isMet(ctx.gameData(), enteredFromZone, conditionContext)
                                 ? conditional.wrapped() : null;
+                // "if it entered from your graveyard or you cast it from your graveyard" (CR 603.4): where it came from
+                // and where it was cast from are fixed as it enters, so they are checked as it triggers only.
+                case AnyOf anyOf when anyOf.conditions().stream().allMatch(inner ->
+                        inner instanceof CastFromZone || inner instanceof EnteredFromZone) ->
+                        conditionEvaluationService.isMet(ctx.gameData(), anyOf, conditionContext)
+                                ? conditional.wrapped() : null;
                 case ColorSpentToCast colorSpent ->
                         conditionEvaluationService.isMet(ctx.gameData(), colorSpent, conditionContext)
                                 ? effect : null;

@@ -135,6 +135,20 @@ public final class SpellTarget {
     }
 
     /**
+     * Adds a triggered ability whose registrations carry {@code triggerMode}, with {@code options}
+     * ({@link Card#addTrigger(Trigger, TriggerMode, TriggerOptions, CardEffect...)}), and binds the effects to this
+     * group.
+     */
+    public SpellTarget addTrigger(Trigger trigger, TriggerMode triggerMode, TriggerOptions options,
+                                  CardEffect... effects) {
+        card.addTrigger(trigger, triggerMode, options, effects);
+        for (CardEffect effect : effects) {
+            card.registerEffectTargetIndex(effect, this.index);
+        }
+        return this;
+    }
+
+    /**
      * Binds an effect that is already registered through another target group to this group as well,
      * so one effect instance resolves against the targets of several groups at once (Don and Leo
      * exiles its artifact and creature targets together before returning them).

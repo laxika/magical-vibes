@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -18,6 +20,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentManaValueLessThanSou
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -35,9 +39,11 @@ public class ClementTheWorrywort extends Card {
         target(new PermanentPredicateTargetFilter(
                 bounceFilter,
                 "Target must be a creature you control with lesser mana value"), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), ReturnToHandEffect.target())
-                .addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                        ReturnToHandEffect.target());
+                .addTriggeredAbility(new TriggeredAbility(List.of(
+                                new TriggerCondition(Triggers.enters(ObjectRelation.THIS)),
+                                new TriggerCondition(Triggers.enters(Triggers.CREATURE,
+                                        ObjectRelation.ANOTHER_YOU_CONTROL))),
+                        TriggerOptions.DEFAULT, List.of(new EffectRegistration(ReturnToHandEffect.target()))));
 
         PermanentPredicate frogFilter = new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.FROG));
         addStaticEffect(new GrantActivatedAbilityEffect(

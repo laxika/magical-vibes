@@ -2358,7 +2358,7 @@ public class PermanentChoiceTriggerHandlerService {
                 entry.setRepeatedAdditionalCosts(sourcePermanent.getRepeatedAdditionalCosts());
                 entry.setSpectacle(sourcePermanent.isSpectacle());
                 if (sourcePermanent.isEvoked()
-                        && etbTtt.sourceCard().getTriggerEffectRegistrations(Triggers.enters(ObjectRelation.THIS)).stream()
+                        && etbTtt.sourceCard().getLegacyTriggerEffectRegistrations(Triggers.enters(ObjectRelation.THIS)).stream()
                         .anyMatch(registration -> registration.triggerMode()
                                 == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT)) {
                     entry.setTriggeringCardId(etbTtt.sourceCard().getId());

@@ -478,7 +478,7 @@ public final class EffectResolution {
         if (!isTargetlessPermanentSpell(card) || card.getCastingOption(BestowCast.class).isPresent()) {
             return false;
         }
-        List<CardEffect> etbEffects = card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS));
+        List<CardEffect> etbEffects = card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS));
         return !card.getTargetGroups().isEmpty()
                 || !computeAllowedTargets(List.of(), etbEffects, false, false).isEmpty()
                 || etbEffects.stream().anyMatch(EffectResolution::targetsSpellOnStack)
@@ -571,7 +571,7 @@ public final class EffectResolution {
      */
     public static boolean hasColorSpentCondition(Card card) {
         return java.util.stream.Stream.of(card.getCastingCostsAndSpellEffects(),
-                        card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)), card.getStaticEffects())
+                        card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)), card.getStaticEffects())
                 .flatMap(List::stream)
                 .anyMatch(EffectResolution::effectUsesColorSpentMana);
     }
@@ -605,7 +605,7 @@ public final class EffectResolution {
      */
     public static boolean hasColorManaPairsSpentToCastAmount(Card card) {
         return java.util.stream.Stream.of(card.getCastingCostsAndSpellEffects(),
-                        card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)), card.getStaticEffects())
+                        card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)), card.getStaticEffects())
                 .flatMap(List::stream)
                 .anyMatch(EffectResolution::effectUsesColorManaPairsSpentToCast);
     }
@@ -660,7 +660,7 @@ public final class EffectResolution {
      */
     public static boolean hasManaSpentToCastAmount(Card card) {
         return java.util.stream.Stream.of(card.getCastingCostsAndSpellEffects(),
-                        card.getTriggerEffects(Triggers.youCastThisSpell()), card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)),
+                        card.getTriggerEffects(Triggers.youCastThisSpell()), card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)),
                         card.getStaticEffects())
                 .flatMap(List::stream)
                 .anyMatch(EffectResolution::effectUsesManaSpentToCast);

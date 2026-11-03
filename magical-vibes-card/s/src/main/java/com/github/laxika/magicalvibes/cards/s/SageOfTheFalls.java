@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -12,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,12 +28,12 @@ public class SageOfTheFalls extends Card {
                 new DrawCardEffect(1),
                 new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
                 "You may draw a card. If you do, discard a card.");
-        addTrigger(Triggers.enters(ObjectRelation.THIS), loot);
-        addTrigger(Triggers.enters(
-                        new PermanentAllOfPredicate(List.of(
+        addTriggeredAbility(new TriggeredAbility(List.of(
+                        new TriggerCondition(Triggers.enters(ObjectRelation.THIS)),
+                        new TriggerCondition(Triggers.enters(new PermanentAllOfPredicate(List.of(
                                 Triggers.CREATURE,
                                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)))),
-                        ObjectRelation.ANOTHER_YOU_CONTROL),
-                loot);
+                                ObjectRelation.ANOTHER_YOU_CONTROL))),
+                TriggerOptions.DEFAULT, List.of(new EffectRegistration(loot))));
     }
 }

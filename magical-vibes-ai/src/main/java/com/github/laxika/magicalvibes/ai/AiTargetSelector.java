@@ -426,7 +426,7 @@ class AiTargetSelector {
             return chooseMultiTargets(gameData, card, aiPlayerId) != null;
         }
         if (EffectResolution.needsTarget(card.getCastingCostsAndSpellEffects(),
-                card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)), false, false)) {
+                card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)), false, false)) {
             return chooseTarget(gameData, card, aiPlayerId) != null;
         }
         return true;
@@ -755,7 +755,7 @@ class AiTargetSelector {
                 result.add(effect);
             }
         }
-        for (CardEffect effect : card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
+        for (CardEffect effect : card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
             if (card.getEffectTargetIndex(effect) == targetIndex) {
                 result.add(effect);
             }
@@ -990,7 +990,7 @@ class AiTargetSelector {
         if (targetValidationService.checkEffectTargets(card.getCastingCostsAndSpellEffects(), ctx).isPresent()) {
             return false;
         }
-        if (targetValidationService.checkEffectTargets(card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)), ctx).isPresent()) {
+        if (targetValidationService.checkEffectTargets(card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)), ctx).isPresent()) {
             return false;
         }
         return hasPossibleCastTimeCreatureType(gameData, card, target);
@@ -1060,7 +1060,7 @@ class AiTargetSelector {
             if (spec.admits(TargetPredicate.Kind.EXILED_CARD)) result.add(TargetType.EXILE);
         }
         List<CardEffect> baseEtbEffects = EffectResolution.resolveEffects(
-                card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)), false, null);
+                card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)), false, null);
         for (CardEffect effect : baseEtbEffects) {
             TargetSpec spec = effect.targetSpec();
             if (spec.admits(TargetPredicate.Kind.PLAYER)) result.add(TargetType.PLAYER);

@@ -3,13 +3,18 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import java.util.List;
 
 @CardRegistration(set = "MKC", collectorNumber = "108")
 @CardRegistration(set = "NEC", collectorNumber = "14")
@@ -23,12 +28,11 @@ public class KappaCannoneer extends Card {
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(4));
         // Whenever this creature or another artifact you control enters, put a +1/+1 counter on
         // this creature. It can't be blocked this turn.
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new GrantStaticEffectToSourceUntilEndOfTurnEffect(new CantBeBlockedEffect()));
-        addTrigger(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL), SequenceEffect.of(
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                new GrantStaticEffectToSourceUntilEndOfTurnEffect(new CantBeBlockedEffect())));
+        addTriggeredAbility(new TriggeredAbility(List.of(
+                        new TriggerCondition(Triggers.enters(ObjectRelation.THIS)),
+                        new TriggerCondition(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL))),
+                TriggerOptions.DEFAULT, List.of(new EffectRegistration(SequenceEffect.of(
+                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                        new GrantStaticEffectToSourceUntilEndOfTurnEffect(new CantBeBlockedEffect()))))));
     }
 }

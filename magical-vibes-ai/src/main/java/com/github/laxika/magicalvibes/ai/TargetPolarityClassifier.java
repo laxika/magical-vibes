@@ -102,7 +102,7 @@ public class TargetPolarityClassifier {
      */
     public TargetPolarity classifyCard(GameData gameData, Card card, UUID aiPlayerId) {
         TargetPolarity best = null;
-        for (CardEffect effect : card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
+        for (CardEffect effect : card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
             best = higherPriority(best, classify(gameData, effect, aiPlayerId));
         }
         for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {

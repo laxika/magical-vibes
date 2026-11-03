@@ -552,7 +552,7 @@ public class StackResolutionService {
         // CR 702.152a: a blitzed permanent has haste as a static ability, not as an enters-the-battlefield
         // trigger, so Torpor Orb-style suppression of enters triggers doesn't remove it.
         boolean printedBlitzHaste = entry.isAlternateCost()
-                && entry.getCard().getTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
+                && entry.getCard().getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
                 .anyMatch(e -> e instanceof com.github.laxika.magicalvibes.model.effect.ConditionalEffect c
                         && c.condition() instanceof com.github.laxika.magicalvibes.model.condition.CastForAlternateCost
                         && c.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect grant

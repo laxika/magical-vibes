@@ -910,7 +910,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (isSingleEffectRemoval(effect)) return CombatRelevance.REMOVAL;
         }
-        for (CardEffect effect : card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
+        for (CardEffect effect : card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
             if (isSingleEffectRemoval(effect)) return CombatRelevance.REMOVAL;
         }
 
@@ -961,7 +961,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         for (CardEffect effect : spell.getCastingCostsAndSpellEffects()) {
             if (canSingleEffectRemoveCreature(gameData, spell, effect, creature)) return true;
         }
-        for (CardEffect effect : spell.getTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
+        for (CardEffect effect : spell.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
             if (canSingleEffectRemoveCreature(gameData, spell, effect, creature)) return true;
         }
         return false;
@@ -2846,7 +2846,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      * enter-the-battlefield effects (useful for prioritizing draw-first casting).
      */
     private boolean hasCardDrawEtb(Card card) {
-        for (CardEffect effect : card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
+        for (CardEffect effect : card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
             if (effect instanceof CardDrawingEffect) {
                 return true;
             }

@@ -295,7 +295,7 @@ public class TriggeredAbilityStackService {
 
     /** The key the source's limits are kept under for this ability: equal abilities of one source share it. */
     private static String limitKey(TriggerCandidate candidate) {
-        return "trigger:" + Integer.toHexString(candidate.ability().hashCode());
+        return candidate.ability().limitKey();
     }
 
     private static boolean limitReached(GameData gameData, TriggerLimit limit, UUID sourceId, String key) {

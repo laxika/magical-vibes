@@ -2794,7 +2794,7 @@ public class TriggeredAbilityQueueService {
             ExileCardsFromGraveyardEffect enterExile = pending.effects().stream()
                     .filter(ExileCardsFromGraveyardEffect.class::isInstance)
                     .map(ExileCardsFromGraveyardEffect.class::cast)
-                    .filter(exile -> pending.sourceCard().getTriggerEffects(Triggers.enters(ObjectRelation.THIS)).contains(exile))
+                    .filter(exile -> pending.sourceCard().getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)).contains(exile))
                     .findFirst()
                     .orElse(null);
             if (enterExile != null) {

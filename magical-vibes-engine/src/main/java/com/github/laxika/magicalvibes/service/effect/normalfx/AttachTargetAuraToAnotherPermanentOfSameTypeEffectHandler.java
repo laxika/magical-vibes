@@ -123,7 +123,7 @@ public class AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler implement
     }
 
     private boolean canMoveAuraTo(Permanent aura, Permanent candidate) {
-        boolean enchantsOnlyReanimatedCreature = aura.getCard().getTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
+        boolean enchantsOnlyReanimatedCreature = aura.getCard().getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
                 .anyMatch(BecomeAuraReanimateFromGraveyardEffect.class::isInstance);
         return !enchantsOnlyReanimatedCreature
                 || candidate.getId().equals(aura.getChosenPermanentId());

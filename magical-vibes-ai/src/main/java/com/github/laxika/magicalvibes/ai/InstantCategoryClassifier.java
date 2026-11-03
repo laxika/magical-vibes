@@ -101,7 +101,7 @@ public final class InstantCategoryClassifier {
             return InstantCategory.OTHER;
         }
 
-        for (CardEffect effect : card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
+        for (CardEffect effect : card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
             InstantCategory cat = classifySingleEffect(effect);
             if (cat != null) return cat;
         }

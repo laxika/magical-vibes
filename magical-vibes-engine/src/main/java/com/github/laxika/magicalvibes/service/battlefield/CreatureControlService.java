@@ -359,7 +359,7 @@ public class CreatureControlService {
                 .noneMatch(action -> action.permanentId().equals(permanent.getId()))) {
             for (var effect : java.util.stream.Stream.concat(
                     permanent.getCard().getStaticEffects().stream(),
-                    permanent.getCard().getTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()).toList()) {
+                    permanent.getCard().getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()).toList()) {
                 if (effect instanceof RegisterEchoAtNextUpkeepEffect echo) {
                     gameData.queueDelayedAction(new EchoAtNextUpkeep(permanent.getId(),
                             echo.manaCost(), echo.dynamicManaCost(), echo.handCardCost(),

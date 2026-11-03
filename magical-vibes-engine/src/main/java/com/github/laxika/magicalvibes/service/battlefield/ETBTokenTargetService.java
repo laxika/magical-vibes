@@ -1032,7 +1032,7 @@ public class ETBTokenTargetService {
                 // An evoked permanent's independent ETB abilities and its evoke sacrifice trigger
                 // together, so its controller may order them (CR 603.3b).
                 if (pending.triggeringCardId() == null && sourcePermanent.isEvoked()
-                        && card.getTriggerEffectRegistrations(Triggers.enters(ObjectRelation.THIS)).stream()
+                        && card.getLegacyTriggerEffectRegistrations(Triggers.enters(ObjectRelation.THIS)).stream()
                         .anyMatch(registration -> registration.triggerMode() == TriggerMode.INDEPENDENT)) {
                     etbEntry.setTriggeringCardId(card.getId());
                 }

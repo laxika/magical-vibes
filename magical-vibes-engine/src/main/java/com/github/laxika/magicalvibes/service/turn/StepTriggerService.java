@@ -1841,7 +1841,7 @@ public class StepTriggerService {
                         perm.getCard().getTriggerEffects(OPPONENT_UPKEEP, Zone.BATTLEFIELD);
                 if (opponentUpkeepEffects == null || opponentUpkeepEffects.isEmpty()) continue;
 
-                boolean hasChosenPlayer = perm.getCard().getTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
+                boolean hasChosenPlayer = perm.getCard().getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
                         .anyMatch(RememberTargetPlayerEffect.class::isInstance)
                         || perm.getCard().getStaticEffects().stream().anyMatch(
                                 com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect.class::isInstance);

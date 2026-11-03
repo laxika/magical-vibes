@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -11,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -31,13 +35,13 @@ public class ScourgeOfValkas extends Card {
         // Whenever this creature or another Dragon you control enters, it deals X damage to any
         // target, where X is the number of Dragons you control. The count resolves on resolution,
         // so the entering Dragon (already on the battlefield) counts itself.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), dragonDamage());
-        addTrigger(Triggers.enters(
-                        new PermanentAllOfPredicate(List.of(
+        addTriggeredAbility(new TriggeredAbility(List.of(
+                        new TriggerCondition(Triggers.enters(ObjectRelation.THIS)),
+                        new TriggerCondition(Triggers.enters(new PermanentAllOfPredicate(List.of(
                                 Triggers.CREATURE,
                                 new PermanentHasSubtypePredicate(CardSubtype.DRAGON))),
-                        ObjectRelation.ANOTHER_YOU_CONTROL),
-                dragonDamage());
+                                ObjectRelation.ANOTHER_YOU_CONTROL))),
+                TriggerOptions.DEFAULT, List.of(new EffectRegistration(dragonDamage()))));
 
         // {R}: This creature gets +1/+0 until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{R}", List.of(new BoostSelfEffect(1, 0)),

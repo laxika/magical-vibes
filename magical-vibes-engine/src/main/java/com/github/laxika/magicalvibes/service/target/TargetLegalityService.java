@@ -1456,7 +1456,7 @@ public class TargetLegalityService {
         }
         if (targetZone == Zone.STACK
                 || (spellEffects.stream().anyMatch(EffectResolution::targetsSpellOnStack)
-                || card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
+                || card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
                         .anyMatch(EffectResolution::targetsSpellOnStack))
                 && isSpellOnStack(gameData, targetId)) {
             TargetFilter stackTargetFilter = effectiveTargetFilter instanceof StackEntryPredicateTargetFilter
@@ -1478,7 +1478,7 @@ public class TargetLegalityService {
                 return Optional.of(handFilter.errorMessage());
             }
             Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(
-                    spellEffects, card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)),
+                    spellEffects, card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)),
                     card.isAuraThatRequiresAttachment(), card.isEnchantPlayer());
             if (needsTarget && !allowedTargets.contains(TargetType.HAND)) {
                 return Optional.of("This spell cannot target cards in hand");
@@ -1515,7 +1515,7 @@ public class TargetLegalityService {
                     .anyMatch(ChooseOneEffect.class::isInstance);
             if (!isModal) {
                 Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(
-                        spellEffects, card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)),
+                        spellEffects, card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)),
                         card.isAuraThatRequiresAttachment(), card.isEnchantPlayer());
 
                 if (target != null && !allowedTargets.contains(TargetType.PERMANENT)
@@ -1691,7 +1691,7 @@ public class TargetLegalityService {
                                                         UUID controllerId, int xValue,
                                                         TargetFilter targetFilter) {
         if (!EffectResolution.computeAllowedTargets(
-                spellEffects, card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)),
+                spellEffects, card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)),
                 card.isAuraThatRequiresAttachment(), card.isEnchantPlayer()).contains(TargetType.PLAYER)) {
             return false;
         }
@@ -1730,7 +1730,7 @@ public class TargetLegalityService {
                                                   List<CardEffect> spellEffects, Permanent candidate,
                                                   UUID controllerId, int xValue, TargetFilter targetFilter) {
         if (!EffectResolution.computeAllowedTargets(
-                spellEffects, card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)),
+                spellEffects, card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)),
                 card.isAuraThatRequiresAttachment(), card.isEnchantPlayer()).contains(TargetType.PERMANENT)) {
             return false;
         }

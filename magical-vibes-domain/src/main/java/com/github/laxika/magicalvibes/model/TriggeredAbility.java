@@ -1,11 +1,16 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -95,6 +100,49 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
     public boolean hasTrigger(Trigger trigger, Zone zone) {
         return conditions.stream().anyMatch(condition -> condition.trigger().equals(trigger)
                 && condition.zones().functionsIn(zone));
+    }
+
+    /**
+     * The key "triggers only once each turn" marks for this ability on its source, so a limit covers every trigger
+     * condition of the ability and no other ability of the source.
+     */
+    public String limitKey() {
+        return "trigger:" + Integer.toHexString(hashCode());
+    }
+
+    /**
+     * This ability's registrations in the form the code that still reads effects instead of abilities takes them
+     * (the "when this enters" collector and the code that inspects "when this enters" abilities, until step 15 of
+     * effect-slot-refactor.md): each effect wrapped in this ability's options as the cards wrote them before step 14.
+     * An intervening "if" is a {@link ConditionalEffect} of it, checked as the ability triggers and again as it
+     * resolves (CR 603.4); "triggers only once each turn" is a {@link OncePerTurnTriggerEffect} keyed by
+     * {@link #limitKey()}, the key the trigger pipeline marks; "do this only once each turn" one marked as the action
+     * is taken (CR 603.2h). The limit {@code ONCE} isn't represented. An ability without options returns its
+     * registrations as they are.
+     */
+    public List<EffectRegistration> legacyEffects() {
+        Condition interveningIf = options.interveningIf();
+        TriggerLimit limit = options.limit();
+        if (interveningIf == null && limit != TriggerLimit.ONCE_EACH_TURN
+                && limit != TriggerLimit.DO_ONLY_ONCE_EACH_TURN) {
+            return effects;
+        }
+        String key = limit == TriggerLimit.ONCE_EACH_TURN ? limitKey() : null;
+        List<EffectRegistration> wrapped = new ArrayList<>(effects.size());
+        for (EffectRegistration registration : effects) {
+            CardEffect effect = registration.effect();
+            if (interveningIf != null) {
+                effect = new ConditionalEffect(interveningIf, effect, true);
+            }
+            if (limit == TriggerLimit.ONCE_EACH_TURN) {
+                effect = OncePerTurnTriggerEffect.keyed(effect, key);
+            } else if (limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN) {
+                effect = OncePerTurnTriggerEffect.markOnAcceptance(effect);
+            }
+            wrapped.add(new EffectRegistration(effect, registration.triggerMode(),
+                    registration.simultaneousWithPrevious()));
+        }
+        return List.copyOf(wrapped);
     }
 
     /** This ability with {@code effects} in place of its effects. */

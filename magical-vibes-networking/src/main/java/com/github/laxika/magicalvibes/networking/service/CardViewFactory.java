@@ -405,7 +405,7 @@ public class CardViewFactory {
         for (CardEffect e : card.getCastingCostsAndSpellEffects()) {
             if (e instanceof ChooseOneEffect coe) return coe;
         }
-        for (CardEffect e : card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
+        for (CardEffect e : card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
             if (e instanceof ChooseOneEffect coe) return coe;
         }
         return null;

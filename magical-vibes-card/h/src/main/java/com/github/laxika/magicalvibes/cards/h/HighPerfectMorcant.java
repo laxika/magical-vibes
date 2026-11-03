@@ -5,11 +5,15 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentBlightsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -19,11 +23,11 @@ import java.util.List;
 public class HighPerfectMorcant extends Card {
 
     public HighPerfectMorcant() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new EachOpponentBlightsEffect(1));
-        addTrigger(Triggers.enters(
-                        new PermanentHasSubtypePredicate(CardSubtype.ELF),
-                        ObjectRelation.ANOTHER_YOU_CONTROL),
-                new EachOpponentBlightsEffect(1));
+        addTriggeredAbility(new TriggeredAbility(List.of(
+                        new TriggerCondition(Triggers.enters(ObjectRelation.THIS)),
+                        new TriggerCondition(Triggers.enters(new PermanentHasSubtypePredicate(CardSubtype.ELF),
+                                ObjectRelation.ANOTHER_YOU_CONTROL))),
+                TriggerOptions.DEFAULT, List.of(new EffectRegistration(new EachOpponentBlightsEffect(1)))));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

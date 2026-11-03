@@ -6,12 +6,15 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.condition.AnyOf;
+import com.github.laxika.magicalvibes.model.condition.AnyOf;
+import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.EnteredFromZone;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndCreateTokenEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,10 +27,8 @@ public class ArchfiendsVessel extends Card {
         CreateTokenEffect demon = new CreateTokenEffect("Demon", 5, 5, CardColor.BLACK,
                 List.of(CardSubtype.DEMON), Set.of(Keyword.FLYING), Set.of());
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new CastFromZone(Zone.GRAVEYARD, true),
-                        new ExileSelfAndCreateTokenEffect(demon)));
-        addTrigger(Triggers.entersFrom(Zone.GRAVEYARD, null, ObjectRelation.THIS),
-                new ConditionalEffect(new EnteredFromZone(Zone.GRAVEYARD, true),
-                        new ExileSelfAndCreateTokenEffect(demon)));
+                TriggerOptions.DEFAULT.withInterveningIf(new AnyOf(List.of(
+                        new EnteredFromZone(Zone.GRAVEYARD, true), new CastFromZone(Zone.GRAVEYARD, true)))),
+                new ExileSelfAndCreateTokenEffect(demon));
     }
 }

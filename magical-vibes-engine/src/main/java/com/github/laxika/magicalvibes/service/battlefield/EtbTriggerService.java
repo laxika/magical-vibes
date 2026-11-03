@@ -392,7 +392,7 @@ public class EtbTriggerService {
 
         List<CardEffect> triggeredEffects = enteringPermanentTriggersSuppressed || printedAbilitiesRemoved
                 ? new ArrayList<>()
-                : new ArrayList<>(card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)));
+                : new ArrayList<>(card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)));
         List<CardEffect> independentlyGrantedEffects = new ArrayList<>();
         if (!enteringPermanentTriggersSuppressed && enteringPermanent != null) {
             independentlyGrantedEffects.addAll(enteringPermanent.getGrantedTriggerEffects(
@@ -490,7 +490,7 @@ public class EtbTriggerService {
                     .toList();
 
             UUID triggerSourcePermanentId = enteringPermanent != null ? enteringPermanent.getId() : null;
-            List<CardEffect> independentEffects = new ArrayList<>(card.getTriggerEffectRegistrations(Triggers.enters(ObjectRelation.THIS)).stream()
+            List<CardEffect> independentEffects = new ArrayList<>(card.getLegacyTriggerEffectRegistrations(Triggers.enters(ObjectRelation.THIS)).stream()
                     .filter(registration -> registration.triggerMode() == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT)
                     .filter(registration -> !(registration.effect() instanceof MayEffect))
                     .filter(registration -> !(registration.effect() instanceof ChooseOneAtTriggerTimeEffect))
@@ -1097,7 +1097,7 @@ public class EtbTriggerService {
                     etbEntry.setKicked(true);
                 }
                 if (enteringPermanent != null && enteringPermanent.isEvoked()
-                        && card.getTriggerEffectRegistrations(Triggers.enters(ObjectRelation.THIS)).stream()
+                        && card.getLegacyTriggerEffectRegistrations(Triggers.enters(ObjectRelation.THIS)).stream()
                         .anyMatch(registration -> registration.triggerMode()
                                 == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT)) {
                     etbEntry.setTriggeringCardId(card.getId());

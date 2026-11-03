@@ -84,13 +84,14 @@ public class GrantedTriggeredAbilitySupport {
 
     /**
      * Form for callers that already hold the permanent's static bonus for the current game state, sparing a second
-     * layered query.
+     * layered query. Each effect is wrapped in its ability's options ({@link TriggeredAbility#legacyEffects()}), the
+     * form the collectors that still read effects take.
      */
     public List<CardEffect> grantedTriggerEffects(GameData gameData, Permanent permanent,
                                                   GameQueryService.StaticBonus staticBonus, Trigger trigger) {
         return grantedTriggeredAbilities(gameData, permanent, staticBonus,
                 ability -> ability.hasTrigger(trigger)).stream()
-                .flatMap(ability -> ability.effects().stream().map(EffectRegistration::effect))
+                .flatMap(ability -> ability.legacyEffects().stream().map(EffectRegistration::effect))
                 .toList();
     }
 

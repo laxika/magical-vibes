@@ -300,11 +300,11 @@ public class GameViewProjectionFactory {
                             com.github.laxika.magicalvibes.model.effect.ExileTopCardFaceDownInsteadOfDrawReplacement.class::isInstance)) {
                         continue;
                     }
-                    if (p.getCard().getTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream().anyMatch(
+                    if (p.getCard().getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream().anyMatch(
                             com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToExileFaceDownPileEffect.class::isInstance)) {
                         continue;
                     }
-                    boolean exiledFaceDownFromHandOnEnter = p.getCard().getTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
+                    boolean exiledFaceDownFromHandOnEnter = p.getCard().getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
                             .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.MayEffect may
                                     && may.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect imprint
                                     && imprint.faceDown());

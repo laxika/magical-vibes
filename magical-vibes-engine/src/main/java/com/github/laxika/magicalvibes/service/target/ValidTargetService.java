@@ -195,7 +195,7 @@ public class ValidTargetService {
         boolean isMultiTarget = card.getMaxTargets() > 1 || modalTargetFilters.size() > 1;
 
         List<CardEffect> spellEffects = card.getCastingCostsAndSpellEffects();
-        List<CardEffect> etbEffects = card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS));
+        List<CardEffect> etbEffects = card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS));
         if (spellEffects.stream()
                 .filter(com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect.class::isInstance)
                 .map(com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect.class::cast)
@@ -695,7 +695,7 @@ public class ValidTargetService {
         for (CardEffect e : card.getCastingCostsAndSpellEffects()) {
             if (e instanceof ChooseOneEffect coe) return coe;
         }
-        for (CardEffect e : card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
+        for (CardEffect e : card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
             if (e instanceof ChooseOneEffect coe) return coe;
         }
         return null;
@@ -1772,7 +1772,7 @@ public class ValidTargetService {
                     gameData, card, controllerId, xValue, Boolean.TRUE.equals(kicked)).isEmpty();
         }
         Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(
-                spellEffects, card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)),
+                spellEffects, card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)),
                 card.isAuraThatRequiresAttachment(), card.isEnchantPlayer());
         boolean isMultiTarget = card.getMaxTargets() > 1;
         boolean hasValidPermanentTargetSet = card.getMultiTargetConstraint()

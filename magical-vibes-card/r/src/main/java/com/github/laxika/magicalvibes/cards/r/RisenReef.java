@@ -4,11 +4,15 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayPutMatchingOntoBattlefieldElseToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,15 +26,14 @@ public class RisenReef extends Card {
     public RisenReef() {
         // Whenever this creature or another Elemental you control enters. The self entry is unconditional so a
         // type-changing effect on Risen Reef itself (Conspiracy) does not stop its own trigger.
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new LookAtTopCardMayPutMatchingOntoBattlefieldElseToHandEffect(
-                        new CardTypePredicate(CardType.LAND), true));
-        addTrigger(Triggers.enters(
-                        new PermanentAllOfPredicate(List.of(
+        addTriggeredAbility(new TriggeredAbility(List.of(
+                        new TriggerCondition(Triggers.enters(ObjectRelation.THIS)),
+                        new TriggerCondition(Triggers.enters(new PermanentAllOfPredicate(List.of(
                                 Triggers.CREATURE,
                                 new PermanentHasSubtypePredicate(CardSubtype.ELEMENTAL))),
-                        ObjectRelation.ANOTHER_YOU_CONTROL),
-                new LookAtTopCardMayPutMatchingOntoBattlefieldElseToHandEffect(
-                        new CardTypePredicate(CardType.LAND), true));
+                                ObjectRelation.ANOTHER_YOU_CONTROL))),
+                TriggerOptions.DEFAULT, List.of(new EffectRegistration(
+                        new LookAtTopCardMayPutMatchingOntoBattlefieldElseToHandEffect(
+                                new CardTypePredicate(CardType.LAND), true)))));
     }
 }

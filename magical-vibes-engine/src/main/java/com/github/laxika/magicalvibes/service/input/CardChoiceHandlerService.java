@@ -188,7 +188,7 @@ public class CardChoiceHandlerService {
             modifiedCard.addStaticEffect(new KickerEffect(choice.offspringCost(), false));
             offspringPaid = new Kicked();
         } else {
-            int paymentOrdinal = 1 + (int) modifiedCard.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
+            int paymentOrdinal = 1 + (int) modifiedCard.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
                     .filter(ConditionalEffect.class::isInstance).map(ConditionalEffect.class::cast)
                     .map(ConditionalEffect::condition)
                     .filter(com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid.class::isInstance)

@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters") |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -578,7 +578,8 @@ classes, `TriggerMode` and `LegacyTriggerOptions`.
 `TriggerMode` are gone, and the converted cards' tests fail exactly as at the baseline.
 
 This step was split, with the user, by family, as step 13 was; run 3 was split again into 3a and 3b, with the user,
-because of its size (690 abilities). Each run converts every wrapper kind of one
+because of its size (690 abilities), and run 4 into 4a and 4b, with the user, for the same reason (about 600 wrapped
+abilities in 941 card classes, and about 60 engine and AI readers that inspect the own enters effects). Each run converts every wrapper kind of one
 family's abilities, makes that family's collectors read options and filters instead, and deletes the wrapper classes
 no other family still uses. The order:
 
@@ -588,7 +589,8 @@ no other family still uses. The order:
 | 2 | Creature death (step 11's `CreatureDeathWatch`), with the 32 "this or another [restricted] creature" cards merged |
 | 3a | The other zone changes and the permanent changes (step 12a's `ZoneChangeWatch`) but "another object enters", with their split "this or another" cards merged |
 | 3b | "Another object enters" (step 12a part 2's entering watches) |
-| 4 | The source's own enters abilities (step 12b's `EtbTriggerService`), with the 60 "this or another" enters cards merged |
+| 4a | The source's own enters abilities (step 12b's `EtbTriggerService`): the collector and every reader of them read the abilities' options, the 60 "this or another" enters cards merged, the cards 3b left for run 4 |
+| 4b | The rest of the own enters abilities' wrappers: the intervening-if `ConditionalEffect`s (about 520), by script |
 | 5 to 15 | Step 13's families 1 to 11, in its order |
 | 16 | What no family owns: the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags, the `onlyIfSacrificed` flags, and the wrapper classes left |
 
@@ -4521,7 +4523,7 @@ was re-rendered with `--keep-baseline`.
 
 Step 14 is repeatable by family (its section has the order). Run 1 converted the source's own zone changes, run 2
 the creature-death family, run 3a the other zone and permanent changes but "another object enters", run 3b "another
-object enters".
+object enters", run 4a the reading of the own enters abilities' options and the "this or another" enters merges.
 
 #### Run 1: the source's own zone changes
 
@@ -4964,6 +4966,134 @@ control").
   classes (655 tests): the failures are `DeathTriggerCollectorServiceTest`'s 6, `CardImmutabilityArchTest` and
   `SimulationCopyCompletenessTest`'s known ones, and `BattlefieldPlacementServiceTest`'s 24 and
   `CostEffectClassificationTest`'s 1, which fail the same way at HEAD (checked in a HEAD worktree).
+- AI: the whole module (1,620 tests), the same 10 failures as before.
+- The full suite was not run here.
+
+#### Run 4a: the own enters abilities read their options; "this or another" enters merged
+
+Run 4 was split, with the user, into 4a (this run) and 4b (the intervening-if `ConditionalEffect`s of the own enters
+abilities). The "when this enters" collector and every engine, AI, networking and test-fixture reader of the own enters
+abilities read the abilities' options, so a card can author "when this enters, if …" and "triggers only once each turn"
+as `TriggerOptions`, and the "this [permanent] or another [type] you control enters" cards step 12b left split are one
+ability each.
+
+**Authoring.**
+
+- "When this enters, if …" (CR 603.4, checked) is `addTrigger(Triggers.enters(ObjectRelation.THIS),
+  TriggerOptions.DEFAULT.withInterveningIf(condition), effect)`; an `INDEPENDENT` one is the new
+  `Card.addTrigger(Trigger, TriggerMode, TriggerOptions, CardEffect...)` (and `SpellTarget`'s), Catharsis.
+  "Triggers only once each turn" is `withLimit(TriggerLimit.ONCE_EACH_TURN)` and covers every trigger condition of the
+  ability (Oasis of Renewal).
+- "This [permanent] or another [type] you control enters" is one `TriggeredAbility` with two trigger conditions,
+  `enters(THIS)` and `enters(filter, ANOTHER_YOU_CONTROL)` (`ANOTHER` for "or another Zombie enters"), added with
+  `addTriggeredAbility` (`target(filter).addTriggeredAbility` on a target group), as run 3a merged its "this or
+  another" cards. The source's own condition is collected by `EtbTriggerService` as before and the other by its
+  entering watch as before, so no entry is collected differently; only the ability is one object (CR 603.3, checked).
+  `THIS_OR_ANOTHER_YOU_CONTROL` (3b's form for creature watches) wasn't used: 12b's attempt with it moved the source's
+  own entry to the watch's target flow and failed 37 tests, and no watch sees a non-creature source's own entry.
+
+**The engine.**
+
+- `TriggeredAbility.legacyEffects()` gives the ability's registrations wrapped in its options in the form the cards
+  wrote them before step 14: an intervening "if" as `ConditionalEffect(condition, effect, true)`, `ONCE_EACH_TURN` as
+  `OncePerTurnTriggerEffect.keyed(effect, limitKey())`, `DO_ONLY_ONCE_EACH_TURN` as `.markOnAcceptance` (`ONCE` isn't
+  represented: no own enters ability has it). `TriggeredAbility.limitKey()` is the key the pipeline's
+  `TriggeredAbilityStackService.limitKey` already used, now shared, so a limit marked by the enters collector is seen
+  by the pipeline for the ability's other condition and the other way round.
+- `Card.getLegacyTriggerEffects(Trigger)` / `getLegacyTriggerEffectRegistrations(Trigger)` read a second per-trigger
+  view built with the card's index (derived, no new copied state, nothing for `CardFreezeTest`), so a wrapped effect
+  keeps its identity across reads (`isSimultaneousWithPrevious` also looks there; `getEffectTargetIndex` already
+  unwraps a `ConditionalEffect`). An ability without options gives its registrations as they are, so nothing changes
+  for the cards 4b hasn't converted.
+- Every reader of `getTriggerEffects` / `getTriggerEffectRegistrations(Triggers.enters(ObjectRelation.THIS))` reads the
+  legacy view (`scripts/step14-own-enters-readers.py`, 60 call sites in 26 files: `EtbTriggerService`,
+  `EtbEffectResolver`'s callers, targeting, kicker, blitz and evoke checks, `CardViewFactory`, the AI), so
+  `EtbEffectResolver` and the code that inspects a kicked or gated enters ability see the wrapper they saw before.
+  `Permanent.getGrantedTriggerEffects` and `GrantedTriggeredAbilitySupport.grantedTriggerEffects` wrap granted
+  abilities the same way (no granted ability has options yet).
+- `EtbEffectResolver`: an intervening "if" that is an `AnyOf` of `CastFromZone` / `EnteredFromZone` (Archfiend's
+  Vessel) is checked as the ability triggers and unwrapped, as each part alone was; as a plain gate it would have been
+  kept for a resolution check of the cast zone, which the resolving ability doesn't know.
+- `TriggerMatcher.matchedTrigger` returns an ability's first matching condition, so a merged ability's own entry
+  matches its `enters(THIS)` condition, which the pipeline skips (`OWN_ENTRY`), and another permanent's entry its
+  other condition.
+
+**Cards.** `scripts/step14-own-enters-merge.py` (per letter module; `--dry-run` prints the diffs) merged 63 card
+classes: the 56 whose two halves have the same effect text (31 that 12b's scan listed and 25 with a nested filter its
+regex missed; `scripts/step14-own-enters-scan.py` lists the own enters abilities with wrappers for 4b), and by exact
+replacement (`MANUAL`) Kappa Cannoneer and Pactdoll Terror (two pooled own abilities against one `SequenceEffect`),
+Fear of Sleep Paralysis (three conditions, "and whenever you fully unlock a Room"), Field of the Dead (its intervening
+"if" an option on both conditions; the landfall condition stays `YOU_CONTROL`, its own entry matching `THIS` first),
+Cacophony Unleashed (its "if you cast it" ability stays apart for 4b) and Coercive Recruiter (two target groups of one
+filter become one). Also by `MANUAL`: Archfiend's Vessel ("if it entered from your graveyard or you cast it from your
+graveyard": one `enters(THIS)` ability with the option `AnyOf(EnteredFromZone, CastFromZone)` where a cast half and an
+`entersFrom(GRAVEYARD, THIS)` half stood), Catharsis (its two `atTriggerTime(ColorSpentToCast)` wrappers are options;
+the resolver checks a mana-spent condition only as it triggers, as the wrapper said) and Oasis of Renewal (two
+abilities of `enters(THIS)` and `leavesGraveyard(PermanentIsLandPredicate / Not(…), YOU_OWN)` with
+`ONE_OR_MORE.withLimit(ONCE_EACH_TURN)`, where four abilities shared two keyed wrappers and the graveyard halves a
+`TriggeringCardConditionalEffect`). `AFTER` fixes three comments about the halves. `scripts/step14-own-enters-docs.py`
+rewrote 6 `ORACLE_TEXT_EFFECT_MAP.md` rows; the implement-card skill and `ARCHITECTURE.md` were edited by hand
+(review-card already described both forms).
+
+**Kept for later runs.**
+
+- Split, needing a filter on the source's own entry, which `EtbTriggerService` can't read (it reads the exact
+  `enters(THIS)` trigger): Death Match ("whenever a creature enters" on an enchantment: its own half is "if it's a
+  creature", `atTriggerTime(SourceIsCreature)`), and the plain-wording cards 12a listed whose own half is "if it is
+  [the type]": Weldfast Wingsmith, Path of Discovery, Epharas Enlightenment, Airbender Ascension, Ghostly Dancers, Merry
+  Warden of Isengard, Ingenious Smith. Each entry still meets one half only, so they behave as the one Oracle ability.
+- Split, the halves' effects differing: Sokka and Suki and Hammer of Nazahn (attach to this vs. to "that" Equipment or
+  creature: one effect would need the triggering permanent to be the source on its own entry, step 15).
+- Phyrexian Dragon Engine: "when this enters from your graveyard" would be the filter "you own it", but
+  `PermanentOwnedBySourceControllerPredicate` reads a reanimated permanent's controller as its owner (its card test
+  "returning from an opponent's graveyard" failed with it), so its `atTriggerTime(EnteredFromZone)` wrapper stays.
+- MACH-1, Swooping Scoundrel: its once-each-turn limit is shared with a "whenever you gain life" condition, whose
+  collector (life, step 13 family 9) doesn't read options yet (run 13).
+- The keyword-built intervening "if"s: evoke's `SacrificeSelfIfEvokedEffect` (CR 702.74a, checked; 35 cards, added by
+  `SpellCastingService` too), tribute's `TributeNotPaidEffect` (12) and `LoseGameIfNotCastFromHandEffect` (Phage): each
+  would need a condition and the readers that look for the effect by class (`EtbTriggerService`, the AI); run 16 or the
+  keyword family.
+- The engine writers that add an own enters `ConditionalEffect` (offspring and the specialize/perpetual paths in
+  `CardChoiceHandlerService`, the hand-cast kicker copy in `HandCastCardCharacteristicsService`): 4b.
+
+**For run 4b.** About 520 own enters abilities still carry an intervening-if `ConditionalEffect` (478 `new
+ConditionalEffect(`, 43 factory forms, 41 `unless`, which stay; `scripts/step14-own-enters-scan.py --summary`). Their
+conversion to `TriggerOptions.DEFAULT.withInterveningIf(c)` keeps behaviour by construction (the legacy view gives the
+resolver the same `ConditionalEffect`), but `EtbEffectResolver` checks only the condition types its switch names (and
+the `isEtbTriggerGate()` ones) as the ability triggers; any other intervening "if" is checked only as it resolves, an
+old-path deviation from CR 603.4 that the conversion carries over unless 4b makes the collector check every option
+condition as the ability triggers. 4b should also decide by the Oracle wording ("enters, if") which default-flag
+`ConditionalEffect`s are really intervening "if"s.
+
+**Behaviour changes.** None intended: each merged card's own entry and the other entries are collected where they
+were, and the converted wrappers are given to the collector in the form it read before. The merged abilities are one
+object each (a limit or an option now covers both conditions). Archfiend's Vessel's graveyard entry is collected by the
+enters collector instead of the "enters from a graveyard" watch.
+
+**Tests changed.**
+
+- `TriggerPipelineTest`: three new tests through the engine: a "when this enters" intervening "if" option is checked
+  as the ability triggers and again as it resolves; a "this or another creature" ability of two conditions triggers
+  once for its own entry and once for another creature's; a once-each-turn limit covers an ability's own entry and its
+  other condition.
+- `CardAbilitiesTest`: two new tests of the legacy view (an intervening "if" wraps each effect once, with a stable
+  identity, the plain view unchanged; a limit is keyed by its ability).
+- No card test changed.
+
+**Test runs.**
+
+- Card: every test class of a changed card and every card test that constructs one (93 classes, 881 tests): the only
+  failure was Phyrexian Dragon Engine's (above, reverted).
+- Application: `TriggerPipelineTest`, `CardAbilitiesTest`, `LegacyTriggerBindingsTest`, `ZoneChangeTriggerTest`,
+  `TriggeredAbilityTest`, `TriggerOptionsTest`, `TriggerConditionTest`, `CardFreezeTest`, `EtbTriggerServiceTest`,
+  `EnterTriggerCollectorServiceTest`, `GrantedAbilitiesTest`, `BattlefieldPlacementServiceTest`,
+  `SpellCastingServiceTest`, `TargetLegalityServiceTest`, `ValidTargetServiceTest`, `CardViewFactoryTest`,
+  `ETBTokenTargetServiceTest`, `StackEntryTargetGroupsTest`, `CreatureControlServiceTest`, `MiscTriggerTest`,
+  `ActionTriggerTest`, `RulesEventLogTest`, `ZoneChangeRulesEventTest`, the `…WatchTest`, architecture and copy classes
+  (745 tests): 57 failures, all failing the same way at HEAD (`BattlefieldPlacementServiceTest` 24,
+  `SpellCastingServiceTest` 10, `CreatureControlServiceTest` 1, `CardImmutabilityArchTest` and
+  `SimulationCopyCompletenessTest` 1 each as recorded; `TargetLegalityServiceTest` 14, `ValidTargetServiceTest` 2 and
+  `ETBTokenTargetServiceTest` 4 checked in a HEAD worktree).
 - AI: the whole module (1,620 tests), the same 10 failures as before.
 - The full suite was not run here.
 
