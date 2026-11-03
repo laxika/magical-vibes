@@ -14520,7 +14520,7 @@ public class TriggerCollectionService {
         for (TriggeredAbility ability : plane.getTriggeredAbilities()) {
             boolean matched = ability.conditions().stream().anyMatch(condition ->
                     condition.trigger() instanceof ZoneChangeTrigger trigger
-                            && watched.contains(ZoneChangeWatch.of(ability, trigger, Zone.BATTLEFIELD))
+                            && watches(watched, ZoneChangeWatch.of(ability, trigger, Zone.BATTLEFIELD))
                             && (trigger.filter() == null || entering != null && predicateEvaluationService
                             .matchesPermanentPredicate(entering, trigger.filter(), context)));
             if (matched) {
@@ -14528,6 +14528,14 @@ public class TriggerCollectionService {
             }
         }
         return effects;
+    }
+
+    /**
+     * Whether {@code watch} is one of {@code watched}. A plane's trigger condition that no zone-change watch collects
+     * (Agyrem's "whenever a creature dies", which the creature-death collectors read) has none.
+     */
+    private static boolean watches(List<ZoneChangeWatch> watched, ZoneChangeWatch watch) {
+        return watch != null && watched.contains(watch);
     }
 
     /** Collects ally-permanent-entry triggers from face-up planes, which are not battlefield permanents. */

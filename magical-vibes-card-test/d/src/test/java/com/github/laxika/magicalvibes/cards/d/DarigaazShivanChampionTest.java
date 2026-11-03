@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -63,6 +64,7 @@ class DarigaazShivanChampionTest extends BaseCardTest {
         triggerUpkeep(player1);
         assertThat(gd.exiledCardEggCounters).containsEntry(conjuredCard.getId(), 1);
         triggerUpkeep(player1);
+        answerEntryChoice();
 
         assertThat(gd.exiledCardEggCounters).doesNotContainKey(conjuredCard.getId());
         assertThat(gd.exiledCards).noneMatch(entry -> entry.card().getId().equals(conjuredCard.getId()));
@@ -107,6 +109,7 @@ class DarigaazShivanChampionTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
+        answerEntryChoice();
         harness.assertOnBattlefield(player1, card.getName());
         assertThat(gd.exiledCards).noneMatch(entry -> entry.card().getId().equals(card.getId()));
     }
@@ -129,6 +132,16 @@ class DarigaazShivanChampionTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
         return gd.exiledCards.getFirst().card();
+    }
+
+    /**
+     * The spellbook card is chosen at random; Skarrgan Hellkite's riot ("enters with your choice of a +1/+1 counter or
+     * haste") is a choice made as it enters, which holds it off the battlefield until it is answered.
+     */
+    private void answerEntryChoice() {
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
     }
 
     private void triggerUpkeep(com.github.laxika.magicalvibes.model.Player player) {
