@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.trigger;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+
 import java.util.Objects;
 
 /**
@@ -13,12 +15,43 @@ import java.util.Objects;
  *                 {@link ObjectRelation#OPPONENT_CONTROLS} for "a source an opponent controls",
  *                 {@link ObjectRelation#ANY} for any); for an "is dealt damage" event about a permanent it is the
  *                 damaged permanent; for an event about a player being dealt damage it is the source of the damage
+ * @param filter   what the permanent the damage collectors judge must be, or {@code null} for any: "whenever a Dragon
+ *                 you control is dealt damage" is {@code Triggers.permanentYouControlDealtDamage().withFilter(new
+ *                 PermanentHasSubtypePredicate(DRAGON))}. For an "is dealt damage" event and for "this deals damage"
+ *                 ({@link DamageEvent#DEALS_DAMAGE} with {@link ObjectRelation#THIS}: "deals damage to one or more
+ *                 creatures") it is the damaged permanent; for the other "deals damage" events it is the permanent
+ *                 that deals the damage (each of the creatures for "one or more creatures you control deal damage").
+ *                 The damage collectors read it from the legacy view ({@code TriggeredAbility.legacyEffects()}), so
+ *                 {@link #watchKey()} drops it
  */
-public record DamageTrigger(DamageEvent event, ObjectRelation relation) implements Trigger {
+public record DamageTrigger(DamageEvent event, ObjectRelation relation, PermanentPredicate filter) implements Trigger {
 
     public DamageTrigger {
         Objects.requireNonNull(event, "event");
         Objects.requireNonNull(relation, "relation");
+    }
+
+    /** A trigger on any permanent that relates to the source as {@code relation} says. */
+    public DamageTrigger(DamageEvent event, ObjectRelation relation) {
+        this(event, relation, null);
+    }
+
+    /**
+     * This trigger narrowed to a permanent that matches {@code filter}, as {@link #filter} says: "whenever a Dinosaur
+     * you control is dealt damage", "whenever one or more Pirates you control deal damage to a player".
+     */
+    public DamageTrigger withFilter(PermanentPredicate filter) {
+        Objects.requireNonNull(filter, "filter");
+        if (this.filter != null) {
+            throw new IllegalStateException("This damage trigger already has a filter: " + this);
+        }
+        return new DamageTrigger(event, relation, filter);
+    }
+
+    /** The trigger without its filter, so the {@code DamageWatch} of the unfiltered trigger finds the ability. */
+    @Override
+    public Trigger watchKey() {
+        return filter == null ? this : new DamageTrigger(event, relation);
     }
 
     /**

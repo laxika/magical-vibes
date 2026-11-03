@@ -1966,8 +1966,8 @@ public class CombatDamageService {
             if (!source.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, source)) {
                 effects.addAll(DamageWatch.ON_SELF_DEALS_DAMAGE.effectsOf(source.getCard()));
             }
-            effects.addAll(source.getTemporaryTriggerEffects(DamageWatch.ON_SELF_DEALS_DAMAGE.trigger()));
-            effects.addAll(source.getPersistentTriggerEffects(DamageWatch.ON_SELF_DEALS_DAMAGE.trigger()));
+            effects.addAll(source.getLegacyTemporaryTriggerEffects(DamageWatch.ON_SELF_DEALS_DAMAGE.trigger()));
+            effects.addAll(source.getLegacyPersistentTriggerEffects(DamageWatch.ON_SELF_DEALS_DAMAGE.trigger()));
             effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
                     gameData, source, DamageWatch.ON_SELF_DEALS_DAMAGE.trigger()));
             state.selfDealsDamageEffects.put(source, effects);
@@ -2099,9 +2099,9 @@ public class CombatDamageService {
                 if (hasPrintedAbilities) {
                     allDamageEffects.addAll(DamageWatch.ON_DAMAGE_TO_OPPONENT.effectsOf(creature.getCard()));
                 }
-                allDamageEffects.addAll(creature.getTemporaryTriggerEffects(DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger()));
+                allDamageEffects.addAll(creature.getLegacyTemporaryTriggerEffects(DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger()));
                 if (!lostAllAbilities) {
-                    allDamageEffects.addAll(creature.getPersistentTriggerEffects(DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger()));
+                    allDamageEffects.addAll(creature.getLegacyPersistentTriggerEffects(DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger()));
                 }
                 allDamageEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
                         gameData, creature, attackerId, DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger()));
@@ -2111,7 +2111,7 @@ public class CombatDamageService {
             allDamageEffects.addAll(creature.getLegacyTemporaryTriggerEffects(CombatWatch.ON_COMBAT_DAMAGE_TO_PLAYER.trigger()));
             if (!lostAllAbilities) {
                 allDamageEffects.addAll(creature.getLegacyPersistentTriggerEffects(CombatWatch.ON_COMBAT_DAMAGE_TO_PLAYER.trigger()));
-                allDamageEffects.addAll(creature.getPersistentTriggerEffects(DamageWatch.ON_DAMAGE_TO_PLAYER.trigger()));
+                allDamageEffects.addAll(creature.getLegacyPersistentTriggerEffects(DamageWatch.ON_DAMAGE_TO_PLAYER.trigger()));
             }
             // Combat-damage-to-player triggers granted continuously by a static ability
             // (e.g. Tandem Lookout's soulbond grant), recomputed by the layer system.
@@ -2643,13 +2643,13 @@ public class CombatDamageService {
                 }
                 rawEffects.addAll(DamageWatch.ON_DAMAGE_TO_PLAYER.effectsOf(perm.getCard()));
                 rawEffects.addAll(perm.getLegacyTemporaryTriggerEffects(CombatWatch.ON_COMBAT_DAMAGE_TO_PLAYER.trigger()));
-                rawEffects.addAll(perm.getTemporaryTriggerEffects(DamageWatch.ON_DAMAGE_TO_PLAYER.trigger()));
+                rawEffects.addAll(perm.getLegacyTemporaryTriggerEffects(DamageWatch.ON_DAMAGE_TO_PLAYER.trigger()));
                 rawEffects.addAll(perm.getLegacyPersistentTriggerEffects(CombatWatch.ON_COMBAT_DAMAGE_TO_PLAYER.trigger()));
-                rawEffects.addAll(perm.getPersistentTriggerEffects(DamageWatch.ON_DAMAGE_TO_PLAYER.trigger()));
+                rawEffects.addAll(perm.getLegacyPersistentTriggerEffects(DamageWatch.ON_DAMAGE_TO_PLAYER.trigger()));
                 if (!ownerId.equals(defenderId)) {
                     rawEffects.addAll(DamageWatch.ON_DAMAGE_TO_OPPONENT.effectsOf(perm.getCard()));
-                    rawEffects.addAll(perm.getTemporaryTriggerEffects(DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger()));
-                    rawEffects.addAll(perm.getPersistentTriggerEffects(DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger()));
+                    rawEffects.addAll(perm.getLegacyTemporaryTriggerEffects(DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger()));
+                    rawEffects.addAll(perm.getLegacyPersistentTriggerEffects(DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger()));
                 }
 
                 // Unwrap EnchantedPermanentConditionalEffect against the enchanted creature that
@@ -4003,8 +4003,8 @@ public class CombatDamageService {
                 if (hasPrintedAbilities) {
                     effects.addAll(DamageWatch.ON_DEALT_DAMAGE.effectsOf(target.getCard()));
                 }
-                effects.addAll(target.getTemporaryTriggerEffects(DamageWatch.ON_DEALT_DAMAGE.trigger()));
-                effects.addAll(target.getPersistentTriggerEffects(DamageWatch.ON_DEALT_DAMAGE.trigger()));
+                effects.addAll(target.getLegacyTemporaryTriggerEffects(DamageWatch.ON_DEALT_DAMAGE.trigger()));
+                effects.addAll(target.getLegacyPersistentTriggerEffects(DamageWatch.ON_DEALT_DAMAGE.trigger()));
                 effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
                         gameData, target, DamageWatch.ON_DEALT_DAMAGE.trigger()));
                 List<CardEffect> combatDamageReceivedEffects = new ArrayList<>();

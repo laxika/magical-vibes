@@ -26,6 +26,9 @@ public record TriggerOptions(Condition interveningIf, TriggerLimit limit, Trigge
     /** No intervening "if" and no limit; triggers once for each creature blocking the attacking creature. */
     public static final TriggerOptions EACH_BLOCKER = DEFAULT.withMultiplicity(TriggerMultiplicity.EACH_BLOCKER);
 
+    /** No intervening "if" and no limit; triggers once for each source that deals damage in the event. */
+    public static final TriggerOptions EACH_SOURCE = DEFAULT.withMultiplicity(TriggerMultiplicity.EACH_SOURCE);
+
     public TriggerOptions {
         Objects.requireNonNull(limit, "limit");
         Objects.requireNonNull(multiplicity, "multiplicity");

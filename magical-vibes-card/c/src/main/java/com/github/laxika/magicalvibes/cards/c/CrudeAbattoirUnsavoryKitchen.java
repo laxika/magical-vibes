@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCreatureCardInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -33,8 +33,7 @@ public class CrudeAbattoirUnsavoryKitchen extends Card {
                         new DealDamageToTargetCreatureEffect(2)));
 
         addTrigger(Triggers.sourceYouControlDealsNoncombatDamageToCreature(),
-                new ConditionalEffect(
-                        new SourceRoomDoorUnlocked(1),
-                        new PerpetuallyBoostCreatureCardInHandEffect(2, Set.of(Keyword.HASTE))));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceRoomDoorUnlocked(1)),
+                new PerpetuallyBoostCreatureCardInHandEffect(2, Set.of(Keyword.HASTE)));
     }
 }

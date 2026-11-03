@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,9 +17,8 @@ public class FranciscoFowlMarauder extends Card {
         addStaticEffect(new CantBlockEffect());
 
         // Whenever one or more Pirates you control deal damage to a player, Francisco explores.
-        addTrigger(Triggers.creaturesYouControlDealDamageToPlayer(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.PIRATE),
-                        new ExploreEffect()));
+        addTrigger(Triggers.creaturesYouControlDealDamageToPlayer()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.PIRATE)),
+                new ExploreEffect());
     }
 }

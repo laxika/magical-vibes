@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import java.util.List;
+
 @CardRegistration(set = "USG", collectorNumber = "136")
 @CardRegistration(set = "DMR", collectorNumber = "86")
 public class FleshReaver extends Card {
@@ -14,7 +16,9 @@ public class FleshReaver extends Card {
     public FleshReaver() {
         DealDamageToPlayersEffect damageBack =
                 new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.CONTROLLER);
-        addTrigger(Triggers.creatureYouControlDealsDamageToCreature(), damageBack);
-        addTrigger(Triggers.sourceYouControlDealsDamageToOpponent(), damageBack);
+        addTrigger(List.of(
+                        Triggers.creatureYouControlDealsDamageToCreature(),
+                        Triggers.sourceYouControlDealsDamageToOpponent()),
+                damageBack);
     }
 }

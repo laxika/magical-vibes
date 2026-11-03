@@ -1,8 +1,13 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 /**
  * Which of the old damage slot collectors reads a triggered ability, now that the ability has a real trigger
@@ -12,6 +17,11 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
  * ability triggers, how its effects group into stack objects and which wrappers filter it, and its
  * {@link CollectsDamageTrigger} handlers bind the event data, as the slot's did, until steps 14 and 15 of the refactor
  * replace them with trigger options and effects that read the event.
+ * <p>
+ * The collectors read the abilities in the form the cards wrote them before step 14
+ * ({@link Card#getLegacyTriggerEffects(Trigger, Zone)}): an intervening "if" and a limit wrapped around each effect,
+ * a damage trigger's filter as the {@code TriggeringPermanentConditionalEffect} they judge, and "once for each source"
+ * as a {@code PerDamageSourceTriggerEffect}.
  */
 public enum DamageWatch implements TriggerWatch {
     /** "Whenever this deals damage to a player"; on an Aura or Equipment, the attached creature. */
@@ -140,5 +150,15 @@ public enum DamageWatch implements TriggerWatch {
     @Override
     public Zone zone() {
         return zone;
+    }
+
+    @Override
+    public List<CardEffect> effectsOf(Card card) {
+        return card.getLegacyTriggerEffects(trigger, zone);
+    }
+
+    @Override
+    public List<EffectRegistration> registrationsOf(Card card) {
+        return card.getLegacyTriggerEffectRegistrations(trigger, zone);
     }
 }

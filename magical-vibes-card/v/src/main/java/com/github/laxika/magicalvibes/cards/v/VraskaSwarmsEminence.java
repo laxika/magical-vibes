@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,17 +28,17 @@ public class VraskaSwarmsEminence extends Card {
     public VraskaSwarmsEminence() {
         CardEffect putCounterOnDealer = new PutCounterOnReferencedPermanentEffect(
                 PermanentReference.TRIGGERING, CounterType.PLUS_ONE_PLUS_ONE);
-        addTrigger(Triggers.sourceYouControlDealsDamageToPlayer(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH), putCounterOnDealer));
-        addTrigger(Triggers.creatureYouControlDealsDamageToPlaneswalker(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH), putCounterOnDealer));
+        addTrigger(List.of(
+                        Triggers.sourceYouControlDealsDamageToPlayer()
+                                .withFilter(new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH)),
+                        Triggers.creatureYouControlDealsDamageToPlaneswalker()
+                                .withFilter(new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH))),
+                putCounterOnDealer);
 
         List<Ability> assassinTokenEffects = List.of(
-                new TriggeredAbility(Triggers.creatureYouControlDealsDamageToPlaneswalker(),
-                        new TriggeringPermanentConditionalEffect(
-                        new PermanentIsSourcePermanentPredicate(), new DestroyTargetPermanentEffect())));
+                new TriggeredAbility(Triggers.creatureYouControlDealsDamageToPlaneswalker()
+                                .withFilter(new PermanentIsSourcePermanentPredicate()),
+                        new DestroyTargetPermanentEffect()));
         addActivatedAbility(new ActivatedAbility(
                 -2,
                 List.of(new CreateTokenEffect(

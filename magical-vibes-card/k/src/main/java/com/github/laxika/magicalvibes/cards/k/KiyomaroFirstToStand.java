@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOK", collectorNumber = "18")
@@ -22,7 +23,8 @@ public class KiyomaroFirstToStand extends Card {
         addStaticEffect(new ConditionalEffect(
                 new CardsInHandAtLeast(4),
                 new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF)));
-        addTrigger(Triggers.dealsDamage(), new ConditionalEffect(
-                new CardsInHandAtLeast(7), new GainLifeEffect(7)));
+        addTrigger(Triggers.dealsDamage(),
+                TriggerOptions.DEFAULT.withInterveningIf(new CardsInHandAtLeast(7)),
+                new GainLifeEffect(7));
     }
 }

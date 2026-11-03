@@ -12,5 +12,12 @@ public enum TriggerLimit {
      */
     DO_ONLY_ONCE_EACH_TURN,
     /** "This ability triggers only once." */
-    ONCE
+    ONCE,
+    /**
+     * Once each turn for each creature the event names: Stensia's "whenever a creature deals damage to one or more
+     * players for the first time each turn", keyed by the source and the creature. Only the collectors that read the
+     * legacy view ({@code TriggeredAbility.legacyEffects()}) know it, as the {@code OncePerTurnPerCreatureTriggerEffect}
+     * it gives.
+     */
+    ONCE_EACH_TURN_FOR_EACH_CREATURE
 }

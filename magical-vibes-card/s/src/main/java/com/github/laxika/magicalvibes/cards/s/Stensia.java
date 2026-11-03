@@ -8,9 +8,10 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPla
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnPerCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -21,12 +22,14 @@ import java.util.List;
 public class Stensia extends Card {
 
     public Stensia() {
-        var putCounterOnDamagingCreature = new OncePerTurnPerCreatureTriggerEffect(
-                new PutCounterOnReferencedPermanentEffect(
-                        PermanentReference.TRIGGERING, CounterType.PLUS_ONE_PLUS_ONE));
-        addTrigger(Triggers.sourceYouControlDealsDamageToOpponent(), putCounterOnDamagingCreature);
-        addTrigger(Triggers.permanentDealsDamageToYou(), putCounterOnDamagingCreature);
-        addTrigger(Triggers.creatureDealsDamageToItsController(), putCounterOnDamagingCreature);
+        var putCounterOnDamagingCreature = new PutCounterOnReferencedPermanentEffect(
+                PermanentReference.TRIGGERING, CounterType.PLUS_ONE_PLUS_ONE);
+        addTrigger(List.of(
+                        Triggers.sourceYouControlDealsDamageToOpponent(),
+                        Triggers.permanentDealsDamageToYou(),
+                        Triggers.creatureDealsDamageToItsController()),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE),
+                putCounterOnDamagingCreature);
 
         addTrigger(Triggers.chaosEnsues(), new GrantActivatedAbilityEffect(
                 new ActivatedAbility(

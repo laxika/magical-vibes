@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,9 +21,8 @@ public class HoodedBlightfang extends Card {
         addTrigger(Triggers.creatureYouControlAttacks()
                         .withFilter(new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH)),
                 new GainLifeEffect(1));
-        addTrigger(Triggers.creatureYouControlDealsDamageToPlaneswalker(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH),
-                        new DestroyTargetPermanentEffect()));
+        addTrigger(Triggers.creatureYouControlDealsDamageToPlaneswalker()
+                        .withFilter(new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH)),
+                new DestroyTargetPermanentEffect());
     }
 }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPermissionUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -13,9 +12,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class BreechesBrazenPlunderer extends Card {
 
     public BreechesBrazenPlunderer() {
-        addTrigger(Triggers.creaturesYouControlDealDamageToOpponent(),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.PIRATE),
-                        new ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPermissionUntilEndOfTurnEffect()));
+        addTrigger(Triggers.creaturesYouControlDealDamageToOpponent()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.PIRATE)),
+                new ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPermissionUntilEndOfTurnEffect());
     }
 }

@@ -2059,8 +2059,8 @@ public class DamageSupport {
         if (!sourcePermanent.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, sourcePermanent)) {
             effects.addAll(DamageWatch.ON_SELF_DEALS_DAMAGE.effectsOf(sourceCard));
         }
-        effects.addAll(sourcePermanent.getTemporaryTriggerEffects(DamageWatch.ON_SELF_DEALS_DAMAGE.trigger()));
-        effects.addAll(sourcePermanent.getPersistentTriggerEffects(DamageWatch.ON_SELF_DEALS_DAMAGE.trigger()));
+        effects.addAll(sourcePermanent.getLegacyTemporaryTriggerEffects(DamageWatch.ON_SELF_DEALS_DAMAGE.trigger()));
+        effects.addAll(sourcePermanent.getLegacyPersistentTriggerEffects(DamageWatch.ON_SELF_DEALS_DAMAGE.trigger()));
         effects.addAll(triggerCollectionService.grantedTriggerEffects(
                 gameData, sourcePermanent, DamageWatch.ON_SELF_DEALS_DAMAGE.trigger()));
         return effects;

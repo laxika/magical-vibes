@@ -18,5 +18,11 @@ public enum TriggerMultiplicity {
      * Once for each creature blocking the attacking creature: "whenever this creature becomes blocked by a creature"
      * (CR 509.3d), where the default "becomes blocked" triggers once however many creatures block it (CR 509.3c).
      */
-    EACH_BLOCKER
+    EACH_BLOCKER,
+    /**
+     * Once for each source that deals damage in the event: "whenever a source deals damage to this creature" (Nested
+     * Ghoul), where combat damage from several creatures at once is several occurrences of one event (CR 603.2c).
+     * Only damage triggers have it.
+     */
+    EACH_SOURCE
 }

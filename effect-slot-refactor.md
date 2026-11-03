@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -4534,8 +4534,9 @@ object enters", run 4a the reading of the own enters abilities' options and the 
 the own enters abilities' intervening "if"s, run 4c the rules fixes: every own enters intervening "if" checked
 as the ability triggers, run 5 the steps and phases, run 6a the spell, land-play and activation abilities' generic
 wrappers, run 6b `SpellCastTriggerEffect`, as the cast trigger's filter, the ability's options and its effects, run
-6c the other spell, copy and land-play condition-as-effect classes, as the trigger's filter, and run 7 the combat
-abilities (step 13's family 3), all of their wrapper kinds in one run, with the user.
+6c the other spell, copy and land-play condition-as-effect classes, as the trigger's filter, run 7 the combat
+abilities (step 13's family 3), all of their wrapper kinds in one run, with the user, and run 8 the damage abilities
+(step 13's family 4) the same way.
 
 #### Run 1: the source's own zone changes
 
@@ -5939,6 +5940,114 @@ abilities kept below. 818 abilities in 805 card classes were converted, and 48 "
   - `CombatDamageServiceTest` 40 and `GameQueryServiceTest` 1 (mock wiring). The same counts fail at HEAD
     `bb17de13b7`, checked in a worktree.
 - AI: the whole module, with the same 10 failures as before.
+- The full suite was not run here.
+
+#### Run 8: damage
+
+Step 13 family 4, every wrapper kind in one run: every damage ability that the `DamageWatch` collectors read is
+authored without trigger-only wrappers, but Zagras (below). The family is small: 33 wrapped abilities in 30 card
+classes were converted, and three cards whose one Oracle ability was split over several damage abilities were merged.
+
+**Authoring.**
+
+- A restriction on the permanent is the trigger's filter: `DamageTrigger.withFilter(PermanentPredicate)`, as in
+  `Triggers.permanentYouControlDealtDamage().withFilter(dragon)` or
+  `Triggers.creaturesYouControlDealDamageToPlayer().withFilter(pirate)`. The filter is the permanent the collectors
+  judged the `TriggeringPermanentConditionalEffect` against: the damaged permanent for an "is dealt damage" event and for
+  "this deals damage" (`DEALS_DAMAGE` with `THIS`, Briarbridge Patrol's "to one or more creatures"), the dealer for
+  every other "deals damage" event. A second filter is rejected; `DamageTrigger.watchKey()` drops the filter.
+- An intervening "if" is `TriggerOptions.DEFAULT.withInterveningIf(c)` (CR 603.4, checked), as is a condition that
+  belongs to the trigger event ("deals 4 or more damage", "is dealt 3 or more damage", "during your turn") and an
+  unlocked Room door. "Triggers only once each turn" and "for the first time each turn" are `ONCE_EACH_TURN`, "do this
+  only once each turn" `DO_ONLY_ONCE_EACH_TURN` (CR 603.2h, checked).
+- New `TriggerMultiplicity.EACH_SOURCE` (`TriggerOptions.EACH_SOURCE`): "whenever a source deals damage to this" is
+  once for each source in one damage event, where simultaneous combat damage from several creatures is several
+  occurrences of one event (CR 603.2c, checked). Only damage triggers have it (Nested Ghoul).
+- New `TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE`: once each turn for each creature the event names, keyed by the
+  source and the creature (Stensia, the non-global `OncePerTurnPerCreatureTriggerEffect`). Only the legacy collectors
+  read it; the trigger pipeline's `TriggeredAbilityStackService` throws on it. The counter and tap runs can use it for
+  Stalwart Successor, Captain America and Tale of Katara and Toph; the global form (`global = true`) needs its own value.
+- One Oracle ability over several damage watches is one ability: `addTrigger(List.of(t1, t2, …), [options,] effects)`
+  (Stensia's three "a creature deals damage to one or more players" watches, Flesh Reaver's "a creature or opponent",
+  Vraska, Swarm's Eminence's "a player or planeswalker", with the same filter on both).
+
+**The engine.**
+
+- `TriggeredAbility.legacyEffects()` rebuilds the damage wrappers in the order the cards nested them, outermost
+  first: `PerDamageSourceTriggerEffect` (each source), the filter as a `TriggeringPermanentConditionalEffect`, the limit
+  (`OncePerTurnTriggerEffect` keyed by the ability, `markOnAcceptance`, or `OncePerTurnPerCreatureTriggerEffect`), the
+  intervening "if", then `OnceOnlyTriggerEffect`. The damage filter sits outside the limit, where combat's sits inside
+  it: The Sensational She-Hulk nested it so, and its collector dispatches on the outer class. `ONE_OR_MORE` and
+  `EACH_BLOCKER` on a damage condition, `EACH_SOURCE` off one, and damage conditions with different filters throw.
+- `DamageWatch.effectsOf` and `registrationsOf` read the legacy view. `scripts/step14-damage-readers.py` (run 7's
+  reader script on the damage watches, plus the readers that take a `DamageWatch watch` parameter or loop over
+  watches) moved the temporary, persistent, graveyard and registered-global readers to their legacy forms (25 calls in
+  `TriggerCollectionService`, `DamageSupport` and `CombatDamageService`).
+- By hand: the "a source you control deals damage to you" collector (Stick, Fearless Mentor) marked the unkeyed
+  once-each-turn mark whatever the wrapper's key, so with the keyed limit of the legacy view it never stopped
+  triggering; it marks through `OncePerTurnTriggerSupport.markIfNeeded` now. The other collectors of the converted
+  limits (Hercules, Molten Lavamancer) already did.
+- No wrapper class is deleted: the legacy view still builds them. Run 16 deletes what is left.
+
+**Cards.**
+
+- `scripts/step14-damage-scan.py` lists the family's wrapped abilities; `scripts/step14-damage-chains.py` counts their
+  wrapper chains (both run 7's scripts on the damage factories).
+- `scripts/step14-damage-options.py` (per letter module; `--dry-run`, `--report`) did the conversion and the merges,
+  with run 7's helpers. It follows local variables to their one definition and stops on any wrapped ability it can't
+  decide. Its tables: `QUALIFIERS` (`EventValueAtLeast`, `SourceRoomDoorUnlocked`), `INTERVENING_CARDS` (Molten
+  Lavamancer's "during your turn") and `MERGE` (the three cards above). `scripts/step14-damage-converted.txt` lists
+  every decision.
+- `scripts/step14-damage-docs.py` rewrote 12 agent-docs lines and added a "don't author" note to
+  `OncePerTurnPerCreatureTriggerEffect`'s `EFFECTS_INDEX.md` entry. `ARCHITECTURE.md` and the implement-card and
+  review-card skills were edited by hand.
+- Check: every card's `DamageWatch` registrations were dumped before and after the conversion (a throwaway test,
+  deleted): they are equal but for the once-each-turn key of Hercules, Molten Lavamancer and Stick, which is now the
+  ability's.
+
+**Kept, with their reason.**
+
+- Zagras, Thief of Heartbeats: `TriggeringPermanentConditionalEffect.combatDamageOnly` ("deals combat damage to a
+  planeswalker") is a flagged wrapper with no predicate. A combat trigger for "a creature you control deals combat
+  damage to a planeswalker" (or a combat-only flag on the damage trigger) can replace it.
+- The effect-text "unless"s (`ConditionalEffect.unless`: Xyru Specter, The Incredible Hulk, Cecil, Dark Knight) are
+  effects.
+- The mixed readings step 13 run 4 listed stay: `creatureYouControlDealsDamageToCreature()` effects that say whether
+  the dealer is this creature, equipped creature or any creature (`DestroyDamagedCreatureEffect` and its kin), the
+  `sourceDealsDamage()` and `creatureDealsDamageToYouOrYourPermanent()` effects that filter their source, the
+  handler-enforced "source you control" and "permanent you control" checks. They are event-reading effects, not
+  wrappers; step 15 or the step that moves damage onto rules events splits them.
+- Most damage collectors check an intervening "if" only as the ability resolves; the legacy view rebuilds the same
+  wrappers, so nothing changed. A run like 4c's would make them check it as the ability triggers.
+
+**Behaviour changes.** None: the legacy view hands every collector the wrappers it read before. The merged abilities
+trigger on the same events: their watches are disjoint, and Stensia's per-creature limit was already shared by the
+source.
+
+**Tests changed.**
+
+- `DamageTriggerTest`, seven new tests: a filter is dropped from the watch key and a second one rejected; the legacy
+  view gives the filter outside the limit and the limit outside the intervening "if", with a stable identity; "triggers
+  only once each turn" is keyed by the ability; "each source" is the outermost wrapper and "each creature" the limit;
+  an unreadable multiplicity or two filters are rejected; an ability with several damage conditions is read by each
+  watch; granted abilities are read in the legacy form.
+- No other test changed.
+
+**Test runs.**
+
+- Card: the test class of every converted card (Zagras included), the front faces of The Sensational She-Hulk and The
+  Incredible Hulk (Jennifer Walters, Bruce Banner) and every card test that constructs one (39 classes, 352 tests): all
+  passing.
+- Application: the `service.trigger` and `model.trigger` packages and the freeze, triggered-ability, combat damage,
+  turn-cleanup, planechase, query, targeting, step and architecture classes (276 classes, 1,432 tests). Every failure
+  also fails at HEAD:
+  - the same counts as run 7: `StepTriggerServiceTest` 16, `TargetLegalityServiceTest` 14,
+    `SpellCastTriggerCollectorServiceTest` 3, `DamageTriggerCollectorServiceTest` 6, `DeathTriggerCollectorServiceTest`
+    6, `LandTapTriggerCollectorServiceTest` 2, `CombatDamageServiceTest` 40, `GameQueryServiceTest` 1, and the known one
+    each in `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and `CardEffectTargetingConsistencyTest`;
+  - `TurnCleanupServiceTest` 10 and `PlanechaseServiceTest` 2, and `DamageTriggerCollectorServiceTest`'s 6: the same
+    test names fail at HEAD `35b3fbf3e1`, checked in a worktree with the main tree's `card-data-cache`.
+- AI: the whole module (1,620 tests), with the same 10 failures as before.
 - The full suite was not run here.
 
 ## Prompt
