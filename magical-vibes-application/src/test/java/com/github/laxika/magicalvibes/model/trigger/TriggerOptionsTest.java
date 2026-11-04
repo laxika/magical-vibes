@@ -70,9 +70,9 @@ class TriggerOptionsTest {
         SourceCardInGraveyard inGraveyard = new SourceCardInGraveyard();
         DrawCardEffect draw = new DrawCardEffect();
         GainLifeEffect gain = new GainLifeEffect(1);
-        TriggeredAbility plain = new TriggeredAbility(Triggers.attacks(),
+        TriggeredAbility plain = new TriggeredAbility(Triggers.dealsDamage(),
                 TriggerOptions.DEFAULT.withEventCondition(yourTurn), draw, gain);
-        TriggeredAbility wrapped = new TriggeredAbility(Triggers.attacks(), TriggerOptions.DEFAULT
+        TriggeredAbility wrapped = new TriggeredAbility(Triggers.dealsDamage(), TriggerOptions.DEFAULT
                 .withEventCondition(yourTurn).withInterveningIf(inGraveyard).withLimit(TriggerLimit.ONCE_EACH_TURN),
                 draw);
 

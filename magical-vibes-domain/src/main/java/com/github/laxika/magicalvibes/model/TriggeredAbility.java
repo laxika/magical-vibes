@@ -2,8 +2,6 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.AbilityTargetChoiceTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.BatchedCombatDamageToYouTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CyclingTriggerEffect;
@@ -107,6 +105,7 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
                         + "collectors and wrapper effects, not from TriggerOptions");
             }
         }
+        requireReadableMultiplicity(conditions, options.multiplicity());
         if (!options.equals(TriggerOptions.DEFAULT)
                 && conditions.stream().anyMatch(condition -> condition.trigger() instanceof ChapterTrigger)) {
             // "{rN}—[Effect]" is "when one or more lore counters are put onto this Saga, if the number of lore
@@ -115,6 +114,52 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             throw new IllegalArgumentException("A chapter ability takes no options: " + conditions + " with "
                     + options);
         }
+    }
+
+    /**
+     * Rejects a multiplicity none of {@code conditions}' events has: "each source" is a damage event's (CR 603.2c),
+     * "each blocker" "becomes blocked"'s (CR 509.3d), and among the combat events "one or more" is that of "blocks" once
+     * each combat (CR 509.3a), "becomes blocked", "a creature you control (or with the same name as this) deals combat
+     * damage to a player [or battle, or planeswalker]" and "a creature deals combat damage to you", the combat
+     * collectors that read it. The legacy view checked these as a card's abilities were indexed; the combat collectors
+     * read the ability itself, so the ability checks them as it is built.
+     */
+    private static void requireReadableMultiplicity(List<TriggerCondition> conditions,
+                                                    TriggerMultiplicity multiplicity) {
+        List<CombatTrigger> combat = conditions.stream().map(TriggerCondition::trigger)
+                .filter(CombatTrigger.class::isInstance).map(CombatTrigger.class::cast).toList();
+        switch (multiplicity) {
+            case EACH_SOURCE -> {
+                if (conditions.stream().noneMatch(condition -> condition.trigger() instanceof DamageTrigger)) {
+                    throw new IllegalArgumentException("\"Each source\" is a multiplicity of damage triggers: "
+                            + conditions);
+                }
+            }
+            case EACH_BLOCKER -> {
+                if (combat.stream().noneMatch(trigger -> trigger.event() == CombatTrigger.CombatEvent.BECOMES_BLOCKED)) {
+                    throw new IllegalArgumentException("\"Each blocker\" is a multiplicity of \"becomes blocked\": "
+                            + conditions);
+                }
+            }
+            case ONE_OR_MORE -> {
+                if (!combat.isEmpty() && combat.stream().noneMatch(TriggeredAbility::readsOneOrMore)) {
+                    throw new IllegalArgumentException("No combat collector reads \"one or more\" for " + conditions);
+                }
+            }
+            case EACH -> {
+            }
+        }
+    }
+
+    /** Whether the collectors of {@code trigger} read "one or more", as {@link #requireReadableMultiplicity} says. */
+    private static boolean readsOneOrMore(CombatTrigger trigger) {
+        return switch (trigger.event()) {
+            case BLOCKS, BECOMES_BLOCKED, COMBAT_DAMAGE_TO_YOU -> true;
+            case COMBAT_DAMAGE_TO_PLAYER, COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE, COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER ->
+                    trigger.relation() == ObjectRelation.YOU_CONTROL
+                            || trigger.equals(Triggers.creatureWithSameNameDealsCombatDamageToPlayer());
+            default -> false;
+        };
     }
 
     /** An ability that is one instance of its kind on its object. */
@@ -241,18 +286,9 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * checked only as the ability triggers (CR 603.2); "triggers only once each turn" is a {@link OncePerTurnTriggerEffect} keyed by
      * {@link #limitKey()}, the key the trigger pipeline marks; "do this only once each turn" one marked as the action
      * is taken (CR 603.2h); "this ability triggers only once" ({@code ONCE}) an {@link OnceOnlyTriggerEffect} inside
-     * the intervening "if", as the cards wrote it. An ability with a spell, land-play, activation or "at the beginning
-     * of [step or phase]" trigger ({@link #collectedAsAbility()}) has no legacy view: its collectors read it itself,
-     * and this throws. A combat
-     * trigger's filter is a {@link TriggeringPermanentConditionalEffect} inside the limit, as the combat cards wrote
-     * it, but on "a creature you control deals combat damage to a player [or battle]", whose collectors read every
-     * effect as an {@link AllyCombatDamageTriggerEffect}: there the filter, and "one or more"
-     * ({@link TriggerMultiplicity#ONE_OR_MORE}), are that record's, wrapped around the intervening "if" (an authored
-     * record takes them in). "One or more creatures deal combat damage to you" wraps each effect in a
-     * {@link BatchedCombatDamageToYouTriggerEffect} there. "Whenever this creature blocks" once each combat
-     * ({@code ONE_OR_MORE}, CR 509.3a) and "becomes blocked by a creature" ({@link TriggerMultiplicity#EACH_BLOCKER},
-     * CR 509.3d) are the registrations' {@link TriggerMode#ONCE_PER_BLOCK} and {@link TriggerMode#PER_BLOCKER}. A
-     * damage trigger's filter is a {@link TriggeringPermanentConditionalEffect} outside the limit, and "once for each
+     * the intervening "if", as the cards wrote it. An ability with a spell, land-play, activation, "at the beginning of
+     * [step or phase]" or combat trigger ({@link #collectedAsAbility()}) has no legacy view: its collectors read it
+     * itself, and this throws. A damage trigger's filter is a {@link TriggeringPermanentConditionalEffect} outside the limit, and "once for each
      * source" ({@link TriggerMultiplicity#EACH_SOURCE}) a {@link PerDamageSourceTriggerEffect} outside that, as the
      * damage cards wrote them. "Once each turn for each creature"
      * ({@link TriggerLimit#ONCE_EACH_TURN_FOR_EACH_CREATURE}) is an {@link OncePerTurnPerCreatureTriggerEffect} where
@@ -307,7 +343,6 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         requireFinalChapterOptions();
         Condition interveningIf = options.interveningIf();
         TriggerLimit limit = options.limit();
-        CombatView combat = combatView();
         DamageView damage = damageView();
         CounterView counter = counterView();
         TargetView target = targetView();
@@ -315,7 +350,7 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         LifeView life = lifeView();
         ObjectActionTrigger object = objectActionView();
         if (interveningIf == null && limit == TriggerLimit.NONE
-                && (combat == null || combat.plain()) && (damage == null || damage.plain())
+                && (damage == null || damage.plain())
                 && (counter == null || counter.plain()) && (target == null || target.plain())
                 && (tap == null || tap.plain()) && (life == null || life.plain()) && object == null) {
             return legacyBaseEffects();
@@ -324,24 +359,11 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         List<EffectRegistration> wrapped = new ArrayList<>(effects.size());
         for (EffectRegistration registration : legacyBaseEffects()) {
             CardEffect effect = registration.effect();
-            // An authored ally combat damage record (an event binding) is the outermost of the effect's own
-            // wrappers: the intervening "if" goes inside it, as the cards wrote it.
-            AllyCombatDamageTriggerEffect authoredAlly = combat != null && combat.allyDamage()
-                    && effect instanceof AllyCombatDamageTriggerEffect ally ? ally : null;
-            if (authoredAlly != null) {
-                effect = authoredAlly.effect();
-            }
             if (limit == TriggerLimit.ONCE) {
                 effect = new OnceOnlyTriggerEffect(effect);
             }
             if (interveningIf != null) {
                 effect = new ConditionalEffect(interveningIf, effect, true);
-            }
-            if (authoredAlly != null) {
-                effect = effect == authoredAlly.effect() ? authoredAlly : authoredAlly.withEffect(effect);
-            }
-            if (combat != null) {
-                effect = combat.wrap(effect);
             }
             if (limit == TriggerLimit.ONCE_EACH_TURN) {
                 effect = OncePerTurnTriggerEffect.keyed(effect, key);
@@ -368,7 +390,7 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             if (object != null) {
                 effect = legacyObjectActionWrapper(object, effect);
             }
-            TriggerMode mode = combat != null ? combat.mode(registration.triggerMode()) : registration.triggerMode();
+            TriggerMode mode = registration.triggerMode();
             if (counter != null) {
                 mode = counter.mode(mode);
             }
@@ -474,46 +496,6 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
                 || (options.limit() != TriggerLimit.NONE && options.limit() != TriggerLimit.ONCE_EACH_TURN)) {
             throw new IllegalStateException("The final-chapter collector doesn't read " + options + ": " + conditions);
         }
-    }
-
-    /**
-     * What the legacy view adds for this ability's combat conditions, or {@code null} when it has none: their filter
-     * (the one {@link CombatTrigger#watchKey()} drops; the conditions must agree on it), whether the collectors read
-     * the effects as {@link AllyCombatDamageTriggerEffect}s or {@link BatchedCombatDamageToYouTriggerEffect}s, and
-     * the trigger mode the multiplicity is.
-     */
-    private CombatView combatView() {
-        List<CombatTrigger> combat = conditions.stream().map(TriggerCondition::trigger)
-                .filter(CombatTrigger.class::isInstance).map(CombatTrigger.class::cast).toList();
-        if (combat.isEmpty()) {
-            return null;
-        }
-        List<PermanentPredicate> filters = combat.stream()
-                .map(trigger -> trigger.watchKey().equals(trigger) ? null : trigger.filter()).distinct().toList();
-        if (filters.size() > 1) {
-            throw new IllegalStateException("The combat conditions of one ability must have the same filter: "
-                    + conditions);
-        }
-        boolean allyDamage = combat.stream().anyMatch(TriggeredAbility::readAsAllyCombatDamage);
-        if (allyDamage && combat.size() > 1) {
-            throw new IllegalStateException("A \"creature you control deals combat damage to a player\" ability has no "
-                    + "other combat condition in the legacy view: " + conditions);
-        }
-        boolean damageToYou = combat.stream()
-                .anyMatch(trigger -> trigger.event() == CombatTrigger.CombatEvent.COMBAT_DAMAGE_TO_YOU);
-        boolean block = combat.stream().anyMatch(trigger -> trigger.event() == CombatTrigger.CombatEvent.BLOCKS
-                || trigger.event() == CombatTrigger.CombatEvent.BECOMES_BLOCKED);
-        TriggerMultiplicity multiplicity = options.multiplicity();
-        boolean oneOrMore = multiplicity == TriggerMultiplicity.ONE_OR_MORE;
-        if (oneOrMore && !allyDamage && !damageToYou && !block) {
-            throw new IllegalStateException("The legacy view has no \"one or more\" form for " + conditions);
-        }
-        if (multiplicity == TriggerMultiplicity.EACH_BLOCKER && combat.stream()
-                .noneMatch(trigger -> trigger.event() == CombatTrigger.CombatEvent.BECOMES_BLOCKED)) {
-            throw new IllegalStateException("\"Each blocker\" is a multiplicity of \"becomes blocked\": " + conditions);
-        }
-        return new CombatView(filters.getFirst(), allyDamage, oneOrMore && !allyDamage && damageToYou,
-                oneOrMore && !allyDamage, multiplicity);
     }
 
     /**
@@ -1033,63 +1015,6 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             return OncePerTurnTriggerEffect.firstSurveil(effect);
         }
         throw new IllegalStateException("No library collector counts the first event of the turn for " + trigger);
-    }
-
-    /**
-     * The combat triggers whose collectors read every effect as an {@link AllyCombatDamageTriggerEffect}: a creature
-     * you control (or one with the same name as the source) deals combat damage to a player, a player or battle, or a
-     * player or planeswalker.
-     */
-    private static boolean readAsAllyCombatDamage(CombatTrigger trigger) {
-        CombatTrigger.CombatEvent event = trigger.event();
-        boolean toPlayer = event == CombatTrigger.CombatEvent.COMBAT_DAMAGE_TO_PLAYER
-                || event == CombatTrigger.CombatEvent.COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE
-                || event == CombatTrigger.CombatEvent.COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER;
-        return toPlayer && (trigger.relation() == ObjectRelation.YOU_CONTROL
-                || trigger.equals(Triggers.creatureWithSameNameDealsCombatDamageToPlayer()));
-    }
-
-    /**
-     * The legacy view of an ability's combat conditions, as {@link #combatView()} builds it.
-     *
-     * @param filter       the conditions' filter, or {@code null}
-     * @param allyDamage   the effects are read as {@link AllyCombatDamageTriggerEffect}s
-     * @param damageToYou  each effect is wrapped in a {@link BatchedCombatDamageToYouTriggerEffect}
-     * @param oneOrMore    "one or more" that isn't the ally record's: once per block, or the batched wrapper
-     * @param multiplicity the ability's multiplicity
-     */
-    private record CombatView(PermanentPredicate filter, boolean allyDamage, boolean damageToYou, boolean oneOrMore,
-                              TriggerMultiplicity multiplicity) {
-
-        /** Whether the legacy view adds nothing to the effects and modes. */
-        boolean plain() {
-            return filter == null && !allyDamage && multiplicity == TriggerMultiplicity.EACH;
-        }
-
-        CardEffect wrap(CardEffect effect) {
-            if (allyDamage) {
-                boolean oncePerStep = multiplicity == TriggerMultiplicity.ONE_OR_MORE;
-                return effect instanceof AllyCombatDamageTriggerEffect authored
-                        ? authored.withTriggerOptions(filter, oncePerStep)
-                        : new AllyCombatDamageTriggerEffect(filter, effect, false, oncePerStep);
-            }
-            CardEffect wrapped = damageToYou ? new BatchedCombatDamageToYouTriggerEffect(effect) : effect;
-            return filter != null ? new TriggeringPermanentConditionalEffect(filter, wrapped) : wrapped;
-        }
-
-        TriggerMode mode(TriggerMode authored) {
-            if (authored != TriggerMode.NORMAL) {
-                if (!plain() && multiplicity != TriggerMultiplicity.EACH) {
-                    throw new IllegalStateException("A registration's trigger mode " + authored
-                            + " and the ability's multiplicity " + multiplicity + " are two multiplicities");
-                }
-                return authored;
-            }
-            if (multiplicity == TriggerMultiplicity.EACH_BLOCKER) {
-                return TriggerMode.PER_BLOCKER;
-            }
-            return oneOrMore && !damageToYou ? TriggerMode.ONCE_PER_BLOCK : TriggerMode.NORMAL;
-        }
     }
 
     /**

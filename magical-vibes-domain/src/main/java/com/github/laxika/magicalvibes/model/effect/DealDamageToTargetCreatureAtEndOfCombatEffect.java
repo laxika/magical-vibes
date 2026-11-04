@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * As a {@link CombatOpponentReferencingEffect} it also serves the Sawtooth Ogre wording "whenever
  * this creature blocks or becomes blocked by a creature, this creature deals N damage to that
  * creature at end of combat": on {@code Triggers.blocks()} the blocked attacker is baked into the
- * non-targeting trigger, and on {@code Triggers.becomesBlocked()} ability with {@code TriggerMode.PER_BLOCKER}
+ * non-targeting trigger, and on {@code Triggers.becomesBlocked()} ability with {@code TriggerOptions.EACH_BLOCKER}
  * each blocker is.
  *
  * @param damage the amount of damage the source deals at end of combat

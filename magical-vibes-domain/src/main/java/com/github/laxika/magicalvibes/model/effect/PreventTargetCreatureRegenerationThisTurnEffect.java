@@ -7,7 +7,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * during turn cleanup. Harmful (protection from the source is honoured). Hurr Jackal.
  * <p>
  * Also a {@link CombatOpponentReferencingEffect}: on {@code Triggers.blocks()} /
- * {@code Triggers.becomesBlocked()} ability (PER_BLOCKER) the combat opponent is carried as the trigger's
+ * {@code Triggers.becomesBlocked()} ability ({@code EACH_BLOCKER}) the combat opponent is carried as the trigger's
  * non-targeting target (Lim-Dûl's Cohort).
  */
 public record PreventTargetCreatureRegenerationThisTurnEffect(boolean sourcePermanent)

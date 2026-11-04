@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
+import com.github.laxika.magicalvibes.service.trigger.CombatAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.CombatWatch;
 import java.util.List;
 import java.util.Set;
@@ -493,7 +494,8 @@ public class BoardEvaluator {
      */
     private double growthThreatBonus(Permanent perm) {
         double bonus = 0;
-        for (CardEffect effect : CombatWatch.ON_COMBAT_DAMAGE_TO_PLAYER.effectsOf(perm.getCard())) {
+        for (CardEffect effect : CombatAbilityReader.rawEffects(
+                CombatAbilityReader.printed(perm.getCard(), CombatWatch.ON_COMBAT_DAMAGE_TO_PLAYER))) {
             if (effect instanceof PutCountersOnSourceEffect counters) {
                 bonus += counters.amount() * (counters.powerModifier() + counters.toughnessModifier()) * 3.0;
             }

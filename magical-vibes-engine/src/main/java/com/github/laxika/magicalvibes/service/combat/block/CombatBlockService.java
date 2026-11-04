@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.service.combat.block;
 
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
+import com.github.laxika.magicalvibes.service.trigger.CombatAbilityReader;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
@@ -22,7 +24,6 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockOrBecomesBlockedTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerDeclarationControl;
@@ -714,18 +715,29 @@ public class CombatBlockService {
         for (BlockerAssignment assignment : blockerAssignments) {
             Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
             boolean blockerLostAbilities = gameQueryService.hasLostPrintedAbilities(gameData, blocker);
-            List<CardEffect> blockEffects = blocker.isFaceDown() || blockerLostAbilities
-                    ? new ArrayList<>() : new ArrayList<>(CombatWatch.ON_BLOCK.effectsOf(blocker.getCard()));
+            Trigger blocks = CombatWatch.ON_BLOCK.trigger();
+            List<CombatAbilityReader.CombatEffect> printedBlock = CombatAbilityReader.read(
+                    CombatAbilityReader.printed(blocker.getCard(), CombatWatch.ON_BLOCK), blocks);
+            List<CombatAbilityReader.CombatEffect> blockEffects = blocker.isFaceDown() || blockerLostAbilities
+                    ? new ArrayList<>() : new ArrayList<>(printedBlock);
             if (!blockerLostAbilities) {
-                blockEffects.addAll(blocker.getLegacyTemporaryTriggerEffects(CombatWatch.ON_BLOCK.trigger()));
-                blockEffects.addAll(blocker.getLegacyPersistentTriggerEffects(CombatWatch.ON_BLOCK.trigger()));
-                blockEffects.addAll(triggerCollectionService.grantedTriggerEffects(gameData, blocker, CombatWatch.ON_BLOCK.trigger()));
+                blockEffects.addAll(CombatAbilityReader.read(CombatAbilityReader.temporary(blocker, blocks), blocks));
+                blockEffects.addAll(CombatAbilityReader.read(CombatAbilityReader.persistent(blocker, blocks), blocks));
+                blockEffects.addAll(CombatAbilityReader.read(
+                        triggerCollectionService.grantedWatchedAbilities(gameData, blocker, blocks), blocks));
             }
             if (!blockersWithBushidoTrigger.add(blocker.getId())) {
-                blockEffects.removeIf(BushidoEffect.class::isInstance);
+                blockEffects.removeIf(read -> read.effect() instanceof BushidoEffect);
             }
-            boolean hasOncePerBlockEffect = CombatWatch.ON_BLOCK.registrationsOf(blocker.getCard()).stream()
-                    .anyMatch(registration -> registration.triggerMode() == TriggerMode.ONCE_PER_BLOCK);
+            for (CombatAbilityReader.CombatEffect read : blockEffects) {
+                if (read.limit() != TriggerLimit.NONE || read.eachBlocker()) {
+                    throw new IllegalStateException("The block collector reads no " + read.options() + ": "
+                            + read.ability());
+                }
+            }
+            // "Whenever this creature blocks" once each combat however many creatures it blocks (CR 509.3a), where
+            // "blocks a creature" is once for each (CR 509.3b): the printed ability's ONE_OR_MORE.
+            boolean hasOncePerBlockEffect = printedBlock.stream().anyMatch(CombatAbilityReader.CombatEffect::oneOrMore);
             boolean collectBlockTrigger = !hasOncePerBlockEffect
                     || blockersWithOncePerBlockTrigger.add(assignment.blockerIndex());
             if (collectBlockTrigger && !blockEffects.isEmpty()) {
@@ -733,7 +745,13 @@ public class CombatBlockService {
 
                 // Resolve conditional block effects (e.g. "when blocking a creature with flying")
                 List<CardEffect> allResolvedBlockEffects = new ArrayList<>();
-                for (CardEffect e : blockEffects) {
+                for (CombatAbilityReader.CombatEffect read : blockEffects) {
+                    // "When this creature blocks a [filter] creature": the trigger's filter on the attacker.
+                    if (read.filter() != null
+                            && !predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, read.filter())) {
+                        continue;
+                    }
+                    CardEffect e = read.effect();
                     if (e instanceof ConditionalEffect conditional
                             && !conditionEvaluationService.isInterveningIfMet(
                             gameData, conditional, blocker, defenderId, attacker.getId())) {
@@ -840,7 +858,8 @@ public class CombatBlockService {
                 continue;
             }
             Permanent blocker = defenderBattlefield.get(entry.getKey());
-            List<CardEffect> multiBlockEffects = CombatWatch.ON_BLOCKS_MULTIPLE_CREATURES.effectsOf(blocker.getCard());
+            List<CardEffect> multiBlockEffects = CombatAbilityReader.effects(CombatAbilityReader.printed(blocker.getCard(),
+                    CombatWatch.ON_BLOCKS_MULTIPLE_CREATURES), CombatWatch.ON_BLOCKS_MULTIPLE_CREATURES.trigger());
             if (multiBlockEffects.isEmpty()) {
                 continue;
             }
@@ -884,9 +903,9 @@ public class CombatBlockService {
             combatTriggerService.checkAttachedPerBlockerTriggers(gameData, attacker, blockerAssignments, defenderBattlefield, atkIdx);
 
             // Check for "whenever a creature you control becomes blocked" triggers (active player's / AP's).
-            checkAllyBecomesBlockedTriggers(gameData, activeId, attacker, TriggerMode.NORMAL);
+            checkAllyBecomesBlockedTriggers(gameData, activeId, attacker, false);
             for (Permanent blocker : blockers) {
-                checkAllyBecomesBlockedTriggers(gameData, activeId, attacker, TriggerMode.PER_BLOCKER);
+                checkAllyBecomesBlockedTriggers(gameData, activeId, attacker, true);
             }
         }
 
@@ -1032,7 +1051,8 @@ public class CombatBlockService {
                 auraOncePerBlockTriggers);
 
         if (blocker.getBlockingTargetIds().size() >= 2) {
-            List<CardEffect> effects = CombatWatch.ON_BLOCKS_MULTIPLE_CREATURES.effectsOf(blocker.getCard());
+            List<CardEffect> effects = CombatAbilityReader.effects(CombatAbilityReader.printed(blocker.getCard(),
+                    CombatWatch.ON_BLOCKS_MULTIPLE_CREATURES), CombatWatch.ON_BLOCKS_MULTIPLE_CREATURES.trigger());
             if (!effects.isEmpty()) {
                 StackEntry trigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
@@ -1084,19 +1104,32 @@ public class CombatBlockService {
     private void collectEffectBlockTrigger(GameData gameData, Permanent blocker, Permanent attacker,
                                            UUID defenderId) {
         boolean blockerLostAbilities = gameQueryService.hasLostPrintedAbilities(gameData, blocker);
-        List<CardEffect> blockEffects = blocker.isFaceDown()
-            ? new ArrayList<>() : new ArrayList<>(CombatWatch.ON_BLOCK.effectsOf(blocker.getCard()));
+        Trigger blocks = CombatWatch.ON_BLOCK.trigger();
+        List<CombatAbilityReader.CombatEffect> blockEffects = blocker.isFaceDown()
+            ? new ArrayList<>() : new ArrayList<>(CombatAbilityReader.read(
+                    CombatAbilityReader.printed(blocker.getCard(), CombatWatch.ON_BLOCK), blocks));
         if (!blockerLostAbilities) {
-            blockEffects.addAll(blocker.getLegacyTemporaryTriggerEffects(CombatWatch.ON_BLOCK.trigger()));
-            blockEffects.addAll(blocker.getLegacyPersistentTriggerEffects(CombatWatch.ON_BLOCK.trigger()));
-            blockEffects.addAll(triggerCollectionService.grantedTriggerEffects(gameData, blocker, CombatWatch.ON_BLOCK.trigger()));
+            blockEffects.addAll(CombatAbilityReader.read(CombatAbilityReader.temporary(blocker, blocks), blocks));
+            blockEffects.addAll(CombatAbilityReader.read(CombatAbilityReader.persistent(blocker, blocks), blocks));
+            blockEffects.addAll(CombatAbilityReader.read(
+                    triggerCollectionService.grantedWatchedAbilities(gameData, blocker, blocks), blocks));
         }
         if (blockEffects.isEmpty()) {
             return;
         }
 
         List<CardEffect> resolvedEffects = new ArrayList<>();
-        for (CardEffect effect : blockEffects) {
+        for (CombatAbilityReader.CombatEffect read : blockEffects) {
+            // A blocker added by an effect blocks one creature, so "blocks" once each combat reads as once.
+            if (read.limit() != TriggerLimit.NONE || read.eachBlocker()) {
+                throw new IllegalStateException("The block collector reads no " + read.options() + ": "
+                        + read.ability());
+            }
+            if (read.filter() != null
+                    && !predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, read.filter())) {
+                continue;
+            }
+            CardEffect effect = read.effect();
             if (effect instanceof ConditionalEffect conditional
                     && !conditionEvaluationService.isInterveningIfMet(
                     gameData, conditional, blocker, defenderId, attacker.getId())) {
@@ -1165,30 +1198,94 @@ public class CombatBlockService {
         gameData.stack.add(trigger);
     }
 
+    /**
+     * The effects of {@code attacker}'s printed "whenever this creature becomes blocked" abilities. "Becomes blocked by
+     * a creature" is {@code EACH_BLOCKER} (CR 509.3d); an attack-or-block ability's "one or more" is "blocks" once each
+     * combat (CR 509.3a), and a creature becomes blocked once each combat anyway.
+     */
+    private static List<CombatAbilityReader.CombatEffect> printedBecomesBlocked(Permanent attacker) {
+        List<CombatAbilityReader.CombatEffect> reads = CombatAbilityReader.read(
+                CombatAbilityReader.printed(attacker.getCard(), CombatWatch.ON_BECOMES_BLOCKED),
+                CombatWatch.ON_BECOMES_BLOCKED.trigger());
+        for (CombatAbilityReader.CombatEffect read : reads) {
+            if (read.limit() != TriggerLimit.NONE) {
+                throw new IllegalStateException("The becomes-blocked collector reads no " + read.options() + ": "
+                        + read.ability());
+            }
+        }
+        return reads;
+    }
+
+    /**
+     * The effects of the "whenever this creature becomes blocked" abilities granted to {@code attacker} until end of
+     * turn or combat and until it leaves the battlefield, in that order. No granted one has a filter, limit or
+     * multiplicity.
+     */
+    private static List<CardEffect> temporaryAndPersistentBecomesBlocked(Permanent attacker) {
+        Trigger becomesBlocked = CombatWatch.ON_BECOMES_BLOCKED.trigger();
+        List<CardEffect> effects = new ArrayList<>(CombatAbilityReader.effects(
+                CombatAbilityReader.temporary(attacker, becomesBlocked), becomesBlocked));
+        effects.addAll(CombatAbilityReader.effects(CombatAbilityReader.persistent(attacker, becomesBlocked),
+                becomesBlocked));
+        return effects;
+    }
+
+    /**
+     * The effects of {@code reads} that trigger once however many creatures block (CR 509.3c), not once for each
+     * blocker. No such ability has a filter on the blocker, and this throws on one.
+     */
+    private static List<CardEffect> regularBecomesBlocked(List<CombatAbilityReader.CombatEffect> reads) {
+        List<CardEffect> effects = new ArrayList<>();
+        for (CombatAbilityReader.CombatEffect read : reads) {
+            if (read.eachBlocker()) {
+                continue;
+            }
+            if (read.filter() != null) {
+                throw new IllegalStateException("The becomes-blocked collector judges a blocker's filter only for "
+                        + "\"becomes blocked by a creature\": " + read.ability());
+            }
+            effects.add(read.effect());
+        }
+        return effects;
+    }
+
+    /**
+     * The effects of {@code card}'s abilities that {@code watch} reads, for a collector that reads no filter, limit or
+     * multiplicity ({@link CombatAbilityReader#effects(List, Trigger)}).
+     */
+    private static List<CardEffect> printedCombatEffects(Card card, CombatWatch watch) {
+        return CombatAbilityReader.effects(CombatAbilityReader.printed(card, watch), watch.trigger());
+    }
+
     private void collectEffectBecomesBlockedTriggers(GameData gameData, Permanent attacker, Permanent blocker,
                                                      List<BlockerAssignment> assignments, UUID activeId,
                                                      List<Permanent> attackerBattlefield,
                                                      List<Permanent> defenderBattlefield,
                                                      Set<UUID> auraOncePerBlockTriggers) {
         boolean lostAbilities = gameQueryService.hasLostPrintedAbilities(gameData, attacker);
-        List<EffectRegistration> registrations = lostAbilities ? List.of() : CombatWatch.ON_BECOMES_BLOCKED.registrationsOf(attacker.getCard());
-        List<CardEffect> grantedEffects = new ArrayList<>(lostAbilities ? List.of()
-                : attacker.getLegacyTemporaryTriggerEffects(CombatWatch.ON_BECOMES_BLOCKED.trigger()));
-        if (!lostAbilities) {
-            grantedEffects.addAll(attacker.getLegacyPersistentTriggerEffects(CombatWatch.ON_BECOMES_BLOCKED.trigger()));
+        List<CombatAbilityReader.CombatEffect> registrations = lostAbilities ? List.of()
+                : printedBecomesBlocked(attacker);
+        List<CardEffect> grantedEffects = lostAbilities ? new ArrayList<>()
+                : temporaryAndPersistentBecomesBlocked(attacker);
+        // "Becomes blocked by a creature" (CR 509.3d) triggers for this blocker; one with a filter on the blocker
+        // ("becomes blocked by an artifact creature") is an ability of its own for each blocker it matches.
+        List<CardEffect> blockerSpecificEffects = new ArrayList<>();
+        List<CardEffect> separateInstanceEffects = new ArrayList<>();
+        for (CombatAbilityReader.CombatEffect read : registrations) {
+            if (!read.eachBlocker()) {
+                continue;
+            }
+            if (read.filter() == null) {
+                blockerSpecificEffects.add(read.effect());
+            } else if (predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, read.filter())) {
+                separateInstanceEffects.add(read.effect());
+            }
         }
-        List<CardEffect> blockerSpecificEffects = new ArrayList<>(registrations.stream()
-                .filter(registration -> registration.triggerMode() == TriggerMode.PER_BLOCKER)
-                .map(EffectRegistration::effect)
-                .toList());
         blockerSpecificEffects.addAll(grantedEffects.stream()
                 .filter(effect -> effect instanceof CombatOpponentReferencingEffect combatOpponent
                         && combatOpponent.referencesCombatOpponent())
                 .toList());
-        List<CardEffect> regularEffects = new ArrayList<>(registrations.stream()
-                .filter(registration -> registration.triggerMode() != TriggerMode.PER_BLOCKER)
-                .map(EffectRegistration::effect)
-                .toList());
+        List<CardEffect> regularEffects = new ArrayList<>(regularBecomesBlocked(registrations));
         regularEffects.addAll(grantedEffects.stream()
                 .filter(effect -> !(effect instanceof CombatOpponentReferencingEffect combatOpponent)
                         || !combatOpponent.referencesCombatOpponent())
@@ -1197,9 +1294,8 @@ public class CombatBlockService {
         pushRegularBecomesBlockedTriggers(gameData, attacker, activeId,
                 resolveCombatOpponentBoosts(gameData, regularEffects, List.of(blocker)));
 
-        if (!blockerSpecificEffects.isEmpty()) {
+        if (!blockerSpecificEffects.isEmpty() || !separateInstanceEffects.isEmpty()) {
             List<CardEffect> filteredEffects = new ArrayList<>();
-            List<CardEffect> separateInstanceEffects = new ArrayList<>();
             for (CardEffect effect : blockerSpecificEffects) {
                 if (effect instanceof DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect) {
                     if (hasEquipmentAttached(gameData, blocker)) {
@@ -1248,8 +1344,8 @@ public class CombatBlockService {
         int attackerIndex = attackerBattlefield.indexOf(attacker);
         combatTriggerService.checkAttachedPerBlockerTriggers(gameData, attacker, assignments,
                 defenderBattlefield, attackerIndex);
-        checkAllyBecomesBlockedTriggers(gameData, activeId, attacker, TriggerMode.NORMAL);
-        checkAllyBecomesBlockedTriggers(gameData, activeId, attacker, TriggerMode.PER_BLOCKER);
+        checkAllyBecomesBlockedTriggers(gameData, activeId, attacker, false);
+        checkAllyBecomesBlockedTriggers(gameData, activeId, attacker, true);
     }
 
     /**
@@ -1571,14 +1667,14 @@ public class CombatBlockService {
                     || gameQueryService.hasLostAllAbilities(gameData, attacker)) {
                 continue;
             }
-            List<CardEffect> printedEffects = CombatWatch.ON_ATTACKS_UNBLOCKED.effectsOf(attacker.getCard());
+            List<CardEffect> printedEffects = printedCombatEffects(attacker.getCard(), CombatWatch.ON_ATTACKS_UNBLOCKED);
             List<List<CardEffect>> abilityInstances = new ArrayList<>();
             if (!printedEffects.isEmpty()) {
                 abilityInstances.add(new ArrayList<>(printedEffects));
             }
             // Each granted instance is a separate ability (CR 702.68b for frenzy), so it gets its own trigger.
-            for (CardEffect granted : triggerCollectionService.grantedTriggerEffects(
-                    gameData, attacker, CombatWatch.ON_ATTACKS_UNBLOCKED.trigger())) {
+            for (CardEffect granted : CombatAbilityReader.effects(triggerCollectionService.grantedWatchedAbilities(
+                    gameData, attacker, CombatWatch.ON_ATTACKS_UNBLOCKED.trigger()), CombatWatch.ON_ATTACKS_UNBLOCKED.trigger())) {
                 abilityInstances.add(List.of(granted));
             }
             for (List<CardEffect> effects : abilityInstances) {
@@ -1686,7 +1782,7 @@ public class CombatBlockService {
             if (!perm.isAttached() || !attacker.getId().equals(perm.getAttachedTo())) {
                 return;
             }
-            List<CardEffect> effects = CombatWatch.ON_ENCHANTED_CREATURE_ATTACKS_UNBLOCKED.effectsOf(perm.getCard());
+            List<CardEffect> effects = printedCombatEffects(perm.getCard(), CombatWatch.ON_ENCHANTED_CREATURE_ATTACKS_UNBLOCKED);
             if (effects.isEmpty()) {
                 return;
             }
@@ -1746,7 +1842,12 @@ public class CombatBlockService {
         for (Permanent attacker : unblockedAttackers) {
             for (Permanent perm : battlefield) {
                 if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-                List<CardEffect> effects = CombatWatch.ON_ALLY_CREATURE_ATTACKS_UNBLOCKED.effectsOf(perm.getCard());
+                // "Whenever a [filter] creature you control attacks and isn't blocked": the trigger's filter on the
+                // attacker (Stinkdrinker Bandit).
+                List<CardEffect> effects = CombatAbilityReader.effects(
+                        CombatAbilityReader.printed(perm.getCard(), CombatWatch.ON_ALLY_CREATURE_ATTACKS_UNBLOCKED),
+                        CombatWatch.ON_ALLY_CREATURE_ATTACKS_UNBLOCKED.trigger(),
+                        filter -> predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, filter));
                 if (effects.isEmpty()) continue;
 
                 List<CardEffect> matchingEffects = new ArrayList<>();
@@ -1802,7 +1903,7 @@ public class CombatBlockService {
                 continue;
             }
             Card card = exiled.card();
-            List<CardEffect> effects = CombatWatch.EXILE_ON_ALLY_CREATURE_ATTACKS_UNBLOCKED.effectsOf(card);
+            List<CardEffect> effects = printedCombatEffects(card, CombatWatch.EXILE_ON_ALLY_CREATURE_ATTACKS_UNBLOCKED);
             if (effects.isEmpty()) {
                 continue;
             }
@@ -1865,9 +1966,9 @@ public class CombatBlockService {
         }
         int pushed = 0;
         for (Permanent permanent : battlefield) {
-            List<CardEffect> effects = new ArrayList<>(CombatWatch.ON_OPPONENT_CREATURES_ATTACK_YOU_UNBLOCKED.effectsOf(permanent.getCard()));
-            effects.addAll(triggerCollectionService.grantedTriggerEffects(
-                    gameData, permanent, CombatWatch.ON_OPPONENT_CREATURES_ATTACK_YOU_UNBLOCKED.trigger()));
+            List<CardEffect> effects = new ArrayList<>(printedCombatEffects(permanent.getCard(), CombatWatch.ON_OPPONENT_CREATURES_ATTACK_YOU_UNBLOCKED));
+            effects.addAll(CombatAbilityReader.effects(triggerCollectionService.grantedWatchedAbilities(
+                    gameData, permanent, CombatWatch.ON_OPPONENT_CREATURES_ATTACK_YOU_UNBLOCKED.trigger()), CombatWatch.ON_OPPONENT_CREATURES_ATTACK_YOU_UNBLOCKED.trigger()));
             if (effects.isEmpty()) {
                 continue;
             }
@@ -1909,9 +2010,9 @@ public class CombatBlockService {
 
         int pushed = 0;
         for (Permanent permanent : new ArrayList<>(defenderBattlefield)) {
-            List<CardEffect> effects = new ArrayList<>(CombatWatch.ON_OPPONENT_CREATURES_ATTACK_YOU_UNBLOCKED.effectsOf(permanent.getCard()));
-            effects.addAll(triggerCollectionService.grantedTriggerEffects(
-                    gameData, permanent, CombatWatch.ON_OPPONENT_CREATURES_ATTACK_YOU_UNBLOCKED.trigger()));
+            List<CardEffect> effects = new ArrayList<>(printedCombatEffects(permanent.getCard(), CombatWatch.ON_OPPONENT_CREATURES_ATTACK_YOU_UNBLOCKED));
+            effects.addAll(CombatAbilityReader.effects(triggerCollectionService.grantedWatchedAbilities(
+                    gameData, permanent, CombatWatch.ON_OPPONENT_CREATURES_ATTACK_YOU_UNBLOCKED.trigger()), CombatWatch.ON_OPPONENT_CREATURES_ATTACK_YOU_UNBLOCKED.trigger()));
             if (effects.isEmpty()) {
                 continue;
             }
@@ -2060,9 +2161,9 @@ public class CombatBlockService {
         fireCreatureBecomesBlockedTriggers(gameData, attacker, attackerControllerId, List.of(token), newlyBlocked);
         if (newlyBlocked) {
             combatTriggerService.checkAuraTriggersForCreature(gameData, attacker, CombatWatch.ON_BECOMES_BLOCKED);
-            checkAllyBecomesBlockedTriggers(gameData, attackerControllerId, attacker, TriggerMode.NORMAL);
+            checkAllyBecomesBlockedTriggers(gameData, attackerControllerId, attacker, false);
         }
-        checkAllyBecomesBlockedTriggers(gameData, attackerControllerId, attacker, TriggerMode.PER_BLOCKER);
+        checkAllyBecomesBlockedTriggers(gameData, attackerControllerId, attacker, true);
 
     }
 
@@ -2082,32 +2183,24 @@ public class CombatBlockService {
     /**
      * Fires the "becomes blocked" triggers for an attacker that an effect made blocked without any
      * creature blocking it (CR 509.1h, e.g. Dazzling Beauty). Only triggers that don't reference a
-     * blocker fire — PER_BLOCKER registrations and per-blocker attached triggers are skipped, since
+     * blocker fire — "becomes blocked by a creature" abilities and per-blocker attached triggers are skipped, since
      * there is no blocker.
      */
     public void fireBecomesBlockedTriggersWithoutBlockers(GameData gameData, Permanent attacker) {
         UUID controllerId = gameData.activePlayerId;
         boolean lostAbilities = gameQueryService.hasLostPrintedAbilities(gameData, attacker);
         List<CardEffect> regularEffects = new ArrayList<>(lostAbilities ? List.of()
-                : CombatWatch.ON_BECOMES_BLOCKED.registrationsOf(attacker.getCard())
-                .stream()
-                .filter(r -> r.triggerMode() != TriggerMode.PER_BLOCKER)
-                .map(EffectRegistration::effect)
-                .toList());
+                : regularBecomesBlocked(printedBecomesBlocked(attacker)));
         if (!lostAbilities) {
-            regularEffects.addAll(attacker.getLegacyTemporaryTriggerEffects(CombatWatch.ON_BECOMES_BLOCKED.trigger()).stream()
-                    .filter(e -> !(e instanceof CombatOpponentReferencingEffect c)
-                            || !c.referencesCombatOpponent())
-                    .toList());
-            regularEffects.addAll(attacker.getLegacyPersistentTriggerEffects(CombatWatch.ON_BECOMES_BLOCKED.trigger()).stream()
+            regularEffects.addAll(temporaryAndPersistentBecomesBlocked(attacker).stream()
                     .filter(e -> !(e instanceof CombatOpponentReferencingEffect c)
                             || !c.referencesCombatOpponent())
                     .toList());
         }
         checkDelayedBecomesBlockedTriggers(gameData, attacker);
         pushRegularBecomesBlockedTriggers(gameData, attacker, controllerId, regularEffects);
-        for (CardEffect granted : lostAbilities ? List.<CardEffect>of() : triggerCollectionService.grantedTriggerEffects(
-                gameData, attacker, CombatWatch.ON_BECOMES_BLOCKED.trigger())) {
+        for (CardEffect granted : lostAbilities ? List.<CardEffect>of() : CombatAbilityReader.effects(triggerCollectionService.grantedWatchedAbilities(
+                    gameData, attacker, CombatWatch.ON_BECOMES_BLOCKED.trigger()), CombatWatch.ON_BECOMES_BLOCKED.trigger())) {
             if (!(granted instanceof CombatOpponentReferencingEffect referencing)
                     || !referencing.referencesCombatOpponent()) {
                 pushRegularBecomesBlockedTriggers(gameData, attacker, controllerId, List.of(granted));
@@ -2115,7 +2208,7 @@ public class CombatBlockService {
         }
 
         combatTriggerService.checkAuraTriggersForCreature(gameData, attacker, CombatWatch.ON_BECOMES_BLOCKED);
-        checkAllyBecomesBlockedTriggers(gameData, controllerId, attacker, TriggerMode.NORMAL);
+        checkAllyBecomesBlockedTriggers(gameData, controllerId, attacker, false);
         checkBlockedCreatureTriggers(gameData, attacker);
     }
 
@@ -2141,7 +2234,7 @@ public class CombatBlockService {
     }
 
     /**
-     * Pushes the non-PER_BLOCKER becomes-blocked effects of a blocked attacker.
+     * Pushes the becomes-blocked effects of a blocked attacker that trigger once, not once for each blocker.
      *
      * <p>Targets are chosen when the trigger is put on the stack, including optional effects.
      * The optional action is then accepted or declined when the targeted ability resolves.
@@ -2220,7 +2313,8 @@ public class CombatBlockService {
             StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
                     delayed.sourceCard(), delayed.controllerId(),
                     delayed.sourceCard().getName() + "'s delayed becomes-blocked trigger",
-                    List.of(delayed.legacyEffect()), attacker.getId(), (UUID) null);
+                    CombatAbilityReader.effects(List.of(delayed.ability()), CombatWatch.ON_BECOMES_BLOCKED.trigger()),
+                    attacker.getId(), (UUID) null);
             trigger.setNonTargeting(true);
             gameData.stack.add(trigger);
         }
@@ -2232,32 +2326,33 @@ public class CombatBlockService {
             checkDelayedBecomesBlockedTriggers(gameData, attacker);
         }
         boolean lostAbilities = gameQueryService.hasLostPrintedAbilities(gameData, attacker);
-        List<EffectRegistration> becomesBlockedRegs = lostAbilities ? List.of()
-                : CombatWatch.ON_BECOMES_BLOCKED.registrationsOf(attacker.getCard());
-        List<CardEffect> grantedBecomesBlockedEffects = new ArrayList<>(lostAbilities ? List.of()
-                : attacker.getLegacyTemporaryTriggerEffects(CombatWatch.ON_BECOMES_BLOCKED.trigger()));
-        if (!lostAbilities) {
-            grantedBecomesBlockedEffects.addAll(attacker.getLegacyPersistentTriggerEffects(CombatWatch.ON_BECOMES_BLOCKED.trigger()));
-        }
+        List<CombatAbilityReader.CombatEffect> becomesBlockedRegs = lostAbilities ? List.of()
+                : printedBecomesBlocked(attacker);
+        List<CardEffect> grantedBecomesBlockedEffects = lostAbilities ? new ArrayList<>()
+                : temporaryAndPersistentBecomesBlocked(attacker);
         List<CardEffect> continuouslyGrantedEffects = lostAbilities ? List.of()
-                : triggerCollectionService.grantedTriggerEffects(gameData, attacker, CombatWatch.ON_BECOMES_BLOCKED.trigger());
+                : CombatAbilityReader.effects(triggerCollectionService.grantedWatchedAbilities(
+                    gameData, attacker, CombatWatch.ON_BECOMES_BLOCKED.trigger()), CombatWatch.ON_BECOMES_BLOCKED.trigger());
         grantedBecomesBlockedEffects.addAll(continuouslyGrantedEffects.stream()
                 .filter(effect -> effect instanceof CombatOpponentReferencingEffect referencing
                         && referencing.referencesCombatOpponent()).toList());
         if (!becomesBlockedRegs.isEmpty() || !grantedBecomesBlockedEffects.isEmpty()
                 || !continuouslyGrantedEffects.isEmpty()) {
+            // "Becomes blocked by a creature" (CR 509.3d) triggers once for each blocker; one with a filter on the
+            // blocker ("becomes blocked by a nonartifact, non-Dragon creature") is an ability of its own for each
+            // blocker it matches.
             List<CardEffect> blockerSpecificEffects = new ArrayList<>(becomesBlockedRegs.stream()
-                    .filter(r -> r.triggerMode() == TriggerMode.PER_BLOCKER)
-                    .map(EffectRegistration::effect)
+                    .filter(read -> read.eachBlocker() && read.filter() == null)
+                    .map(CombatAbilityReader.CombatEffect::effect)
                     .toList());
+            List<CombatAbilityReader.CombatEffect> filteredPerBlocker = becomesBlockedRegs.stream()
+                    .filter(read -> read.eachBlocker() && read.filter() != null)
+                    .toList();
             blockerSpecificEffects.addAll(grantedBecomesBlockedEffects.stream()
                     .filter(e -> e instanceof CombatOpponentReferencingEffect c
                             && c.referencesCombatOpponent())
                     .toList());
-            List<CardEffect> regularEffects = new ArrayList<>(becomesBlockedRegs.stream()
-                    .filter(r -> r.triggerMode() != TriggerMode.PER_BLOCKER)
-                    .map(EffectRegistration::effect)
-                    .toList());
+            List<CardEffect> regularEffects = new ArrayList<>(regularBecomesBlocked(becomesBlockedRegs));
             regularEffects.addAll(grantedBecomesBlockedEffects.stream()
                     .filter(e -> !(e instanceof CombatOpponentReferencingEffect c)
                             || !c.referencesCombatOpponent())
@@ -2275,11 +2370,16 @@ public class CombatBlockService {
                 }
             }
 
-            if (!blockerSpecificEffects.isEmpty()) {
+            if (!blockerSpecificEffects.isEmpty() || !filteredPerBlocker.isEmpty()) {
                 for (Permanent blocker : blockers) {
                     // Filter conditional per-blocker effects (e.g. "becomes blocked by an equipped creature")
                     List<CardEffect> filteredEffects = new ArrayList<>();
                     List<CardEffect> separateInstanceEffects = new ArrayList<>();
+                    for (CombatAbilityReader.CombatEffect read : filteredPerBlocker) {
+                        if (predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, read.filter())) {
+                            separateInstanceEffects.add(read.effect());
+                        }
+                    }
                     for (CardEffect e : blockerSpecificEffects) {
                         if (e instanceof DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect) {
                             if (hasEquipmentAttached(gameData, blocker)) {
@@ -2371,22 +2471,25 @@ public class CombatBlockService {
      * Fires ON_ALLY_CREATURE_BECOMES_BLOCKED triggers for a single blocked attacker. Scans every
      * permanent with this slot on the blocked creature's controller's battlefield (not just the
      * blocked creature itself). "It" references the blocked creature via the non-targeting
-     * sourcePermanentId, so self-scoped effects like {@code BoostSelfEffect} apply to it.
+     * sourcePermanentId, so self-scoped effects like {@code BoostSelfEffect} apply to it. With {@code eachBlocker}
+     * it fires the "becomes blocked by a creature" ones (CR 509.3d), once for each blocker, otherwise the others.
      */
-    private void checkAllyBecomesBlockedTriggers(GameData gameData, UUID activeId, Permanent blockedAttacker, TriggerMode mode) {
+    private void checkAllyBecomesBlockedTriggers(GameData gameData, UUID activeId, Permanent blockedAttacker,
+                                                 boolean eachBlocker) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(activeId);
         if (battlefield == null) {
             return;
         }
         // Per-blocker ally triggers are abilities granted to the blocked creature (Retaliation), so
         // a creature that lost its abilities no longer has them.
-        if (mode == TriggerMode.PER_BLOCKER && gameQueryService.hasLostPrintedAbilities(gameData, blockedAttacker)) {
+        if (eachBlocker && gameQueryService.hasLostPrintedAbilities(gameData, blockedAttacker)) {
             return;
         }
+        Trigger allyBecomesBlocked = CombatWatch.ON_ALLY_CREATURE_BECOMES_BLOCKED.trigger();
         for (Permanent perm : battlefield) {
-            List<CardEffect> effects = CombatWatch.ON_ALLY_CREATURE_BECOMES_BLOCKED.registrationsOf(perm.getCard())
-                    .stream().filter(registration -> registration.triggerMode() == mode)
-                    .map(EffectRegistration::effect).toList();
+            List<CombatAbilityReader.CombatEffect> effects = CombatAbilityReader.read(
+                    CombatAbilityReader.printed(perm.getCard(), CombatWatch.ON_ALLY_CREATURE_BECOMES_BLOCKED),
+                    allyBecomesBlocked).stream().filter(read -> read.eachBlocker() == eachBlocker).toList();
             if (effects.isEmpty()) continue;
             if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
 
@@ -2395,7 +2498,17 @@ public class CombatBlockService {
                     .withSourceCardId(perm.getCard().getId())
                     .withSourceControllerId(activeId)
                     .withSourcePermanentId(perm.getId());
-            for (CardEffect effect : effects) {
+            for (CombatAbilityReader.CombatEffect read : effects) {
+                if (read.limit() != TriggerLimit.NONE || read.oneOrMore()) {
+                    throw new IllegalStateException("The \"a creature you control becomes blocked\" collector reads no "
+                            + read.options() + ": " + read.ability());
+                }
+                // "Whenever a [filter] creature you control becomes blocked": the trigger's filter on it.
+                if (read.filter() != null && !predicateEvaluationService.matchesPermanentPredicate(
+                        blockedAttacker, read.filter(), watcherContext)) {
+                    continue;
+                }
+                CardEffect effect = read.effect();
                 if (effect instanceof TriggeringCardConditionalEffect conditional) {
                     // Subtypes are read from the blocked permanent itself so creature-type changes made
                     // to that permanent (e.g. Amoeboid Changeling) are seen, not just the printed card.
@@ -2467,10 +2580,8 @@ public class CombatBlockService {
             return;
         }
         for (Permanent watcher : List.copyOf(battlefield)) {
-            List<CardEffect> effects = CombatWatch.ON_ALLY_CREATURES_BECOME_BLOCKED.registrationsOf(watcher.getCard()).stream()
-                    .filter(registration -> registration.triggerMode() == TriggerMode.NORMAL)
-                    .map(EffectRegistration::effect)
-                    .toList();
+            List<CardEffect> effects = printedCombatEffects(watcher.getCard(),
+                    CombatWatch.ON_ALLY_CREATURES_BECOME_BLOCKED);
             if (effects.isEmpty()) {
                 continue;
             }
@@ -2516,7 +2627,7 @@ public class CombatBlockService {
 
             for (Map.Entry<UUID, List<Permanent>> battlefield : gameData.playerBattlefields.entrySet()) {
                 for (Permanent watcher : List.copyOf(battlefield.getValue())) {
-                    for (CardEffect effect : CombatWatch.ON_ANY_CREATURE_BECOMES_BLOCKED.effectsOf(watcher.getCard())) {
+                    for (CardEffect effect : printedCombatEffects(watcher.getCard(), CombatWatch.ON_ANY_CREATURE_BECOMES_BLOCKED)) {
                         if (!(effect instanceof BlockPairConditionalEffect pairEffect)) {
                             continue;
                         }
@@ -2562,7 +2673,7 @@ public class CombatBlockService {
         for (Map.Entry<UUID, List<Permanent>> battlefield : gameData.playerBattlefields.entrySet()) {
             for (Permanent watcher : List.copyOf(battlefield.getValue())) {
                 List<CardEffect> matchingEffects = new ArrayList<>();
-                for (CardEffect effect : CombatWatch.ON_ANY_CREATURE_BECOMES_BLOCKED.effectsOf(watcher.getCard())) {
+                for (CardEffect effect : printedCombatEffects(watcher.getCard(), CombatWatch.ON_ANY_CREATURE_BECOMES_BLOCKED)) {
                     if (!(effect instanceof BlockedCreatureTriggerEffect conditional)) {
                         continue;
                     }
@@ -2610,7 +2721,7 @@ public class CombatBlockService {
         }
         for (Map.Entry<UUID, List<Permanent>> battlefield : gameData.playerBattlefields.entrySet()) {
             for (Permanent watcher : List.copyOf(battlefield.getValue())) {
-                List<CardEffect> effects = CombatWatch.ON_ANY_CREATURES_BLOCK.effectsOf(watcher.getCard());
+                List<CardEffect> effects = printedCombatEffects(watcher.getCard(), CombatWatch.ON_ANY_CREATURES_BLOCK);
                 if (effects.isEmpty() || gameQueryService.hasLostAllAbilities(gameData, watcher)) {
                     continue;
                 }
@@ -2650,13 +2761,18 @@ public class CombatBlockService {
             for (Map.Entry<UUID, List<Permanent>> battlefield : gameData.playerBattlefields.entrySet()) {
                 for (Permanent watcher : List.copyOf(battlefield.getValue())) {
                     if (gameQueryService.hasLostPrintedAbilities(gameData, watcher)) continue;
-                    List<CardEffect> effects = CombatWatch.ON_ANY_CREATURE_BLOCKS.effectsOf(watcher.getCard());
-                    if (effects.isEmpty()) {
+                    List<TriggeredAbility> blockAbilities = CombatAbilityReader.printed(watcher.getCard(),
+                            CombatWatch.ON_ANY_CREATURE_BLOCKS);
+                    if (blockAbilities.isEmpty()) {
                         continue;
                     }
                     FilterContext watcherContext = FilterContext.of(gameData)
                             .withSourceCardId(watcher.getCard().getId())
                             .withSourceControllerId(battlefield.getKey());
+                    // "Whenever a [filter] creature blocks": the trigger's filter on the blocker (Noble Stand).
+                    List<CardEffect> effects = CombatAbilityReader.effects(blockAbilities,
+                            CombatWatch.ON_ANY_CREATURE_BLOCKS.trigger(),
+                            filter -> predicateEvaluationService.matchesPermanentPredicate(blocker, filter, watcherContext));
                     List<CardEffect> filteredEffects = new ArrayList<>();
                     for (CardEffect effect : effects) {
                         if (effect instanceof TriggeringPermanentConditionalEffect conditional) {

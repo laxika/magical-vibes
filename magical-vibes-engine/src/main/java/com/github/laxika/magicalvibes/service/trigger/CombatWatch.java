@@ -13,16 +13,13 @@ import java.util.List;
  * Which of the old combat slot collectors reads a triggered ability, now that the ability has a real trigger
  * (effect-slot-refactor.md step 13, family 3). Each constant is named after the slot whose collector it stands for and
  * names the trigger its cards were converted to and the zone the collector reads them in. The collectors in the
- * combat services and {@code TriggerCollectionService} still decide when the ability triggers, how its effects group
- * into stack objects and which wrappers filter it, and its {@link CollectsCombatTrigger} handlers bind the event data,
- * as the slot's did, until steps 14 and 15 of the refactor replace them with trigger options and effects that read
- * the event.
+ * combat services and {@code TriggerCollectionService} still decide when the ability triggers and how its effects
+ * group into stack objects, and its {@link CollectsCombatTrigger} handlers bind the event data, as the slot's did,
+ * until step 15 of the refactor replaces them with effects that read the event.
  * <p>
- * The collectors read the abilities in the form the cards wrote them before step 14
- * ({@link Card#getLegacyTriggerEffects(com.github.laxika.magicalvibes.model.trigger.Trigger, Zone)}): an intervening
- * "if" and a limit wrapped around each effect, a combat trigger's filter as the
- * {@code TriggeringPermanentConditionalEffect} or {@code AllyCombatDamageTriggerEffect} they judge, and the
- * multiplicity as the registration's trigger mode.
+ * Every collector of these watches reads the abilities themselves ({@link Trigger#collectedAsAbility()}), through
+ * {@link CombatAbilityReader}: the trigger's filter on the creature, the limit and the multiplicity come from the
+ * ability, and the legacy view gives none of them, so {@link #effectsOf} and {@link #registrationsOf} throw.
  */
 public enum CombatWatch implements TriggerWatch {
     /** "Whenever this creature attacks". */
@@ -161,13 +158,15 @@ public enum CombatWatch implements TriggerWatch {
         return zone;
     }
 
+    /** Throws: the collectors of a combat watch read its abilities themselves ({@link CombatAbilityReader}). */
     @Override
     public List<CardEffect> effectsOf(Card card) {
-        return card.getLegacyTriggerEffects(trigger, zone);
+        throw new UnsupportedOperationException(name() + " is read by abilities, not by effects");
     }
 
+    /** Throws: the collectors of a combat watch read its abilities themselves ({@link CombatAbilityReader}). */
     @Override
     public List<EffectRegistration> registrationsOf(Card card) {
-        return card.getLegacyTriggerEffectRegistrations(trigger, zone);
+        throw new UnsupportedOperationException(name() + " is read by abilities, not by effects");
     }
 }

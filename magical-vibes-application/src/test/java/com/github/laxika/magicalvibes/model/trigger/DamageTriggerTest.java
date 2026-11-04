@@ -119,15 +119,13 @@ class DamageTriggerTest {
     void aMultiplicityTheDamageCollectorsCantReadIsRejected() {
         Card oneOrMore = new Card();
         oneOrMore.addTrigger(Triggers.dealtDamage(), TriggerOptions.ONE_OR_MORE, DRAW);
-        Card eachSourceOffDamage = new Card();
-        eachSourceOffDamage.addTrigger(Triggers.attacks(), TriggerOptions.EACH_SOURCE, DRAW);
         Card twoFilters = new Card();
         twoFilters.addTrigger(List.of(Triggers.dealtDamage().withFilter(DRAGON), Triggers.dealsDamage()), DRAW);
 
         assertThatThrownBy(() -> DamageWatch.ON_DEALT_DAMAGE.effectsOf(oneOrMore))
                 .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> eachSourceOffDamage.getLegacyTriggerEffects(Triggers.attacks(), Zone.BATTLEFIELD))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> new Card().addTrigger(Triggers.attacks(), TriggerOptions.EACH_SOURCE, DRAW))
+                .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> DamageWatch.ON_DEALT_DAMAGE.effectsOf(twoFilters))
                 .isInstanceOf(IllegalStateException.class);
     }

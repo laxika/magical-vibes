@@ -7,9 +7,11 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,9 +33,13 @@ class CombatWatchTest {
         card.addTrigger(new TriggerCondition(Triggers.youAttack(), AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
                 fromGraveyard);
 
-        assertThat(CombatWatch.ON_ALLY_CREATURES_ATTACK.effectsOf(card)).containsExactly(fromBattlefield);
-        assertThat(CombatWatch.GRAVEYARD_ON_ALLY_CREATURES_ATTACK.effectsOf(card)).containsExactly(fromGraveyard);
-        assertThat(CombatWatch.EXILE_ON_ALLY_CREATURES_ATTACK.effectsOf(card)).isEmpty();
+        assertThat(effects(card, CombatWatch.ON_ALLY_CREATURES_ATTACK)).containsExactly(fromBattlefield);
+        assertThat(effects(card, CombatWatch.GRAVEYARD_ON_ALLY_CREATURES_ATTACK)).containsExactly(fromGraveyard);
+        assertThat(effects(card, CombatWatch.EXILE_ON_ALLY_CREATURES_ATTACK)).isEmpty();
         assertThat(CombatWatch.GRAVEYARD_ON_ALLY_CREATURES_ATTACK.zone()).isEqualTo(Zone.GRAVEYARD);
+    }
+
+    private static List<CardEffect> effects(Card card, CombatWatch watch) {
+        return CombatAbilityReader.effects(CombatAbilityReader.printed(card, watch), watch.trigger());
     }
 }

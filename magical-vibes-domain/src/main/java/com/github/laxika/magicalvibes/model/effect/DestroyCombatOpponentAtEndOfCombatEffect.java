@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * Placed on the {@code Triggers.blocks()} ability (for the
  * "blocks" half, auto-targeting the blocked attacker) and on
  * {@code Triggers.becomesBlocked()} ability with
- * {@link com.github.laxika.magicalvibes.model.TriggerMode#PER_BLOCKER} (for the "becomes blocked"
+ * {@code TriggerOptions.EACH_BLOCKER} (for the "becomes blocked"
  * half, one trigger per blocker). The referenced creature is passed as the stack entry's target but
  * the trigger does not target (it can't fizzle). At resolution the opponent's colour/type is checked
  * against {@code filter}; a delayed {@link com.github.laxika.magicalvibes.model.action.DelayedPermanentAction}

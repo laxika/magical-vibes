@@ -1894,8 +1894,7 @@ public class Card {
 
     /**
      * Adds a triggered ability like {@link #addSimultaneousTrigger(Trigger, CardEffect...)} whose registrations carry
-     * {@code triggerMode}: "whenever this becomes blocked by a creature, it deals 3 damage to that creature's
-     * controller and 3 damage to that creature" is {@link TriggerMode#PER_BLOCKER}.
+     * {@code triggerMode}: {@link TriggerMode#INDEPENDENT} for a simultaneous group that is an ability of its own.
      */
     public void addSimultaneousTrigger(Trigger trigger, TriggerMode triggerMode, CardEffect... effects) {
         addTriggeredAbility(new TriggeredAbility(trigger, TriggerOptions.DEFAULT,

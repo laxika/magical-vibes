@@ -36,8 +36,8 @@ public sealed interface Trigger permits AbilityTrigger, AttachTrigger, ChapterTr
      * Whether every collector of this trigger reads its abilities themselves (the trigger's filters, the ability's
      * options and its effects), so the legacy view ({@code TriggeredAbility.legacyEffects()}) gives none of them: the
      * spell, land-play and activation triggers (step 13's family 2), whose collectors effect-slot-refactor.md step 14
-     * moved off the legacy view in runs 16b to 16d, and the "at the beginning of [step or phase]" triggers (family 1,
-     * run 16e).
+     * moved off the legacy view in runs 16b to 16d, the "at the beginning of [step or phase]" triggers (family 1,
+     * run 16e) and the combat triggers (family 3, run 16f).
      */
     default boolean collectedAsAbility() {
         return false;

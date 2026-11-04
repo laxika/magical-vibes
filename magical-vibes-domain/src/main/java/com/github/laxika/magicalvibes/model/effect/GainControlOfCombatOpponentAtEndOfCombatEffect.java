@@ -9,7 +9,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * combat" ({@link ControlDuration#PERMANENT}).
  * <p>
  * Placed on {@code Triggers.becomesBlocked()} ability with
- * {@link com.github.laxika.magicalvibes.model.TriggerMode#PER_BLOCKER} (one trigger per blocker). The
+ * {@code TriggerOptions.EACH_BLOCKER} (one trigger per blocker). The
  * referenced creature is carried as the stack entry's target and the source is the entry's source
  * permanent; the trigger does not target (it can't fizzle). Resolution creates a
  * {@link com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger} carrying a

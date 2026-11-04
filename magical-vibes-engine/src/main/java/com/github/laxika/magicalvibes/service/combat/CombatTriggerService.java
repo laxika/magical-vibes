@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.combat;
 
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.service.trigger.CombatAbilityReader;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -7,7 +9,6 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -17,7 +18,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.FirstCombatPhase;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsMonarch;
@@ -67,6 +67,23 @@ public class CombatTriggerService {
     private final ETBTokenTargetService etbTokenTargetService;
     private final GraveyardTargetingService graveyardTargetingService;
 
+    /**
+     * The effects of the attached permanent {@code perm}'s abilities that {@code watch} reads: its own "whenever
+     * equipped / enchanted creature attacks, blocks or becomes blocked", or the ability it grants the creature. No
+     * Aura or Equipment writes one with a filter or a limit, and this throws on one.
+     */
+    private static List<CombatAbilityReader.CombatEffect> attachedCombatEffects(Permanent perm, CombatWatch watch) {
+        List<CombatAbilityReader.CombatEffect> reads = CombatAbilityReader.read(
+                CombatAbilityReader.printed(perm.getCard(), watch), watch.trigger());
+        for (CombatAbilityReader.CombatEffect read : reads) {
+            if (read.filter() != null || read.limit() != TriggerLimit.NONE) {
+                throw new IllegalStateException("The attached-permanent combat collector reads no filter or limit: "
+                        + read.ability());
+            }
+        }
+        return reads;
+    }
+
     private boolean isOwnAttackTrigger(Permanent perm, CombatWatch slot) {
         return slot == CombatWatch.ON_ATTACK
                 && (perm.getCard().isAttackTriggerOwnedByAura()
@@ -96,7 +113,7 @@ public class CombatTriggerService {
 
     /**
      * Checks attached triggers while allowing the block collector to suppress each attached
-     * permanent's ONCE_PER_BLOCK registration after its first trigger in the block declaration.
+     * permanent's "blocks" once each combat ability after its first trigger in the block declaration.
      */
     public void checkAuraTriggersForCreature(GameData gameData, Permanent creature, CombatWatch slot,
                                               Permanent combatOpponent,
@@ -114,28 +131,29 @@ public class CombatTriggerService {
                         && !perm.getCard().isAttackTriggerOwnedByAura()) {
                     return;
                 }
-                List<EffectRegistration> auraRegs = slot.registrationsOf(perm.getCard());
-                // Skip per-blocker effects — they are handled by checkAttachedPerBlockerTriggers
+                List<CombatAbilityReader.CombatEffect> auraRegs = attachedCombatEffects(perm, slot);
+                // Skip per-blocker effects ("becomes blocked by a creature", CR 509.3d) — they are handled by
+                // checkAttachedPerBlockerTriggers. "Blocks" once each combat (CR 509.3a) triggers for the first
+                // block of the declaration only.
                 boolean hasOncePerBlockRegistration = auraRegs.stream()
-                        .anyMatch(registration -> registration.triggerMode() == TriggerMode.ONCE_PER_BLOCK);
+                        .anyMatch(CombatAbilityReader.CombatEffect::oneOrMore);
                 boolean includeOncePerBlockRegistration = !hasOncePerBlockRegistration
                         || oncePerBlockTriggeredPermanents == null
                         || oncePerBlockTriggeredPermanents.add(perm.getId());
-                List<EffectRegistration> queuedRegistrations = auraRegs.stream()
-                        .filter(r -> r.triggerMode() != TriggerMode.PER_BLOCKER)
-                        .filter(r -> r.triggerMode() != TriggerMode.ONCE_PER_BLOCK
-                                || includeOncePerBlockRegistration)
+                List<CombatAbilityReader.CombatEffect> queuedRegistrations = auraRegs.stream()
+                        .filter(r -> !r.eachBlocker())
+                        .filter(r -> !r.oneOrMore() || includeOncePerBlockRegistration)
                         .toList();
                 List<List<CardEffect>> effectGroups = new ArrayList<>();
                 List<CardEffect> sharedEffects = queuedRegistrations.stream()
-                        .filter(r -> r.triggerMode() != TriggerMode.INDEPENDENT)
-                        .map(EffectRegistration::effect)
+                        .filter(r -> !r.independent())
+                        .map(CombatAbilityReader.CombatEffect::effect)
                         .toList();
                 if (!sharedEffects.isEmpty()) {
                     effectGroups.add(sharedEffects);
                 }
                 queuedRegistrations.stream()
-                        .filter(r -> r.triggerMode() == TriggerMode.INDEPENDENT)
+                        .filter(CombatAbilityReader.CombatEffect::independent)
                         .forEach(r -> effectGroups.add(List.of(r.effect())));
                 for (List<CardEffect> nonPerBlockerEffects : effectGroups) {
                     // Each INDEPENDENT registration is its own triggered ability (Reaper's Talisman).
@@ -429,9 +447,9 @@ public class CombatTriggerService {
 
         gameData.forEachPermanent((ownerId, perm) -> {
             if (perm.isAttached() && perm.getAttachedTo().equals(attacker.getId())) {
-                List<CardEffect> perBlockerEffects = CombatWatch.ON_BECOMES_BLOCKED.registrationsOf(perm.getCard()).stream()
-                        .filter(r -> r.triggerMode() == TriggerMode.PER_BLOCKER)
-                        .map(EffectRegistration::effect)
+                List<CardEffect> perBlockerEffects = attachedCombatEffects(perm, CombatWatch.ON_BECOMES_BLOCKED).stream()
+                        .filter(CombatAbilityReader.CombatEffect::eachBlocker)
+                        .map(CombatAbilityReader.CombatEffect::effect)
                         .toList();
                 if (!perBlockerEffects.isEmpty()) {
                     for (BlockerAssignment assignment : blockerAssignments) {

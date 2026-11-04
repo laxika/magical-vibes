@@ -7,7 +7,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>
  * Placed on the {@code Triggers.blocks()} ability (for the
  * "blocks" half) and on {@code Triggers.becomesBlocked()}
- * with {@link com.github.laxika.magicalvibes.model.TriggerMode#PER_BLOCKER} (for the "becomes
+ * with {@code TriggerOptions.EACH_BLOCKER} (for the "becomes
  * blocked" half, one trigger per blocker). As a {@link CombatOpponentReferencingEffect} the combat
  * opponent is carried as the trigger's non-targeting target, so the trigger can't fizzle.
  * <p>

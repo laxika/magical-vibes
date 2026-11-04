@@ -76,7 +76,8 @@ public record TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard
 
     /**
      * The effect of {@link #ability} wrapped in its options and filters ({@link TriggeredAbility#legacyEffects()}): the
-     * form the combat collectors read it in.
+     * form the collectors that still read effects take it in (the tap collectors'). A combat ability has no legacy
+     * view, and this throws for one: its collectors read {@link #ability} through {@code CombatAbilityReader}.
      */
     public CardEffect legacyEffect() {
         return ability.legacyEffects().getFirst().effect();

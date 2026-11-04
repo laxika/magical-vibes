@@ -1,5 +1,11 @@
 package com.github.laxika.magicalvibes.service.combat.attack;
 
+import com.github.laxika.magicalvibes.model.Zone;
+import java.util.function.Predicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
+import com.github.laxika.magicalvibes.service.trigger.CombatAbilityReader;
 import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -277,14 +283,19 @@ public class CombatAttackService {
                                              boolean mustAttackWithAtLeastOne) {
     }
 
-    private record AttackTriggerSource(Permanent permanent, CombatWatch watch,
-                                       List<CardEffect> effects, List<UUID> bandMembers) {
-        private AttackTriggerSource(Permanent permanent, CombatWatch watch, List<CardEffect> effects) {
-            this(permanent, watch, effects, null);
-        }
+    /**
+     * The effects of {@code card}'s abilities that {@code watch} reads, for a collector that reads no filter, limit or
+     * multiplicity ({@link CombatAbilityReader#effects(List, Trigger)}).
+     */
+    private static List<CardEffect> printedCombatEffects(Card card, CombatWatch watch) {
+        return CombatAbilityReader.effects(CombatAbilityReader.printed(card, watch), watch.trigger());
+    }
 
-        private AttackTriggerSource(Permanent permanent, CombatWatch watch) {
-            this(permanent, watch, null, null);
+    private record AttackTriggerSource(Permanent permanent, CombatWatch watch,
+                                       List<CombatAbilityReader.CombatEffect> effects, List<UUID> bandMembers) {
+        private AttackTriggerSource(Permanent permanent, CombatWatch watch,
+                                    List<CombatAbilityReader.CombatEffect> effects) {
+            this(permanent, watch, effects, null);
         }
     }
 
@@ -1143,20 +1154,63 @@ public class CombatAttackService {
             // doesn't fire when an animated Equipment attacks itself (Captain America's Shield).
             boolean equipmentAttackTrigger = gameQueryService.hasEffectiveSubtype(gameData, attacker, CardSubtype.EQUIPMENT)
                     && !gameQueryService.hasReconfigure(gameData, attacker);
-            List<CardEffect> nativeAttackEffects = attacker.isFaceDown()
+            Trigger onAttack = CombatWatch.ON_ATTACK.trigger();
+            List<CombatAbilityReader.CombatEffect> printedAttack = CombatAbilityReader.read(
+                    CombatAbilityReader.printed(attacker.getCard(), CombatWatch.ON_ATTACK), onAttack);
+            List<CombatAbilityReader.CombatEffect> nativeAttack = attacker.isFaceDown()
                     || gameQueryService.hasLostPrintedAbilities(gameData, attacker)
                     || equipmentAttackTrigger
-                    ? List.of() : CombatWatch.ON_ATTACK.effectsOf(attacker.getCard());
+                    ? List.of() : printedAttack;
             // A granted triggered ability is an ability of the creature, so losing all abilities removes it.
-            List<CardEffect> temporaryAttackEffects = new ArrayList<>();
+            List<CombatAbilityReader.CombatEffect> temporaryAttack = new ArrayList<>();
             if (!gameQueryService.hasLostAllAbilities(gameData, attacker)) {
-                temporaryAttackEffects.addAll(attacker.getLegacyTemporaryTriggerEffects(CombatWatch.ON_ATTACK.trigger()));
-                temporaryAttackEffects.addAll(attacker.getLegacyPersistentTriggerEffects(CombatWatch.ON_ATTACK.trigger()));
+                temporaryAttack.addAll(CombatAbilityReader.read(
+                        CombatAbilityReader.temporary(attacker, onAttack), onAttack));
+                temporaryAttack.addAll(CombatAbilityReader.read(
+                        CombatAbilityReader.persistent(attacker, onAttack), onAttack));
             }
             // Continuously granted ON_ATTACK abilities (Thorncaster Sliver giving every Sliver
             // "Whenever this creature attacks, it deals 1 damage to any target").
-            List<CardEffect> grantedAttackEffects = grantedTriggeredAbilitySupport.grantedTriggerEffects(
-                    gameData, attacker, CombatWatch.ON_ATTACK.trigger());
+            List<CombatAbilityReader.CombatEffect> grantedAttack = CombatAbilityReader.read(
+                    grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, attacker, onAttack), onAttack);
+            // "Whenever this creature attacks for the first time each turn" (Aurelia, the Warleader) is the
+            // ability's ONCE_EACH_TURN limit: drop those abilities once this permanent has already attacked
+            // this turn, otherwise consume the first-attack marker before any intervening-if or trigger-subject
+            // filter can remove them. The gate is per permanent, so an extra combat phase it grants can't loop.
+            // Attacks made while the creature had lost its abilities still count as its attacks this turn, so
+            // the attack count is checked as well as the marker. "One or more" is an attack-or-block ability's
+            // "blocks" once each combat (CR 509.3a); a creature attacks once each combat anyway.
+            List<CombatAbilityReader.CombatEffect> attackReads = new ArrayList<>(nativeAttack);
+            attackReads.addAll(grantedAttack);
+            attackReads.addAll(temporaryAttack);
+            for (CombatAbilityReader.CombatEffect read : attackReads) {
+                if ((read.limit() != TriggerLimit.NONE && read.limit() != TriggerLimit.ONCE_EACH_TURN)
+                        || (read.multiplicity() != TriggerMultiplicity.EACH && !read.oneOrMore())) {
+                    throw new IllegalStateException("The attack collector reads no " + read.options() + ": "
+                            + read.ability());
+                }
+            }
+            if (attackReads.stream().anyMatch(read -> read.limit() == TriggerLimit.ONCE_EACH_TURN)) {
+                Predicate<CombatAbilityReader.CombatEffect> firstTime =
+                        read -> read.limit() == TriggerLimit.ONCE_EACH_TURN;
+                if (attacker.getAttacksThisTurn() > 1
+                        || gameData.onceEachTurnAttackTriggersFiredThisTurn.contains(attacker.getId())) {
+                    nativeAttack = nativeAttack.stream().filter(firstTime.negate()).toList();
+                    grantedAttack.removeIf(firstTime);
+                    temporaryAttack.removeIf(firstTime);
+                } else {
+                    gameData.onceEachTurnAttackTriggersFiredThisTurn.add(attacker.getId());
+                }
+            }
+            // Filter trigger-subject conditions against this attacking creature.
+            Predicate<CombatAbilityReader.CombatEffect> failsFilter = read -> read.filter() != null
+                    && !predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, read.filter());
+            nativeAttack = nativeAttack.stream().filter(failsFilter.negate()).toList();
+            grantedAttack.removeIf(failsFilter);
+            temporaryAttack.removeIf(failsFilter);
+            List<CardEffect> nativeAttackEffects = CombatAbilityReader.effectsOf(nativeAttack);
+            List<CardEffect> temporaryAttackEffects = new ArrayList<>(CombatAbilityReader.effectsOf(temporaryAttack));
+            List<CardEffect> grantedAttackEffects = CombatAbilityReader.effectsOf(grantedAttack);
             // Decayed's "sacrifice it at end of combat" is its own triggered ability (CR 702.147a),
             // so it goes on the stack as a separate object from any printed attack ability.
             boolean decayedTrigger = gameQueryService.hasKeyword(gameData, attacker, Keyword.DECAYED);
@@ -1183,29 +1237,6 @@ public class CombatAttackService {
                             : new com.github.laxika.magicalvibes.model.effect.SequenceEffect(chosen);
                 });
 
-                // "Whenever this creature attacks for the first time each turn" (Aurelia, the
-                // Warleader): drop the wrapped effects entirely once this permanent has already
-                // attacked this turn, otherwise consume the first-attack marker before any
-                // intervening-if or trigger-subject filters can remove the wrapped effect.
-                // The gate is per permanent, so an extra combat phase it grants can't loop. Attacks
-                // made while the creature had lost its abilities still count as its attacks this turn,
-                // so the attack count is checked as well as the marker.
-                if (allEffects.stream().anyMatch(e -> e instanceof OncePerTurnTriggerEffect)) {
-                    if (attacker.getAttacksThisTurn() > 1
-                            || gameData.onceEachTurnAttackTriggersFiredThisTurn.contains(attacker.getId())) {
-                        allEffects.removeIf(e -> e instanceof OncePerTurnTriggerEffect);
-                    } else {
-                        gameData.onceEachTurnAttackTriggersFiredThisTurn.add(attacker.getId());
-                        allEffects.replaceAll(e -> e instanceof OncePerTurnTriggerEffect once ? once.wrapped() : e);
-                    }
-                }
-                // Filter trigger-subject conditionals against this attacking creature, then
-                // unwrap them so their condition is not re-evaluated during resolution.
-                allEffects.removeIf(e -> e instanceof TriggeringPermanentConditionalEffect conditional
-                        && !predicateEvaluationService.matchesPermanentPredicate(
-                                gameData, attacker, conditional.predicate()));
-                allEffects.replaceAll(e -> e instanceof TriggeringPermanentConditionalEffect conditional
-                        ? conditional.wrapped() : e);
 
                 // Filter out attacks-alone conditionals when not attacking alone (CR 506.5)
                 allEffects.removeIf(e -> e instanceof ConditionalEffect ce
@@ -1496,7 +1527,7 @@ public class CombatAttackService {
                                     abilities.add(List.of(granted));
                                 }
                             }
-                            for (var registration : CombatWatch.ON_ATTACK.registrationsOf(attacker.getCard())) {
+                            for (var registration : CombatAbilityReader.registrationsOf(printedAttack)) {
                                 if (registration.triggerMode()
                                         == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT
                                         && bundledEffects.remove(registration.effect())) {
@@ -1539,7 +1570,7 @@ public class CombatAttackService {
                                         && attackCard.getTargetGroups().stream().allMatch(group ->
                                         attackCard.bindsEffectToTargetGroup(group.getIndex())
                                                 && attackCard.getEffectsBoundToTargetGroup(group.getIndex()).stream()
-                                                .noneMatch(CombatWatch.ON_ATTACK.effectsOf(attackCard)::contains));
+                                                .noneMatch(CombatAbilityReader.effectsOf(printedAttack)::contains));
                                 if (!declaredGroupsTargetOtherAbilities
                                         && (attackCard.getTargetGroups().size() > 1
                                         || ((!staticSingleMultiTargetGroup || attachesEquipment)
@@ -1574,7 +1605,7 @@ public class CombatAttackService {
                                     abilities.add(List.of(granted));
                                 }
                             }
-                            for (var registration : CombatWatch.ON_ATTACK.registrationsOf(attacker.getCard())) {
+                            for (var registration : CombatAbilityReader.registrationsOf(printedAttack)) {
                                 if (registration.triggerMode()
                                         == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT
                                         && bundledEffects.remove(registration.effect())) {
@@ -1642,14 +1673,14 @@ public class CombatAttackService {
                         || !attacker.getId().equals(watcher.watchedPermanentId())) {
                     continue;
                 }
-                CardEffect watcherEffect = watcher.legacyEffect();
-                if (watcherEffect instanceof TriggeringPermanentConditionalEffect conditional) {
-                    if (!predicateEvaluationService.matchesPermanentPredicate(
-                            gameData, attacker, conditional.predicate())) {
-                        continue;
-                    }
-                    watcherEffect = conditional.wrapped();
+                CombatAbilityReader.CombatEffect watcherRead = CombatAbilityReader.read(
+                        watcher.ability(), CombatWatch.ON_ATTACK.trigger()).getFirst();
+                CombatAbilityReader.requireNoLimitOrMultiplicity(watcherRead, CombatWatch.ON_ATTACK.trigger());
+                if (watcherRead.filter() != null && !predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, attacker, watcherRead.filter())) {
+                    continue;
                 }
+                CardEffect watcherEffect = watcherRead.effect();
                 StackEntry delayedTrigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         watcher.sourceCard(),
@@ -1871,9 +1902,11 @@ public class CombatAttackService {
         // The attacker count is locked at trigger time via xValue (per MTG rules: creatures
         // removed before resolution still count, tokens entering attacking after don't).
         List<AttackTriggerSource> attackTriggerSources = new ArrayList<>();
+        Trigger youAttack = CombatWatch.ON_ALLY_CREATURES_ATTACK.trigger();
         for (Permanent perm : battlefield) {
-            List<CardEffect> combinedEffects = new ArrayList<>();
-            for (var registration : CombatWatch.ON_ALLY_CREATURES_ATTACK.registrationsOf(perm.getCard())) {
+            List<CombatAbilityReader.CombatEffect> combinedEffects = new ArrayList<>();
+            for (var registration : CombatAbilityReader.read(
+                    CombatAbilityReader.printed(perm.getCard(), CombatWatch.ON_ALLY_CREATURES_ATTACK), youAttack)) {
                 if (registration.effect() instanceof com.github.laxika.magicalvibes.model.effect.BoostCreaturesInAttackingBandsEffect) {
                     Map<UUID, List<UUID>> declaredBands = new java.util.LinkedHashMap<>();
                     for (int attackerIndex : attackerIndices) {
@@ -1886,20 +1919,19 @@ public class CombatAttackService {
                     for (List<UUID> members : declaredBands.values()) {
                         if (members.size() >= 2) {
                             attackTriggerSources.add(new AttackTriggerSource(perm,
-                                    CombatWatch.ON_ALLY_CREATURES_ATTACK, List.of(registration.effect()), List.copyOf(members)));
+                                    CombatWatch.ON_ALLY_CREATURES_ATTACK, List.of(registration), List.copyOf(members)));
                         }
                     }
                     continue;
                 }
-                if (registration.triggerMode() == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT) {
+                if (registration.independent()) {
                     attackTriggerSources.add(new AttackTriggerSource(perm,
-                            CombatWatch.ON_ALLY_CREATURES_ATTACK, List.of(registration.effect())));
+                            CombatWatch.ON_ALLY_CREATURES_ATTACK, List.of(registration)));
                 } else {
-                    combinedEffects.add(registration.effect());
+                    combinedEffects.add(registration);
                 }
             }
-            combinedEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
-                    gameData, perm, CombatWatch.ON_ALLY_CREATURES_ATTACK.trigger()));
+            combinedEffects.addAll(CombatAbilityReader.read(grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, perm, youAttack), youAttack));
             if (!combinedEffects.isEmpty()) {
                 attackTriggerSources.add(new AttackTriggerSource(perm,
                         CombatWatch.ON_ALLY_CREATURES_ATTACK, combinedEffects));
@@ -1907,9 +1939,7 @@ public class CombatAttackService {
         }
         for (AttackTriggerSource triggerSource : attackTriggerSources) {
             Permanent perm = triggerSource.permanent();
-            CombatWatch watch = triggerSource.watch();
-            List<CardEffect> allyAttackEffects = new ArrayList<>(triggerSource.effects() != null
-                    ? triggerSource.effects() : watch.effectsOf(perm.getCard()));
+            List<CombatAbilityReader.CombatEffect> allyAttackEffects = triggerSource.effects();
             if (allyAttackEffects.isEmpty()) continue;
 
             // Pre-filter attacker-group conditional effects — skip if no matching attacker exists,
@@ -1926,168 +1956,195 @@ public class CombatAttackService {
             boolean oncePerTurnForPlayer = false;
             boolean markOncePerTurnOnAcceptance = false;
             boolean onceOnly = false;
-            for (CardEffect effect : allyAttackEffects) {
-                CardEffect normalizedEffect = effect;
-                boolean firstQualifyingAttackOfPlayer = effect instanceof ConditionalEffect firstTimeCondition
-                        && firstTimeCondition.condition() instanceof AttackingCreaturesTotalPowerAtLeast
-                        && firstTimeCondition.wrapped() instanceof OncePerTurnTriggerEffect;
-                if (effect instanceof AttackingCreaturesAwareEffect aware) {
-                    List<AttackingPermanentSnapshot> attackers = snapshotMatchingAttackerPowers(
-                            gameData, battlefield, attackerIndices, perm, playerId,
-                            aware.attackingCreaturePredicate());
-                    if (attackers.isEmpty()) {
-                        continue;
-                    }
-                    normalizedEffect = aware.withAttackingCreatures(attackers);
+            for (CombatAbilityReader.CombatEffect read : allyAttackEffects) {
+                // "Triggers only once each turn" (Akki Battle Squad) and "this ability triggers only once" (Ruby
+                // Collector) are the ability's limit, marked on this permanent as the ability goes on the stack.
+                boolean firstOfTurn = read.limit() == TriggerLimit.ONCE_EACH_TURN;
+                boolean once = read.limit() == TriggerLimit.ONCE;
+                if ((read.limit() != TriggerLimit.NONE && !firstOfTurn && !once)
+                        || read.multiplicity() != TriggerMultiplicity.EACH || read.filter() != null) {
+                    throw new IllegalStateException("The \"whenever you attack\" collector reads no "
+                            + read.options() + " or filter: " + read.ability());
                 }
-                if (effect instanceof ConditionalEffect ce
-                        && ce.condition() instanceof AttackingCreaturesTotalPowerAtLeast) {
-                    if (!conditionEvaluationService.isMet(gameData, ce.condition(),
-                            ConditionContext.forPermanent(perm, playerId))) {
-                        continue;
-                    }
-                    normalizedEffect = ce.wrapped();
-                }
-                if (effect instanceof ConditionalEffect ce
-                        && ce.condition() instanceof MinimumAttackers minimumAttackers) {
-                    boolean minimumMet = conditionEvaluationService.isMet(gameData, ce.condition(),
-                            ConditionContext.forPermanent(perm, playerId).withXValue(attackerIndices.size()));
-                    if (!minimumMet) {
-                        log.info("Game {} - {} attack trigger skipped (too few attackers; minimum {})",
-                                gameData.id, perm.getCard().getName(), minimumAttackers.minimumAttackers());
-                        continue;
-                    }
-                    normalizedEffect = ce.wrapped();
-                }
-                if (normalizedEffect instanceof OncePerTurnTriggerEffect onceEffect) {
-                    if (firstQualifyingAttackOfPlayer) {
-                        // "For the first time each turn" counts the player's qualifying attacks, not each
-                        // source's: sources present for that attack all trigger, later arrivals never do.
-                        if (!isFirstQualifyingAttackThisTurn(gameData, playerId)) {
-                            continue;
-                        }
-                        oncePerTurnForPlayer = true;
-                    } else if (gameData.oncePerTurnTriggersFiredThisTurn.contains(perm.getId())) {
+                if (firstOfTurn) {
+                    if (gameData.oncePerTurnTriggersFiredThisTurn.contains(perm.getId())) {
                         continue;
                     }
                     oncePerTurn = true;
-                    markOncePerTurnOnAcceptance |= onceEffect.markOnAcceptance();
-                    normalizedEffect = onceEffect.wrapped();
                 }
-                if (normalizedEffect instanceof OnceOnlyTriggerEffect onceEffect) {
-                    if (OnceOnlyTriggerSupport.isFired(gameData, perm)) {
-                        continue;
+                if (once && OnceOnlyTriggerSupport.isFired(gameData, perm)) {
+                    continue;
+                }
+                int keptBefore = filteredEffects.size();
+                CardEffect effect = read.effect();
+                // Each "continue" of the body below leaves the effect out; an effect it keeps sets the once-only
+                // mark, as the ability goes on the stack with it.
+                do {
+                    CardEffect normalizedEffect = effect;
+                    boolean firstQualifyingAttackOfPlayer = effect instanceof ConditionalEffect firstTimeCondition
+                            && firstTimeCondition.condition() instanceof AttackingCreaturesTotalPowerAtLeast
+                            && firstTimeCondition.wrapped() instanceof OncePerTurnTriggerEffect;
+                    if (effect instanceof AttackingCreaturesAwareEffect aware) {
+                        List<AttackingPermanentSnapshot> attackers = snapshotMatchingAttackerPowers(
+                                gameData, battlefield, attackerIndices, perm, playerId,
+                                aware.attackingCreaturePredicate());
+                        if (attackers.isEmpty()) {
+                            continue;
+                        }
+                        normalizedEffect = aware.withAttackingCreatures(attackers);
                     }
-                    onceOnly = true;
-                    normalizedEffect = onceEffect.wrapped();
-                }
-                if (normalizedEffect != effect) {
-                    if (normalizedEffect instanceof ConditionalEffect conditional
-                            && containsHasAttackerCondition(conditional.condition())) {
-                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                    if (effect instanceof ConditionalEffect ce
+                            && ce.condition() instanceof AttackingCreaturesTotalPowerAtLeast) {
+                        if (!conditionEvaluationService.isMet(gameData, ce.condition(),
                                 ConditionContext.forPermanent(perm, playerId))) {
                             continue;
                         }
-                        normalizedEffect = conditional.wrapped();
+                        normalizedEffect = ce.wrapped();
                     }
-                    filteredEffects.add(normalizedEffect);
-                } else if (effect instanceof ConditionalEffect ce && ce.condition() instanceof MinimumAttackers minimumAttackers) {
-                    boolean minimumMet = conditionEvaluationService.isMet(gameData, ce.condition(),
-                            ConditionContext.forPermanent(perm, playerId).withXValue(attackerIndices.size()));
-                    if (!minimumMet) {
-                        log.info("Game {} - {} attack trigger skipped (too few attackers; minimum {})",
-                                gameData.id, perm.getCard().getName(), minimumAttackers.minimumAttackers());
+                    if (effect instanceof ConditionalEffect ce
+                            && ce.condition() instanceof MinimumAttackers minimumAttackers) {
+                        boolean minimumMet = conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(perm, playerId).withXValue(attackerIndices.size()));
+                        if (!minimumMet) {
+                            log.info("Game {} - {} attack trigger skipped (too few attackers; minimum {})",
+                                    gameData.id, perm.getCard().getName(), minimumAttackers.minimumAttackers());
+                            continue;
+                        }
+                        normalizedEffect = ce.wrapped();
+                    }
+                    if (normalizedEffect instanceof OncePerTurnTriggerEffect onceEffect) {
+                        if (firstQualifyingAttackOfPlayer) {
+                            // "For the first time each turn" counts the player's qualifying attacks, not each
+                            // source's: sources present for that attack all trigger, later arrivals never do.
+                            if (!isFirstQualifyingAttackThisTurn(gameData, playerId)) {
+                                continue;
+                            }
+                            oncePerTurnForPlayer = true;
+                        } else if (gameData.oncePerTurnTriggersFiredThisTurn.contains(perm.getId())) {
+                            continue;
+                        }
+                        oncePerTurn = true;
+                        markOncePerTurnOnAcceptance |= onceEffect.markOnAcceptance();
+                        normalizedEffect = onceEffect.wrapped();
+                    }
+                    if (normalizedEffect instanceof OnceOnlyTriggerEffect onceEffect) {
+                        if (OnceOnlyTriggerSupport.isFired(gameData, perm)) {
+                            continue;
+                        }
+                        onceOnly = true;
+                        normalizedEffect = onceEffect.wrapped();
+                    }
+                    if (normalizedEffect != effect) {
+                        if (normalizedEffect instanceof ConditionalEffect conditional
+                                && containsHasAttackerCondition(conditional.condition())) {
+                            if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                    ConditionContext.forPermanent(perm, playerId))) {
+                                continue;
+                            }
+                            normalizedEffect = conditional.wrapped();
+                        }
+                        filteredEffects.add(normalizedEffect);
+                    } else if (effect instanceof ConditionalEffect ce && ce.condition() instanceof MinimumAttackers minimumAttackers) {
+                        boolean minimumMet = conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(perm, playerId).withXValue(attackerIndices.size()));
+                        if (!minimumMet) {
+                            log.info("Game {} - {} attack trigger skipped (too few attackers; minimum {})",
+                                    gameData.id, perm.getCard().getName(), minimumAttackers.minimumAttackers());
+                            continue;
+                        }
+                        filteredEffects.add(ce.wrapped());
+                    } else if (effect instanceof ConditionalEffect ce && ce.condition() instanceof HasAttacker) {
+                        boolean hasMatch = conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(perm, playerId));
+                        if (!hasMatch) {
+                            log.info("Game {} - {} attack trigger skipped (no matching attacker)",
+                                    gameData.id, perm.getCard().getName());
+                            continue;
+                        }
+                        filteredEffects.add(ce.wrapped());
+                    } else if (effect instanceof ConditionalEffect ce
+                            && containsHasAttackerCondition(ce.condition())) {
+                        if (!conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(perm, playerId))) {
+                            log.info("Game {} - {} attack trigger skipped (attacker condition not met)",
+                                    gameData.id, perm.getCard().getName());
+                            continue;
+                        }
+                        filteredEffects.add(residualAfterAttackerGate(ce));
+                    } else if (effect instanceof ConditionalEffect ce
+                            && ce.condition() instanceof AllMatchingCreaturesAttack) {
+                        boolean allMatch = conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(perm, playerId));
+                        if (!allMatch) {
+                            log.info("Game {} - {} attack trigger skipped (not all matching creatures attack)",
+                                    gameData.id, perm.getCard().getName());
+                            continue;
+                        }
+                        filteredEffects.add(ce.wrapped());
+                    } else if (effect instanceof ConditionalEffect ce
+                            && ce.condition() instanceof MinimumAttackingCreaturesOfSubtype) {
+                        boolean hasEnoughMatchingAttackers = conditionEvaluationService.isMet(
+                                gameData, ce.condition(), ConditionContext.forPermanent(perm, playerId));
+                        if (!hasEnoughMatchingAttackers) {
+                            log.info("Game {} - {} attack trigger skipped (not enough matching attackers)",
+                                    gameData.id, perm.getCard().getName());
+                            continue;
+                        }
+                        filteredEffects.add(ce.wrapped());
+                    } else if (effect instanceof ConditionalEffect ce
+                            && ce.condition() instanceof AttackingCreaturesGreaterThanSourceCounters) {
+                        boolean countGreaterThanCounters = conditionEvaluationService.isMet(
+                                gameData, ce.condition(),
+                                ConditionContext.forPermanent(perm, playerId).withXValue(attackerIndices.size()));
+                        if (!countGreaterThanCounters) {
+                            log.info("Game {} - {} attack trigger skipped (attacker count does not exceed source counters)",
+                                    gameData.id, perm.getCard().getName());
+                            continue;
+                        }
+                        filteredEffects.add(effect);
+                    } else if (effect instanceof ConditionalEffect ce
+                            && ce.condition() instanceof ExactlyAttackers exactlyAttackers) {
+                        boolean exactCountMet = conditionEvaluationService.isMet(
+                                gameData, ce.condition(),
+                                ConditionContext.forPermanent(perm, playerId).withXValue(attackerIndices.size()));
+                        if (!exactCountMet) {
+                            log.info("Game {} - {} attack trigger skipped (not exactly {} attackers)",
+                                    gameData.id, perm.getCard().getName(), exactlyAttackers.attackerCount());
+                            continue;
+                        }
+                        filteredEffects.add(ce.wrapped());
+                    } else if (effect instanceof ConditionalEffect ce
+                            && ce.condition() instanceof MinimumMatchingAttackers matchingAttackers) {
+                        boolean met = conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(perm, playerId));
+                        if (!met) {
+                            log.info("Game {} - {} attack trigger skipped (not enough matching attackers)",
+                                    gameData.id, perm.getCard().getName());
+                            continue;
+                        }
+                        if (matchingAttackerCount == null) {
+                            matchingAttackerCount = countMatchingAttackerIndices(
+                                    gameData, battlefield, attackerIndices, perm, playerId, matchingAttackers.predicate());
+                        }
+                        filteredEffects.add(ce.wrapped());
+                    } else if (effect instanceof ConditionalEffect ce
+                            && ce.condition() instanceof SourceHasChosenMode) {
+                        if (!conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(perm, playerId))) {
+                            continue;
+                        }
+                        filteredEffects.add(ce.wrapped());
+                    } else if (effect instanceof ConditionalEffect ce && ce.interveningIf()
+                            && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                            ConditionContext.forPermanent(perm, playerId)
+                                    .withXValue(attackerIndices.size()))) {
                         continue;
+                    } else {
+                        filteredEffects.add(effect);
                     }
-                    filteredEffects.add(ce.wrapped());
-                } else if (effect instanceof ConditionalEffect ce && ce.condition() instanceof HasAttacker) {
-                    boolean hasMatch = conditionEvaluationService.isMet(gameData, ce.condition(),
-                            ConditionContext.forPermanent(perm, playerId));
-                    if (!hasMatch) {
-                        log.info("Game {} - {} attack trigger skipped (no matching attacker)",
-                                gameData.id, perm.getCard().getName());
-                        continue;
-                    }
-                    filteredEffects.add(ce.wrapped());
-                } else if (effect instanceof ConditionalEffect ce
-                        && containsHasAttackerCondition(ce.condition())) {
-                    if (!conditionEvaluationService.isMet(gameData, ce.condition(),
-                            ConditionContext.forPermanent(perm, playerId))) {
-                        log.info("Game {} - {} attack trigger skipped (attacker condition not met)",
-                                gameData.id, perm.getCard().getName());
-                        continue;
-                    }
-                    filteredEffects.add(residualAfterAttackerGate(ce));
-                } else if (effect instanceof ConditionalEffect ce
-                        && ce.condition() instanceof AllMatchingCreaturesAttack) {
-                    boolean allMatch = conditionEvaluationService.isMet(gameData, ce.condition(),
-                            ConditionContext.forPermanent(perm, playerId));
-                    if (!allMatch) {
-                        log.info("Game {} - {} attack trigger skipped (not all matching creatures attack)",
-                                gameData.id, perm.getCard().getName());
-                        continue;
-                    }
-                    filteredEffects.add(ce.wrapped());
-                } else if (effect instanceof ConditionalEffect ce
-                        && ce.condition() instanceof MinimumAttackingCreaturesOfSubtype) {
-                    boolean hasEnoughMatchingAttackers = conditionEvaluationService.isMet(
-                            gameData, ce.condition(), ConditionContext.forPermanent(perm, playerId));
-                    if (!hasEnoughMatchingAttackers) {
-                        log.info("Game {} - {} attack trigger skipped (not enough matching attackers)",
-                                gameData.id, perm.getCard().getName());
-                        continue;
-                    }
-                    filteredEffects.add(ce.wrapped());
-                } else if (effect instanceof ConditionalEffect ce
-                        && ce.condition() instanceof AttackingCreaturesGreaterThanSourceCounters) {
-                    boolean countGreaterThanCounters = conditionEvaluationService.isMet(
-                            gameData, ce.condition(),
-                            ConditionContext.forPermanent(perm, playerId).withXValue(attackerIndices.size()));
-                    if (!countGreaterThanCounters) {
-                        log.info("Game {} - {} attack trigger skipped (attacker count does not exceed source counters)",
-                                gameData.id, perm.getCard().getName());
-                        continue;
-                    }
-                    filteredEffects.add(effect);
-                } else if (effect instanceof ConditionalEffect ce
-                        && ce.condition() instanceof ExactlyAttackers exactlyAttackers) {
-                    boolean exactCountMet = conditionEvaluationService.isMet(
-                            gameData, ce.condition(),
-                            ConditionContext.forPermanent(perm, playerId).withXValue(attackerIndices.size()));
-                    if (!exactCountMet) {
-                        log.info("Game {} - {} attack trigger skipped (not exactly {} attackers)",
-                                gameData.id, perm.getCard().getName(), exactlyAttackers.attackerCount());
-                        continue;
-                    }
-                    filteredEffects.add(ce.wrapped());
-                } else if (effect instanceof ConditionalEffect ce
-                        && ce.condition() instanceof MinimumMatchingAttackers matchingAttackers) {
-                    boolean met = conditionEvaluationService.isMet(gameData, ce.condition(),
-                            ConditionContext.forPermanent(perm, playerId));
-                    if (!met) {
-                        log.info("Game {} - {} attack trigger skipped (not enough matching attackers)",
-                                gameData.id, perm.getCard().getName());
-                        continue;
-                    }
-                    if (matchingAttackerCount == null) {
-                        matchingAttackerCount = countMatchingAttackerIndices(
-                                gameData, battlefield, attackerIndices, perm, playerId, matchingAttackers.predicate());
-                    }
-                    filteredEffects.add(ce.wrapped());
-                } else if (effect instanceof ConditionalEffect ce
-                        && ce.condition() instanceof SourceHasChosenMode) {
-                    if (!conditionEvaluationService.isMet(gameData, ce.condition(),
-                            ConditionContext.forPermanent(perm, playerId))) {
-                        continue;
-                    }
-                    filteredEffects.add(ce.wrapped());
-                } else if (effect instanceof ConditionalEffect ce && ce.interveningIf()
-                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
-                        ConditionContext.forPermanent(perm, playerId)
-                                .withXValue(attackerIndices.size()))) {
-                    continue;
-                } else {
-                    filteredEffects.add(effect);
+                } while (false);
+                if (once && filteredEffects.size() > keptBefore) {
+                    onceOnly = true;
                 }
             }
             if (filteredEffects.isEmpty()) continue;
@@ -2272,9 +2329,10 @@ public class CombatAttackService {
             CombatWatch attackPlayerSlot = attackedDefenderSlot.getKey();
             UUID attackedPlayerId = attackedDefenderSlot.getValue();
             for (Permanent perm : new ArrayList<>(battlefield)) {
-                List<CardEffect> effects = new ArrayList<>(attackPlayerSlot.effectsOf(perm.getCard()));
-                effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
-                        gameData, perm, attackPlayerSlot.trigger()));
+                Trigger attackPlayer = attackPlayerSlot.trigger();
+                List<CardEffect> effects = new ArrayList<>(CombatAbilityReader.effects(
+                        CombatAbilityReader.printed(perm.getCard(), attackPlayerSlot), attackPlayer));
+                effects.addAll(CombatAbilityReader.effects(grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, perm, attackPlayer), attackPlayer));
                 if (effects.isEmpty()) continue;
 
                 ConditionContext targetContext = ConditionContext.forPermanent(perm, playerId)
@@ -2345,31 +2403,47 @@ public class CombatAttackService {
         // Check for "whenever a creature you control attacks" triggers (ON_ALLY_CREATURE_ATTACKS)
         // These fire once per attacking creature (not once per combat like ON_ALLY_CREATURES_ATTACK).
         // Supports card and permanent conditional effects to filter by the attacking creature.
+        Trigger allyAttacks = CombatWatch.ON_ALLY_CREATURE_ATTACKS.trigger();
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
             for (Permanent perm : battlefield) {
-                List<CardEffect> perCreatureAttackEffects = new ArrayList<>();
-                List<CardEffect> printedAttackEffects = CombatWatch.ON_ALLY_CREATURE_ATTACKS.effectsOf(LayerSystemService.currentCard(gameData, perm));
+                List<CombatAbilityReader.CombatEffect> perCreatureAttackEffects = new ArrayList<>();
+                List<CombatAbilityReader.CombatEffect> printedAttackEffects = CombatAbilityReader.read(
+                        CombatAbilityReader.printed(LayerSystemService.currentCard(gameData, perm),
+                                CombatWatch.ON_ALLY_CREATURE_ATTACKS), allyAttacks);
                 if (!printedAttackEffects.isEmpty() && !perm.isFaceDown()
                         && !gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
                     perCreatureAttackEffects.addAll(printedAttackEffects);
                 }
-                List<CardEffect> temporaryAttackEffects =
-                        perm.getLegacyTemporaryTriggerEffects(CombatWatch.ON_ALLY_CREATURE_ATTACKS.trigger());
-                List<CardEffect> persistentAttackEffects =
-                        perm.getLegacyPersistentTriggerEffects(CombatWatch.ON_ALLY_CREATURE_ATTACKS.trigger());
+                List<CombatAbilityReader.CombatEffect> temporaryAttackEffects = CombatAbilityReader.read(
+                        CombatAbilityReader.temporary(perm, allyAttacks), allyAttacks);
+                List<CombatAbilityReader.CombatEffect> persistentAttackEffects = CombatAbilityReader.read(
+                        CombatAbilityReader.persistent(perm, allyAttacks), allyAttacks);
                 if ((!temporaryAttackEffects.isEmpty() || !persistentAttackEffects.isEmpty())
                         && !gameQueryService.hasLostAllAbilities(gameData, perm)) {
                     perCreatureAttackEffects.addAll(temporaryAttackEffects);
                     perCreatureAttackEffects.addAll(persistentAttackEffects);
                 }
-                List<CardEffect> grantedAttackEffects = grantedTriggeredAbilitySupport.grantedTriggerEffects(
-                        gameData, perm, CombatWatch.ON_ALLY_CREATURE_ATTACKS.trigger());
-                perCreatureAttackEffects.addAll(grantedAttackEffects);
+                List<CombatAbilityReader.CombatEffect> grantedAttackReads = CombatAbilityReader.read(
+                        grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, perm, allyAttacks), allyAttacks);
+                List<CardEffect> grantedAttackEffects = CombatAbilityReader.effectsOf(grantedAttackReads);
+                perCreatureAttackEffects.addAll(grantedAttackReads);
                 if (perCreatureAttackEffects.isEmpty()) continue;
 
+                // Filter by the attacking permanent itself (e.g. Rage Forger — "a creature you control with a
+                // +1/+1 counter on it attacks"): the trigger's filter.
+                FilterContext filterContext = FilterContext.of(gameData)
+                        .withSourceCardId(perm.getOriginalCard().getId())
+                        .withSourceControllerId(playerId)
+                        .withSourcePermanentId(perm.getId());
                 List<CardEffect> matchingEffects = new ArrayList<>();
-                for (CardEffect effect : perCreatureAttackEffects) {
+                for (CombatAbilityReader.CombatEffect read : perCreatureAttackEffects) {
+                    CombatAbilityReader.requireNoLimitOrMultiplicity(read, allyAttacks);
+                    if (read.filter() != null && !predicateEvaluationService.matchesPermanentPredicate(
+                            attacker, read.filter(), filterContext)) {
+                        continue;
+                    }
+                    CardEffect effect = read.effect();
                     if (effect instanceof TriggeringCardConditionalEffect conditional) {
                         if (!predicateEvaluationService.matchesCardPredicate(attacker.getCard(), conditional.predicate(), null,
                                 gameData, playerId)) {
@@ -2497,9 +2571,10 @@ public class CombatAttackService {
                     if (!mandatoryEffects.isEmpty()) {
                         List<CardEffect> bundledEffects = new ArrayList<>(mandatoryEffects);
                         List<List<CardEffect>> abilities = new ArrayList<>();
-                        for (var registration : CombatWatch.ON_ALLY_CREATURE_ATTACKS.registrationsOf(perm.getCard())) {
-                            if (registration.triggerMode()
-                                    != com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT) {
+                        for (var registration : CombatAbilityReader.read(
+                                CombatAbilityReader.printed(perm.getCard(), CombatWatch.ON_ALLY_CREATURE_ATTACKS),
+                                allyAttacks)) {
+                            if (!registration.independent()) {
                                 continue;
                             }
                             CardEffect registeredEffect = registration.effect();
@@ -2633,8 +2708,10 @@ public class CombatAttackService {
             if (graveyard == null) continue;
             boolean attackingPlayersGraveyard = graveyardOwnerId.equals(playerId);
             for (Card card : new ArrayList<>(graveyard)) {
-                List<CardEffect> gyAttackEffects = gameQueryService.getEffectiveGraveyardLegacyTriggerEffects(
-                        gameData, card, CombatWatch.GRAVEYARD_ON_ALLY_CREATURES_ATTACK.trigger());
+                List<CardEffect> gyAttackEffects = CombatAbilityReader.effects(CombatAbilityReader.withWatchedTrigger(
+                        gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData, card),
+                        CombatWatch.GRAVEYARD_ON_ALLY_CREATURES_ATTACK.trigger(), Zone.GRAVEYARD),
+                        CombatWatch.GRAVEYARD_ON_ALLY_CREATURES_ATTACK.trigger());
                 if (gyAttackEffects.isEmpty()) continue;
 
                 for (CardEffect effect : gyAttackEffects) {
@@ -2728,7 +2805,9 @@ public class CombatAttackService {
                 if (exiled.faceDown() || !playerId.equals(exiled.ownerId())) {
                     continue;
                 }
-                List<CardEffect> exileAttackEffects = CombatWatch.EXILE_ON_ALLY_CREATURES_ATTACK.effectsOf(exiled.card());
+                List<CardEffect> exileAttackEffects = CombatAbilityReader.effects(
+                        CombatAbilityReader.printed(exiled.card(), CombatWatch.EXILE_ON_ALLY_CREATURES_ATTACK),
+                        CombatWatch.EXILE_ON_ALLY_CREATURES_ATTACK.trigger());
                 if (exileAttackEffects.isEmpty()) {
                     continue;
                 }
@@ -2786,13 +2865,13 @@ public class CombatAttackService {
                 List<CardEffect> attackedTriggerEffects = new ArrayList<>();
                 List<CardEffect> candidateEffects = new ArrayList<>();
                 if (!battleAttacked) {
-                    candidateEffects.addAll(CombatWatch.ON_CREATURE_ATTACKS_YOU.effectsOf(perm.getCard()));
+                    candidateEffects.addAll(printedCombatEffects(perm.getCard(), CombatWatch.ON_CREATURE_ATTACKS_YOU));
                 }
                 candidateEffects.addAll(
-                        CombatWatch.ON_CREATURE_ATTACKS_DEFENDING_PLAYER.effectsOf(perm.getCard()));
+                        printedCombatEffects(perm.getCard(), CombatWatch.ON_CREATURE_ATTACKS_DEFENDING_PLAYER));
                 if (gameData.playerIds.contains(attackedTargetId)) {
                     candidateEffects.addAll(
-                            CombatWatch.ON_CREATURE_ATTACKS_YOU_DIRECTLY.effectsOf(perm.getCard()));
+                            printedCombatEffects(perm.getCard(), CombatWatch.ON_CREATURE_ATTACKS_YOU_DIRECTLY));
                 }
                 for (CardEffect attackedEffect : candidateEffects) {
                     // Some triggers only fire for attackers matching a condition (e.g. Raking Canopy:
@@ -2820,8 +2899,9 @@ public class CombatAttackService {
                     for (CombatWatch triggerSlot : List.of(CombatWatch.ON_CREATURE_ATTACKS_YOU,
                             CombatWatch.ON_CREATURE_ATTACKS_YOU_DIRECTLY,
                             CombatWatch.ON_CREATURE_ATTACKS_DEFENDING_PLAYER)) {
-                        for (var registration : triggerSlot.registrationsOf(perm.getCard())) {
-                            if (registration.triggerMode() == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT
+                        for (var registration : CombatAbilityReader.read(
+                                CombatAbilityReader.printed(perm.getCard(), triggerSlot), triggerSlot.trigger())) {
+                            if (registration.independent()
                                     && bundledEffects.remove(registration.effect())) {
                                 abilities.add(List.of(registration.effect()));
                             }
@@ -2871,7 +2951,7 @@ public class CombatAttackService {
             if (defenderBattlefield == null) continue;
             for (Permanent perm : new ArrayList<>(defenderBattlefield)) {
                 List<CardEffect> effects = new ArrayList<>();
-                for (CardEffect effect : CombatWatch.ON_CREATURES_ATTACK_YOU.effectsOf(perm.getCard())) {
+                for (CardEffect effect : printedCombatEffects(perm.getCard(), CombatWatch.ON_CREATURES_ATTACK_YOU)) {
                     if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
                             && !conditionEvaluationService.isMet(gameData, conditional.condition(),
                             ConditionContext.forPermanent(perm, attackedPlayerId))) {
@@ -2949,7 +3029,8 @@ public class CombatAttackService {
             List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(attackedPlayerId);
             if (defenderBattlefield == null) continue;
             for (Permanent perm : new ArrayList<>(defenderBattlefield)) {
-                List<CardEffect> effects = CombatWatch.ON_OPPONENT_ATTACKS_PLANESWALKER_YOU_CONTROL.effectsOf(perm.getCard());
+                List<CardEffect> effects = printedCombatEffects(perm.getCard(),
+                        CombatWatch.ON_OPPONENT_ATTACKS_PLANESWALKER_YOU_CONTROL);
                 if (effects.isEmpty()) continue;
 
                 StackEntry trigger = new StackEntry(
@@ -3026,17 +3107,23 @@ public class CombatAttackService {
             for (Map.Entry<UUID, List<Permanent>> bf : gameData.playerBattlefields.entrySet()) {
                 UUID permController = bf.getKey();
                 for (Permanent perm : new ArrayList<>(bf.getValue())) {
-                    List<CardEffect> anyAttackEffects = CombatWatch.ON_ANY_CREATURE_ATTACKS.effectsOf(perm.getCard());
+                    List<CombatAbilityReader.CombatEffect> anyAttackEffects = CombatAbilityReader.read(
+                            CombatAbilityReader.printed(perm.getCard(), CombatWatch.ON_ANY_CREATURE_ATTACKS),
+                            CombatWatch.ON_ANY_CREATURE_ATTACKS.trigger());
                     if (anyAttackEffects.isEmpty()) continue;
 
                     List<CardEffect> matchingAnyAttackEffects = new ArrayList<>();
-                    for (CardEffect effect : anyAttackEffects) {
+                    for (CombatAbilityReader.CombatEffect read : anyAttackEffects) {
+                        CombatAbilityReader.requireNoLimitOrMultiplicity(read, CombatWatch.ON_ANY_CREATURE_ATTACKS.trigger());
+                        CardEffect effect = read.effect();
                         CardEffect matchingEffect = effect;
-                        boolean matches = true;
                         FilterContext sourceContext = FilterContext.of(gameData)
                                 .withSourceCardId(perm.getOriginalCard().getId())
                                 .withSourceControllerId(permController)
                                 .withSourcePermanentId(perm.getId());
+                        // The trigger's filter on the attacking creature (Windreader Sphinx).
+                        boolean matches = read.filter() == null || predicateEvaluationService.matchesPermanentPredicate(
+                                attacker, read.filter(), sourceContext);
                         while (matches) {
                             if (matchingEffect instanceof PutCounterOnAttackingCreatureOnAttacksYouEffect counterEffect) {
                                 if (!perm.isAttached()
@@ -3148,7 +3235,7 @@ public class CombatAttackService {
             for (Permanent perm : new ArrayList<>(bf.getValue())) {
                 List<CardEffect> playerAttackEffects = new ArrayList<>();
                 Map<UUID, List<CardEffect>> effectsByAttackedOpponent = new LinkedHashMap<>();
-                for (CardEffect effect : CombatWatch.ON_ANY_PLAYER_ATTACKS.effectsOf(perm.getCard())) {
+                for (CardEffect effect : printedCombatEffects(perm.getCard(), CombatWatch.ON_ANY_PLAYER_ATTACKS)) {
                     if (effect instanceof ConditionalEffect conditional) {
                         if (conditional.condition()
                                 instanceof PlayerAttacksOneOfYourOpponentsWithPowerOrToughnessEqualToSourceChosenNumber) {
@@ -3260,8 +3347,10 @@ public class CombatAttackService {
                 try {
                     List<List<CardEffect>> triggerEffectGroups = new ArrayList<>();
                     List<CardEffect> bundledEffects = new ArrayList<>(playerAttackEffects);
-                    for (var registration : CombatWatch.ON_ANY_PLAYER_ATTACKS.registrationsOf(perm.getCard())) {
-                        if (registration.triggerMode() == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT) {
+                    for (var registration : CombatAbilityReader.read(
+                            CombatAbilityReader.printed(perm.getCard(), CombatWatch.ON_ANY_PLAYER_ATTACKS),
+                            CombatWatch.ON_ANY_PLAYER_ATTACKS.trigger())) {
+                        if (registration.independent()) {
                             CardEffect registeredEffect = registration.effect();
                             CardEffect resolvedEffect = registeredEffect instanceof ConditionalEffect conditional
                                     ? conditional.wrapped() : registeredEffect;
@@ -3372,7 +3461,7 @@ public class CombatAttackService {
                 continue;
             }
             List<CardEffect> effects = new ArrayList<>();
-            for (CardEffect effect : CombatWatch.COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK.effectsOf(card)) {
+            for (CardEffect effect : printedCombatEffects(card, CombatWatch.COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK)) {
                 if (effect instanceof ConditionalEffect conditional
                         && containsHasAttackerCondition(conditional.condition())) {
                     if (!conditionEvaluationService.isMet(gameData, conditional.condition(),

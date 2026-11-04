@@ -10,13 +10,10 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.BatchedCombatDamageToYouTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsGoadedPredicate;
@@ -24,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.service.trigger.CombatAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.CombatWatch;
 import org.junit.jupiter.api.Test;
 
@@ -92,78 +90,160 @@ class CombatTriggerTest {
     }
 
     @Test
-    void theLegacyViewGivesTheFilterInsideTheLimitAndOutsideTheInterveningIf() {
+    void aCombatAbilityHasNoLegacyView() {
+        Card card = new Card();
+        card.addTrigger(Triggers.creatureYouControlAttacks().withFilter(DRAGON), DRAW);
+        TriggeredAbility ability = card.getTriggeredAbilities().getFirst();
+        Permanent permanent = new Permanent(new Card());
+        permanent.addTemporaryAbility(ability);
+
+        assertThat(Triggers.attacks().collectedAsAbility()).isTrue();
+        assertThatThrownBy(ability::legacyEffects).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.creatureYouControlAttacks(), Zone.BATTLEFIELD))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> permanent.getLegacyTemporaryTriggerEffects(Triggers.creatureYouControlAttacks()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> CombatWatch.ON_ALLY_CREATURE_ATTACKS.effectsOf(card))
+                .isInstanceOf(UnsupportedOperationException.class);
+        assertThatThrownBy(() -> CombatWatch.ON_BLOCK.registrationsOf(card))
+                .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void theReaderGivesTheFilterAndLimitFromTheAbilityAndWrapsTheInterveningIf() {
         Card card = new Card();
         card.addTrigger(Triggers.creatureYouControlAttacks().withFilter(DRAGON),
                 TriggerOptions.DEFAULT.withInterveningIf(ALONE).withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW);
-        TriggeredAbility ability = card.getTriggeredAbilities().getFirst();
 
-        List<CardEffect> legacy = CombatWatch.ON_ALLY_CREATURE_ATTACKS.effectsOf(card);
+        List<CombatAbilityReader.CombatEffect> reads = CombatAbilityReader.read(
+                CombatAbilityReader.printed(card, CombatWatch.ON_ALLY_CREATURE_ATTACKS),
+                Triggers.creatureYouControlAttacks());
 
-        assertThat(legacy).containsExactly(OncePerTurnTriggerEffect.keyed(
-                new TriggeringPermanentConditionalEffect(DRAGON, new ConditionalEffect(ALONE, DRAW)),
-                ability.limitKey()));
-        assertThat(CombatWatch.ON_ALLY_CREATURE_ATTACKS.effectsOf(card).getFirst()).isSameAs(legacy.getFirst());
+        assertThat(reads).hasSize(1);
+        CombatAbilityReader.CombatEffect read = reads.getFirst();
+        assertThat(read.effect()).isEqualTo(new ConditionalEffect(ALONE, DRAW, true));
+        assertThat(read.filter()).isEqualTo(DRAGON);
+        assertThat(read.limit()).isEqualTo(TriggerLimit.ONCE_EACH_TURN);
+        assertThat(read.ability()).isSameAs(card.getTriggeredAbilities().getFirst());
         assertThat(card.getTriggerEffects(Triggers.creatureYouControlAttacks(), Zone.BATTLEFIELD)).isEmpty();
     }
 
     @Test
-    void aCreatureYouControlDealingCombatDamageToAPlayerIsReadAsTheAllyRecord() {
+    void theEventConditionIsCheckedOnlyAsTheAbilityTriggersInsideTheInterveningIf() {
+        Card card = new Card();
+        card.addTrigger(Triggers.attacks(), TriggerOptions.DEFAULT.withEventCondition(ALONE)
+                .withInterveningIf(ALONE), DRAW);
+
+        assertThat(CombatAbilityReader.effects(CombatAbilityReader.printed(card, CombatWatch.ON_ATTACK),
+                Triggers.attacks())).containsExactly(
+                new ConditionalEffect(ALONE, ConditionalEffect.atTriggerTime(ALONE, DRAW), true));
+    }
+
+    @Test
+    void theAllyCombatDamageReadingTakesTheFilterAndOneOrMoreFromTheAbility() {
         Card card = new Card();
         card.addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(), DRAW);
         card.addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer().withFilter(DRAGON),
-                TriggerOptions.ONE_OR_MORE, new ConditionalEffect(ALONE, GAIN));
+                TriggerOptions.ONE_OR_MORE.withInterveningIf(ALONE), GAIN);
         CardEffect counter = new GainLifeEffect(3);
         card.addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer().withFilter(DRAGON),
                 AllyCombatDamageTriggerEffect.boundToDealer(counter));
+        Card twoFilters = new Card();
+        twoFilters.addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer().withFilter(DRAGON),
+                new AllyCombatDamageTriggerEffect(DRAGON, DRAW));
 
-        assertThat(CombatWatch.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER.effectsOf(card)).containsExactly(
-                new AllyCombatDamageTriggerEffect(null, DRAW),
-                new AllyCombatDamageTriggerEffect(DRAGON, new ConditionalEffect(ALONE, GAIN), false, true),
-                new AllyCombatDamageTriggerEffect(DRAGON, counter, true));
-        assertThatThrownBy(() -> AllyCombatDamageTriggerEffect.boundToDealer(counter)
-                .withTriggerOptions(DRAGON, false).withTriggerOptions(DRAGON, false))
+        List<CombatAbilityReader.AllyCombatDamage> reads = CombatAbilityReader.read(
+                        CombatAbilityReader.printed(card, CombatWatch.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER),
+                        Triggers.creatureYouControlDealsCombatDamageToPlayer()).stream()
+                .map(CombatAbilityReader::allyCombatDamage).toList();
+
+        assertThat(reads).containsExactly(
+                new CombatAbilityReader.AllyCombatDamage(null, false, false, false, DRAW),
+                new CombatAbilityReader.AllyCombatDamage(DRAGON, true, false, false,
+                        new ConditionalEffect(ALONE, GAIN, true)),
+                new CombatAbilityReader.AllyCombatDamage(DRAGON, false, true, false, counter));
+        CombatAbilityReader.CombatEffect bothFilters = CombatAbilityReader.read(
+                twoFilters.getTriggeredAbilities().getFirst(),
+                Triggers.creatureYouControlDealsCombatDamageToPlayer()).getFirst();
+        assertThatThrownBy(() -> CombatAbilityReader.allyCombatDamage(bothFilters))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    void anAuthoredAllyRecordWithoutTriggerOptionsKeepsItsIdentity() {
+    void anAuthoredAllyRecordKeepsItsIdentityAndTakesTheInterveningIfInside() {
         Card card = new Card();
         CardEffect authored = new AllyCombatDamageTriggerEffect(DRAGON, DRAW, true, true);
         card.addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(), authored);
+        Card guarded = new Card();
+        guarded.addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
+                TriggerOptions.DEFAULT.withInterveningIf(ALONE), authored);
 
-        assertThat(CombatWatch.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER.effectsOf(card).getFirst()).isSameAs(authored);
+        assertThat(CombatAbilityReader.effects(CombatAbilityReader.printed(card,
+                        CombatWatch.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER),
+                Triggers.creatureYouControlDealsCombatDamageToPlayer()).getFirst()).isSameAs(authored);
+        assertThat(CombatAbilityReader.effects(CombatAbilityReader.printed(guarded,
+                        CombatWatch.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER),
+                Triggers.creatureYouControlDealsCombatDamageToPlayer())).containsExactly(
+                new AllyCombatDamageTriggerEffect(DRAGON, new ConditionalEffect(ALONE, DRAW, true), true, true));
     }
 
     @Test
-    void theMultiplicityIsTheRegistrationsTriggerModeOrTheBatchedWrapper() {
+    void theMultiplicityIsTheAbilitys() {
         Card card = new Card();
         card.addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, DRAW);
         card.addTrigger(Triggers.becomesBlocked().withFilter(DRAGON), TriggerOptions.EACH_BLOCKER, GAIN);
         CardEffect damaged = new DrawCardEffect(3);
         card.addTrigger(Triggers.creatureDealsCombatDamageToYou(), TriggerOptions.ONE_OR_MORE, damaged);
 
-        assertThat(CombatWatch.ON_BLOCK.registrationsOf(card))
-                .containsExactly(new EffectRegistration(DRAW, TriggerMode.ONCE_PER_BLOCK));
-        assertThat(CombatWatch.ON_BECOMES_BLOCKED.registrationsOf(card)).containsExactly(new EffectRegistration(
-                new TriggeringPermanentConditionalEffect(DRAGON, GAIN), TriggerMode.PER_BLOCKER));
-        assertThat(CombatWatch.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU.effectsOf(card))
-                .containsExactly(new BatchedCombatDamageToYouTriggerEffect(damaged));
+        CombatAbilityReader.CombatEffect blocks = CombatAbilityReader.read(
+                CombatAbilityReader.printed(card, CombatWatch.ON_BLOCK), Triggers.blocks()).getFirst();
+        CombatAbilityReader.CombatEffect blocked = CombatAbilityReader.read(
+                CombatAbilityReader.printed(card, CombatWatch.ON_BECOMES_BLOCKED), Triggers.becomesBlocked()).getFirst();
+        CombatAbilityReader.CombatEffect damage = CombatAbilityReader.read(
+                CombatAbilityReader.printed(card, CombatWatch.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU),
+                Triggers.creatureDealsCombatDamageToYou()).getFirst();
+
+        assertThat(blocks.oneOrMore()).isTrue();
+        assertThat(blocks.effect()).isSameAs(DRAW);
+        assertThat(blocked.eachBlocker()).isTrue();
+        assertThat(blocked.filter()).isEqualTo(DRAGON);
+        assertThat(blocked.effect()).isSameAs(GAIN);
+        assertThat(damage.oneOrMore()).isTrue();
+        assertThat(damage.effect()).isSameAs(damaged);
     }
 
     @Test
-    void aMultiplicityTheCollectorsCantReadIsRejected() {
-        Card attacks = new Card();
-        attacks.addTrigger(Triggers.attacks(), TriggerOptions.ONE_OR_MORE, DRAW);
-        Card blocks = new Card();
-        blocks.addTrigger(Triggers.blocks(), TriggerOptions.EACH_BLOCKER, DRAW);
-        Card modes = new Card();
-        modes.addTrigger(Triggers.becomesBlocked(), TriggerMode.PER_BLOCKER, TriggerOptions.EACH_BLOCKER, DRAW);
+    void aMultiplicityTheCollectorsCantReadIsRejectedAsTheAbilityIsBuilt() {
+        assertThatThrownBy(() -> new Card().addTrigger(Triggers.attacks(), TriggerOptions.ONE_OR_MORE, DRAW))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new Card().addTrigger(Triggers.blocks(), TriggerOptions.EACH_BLOCKER, DRAW))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new Card().addTrigger(Triggers.dealsCombatDamageToPlayer(),
+                TriggerOptions.ONE_OR_MORE, DRAW)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new Card().addTrigger(Triggers.attacks(), TriggerOptions.EACH_SOURCE, DRAW))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
 
-        assertThatThrownBy(() -> CombatWatch.ON_ATTACK.effectsOf(attacks)).isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> CombatWatch.ON_BLOCK.effectsOf(blocks)).isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> CombatWatch.ON_BECOMES_BLOCKED.effectsOf(modes))
-                .isInstanceOf(IllegalStateException.class);
+    @Test
+    void aCollectorThatReadsNoFilterLimitOrMultiplicityRejectsOne() {
+        Card filtered = new Card();
+        filtered.addTrigger(Triggers.creatureYouControlAttacks().withFilter(DRAGON), DRAW);
+        Card limited = new Card();
+        limited.addTrigger(Triggers.attacks(), TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW);
+        Card oneOrMore = new Card();
+        oneOrMore.addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, DRAW);
+
+        assertThatThrownBy(() -> CombatAbilityReader.effects(
+                CombatAbilityReader.printed(filtered, CombatWatch.ON_ALLY_CREATURE_ATTACKS),
+                Triggers.creatureYouControlAttacks())).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> CombatAbilityReader.effects(CombatAbilityReader.printed(limited, CombatWatch.ON_ATTACK),
+                Triggers.attacks())).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> CombatAbilityReader.effects(CombatAbilityReader.printed(oneOrMore, CombatWatch.ON_BLOCK),
+                Triggers.blocks())).isInstanceOf(IllegalStateException.class);
+        assertThat(CombatAbilityReader.effects(CombatAbilityReader.printed(filtered, CombatWatch.ON_ALLY_CREATURE_ATTACKS),
+                Triggers.creatureYouControlAttacks(), DRAGON::equals)).containsExactly(DRAW);
+        assertThat(CombatAbilityReader.effects(CombatAbilityReader.printed(filtered, CombatWatch.ON_ALLY_CREATURE_ATTACKS),
+                Triggers.creatureYouControlAttacks(), filter -> false)).isEmpty();
     }
 
     @Test
@@ -172,28 +252,31 @@ class CombatTriggerTest {
         card.addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), TriggerOptions.ONE_OR_MORE, DRAW);
 
         assertThat(card.getTriggeredAbilities()).hasSize(1);
-        assertThat(CombatWatch.ON_ATTACK.registrationsOf(card))
-                .containsExactly(new EffectRegistration(DRAW, TriggerMode.ONCE_PER_BLOCK));
-        assertThat(CombatWatch.ON_BLOCK.registrationsOf(card))
-                .containsExactly(new EffectRegistration(DRAW, TriggerMode.ONCE_PER_BLOCK));
-        assertThat(CombatWatch.ON_ATTACK.effectsOf(card).getFirst())
-                .isSameAs(CombatWatch.ON_BLOCK.effectsOf(card).getFirst());
+        CombatAbilityReader.CombatEffect attack = CombatAbilityReader.read(
+                CombatAbilityReader.printed(card, CombatWatch.ON_ATTACK), Triggers.attacks()).getFirst();
+        CombatAbilityReader.CombatEffect block = CombatAbilityReader.read(
+                CombatAbilityReader.printed(card, CombatWatch.ON_BLOCK), Triggers.blocks()).getFirst();
+        assertThat(attack.ability()).isSameAs(block.ability());
+        assertThat(attack.effect()).isSameAs(DRAW);
+        assertThat(block.oneOrMore()).isTrue();
     }
 
     @Test
-    void grantedAndRegisteredAbilitiesAreReadInTheLegacyFormToo() {
+    void grantedAndRegisteredAbilitiesAreReadByTheReader() {
         TriggeredAbility ability = new TriggeredAbility(Triggers.creatureAttacks().withFilter(
                 new PermanentIsTokenPredicate()), TriggerOptions.DEFAULT.withInterveningIf(ALONE), DRAW);
         Permanent permanent = new Permanent(new Card());
         permanent.addTemporaryAbility(ability);
 
-        assertThat(permanent.getLegacyTemporaryTriggerEffects(Triggers.creatureAttacks())).containsExactly(
-                new TriggeringPermanentConditionalEffect(new PermanentIsTokenPredicate(),
-                        new ConditionalEffect(ALONE, DRAW)));
+        assertThat(CombatAbilityReader.temporary(permanent, Triggers.creatureAttacks())).containsExactly(ability);
+        assertThat(CombatAbilityReader.persistent(permanent, Triggers.creatureAttacks())).isEmpty();
+        CombatAbilityReader.CombatEffect read = CombatAbilityReader.read(ability, Triggers.creatureAttacks())
+                .getFirst();
+        assertThat(read.filter()).isEqualTo(new PermanentIsTokenPredicate());
+        assertThat(read.effect()).isEqualTo(new ConditionalEffect(ALONE, DRAW));
         assertThat(permanent.getTemporaryTriggerEffects(Triggers.creatureAttacks())).isEmpty();
-        assertThat(new TemporaryGlobalTriggeredAbility(UUID.randomUUID(), new Card(), ability).legacyEffect())
-                .isEqualTo(new TriggeringPermanentConditionalEffect(new PermanentIsTokenPredicate(),
-                        new ConditionalEffect(ALONE, DRAW)));
+        assertThatThrownBy(() -> new TemporaryGlobalTriggeredAbility(UUID.randomUUID(), new Card(), ability)
+                .legacyEffect()).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -220,16 +303,17 @@ class CombatTriggerTest {
     void aRegistrationKeepsItsTriggerMode() {
         Card card = new Card();
         card.addTrigger(Triggers.blocks(), DRAW);
-        card.addTrigger(Triggers.blocks(), TriggerMode.ONCE_PER_BLOCK, GAIN);
+        card.addTrigger(Triggers.blocks(), TriggerMode.INDEPENDENT, GAIN);
         CardEffect draw = new DrawCardEffect(2);
         CardEffect life = new GainLifeEffect(2);
-        card.addSimultaneousTrigger(Triggers.becomesBlocked(), TriggerMode.PER_BLOCKER, draw, life);
+        card.addSimultaneousTrigger(Triggers.becomesBlocked(), TriggerMode.INDEPENDENT, draw, life);
 
         assertThat(card.getTriggerEffectRegistrations(Triggers.blocks(), Zone.BATTLEFIELD)).containsExactly(
-                new EffectRegistration(DRAW), new EffectRegistration(GAIN, TriggerMode.ONCE_PER_BLOCK));
-        assertThat(card.getTriggerEffectRegistrations(Triggers.becomesBlocked(), Zone.BATTLEFIELD)).containsExactly(
-                new EffectRegistration(draw, TriggerMode.PER_BLOCKER),
-                new EffectRegistration(life, TriggerMode.PER_BLOCKER, true));
+                new EffectRegistration(DRAW), new EffectRegistration(GAIN, TriggerMode.INDEPENDENT));
+        assertThat(CombatAbilityReader.registrationsOf(CombatAbilityReader.read(
+                CombatAbilityReader.printed(card, CombatWatch.ON_BECOMES_BLOCKED), Triggers.becomesBlocked())))
+                .containsExactly(new EffectRegistration(draw, TriggerMode.INDEPENDENT),
+                        new EffectRegistration(life, TriggerMode.INDEPENDENT, true));
         assertThat(card.isSimultaneousWithPrevious(life)).isTrue();
     }
 }

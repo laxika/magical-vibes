@@ -7,7 +7,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * create a 0/2 colorless Wall artifact creature token with defender."
  * <p>
  * Placed on {@code Triggers.becomesBlocked()} ability with
- * {@link com.github.laxika.magicalvibes.model.TriggerMode#PER_BLOCKER} (one trigger per blocker) and/or
+ * {@code TriggerOptions.EACH_BLOCKER} (one trigger per blocker) and/or
  * on {@code Triggers.blocks()} ability for the "blocks" half. The
  * referenced creature is carried as the stack entry's non-targeting target, so the trigger can't
  * fizzle. Resolution queues a {@link com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat}

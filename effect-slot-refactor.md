@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; runs 16f onward left: the rest of the legacy view's retirement, family by family, with the may-unwrapping, `TriggerMode`, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; runs 16g onward left: the rest of the legacy view's retirement, family by family, with the may-unwrapping, `TriggerMode`, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -607,7 +607,8 @@ no other family still uses. The order:
 | 16c | Family 2's rest: the filtered land-play abilities and every activation ability are read by their collectors themselves; the land-play zone records and the `Triggering…AbilityConditionalEffect`s go |
 | 16d | Family 2's rest: the unfiltered spell and land-play abilities with options, the "when you cast this spell", "when this spell is countered", suspended-card and mana-ability-resolves readers, and the wrappers family 2 cards still author; no family 2 ability has a legacy view |
 | 16e | Step 13's family 1 (steps and phases): every step reader reads the abilities and judges their options through `StepAbilityReader`; no step ability has a legacy view |
-| 16f onward | The rest of the legacy view's retirement, family by family: each family's collectors read the ability's options, filters and grouping (no `TriggerMode`), then the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
+| 16f | Step 13's family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader` (filter, limit and multiplicity from the ability); no combat ability has a legacy view, and `TriggerMode.PER_BLOCKER` / `ONCE_PER_BLOCK` and `BatchedCombatDamageToYouTriggerEffect` are gone |
+| 16g onward | The rest of the legacy view's retirement, family by family: each family's collectors read the ability's options, filters and grouping (no `TriggerMode`), then the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
 
 Mark the step `done` only after the last run of 16.
 
@@ -7560,6 +7561,120 @@ paragraph (one Oracle ability is one `addTrigger`, never `INDEPENDENT`) were edi
   1); `StepTriggerServiceTest`'s two granted-ability tests failed until they stubbed the ability reader.
 - AI: the whole module (1,620 tests), with the same 10 failures as before.
 - `magical-vibes-webservice`'s test sources still don't compile (`CardBrowserServiceTest`); not touched here.
+- The full suite was not run here.
+
+#### Run 16f: combat reads the ability
+
+Step 13's family 3, the user's choice for 16f (all of combat in one run, where 16e's findings listed the families
+left): every "whenever [a creature] attacks / blocks / becomes blocked / deals combat damage" ability (a
+`CombatTrigger`, collected by `CombatAttackService`, `CombatBlockService`, `CombatDamageService`,
+`CombatTriggerService`, `TriggerCollectionService` and the combat handlers of `DamageTriggerCollectorService`) has no
+legacy view any more, and every reader of one reads the ability.
+
+**What the scan found.** A temporary reflection scan of every card class, its own abilities and the abilities its
+effects grant (3,486 combat abilities in 3,078 card classes, 201 granted): 403 intervening "if"s, 31 event conditions,
+254 filters on the creature, 148 "one or more" (62 "blocks" once each combat, 74 ally combat damage, 5 "combat damage to
+you", the rest attack-or-block abilities), 63 "each blocker", and 13 limits: "attacks for the first time each turn" on
+seven attack abilities (Aurelia, the Warleader, Godo, Bandit Warlord, Fear of Missing Out, Scourge of the Throne), "triggers
+only once each turn" on Akki Battle Squad, Ms. Marvel, Elastic Ally and Raphael, Tag Team Tough, "do this only once each
+turn" on Calix, Guided by Fate and Tidus, Yuna's Guardian, and "triggers only once" on Ruby Collector. No ability mixes
+a combat trigger with another family's; 48 are "attacks or blocks"; 18 registrations are `INDEPENDENT`. Off the
+battlefield: 15 in a graveyard, 3 in the command zone, 2 in exile. No card authored `TriggerMode.PER_BLOCKER` or
+`ONCE_PER_BLOCK` (only the legacy view made them) or `BatchedCombatDamageToYouTriggerEffect`; 18 author an
+`AllyCombatDamageTriggerEffect` event binding (`boundToDealer`, `opponentsDealtDamage`, Pirated Copy's same-name one).
+179 cards write one Oracle combat ability as several `addTrigger` calls (Godo's untap and extra combat, the Swords'
+two effects, Agate-Blade Assassin's drain), which the bodies' bundling keeps one stack object.
+
+**The model.** `CombatTrigger.collectedAsAbility()` is true: `TriggeredAbility.legacyEffects()`, the `getLegacy…`
+getters and `TemporaryGlobalTriggeredAbility.legacyEffect()` throw for a combat ability, the card's slot index leaves
+combat abilities out of its legacy maps, and `CombatWatch.effectsOf` / `registrationsOf` throw. The legacy view's
+combat branch (`CombatView`) is gone, with `TriggerMode.PER_BLOCKER`, `TriggerMode.ONCE_PER_BLOCK`,
+`BatchedCombatDamageToYouTriggerEffect` and `AllyCombatDamageTriggerEffect.withTriggerOptions` / `oneOrMoreDealers`.
+A multiplicity no combat collector reads is rejected as the `TriggeredAbility` is built (new
+`requireReadableMultiplicity`: "each source" off a damage trigger, "each blocker" off "becomes blocked", "one or more"
+on a combat ability without a "blocks", "becomes blocked", ally combat damage or "combat damage to you" condition),
+where the legacy view rejected it as the card was indexed.
+
+**The engine.**
+
+- New `CombatAbilityReader` (`service/trigger`, static): finds the abilities a `CombatWatch` reads (printed by watch key
+  and zone, granted until end of turn or combat and until the permanent leaves, by a static ability through new
+  `GrantedTriggeredAbilitySupport.grantedWatchedAbilities`, a graveyard card's own and perpetual ones, a registered
+  one's `ability()`), and reads each effect as a `CombatEffect`: the effect with the intervening "if" around it (a
+  `ConditionalEffect`, CR 603.4) and the event condition inside that (`ConditionalEffect.atTriggerTime`, CR 603.2), as
+  the bodies judged them, plus the ability, its filter on the creature (the one the watch key drops), its limit (judged
+  and marked by `TriggeredAbility.limitKey()` on the source, `limitReached` / `markLimit`) and its multiplicity. On an
+  authored `AllyCombatDamageTriggerEffect` the intervening "if" goes inside the record. `allyCombatDamage` reads the ally
+  combat damage abilities: the filter and "one or more" from the ability, the event bindings from an authored record.
+  `effects(abilities, trigger[, filterMatches])` and `registrations` serve the collectors that read no limit or
+  multiplicity (all but the attack, "whenever you attack", block, becomes-blocked, ally combat damage and "combat
+  damage to you" bodies) and throw on one; `rawEffects` serves the code that only inspects a combat ability's effects
+  (bushido's static bonus, the AI's threat estimates).
+- Every body judges the filter itself, against the creature and in the filter context it judged the
+  `TriggeringPermanentConditionalEffect` in (the attacker, the blocker, the blocked attacker, the damage dealer); the
+  bodies that read "one or more" and "each blocker" read the multiplicity (the block body's once-per-block set, the
+  becomes-blocked bodies' per-blocker split, the ally and "to you" damage bodies' batched sets) where they read
+  `ONCE_PER_BLOCK`, `PER_BLOCKER`, the ally record's `oncePerDamageStep` and `BatchedCombatDamageToYouTriggerEffect`;
+  the limits are read from the ability (the attack body's "first time each turn" by the attack count and marker, the
+  "whenever you attack" body's unkeyed once-each-turn and once-only marks, the ally damage body's keyed limit and "do this
+  only once each turn" marked on acceptance), where the bodies unwrapped `OncePerTurnTriggerEffect` /
+  `OnceOnlyTriggerEffect`. Authored wrappers (Desert Were-Worm's, Mirror Shield's, the Senu and Berserk Murlodont filters)
+  are still judged as before.
+- The bodies keep their routing by effect kind and their bundling: the printed abilities of one watch that aren't
+  `INDEPENDENT` go on the stack as one object, a granted ability as one of its own.
+
+**Behaviour changes.**
+
+- A granted attack ability with a filter (the Young Hero Role's "if its toughness is 3 or less") is its own stack object
+  (CR 603.3), where the filter wrapper kept it from being split off the creature's printed attack abilities.
+- Nothing else is known to change: each body judges the filter, limit and multiplicity in the context and at the point
+  it judged the legacy wrappers, and the scan found no filtered combat ability with an intervening "if" that a body
+  judged differently.
+
+**Kept, with their reason.**
+
+- The intervening "if" and the event condition still reach the bodies as `ConditionalEffect`s: the attack bodies judge
+  them in contexts of their own (`MinimumAttackers` with the attacker count, `AttackedTargetMatches` with the attacked
+  player, the battalion and pack-tactics conditions unwrapped as the event's), so a reader-side check would need each
+  body's context. Step 15's event-reading effects retire that routing; then the `interveningIf` / `triggerTimeOnly`
+  flags can go.
+- Grouping by ability: the bodies still bundle a permanent's printed abilities of one watch into one stack object (and
+  read `TriggerMode.INDEPENDENT`), because 179 cards write one Oracle ability as several `addTrigger` calls and others
+  (Momentum Rumbler's two "whenever this creature attacks, if …") are two Oracle abilities that bundling merges. A later run merges the
+  former by script, checks the latter against the Oracle text, and then groups by ability (CR 603.3).
+- `AllyCombatDamageTriggerEffect` stays for the 18 authored event bindings (step 15).
+
+**For 16g onward.**
+
+- The other families (damage, counters, targets, library, tap, life, sagas, misc, zone changes), as 16a planned; each
+  can reuse `CombatAbilityReader`'s shape (the reader gives the filter, limit and multiplicity, the bodies judge them
+  in their own contexts).
+- Combat's grouping by ability, above; the "when you cast this spell" merges (16d).
+
+**Tests changed.**
+
+- `CombatTriggerTest`: the legacy-view tests (the filter inside the limit, the ally record, the trigger modes and the
+  batched wrapper, the granted and registered legacy forms) became reader tests: no legacy view, the reader's filter,
+  limit and intervening "if", the event condition inside the intervening "if", the ally reading and an authored
+  record's identity, the multiplicity, a multiplicity rejected as the ability is built, the strict reader rejecting a
+  filter, limit or multiplicity, attack-or-block read by both watches, granted and registered abilities.
+  `aRegistrationKeepsItsTriggerMode` uses `INDEPENDENT` (the deleted modes).
+- `CombatWatchTest`: reads through the reader. `DamageTriggerTest`: "each source" on an attack trigger is rejected as
+  the ability is built. `TriggerOptionsTest`: its legacy-view example uses a damage trigger.
+  `CombatDamageServiceTest#grantedDamageTriggerSurvivesItsSourceDyingInCombat` stubs `grantedWatchedAbilities`.
+
+**Test runs.**
+
+- Card: the test class of every card with a combat ability (by the scan), and every card test that names one without a
+  test of its own (3,067 classes, 24,321 tests): all passing.
+- Application: the `service.trigger` and `model.trigger` packages and the combat-service, triggered-ability,
+  card-abilities, freeze, simulation-copy, granted-ability, pipeline, legacy-binding and planechase classes (963 tests):
+  64 failures, all failing at HEAD (`CombatDamageServiceTest` 40, `DamageTriggerCollectorServiceTest` 6,
+  `DeathTriggerCollectorServiceTest` 6, `CombatServiceTest` 5 (`processEndOfCombatSacrifices`, checked at HEAD in this
+  run), `SpellCastTriggerCollectorServiceTest` 2, `LandTapTriggerCollectorServiceTest` 2, `PlanechaseServiceTest` 2,
+  `SimulationCopyCompletenessTest` 1).
+- AI: the whole module (1,620 tests), with the same 10 failures as before (two each in the four AI decision engine
+  tests and `TargetPolarityGuardTest`).
 - The full suite was not run here.
 
 ## Prompt

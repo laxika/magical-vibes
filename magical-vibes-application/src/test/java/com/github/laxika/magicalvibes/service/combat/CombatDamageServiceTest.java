@@ -70,7 +70,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -554,12 +553,14 @@ class CombatDamageServiceTest {
             Permanent attacker = addAttacker("Small attacker", 1, 1);
             Permanent blocker = addBlocker("Large blocker", 2, 4, 0);
             var effect = new com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect(true);
-            when(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+            var granted = new com.github.laxika.magicalvibes.model.TriggeredAbility(
+                    Triggers.dealsCombatDamageToCreature(), effect);
+            when(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
                     eq(gameData), any(Permanent.class), any(Trigger.class)))
                     .thenAnswer(invocation -> invocation.getArgument(1) == attacker
                             && Triggers.dealsCombatDamageToCreature().equals(invocation.getArgument(2))
                             && gameData.playerBattlefields.get(player1Id).contains(attacker)
-                            ? List.of(effect) : List.of());
+                            ? List.of(granted) : List.of());
 
             combatDamageService.resolveCombatDamage(gameData);
 

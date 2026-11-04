@@ -98,6 +98,26 @@ public class GrantedTriggeredAbilitySupport {
     }
 
     /**
+     * The abilities other permanents' static abilities grant {@code permanent}, as it is now, with a trigger condition
+     * whose {@link com.github.laxika.magicalvibes.model.trigger.Trigger#watchKey()} is {@code watched}: for a collector
+     * that reads the abilities themselves (the combat collectors, {@code CombatAbilityReader}).
+     */
+    public List<TriggeredAbility> grantedWatchedAbilities(GameData gameData, Permanent permanent, Trigger watched) {
+        return grantedTriggeredAbilities(gameData, permanent, null, ability -> ability.hasWatchedTrigger(watched));
+    }
+
+    /**
+     * Controller-aware form of {@link #grantedWatchedAbilities(GameData, Permanent, Trigger)}, for a permanent
+     * snapshot after it has left the battlefield.
+     */
+    public List<TriggeredAbility> grantedWatchedAbilities(GameData gameData, Permanent permanent, UUID controllerId,
+                                                          Trigger watched) {
+        return grantedTriggeredAbilities(gameData, permanent,
+                gameQueryService.computeStaticBonus(gameData, permanent, controllerId),
+                ability -> ability.hasWatchedTrigger(watched));
+    }
+
+    /**
      * The abilities other permanents' static abilities grant {@code permanent} that trigger on a zone change, its
      * own ("when this dies") or another object's ("whenever a creature dies"), as it is now. A departure records
      * them before the permanent leaves, so its look-back triggers see them (CR 603.10a).

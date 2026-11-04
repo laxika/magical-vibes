@@ -8,7 +8,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>
  * Placed on {@code Triggers.blocks()} ability (auto-targeting the
  * blocked attacker) and/or on {@code Triggers.becomesBlocked()}
- * with {@link com.github.laxika.magicalvibes.model.TriggerMode#PER_BLOCKER}. The referenced creature
+ * with {@code TriggerOptions.EACH_BLOCKER}. The referenced creature
  * is carried as the stack entry's non-targeting target, so the trigger can't fizzle. Resolution
  * queues a {@link com.github.laxika.magicalvibes.model.action.DelayedPermanentAction} of kind
  * {@code RETURN_TO_HAND_AT_END_OF_COMBAT}, so the creature still deals its combat damage and is
