@@ -2117,6 +2117,7 @@ public class Permanent {
      * trigger's {@link Trigger#watchKey()}, as {@link Card#getLegacyTriggerEffects(Trigger)} finds a card's.
      */
     public List<CardEffect> getGrantedTriggerEffects(Trigger trigger) {
+        TriggeredAbility.requireLegacyView(trigger);
         List<CardEffect> effects = new ArrayList<>();
         for (TriggeredAbility ability : getTemporaryTriggeredAbilities()) {
             if (ability.hasWatchedTrigger(trigger)) {
@@ -2163,6 +2164,7 @@ public class Permanent {
     }
 
     private static List<CardEffect> legacyEffectsWithTrigger(List<TriggeredAbility> abilities, Trigger trigger) {
+        TriggeredAbility.requireLegacyView(trigger);
         List<CardEffect> effects = new ArrayList<>();
         for (TriggeredAbility ability : abilities) {
             if (ability.hasWatchedTrigger(trigger)) {

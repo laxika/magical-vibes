@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; runs 16d onward left: the rest of the legacy view's retirement, family by family, with the may-unwrapping, `TriggerMode`, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; runs 16e onward left: the rest of the legacy view's retirement, family by family, with the may-unwrapping, `TriggerMode`, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -605,7 +605,8 @@ no other family still uses. The order:
 | 16a | What no family owns and needs no collector rewritten: the `onlyIfSacrificed` flags, the `atTriggerTime` and die-result conditions as the trigger's event condition, the may questions asked before the stack (CR 603.5), the Eerie merges |
 | 16b | The legacy view's retirement begins: the spell-cast and spell-copy collectors read the filtered abilities themselves |
 | 16c | Family 2's rest: the filtered land-play abilities and every activation ability are read by their collectors themselves; the land-play zone records and the `Triggering…AbilityConditionalEffect`s go |
-| 16d onward | The rest of the legacy view's retirement, family by family: each family's collectors read the ability's options, filters and grouping (no `TriggerMode`), then the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
+| 16d | Family 2's rest: the unfiltered spell and land-play abilities with options, the "when you cast this spell", "when this spell is countered", suspended-card and mana-ability-resolves readers, and the wrappers family 2 cards still author; no family 2 ability has a legacy view |
+| 16e onward | The rest of the legacy view's retirement, family by family: each family's collectors read the ability's options, filters and grouping (no `TriggerMode`), then the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
 
 Mark the step `done` only after the last run of 16.
 
@@ -7317,6 +7318,135 @@ granted but Tyvar the Bellicose's "a mana ability of this creature resolves", wh
   `DamageTriggerCollectorServiceTest` 6, `SpellCastTriggerCollectorServiceTest` 2, `LandTapTriggerCollectorServiceTest`
   2 and the known one each in `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and
   `CardEffectTargetingConsistencyTest`).
+- AI: the whole module (1,620 tests), with the same 10 failures as before.
+- The full suite was not run here.
+
+#### Run 16d: family 2's rest
+
+The plan left 16d onward unscoped ("family by family"); the user chose to close family 2 in 16d, as 16c's findings
+listed it, and to start step 13's family 1 (steps and phases: 2,315 card classes, 681 with options, the 7,790 lines
+of `StepTriggerService`) in 16e. After 16d no spell, land-play or activation ability has a legacy view: every reader of
+family 2 reads the ability itself and judges its options.
+
+**What the scan found.** A temporary reflection scan of every registered card, its own abilities and the abilities its
+effects grant, for the family 2 abilities that still went through the legacy view with options, a wrapper or a
+non-default `TriggerMode`: 25 abilities.
+
+- "When you cast this spell" (from the stack): Apex Devastator's four `INDEPENDENT` cascades, Bloodbraid Marauder's
+  event condition (delirium), and the intervening "if"s of Bygone Marvels, Kozilek, the Great Distortion, Scourge of the
+  Skyclaves and Unbreakable Remnant.
+- Unfiltered cast abilities whose effect is an event binding (copy that spell): Chandra, Hope's Beacon, Donal, Herald
+  of Wings, Jin-Gitaxias, Progress Tyrant and The Sixth Doctor ("triggers only once each turn"), Cosmic Crucible, Iron
+  Man, Bleeding Edge and Spider-Verse ("do this only once each turn"); Bill Potts's authored
+  `OncePerTurnTriggerEffect`; Pardic Dragon's "if this card is suspended", read from exile.
+- Unfiltered land-play abilities with an intervening "if": Hidden Stag (two) and Fastbond.
+- Authored wrappers: The Fourth Doctor's two `OncePerTurnTriggerEffect`s around one Food binding, and the granted
+  `OncePerTurnTriggerEffect.perGrant` of Folk Hero (around an authored `SpellCastTriggerEffect`) and Tyvar the
+  Bellicose ("whenever a mana ability of this creature resolves").
+
+No ability mixes a family 2 trigger with another family's.
+
+**The model.**
+
+- New `Trigger.collectedAsAbility()`, true for `SpellTrigger`, `LandPlayTrigger` and `AbilityTrigger`, and
+  `TriggeredAbility.collectedAsAbility()`. Such an ability has no legacy view: `legacyEffects()` throws, the card's slot
+  index leaves it out of the legacy maps, and the `getLegacy…` getters of `Card`, `Permanent`, `GameData`
+  (`perpetualLegacyTriggerEffects`) and `GrantedTriggeredAbilitySupport.grantedTriggerEffects` throw for a family 2
+  trigger (new `TriggeredAbility.requireLegacyView`), as do `SpellAbilityWatch.effectsOf` and `registrationsOf`. A
+  reader left on the legacy view fails at once instead of reading the effects without their options; one did
+  (`CastTargetInstantOrSorceryFromGraveyardHandler`'s "do this only once each turn" sweep over the source's abilities,
+  found by Harness the Storm's tests), and reads a family 2 ability's limit from its options now.
+- `TriggeredAbility` has a fifth component, `instance` (**CR 113.2c**, checked: each instance of an ability functions
+  independently): which of several equal instances one object has it is, or `null`, with `withInstance`; `limitKey()`
+  differs by it and the withers keep it. `GrantTriggeredAbilityEffectHandler` makes a granted ability with a limit the
+  granting permanent's instance (`"granted-by:" + id`), so each grant keeps its own "triggers only once each turn", as
+  `perGrant` did for its wrapper. The 4-argument constructor stays.
+
+**The engine.**
+
+- `TriggerCollectionService.dispatchWatch` hands every spell, land-play and activation watch to `dispatchSpellWatch`
+  (the counters and countered watches too); `readsFilteredAbilities` is gone. An unfiltered ability (no spell filter,
+  land filter or zone), on the battlefield, granted, in exile or on a face-up plane, goes to the new
+  `collectUnfilteredAbility`: new `triggeredEffects` checks the event condition and the intervening "if" as it
+  triggers (**CR 603.2**, **CR 603.4**) and wraps the intervening "if" around each effect for the check as it
+  resolves; a limit is judged and marked by `collectLimitedAbility` (16c), keyed by `limitKey()`, and only an ability
+  with one effect may have one; each effect goes to the watch's handlers, which bind the event data (step 15), with the
+  printed abilities' effects read through text changes as before.
+- The "when you cast this spell" reader reads the card's abilities (judging the event condition and intervening "if"
+  in the spell's context, throwing on a limit) and the replicate check reads the raw effects; the "when this spell is
+  countered or doesn't resolve" reader, the suspended-card reader (Pardic Dragon, Deep-Sea Kraken) and the
+  mana-ability-resolves reader (Tyvar's grants) read abilities through `triggeredEffects` / `collectUnfilteredAbility`.
+  New `requireNoLimit` for the readers of a card that isn't a permanent. `EffectResolution.hasManaSpentToCastAmount`
+  reads the raw "when you cast this spell" effects.
+- The cast-spell copy handler reads "do this only once each turn" from
+  `TriggerMatchContext.markSourceOncePerTurnOnAcceptance()` (the limit's flag) as well as from an authored wrapper.
+
+**Cards.** `scripts/step14-family-two-leftovers.py` (exact replacements, idempotent): Tyvar's and Folk Hero's granted
+abilities take `TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN)` (Folk Hero's `SpellCastTriggerEffect`
+became `Triggers.youCastSpell().withFilter(new CardSharesCreatureTypeWithSourcePredicate())` with a plain
+`DrawCardEffect`, read by the spell-cast collector); The Fourth Doctor's two abilities are one of both conditions
+(`youCastSpell()`, `youPlayLand()`) with the limit; Apex Devastator's cascades drop `TriggerMode.INDEPENDENT` (each
+`addTrigger` is an ability of its own). `scripts/step14-family-two-leftovers-docs.py` rewrote the `ARCHITECTURE.md`,
+`EFFECTS_QUICK_REFERENCE.md` and `ORACLE_TEXT_EFFECT_MAP.md` passages.
+
+**Behaviour changes.**
+
+- Rules fix (CR 113.2c): a granted ability with an options limit is an instance per granting permanent, so a creature
+  that two Danny Pinks (or two Niambi, Beloved Protectors) grant the ability draws once for each, where both instances
+  shared one key and only one triggered. New `DannyPinkTest#eachDannyPinkGrantsAnIndependentOncePerTurnAbility` and
+  `TyvarTheBellicoseTest#eachTyvarGrantsAnIndependentOncePerTurnAbility`; with the instance turned off they fail, as do
+  Folk Hero's per-grant test and Tyvar's blink test.
+- Bloodbraid Marauder's cascade: delirium is judged by the reader, and the cascade goes on the stack as the cascade
+  object ("'s cascade ability", with the spell's X, kicker and zone), where the event condition's wrapper put it in the
+  generic self-cast object. Its tests pass.
+- Nothing else is known to change: the other readers hand the handlers what the legacy view did (the intervening "if"
+  as the `ConditionalEffect` the land-play default handlers and Pardic Dragon's handler judge).
+
+**Kept, with their reason.**
+
+- The "when you cast this spell" reader still puts the plain effects of all the card's such abilities on the stack as
+  one object. Grouping them by ability broke 12 cards that write one Oracle ability as several `addTrigger` calls
+  (Hydroid Krasis's "you gain half X life and draw half X cards", Decimator of the Provinces, Abundant Maw, Hideous
+  Taskmaster, Flayer of Loyalties, The Beast, Deathless Prince, Kozilek Compleated, Mutated Cultist, Wingbright Thief,
+  Oblivion Sower, Gluttonous Hellkite, Sauron, Lord of the Rings); a later run merges those by script and then groups.
+- An unfiltered ability's event bindings still receive its intervening "if" as a `ConditionalEffect` (Hidden Stag,
+  Fastbond, Pardic Dragon), and an unfiltered ability with a limit may have one effect only: its handler puts it on
+  the stack. Step 15 makes those effects read the event, and then the generic collector can take them.
+- Bill Potts's two authored `OncePerTurnTriggerEffect`s share the source's unkeyed mark across a cast and an
+  activation condition whose event bindings differ (`CopyControllerCastSpellOnSpellCastEffect`,
+  `CopyControllerActivatedAbilityTriggerEffect`): one ability of both conditions needs step 15's "copy that spell or
+  ability".
+- `OncePerTurnTriggerEffect.perGrant` stays for Well Rested (a tap trigger, still on the legacy view), and the
+  may-unwrapping for the 31 event bindings 16a listed and Pontiff of Blight's authored extort.
+
+**For 16e onward.**
+
+- Family 1 (steps and phases), then the other families, as 16a planned. Each can reuse `collectUnfilteredAbility`'s
+  shape: options judged by the reader, effects to the handlers, until step 15.
+- Merge the "when you cast this spell" abilities cards split, then group that reader's effects by ability (CR 603.3).
+
+**Tests changed.**
+
+- `SpellAbilityTriggerTest`: the legacy-view tests of the unfiltered land-play and cast triggers and the copy trigger
+  assert that the unfiltered trigger finds only its own abilities and that the legacy getters throw.
+- New: `TriggeredAbilityTest#anInstanceOfAnAbilityKeepsItsOwnLimitKeyAndTheWithersKeepTheInstance` and
+  `#aSpellLandPlayOrActivationAbilityHasNoLegacyView`, the Danny Pink and Tyvar tests above.
+
+**Test runs.**
+
+- Card: the test class of every card with a "when you cast this spell", "when this spell is countered", "you counter
+  a spell", "a spell you control is countered" or mana-ability-resolves ability, an unfiltered cast, copy or land-play
+  ability, or a replicate or demonstrate effect, and of Danny Pink, Niambi, Mirror Box, Hidden Stag and Fastbond (378
+  classes, 3,116 tests), and Folk Hero's: all passing.
+- Application: the `service.trigger`, `model.trigger`, `architecture` and `service.spell` packages and the
+  triggered-ability, granted-ability, freeze, pipeline, targeting-consistency, stack-resolution, text-change,
+  step-trigger and planechase classes, with the engine module's `service.trigger` and `service.effect` packages (1,076
+  application tests): 48 failures, all known from HEAD (`StepTriggerServiceTest` 16, `SpellCastingServiceTest` 10,
+  `DeathTriggerCollectorServiceTest` 6, `DamageTriggerCollectorServiceTest` 6, `SpellCastTriggerCollectorServiceTest`
+  2, `LandTapTriggerCollectorServiceTest` 2, `PlanechaseServiceTest` 2, the known one each in
+  `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and `CardEffectTargetingConsistencyTest`, and
+  `CostEffectClassificationTest`'s unclassified `RevealSourceChosenSubtypeCost`, which this run doesn't touch). The
+  engine module's tests pass.
 - AI: the whole module (1,620 tests), with the same 10 failures as before.
 - The full suite was not run here.
 

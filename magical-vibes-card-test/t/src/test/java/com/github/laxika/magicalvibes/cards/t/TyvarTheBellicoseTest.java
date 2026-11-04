@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GoldMyr;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.m.MirrorBox;
 import com.github.laxika.magicalvibes.cards.m.MomentaryBlink;
 import com.github.laxika.magicalvibes.cards.p.PriestOfTitania;
 import com.github.laxika.magicalvibes.cards.v.ViridianJoiner;
@@ -22,7 +23,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({TyvarTheBellicose.class, GrizzlyBears.class, LlanowarElves.class, PriestOfTitania.class,
-        MomentaryBlink.class, TurnToFrog.class, ViridianJoiner.class, GiantGrowth.class, GoldMyr.class})
+        MomentaryBlink.class, TurnToFrog.class, ViridianJoiner.class, GiantGrowth.class, GoldMyr.class,
+        MirrorBox.class})
 class TyvarTheBellicoseTest extends BaseCardTest {
 
     @Test
@@ -69,6 +71,25 @@ class TyvarTheBellicoseTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(elf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Each Tyvar grants its own instance, which triggers once each turn on its own")
+    void eachTyvarGrantsAnIndependentOncePerTurnAbility() {
+        harness.addToBattlefield(player1, new MirrorBox());
+        harness.addToBattlefield(player1, new TyvarTheBellicose());
+        harness.addToBattlefield(player1, new TyvarTheBellicose());
+        Permanent elf = addCreatureReady(player1, new LlanowarElves());
+
+        harness.tapPermanent(player1, 3);
+        resolveAllTriggers();
+        assertThat(elf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+
+        elf.untap();
+        harness.tapPermanent(player1, 3);
+        resolveAllTriggers();
+
+        assertThat(elf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test

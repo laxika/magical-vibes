@@ -2005,9 +2005,11 @@ public class Card {
      * abilities. The wrapped effects are built once, with the index, so they keep their identity across calls. An
      * ability is found by its trigger's {@link Trigger#watchKey()}, so an ability whose collector judges a filter from
      * a wrapper (a Room door, a tap trigger's permanent) is found by the unfiltered trigger, with the filter as a
-     * wrapper.
+     * wrapper. A spell, land-play or activation trigger ({@link Trigger#collectedAsAbility()}) has no legacy view, and
+     * throws.
      */
     public List<CardEffect> getLegacyTriggerEffects(Trigger trigger) {
+        TriggeredAbility.requireLegacyView(trigger);
         TriggerView view = slotIndex().legacyByTrigger().get(trigger);
         return view == null ? List.of() : view.effects();
     }
@@ -2018,6 +2020,7 @@ public class Card {
      * {@link #getLegacyTriggerEffects(Trigger)} says.
      */
     public List<EffectRegistration> getLegacyTriggerEffectRegistrations(Trigger trigger) {
+        TriggeredAbility.requireLegacyView(trigger);
         TriggerView view = slotIndex().legacyByTrigger().get(trigger);
         return view == null ? List.of() : view.registrations();
     }
@@ -2051,8 +2054,8 @@ public class Card {
     /**
      * The effects of this card's triggered abilities that have {@code trigger} as a trigger condition functioning in
      * {@code zone}, each wrapped in its ability's options as {@link #getLegacyTriggerEffects(Trigger)} says: the form
-     * the "at the beginning of [step or phase]" and the unfiltered spell and land-play collectors read them in (by
-     * the trigger's {@link Trigger#watchKey()}, as {@link #getLegacyTriggerEffects(Trigger)} says). The wrapped
+     * the "at the beginning of [step or phase]" collectors read them in (by the trigger's {@link Trigger#watchKey()},
+     * as {@link #getLegacyTriggerEffects(Trigger)} says). The wrapped
      * effects are the ones
      * {@link #getLegacyTriggerEffects(Trigger)} gives, so they keep their identity across calls.
      */
@@ -2066,6 +2069,7 @@ public class Card {
      * {@link #getLegacyTriggerEffects(Trigger, Zone)} says.
      */
     public List<EffectRegistration> getLegacyTriggerEffectRegistrations(Trigger trigger, Zone zone) {
+        TriggeredAbility.requireLegacyView(trigger);
         SlotIndex index = slotIndex();
         if (!index.legacyByTrigger().containsKey(trigger)) {
             return List.of();
@@ -2318,11 +2322,15 @@ public class Card {
                 } else if (ability instanceof TriggeredAbility triggered && slotOf(triggered) != null) {
                     bySlot.computeIfAbsent(slotOf(triggered), slot -> new ArrayList<>()).add(triggered);
                 } else if (ability instanceof TriggeredAbility triggered) {
-                    List<EffectRegistration> legacy = triggered.legacyEffects();
-                    legacyByAbility.put(triggered, legacy);
                     triggered.conditions().stream().map(TriggerCondition::trigger).distinct().forEach(trigger ->
                             registrationsByTrigger.computeIfAbsent(trigger, ignored -> new ArrayList<>())
                                     .addAll(triggered.effects()));
+                    // The spell, land-play and activation collectors read their abilities themselves.
+                    if (triggered.collectedAsAbility()) {
+                        continue;
+                    }
+                    List<EffectRegistration> legacy = triggered.legacyEffects();
+                    legacyByAbility.put(triggered, legacy);
                     triggered.conditions().stream().map(condition -> condition.trigger().watchKey()).distinct()
                             .forEach(trigger -> legacyRegistrationsByTrigger
                                     .computeIfAbsent(trigger, ignored -> new ArrayList<>()).addAll(legacy));

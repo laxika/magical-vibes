@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import org.junit.jupiter.api.Test;
@@ -74,5 +75,39 @@ class TriggeredAbilityTest {
         assertThatThrownBy(() -> new TriggeredAbility(Triggers.youLoseControlOfThis(),
                 TriggerOptions.DEFAULT, List.of(simultaneous)))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void anInstanceOfAnAbilityKeepsItsOwnLimitKeyAndTheWithersKeepTheInstance() {
+        TriggeredAbility ability = new TriggeredAbility(Triggers.thisManaAbilityResolves(),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), new DrawCardEffect(1));
+
+        TriggeredAbility fromOne = ability.withInstance("granted-by:one");
+        TriggeredAbility fromTwo = ability.withInstance("granted-by:two");
+
+        assertThat(ability.instance()).isNull();
+        assertThat(fromOne).isNotEqualTo(fromTwo);
+        assertThat(fromOne.limitKey()).isNotEqualTo(fromTwo.limitKey()).isNotEqualTo(ability.limitKey());
+        assertThat(ability.withInstance("granted-by:one").limitKey()).isEqualTo(fromOne.limitKey());
+        assertThat(fromOne.withEffects(ZOMBIE).instance()).isEqualTo("granted-by:one");
+        assertThat(fromOne.withChapterTargets(SagaChapterTargets.NONE)).isEqualTo(fromOne);
+    }
+
+    @Test
+    void aSpellLandPlayOrActivationAbilityHasNoLegacyView() {
+        TriggeredAbility cast = new TriggeredAbility(Triggers.youCastSpell(), new DrawCardEffect(1));
+        TriggeredAbility landPlay = new TriggeredAbility(Triggers.youPlayLand(), new DrawCardEffect(1));
+        TriggeredAbility activation = new TriggeredAbility(Triggers.youActivateAbility(), new DrawCardEffect(1));
+        TriggeredAbility dies = new TriggeredAbility(Triggers.youLoseControlOfThis(), new DrawCardEffect(1));
+
+        assertThat(cast.collectedAsAbility()).isTrue();
+        assertThat(landPlay.collectedAsAbility()).isTrue();
+        assertThat(activation.collectedAsAbility()).isTrue();
+        assertThat(dies.collectedAsAbility()).isFalse();
+        assertThatThrownBy(cast::legacyEffects).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> TriggeredAbility.requireLegacyView(Triggers.youPlayLand()))
+                .isInstanceOf(IllegalArgumentException.class);
+        TriggeredAbility.requireLegacyView(Triggers.youLoseControlOfThis());
+        assertThat(dies.legacyEffects()).isEqualTo(dies.effects());
     }
 }

@@ -4,10 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateFoodWhenPlayingCardFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandOrCastSpellFromTopOfLibraryOncePerTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "2")
 @CardRegistration(set = "WHO", collectorNumber = "193")
@@ -24,11 +27,8 @@ public class TheFourthDoctor extends Card {
         addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
         addStaticEffect(new PlayLandOrCastSpellFromTopOfLibraryOncePerTurnEffect(historic));
 
-        CreateFoodWhenPlayingCardFromTopOfLibraryEffect createFood =
-                new CreateFoodWhenPlayingCardFromTopOfLibraryEffect(historic);
-        addTrigger(Triggers.youCastSpell(),
-                new OncePerTurnTriggerEffect(createFood));
-        addTrigger(Triggers.youPlayLand(),
-                new OncePerTurnTriggerEffect(createFood));
+        addTrigger(List.of(Triggers.youCastSpell(), Triggers.youPlayLand()),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new CreateFoodWhenPlayingCardFromTopOfLibraryEffect(historic));
     }
 }

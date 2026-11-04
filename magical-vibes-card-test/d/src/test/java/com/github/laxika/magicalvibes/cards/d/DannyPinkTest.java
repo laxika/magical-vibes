@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GavonyTownship;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MirrorBox;
 import com.github.laxika.magicalvibes.cards.s.SisterhoodOfKarn;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DannyPink.class, Forest.class, GavonyTownship.class, GrizzlyBears.class, SisterhoodOfKarn.class})
+@CardUsed({DannyPink.class, Forest.class, GavonyTownship.class, GrizzlyBears.class, SisterhoodOfKarn.class,
+        MirrorBox.class})
 class DannyPinkTest extends BaseCardTest {
 
     @BeforeEach
@@ -65,6 +67,28 @@ class DannyPinkTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Each Danny Pink grants its own instance, so a creature draws once for each that turn")
+    void eachDannyPinkGrantsAnIndependentOncePerTurnAbility() {
+        harness.addToBattlefield(player1, new MirrorBox());
+        addCreatureReady(player1, new DannyPink());
+        addCreatureReady(player1, new DannyPink());
+        Permanent township = harness.addToBattlefieldAndReturn(player1, new GavonyTownship());
+        harness.setLibrary(player1, List.of(
+                new Forest(), new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
+
+        activateTownship(township);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+
+        township.untap();
+        activateTownship(township);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
     }
 
     private void activateTownship(Permanent township) {

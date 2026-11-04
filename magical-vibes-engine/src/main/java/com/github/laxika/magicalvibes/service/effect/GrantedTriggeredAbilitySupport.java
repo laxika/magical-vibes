@@ -90,6 +90,7 @@ public class GrantedTriggeredAbilitySupport {
      */
     public List<CardEffect> grantedTriggerEffects(GameData gameData, Permanent permanent,
                                                   GameQueryService.StaticBonus staticBonus, Trigger trigger) {
+        TriggeredAbility.requireLegacyView(trigger);
         return grantedTriggeredAbilities(gameData, permanent, staticBonus,
                 ability -> ability.hasWatchedTrigger(trigger)).stream()
                 .flatMap(ability -> ability.legacyEffects().stream().map(EffectRegistration::effect))

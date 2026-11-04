@@ -27,6 +27,12 @@ public record AbilityTrigger(AbilityEvent event, PlayerRelation player, Permanen
         this(event, player, null, null);
     }
 
+    /** The spell, land-play and activation collectors read this trigger's abilities themselves. */
+    @Override
+    public boolean collectedAsAbility() {
+        return true;
+    }
+
     /** This trigger for an ability of a permanent that matches {@code source} only. */
     public AbilityTrigger withSource(PermanentPredicate source) {
         return new AbilityTrigger(event, player, Objects.requireNonNull(source, "source"), kind);

@@ -11635,6 +11635,7 @@ public class GameData {
      * read effects take them in.
      */
     public List<CardEffect> perpetualLegacyTriggerEffects(UUID cardId, Trigger trigger, Zone zone) {
+        TriggeredAbility.requireLegacyView(trigger);
         List<CardEffect> effects = new ArrayList<>();
         for (Ability ability : perpetualAbilities(cardId)) {
             if (ability instanceof TriggeredAbility triggered && triggered.hasWatchedTrigger(trigger, zone)) {

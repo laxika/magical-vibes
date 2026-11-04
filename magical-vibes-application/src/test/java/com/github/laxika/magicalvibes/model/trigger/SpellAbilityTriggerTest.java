@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -134,7 +133,7 @@ class SpellAbilityTriggerTest {
     }
 
     @Test
-    void theLegacyViewOfTheUnfilteredLandPlayTriggerLeavesOutFilteredLandPlayAbilities() {
+    void landPlayAbilitiesHaveNoLegacyViewAndTheUnfilteredTriggerFindsOnlyItsOwnAbilities() {
         Card card = new Card();
         card.addTrigger(Triggers.youPlayLand().withFilter(new CardSubtypePredicate(CardSubtype.ISLAND)),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW);
@@ -142,12 +141,13 @@ class SpellAbilityTriggerTest {
         card.addTrigger(Triggers.youPlayLand(), TriggerOptions.DEFAULT.withInterveningIf(new SourceIsEnchantment()),
                 GAIN);
 
-        // The land-play collector reads a filtered ability itself; an unfiltered one is still read by its effects.
-        assertThat(card.getLegacyTriggerEffects(Triggers.youPlayLand(), Zone.BATTLEFIELD))
-                .containsExactly(new ConditionalEffect(new SourceIsEnchantment(), GAIN, true));
-        assertThat(card.getLegacyTriggerEffects(Triggers.youPlayLand(), Zone.BATTLEFIELD).getFirst())
-                .isSameAs(card.getLegacyTriggerEffects(Triggers.youPlayLand(), Zone.BATTLEFIELD).getFirst());
-        assertThat(card.getLegacyTriggerEffects(Triggers.opponentPlaysLand(), Zone.BATTLEFIELD)).isEmpty();
+        // The land-play collectors read every land-play ability itself, its options included.
+        assertThat(card.getTriggerEffects(Triggers.youPlayLand(), Zone.BATTLEFIELD)).containsExactly(GAIN);
+        assertThat(card.getTriggerEffects(Triggers.opponentPlaysLand(), Zone.BATTLEFIELD)).isEmpty();
+        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.youPlayLand(), Zone.BATTLEFIELD))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> card.getLegacyTriggerEffectRegistrations(card.getTriggeredAbilities().getLast()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -202,7 +202,7 @@ class SpellAbilityTriggerTest {
     }
 
     @Test
-    void theLegacyViewOfTheUnfilteredTriggerLeavesOutFilteredCastAbilities() {
+    void theUnfilteredCastTriggerFindsOnlyItsOwnAbilitiesAndNoneHasALegacyView() {
         var creature = new CardTypePredicate(CardType.CREATURE);
         Card card = new Card();
         card.addTrigger(Triggers.youCastSpell().withFilter(creature).duringOpponentsTurn().paidWithTreasureMana(),
@@ -210,9 +210,10 @@ class SpellAbilityTriggerTest {
         card.addTrigger(Triggers.youCastSpell(), LOSE);
         TriggeredAbility granted = new TriggeredAbility(Triggers.youCastSpell().anySpell(), DRAW);
 
-        // The spell-cast collector reads a filtered ability itself; only the effect-keyed one is in the legacy view.
+        // The unfiltered trigger finds only its own ability; no cast ability is in the legacy view.
         assertThat(card.getTriggerEffects(Triggers.youCastSpell(), Zone.BATTLEFIELD)).containsExactly(LOSE);
-        assertThat(card.getLegacyTriggerEffects(Triggers.youCastSpell(), Zone.BATTLEFIELD)).containsExactly(LOSE);
+        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.youCastSpell(), Zone.BATTLEFIELD))
+                .isInstanceOf(IllegalArgumentException.class);
         assertThat(granted.hasWatchedTrigger(Triggers.youCastSpell())).isFalse();
         assertThat(granted.hasTrigger(Triggers.youCastSpell())).isFalse();
     }
@@ -243,8 +244,9 @@ class SpellAbilityTriggerTest {
         assertThat(Triggers.opponentCopiesSpell().withStackEntryFilter(new StackEntryKickedPredicate()).filter())
                 .isEqualTo(SpellFilter.ANY.withStackEntry(new StackEntryKickedPredicate()));
         // The spell-copy collector reads a filtered copy ability itself, not through the legacy view.
-        assertThat(card.getLegacyTriggerEffects(Triggers.youCopySpell(), Zone.BATTLEFIELD)).isEmpty();
-        assertThat(card.getLegacyTriggerEffects(Triggers.opponentCopiesSpell(), Zone.BATTLEFIELD)).isEmpty();
+        assertThat(card.getTriggerEffects(Triggers.youCopySpell(), Zone.BATTLEFIELD)).isEmpty();
+        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.opponentCopiesSpell(), Zone.BATTLEFIELD))
+                .isInstanceOf(IllegalArgumentException.class);
         // A copy isn't cast: what the copied spell is is all a copy trigger can say.
         assertThatThrownBy(() -> Triggers.youCopySpell().nthThisTurn(1)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> Triggers.youCopySpell().castFrom(Zone.HAND))

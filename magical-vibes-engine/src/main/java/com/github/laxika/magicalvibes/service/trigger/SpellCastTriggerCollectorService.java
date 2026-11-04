@@ -1567,8 +1567,9 @@ public class SpellCastTriggerCollectorService {
         }
 
         StackEntry snapshot = new StackEntry(spellEntry);
-        boolean markOnAcceptance = match.rawEffect() instanceof OncePerTurnTriggerEffect once
-                && once.markOnAcceptance();
+        // "Do this only once each turn" (CR 603.2h): copying is the action, so accepting the copy uses it up.
+        boolean markOnAcceptance = match.markSourceOncePerTurnOnAcceptance()
+                || match.rawEffect() instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance();
         CardEffect copyEffect =
                 new CopyControllerCastSpellEffect(snapshot, sc.castingPlayerId(), trigger.grantedKeywords(),
                         trigger.additionalTypes(), trigger.removedSupertypes(), trigger.tokenCopy(),

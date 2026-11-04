@@ -326,6 +326,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
@@ -1892,18 +1893,17 @@ public class TriggerCollectionService {
             }
         }
 
-        // ON_SELF_CAST — "When you cast this spell, ..." triggers scanned against the just-cast card
-        // itself (it's a spell on the stack, not a permanent). CopyThisSpellIfConditionEffect (SOS
-        // Infusion copy cycle) needs a snapshot of the spell entry; any other effect (e.g. Demigod of
-        // Revenge's graveyard return) is queued as a plain triggered ability under the caster.
-        List<CardEffect> selfCastTriggeredEffects = new ArrayList<>();
+        // "When you cast this spell, ..." abilities of the just-cast card itself (it's a spell on the stack, not a
+        // permanent), collected together by collectSelfCastEffects: replicate, demonstrate, the card's own abilities
+        // (their options judged as they trigger) and the targeted ones perpetually granted to it.
         List<CardEffect> selfCastEffects = new ArrayList<>();
         if (spellCard.getManaCost() != null) {
             gameQueryService.getSpellCastingAbilityGrantValues(
                             gameData, castingPlayerId, spellCard, Keyword.REPLICATE, castZone).stream()
                     .map(value -> value > 0 ? "{" + value + "}" : spellCard.getManaCost())
                     .distinct()
-                    .filter(replicateCost -> SpellAbilityWatch.ON_SELF_CAST.effectsOf(spellCard).stream()
+                    .filter(replicateCost -> spellCard.getTriggerEffects(SpellAbilityWatch.ON_SELF_CAST.trigger(),
+                                    SpellAbilityWatch.ON_SELF_CAST.zone()).stream()
                             .noneMatch(effect -> effect instanceof ReplicateEffect replicate
                                     && replicateCost.equals(replicate.manaCost())))
                     .map(ReplicateEffect::new)
@@ -1950,7 +1950,25 @@ public class TriggerCollectionService {
                         gameData, castingPlayerId, spellCard, Keyword.DEMONSTRATE, castZone)
                 .forEach(grant -> selfCastEffects.add(new MayEffect(
                         new DemonstrateEffect(), "Copy " + spellCard.getName() + "?")));
-        selfCastEffects.addAll(SpellAbilityWatch.ON_SELF_CAST.effectsOf(spellCard));
+        StackEntry selfCastSpellEntry = gameData.stack.stream()
+                .filter(entry -> entry.getTargetableId().equals(spellCard.getId()))
+                .findFirst()
+                .orElse(null);
+        ConditionContext selfCastContext = selfCastSpellEntry != null
+                ? ConditionContext.forStackEntry(selfCastSpellEntry)
+                : ConditionContext.forCard(spellCard, castingPlayerId);
+        for (TriggeredAbility ability : spellCard.getTriggeredAbilities()) {
+            if (!ability.hasWatchedTrigger(SpellAbilityWatch.ON_SELF_CAST.trigger(),
+                    SpellAbilityWatch.ON_SELF_CAST.zone())) {
+                continue;
+            }
+            requireNoLimit(ability, spellCard);
+            List<CardEffect> effects = triggeredEffects(gameData, ability, selfCastContext,
+                    UnaryOperator.identity());
+            if (effects != null) {
+                selfCastEffects.addAll(effects);
+            }
+        }
         List<CardEffect> perpetualSelfCastEffects =
                 gameData.perpetualTriggerEffects(spellCard.getId(),
                         SpellAbilityWatch.ON_SELF_CAST.trigger(), SpellAbilityWatch.ON_SELF_CAST.zone());
@@ -1969,11 +1987,253 @@ public class TriggerCollectionService {
                 gameData.stack.add(grantedTrigger);
             }
         }
-        StackEntry selfCastSpellEntry = gameData.stack.stream()
-                .filter(entry -> entry.getTargetableId().equals(spellCard.getId()))
-                .findFirst()
-                .orElse(null);
-        for (CardEffect effect : selfCastEffects) {
+        collectSelfCastEffects(gameData, spellCard, castingPlayerId, castZone, selfCastSpellEntry, selfCastEffects);
+
+        if (castZone == Zone.HAND && (spellCard.hasType(CardType.INSTANT) || spellCard.hasType(CardType.SORCERY))) {
+            List<Permanent> casterBattlefield = gameData.playerBattlefields.get(castingPlayerId);
+            if (casterBattlefield != null) {
+                for (Permanent perm : new ArrayList<>(casterBattlefield)) {
+                    if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+                    GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, perm);
+                    if (staticBonus.losesAllAbilities() || staticBonus.losesAllNonManaAbilities()
+                            || gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
+                    List<CardEffect> grantEffects = castTriggerGrants(perm, SpellCastTriggerGrant.CASCADE_TO_INSTANT_OR_SORCERY_FROM_HAND);
+                    if (grantEffects.isEmpty()) continue;
+
+                    StackEntry cascadeTrigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            spellCard,
+                            castingPlayerId,
+                            spellCard.getName() + "'s ability",
+                            new ArrayList<>(grantEffects)
+                    );
+                    cascadeTrigger.setTriggeringCardId(spellCard.getId());
+                    cascadeTrigger.setEventValue(spellManaValue(gameData, spellCard));
+                    gameData.stack.add(cascadeTrigger);
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    log.info("Game {} - {} grants cascade to {} cast from hand for {}",
+                            gameData.id, perm.getCard().getName(), spellCard.getName(), castingPlayerId);
+                }
+            }
+        }
+        // COMMAND_ZONE_ON_CONTROLLER_CASTS_SPELL — Eminence and similar command-zone spell-cast triggers
+
+        if (castZone == Zone.HAND && spellCard.hasType(CardType.ENCHANTMENT)) {
+            List<Permanent> casterBattlefield = gameData.playerBattlefields.get(castingPlayerId);
+            if (casterBattlefield != null) {
+                for (Permanent perm : new ArrayList<>(casterBattlefield)) {
+                    if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+                    GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, perm);
+                    if (staticBonus.losesAllAbilities() || staticBonus.losesAllNonManaAbilities()
+                            || gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
+                    List<CardEffect> grantEffects = castTriggerGrants(perm, SpellCastTriggerGrant.CASCADE_TO_ENCHANTMENT_FROM_HAND);
+                    if (grantEffects.isEmpty()) continue;
+
+                    StackEntry cascadeTrigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            spellCard,
+                            castingPlayerId,
+                            spellCard.getName() + "'s ability",
+                            new ArrayList<>(grantEffects));
+                    cascadeTrigger.setTriggeringCardId(spellCard.getId());
+                    cascadeTrigger.setEventValue(spellManaValue(gameData, spellCard));
+                    gameData.stack.add(cascadeTrigger);
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    log.info("Game {} - {} grants cascade to enchantment {} cast from hand for {}",
+                            gameData.id, perm.getCard().getName(), spellCard.getName(), castingPlayerId);
+                }
+            }
+        }
+
+        // "The first spell you cast each turn has cascade" (Maelstrom Nexus). A permanent-granted
+        // keyword: a static GrantCastTriggerToSpellsEffect on the caster's battlefield. recordSpellCast runs before this method in
+        // every cast path, so a count of 1 identifies the caster's first spell of the turn. The held
+        // CascadeEffect is queued keyed to the just-cast spell so CascadeEffectHandler's threshold is
+        // the spell's mana value (not the granting permanent's). One trigger per granting permanent.
+        if (gameQueryService.cardHasSubtype(spellCard, CardSubtype.SLIVER, gameData, castingPlayerId)) {
+            List<Permanent> casterBattlefield = gameData.playerBattlefields.get(castingPlayerId);
+            if (casterBattlefield != null) {
+                for (Permanent perm : new ArrayList<>(casterBattlefield)) {
+                    if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+                    List<CardEffect> grantEffects = castTriggerGrants(perm, SpellCastTriggerGrant.CASCADE_TO_SLIVER_SPELL);
+                    if (grantEffects.isEmpty()) continue;
+
+                    StackEntry grantedCascade = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            spellCard,
+                            castingPlayerId,
+                            spellCard.getName() + "'s ability",
+                            new ArrayList<>(grantEffects));
+                    StackEntry grantedCascadeSpell = findStackEntryByCardId(gameData, spellCard.getId());
+                    if (grantedCascadeSpell != null) {
+                        grantedCascade.setXValue(grantedCascadeSpell.getXValue());
+                    }
+                    gameData.stack.add(grantedCascade);
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    log.info("Game {} - {} grants cascade to Sliver spell {} for {}",
+                            gameData.id, perm.getCard().getName(), spellCard.getName(), castingPlayerId);
+                }
+            }
+        }
+
+        if (gameData.getSpellsCastThisTurnCount(castingPlayerId) == 1) {
+            List<Permanent> casterBattlefield = gameData.playerBattlefields.get(castingPlayerId);
+            if (casterBattlefield != null) {
+                for (Permanent perm : new ArrayList<>(casterBattlefield)) {
+                    if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+                    List<CardEffect> grantEffects = castTriggerGrants(perm, SpellCastTriggerGrant.CASCADE_TO_FIRST_SPELL);
+                    if (grantEffects.isEmpty()) continue;
+
+                    StackEntry grantedCascade = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            spellCard,
+                            castingPlayerId,
+                            spellCard.getName() + "'s ability",
+                            new ArrayList<>(grantEffects));
+                    StackEntry grantedCascadeSpell = findStackEntryByCardId(gameData, spellCard.getId());
+                    if (grantedCascadeSpell != null) {
+                        grantedCascade.setXValue(grantedCascadeSpell.getXValue());
+                    }
+                    gameData.stack.add(grantedCascade);
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    log.info("Game {} - {} grants cascade to first spell {} for {}",
+                            gameData.id, perm.getCard().getName(), spellCard.getName(), castingPlayerId);
+                }
+            }
+        }
+
+        // "The first spell you cast each turn that mana from a Treasure was spent to cast has
+        // cascade" (Rain of Riches). Unlike the ordinary first-spell marker above, a spell cast
+        // without Treasure mana does not consume this grant.
+        if (castUsingTreasureMana
+                && gameData.getSpellsCastUsingTreasureManaThisTurnCount(castingPlayerId) == 1) {
+            List<Permanent> casterBattlefield = gameData.playerBattlefields.get(castingPlayerId);
+            if (casterBattlefield != null) {
+                for (Permanent perm : new ArrayList<>(casterBattlefield)) {
+                    if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
+                    List<CardEffect> grantEffects = castTriggerGrants(perm, SpellCastTriggerGrant.CASCADE_TO_FIRST_SPELL_USING_TREASURE_MANA);
+                    if (grantEffects.isEmpty()) continue;
+
+                    StackEntry grantedCascade = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            spellCard,
+                            castingPlayerId,
+                            spellCard.getName() + "'s ability",
+                            new ArrayList<>(grantEffects));
+                    StackEntry grantedCascadeSpell = findStackEntryByCardId(gameData, spellCard.getId());
+                    if (grantedCascadeSpell != null) {
+                        grantedCascade.setXValue(grantedCascadeSpell.getXValue());
+                    }
+                    gameData.stack.add(grantedCascade);
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    log.info("Game {} - {} grants cascade to first Treasure-mana-funded spell {} for {}",
+                            gameData.id, perm.getCard().getName(), spellCard.getName(), castingPlayerId);
+                }
+            }
+        }
+
+        if (spellCard.hasType(CardType.INSTANT) || spellCard.hasType(CardType.SORCERY)) {
+            List<Permanent> casterBattlefield = gameData.playerBattlefields.get(castingPlayerId);
+            if (casterBattlefield != null) {
+                for (Permanent perm : new ArrayList<>(casterBattlefield)) {
+                    if (perm.isLosesAllAbilitiesUntilEndOfTurn()
+                            || gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
+                    List<CardEffect> grantEffects = castTriggerGrants(perm, SpellCastTriggerGrant.STORM_TO_INSTANT_OR_SORCERY);
+                    if (grantEffects.isEmpty()) continue;
+
+                    StackEntry spellEntry = null;
+                    for (StackEntry se : gameData.stack) {
+                        if (se.getTargetableId().equals(spellCard.getId())) {
+                            spellEntry = se;
+                            break;
+                        }
+                    }
+                    if (spellEntry == null) continue;
+
+                    int copies = gameData.getTotalSpellsCastThisTurnCount() - 1;
+                    StackEntry snapshot = new StackEntry(spellEntry);
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            castingPlayerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(new StormCopyEffect(snapshot, castingPlayerId, copies))),
+                            0,
+                            perm.getId()
+                    ));
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    log.info("Game {} - {} grants Storm to {} ({} copies) for {}",
+                            gameData.id, perm.getCard().getName(), spellCard.getName(), copies, castingPlayerId);
+                }
+            }
+        }
+
+        playerInputService.processNextMayAbility(gameData);
+    }
+
+    /**
+     * The triggered abilities a permanent's static {@link GrantCastTriggerToSpellsEffect}s of the given kind give
+     * the spell being cast, in the order the permanent lists them.
+     */
+    private static List<CardEffect> castTriggerGrants(Permanent perm, SpellCastTriggerGrant grant) {
+        return perm.getCard().getStaticEffects().stream()
+                .filter(GrantCastTriggerToSpellsEffect.class::isInstance)
+                .map(GrantCastTriggerToSpellsEffect.class::cast)
+                .filter(granting -> granting.grant() == grant)
+                .map(GrantCastTriggerToSpellsEffect::ability)
+                .toList();
+    }
+
+    private void queueStormTrigger(GameData gameData, Card spellCard, UUID castingPlayerId,
+                                   StackEntry spellEntry, boolean instantOrSorceryOnly, boolean tokenCopy) {
+        queueStormTrigger(gameData, spellCard, castingPlayerId, spellEntry,
+                instantOrSorceryOnly, tokenCopy, false);
+    }
+
+    private void queueStormTrigger(GameData gameData, Card spellCard, UUID castingPlayerId,
+                                   StackEntry spellEntry, boolean instantOrSorceryOnly,
+                                   boolean tokenCopy, boolean removeLegendary) {
+        int copies = Math.max(0, instantOrSorceryOnly
+                ? (int) gameData.getSpellsCastThisTurn(castingPlayerId).stream()
+                        .filter(card -> card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
+                        .count() - 1
+                : gameData.getTotalSpellsCastThisTurnCount() - 1);
+        gameData.stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                spellCard,
+                castingPlayerId,
+                spellCard.getName() + "'s ability",
+                new ArrayList<>(List.of(new StormCopyEffect(
+                        new StackEntry(spellEntry), castingPlayerId, copies, tokenCopy,
+                        removeLegendary,
+                        instantOrSorceryOnly ? new OtherInstantsAndSorceriesCastCountEffect() : null)))
+        ));
+        log.info("Game {} - {} Storm trigger queued ({} copies) for {}",
+                gameData.id, spellCard.getName(), copies, castingPlayerId);
+    }
+
+    private int spellManaValue(GameData gameData, Card spellCard) {
+        StackEntry spellEntry = findStackEntryByCardId(gameData, spellCard.getId());
+        if (spellEntry != null && spellEntry.isCastFaceDown()) {
+            return 0;
+        }
+        return spellCard.getManaValue() + (spellEntry == null || spellCard.getParsedManaCost() == null
+                ? 0 : spellEntry.getXValue() * spellCard.getParsedManaCost().getXSymbolCount());
+    }
+
+    /**
+     * Collects the effects of {@code spellCard}'s "when you cast this spell" abilities that trigger, {@code effects}
+     * (their options already judged, an intervening "if" wrapped around each): the copy, storm, cascade and
+     * demonstrate effects each go on the stack as the stack object their keyword makes, bound to the spell
+     * ({@code selfCastSpellEntry}); the other effects go on the stack together as one object, their targets chosen as
+     * it is put there (CR 603.3d). That object holds the effects of every such ability, as this collector has always
+     * put them there: cards write one "when you cast this spell" ability as several (Hydroid Krasis's "you gain half X
+     * life and draw half X cards"), so they are grouped by ability only once those cards are merged.
+     */
+    private void collectSelfCastEffects(GameData gameData, Card spellCard, UUID castingPlayerId, Zone castZone,
+                                        StackEntry selfCastSpellEntry, List<CardEffect> effects) {
+        List<CardEffect> selfCastTriggeredEffects = new ArrayList<>();
+        for (CardEffect effect : effects) {
             if (selfCastSpellEntry != null && effect instanceof MayEffect may
                     && may.wrapped() instanceof DemonstrateEffect demonstrate
                     && demonstrate.spellSnapshot() == null) {
@@ -2261,237 +2521,6 @@ public class TriggerCollectionService {
                 }
             }
         }
-
-        if (castZone == Zone.HAND && (spellCard.hasType(CardType.INSTANT) || spellCard.hasType(CardType.SORCERY))) {
-            List<Permanent> casterBattlefield = gameData.playerBattlefields.get(castingPlayerId);
-            if (casterBattlefield != null) {
-                for (Permanent perm : new ArrayList<>(casterBattlefield)) {
-                    if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
-                    GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, perm);
-                    if (staticBonus.losesAllAbilities() || staticBonus.losesAllNonManaAbilities()
-                            || gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-                    List<CardEffect> grantEffects = castTriggerGrants(perm, SpellCastTriggerGrant.CASCADE_TO_INSTANT_OR_SORCERY_FROM_HAND);
-                    if (grantEffects.isEmpty()) continue;
-
-                    StackEntry cascadeTrigger = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            spellCard,
-                            castingPlayerId,
-                            spellCard.getName() + "'s ability",
-                            new ArrayList<>(grantEffects)
-                    );
-                    cascadeTrigger.setTriggeringCardId(spellCard.getId());
-                    cascadeTrigger.setEventValue(spellManaValue(gameData, spellCard));
-                    gameData.stack.add(cascadeTrigger);
-                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                    log.info("Game {} - {} grants cascade to {} cast from hand for {}",
-                            gameData.id, perm.getCard().getName(), spellCard.getName(), castingPlayerId);
-                }
-            }
-        }
-        // COMMAND_ZONE_ON_CONTROLLER_CASTS_SPELL — Eminence and similar command-zone spell-cast triggers
-
-        if (castZone == Zone.HAND && spellCard.hasType(CardType.ENCHANTMENT)) {
-            List<Permanent> casterBattlefield = gameData.playerBattlefields.get(castingPlayerId);
-            if (casterBattlefield != null) {
-                for (Permanent perm : new ArrayList<>(casterBattlefield)) {
-                    if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
-                    GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, perm);
-                    if (staticBonus.losesAllAbilities() || staticBonus.losesAllNonManaAbilities()
-                            || gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-                    List<CardEffect> grantEffects = castTriggerGrants(perm, SpellCastTriggerGrant.CASCADE_TO_ENCHANTMENT_FROM_HAND);
-                    if (grantEffects.isEmpty()) continue;
-
-                    StackEntry cascadeTrigger = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            spellCard,
-                            castingPlayerId,
-                            spellCard.getName() + "'s ability",
-                            new ArrayList<>(grantEffects));
-                    cascadeTrigger.setTriggeringCardId(spellCard.getId());
-                    cascadeTrigger.setEventValue(spellManaValue(gameData, spellCard));
-                    gameData.stack.add(cascadeTrigger);
-                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                    log.info("Game {} - {} grants cascade to enchantment {} cast from hand for {}",
-                            gameData.id, perm.getCard().getName(), spellCard.getName(), castingPlayerId);
-                }
-            }
-        }
-
-        // "The first spell you cast each turn has cascade" (Maelstrom Nexus). A permanent-granted
-        // keyword: a static GrantCastTriggerToSpellsEffect on the caster's battlefield. recordSpellCast runs before this method in
-        // every cast path, so a count of 1 identifies the caster's first spell of the turn. The held
-        // CascadeEffect is queued keyed to the just-cast spell so CascadeEffectHandler's threshold is
-        // the spell's mana value (not the granting permanent's). One trigger per granting permanent.
-        if (gameQueryService.cardHasSubtype(spellCard, CardSubtype.SLIVER, gameData, castingPlayerId)) {
-            List<Permanent> casterBattlefield = gameData.playerBattlefields.get(castingPlayerId);
-            if (casterBattlefield != null) {
-                for (Permanent perm : new ArrayList<>(casterBattlefield)) {
-                    if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
-                    List<CardEffect> grantEffects = castTriggerGrants(perm, SpellCastTriggerGrant.CASCADE_TO_SLIVER_SPELL);
-                    if (grantEffects.isEmpty()) continue;
-
-                    StackEntry grantedCascade = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            spellCard,
-                            castingPlayerId,
-                            spellCard.getName() + "'s ability",
-                            new ArrayList<>(grantEffects));
-                    StackEntry grantedCascadeSpell = findStackEntryByCardId(gameData, spellCard.getId());
-                    if (grantedCascadeSpell != null) {
-                        grantedCascade.setXValue(grantedCascadeSpell.getXValue());
-                    }
-                    gameData.stack.add(grantedCascade);
-                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                    log.info("Game {} - {} grants cascade to Sliver spell {} for {}",
-                            gameData.id, perm.getCard().getName(), spellCard.getName(), castingPlayerId);
-                }
-            }
-        }
-
-        if (gameData.getSpellsCastThisTurnCount(castingPlayerId) == 1) {
-            List<Permanent> casterBattlefield = gameData.playerBattlefields.get(castingPlayerId);
-            if (casterBattlefield != null) {
-                for (Permanent perm : new ArrayList<>(casterBattlefield)) {
-                    if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
-                    List<CardEffect> grantEffects = castTriggerGrants(perm, SpellCastTriggerGrant.CASCADE_TO_FIRST_SPELL);
-                    if (grantEffects.isEmpty()) continue;
-
-                    StackEntry grantedCascade = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            spellCard,
-                            castingPlayerId,
-                            spellCard.getName() + "'s ability",
-                            new ArrayList<>(grantEffects));
-                    StackEntry grantedCascadeSpell = findStackEntryByCardId(gameData, spellCard.getId());
-                    if (grantedCascadeSpell != null) {
-                        grantedCascade.setXValue(grantedCascadeSpell.getXValue());
-                    }
-                    gameData.stack.add(grantedCascade);
-                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                    log.info("Game {} - {} grants cascade to first spell {} for {}",
-                            gameData.id, perm.getCard().getName(), spellCard.getName(), castingPlayerId);
-                }
-            }
-        }
-
-        // "The first spell you cast each turn that mana from a Treasure was spent to cast has
-        // cascade" (Rain of Riches). Unlike the ordinary first-spell marker above, a spell cast
-        // without Treasure mana does not consume this grant.
-        if (castUsingTreasureMana
-                && gameData.getSpellsCastUsingTreasureManaThisTurnCount(castingPlayerId) == 1) {
-            List<Permanent> casterBattlefield = gameData.playerBattlefields.get(castingPlayerId);
-            if (casterBattlefield != null) {
-                for (Permanent perm : new ArrayList<>(casterBattlefield)) {
-                    if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-                    List<CardEffect> grantEffects = castTriggerGrants(perm, SpellCastTriggerGrant.CASCADE_TO_FIRST_SPELL_USING_TREASURE_MANA);
-                    if (grantEffects.isEmpty()) continue;
-
-                    StackEntry grantedCascade = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            spellCard,
-                            castingPlayerId,
-                            spellCard.getName() + "'s ability",
-                            new ArrayList<>(grantEffects));
-                    StackEntry grantedCascadeSpell = findStackEntryByCardId(gameData, spellCard.getId());
-                    if (grantedCascadeSpell != null) {
-                        grantedCascade.setXValue(grantedCascadeSpell.getXValue());
-                    }
-                    gameData.stack.add(grantedCascade);
-                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                    log.info("Game {} - {} grants cascade to first Treasure-mana-funded spell {} for {}",
-                            gameData.id, perm.getCard().getName(), spellCard.getName(), castingPlayerId);
-                }
-            }
-        }
-
-        if (spellCard.hasType(CardType.INSTANT) || spellCard.hasType(CardType.SORCERY)) {
-            List<Permanent> casterBattlefield = gameData.playerBattlefields.get(castingPlayerId);
-            if (casterBattlefield != null) {
-                for (Permanent perm : new ArrayList<>(casterBattlefield)) {
-                    if (perm.isLosesAllAbilitiesUntilEndOfTurn()
-                            || gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-                    List<CardEffect> grantEffects = castTriggerGrants(perm, SpellCastTriggerGrant.STORM_TO_INSTANT_OR_SORCERY);
-                    if (grantEffects.isEmpty()) continue;
-
-                    StackEntry spellEntry = null;
-                    for (StackEntry se : gameData.stack) {
-                        if (se.getTargetableId().equals(spellCard.getId())) {
-                            spellEntry = se;
-                            break;
-                        }
-                    }
-                    if (spellEntry == null) continue;
-
-                    int copies = gameData.getTotalSpellsCastThisTurnCount() - 1;
-                    StackEntry snapshot = new StackEntry(spellEntry);
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            castingPlayerId,
-                            perm.getCard().getName() + "'s ability",
-                            new ArrayList<>(List.of(new StormCopyEffect(snapshot, castingPlayerId, copies))),
-                            0,
-                            perm.getId()
-                    ));
-                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                    log.info("Game {} - {} grants Storm to {} ({} copies) for {}",
-                            gameData.id, perm.getCard().getName(), spellCard.getName(), copies, castingPlayerId);
-                }
-            }
-        }
-
-        playerInputService.processNextMayAbility(gameData);
-    }
-
-    /**
-     * The triggered abilities a permanent's static {@link GrantCastTriggerToSpellsEffect}s of the given kind give
-     * the spell being cast, in the order the permanent lists them.
-     */
-    private static List<CardEffect> castTriggerGrants(Permanent perm, SpellCastTriggerGrant grant) {
-        return perm.getCard().getStaticEffects().stream()
-                .filter(GrantCastTriggerToSpellsEffect.class::isInstance)
-                .map(GrantCastTriggerToSpellsEffect.class::cast)
-                .filter(granting -> granting.grant() == grant)
-                .map(GrantCastTriggerToSpellsEffect::ability)
-                .toList();
-    }
-
-    private void queueStormTrigger(GameData gameData, Card spellCard, UUID castingPlayerId,
-                                   StackEntry spellEntry, boolean instantOrSorceryOnly, boolean tokenCopy) {
-        queueStormTrigger(gameData, spellCard, castingPlayerId, spellEntry,
-                instantOrSorceryOnly, tokenCopy, false);
-    }
-
-    private void queueStormTrigger(GameData gameData, Card spellCard, UUID castingPlayerId,
-                                   StackEntry spellEntry, boolean instantOrSorceryOnly,
-                                   boolean tokenCopy, boolean removeLegendary) {
-        int copies = Math.max(0, instantOrSorceryOnly
-                ? (int) gameData.getSpellsCastThisTurn(castingPlayerId).stream()
-                        .filter(card -> card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
-                        .count() - 1
-                : gameData.getTotalSpellsCastThisTurnCount() - 1);
-        gameData.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                spellCard,
-                castingPlayerId,
-                spellCard.getName() + "'s ability",
-                new ArrayList<>(List.of(new StormCopyEffect(
-                        new StackEntry(spellEntry), castingPlayerId, copies, tokenCopy,
-                        removeLegendary,
-                        instantOrSorceryOnly ? new OtherInstantsAndSorceriesCastCountEffect() : null)))
-        ));
-        log.info("Game {} - {} Storm trigger queued ({} copies) for {}",
-                gameData.id, spellCard.getName(), copies, castingPlayerId);
-    }
-
-    private int spellManaValue(GameData gameData, Card spellCard) {
-        StackEntry spellEntry = findStackEntryByCardId(gameData, spellCard.getId());
-        if (spellEntry != null && spellEntry.isCastFaceDown()) {
-            return 0;
-        }
-        return spellCard.getManaValue() + (spellEntry == null || spellCard.getParsedManaCost() == null
-                ? 0 : spellEntry.getXValue() * spellCard.getParsedManaCost().getXSymbolCount());
     }
 
     private void dispatchSuspendedExiledCardSpellCastTriggers(GameData gameData, UUID castingPlayerId,
@@ -2510,9 +2539,13 @@ public class TriggerCollectionService {
             }
 
             Card card = exiledEntry.card();
-            for (CardEffect effect : SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL.effectsOf(card)) {
-                registry.dispatch(new TriggerMatchContext(gameData, null, ownerId, effect, card),
-                        SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL, effect, context);
+            for (TriggeredAbility ability : card.getTriggeredAbilities()) {
+                if (ability.hasWatchedTrigger(SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL.trigger(),
+                        SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL.zone())) {
+                    requireNoLimit(ability, card);
+                    collectUnfilteredAbility(gameData, null, card, ownerId, SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL,
+                            context, ability, UnaryOperator.identity(), null, false);
+                }
             }
         }
     }
@@ -2533,6 +2566,18 @@ public class TriggerCollectionService {
         if (!ability.options().equals(TriggerOptions.DEFAULT)) {
             throw new IllegalStateException(card.getName() + "'s triggered ability has options its zone's reader "
                     + "doesn't judge: " + ability.options());
+        }
+    }
+
+    /**
+     * The readers of a card that isn't a permanent (a spell's "when you cast this spell" and "when this spell is
+     * countered" abilities, a suspended card's) judge no limit, which is kept on a permanent; a card with one there
+     * fails loudly instead of triggering wrongly.
+     */
+    private static void requireNoLimit(TriggeredAbility ability, Card card) {
+        if (ability.options().limit() != TriggerLimit.NONE) {
+            throw new IllegalStateException(card.getName() + "'s triggered ability has a limit its reader doesn't "
+                    + "judge: " + ability.options());
         }
     }
 
@@ -2604,9 +2649,18 @@ public class TriggerCollectionService {
 
         TriggerContext context = new TriggerContext.SpellCounteredOrFizzled(new StackEntry(spellEntry));
         Card spellCard = spellEntry.getCard();
-        for (CardEffect effect : SpellAbilityWatch.ON_SELF_SPELL_COUNTERED_OR_FIZZLED.effectsOf(spellCard)) {
-            dispatch(new TriggerMatchContext(gameData, null, spellEntry.getControllerId(), effect, spellCard),
-                    SpellAbilityWatch.ON_SELF_SPELL_COUNTERED_OR_FIZZLED, effect, context);
+        SpellAbilityWatch watch = SpellAbilityWatch.ON_SELF_SPELL_COUNTERED_OR_FIZZLED;
+        for (TriggeredAbility ability : spellCard.getTriggeredAbilities()) {
+            if (!ability.hasWatchedTrigger(watch.trigger(), watch.zone())) {
+                continue;
+            }
+            requireNoLimit(ability, spellCard);
+            List<CardEffect> effects = triggeredEffects(gameData, ability,
+                    ConditionContext.forStackEntry(spellEntry), UnaryOperator.identity());
+            for (CardEffect effect : effects == null ? List.<CardEffect>of() : effects) {
+                dispatch(new TriggerMatchContext(gameData, null, spellEntry.getControllerId(), effect, spellCard),
+                        watch, effect, context);
+            }
         }
     }
 
@@ -4679,24 +4733,26 @@ public class TriggerCollectionService {
         log.info("Game {} - {} triggers on being tapped for mana", gameData.id, tappedPermanent.getCard().getName());
     }
 
+    /**
+     * Collects the "whenever a mana ability of this creature resolves" abilities of {@code sourcePermanent}, its own and
+     * those other permanents grant it (Tyvar the Bellicose), by {@link #collectUnfilteredAbility}: each grant is an
+     * instance of its own with its own "triggers only once each turn" (CR 113.2c).
+     */
     public void checkManaAbilityResolutionTriggers(GameData gameData, Permanent sourcePermanent,
                                                     UUID controllerId, int manaProduced) {
-        List<CardEffect> effects = new ArrayList<>(
-                SpellAbilityWatch.ON_SELF_MANA_ABILITY_RESOLVES.effectsOf(sourcePermanent.getCard()));
-        effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
-                gameData, sourcePermanent, SpellAbilityWatch.ON_SELF_MANA_ABILITY_RESOLVES.trigger()));
-        if (effects.isEmpty()) return;
+        SpellAbilityWatch watch = SpellAbilityWatch.ON_SELF_MANA_ABILITY_RESOLVES;
+        Card card = sourcePermanent.getCard();
+        List<TriggeredAbility> abilities = new ArrayList<>(card.getTriggeredAbilities().stream()
+                .filter(ability -> ability.hasWatchedTrigger(watch.trigger(), watch.zone()))
+                .toList());
+        abilities.addAll(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(gameData, sourcePermanent, null,
+                ability -> ability.hasWatchedTrigger(watch.trigger())));
+        if (abilities.isEmpty()) return;
 
         TriggerContext context = new TriggerContext.ManaAbilityResolved(controllerId, manaProduced);
-        for (CardEffect effect : effects) {
-            CardEffect resolved = unwrapOncePerTurnTrigger(gameData, sourcePermanent, effect);
-            if (resolved == null) continue;
-            boolean triggered = dispatch(new TriggerMatchContext(
-                    gameData, sourcePermanent, controllerId, effect),
-                    SpellAbilityWatch.ON_SELF_MANA_ABILITY_RESOLVES, resolved, context);
-            if (triggered) {
-                OncePerTurnTriggerSupport.markIfNeeded(gameData, sourcePermanent, effect);
-            }
+        for (TriggeredAbility ability : abilities) {
+            collectUnfilteredAbility(gameData, sourcePermanent, card, controllerId, watch, context, ability,
+                    UnaryOperator.identity(), null, true);
         }
     }
 
@@ -16271,7 +16327,7 @@ public class TriggerCollectionService {
      */
     private boolean dispatchWatch(GameData gameData, Permanent perm, UUID controllerId, TriggerWatch watch,
                                   TriggerContext ctx) {
-        if (watch instanceof SpellAbilityWatch spellWatch && readsFilteredAbilities(spellWatch)) {
+        if (watch instanceof SpellAbilityWatch spellWatch) {
             return dispatchSpellWatch(gameData, perm, controllerId, spellWatch, ctx);
         }
         return dispatchRegistrations(gameData, perm, controllerId, watch, ctx, null,
@@ -16280,17 +16336,6 @@ public class TriggerCollectionService {
                         ? grantedTriggeredAbilitySupport.grantedTriggerEffects(gameData, perm, watch.trigger())
                         : grantedTriggeredAbilitySupport.grantedTriggerEffects(gameData, perm, staticBonus,
                                 watch.trigger()));
-    }
-
-    /**
-     * Whether {@code watch} is a cast, copy or land-play watch on the battlefield, whose filtered abilities
-     * ({@link SpellTrigger#filter()}, {@link LandPlayTrigger#filtered()}) the spell-cast, spell-copy and land-play
-     * collectors read themselves.
-     */
-    private static boolean readsFilteredAbilities(SpellAbilityWatch watch) {
-        return watch.zone() == Zone.BATTLEFIELD && (watch.trigger() instanceof LandPlayTrigger
-                || watch.trigger() instanceof SpellTrigger spell && (spell.event() == SpellTrigger.SpellEvent.CAST
-                || spell.event() == SpellTrigger.SpellEvent.COPIED));
     }
 
     /**
@@ -16334,11 +16379,12 @@ public class TriggerCollectionService {
     }
 
     /**
-     * Dispatches the abilities a cast, copy or land-play watch on the battlefield reads on {@code perm}, its own and
-     * those other permanents grant it, in order: an ability whose trigger has a spell filter goes to the spell-cast or
+     * Dispatches the abilities a spell or land-play watch on the battlefield reads on {@code perm}, its own and those
+     * other permanents grant it, in order: an ability whose trigger has a spell filter goes to the spell-cast or
      * spell-copy collector, and one whose land-play trigger has a filter or a zone to the land-play collector, which
-     * read its filters, options and effects; any other with the watch's trigger to the watch's handlers, by its
-     * effects. The printed abilities' spell filters are read through the permanent's text changes (CR 612).
+     * read its filters, options and effects; any other with the watch's trigger is collected by
+     * {@link #collectUnfilteredAbility}, its effects by the watch's handlers. The printed abilities' spell filters and
+     * effects are read through the permanent's text changes (CR 612).
      */
     private boolean dispatchSpellWatch(GameData gameData, Permanent perm, UUID controllerId, SpellAbilityWatch watch,
                                        TriggerContext ctx) {
@@ -16372,12 +16418,10 @@ public class TriggerCollectionService {
                             landPlay, null, true);
                     continue;
                 }
-                for (EffectRegistration registration : card.getLegacyTriggerEffectRegistrations(ability)) {
-                    // Layer 3 (CR 612.1): the trigger condition is read from the permanent's text-changed words.
-                    CardEffect effect = TextChangeTransformer.transform(
-                            registration.effect(), perm.getTextReplacements(), globalWordChange);
-                    triggered |= dispatchSlotEffect(gameData, perm, controllerId, watch, ctx, effect);
-                }
+                // Layer 3 (CR 612.1): the trigger condition is read from the permanent's text-changed words.
+                triggered |= collectUnfilteredAbility(gameData, perm, card, controllerId, watch, ctx, ability,
+                        effect -> TextChangeTransformer.transform(effect, perm.getTextReplacements(),
+                                globalWordChange), null, true);
             }
         }
         // Triggered abilities granted continuously by another permanent (e.g. Pontiff of Blight giving other
@@ -16398,9 +16442,8 @@ public class TriggerCollectionService {
                         null, true);
                 continue;
             }
-            for (EffectRegistration registration : ability.legacyEffects()) {
-                triggered |= dispatchSlotEffect(gameData, perm, controllerId, watch, ctx, registration.effect());
-            }
+            triggered |= collectUnfilteredAbility(gameData, perm, card, controllerId, watch, ctx, ability,
+                    UnaryOperator.identity(), null, true);
         }
         return triggered;
     }
@@ -16408,8 +16451,8 @@ public class TriggerCollectionService {
     /**
      * Dispatches the abilities of {@code card}, which has no permanent (a card in exile, a face-up plane or phenomenon,
      * {@code planarObject}), that {@code watch} reads in its zone, in order: a filtered cast or land-play ability goes
-     * to the spell-cast or land-play collector, any other with the watch's trigger to the watch's handlers, by its
-     * effects. Each is collected once (no effect makes these trigger additional times).
+     * to the spell-cast or land-play collector, any other with the watch's trigger to {@link #collectUnfilteredAbility}.
+     * Each is collected once (no effect makes these trigger additional times).
      */
     private void dispatchCardSpellAbilities(GameData gameData, Card card, UUID controllerId, SpellAbilityWatch watch,
                                             TriggerContext ctx, PlanarObject planarObject) {
@@ -16429,12 +16472,82 @@ public class TriggerCollectionService {
             if (!ability.hasWatchedTrigger(watch.trigger(), watch.zone())) {
                 continue;
             }
-            for (EffectRegistration registration : card.getLegacyTriggerEffectRegistrations(ability)) {
-                CardEffect effect = registration.effect();
-                registry.dispatch(new TriggerMatchContext(gameData, null, controllerId, effect, card,
-                        planarObject == null ? null : planarObject.copy()), watch, effect, ctx);
-            }
+            collectUnfilteredAbility(gameData, null, card, controllerId, watch, ctx, ability,
+                    UnaryOperator.identity(), planarObject, false);
         }
+    }
+
+    /**
+     * Collects {@code ability}, which has {@code watch}'s own trigger (no spell filter, land filter or zone), for the
+     * event {@code ctx}: its options are judged here, and its effects are handed to {@code watch}'s handlers, which bind
+     * the event data they need and put the ability on the stack. The event condition and the intervening "if" are
+     * checked as the ability triggers (CR 603.2, CR 603.4), and the intervening "if" is wrapped around each effect as
+     * the {@link ConditionalEffect} the handlers put on the stack, which checks it again as it resolves; a limit
+     * (CR 603.2h) is judged and marked on {@code perm} by {@link #collectLimitedAbility}, so only an ability with one
+     * effect may have one. {@code perm} is the source on the battlefield, or {@code null} for {@code sourceCard} in
+     * exile or a face-up plane or phenomenon ({@code planarObject}); {@code transform} reads each effect through the
+     * permanent's text changes. {@code throughDispatch} says whether it is collected as the battlefield collectors
+     * collect, with the effects that make abilities trigger additional times.
+     *
+     * @return whether the ability triggered
+     */
+    private boolean collectUnfilteredAbility(GameData gameData, Permanent perm, Card sourceCard, UUID controllerId,
+                                             SpellAbilityWatch watch, TriggerContext ctx, TriggeredAbility ability,
+                                             UnaryOperator<CardEffect> transform, PlanarObject planarObject,
+                                             boolean throughDispatch) {
+        ConditionContext context = perm != null ? ConditionContext.forPermanent(perm, controllerId)
+                : ConditionContext.forCard(sourceCard, controllerId);
+        List<CardEffect> effects = triggeredEffects(gameData, ability, context, transform);
+        if (effects == null) {
+            return false;
+        }
+        if (ability.options().limit() != TriggerLimit.NONE) {
+            if (effects.size() != 1) {
+                throw new IllegalStateException(sourceCard.getName() + "'s ability with a limit has "
+                        + effects.size() + " effects its handlers would put on the stack apart: " + ability);
+            }
+            CardEffect effect = effects.getFirst();
+            return collectLimitedAbility(gameData, perm, sourceCard, controllerId, watch, ctx, ability, planarObject,
+                    throughDispatch, false, match -> registry.dispatch(match, watch, effect, ctx));
+        }
+        boolean triggered = false;
+        for (CardEffect effect : effects) {
+            triggered |= throughDispatch
+                    ? dispatchSlotEffect(gameData, perm, controllerId, watch, ctx, effect)
+                    : registry.dispatch(new TriggerMatchContext(gameData, perm, controllerId, effect, sourceCard,
+                            planarObject == null ? null : planarObject.copy()), watch, effect, ctx);
+        }
+        return triggered;
+    }
+
+    /**
+     * The effects {@code ability} puts on the stack as it triggers now, read through {@code transform}, or {@code null}
+     * when its event condition (CR 603.2) or intervening "if" (CR 603.4), checked in {@code context}, is false. The
+     * intervening "if" is wrapped around each effect as a {@link ConditionalEffect}, which checks it again as the
+     * ability resolves. Its limit is the caller's to judge; an ability that triggers once for several objects or
+     * events throws, as no reader of these abilities groups events.
+     */
+    private List<CardEffect> triggeredEffects(GameData gameData, TriggeredAbility ability, ConditionContext context,
+                                              UnaryOperator<CardEffect> transform) {
+        TriggerOptions options = ability.options();
+        if (options.multiplicity() != TriggerMultiplicity.EACH) {
+            throw new IllegalStateException("No spell, land-play or activation reader reads "
+                    + options.multiplicity() + ": " + ability);
+        }
+        if (options.eventCondition() != null
+                && !conditionEvaluationService.isMet(gameData, options.eventCondition(), context)) {
+            return null;
+        }
+        Condition interveningIf = options.interveningIf();
+        if (interveningIf != null && !conditionEvaluationService.isMet(gameData, interveningIf, context)) {
+            return null;
+        }
+        List<CardEffect> effects = new ArrayList<>(ability.effects().size());
+        for (EffectRegistration registration : ability.effects()) {
+            CardEffect effect = transform.apply(registration.effect());
+            effects.add(interveningIf == null ? effect : new ConditionalEffect(interveningIf, effect, true));
+        }
+        return effects;
     }
 
     /**

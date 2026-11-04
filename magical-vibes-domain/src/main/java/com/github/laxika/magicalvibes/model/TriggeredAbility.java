@@ -36,7 +36,6 @@ import com.github.laxika.magicalvibes.model.trigger.CombatTrigger;
 import com.github.laxika.magicalvibes.model.trigger.CounterTrigger;
 import com.github.laxika.magicalvibes.model.trigger.DamageTrigger;
 import com.github.laxika.magicalvibes.model.trigger.FinalChapterTrigger;
-import com.github.laxika.magicalvibes.model.trigger.LandPlayTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LibraryTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LifeTrigger;
@@ -44,7 +43,6 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectActionTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.PlayerActionTrigger;
 import com.github.laxika.magicalvibes.model.trigger.PlayerRelation;
-import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
 import com.github.laxika.magicalvibes.model.trigger.StateTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TapTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TargetTrigger;
@@ -76,9 +74,14 @@ import java.util.stream.Collectors;
  *                   happen at the same time as the effect before them, so the first one can't be.
  * @param chapterTargets the targets of a Saga chapter ability, or {@link SagaChapterTargets#NONE}.
  *                   The targets of other triggered abilities are still bound on the {@link Card}.
+ * @param instance   which of several equal instances of the ability one object has this is (CR 113.2c: each
+ *                   functions independently), or {@code null}: the granting permanent of an ability with a limit
+ *                   that several permanents grant one permanent, so each instance keeps its own limit
+ *                   ({@link #limitKey()}). A printed ability has none.
  */
 public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions options,
-                               List<EffectRegistration> effects, SagaChapterTargets chapterTargets)
+                               List<EffectRegistration> effects, SagaChapterTargets chapterTargets,
+                               String instance)
         implements Ability {
 
     public TriggeredAbility {
@@ -112,6 +115,12 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             throw new IllegalArgumentException("A chapter ability takes no options: " + conditions + " with "
                     + options);
         }
+    }
+
+    /** An ability that is one instance of its kind on its object. */
+    public TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions options,
+                            List<EffectRegistration> effects, SagaChapterTargets chapterTargets) {
+        this(conditions, options, effects, chapterTargets, null);
     }
 
     /** An ability that isn't a Saga chapter ability. */
@@ -185,10 +194,31 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
 
     /**
      * The key "triggers only once each turn" marks for this ability on its source, so a limit covers every trigger
-     * condition of the ability and no other ability of the source.
+     * condition of the ability and no other ability of the source. Equal abilities of one source share it, but for
+     * their {@link #instance()}.
      */
     public String limitKey() {
         return "trigger:" + Integer.toHexString(hashCode());
+    }
+
+    /**
+     * Whether one of this ability's trigger conditions is a trigger whose collectors read the ability itself
+     * ({@link Trigger#collectedAsAbility()}: a spell, land-play or activation trigger): then it has no legacy view.
+     */
+    public boolean collectedAsAbility() {
+        return conditions.stream().anyMatch(condition -> condition.trigger().collectedAsAbility());
+    }
+
+    /**
+     * Rejects a lookup of the legacy view by {@code trigger} when its collectors read abilities themselves
+     * ({@link Trigger#collectedAsAbility()}), so a reader left on the legacy view fails instead of reading the
+     * effects without their options.
+     */
+    public static void requireLegacyView(Trigger trigger) {
+        if (trigger.collectedAsAbility()) {
+            throw new IllegalArgumentException("The collectors of " + trigger + " read its abilities themselves; "
+                    + "the legacy view gives none");
+        }
     }
 
     /**
@@ -200,10 +230,9 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * checked only as the ability triggers (CR 603.2); "triggers only once each turn" is a {@link OncePerTurnTriggerEffect} keyed by
      * {@link #limitKey()}, the key the trigger pipeline marks; "do this only once each turn" one marked as the action
      * is taken (CR 603.2h); "this ability triggers only once" ({@code ONCE}) an {@link OnceOnlyTriggerEffect} inside
-     * the intervening "if", as the "at the beginning of [step or phase]" cards wrote it. A filtered cast or copy
-     * trigger ({@link SpellTrigger#filter()}) and a filtered land-play trigger ({@link LandPlayTrigger#filtered()}) are
-     * their own watch keys: the spell-cast, spell-copy and land-play collectors read such an ability itself, not this
-     * view, which gives it as any other; the activation collectors read every activation ability itself. A combat
+     * the intervening "if", as the "at the beginning of [step or phase]" cards wrote it. An ability with a spell,
+     * land-play or activation trigger ({@link #collectedAsAbility()}) has no legacy view: its collectors read it
+     * itself, and this throws. A combat
      * trigger's filter is a {@link TriggeringPermanentConditionalEffect} inside the limit, as the combat cards wrote
      * it, but on "a creature you control deals combat damage to a player [or battle]", whose collectors read every
      * effect as an {@link AllyCombatDamageTriggerEffect}: there the filter, and "one or more"
@@ -245,6 +274,10 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * returns its registrations as they are.
      */
     public List<EffectRegistration> legacyEffects() {
+        if (collectedAsAbility()) {
+            throw new IllegalStateException("The collectors of " + conditions + " read the ability itself; it has no "
+                    + "legacy view");
+        }
         if (conditions.stream().anyMatch(condition -> condition.trigger() instanceof LibraryTrigger library
                 && !library.watchKey().equals(library))) {
             return legacyLibraryEffects();
@@ -1096,11 +1129,16 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
 
     /** This ability with {@code effects} in place of its effects. */
     public TriggeredAbility withEffects(List<EffectRegistration> effects) {
-        return new TriggeredAbility(conditions, options, effects, chapterTargets);
+        return new TriggeredAbility(conditions, options, effects, chapterTargets, instance);
     }
 
     /** This ability with {@code chapterTargets} in place of its Saga chapter targets. */
     public TriggeredAbility withChapterTargets(SagaChapterTargets chapterTargets) {
-        return new TriggeredAbility(conditions, options, effects, chapterTargets);
+        return new TriggeredAbility(conditions, options, effects, chapterTargets, instance);
+    }
+
+    /** This ability as the instance {@code instance} of it ({@link #instance()}). */
+    public TriggeredAbility withInstance(String instance) {
+        return new TriggeredAbility(conditions, options, effects, chapterTargets, instance);
     }
 }

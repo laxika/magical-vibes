@@ -56,6 +56,12 @@ public record SpellTrigger(SpellEvent event, PlayerRelation player, SpellFilter 
         THIS_COUNTERED_OR_FIZZLES
     }
 
+    /** The spell, land-play and activation collectors read this trigger's abilities themselves. */
+    @Override
+    public boolean collectedAsAbility() {
+        return true;
+    }
+
     /** Whether the trigger is about this spell itself. */
     public boolean thisSpell() {
         return event == SpellEvent.CAST_THIS || event == SpellEvent.THIS_COUNTERED_OR_FIZZLES;

@@ -17,12 +17,13 @@ import java.util.List;
  * the stack, as the slot's handlers did, until steps 14 and 15 of the refactor replace them with trigger options and
  * effects that read the event.
  * <p>
- * The collectors of unfiltered cast and land-play abilities read them in the form the cards wrote them before step 14
- * ({@link Card#getLegacyTriggerEffects(com.github.laxika.magicalvibes.model.trigger.Trigger, Zone)}): an intervening
- * "if" and a limit wrapped around each effect. A cast or copy ability with a spell filter and a land-play ability with
- * a land filter or zone are no part of that view: the spell-cast, spell-copy and land-play collectors read such an
- * ability itself (its filters, options and effects), found by the trigger's {@code unfiltered()} trigger. The
- * activation collectors read every activation ability itself, by
+ * Every collector of these watches reads the abilities themselves ({@link Trigger#collectedAsAbility()}), so the legacy
+ * view gives none of them and {@link #effectsOf} and {@link #registrationsOf} throw. A cast or copy ability with a spell
+ * filter and a land-play ability with a land filter or zone go to the spell-cast, spell-copy and land-play collectors,
+ * which judge the filters, the options and the effects as one stack object; any other ability's options are judged by
+ * its reader (its limit, event condition and intervening "if"), and its effects are handed to the watch's
+ * {@link CollectsSpellAbilityTrigger} handlers, the intervening "if" wrapped around each for the check as it resolves
+ * (CR 603.4). The activation collectors read every activation ability by
  * {@link com.github.laxika.magicalvibes.model.trigger.AbilityTrigger#unfiltered()}.
  */
 public enum SpellAbilityWatch implements TriggerWatch {
@@ -93,13 +94,15 @@ public enum SpellAbilityWatch implements TriggerWatch {
         return zone;
     }
 
+    /** Throws: the collectors of a spell, land-play or activation watch read its abilities themselves. */
     @Override
     public List<CardEffect> effectsOf(Card card) {
-        return card.getLegacyTriggerEffects(trigger, zone);
+        throw new UnsupportedOperationException(name() + " is read by abilities, not by effects");
     }
 
+    /** Throws: the collectors of a spell, land-play or activation watch read its abilities themselves. */
     @Override
     public List<EffectRegistration> registrationsOf(Card card) {
-        return card.getLegacyTriggerEffectRegistrations(trigger, zone);
+        throw new UnsupportedOperationException(name() + " is read by abilities, not by effects");
     }
 }

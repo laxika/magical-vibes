@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.MayCastHandlerService;
 import lombok.RequiredArgsConstructor;
@@ -48,8 +50,9 @@ public class CastTargetInstantOrSorceryFromGraveyardHandler implements MayEffect
     /**
      * "Do this only once each turn" (Emet-Selch of the Third Seat): the source's opportunity is used up
      * only when the player agrees to cast, so declining leaves it available for a later event. The limit is read from
-     * the source's abilities in the legacy form ({@code TriggeredAbility.legacyEffects()}), where
-     * {@code TriggerLimit.DO_ONLY_ONCE_EACH_TURN} is an {@link OncePerTurnTriggerEffect} marked on acceptance.
+     * the options of a spell, land-play or activation ability, and from the source's other abilities in the legacy form
+     * ({@code TriggeredAbility.legacyEffects()}), where {@code TriggerLimit.DO_ONLY_ONCE_EACH_TURN} is an
+     * {@link OncePerTurnTriggerEffect} marked on acceptance; either marks the source as the limit's check reads it.
      */
     private void markOncePerTurnOnAcceptance(GameData gameData, PendingMayAbility ability,
                                              CastTargetInstantOrSorceryFromGraveyardEffect castEffect) {
@@ -60,7 +63,18 @@ public class CastTargetInstantOrSorceryFromGraveyardHandler implements MayEffect
         if (source == null) {
             return;
         }
+        // A spell, land-play or activation ability has no legacy view: its limit is read from its options.
+        boolean collectedAsAbility = source.getCard().getTriggeredAbilities().stream()
+                .anyMatch(triggered -> triggered.collectedAsAbility()
+                        && triggered.options().limit() == TriggerLimit.DO_ONLY_ONCE_EACH_TURN
+                        && triggered.effects().stream().anyMatch(registration -> castEffect.equals(registration.effect())
+                        || registration.effect() instanceof MayEffect may && castEffect.equals(may.wrapped())));
+        if (collectedAsAbility) {
+            gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
+            return;
+        }
         List<CardEffect> effects = source.getCard().getTriggeredAbilities().stream()
+                .filter(triggered -> !triggered.collectedAsAbility())
                 .flatMap(triggered -> triggered.legacyEffects().stream())
                 .map(EffectRegistration::effect)
                 .toList();

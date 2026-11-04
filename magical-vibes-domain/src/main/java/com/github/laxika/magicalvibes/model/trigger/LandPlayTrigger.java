@@ -34,6 +34,12 @@ public record LandPlayTrigger(ObjectRelation relation, CardPredicate filter, Zon
         this(relation, null, null, null);
     }
 
+    /** The spell, land-play and activation collectors read this trigger's abilities themselves. */
+    @Override
+    public boolean collectedAsAbility() {
+        return true;
+    }
+
     /** This trigger for a land played that matches {@code filter} only. */
     public LandPlayTrigger withFilter(CardPredicate filter) {
         return new LandPlayTrigger(relation, Objects.requireNonNull(filter, "filter"), playedFrom, notPlayedFrom);
