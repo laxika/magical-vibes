@@ -2311,7 +2311,7 @@ public class Permanent {
      */
     public boolean hasCumulativeUpkeep() {
         Trigger yourUpkeep = Triggers.upkeep(ActivePlayer.YOU);
-        return hasCumulativeUpkeepIn(card.getLegacyTriggerEffects(yourUpkeep, Zone.BATTLEFIELD))
+        return hasCumulativeUpkeepIn(card.getTriggerEffects(yourUpkeep, Zone.BATTLEFIELD))
                 || hasCumulativeUpkeepIn(getPersistentTriggerEffects(yourUpkeep))
                 || hasCumulativeUpkeepIn(getTemporaryTriggerEffects(yourUpkeep));
     }

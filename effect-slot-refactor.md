@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; runs 16e onward left: the rest of the legacy view's retirement, family by family, with the may-unwrapping, `TriggerMode`, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; runs 16f onward left: the rest of the legacy view's retirement, family by family, with the may-unwrapping, `TriggerMode`, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -606,7 +606,8 @@ no other family still uses. The order:
 | 16b | The legacy view's retirement begins: the spell-cast and spell-copy collectors read the filtered abilities themselves |
 | 16c | Family 2's rest: the filtered land-play abilities and every activation ability are read by their collectors themselves; the land-play zone records and the `Triggering…AbilityConditionalEffect`s go |
 | 16d | Family 2's rest: the unfiltered spell and land-play abilities with options, the "when you cast this spell", "when this spell is countered", suspended-card and mana-ability-resolves readers, and the wrappers family 2 cards still author; no family 2 ability has a legacy view |
-| 16e onward | The rest of the legacy view's retirement, family by family: each family's collectors read the ability's options, filters and grouping (no `TriggerMode`), then the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
+| 16e | Step 13's family 1 (steps and phases): every step reader reads the abilities and judges their options through `StepAbilityReader`; no step ability has a legacy view |
+| 16f onward | The rest of the legacy view's retirement, family by family: each family's collectors read the ability's options, filters and grouping (no `TriggerMode`), then the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
 
 Mark the step `done` only after the last run of 16.
 
@@ -7448,6 +7449,117 @@ became `Triggers.youCastSpell().withFilter(new CardSharesCreatureTypeWithSourceP
   `CostEffectClassificationTest`'s unclassified `RevealSourceChosenSubtypeCost`, which this run doesn't touch). The
   engine module's tests pass.
 - AI: the whole module (1,620 tests), with the same 10 failures as before.
+- The full suite was not run here.
+
+#### Run 16e: steps and phases read the ability
+
+Step 13's family 1, as 16d's findings planned: every "at the beginning of [step or phase]" ability (a `StepTrigger`,
+collected by `StepTriggerService` and the planar die's step triggers) has no legacy view any more, and every reader of
+one reads the ability and judges its options.
+
+**What the scan found.** A temporary reflection scan of every card class, its own abilities and the abilities its
+effects grant (2,461 step abilities in 2,315 card classes): the options are intervening "if"s (660, all printed), 12
+event conditions (one granted: Obsidian Fireheart's blaze-counter upkeep), and "this ability triggers only once" on the
+three second-main-phase Collectors / Cheerleader (Acrobatic Cheerleader, Jet Collector, Pearl Collector). Every
+multiplicity is `EACH`, no ability mixes a step trigger with another family's, and the only `TriggerMode` is Ashling,
+Rimebound's two `INDEPENDENT` precombat-main abilities. Off the battlefield: 28 in a graveyard, 3 in exile (All
+Hallow's Eve, Curse of the Cabal, Tawnos Endures' granted one, which still authored its intervening "if" as a
+`ConditionalEffect`), 2 in the command zone (Oloro, Dark Wings Bring Your Downfall). Only Abstract Paintmage and Sanctum
+of Stone Fangs wrote one Oracle ability as two step abilities (both precombat main).
+
+**The model.** `StepTrigger.collectedAsAbility()` is true: `TriggeredAbility.legacyEffects()` and the `getLegacy…`
+getters throw for a step trigger, and the card's slot index leaves step abilities out of its legacy maps. New
+`Card.getTriggeredAbilities(Trigger, Zone)` and `getTriggeredAbilities(Trigger)` (the abilities with that trigger,
+through the slot index's trigger map, so a card without one costs a lookup) and a
+`TriggeredAbility(TriggerCondition, TriggerOptions, CardEffect...)` constructor.
+
+**The engine.**
+
+- New `StepAbilityReader` (`service/turn`, a plain helper over `ConditionEvaluationService`): for each ability it
+  checks the event condition (**CR 603.2**) and the intervening "if" (**CR 603.4**) as it triggers, in the condition
+  context the step's body gives (the source permanent, or its card for one off the battlefield or a face-up scheme at
+  the beginning of combat; its controller; for "that player" the player whose step it is), judges and marks "this
+  ability triggers only once" by `TriggeredAbility.limitKey()` on the source (`TriggeredAbilityStackService.limitReached`
+  / `markLimit`), throws on any other limit or a multiplicity (none is written), and returns the effects with the
+  intervening "if" wrapped around each as the `ConditionalEffect` that checks it again as it resolves; the event
+  condition isn't wrapped. `effectsByAbility` gives one list for each ability.
+- `StepTriggerService`'s 47 legacy reads read abilities through it: the printed ones by trigger and zone
+  (`printedEffects`), the ones granted for a duration (`durationGrantedEffects`, `StepAbilityReader.granted`), the
+  ones static abilities grant (`staticGrantedEffects`, `GrantedTriggeredAbilitySupport.grantedTriggeredAbilities`), a
+  graveyard card's own and perpetual ones (`graveyardEffects`, `GameQueryService.getEffectiveGraveyardTriggeredAbilities`)
+  and an exiled card's perpetual ones. The bodies keep their routing by effect kind and their checks of authored
+  `ConditionalEffect`s (until step 15). The main-phase bodies no longer unwrap `OnceOnlyTriggerEffect`
+  (`OnceOnlyTriggerSupport` stays for the draw and attack collectors). The precombat-main body puts each ability's
+  non-targeting effects on the stack as one object (**CR 603.3**), where it combined every non-`INDEPENDENT` effect of
+  the permanent into one; the registration's `TriggerMode` is no longer read.
+- `GrantedUpkeepEffectSupport` gives abilities (`grantedUpkeepAbilities`, `grantedEachUpkeepAbilities`; a granted
+  cumulative upkeep is the ability "at the beginning of your upkeep, …", **CR 702.24a**), where it gave the first effect
+  of each granted ability raw, dropping its options and its other effects.
+- `PlanechaseService.trigger` reads a plane's step abilities through the reader (every other planar trigger still
+  through the legacy view).
+- Code that only inspects which effects a card has reads the raw effects: `Permanent.hasCumulativeUpkeep`,
+  `GameSetupService`'s conspiracy marker (`getTriggeredAbilities(endStep(YOU), COMMAND)`), `TargetLegalityService`'s
+  Oath active-player check, `PermanentCounterSupport` (Divine Intervention) and `PermanentRemovalService` (Wall of
+  Nets).
+
+**Cards.** `scripts/step14-step-abilities-leftovers.py` (exact replacements, idempotent): Ashling, Rimebound drops
+`TriggerMode.INDEPENDENT` (each `addTrigger` is an ability of its own); Abstract Paintmage's "add {U}{R}" and Sanctum of
+Stone Fangs' "each opponent loses N life and you gain N life" are one ability of both effects each; Tawnos Endures'
+granted "if this card is exiled" is `TriggerOptions.DEFAULT.withInterveningIf(new SourceCardInExile())`. The
+`ARCHITECTURE.md` step paragraph, the Tawnos Endures `ORACLE_TEXT_EFFECT_MAP.md` row and the implement-card skill's step
+paragraph (one Oracle ability is one `addTrigger`, never `INDEPENDENT`) were edited by hand.
+
+**Behaviour changes.**
+
+- Granted upkeep abilities (`GrantedUpkeepEffectSupport`) put all their effects on the stack and have their options
+  judged, where only the first effect went, raw.
+- Event-condition step abilities go on the stack without the `atTriggerTime` wrapper, so a body routes them by their
+  own effect's kind (Deadwood Treefolk's vanishing, Endrider Spikespitter, the Room doors, …).
+- An intervening "if" is checked as the ability triggers by every step body; the enchanted-player and
+  enchanted-permanent-controller draw-step bodies and the suspended-card upkeep body didn't check one (no ability
+  there has one but Curse of the Cabal, whose condition the time counters the body requires already imply).
+- "This ability triggers only once" is keyed by the ability, not the source (the three cards have one such ability).
+- Nothing else is known to change: each body judges the options in the context it judged the legacy wrappers in.
+
+**Kept, with their reason.**
+
+- The step bodies still route effects by kind and put most effects on the stack one by one (one per effect, or all of
+  a permanent's together): grouping every body by ability waits for step 15's event-reading effects, which retire the
+  routing. Only the precombat-main body, which read `TriggerMode.INDEPENDENT`, groups by ability now.
+- The authored effect-text `ConditionalEffect`s run 5 kept (`NOT_INTERVENING`: Aggression, Clockwork Dragon, Clockwork
+  Vorrac, Kjeldoran Frostbeast, Laboratory Drudge, Ludevic, Throat Wolf, Does Machines) are still checked by the bodies
+  as the ability triggers; when the `interveningIf` flag goes they become `ConditionalEffect.unless` (checked only as
+  they resolve).
+- `TriggerMode` stays: other families still author `INDEPENDENT`.
+
+**For 16f onward.**
+
+- The other families (combat, damage, counters, targets, library, tap, life, sagas, misc, zone changes), as 16a
+  planned; each can reuse `StepAbilityReader`'s shape (options judged in the reader's context, effects to the handlers).
+- Merge the "when you cast this spell" abilities cards split (16d).
+
+**Tests changed.**
+
+- `StepTriggerServiceTest`: the graveyard stub reads `getEffectiveGraveyardTriggeredAbilities`; the granted
+  beginning-of-combat and end-step tests stub `grantedTriggeredAbilities` (honouring its predicate) instead of the
+  legacy `grantedTriggerEffects`. New: an upkeep event condition judged as it triggers and not put on the stack, a
+  granted upkeep ability's intervening "if" judged and wrapped, and each precombat-main ability one stack object.
+- `TriggeredAbilityTest#aStepAbilityHasNoLegacyViewAndIsFoundByTriggerAndZone` (new).
+
+**Test runs.**
+
+- Card: the test class of every card with a step ability (by the scan), and every card test that names a step card
+  without a test of its own (back faces) or one of the four changed cards (2,270 classes, 20,771 tests): all passing.
+- Application: `StepTriggerServiceTest`, `TriggeredAbilityTest`, `PlanechaseServiceTest`, `StepTriggerTest`,
+  `TriggerOptionsTest`, `CardFreezeTest`, `SimulationCopyCompletenessTest`, `GrantedAbilitiesTest`,
+  `TargetLegalityServiceTest`, `PermanentRemovalServiceTest`, `MiscTriggerTest`, `SpellAbilityTriggerTest`,
+  `TriggerPipelineTest`, `TurnProgressionServiceTest`, `GameQueryServiceTest`, `LegacyTriggerBindingsTest`,
+  `TriggerConditionTest`, `CardAbilitiesTest` (981 tests with the new ones): 92 failures, all known from HEAD
+  (`PermanentRemovalServiceTest` 46, `StepTriggerServiceTest` 16, `TargetLegalityServiceTest` 14,
+  `TurnProgressionServiceTest` 10, `PlanechaseServiceTest` 2, `SimulationCopyCompletenessTest` 1, `GameQueryServiceTest`
+  1); `StepTriggerServiceTest`'s two granted-ability tests failed until they stubbed the ability reader.
+- AI: the whole module (1,620 tests), with the same 10 failures as before.
+- `magical-vibes-webservice`'s test sources still don't compile (`CardBrowserServiceTest`); not touched here.
 - The full suite was not run here.
 
 ## Prompt

@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
@@ -109,5 +111,23 @@ class TriggeredAbilityTest {
                 .isInstanceOf(IllegalArgumentException.class);
         TriggeredAbility.requireLegacyView(Triggers.youLoseControlOfThis());
         assertThat(dies.legacyEffects()).isEqualTo(dies.effects());
+    }
+
+    @Test
+    void aStepAbilityHasNoLegacyViewAndIsFoundByTriggerAndZone() {
+        Card card = new Card();
+        card.addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped()), new DrawCardEffect(1));
+        TriggeredAbility upkeep = card.getTriggeredAbilities().getFirst();
+
+        assertThat(upkeep.collectedAsAbility()).isTrue();
+        assertThatThrownBy(upkeep::legacyEffects).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.upkeep(ActivePlayer.YOU), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(card.getTriggeredAbilities(Triggers.upkeep(ActivePlayer.YOU), Zone.GRAVEYARD))
+                .containsExactly(upkeep);
+        assertThat(card.getTriggeredAbilities(Triggers.upkeep(ActivePlayer.YOU), Zone.BATTLEFIELD)).isEmpty();
+        assertThat(card.getTriggeredAbilities(Triggers.upkeep(ActivePlayer.YOU))).containsExactly(upkeep);
+        assertThat(card.getTriggeredAbilities(Triggers.endStep(ActivePlayer.YOU))).isEmpty();
     }
 }

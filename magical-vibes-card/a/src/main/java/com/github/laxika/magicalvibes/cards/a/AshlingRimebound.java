@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -16,9 +15,9 @@ public class AshlingRimebound extends Card {
         AwardAnyColorManaEffect mana = new AwardAnyColorManaEffect(
                 2, ManaSpendRestriction.MANA_VALUE_AT_LEAST_FOUR);
         addTrigger(Triggers.transformsToBackFace(ObjectRelation.THIS), mana);
-        addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU), TriggerMode.INDEPENDENT, mana);
+        addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU), mana);
 
-        addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU), TriggerMode.INDEPENDENT,
+        addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
                 new MayPayManaEffect("{R}", new TransformSelfEffect(),
                         "Pay {R} to transform Ashling?"));
     }

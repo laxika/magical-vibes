@@ -20,7 +20,7 @@ public class SanctumOfStoneFangs extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.SHRINE), CountScope.CONTROLLER);
 
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
-                new LoseLifeEffect(shrinesYouControl, LoseLifeRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU), new GainLifeEffect(shrinesYouControl));
+                new LoseLifeEffect(shrinesYouControl, LoseLifeRecipient.EACH_OPPONENT),
+                new GainLifeEffect(shrinesYouControl));
     }
 }

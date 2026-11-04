@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.*;
 import com.github.laxika.magicalvibes.model.planar.*;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
+import com.github.laxika.magicalvibes.service.turn.StepAbilityReader;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -353,9 +354,18 @@ public class PlanechaseService {
         }
     }
 
-    /** Puts the planar object's abilities with {@code trigger} on the stack, under {@code controller}. */
+    /**
+     * Puts the planar object's abilities with {@code trigger} on the stack, under {@code controller}. A step or phase
+     * ability's options are judged as it triggers ({@link StepAbilityReader}); the others' are read from the legacy
+     * view's wrappers.
+     */
     public void trigger(GameData game, PlanarObject object, Trigger trigger, UUID controller) {
-        trigger(game, object, object.getCard().getLegacyTriggerEffects(trigger), controller);
+        Card card = object.getCard();
+        List<CardEffect> effects = trigger instanceof StepTrigger
+                ? new StepAbilityReader(conditionEvaluationService).effects(game, card.getTriggeredAbilities(trigger),
+                        ConditionContext.forCard(card, controller))
+                : card.getLegacyTriggerEffects(trigger);
+        trigger(game, object, effects, controller);
     }
 
     private void trigger(GameData game, PlanarObject object, List<CardEffect> abilityEffects, UUID controller) {

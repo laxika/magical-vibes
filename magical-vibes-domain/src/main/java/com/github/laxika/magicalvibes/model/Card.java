@@ -1956,6 +1956,42 @@ public class Card {
     }
 
     /**
+     * The card's triggered abilities that have {@code trigger} as a trigger condition functioning in {@code zone}, in
+     * the order they were added: {@code getTriggeredAbilities(Triggers.upkeep(ActivePlayer.YOU), Zone.GRAVEYARD)} for
+     * the "at the beginning of your upkeep" abilities that trigger from the graveyard. For a reader that reads abilities
+     * themselves and judges their options.
+     */
+    public List<TriggeredAbility> getTriggeredAbilities(Trigger trigger, Zone zone) {
+        if (!slotIndex().byTrigger().containsKey(trigger)) {
+            return List.of();
+        }
+        List<TriggeredAbility> triggered = new ArrayList<>();
+        for (TriggeredAbility ability : getTriggeredAbilities()) {
+            if (ability.hasTrigger(trigger, zone)) {
+                triggered.add(ability);
+            }
+        }
+        return triggered;
+    }
+
+    /**
+     * The card's triggered abilities that have {@code trigger} as a trigger condition, in whatever zone it functions,
+     * in the order they were added: the abilities of a face-up plane, which are read wherever the plane is.
+     */
+    public List<TriggeredAbility> getTriggeredAbilities(Trigger trigger) {
+        if (!slotIndex().byTrigger().containsKey(trigger)) {
+            return List.of();
+        }
+        List<TriggeredAbility> triggered = new ArrayList<>();
+        for (TriggeredAbility ability : getTriggeredAbilities()) {
+            if (ability.hasTrigger(trigger)) {
+                triggered.add(ability);
+            }
+        }
+        return triggered;
+    }
+
+    /**
      * The card's triggered abilities with a real trigger, which no slot holds and no slot view shows. Code that walks
      * the slots to read or copy a card's triggered abilities walks these too, until {@code EffectSlot} is gone.
      */
@@ -2054,9 +2090,8 @@ public class Card {
     /**
      * The effects of this card's triggered abilities that have {@code trigger} as a trigger condition functioning in
      * {@code zone}, each wrapped in its ability's options as {@link #getLegacyTriggerEffects(Trigger)} says: the form
-     * the "at the beginning of [step or phase]" collectors read them in (by the trigger's {@link Trigger#watchKey()},
-     * as {@link #getLegacyTriggerEffects(Trigger)} says). The wrapped
-     * effects are the ones
+     * the collectors that still read effects by zone take them in (by the trigger's {@link Trigger#watchKey()}, as
+     * {@link #getLegacyTriggerEffects(Trigger)} says). The wrapped effects are the ones
      * {@link #getLegacyTriggerEffects(Trigger)} gives, so they keep their identity across calls.
      */
     public List<CardEffect> getLegacyTriggerEffects(Trigger trigger, Zone zone) {

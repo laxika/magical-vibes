@@ -4523,7 +4523,7 @@ public class TargetLegalityService {
         // Only abilities that ask the active player to choose (the Oaths, for example)
         // evaluate "opponent" relative to that player. A block trigger still uses its controller.
         if (entry.getActivePlayerId() != null && entry.getCard() != null) {
-            for (CardEffect effect : entry.getCard().getLegacyTriggerEffects(Triggers.upkeep(ActivePlayer.ANY))) {
+            for (CardEffect effect : entry.getCard().getTriggerEffects(Triggers.upkeep(ActivePlayer.ANY))) {
                 if (effect instanceof MayEffect may
                         && may.choicePlayer() == MayChoicePlayer.ACTIVE_PLAYER
                         && (entry.getEffectsToResolve().contains(may)

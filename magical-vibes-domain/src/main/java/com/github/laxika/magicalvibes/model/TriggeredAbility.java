@@ -161,6 +161,16 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
                 Arrays.stream(effects).map(EffectRegistration::new).toList());
     }
 
+    /**
+     * An ability with one trigger condition, which functions from the zones {@code condition} names, and
+     * {@code options}: a granted "at the beginning of your upkeep, if this card is exiled, …" is
+     * {@code new TriggeredAbility(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.EXILE),
+     * TriggerOptions.DEFAULT.withInterveningIf(new SourceCardInExile()), effect)}.
+     */
+    public TriggeredAbility(TriggerCondition condition, TriggerOptions options, CardEffect... effects) {
+        this(List.of(condition), options, Arrays.stream(effects).map(EffectRegistration::new).toList());
+    }
+
     /** Whether {@code trigger} is one of this ability's trigger conditions. */
     public boolean hasTrigger(Trigger trigger) {
         return conditions.stream().anyMatch(condition -> condition.trigger().equals(trigger));
@@ -203,7 +213,8 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
 
     /**
      * Whether one of this ability's trigger conditions is a trigger whose collectors read the ability itself
-     * ({@link Trigger#collectedAsAbility()}: a spell, land-play or activation trigger): then it has no legacy view.
+     * ({@link Trigger#collectedAsAbility()}: a spell, land-play, activation or step trigger): then it has no legacy
+     * view.
      */
     public boolean collectedAsAbility() {
         return conditions.stream().anyMatch(condition -> condition.trigger().collectedAsAbility());
@@ -230,9 +241,9 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * checked only as the ability triggers (CR 603.2); "triggers only once each turn" is a {@link OncePerTurnTriggerEffect} keyed by
      * {@link #limitKey()}, the key the trigger pipeline marks; "do this only once each turn" one marked as the action
      * is taken (CR 603.2h); "this ability triggers only once" ({@code ONCE}) an {@link OnceOnlyTriggerEffect} inside
-     * the intervening "if", as the "at the beginning of [step or phase]" cards wrote it. An ability with a spell,
-     * land-play or activation trigger ({@link #collectedAsAbility()}) has no legacy view: its collectors read it
-     * itself, and this throws. A combat
+     * the intervening "if", as the cards wrote it. An ability with a spell, land-play, activation or "at the beginning
+     * of [step or phase]" trigger ({@link #collectedAsAbility()}) has no legacy view: its collectors read it itself,
+     * and this throws. A combat
      * trigger's filter is a {@link TriggeringPermanentConditionalEffect} inside the limit, as the combat cards wrote
      * it, but on "a creature you control deals combat damage to a player [or battle]", whose collectors read every
      * effect as an {@link AllyCombatDamageTriggerEffect}: there the filter, and "one or more"

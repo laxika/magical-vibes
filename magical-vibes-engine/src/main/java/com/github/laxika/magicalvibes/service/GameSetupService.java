@@ -212,7 +212,7 @@ public class GameSetupService {
             // engine's zone-independent marker, so this also
             // keeps future conspiracy implementations out of the opening hand automatically.
             List<Card> commandZoneCards = deck.stream()
-                    .filter(card -> !card.getLegacyTriggerEffects(Triggers.endStep(ActivePlayer.YOU), Zone.COMMAND).isEmpty())
+                    .filter(card -> !card.getTriggeredAbilities(Triggers.endStep(ActivePlayer.YOU), Zone.COMMAND).isEmpty())
                     .toList();
             deck.removeAll(commandZoneCards);
 

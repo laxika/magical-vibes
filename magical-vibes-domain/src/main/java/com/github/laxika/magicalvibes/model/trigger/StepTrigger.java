@@ -15,6 +15,12 @@ public record StepTrigger(Moment moment, ActivePlayer player) implements Trigger
         Objects.requireNonNull(player, "player");
     }
 
+    /** The step and phase readers read this trigger's abilities themselves and judge their options. */
+    @Override
+    public boolean collectedAsAbility() {
+        return true;
+    }
+
     /** The beginnings of steps and phases a triggered ability can trigger on. */
     public enum Moment {
         /** The upkeep step. */

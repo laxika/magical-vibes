@@ -2731,8 +2731,8 @@ public class GameQueryService {
 
     /**
      * Like {@link #getEffectiveGraveyardTriggerEffects}, with the card's own and its perpetual abilities wrapped in
-     * their options and filters ({@link Card#getLegacyTriggerEffects(Trigger, Zone)}): the form the "at the beginning
-     * of [step or phase]" and combat collectors read them in.
+     * their options and filters ({@link Card#getLegacyTriggerEffects(Trigger, Zone)}): the form the combat and other
+     * graveyard collectors that still read effects take them in.
      */
     public List<CardEffect> getEffectiveGraveyardLegacyTriggerEffects(GameData gameData, Card card, Trigger trigger) {
         if (graveyardCardsHaveLostAllAbilities(gameData)) {

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.turn;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.AbilityZones;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 
 import static org.mockito.ArgumentMatchers.argThat;
@@ -20,6 +19,7 @@ import com.github.laxika.magicalvibes.model.action.EchoAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.RandomDiscardCardsAtNextUpkeep;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Emblem;
@@ -119,7 +119,6 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
-import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -322,10 +321,8 @@ class StepTriggerServiceTest {
         lenient().when(gameQueryService.computeStaticBonus(eq(gd), any(Permanent.class)))
                 .thenReturn(new com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator()
                         .toStaticBonus(0, 0, false));
-        lenient().when(gameQueryService.getEffectiveGraveyardLegacyTriggerEffects(
-                        eq(gd), any(Card.class), any(Trigger.class)))
-                .thenAnswer(invocation -> ((Card) invocation.getArgument(1))
-                        .getLegacyTriggerEffects(invocation.getArgument(2), Zone.GRAVEYARD));
+        lenient().when(gameQueryService.getEffectiveGraveyardTriggeredAbilities(eq(gd), any(Card.class)))
+                .thenAnswer(invocation -> ((Card) invocation.getArgument(1)).getTriggeredAbilities());
     }
 
     @Nested
@@ -443,6 +440,51 @@ class StepTriggerServiceTest {
     @Nested
     @DisplayName("handleUpkeepTriggers")
     class HandleUpkeepTriggers {
+
+        @Test
+        @DisplayName("An upkeep ability's event condition is judged as it triggers and doesn't go on the stack with it")
+        void upkeepEventConditionIsJudgedAsItTriggersAndNotWrapped() {
+            gd.turnNumber = 2;
+            Card card = createCardWithName("Event Condition Card");
+            GainLifeEffect effect = new GainLifeEffect(1);
+            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                    TriggerOptions.DEFAULT.withEventCondition(new SourceIsTapped()), effect);
+            Permanent permanent = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(permanent);
+
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+
+            permanent.tap();
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.stack).singleElement()
+                    .satisfies(entry -> assertThat(entry.getEffectsToResolve()).containsExactly(effect));
+        }
+
+        @Test
+        @DisplayName("A granted upkeep ability's intervening \"if\" is judged as it triggers and checked again as it resolves")
+        void grantedUpkeepAbilityInterveningIfIsJudged() {
+            gd.turnNumber = 2;
+            Card card = createCardWithName("Granted Upkeep Card");
+            Permanent permanent = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(permanent);
+            GainLifeEffect effect = new GainLifeEffect(1);
+            when(grantedUpkeepEffectSupport.grantedUpkeepAbilities(gd, permanent)).thenReturn(List.of(
+                    new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
+                            TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped()), effect)));
+
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+
+            permanent.tap();
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.stack).singleElement().satisfies(entry -> assertThat(entry.getEffectsToResolve())
+                    .containsExactly(new ConditionalEffect(new SourceIsTapped(), effect, true)));
+        }
 
         @Test
         @DisplayName("Random discard delayed trigger waits for the controller's next upkeep")
@@ -1587,9 +1629,10 @@ class StepTriggerServiceTest {
             Card card = createCardWithName("Granted Combat Card");
             Permanent permanent = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(permanent);
-            when(grantedTriggeredAbilitySupport.grantedTriggerEffects(
-                    gd, permanent, Triggers.beginningOfCombat(ActivePlayer.YOU)))
-                    .thenReturn(List.of(new GainLifeEffect(1)));
+            TriggeredAbility granted = new TriggeredAbility(Triggers.beginningOfCombat(ActivePlayer.YOU), new GainLifeEffect(1));
+            when(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(eq(gd), eq(permanent), isNull(), any()))
+                    .thenAnswer(invocation -> invocation.<java.util.function.Predicate<TriggeredAbility>>getArgument(3)
+                            .test(granted) ? List.of(granted) : List.of());
 
             sut.handleBeginningOfCombatTriggers(gd);
 
@@ -1882,9 +1925,10 @@ class StepTriggerServiceTest {
             Card card = createCardWithName("Granted End Step Card");
             Permanent permanent = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(permanent);
-            when(grantedTriggeredAbilitySupport.grantedTriggerEffects(
-                    gd, permanent, Triggers.endStep(ActivePlayer.YOU)))
-                    .thenReturn(List.of(new GainLifeEffect(1)));
+            TriggeredAbility granted = new TriggeredAbility(Triggers.endStep(ActivePlayer.YOU), new GainLifeEffect(1));
+            when(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(eq(gd), eq(permanent), isNull(), any()))
+                    .thenAnswer(invocation -> invocation.<java.util.function.Predicate<TriggeredAbility>>getArgument(3)
+                            .test(granted) ? List.of(granted) : List.of());
 
             sut.handleEndStepTriggers(gd);
 
@@ -2530,6 +2574,26 @@ class StepTriggerServiceTest {
             lenient().when(gameQueryService.replaceCounters(any(), any(Permanent.class), eq(CounterType.LORE),
                     org.mockito.ArgumentMatchers.anyInt(), any(UUID.class)))
                     .thenAnswer(invocation -> invocation.getArgument(3));
+        }
+
+        @Test
+        @DisplayName("Each precombat-main ability is one object on the stack, with all its effects")
+        void eachPrecombatMainAbilityIsOneStackObject() {
+            Card card = createCardWithName("Two Abilities");
+            GainLifeEffect first = new GainLifeEffect(1);
+            GainLifeEffect second = new GainLifeEffect(2);
+            GainLifeEffect third = new GainLifeEffect(3);
+            card.addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU), first, second);
+            card.addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU), third);
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+
+            sut.handlePrecombatMainTriggers(gd);
+
+            assertThat(gd.stack).hasSize(2);
+            assertThat(gd.stack).anySatisfy(entry ->
+                    assertThat(entry.getEffectsToResolve()).containsExactly(first, second));
+            assertThat(gd.stack).anySatisfy(entry ->
+                    assertThat(entry.getEffectsToResolve()).containsExactly(third));
         }
 
         @Test
