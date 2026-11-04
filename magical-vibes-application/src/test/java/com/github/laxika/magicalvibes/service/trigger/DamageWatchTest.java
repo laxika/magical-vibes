@@ -34,12 +34,12 @@ class DamageWatchTest {
         card.addTrigger(new TriggerCondition(Triggers.sourceYouControlDealsNoncombatDamageToOpponent(),
                 AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT, fromGraveyard);
 
-        assertThat(DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT.effectsOf(card))
-                .containsExactly(fromBattlefield);
-        assertThat(DamageWatch.GRAVEYARD_ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT.effectsOf(card))
-                .containsExactly(fromGraveyard);
+        assertThat(DamageAbilityReader.printedEffects(card,
+                DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)).containsExactly(fromBattlefield);
+        assertThat(DamageAbilityReader.printedEffects(card,
+                DamageWatch.GRAVEYARD_ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)).containsExactly(fromGraveyard);
         assertThat(DamageWatch.GRAVEYARD_ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT.zone())
                 .isEqualTo(Zone.GRAVEYARD);
-        assertThat(DamageWatch.ON_DEALT_DAMAGE.effectsOf(card)).isEmpty();
+        assertThat(DamageAbilityReader.printed(card, DamageWatch.ON_DEALT_DAMAGE)).isEmpty();
     }
 }

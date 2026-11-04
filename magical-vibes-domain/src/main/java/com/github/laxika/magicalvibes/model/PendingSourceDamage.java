@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.model;
 
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -25,7 +24,7 @@ public final class PendingSourceDamage {
     private final Map<UUID, Permanent> damagedPermanentSnapshots = new LinkedHashMap<>();
     private final Set<UUID> damageToPermanentControllers = new LinkedHashSet<>();
     private final List<DamageRecipient> damageRecipients = new java.util.ArrayList<>();
-    private final List<CardEffect> selfDealsDamageEffects;
+    private final List<TriggeredAbility> selfDealsDamageAbilities;
     private UUID singleCreatureSpellTargetId;
     private final Set<UUID> instantOrSorceryDamageRecipients = new LinkedHashSet<>();
 
@@ -46,27 +45,27 @@ public final class PendingSourceDamage {
 
     public PendingSourceDamage(Card sourceCard, UUID controllerId, UUID sourcePermanentId, int amount,
                                UUID damagedPlayerId, UUID damagedPermanentControllerId,
-                               List<CardEffect> selfDealsDamageEffects) {
+                               List<TriggeredAbility> selfDealsDamageAbilities) {
         this(sourceCard, controllerId, sourcePermanentId, amount, damagedPlayerId,
-                damagedPermanentControllerId, null, selfDealsDamageEffects);
+                damagedPermanentControllerId, null, selfDealsDamageAbilities);
     }
 
     public PendingSourceDamage(Card sourceCard, UUID controllerId, UUID sourcePermanentId, int amount,
                                UUID damagedPlayerId, UUID damagedPermanentControllerId,
-                               UUID damagedPermanentId, List<CardEffect> selfDealsDamageEffects) {
+                               UUID damagedPermanentId, List<TriggeredAbility> selfDealsDamageAbilities) {
         this(sourceCard, controllerId, sourcePermanentId, amount, damagedPlayerId,
-                damagedPermanentControllerId, damagedPermanentId, selfDealsDamageEffects, null);
+                damagedPermanentControllerId, damagedPermanentId, selfDealsDamageAbilities, null);
     }
 
     public PendingSourceDamage(Card sourceCard, UUID controllerId, UUID sourcePermanentId, int amount,
                                UUID damagedPlayerId, UUID damagedPermanentControllerId,
-                               UUID damagedPermanentId, List<CardEffect> selfDealsDamageEffects,
+                               UUID damagedPermanentId, List<TriggeredAbility> selfDealsDamageAbilities,
                                UUID singleCreatureSpellTargetId) {
         this.sourceCard = sourceCard;
         this.controllerId = controllerId;
         this.sourcePermanentId = sourcePermanentId;
         this.amount = amount;
-        this.selfDealsDamageEffects = selfDealsDamageEffects == null ? null : List.copyOf(selfDealsDamageEffects);
+        this.selfDealsDamageAbilities = selfDealsDamageAbilities == null ? null : List.copyOf(selfDealsDamageAbilities);
         this.singleCreatureSpellTargetId = singleCreatureSpellTargetId;
         addToPlayer(damagedPlayerId, amount);
         addToPermanent(damagedPermanentId, amount);
@@ -121,8 +120,13 @@ public final class PendingSourceDamage {
         return List.copyOf(damageRecipients);
     }
 
-    public List<CardEffect> getSelfDealsDamageEffects() {
-        return selfDealsDamageEffects;
+    /**
+     * The source's "whenever this deals damage" abilities as they were when it dealt the damage (its own unless it was
+     * face down or had lost them, and those granted to it), or {@code null} when none were captured: the source is
+     * read when the batch is flushed.
+     */
+    public List<TriggeredAbility> getSelfDealsDamageAbilities() {
+        return selfDealsDamageAbilities;
     }
 
     public void add(int extra) {
@@ -184,7 +188,7 @@ public final class PendingSourceDamage {
 
     public PendingSourceDamage copy() {
         PendingSourceDamage copy = new PendingSourceDamage(sourceCard, controllerId, sourcePermanentId, amount,
-                null, null, null, selfDealsDamageEffects, singleCreatureSpellTargetId);
+                null, null, null, selfDealsDamageAbilities, singleCreatureSpellTargetId);
         damageToPlayers.forEach((playerId, playerDamage) -> copy.damageToPlayers.put(playerId, playerDamage));
         damageToPermanents.forEach((permanentId, permanentDamage) -> copy.damageToPermanents.put(permanentId, permanentDamage));
         damagedPermanentSnapshots.forEach((id, snapshot) ->

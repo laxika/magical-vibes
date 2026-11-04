@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.trigger;
 
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
@@ -11,16 +12,15 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnPerCreatureTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.PerDamageSourceTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.service.trigger.DamageAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.DamageWatch;
+import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -80,77 +80,145 @@ class DamageTriggerTest {
     }
 
     @Test
-    void theLegacyViewGivesTheFilterOutsideTheLimitAndTheLimitOutsideTheInterveningIf() {
+    void aDamageAbilityHasNoLegacyView() {
+        Card card = new Card();
+        card.addTrigger(Triggers.dealtDamage(), DRAW);
+        TriggeredAbility ability = card.getTriggeredAbilities().getFirst();
+        Permanent permanent = new Permanent(new Card());
+        permanent.addTemporaryAbility(ability);
+
+        assertThat(Triggers.dealtDamage().collectedAsAbility()).isTrue();
+        assertThat(ability.collectedAsAbility()).isTrue();
+        assertThatThrownBy(ability::legacyEffects).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.dealtDamage(), Zone.BATTLEFIELD))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> permanent.getLegacyTemporaryTriggerEffects(Triggers.dealtDamage()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> DamageWatch.ON_DEALT_DAMAGE.effectsOf(card))
+                .isInstanceOf(UnsupportedOperationException.class);
+        assertThatThrownBy(() -> DamageWatch.ON_DEALT_DAMAGE.registrationsOf(card))
+                .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void theReaderGivesTheFilterAndTheLimitAndWrapsTheInterveningIfAroundTheEffect() {
         Card card = new Card();
         card.addTrigger(Triggers.creatureDealtDamage().withFilter(DRAGON), TriggerOptions.DEFAULT
                 .withInterveningIf(new ControllerTurn()).withLimit(TriggerLimit.DO_ONLY_ONCE_EACH_TURN), DRAW);
 
-        List<CardEffect> legacy = DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE.effectsOf(card);
+        List<DamageAbilityReader.DamageEffect> reads = DamageAbilityReader.read(
+                DamageAbilityReader.printed(card, DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE),
+                Triggers.creatureDealtDamage());
 
-        assertThat(legacy).containsExactly(new TriggeringPermanentConditionalEffect(DRAGON,
-                OncePerTurnTriggerEffect.markOnAcceptance(new ConditionalEffect(new ControllerTurn(), DRAW))));
-        assertThat(DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE.effectsOf(card).getFirst()).isSameAs(legacy.getFirst());
-        assertThat(card.getTriggerEffects(Triggers.creatureDealtDamage(), Zone.BATTLEFIELD)).isEmpty();
+        assertThat(reads).singleElement().satisfies(read -> {
+            assertThat(read.effect()).isEqualTo(new ConditionalEffect(new ControllerTurn(), DRAW, true));
+            assertThat(read.filter()).isEqualTo(DRAGON);
+            assertThat(read.limit()).isEqualTo(TriggerLimit.DO_ONLY_ONCE_EACH_TURN);
+            assertThat(read.marksLimitOnAcceptance()).isTrue();
+            assertThat(read.eachSource()).isFalse();
+        });
     }
 
     @Test
-    void theLegacyViewKeysTriggersOnlyOnceEachTurnByTheAbility() {
+    void triggersOnlyOnceEachTurnIsMarkedByTheAbilityOnItsSource() {
         Card card = new Card();
         card.addTrigger(Triggers.dealtDamage(), TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW);
-        TriggeredAbility ability = card.getTriggeredAbilities().getFirst();
+        card.addTrigger(Triggers.dealtDamage(), TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), GAIN);
+        List<DamageAbilityReader.DamageEffect> reads = DamageAbilityReader.read(
+                DamageAbilityReader.printed(card, DamageWatch.ON_DEALT_DAMAGE), Triggers.dealtDamage());
+        GameData gameData = new GameData(UUID.randomUUID(), "test", UUID.randomUUID(), "owner");
+        UUID sourceId = UUID.randomUUID();
 
-        assertThat(DamageWatch.ON_DEALT_DAMAGE.effectsOf(card))
-                .containsExactly(OncePerTurnTriggerEffect.keyed(DRAW, ability.limitKey()));
+        reads.getFirst().markLimit(gameData, sourceId);
+
+        assertThat(reads.getFirst().limitReached(gameData, sourceId)).isTrue();
+        assertThat(reads.getFirst().limitReached(gameData, UUID.randomUUID())).isFalse();
+        assertThat(reads.get(1).limitReached(gameData, sourceId)).isFalse();
     }
 
     @Test
-    void eachSourceIsTheOutermostWrapperAndEachCreatureTheLimit() {
+    void eachSourceIsTheMultiplicityAndEachCreatureTheLimitForTheCreatureTheEventNames() {
         Card card = new Card();
         card.addTrigger(Triggers.dealtDamage(), TriggerOptions.EACH_SOURCE, DRAW);
         card.addTrigger(Triggers.permanentDealsDamageToYou(),
-                TriggerOptions.EACH_SOURCE.withLimit(TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE), GAIN);
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE), GAIN);
+        GameData gameData = new GameData(UUID.randomUUID(), "test", UUID.randomUUID(), "owner");
+        UUID sourceId = UUID.randomUUID();
+        UUID creatureId = UUID.randomUUID();
 
-        assertThat(DamageWatch.ON_DEALT_DAMAGE.effectsOf(card)).containsExactly(new PerDamageSourceTriggerEffect(DRAW));
-        assertThat(DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU.effectsOf(card)).containsExactly(
-                new PerDamageSourceTriggerEffect(new OncePerTurnPerCreatureTriggerEffect(GAIN)));
+        DamageAbilityReader.DamageEffect eachSource = DamageAbilityReader.read(
+                DamageAbilityReader.printed(card, DamageWatch.ON_DEALT_DAMAGE), Triggers.dealtDamage()).getFirst();
+        DamageAbilityReader.DamageEffect eachCreature = DamageAbilityReader.read(
+                DamageAbilityReader.printed(card, DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU),
+                Triggers.permanentDealsDamageToYou()).getFirst();
+        eachCreature.markLimit(gameData, sourceId, creatureId);
+
+        assertThat(eachSource.eachSource()).isTrue();
+        assertThat(eachSource.effect()).isEqualTo(DRAW);
+        assertThat(eachCreature.limitReached(gameData, sourceId, creatureId)).isTrue();
+        assertThat(eachCreature.limitReached(gameData, sourceId, UUID.randomUUID())).isFalse();
     }
 
     @Test
-    void aMultiplicityTheDamageCollectorsCantReadIsRejected() {
-        Card oneOrMore = new Card();
-        oneOrMore.addTrigger(Triggers.dealtDamage(), TriggerOptions.ONE_OR_MORE, DRAW);
-        Card twoFilters = new Card();
-        twoFilters.addTrigger(List.of(Triggers.dealtDamage().withFilter(DRAGON), Triggers.dealsDamage()), DRAW);
-
-        assertThatThrownBy(() -> DamageWatch.ON_DEALT_DAMAGE.effectsOf(oneOrMore))
-                .isInstanceOf(IllegalStateException.class);
+    void aMultiplicityNoDamageCollectorReadsIsRejectedAsTheAbilityIsBuilt() {
+        assertThatThrownBy(() -> new Card().addTrigger(Triggers.dealtDamage(), TriggerOptions.ONE_OR_MORE, DRAW))
+                .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new Card().addTrigger(Triggers.attacks(), TriggerOptions.EACH_SOURCE, DRAW))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> DamageWatch.ON_DEALT_DAMAGE.effectsOf(twoFilters))
-                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    void anAbilityWithSeveralDamageConditionsIsReadByEachOfTheirWatches() {
+    void theStrictReaderRejectsAFilterALimitOrAMultiplicity() {
+        Card filtered = new Card();
+        filtered.addTrigger(Triggers.dealtDamage().withFilter(DRAGON), DRAW);
+        Card limited = new Card();
+        limited.addTrigger(Triggers.dealtDamage(), TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE), DRAW);
+        Card eachSource = new Card();
+        eachSource.addTrigger(Triggers.dealtDamage(), TriggerOptions.EACH_SOURCE, DRAW);
+        Card plain = new Card();
+        plain.addTrigger(Triggers.dealtDamage(), DRAW);
+
+        assertThatThrownBy(() -> DamageAbilityReader.printedEffects(filtered, DamageWatch.ON_DEALT_DAMAGE))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> DamageAbilityReader.printedEffects(limited, DamageWatch.ON_DEALT_DAMAGE))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> DamageAbilityReader.printedEffects(eachSource, DamageWatch.ON_DEALT_DAMAGE))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(DamageAbilityReader.printedEffects(plain, DamageWatch.ON_DEALT_DAMAGE)).containsExactly(DRAW);
+        assertThat(DamageAbilityReader.effects(DamageAbilityReader.printed(filtered, DamageWatch.ON_DEALT_DAMAGE),
+                Triggers.dealtDamage(), filter -> false)).isEmpty();
+        assertThat(DamageAbilityReader.effects(DamageAbilityReader.printed(filtered, DamageWatch.ON_DEALT_DAMAGE),
+                Triggers.dealtDamage(), DRAGON::equals)).containsExactly(DRAW);
+    }
+
+    @Test
+    void anAbilityWithSeveralDamageConditionsIsReadByEachOfTheirWatchesWithItsOwnFilter() {
+        PermanentPredicate pirate = new PermanentHasSubtypePredicate(CardSubtype.PIRATE);
         Card card = new Card();
         card.addTrigger(List.of(Triggers.sourceYouControlDealsDamageToPlayer().withFilter(DRAGON),
-                Triggers.creatureYouControlDealsDamageToPlaneswalker().withFilter(DRAGON)), DRAW);
+                Triggers.creatureYouControlDealsDamageToPlaneswalker().withFilter(pirate)), DRAW);
 
         assertThat(card.getTriggeredAbilities()).hasSize(1);
-        assertThat(DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_PLAYER.effectsOf(card))
-                .containsExactly(new TriggeringPermanentConditionalEffect(DRAGON, DRAW));
-        assertThat(DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER.effectsOf(card).getFirst())
-                .isSameAs(DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_PLAYER.effectsOf(card).getFirst());
+        assertThat(DamageAbilityReader.read(
+                DamageAbilityReader.printed(card, DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_PLAYER),
+                Triggers.sourceYouControlDealsDamageToPlayer()))
+                .singleElement().extracting(DamageAbilityReader.DamageEffect::filter).isEqualTo(DRAGON);
+        assertThat(DamageAbilityReader.read(
+                DamageAbilityReader.printed(card, DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER),
+                Triggers.creatureYouControlDealsDamageToPlaneswalker()))
+                .singleElement().extracting(DamageAbilityReader.DamageEffect::filter).isEqualTo(pirate);
     }
 
     @Test
-    void grantedAbilitiesAreReadInTheLegacyFormToo() {
+    void grantedAbilitiesAreFoundByTheWatchedTriggerAndReadWithTheirFilter() {
         TriggeredAbility ability = new TriggeredAbility(Triggers.dealsDamage().withFilter(DRAGON), DRAW);
         Permanent permanent = new Permanent(new Card());
         permanent.addTemporaryAbility(ability);
 
-        assertThat(permanent.getLegacyTemporaryTriggerEffects(Triggers.dealsDamage()))
-                .containsExactly(new TriggeringPermanentConditionalEffect(DRAGON, DRAW));
+        assertThat(WatchedAbilities.temporary(permanent, Triggers.dealsDamage())).containsExactly(ability);
+        assertThat(DamageAbilityReader.read(WatchedAbilities.temporary(permanent, Triggers.dealsDamage()),
+                Triggers.dealsDamage())).singleElement()
+                .extracting(DamageAbilityReader.DamageEffect::filter).isEqualTo(DRAGON);
         assertThat(permanent.getTemporaryTriggerEffects(Triggers.dealsDamage())).isEmpty();
     }
 

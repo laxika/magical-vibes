@@ -323,7 +323,7 @@ public class TriggeredAbilityStackService {
             case DO_ONLY_ONCE_EACH_TURN -> gameData.oncePerTurnTriggersFiredThisTurn.contains(sourceId);
             case ONCE -> gameData.keyedOnceOnlyTriggersFired.getOrDefault(sourceId, Set.of()).contains(key);
             case ONCE_EACH_TURN_FOR_EACH_CREATURE -> throw new IllegalStateException(
-                    "Once each turn for each creature is read only by the collectors of the legacy view");
+                    "Once each turn for each creature is read only by the damage and counter collectors");
         };
     }
 

@@ -9403,7 +9403,7 @@ public class GameData {
         source.selfDealsCombatDamageEffects.forEach((key, value) -> copy.selfDealsCombatDamageEffects.put(permanentCopy.apply(key), new ArrayList<>(value)));
         source.selfDealsCombatDamageToPlayerOrPlaneswalkerEffects.forEach((key, value) -> copy.selfDealsCombatDamageToPlayerOrPlaneswalkerEffects.put(permanentCopy.apply(key), new ArrayList<>(value)));
         source.selfDealsCombatDamageToPlayerOrBattleEffects.forEach((key, value) -> copy.selfDealsCombatDamageToPlayerOrBattleEffects.put(permanentCopy.apply(key), new ArrayList<>(value)));
-        source.selfDealsDamageEffects.forEach((key, value) -> copy.selfDealsDamageEffects.put(permanentCopy.apply(key), new ArrayList<>(value)));
+        source.selfDealsDamageAbilities.forEach((key, value) -> copy.selfDealsDamageAbilities.put(permanentCopy.apply(key), new ArrayList<>(value)));
         source.enchantedCreatureDealsDamageTriggers.forEach(value -> copy.enchantedCreatureDealsDamageTriggers.add(new StackEntry(value)));
         source.allyCreatureDealsDamageToPlaneswalkerTriggers.forEach(value -> copy.allyCreatureDealsDamageToPlaneswalkerTriggers.add(new StackEntry(value)));
         source.delayedCombatDamageDrawQualifications.forEach(value -> copy.delayedCombatDamageDrawQualifications.add(new CombatDamageState.DelayedCombatDamageDrawQualification(value.delayedAction(), Set.copyOf(value.sourceIds()))));

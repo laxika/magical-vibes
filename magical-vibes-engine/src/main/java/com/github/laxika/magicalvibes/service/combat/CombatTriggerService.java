@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.combat;
 
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.service.trigger.CombatAbilityReader;
+import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -74,7 +75,7 @@ public class CombatTriggerService {
      */
     private static List<CombatAbilityReader.CombatEffect> attachedCombatEffects(Permanent perm, CombatWatch watch) {
         List<CombatAbilityReader.CombatEffect> reads = CombatAbilityReader.read(
-                CombatAbilityReader.printed(perm.getCard(), watch), watch.trigger());
+                WatchedAbilities.printed(perm.getCard(), watch), watch.trigger());
         for (CombatAbilityReader.CombatEffect read : reads) {
             if (read.filter() != null || read.limit() != TriggerLimit.NONE) {
                 throw new IllegalStateException("The attached-permanent combat collector reads no filter or limit: "

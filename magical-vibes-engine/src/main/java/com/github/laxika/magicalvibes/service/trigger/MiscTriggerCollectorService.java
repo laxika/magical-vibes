@@ -2890,34 +2890,6 @@ public class MiscTriggerCollectorService {
         return enqueueNoncombatDamageTrigger(match, effect);
     }
 
-    @CollectsDamageTrigger(value = OncePerTurnTriggerEffect.class,
-            watch = DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)
-    private boolean handleAllySourceDealtNoncombatDamageToOpponentOncePerTurn(
-            TriggerMatchContext match, OncePerTurnTriggerEffect effect, TriggerContext ctx) {
-        if (!(ctx instanceof TriggerContext.NoncombatDamageToOpponent damage)
-                || match.permanent() == null
-                || !match.controllerId().equals(damage.sourceControllerId())) {
-            return false;
-        }
-
-        CardEffect resolved = OncePerTurnTriggerSupport.unwrapIfAvailable(
-                match.gameData(), match.permanent(), effect);
-        if (resolved instanceof ConditionalEffect conditional) {
-            if (!conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
-                    ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
-                return false;
-            }
-            resolved = conditional.wrapped();
-        }
-        if (resolved == null) return false;
-
-        boolean triggered = enqueueNoncombatDamageTrigger(match, resolved);
-        if (triggered) {
-            OncePerTurnTriggerSupport.markIfNeeded(match.gameData(), match.permanent(), effect);
-        }
-        return triggered;
-    }
-
     @CollectsDamageTrigger(value = CreateTokenEffect.class,
             watch = DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)
     private boolean handleAllySourceDealtNoncombatDamageToOpponentToken(TriggerMatchContext match,

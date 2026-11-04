@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureDam
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -47,13 +48,10 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -157,45 +155,20 @@ class DamageTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("filters global permanent damage triggers by the damaged permanent")
-    void filtersGlobalPermanentDamageTriggerByDamagedPermanent() {
+    @DisplayName("queues a global permanent damage trigger whose filter the collector judged")
+    void queuesGlobalPermanentDamageTriggerWhoseFilterTheCollectorJudged() {
         Permanent watcher = createPermanent("Wrathful Raptors");
         Permanent damaged = createPermanent("Dinosaur");
-        var predicate = new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR);
         var wrapped = new DealDamageToAnyTargetEffect(new XValue());
-        var effect = new TriggeringPermanentConditionalEffect(predicate, wrapped);
         var ctx = new TriggerContext.AnyPermanentDealtDamage(damaged, player1Id, 2);
 
-        when(predicateEvaluationService.matchesPermanentPredicate(eq(damaged), eq(predicate), any(FilterContext.class)))
-                .thenReturn(true);
-
         boolean result = registry.dispatch(
-                match(watcher, player1Id, effect), DamageWatch.ON_ANY_PERMANENT_DEALT_DAMAGE, effect, ctx);
+                match(watcher, player1Id, wrapped), DamageWatch.ON_ANY_PERMANENT_DEALT_DAMAGE, wrapped, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class))
                 .isNotNull()
                 .satisfies(pending -> assertThat(pending.effects()).containsExactly(wrapped));
-    }
-
-    @Test
-    @DisplayName("does not queue global permanent damage triggers for a non-matching permanent")
-    void skipsGlobalPermanentDamageTriggerForNonMatchingPermanent() {
-        Permanent watcher = createPermanent("Wrathful Raptors");
-        Permanent damaged = createPermanent("Grizzly Bears");
-        var predicate = new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR);
-        var effect = new TriggeringPermanentConditionalEffect(predicate,
-                new DealDamageToAnyTargetEffect(new XValue()));
-        var ctx = new TriggerContext.AnyPermanentDealtDamage(damaged, player1Id, 2);
-
-        when(predicateEvaluationService.matchesPermanentPredicate(eq(damaged), eq(predicate), any(FilterContext.class)))
-                .thenReturn(false);
-
-        boolean result = registry.dispatch(
-                match(watcher, player1Id, effect), DamageWatch.ON_ANY_PERMANENT_DEALT_DAMAGE, effect, ctx);
-
-        assertThat(result).isFalse();
-        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)).isFalse();
     }
 
     private static Card createCard(String name) {
@@ -377,19 +350,13 @@ class DamageTriggerCollectorServiceTest {
     void queuesBatchedHeroDamageTrigger() {
         Permanent watcher = createPermanent("The Thing, Ben Grimm");
         Permanent hero = createPermanent("Agent Maria Hill");
-        var predicate = new PermanentHasSubtypePredicate(CardSubtype.HERO);
         var wrapped = new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        var effect = new TriggeringPermanentConditionalEffect(predicate, wrapped);
         var ctx = new TriggerContext.AllyCreaturesDealDamageToPlayer(
                 player2Id, player1Id, List.of(hero));
 
-        when(gameQueryService.isCreature(gd, hero)).thenReturn(true);
-        when(predicateEvaluationService.matchesPermanentPredicate(eq(hero), eq(predicate), any(FilterContext.class)))
-                .thenReturn(true);
-
         boolean result = registry.dispatch(
-                match(watcher, player1Id, effect),
-                DamageWatch.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER, effect, ctx);
+                match(watcher, player1Id, wrapped),
+                DamageWatch.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER, wrapped, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -467,20 +434,15 @@ class DamageTriggerCollectorServiceTest {
     class AnyCreatureDealtDamageConditional {
 
         @Test
-        @DisplayName("filters the damaged creature and queues the wrapped effect")
-        void filtersDamagedCreatureAndQueuesWrappedEffect() {
+        @DisplayName("queues the effect at the damaged creature once the collector judged the filter")
+        void queuesEffectAtTheDamagedCreature() {
             Permanent watcher = createPermanent("Rite of Passage");
             Permanent damaged = createPermanent("Hill Giant");
             var wrapped = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE);
-            var effect = new TriggeringPermanentConditionalEffect(
-                    new PermanentControlledBySourceControllerPredicate(), wrapped);
             var ctx = new TriggerContext.AnyCreatureDealtDamage(damaged, player1Id, 2);
 
-            when(predicateEvaluationService.matchesPermanentPredicate(eq(damaged),
-                    eq((PermanentPredicate) effect.predicate()), any(FilterContext.class))).thenReturn(true);
-
             boolean result = registry.dispatch(
-                    match(watcher, player1Id, effect), DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE, effect, ctx);
+                    match(watcher, player1Id, wrapped), DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE, wrapped, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -490,51 +452,23 @@ class DamageTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("does not queue when the damaged creature fails the predicate")
-        void skipsNonMatchingDamagedCreature() {
-            Permanent watcher = createPermanent("Rite of Passage");
-            Permanent damaged = createPermanent("Hill Giant");
-            var wrapped = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE);
-            var effect = new TriggeringPermanentConditionalEffect(
-                    new PermanentControlledBySourceControllerPredicate(), wrapped);
-            var ctx = new TriggerContext.AnyCreatureDealtDamage(damaged, player2Id, 2);
-
-            when(predicateEvaluationService.matchesPermanentPredicate(eq(damaged),
-                    eq((PermanentPredicate) effect.predicate()), any(FilterContext.class))).thenReturn(false);
-
-            boolean result = registry.dispatch(
-                    match(watcher, player1Id, effect), DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE, effect, ctx);
-
-            assertThat(result).isFalse();
-            assertThat(gd.stack).isEmpty();
-        }
-
-        @Test
-        @DisplayName("unwraps and limits once-per-turn effects inside the controller conditional")
-        void unwrapsAndLimitsOncePerTurnEffect() {
+        @DisplayName("carries \"do this only once each turn\" into the target choice, marked as the action is taken")
+        void carriesDoThisOnlyOnceEachTurnIntoTheTargetChoice() {
             Permanent watcher = createPermanent("The Sensational She-Hulk");
             Permanent damaged = createPermanent("Hill Giant");
             MayEffect may = new MayEffect(
                     new com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect(new EventValue()),
                     "Reflect the damage?");
-            var effect = new TriggeringPermanentConditionalEffect(
-                    new PermanentControlledBySourceControllerPredicate(),
-                    new OncePerTurnTriggerEffect(may));
             var ctx = new TriggerContext.AnyCreatureDealtDamage(damaged, player1Id, 2);
 
-            when(predicateEvaluationService.matchesPermanentPredicate(eq(damaged),
-                    eq((PermanentPredicate) effect.predicate()), any(FilterContext.class))).thenReturn(true);
+            assertThat(registry.dispatch(new TriggerMatchContext(gd, watcher, player1Id, may, watcher.getCard(), true),
+                    DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE, may, ctx)).isTrue();
 
-            assertThat(registry.dispatch(
-                    match(watcher, player1Id, effect), DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE, effect, ctx))
-                    .isTrue();
-            assertThat(registry.dispatch(
-                    match(watcher, player1Id, effect), DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE, effect, ctx))
-                    .isFalse();
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getTargetId()).isNull();
-            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(may);
-            assertThat(gd.oncePerTurnTriggersFiredThisTurn).contains(watcher.getId());
+            assertThat(gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class))
+                    .isNotNull()
+                    .satisfies(pending -> assertThat(pending.effects())
+                            .containsExactly(OncePerTurnTriggerEffect.markOnAcceptance(may)));
+            assertThat(gd.oncePerTurnTriggersFiredThisTurn).doesNotContain(watcher.getId());
         }
     }
 
@@ -1306,6 +1240,41 @@ class DamageTriggerCollectorServiceTest {
     }
 
     @Test
+    @DisplayName("queues an intervening-if noncombat-damage token trigger, kept to be checked again as it resolves")
+    void queuesInterveningIfNoncombatDamageTokenTrigger() {
+        Permanent perm = createPermanent("Molten Lavamancer");
+        var effect = new ConditionalEffect(new ControllerTurn(), elementalToken(), true);
+        var ctx = new TriggerContext.NoncombatDamageToOpponent(player2Id, player1Id, 1);
+        when(conditionEvaluationService.isMet(eq(gd), eq(new ControllerTurn()), any(ConditionContext.class), eq(1)))
+                .thenReturn(true);
+
+        assertThat(registry.dispatch(match(perm, player1Id, effect),
+                DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, effect, ctx)).isTrue();
+
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getEffectsToResolve()).containsExactly(effect));
+    }
+
+    @Test
+    @DisplayName("does not queue an intervening-if noncombat-damage token trigger whose condition is false")
+    void skipsInterveningIfNoncombatDamageTokenTriggerOutsideItsCondition() {
+        Permanent perm = createPermanent("Molten Lavamancer");
+        var effect = new ConditionalEffect(new ControllerTurn(), elementalToken(), true);
+        var ctx = new TriggerContext.NoncombatDamageToOpponent(player2Id, player1Id, 1);
+        when(conditionEvaluationService.isMet(eq(gd), eq(new ControllerTurn()), any(ConditionContext.class), eq(1)))
+                .thenReturn(false);
+
+        assertThat(registry.dispatch(match(perm, player1Id, effect),
+                DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, effect, ctx)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private static CreateTokenEffect elementalToken() {
+        return new CreateTokenEffect(1, "Elemental", 1, 1, com.github.laxika.magicalvibes.model.CardColor.RED,
+                List.of(CardSubtype.ELEMENTAL), java.util.Set.of(), java.util.Set.of());
+    }
+
+    @Test
     @DisplayName("queues an unrecognized opponent-damage effect through the default handler")
     void queuesUnrecognizedControllerDealtDamageByOpponentEffect() {
         Permanent watcher = createPermanent("Awaken the Sky Tyrant");
@@ -1562,26 +1531,22 @@ class DamageTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("queues a conditional permanent-damage trigger and preserves its target filter")
-    void queuesConditionalAnyPermanentDamageTrigger() {
+    @DisplayName("queues a filtered permanent-damage trigger and preserves its target filter")
+    void queuesFilteredAnyPermanentDamageTrigger() {
         Card watcherCard = createCard("Wrathful Red Dragon");
         var targetFilter = new AnyTargetPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.DRAGON)),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must not be a Dragon");
         var damage = new DealDamageToAnyTargetEffect(new XValue());
-        var effect = new TriggeringPermanentConditionalEffect(
-                new PermanentHasSubtypePredicate(CardSubtype.DRAGON), damage);
-        watcherCard.target(targetFilter).addTrigger(Triggers.permanentYouControlDealtDamage(), effect);
+        watcherCard.target(targetFilter).addTrigger(Triggers.permanentYouControlDealtDamage()
+                .withFilter(new PermanentHasSubtypePredicate(CardSubtype.DRAGON)), damage);
         Permanent watcher = new Permanent(watcherCard);
         Permanent damaged = createPermanent("Dragon");
         var ctx = new TriggerContext.AnyPermanentDealtDamage(damaged, player1Id, 3);
 
-        when(predicateEvaluationService.matchesPermanentPredicate(
-                eq(damaged), eq(effect.predicate()), any(FilterContext.class))).thenReturn(true);
-
         boolean result = registry.dispatch(
-                match(watcher, player1Id, effect), DamageWatch.ON_ANY_PERMANENT_DEALT_DAMAGE, effect, ctx);
+                match(watcher, player1Id, damage), DamageWatch.ON_ANY_PERMANENT_DEALT_DAMAGE, damage, ctx);
 
         assertThat(result).isTrue();
         var pending = gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);

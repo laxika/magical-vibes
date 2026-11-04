@@ -80,7 +80,7 @@ public class CombatDamageState {
     public final Map<Permanent, List<CardEffect>> selfDealsCombatDamageEffects = new HashMap<>();
     public final Map<Permanent, List<CardEffect>> selfDealsCombatDamageToPlayerOrPlaneswalkerEffects = new HashMap<>();
     public final Map<Permanent, List<CardEffect>> selfDealsCombatDamageToPlayerOrBattleEffects = new HashMap<>();
-    public final Map<Permanent, List<CardEffect>> selfDealsDamageEffects = new HashMap<>();
+    public final Map<Permanent, List<TriggeredAbility>> selfDealsDamageAbilities = new HashMap<>();
     public final List<StackEntry> enchantedCreatureDealsDamageTriggers = new ArrayList<>();
     public final List<StackEntry> allyCreatureDealsDamageToPlaneswalkerTriggers = new ArrayList<>();
     public final List<DelayedCombatDamageDrawQualification> delayedCombatDamageDrawQualifications = new ArrayList<>();

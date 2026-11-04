@@ -98,7 +98,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetControllerIsTriggeringP
 import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackingCreaturesAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackingPermanentSnapshot;
-import com.github.laxika.magicalvibes.model.effect.PerDamageSourceTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.LeavingPermanentIdAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.LeavingPermanentCountersAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseGameIfSourceDealtDamageToPlayerThisTurnEffect;
@@ -398,7 +397,7 @@ public class TriggerCollectionService {
         Trigger watched = watch.trigger();
         List<CombatAbilityReader.CombatEffect> reads = new ArrayList<>();
         if (printed) {
-            reads.addAll(CombatAbilityReader.read(CombatAbilityReader.printed(permanent.getCard(), watch), watched));
+            reads.addAll(CombatAbilityReader.read(WatchedAbilities.printed(permanent.getCard(), watch), watched));
         }
         reads.addAll(CombatAbilityReader.read(
                 grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, permanent, watched), watched));
@@ -414,9 +413,9 @@ public class TriggerCollectionService {
                                                                          CombatWatch watch) {
         Trigger watched = watch.trigger();
         List<CombatAbilityReader.CombatEffect> reads = new ArrayList<>(CombatAbilityReader.read(
-                CombatAbilityReader.printed(permanent.getCard(), watch), watched));
-        reads.addAll(CombatAbilityReader.read(CombatAbilityReader.temporary(permanent, watched), watched));
-        reads.addAll(CombatAbilityReader.read(CombatAbilityReader.persistent(permanent, watched), watched));
+                WatchedAbilities.printed(permanent.getCard(), watch), watched));
+        reads.addAll(CombatAbilityReader.read(WatchedAbilities.temporary(permanent, watched), watched));
+        reads.addAll(CombatAbilityReader.read(WatchedAbilities.persistent(permanent, watched), watched));
         reads.addAll(CombatAbilityReader.read(
                 grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, permanent, watched), watched));
         return reads;
@@ -427,7 +426,7 @@ public class TriggerCollectionService {
      * multiplicity ({@link CombatAbilityReader#effects(List, Trigger)}).
      */
     private static List<CardEffect> printedCombatEffects(Card card, CombatWatch watch) {
-        return CombatAbilityReader.effects(CombatAbilityReader.printed(card, watch), watch.trigger());
+        return CombatAbilityReader.effects(WatchedAbilities.printed(card, watch), watch.trigger());
     }
 
     /** {@link GrantedTriggeredAbilitySupport#grantedWatchedAbilities(GameData, Permanent, Trigger)}. */
@@ -3578,7 +3577,7 @@ public class TriggerCollectionService {
         UUID planarControllerId = gameData.planechase.controllerId;
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
             for (CardEffect effect : CombatAbilityReader.effects(
-                    CombatAbilityReader.printed(object.getCard(), CombatWatch.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT),
+                    WatchedAbilities.printed(object.getCard(), CombatWatch.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT),
                     CombatWatch.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT.trigger())) {
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
@@ -3614,7 +3613,7 @@ public class TriggerCollectionService {
                 continue;
             }
             for (CardEffect effect : CombatAbilityReader.effects(
-                    CombatAbilityReader.printed(source.getCard(), CombatWatch.ON_CONTROLLER_DEALT_COMBAT_DAMAGE),
+                    WatchedAbilities.printed(source.getCard(), CombatWatch.ON_CONTROLLER_DEALT_COMBAT_DAMAGE),
                     CombatWatch.ON_CONTROLLER_DEALT_COMBAT_DAMAGE.trigger())) {
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
@@ -3826,6 +3825,43 @@ public class TriggerCollectionService {
         }
     }
 
+    /**
+     * Whether {@code subject}, the permanent a damage ability's filter is on (the damage source, the dealer, the
+     * damaged permanent), matches {@code filter}, judged with {@code watcher} as the ability's source; {@code false}
+     * when there is no such permanent.
+     */
+    private boolean damageFilterMatches(GameData gameData, Permanent watcher, UUID controllerId,
+                                        PermanentPredicate filter, Permanent subject) {
+        return subject != null && predicateEvaluationService.matchesPermanentPredicate(subject, filter,
+                FilterContext.of(gameData)
+                        .withSourceCardId(watcher.getCard().getId())
+                        .withSourceControllerId(controllerId)
+                        .withSourcePermanentId(watcher.getId())
+                        .withSourcePermanentSnapshot(watcher));
+    }
+
+    /**
+     * The effects of the abilities {@code watch} reads of {@code card} in a graveyard, its own and its perpetual ones,
+     * or none while cards in graveyards have lost all abilities. No graveyard damage ability is written with a filter,
+     * limit or multiplicity, and this throws on one.
+     */
+    private List<CardEffect> graveyardDamageEffects(GameData gameData, Card card, DamageWatch watch) {
+        return DamageAbilityReader.effects(WatchedAbilities.withWatchedTrigger(
+                gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData, card), watch.trigger(),
+                watch.zone()), watch.trigger());
+    }
+
+    /**
+     * The match context of a damage ability's effect on {@code permanent}: "triggers only once each turn"
+     * ({@code TriggerLimit.ONCE_EACH_TURN}) keeps an effect that makes abilities trigger additional times from copying
+     * it, and "do this only once each turn" marks the source as the action is taken.
+     */
+    private static TriggerMatchContext damageMatch(GameData gameData, Permanent permanent, UUID controllerId,
+                                                   DamageAbilityReader.DamageEffect read) {
+        return new TriggerMatchContext(gameData, permanent, controllerId, read.effect(), permanent.getCard(), null,
+                read.marksLimitOnAcceptance(), read.limit() == TriggerLimit.ONCE_EACH_TURN);
+    }
+
     public void checkSourceDealsDamageToPlayerTriggers(GameData gameData, Permanent source,
                                                        UUID controllerId, UUID damagedPlayerId,
                                                        int damageDealt) {
@@ -3833,15 +3869,15 @@ public class TriggerCollectionService {
             return;
         }
 
-        List<CardEffect> effects = new ArrayList<>(DamageWatch.ON_DAMAGE_TO_PLAYER.effectsOf(source.getCard()));
-        effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
-                gameData, source, DamageWatch.ON_DAMAGE_TO_PLAYER.trigger()));
+        List<CardEffect> effects = new ArrayList<>(DamageAbilityReader.printedEffects(source.getCard(), DamageWatch.ON_DAMAGE_TO_PLAYER));
+        effects.addAll(DamageAbilityReader.effects(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
+                    gameData, source, DamageWatch.ON_DAMAGE_TO_PLAYER.trigger()), DamageWatch.ON_DAMAGE_TO_PLAYER.trigger()));
         if (!controllerId.equals(damagedPlayerId)) {
-            effects.addAll(DamageWatch.ON_DAMAGE_TO_OPPONENT.effectsOf(source.getCard()));
-            effects.addAll(source.getLegacyTemporaryTriggerEffects(DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger()));
-            effects.addAll(source.getLegacyPersistentTriggerEffects(DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger()));
-            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
-                    gameData, source, DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger()));
+            effects.addAll(DamageAbilityReader.printedEffects(source.getCard(), DamageWatch.ON_DAMAGE_TO_OPPONENT));
+            effects.addAll(DamageAbilityReader.temporaryEffects(source, DamageWatch.ON_DAMAGE_TO_OPPONENT));
+            effects.addAll(DamageAbilityReader.persistentEffects(source, DamageWatch.ON_DAMAGE_TO_OPPONENT));
+            effects.addAll(DamageAbilityReader.effects(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
+                    gameData, source, DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger()), DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger()));
         }
         // An effect that removes all abilities removes the source's own triggered abilities,
         // so damage dealt after that loss does not trigger them.
@@ -3858,9 +3894,9 @@ public class TriggerCollectionService {
                     || !perm.getAttachedTo().equals(source.getId())) {
                 return;
             }
-            List<CardEffect> attachedEffects = new ArrayList<>(DamageWatch.ON_DAMAGE_TO_PLAYER.effectsOf(perm.getCard()));
+            List<CardEffect> attachedEffects = new ArrayList<>(DamageAbilityReader.printedEffects(perm.getCard(), DamageWatch.ON_DAMAGE_TO_PLAYER));
             if (!ownerId.equals(damagedPlayerId)) {
-                attachedEffects.addAll(DamageWatch.ON_DAMAGE_TO_OPPONENT.effectsOf(perm.getCard()));
+                attachedEffects.addAll(DamageAbilityReader.printedEffects(perm.getCard(), DamageWatch.ON_DAMAGE_TO_OPPONENT));
             }
             for (CardEffect effect : attachedEffects) {
                 // Attached triggers are controlled by the Aura/Equipment's controller.
@@ -4006,8 +4042,8 @@ public class TriggerCollectionService {
         boolean hasTrigger = false;
         if (damagedPlayerBattlefield != null) {
             for (Permanent perm : gameData.permanentsAndFaceUpSchemes(damagedPlayerId)) {
-                if (!DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU.effectsOf(perm.getCard()).isEmpty()
-                        || (isCombatDamage && !CombatAbilityReader.printed(perm.getCard(),
+                if (!DamageAbilityReader.printed(perm.getCard(), DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU).isEmpty()
+                        || (isCombatDamage && !WatchedAbilities.printed(perm.getCard(),
                                 CombatWatch.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU).isEmpty())) {
                     hasTrigger = true;
                     break;
@@ -4035,7 +4071,7 @@ public class TriggerCollectionService {
 
         for (Permanent perm : new ArrayList<>(gameData.permanentsAndFaceUpSchemes(damagedPlayerId))) {
             if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-            for (CardEffect effect : DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU.effectsOf(perm.getCard())) {
+            for (CardEffect effect : DamageAbilityReader.printedEffects(perm.getCard(), DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU)) {
                 var match = new TriggerMatchContext(gameData, perm, damagedPlayerId, effect);
                 boolean triggered = dispatch(match, DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, effect, ctx);
 
@@ -4063,7 +4099,7 @@ public class TriggerCollectionService {
             if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
             List<CardEffect> effects = new ArrayList<>();
             List<CombatAbilityReader.CombatEffect> authoredEffects = CombatAbilityReader.read(
-                    CombatAbilityReader.printed(perm.getCard(), CombatWatch.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU),
+                    WatchedAbilities.printed(perm.getCard(), CombatWatch.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU),
                     CombatWatch.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU.trigger());
             for (int effectIndex = 0; effectIndex < authoredEffects.size(); effectIndex++) {
                 CombatAbilityReader.CombatEffect read = authoredEffects.get(effectIndex);
@@ -4152,7 +4188,7 @@ public class TriggerCollectionService {
 
         for (Permanent aura : new ArrayList<>(damagedPlayerBattlefield)) {
             if (!aura.isAttached() || !sourcePermanentId.equals(aura.getAttachedTo())) continue;
-            if (DamageWatch.ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_YOU.effectsOf(aura.getCard()).isEmpty()) continue;
+            if (DamageAbilityReader.printed(aura.getCard(), DamageWatch.ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_YOU).isEmpty()) continue;
 
             UUID creatureControllerId = gameQueryService.findPermanentController(gameData, sourcePermanentId);
             if (creatureControllerId == null) continue;
@@ -4162,7 +4198,7 @@ public class TriggerCollectionService {
                     aura.getCard(),
                     damagedPlayerId,
                     aura.getCard().getName() + "'s ability",
-                    new ArrayList<>(DamageWatch.ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_YOU.effectsOf(aura.getCard())),
+                    new ArrayList<>(DamageAbilityReader.printedEffects(aura.getCard(), DamageWatch.ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_YOU)),
                     amount,
                     creatureControllerId,
                     aura.getId(),
@@ -4215,22 +4251,22 @@ public class TriggerCollectionService {
 
         for (Permanent perm : List.copyOf(damagedPlayerBattlefield)) {
             for (CardEffect effect : includeAllSources
-                    ? DamageWatch.ON_CONTROLLER_DEALT_DAMAGE.effectsOf(perm.getCard()) : List.<CardEffect>of()) {
+                    ? DamageAbilityReader.printedEffects(perm.getCard(), DamageWatch.ON_CONTROLLER_DEALT_DAMAGE) : List.<CardEffect>of()) {
                 var match = new TriggerMatchContext(gameData, perm, damagedPlayerId, effect);
                 dispatch(match, DamageWatch.ON_CONTROLLER_DEALT_DAMAGE, effect, ctx);
             }
             if (fromAllySource) {
-                for (CardEffect effect : DamageWatch.ON_CONTROLLER_DEALT_DAMAGE_BY_ALLY_SOURCE.effectsOf(perm.getCard())) {
-                    CardEffect resolved = unwrapOncePerTurnTrigger(gameData, perm, effect);
-                    if (resolved == null) continue;
-                    var match = new TriggerMatchContext(gameData, perm, damagedPlayerId, effect);
-                    if (dispatch(match, DamageWatch.ON_CONTROLLER_DEALT_DAMAGE_BY_ALLY_SOURCE, resolved, ctx)) {
-                        OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, effect);
+                DamageWatch allySource = DamageWatch.ON_CONTROLLER_DEALT_DAMAGE_BY_ALLY_SOURCE;
+                for (DamageAbilityReader.DamageEffect read : DamageAbilityReader.read(
+                        DamageAbilityReader.printed(perm.getCard(), allySource), allySource.trigger())) {
+                    if (read.limitReached(gameData, perm.getId())) continue;
+                    if (dispatch(damageMatch(gameData, perm, damagedPlayerId, read), allySource, read.effect(), ctx)) {
+                        read.markLimit(gameData, perm.getId());
                     }
                 }
             }
             if (fromOpponent) {
-                for (CardEffect effect : DamageWatch.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT.effectsOf(perm.getCard())) {
+                for (CardEffect effect : DamageAbilityReader.printedEffects(perm.getCard(), DamageWatch.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT)) {
                     var match = new TriggerMatchContext(gameData, perm, damagedPlayerId, effect);
                     dispatch(match, DamageWatch.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT, effect, ctx);
                 }
@@ -4256,10 +4292,15 @@ public class TriggerCollectionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
         if (battlefield == null) return;
         var ctx = new TriggerContext.NoncombatDamageToOpponent(damagedPlayerId, sourceControllerId, amount);
+        DamageWatch noncombatToOpponent = DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT;
         for (Permanent permanent : List.copyOf(battlefield)) {
-            for (CardEffect effect : DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT.effectsOf(permanent.getCard())) {
-                var match = new TriggerMatchContext(gameData, permanent, sourceControllerId, effect);
-                dispatch(match, DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, effect, ctx);
+            for (DamageAbilityReader.DamageEffect read : DamageAbilityReader.read(
+                    DamageAbilityReader.printed(permanent.getCard(), noncombatToOpponent), noncombatToOpponent.trigger())) {
+                if (read.limitReached(gameData, permanent.getId())) continue;
+                if (dispatch(damageMatch(gameData, permanent, sourceControllerId, read), noncombatToOpponent,
+                        read.effect(), ctx)) {
+                    read.markLimit(gameData, permanent.getId());
+                }
             }
         }
     }
@@ -4286,9 +4327,17 @@ public class TriggerCollectionService {
                     DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_PLAYER)) {
                 if (watch == DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT
                         && sourceControllerId.equals(damagedPlayerId)) continue;
-                for (CardEffect effect : watch.effectsOf(perm.getCard())) {
-                    var match = new TriggerMatchContext(gameData, perm, sourceControllerId, effect);
-                    dispatch(match, watch, effect, ctx);
+                for (DamageAbilityReader.DamageEffect read : DamageAbilityReader.read(
+                        DamageAbilityReader.printed(perm.getCard(), watch), watch.trigger())) {
+                    DamageAbilityReader.requireNoLimitOrMultiplicity(read, watch.trigger());
+                    // "Whenever a [filtered] source you control deals damage": the filter is on the source.
+                    if (read.filter() != null && !damageFilterMatches(gameData, perm, sourceControllerId,
+                            read.filter(), sourcePermanentId == null ? null
+                                    : gameQueryService.findPermanentById(gameData, sourcePermanentId))) {
+                        continue;
+                    }
+                    var match = new TriggerMatchContext(gameData, perm, sourceControllerId, read.effect());
+                    dispatch(match, watch, read.effect(), ctx);
                 }
             }
         }
@@ -4311,7 +4360,7 @@ public class TriggerCollectionService {
             if (watcherPlayerId.equals(damagedPlayerId)) return;
 
             for (Permanent perm : List.copyOf(battlefield)) {
-                for (CardEffect effect : DamageWatch.ON_OPPONENT_DEALT_DAMAGE.effectsOf(perm.getCard())) {
+                for (CardEffect effect : DamageAbilityReader.printedEffects(perm.getCard(), DamageWatch.ON_OPPONENT_DEALT_DAMAGE)) {
                     var match = new TriggerMatchContext(gameData, perm, watcherPlayerId, effect);
                     registry.dispatch(match, DamageWatch.ON_OPPONENT_DEALT_DAMAGE, effect, ctx);
                 }
@@ -4338,7 +4387,7 @@ public class TriggerCollectionService {
         var ctx = new TriggerContext.CreatureDamageToYouOrYourPermanent(
                 damageSource, damagedPlayerId, damagedPermanent, damage);
         for (Permanent perm : List.copyOf(battlefield)) {
-            for (CardEffect effect : DamageWatch.ON_CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT.effectsOf(perm.getCard())) {
+            for (CardEffect effect : DamageAbilityReader.printedEffects(perm.getCard(), DamageWatch.ON_CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT)) {
                 var match = new TriggerMatchContext(gameData, perm, damagedPlayerId, effect);
                 dispatch(match, DamageWatch.ON_CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT, effect, ctx);
             }
@@ -4378,7 +4427,7 @@ public class TriggerCollectionService {
                             sourceCard, sourceControllerId, sourcePermanentId, damagedPlayerId,
                             recipient.damagedPermanentId());
             for (Permanent perm : List.copyOf(battlefield)) {
-                for (CardEffect effect : DamageWatch.ON_OPPONENT_SOURCE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT.effectsOf(perm.getCard())) {
+                for (CardEffect effect : DamageAbilityReader.printedEffects(perm.getCard(), DamageWatch.ON_OPPONENT_SOURCE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT)) {
                     var match = new TriggerMatchContext(gameData, perm, damagedPlayerId, effect);
                     dispatch(match,
                             DamageWatch.ON_OPPONENT_SOURCE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT,
@@ -4413,7 +4462,7 @@ public class TriggerCollectionService {
         if (battlefield == null) return;
         for (Permanent permanent : List.copyOf(battlefield)) {
             if (gameQueryService.hasLostPrintedAbilities(gameData, permanent)) continue;
-            for (CardEffect effect : DamageWatch.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE.effectsOf(permanent.getCard())) {
+            for (CardEffect effect : DamageAbilityReader.printedEffects(permanent.getCard(), DamageWatch.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE)) {
                 var match = new TriggerMatchContext(gameData, permanent, sourceControllerId, effect);
                 dispatch(match, DamageWatch.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE, effect, context);
             }
@@ -4436,37 +4485,37 @@ public class TriggerCollectionService {
     public void queueSourceDealsDamageReflections(GameData gameData, Card sourceCard, UUID sourceControllerId,
                                                    UUID sourcePermanentId, int totalDamage,
                                                    Map<UUID, Integer> damageToPlayers,
-                                                   List<CardEffect> snapshottedSelfEffects) {
+                                                   List<TriggeredAbility> snapshottedSelfAbilities) {
         queueSourceDealsDamageReflections(gameData, sourceCard, sourceControllerId, sourcePermanentId, totalDamage,
-                damageToPlayers, snapshottedSelfEffects, null, Map.of());
+                damageToPlayers, snapshottedSelfAbilities, null, Map.of());
     }
 
     public void queueSourceDealsDamageReflections(GameData gameData, Card sourceCard, UUID sourceControllerId,
                                                    UUID sourcePermanentId, int totalDamage,
                                                    Map<UUID, Integer> damageToPlayers,
-                                                   List<CardEffect> snapshottedSelfEffects,
+                                                   List<TriggeredAbility> snapshottedSelfAbilities,
                                                    UUID singleCreatureSpellTargetId,
                                                    Map<UUID, Integer> damageToPermanents) {
         queueSourceDealsDamageReflections(gameData, sourceCard, sourceControllerId, sourcePermanentId, totalDamage,
-                damageToPlayers, snapshottedSelfEffects, singleCreatureSpellTargetId, damageToPermanents, false);
+                damageToPlayers, snapshottedSelfAbilities, singleCreatureSpellTargetId, damageToPermanents, false);
     }
 
     public void queueSourceDealsDamageReflections(GameData gameData, Card sourceCard, UUID sourceControllerId,
                                                    UUID sourcePermanentId, int totalDamage,
                                                    Map<UUID, Integer> damageToPlayers,
-                                                   List<CardEffect> snapshottedSelfEffects,
+                                                   List<TriggeredAbility> snapshottedSelfAbilities,
                                                    UUID singleCreatureSpellTargetId,
                                                    Map<UUID, Integer> damageToPermanents,
                                                    boolean combatDamage) {
         queueSourceDealsDamageReflections(gameData, sourceCard, sourceControllerId, sourcePermanentId,
-                totalDamage, damageToPlayers, snapshottedSelfEffects, singleCreatureSpellTargetId,
+                totalDamage, damageToPlayers, snapshottedSelfAbilities, singleCreatureSpellTargetId,
                 damageToPermanents, combatDamage, Map.of());
     }
 
     public void queueSourceDealsDamageReflections(GameData gameData, Card sourceCard, UUID sourceControllerId,
                                                    UUID sourcePermanentId, int totalDamage,
                                                    Map<UUID, Integer> damageToPlayers,
-                                                   List<CardEffect> snapshottedSelfEffects,
+                                                   List<TriggeredAbility> snapshottedSelfAbilities,
                                                    UUID singleCreatureSpellTargetId,
                                                    Map<UUID, Integer> damageToPermanents,
                                                    boolean combatDamage,
@@ -4480,7 +4529,7 @@ public class TriggerCollectionService {
         gameData.forEachBattlefield((watcherPlayerId, battlefield) -> {
             for (Permanent perm : List.copyOf(battlefield)) {
                 if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-                for (CardEffect effect : DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE.effectsOf(perm.getCard())) {
+                for (CardEffect effect : DamageAbilityReader.printedEffects(perm.getCard(), DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE)) {
                     var match = new TriggerMatchContext(gameData, perm, watcherPlayerId, effect);
                     dispatch(match, DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE, effect, ctx);
                 }
@@ -4493,23 +4542,29 @@ public class TriggerCollectionService {
         Permanent sourcePermanent = findPermanentByCardId(gameData, sourceCard.getId());
         boolean sourceHasPrintedAbilities = sourcePermanent == null
                 || !sourcePermanent.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, sourcePermanent);
-        List<CardEffect> selfEffects = snapshottedSelfEffects != null
-                ? new ArrayList<>(snapshottedSelfEffects)
+        Trigger selfDealsDamage = DamageWatch.ON_SELF_DEALS_DAMAGE.trigger();
+        List<TriggeredAbility> selfAbilities = snapshottedSelfAbilities != null
+                ? new ArrayList<>(snapshottedSelfAbilities)
                 : sourceHasPrintedAbilities
-                ? new ArrayList<>(DamageWatch.ON_SELF_DEALS_DAMAGE.effectsOf(sourceCard))
+                ? new ArrayList<>(DamageAbilityReader.printed(sourceCard, DamageWatch.ON_SELF_DEALS_DAMAGE))
                 : new ArrayList<>();
         // Granted "whenever this creature deals damage" abilities live on the permanent, not the card
         // (the Genju cycle grants one to the animated land until end of turn). If no snapshot was
         // captured, the source is still on the battlefield and can be read here.
-        if (snapshottedSelfEffects == null && sourcePermanent != null) {
-            selfEffects.addAll(sourcePermanent.getLegacyTemporaryTriggerEffects(DamageWatch.ON_SELF_DEALS_DAMAGE.trigger()));
-            selfEffects.addAll(sourcePermanent.getLegacyPersistentTriggerEffects(DamageWatch.ON_SELF_DEALS_DAMAGE.trigger()));
-            selfEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
-                    gameData, sourcePermanent, DamageWatch.ON_SELF_DEALS_DAMAGE.trigger()));
+        if (snapshottedSelfAbilities == null && sourcePermanent != null) {
+            selfAbilities.addAll(WatchedAbilities.temporary(sourcePermanent, selfDealsDamage));
+            selfAbilities.addAll(WatchedAbilities.persistent(sourcePermanent, selfDealsDamage));
+            selfAbilities.addAll(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
+                    gameData, sourcePermanent, selfDealsDamage));
         }
-        for (CardEffect effect : selfEffects) {
-            var match = new TriggerMatchContext(gameData, sourcePermanent, sourceControllerId, effect);
-            dispatch(match, DamageWatch.ON_SELF_DEALS_DAMAGE, effect, ctx);
+        for (DamageAbilityReader.DamageEffect read : DamageAbilityReader.read(selfAbilities, selfDealsDamage)) {
+            DamageAbilityReader.requireNoLimitOrMultiplicity(read, selfDealsDamage);
+            // "Whenever this deals damage to one or more creatures": the filter is on the damaged permanents.
+            if (read.filter() != null && !damagedPermanentMatches(gameData, ctx, read.filter(), sourcePermanent)) {
+                continue;
+            }
+            var match = new TriggerMatchContext(gameData, sourcePermanent, sourceControllerId, read.effect());
+            dispatch(match, DamageWatch.ON_SELF_DEALS_DAMAGE, read.effect(), ctx);
         }
 
         for (DelayedWatchedCreatureDealsDamage watch
@@ -4562,6 +4617,26 @@ public class TriggerCollectionService {
         }
     }
 
+    /**
+     * Whether a permanent {@code ctx}'s source dealt damage to in this event, as it was before state-based actions,
+     * matches {@code filter}: the filter of "whenever this deals damage to one or more [permanents]", judged with the
+     * damage source as the ability's source.
+     */
+    private boolean damagedPermanentMatches(GameData gameData, TriggerContext.SourceDealsDamage ctx,
+                                            PermanentPredicate filter, Permanent sourcePermanent) {
+        FilterContext recipientContext = FilterContext.of(gameData)
+                .withSourceControllerId(ctx.sourceControllerId())
+                .withSourceCardId(ctx.sourceCard().getId())
+                .withSourcePermanentId(ctx.sourcePermanentId())
+                .withSourcePermanentSnapshot(sourcePermanent);
+        return ctx.damageToPermanents().entrySet().stream()
+                .filter(damage -> damage.getValue() > 0)
+                .map(damage -> ctx.damagedPermanentSnapshots().get(damage.getKey()))
+                .filter(Objects::nonNull)
+                .anyMatch(recipient -> predicateEvaluationService.matchesPermanentPredicate(
+                        recipient, filter, recipientContext));
+    }
+
     public void queueEnchantedCreatureDealsDamageTriggers(GameData gameData, Permanent sourceCreature,
                                                            int damageDealt) {
         if (sourceCreature == null || damageDealt <= 0) return;
@@ -4578,7 +4653,7 @@ public class TriggerCollectionService {
         gameData.forEachPermanent((auraControllerId, aura) -> {
             if (!aura.isAttached() || !sourceCreature.getId().equals(aura.getAttachedTo())) return;
 
-            List<CardEffect> effects = DamageWatch.ON_ENCHANTED_CREATURE_DEALS_DAMAGE.effectsOf(aura.getCard());
+            List<CardEffect> effects = DamageAbilityReader.printedEffects(aura.getCard(), DamageWatch.ON_ENCHANTED_CREATURE_DEALS_DAMAGE);
             if (effects.isEmpty()) return;
 
             UUID sourceControllerId = gameQueryService.findPermanentController(gameData, sourceCreature.getId());
@@ -4626,7 +4701,7 @@ public class TriggerCollectionService {
         gameData.forEachPermanent((auraControllerId, aura) -> {
             if (!aura.isAttached() || !sourceCreature.getId().equals(aura.getAttachedTo())) return;
 
-            List<CardEffect> effects = DamageWatch.ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_CREATURE.effectsOf(aura.getCard());
+            List<CardEffect> effects = DamageAbilityReader.printedEffects(aura.getCard(), DamageWatch.ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_CREATURE);
             if (effects.isEmpty()) return;
 
             StackEntry entry = new StackEntry(
@@ -4687,7 +4762,7 @@ public class TriggerCollectionService {
     public Map<UUID, List<Permanent>> snapshotAllyCreatureDealsCombatDamageWatchers(GameData gameData) {
         Map<UUID, List<Permanent>> watchers = new LinkedHashMap<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
-            if (!CombatAbilityReader.printed(permanent.getCard(), CombatWatch.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE).isEmpty()) {
+            if (!WatchedAbilities.printed(permanent.getCard(), CombatWatch.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE).isEmpty()) {
                 watchers.computeIfAbsent(controllerId, ignored -> new ArrayList<>()).add(permanent);
             }
         });
@@ -4945,15 +5020,17 @@ public class TriggerCollectionService {
 
         var context = new TriggerContext.AllyCreaturesDealDamageToPlayer(
                 damagedPlayerId, sourceControllerId, damageDealers);
+        DamageWatch toPlayer = DamageWatch.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER;
         for (Permanent permanent : List.copyOf(battlefield)) {
-            List<CardEffect> effects = new ArrayList<>(DamageWatch.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER.effectsOf(permanent.getCard()));
-            effects.addAll(permanent.getLegacyTemporaryTriggerEffects(DamageWatch.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER.trigger()));
-            effects.addAll(permanent.getLegacyPersistentTriggerEffects(DamageWatch.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER.trigger()));
-            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
-                    gameData, permanent, DamageWatch.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER.trigger()));
-            for (CardEffect effect : effects) {
-                var match = new TriggerMatchContext(gameData, permanent, sourceControllerId, effect);
-                dispatch(match, DamageWatch.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER, effect, context);
+            for (DamageAbilityReader.DamageEffect read : DamageAbilityReader.read(
+                    allyCreaturesDealDamageAbilities(gameData, permanent, toPlayer), toPlayer.trigger())) {
+                DamageAbilityReader.requireNoLimitOrMultiplicity(read, toPlayer.trigger());
+                // "One or more [filtered] creatures you control": the filter is on each creature that dealt damage.
+                if (!anyDealerMatches(gameData, permanent, sourceControllerId, read.filter(), damageDealers, true)) {
+                    continue;
+                }
+                var match = new TriggerMatchContext(gameData, permanent, sourceControllerId, read.effect());
+                dispatch(match, toPlayer, read.effect(), context);
             }
         }
     }
@@ -4972,11 +5049,42 @@ public class TriggerCollectionService {
     }
 
     /** Watcher and its abilities at the time the damage event occurred. */
-    public record AllyDamageTriggerSnapshot(Permanent permanent, List<CardEffect> effects) {
+    public record AllyDamageTriggerSnapshot(Permanent permanent, List<TriggeredAbility> abilities) {
         public AllyDamageTriggerSnapshot {
             permanent = new Permanent(permanent);
-            effects = List.copyOf(effects);
+            abilities = List.copyOf(abilities);
         }
+    }
+
+    /**
+     * The "whenever one or more creatures you control deal damage to a player [opponent]" abilities {@code watch}
+     * reads of {@code permanent}: its printed ones unless it lost them, then those granted to it for a duration and by
+     * other permanents' static abilities.
+     */
+    private List<TriggeredAbility> allyCreaturesDealDamageAbilities(GameData gameData, Permanent permanent,
+                                                                    DamageWatch watch) {
+        List<TriggeredAbility> abilities = new ArrayList<>();
+        if (watch != DamageWatch.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_OPPONENT
+                || !gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
+            abilities.addAll(DamageAbilityReader.printed(permanent.getCard(), watch));
+        }
+        abilities.addAll(WatchedAbilities.temporary(permanent, watch.trigger()));
+        abilities.addAll(WatchedAbilities.persistent(permanent, watch.trigger()));
+        abilities.addAll(grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, permanent, watch.trigger()));
+        return abilities;
+    }
+
+    /**
+     * Whether one of {@code dealers} matches the filter of "whenever one or more [filtered] creatures you control deal
+     * damage" ({@code null}: any), judged with {@code watcher} as the ability's source; with {@code creaturesOnly},
+     * only creatures count.
+     */
+    private boolean anyDealerMatches(GameData gameData, Permanent watcher, UUID controllerId,
+                                     PermanentPredicate filter, List<Permanent> dealers, boolean creaturesOnly) {
+        return dealers.stream()
+                .filter(dealer -> !creaturesOnly || gameQueryService.isCreature(gameData, dealer))
+                .anyMatch(dealer -> filter == null
+                        || damageFilterMatches(gameData, watcher, controllerId, filter, dealer));
     }
 
     /** Captures watchers before damage casualties remove them or the effects granting their abilities. */
@@ -4984,17 +5092,11 @@ public class TriggerCollectionService {
             GameData gameData) {
         Map<UUID, List<AllyDamageTriggerSnapshot>> snapshots = new LinkedHashMap<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
-            List<CardEffect> effects = new ArrayList<>();
-            if (!gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
-                effects.addAll(DamageWatch.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_OPPONENT.effectsOf(permanent.getCard()));
-            }
-            effects.addAll(permanent.getLegacyTemporaryTriggerEffects(DamageWatch.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_OPPONENT.trigger()));
-            effects.addAll(permanent.getLegacyPersistentTriggerEffects(DamageWatch.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_OPPONENT.trigger()));
-            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
-                    gameData, permanent, DamageWatch.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_OPPONENT.trigger()));
-            if (!effects.isEmpty()) {
+            List<TriggeredAbility> abilities = allyCreaturesDealDamageAbilities(gameData, permanent,
+                    DamageWatch.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_OPPONENT);
+            if (!abilities.isEmpty()) {
                 snapshots.computeIfAbsent(controllerId, ignored -> new ArrayList<>())
-                        .add(new AllyDamageTriggerSnapshot(permanent, effects));
+                        .add(new AllyDamageTriggerSnapshot(permanent, abilities));
             }
         });
         return snapshots;
@@ -5011,10 +5113,18 @@ public class TriggerCollectionService {
 
         var context = new TriggerContext.AllyCreaturesDealDamageToPlayer(
                 damagedPlayerId, sourceControllerId, damageDealers);
+        Trigger toOpponent = DamageWatch.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_OPPONENT.trigger();
         for (AllyDamageTriggerSnapshot watcher : watchers) {
-            for (CardEffect effect : watcher.effects()) {
-                var match = new TriggerMatchContext(gameData, watcher.permanent(), sourceControllerId, effect);
-                dispatch(match, DamageWatch.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_OPPONENT, effect, context);
+            for (DamageAbilityReader.DamageEffect read : DamageAbilityReader.read(watcher.abilities(), toOpponent)) {
+                DamageAbilityReader.requireNoLimitOrMultiplicity(read, toOpponent);
+                // "One or more Pirates you control" counts any object with the type, so a Kindred Pirate spell is a
+                // dealer too; only an unfiltered trigger is limited to creatures.
+                if (!anyDealerMatches(gameData, watcher.permanent(), sourceControllerId, read.filter(), damageDealers,
+                        read.filter() == null)) {
+                    continue;
+                }
+                var match = new TriggerMatchContext(gameData, watcher.permanent(), sourceControllerId, read.effect());
+                dispatch(match, DamageWatch.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_OPPONENT, read.effect(), context);
             }
         }
     }
@@ -8316,7 +8426,7 @@ public class TriggerCollectionService {
         return gameData.planechase != null
                 && Objects.equals(gameData.planechase.controllerId, damagedPlayerId)
                 && gameData.planechase.faceUp.stream()
-                .anyMatch(object -> !CombatAbilityReader.printed(object.getCard(),
+                .anyMatch(object -> !WatchedAbilities.printed(object.getCard(),
                         CombatWatch.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU).isEmpty());
     }
 
@@ -8331,7 +8441,7 @@ public class TriggerCollectionService {
         UUID creatureControllerId = gameQueryService.findPermanentController(gameData, sourceCreature.getId());
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
             for (CardEffect effect : CombatAbilityReader.effects(
-                    CombatAbilityReader.printed(object.getCard(), CombatWatch.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU),
+                    WatchedAbilities.printed(object.getCard(), CombatWatch.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU),
                     CombatWatch.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU.trigger())) {
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
@@ -8575,16 +8685,16 @@ public class TriggerCollectionService {
     private void checkDamageToCreatureTriggers(GameData gameData, Permanent damagedCreature, int damageDealt,
                                                UUID damageSourceControllerId, Card sourceCard,
                                                UUID sourcePermanentId, DamageWatch watch) {
-        List<CardEffect> effects = new ArrayList<>();
+        Trigger watched = watch.trigger();
+        List<TriggeredAbility> abilities = new ArrayList<>();
         if (!damagedCreature.isFaceDown()
                 && !gameQueryService.hasLostPrintedAbilities(gameData, damagedCreature)) {
-            effects.addAll(watch.effectsOf(damagedCreature.getCard()));
+            abilities.addAll(DamageAbilityReader.printed(damagedCreature.getCard(), watch));
         }
-        effects.addAll(damagedCreature.getLegacyTemporaryTriggerEffects(watch.trigger()));
-        effects.addAll(damagedCreature.getLegacyPersistentTriggerEffects(watch.trigger()));
-        effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
-                gameData, damagedCreature, watch.trigger()));
-        if (effects.isEmpty()) return;
+        abilities.addAll(WatchedAbilities.temporary(damagedCreature, watched));
+        abilities.addAll(WatchedAbilities.persistent(damagedCreature, watched));
+        abilities.addAll(grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, damagedCreature, watched));
+        if (abilities.isEmpty()) return;
 
         UUID controllerId = gameQueryService.findPermanentController(gameData, damagedCreature.getId());
         if (controllerId == null) return;
@@ -8592,17 +8702,17 @@ public class TriggerCollectionService {
         var ctx = new TriggerContext.DamageToCreature(damagedCreature, damageDealt, damageSourceControllerId,
                 sourceCard, sourcePermanentId);
 
-        for (CardEffect effect : effects) {
-            CardEffect authoredEffect = effect instanceof PerDamageSourceTriggerEffect perSource
-                    ? perSource.effect() : effect;
-            CardEffect dispatchedEffect = OncePerTurnTriggerSupport.unwrapIfAvailable(
-                    gameData, damagedCreature, authoredEffect);
-            if (dispatchedEffect == null) continue;
+        // "Once for each source" (CR 603.2c): this damage has one source, so the ability triggers once.
+        for (DamageAbilityReader.DamageEffect read : DamageAbilityReader.read(abilities, watched)) {
+            if (read.filter() != null) {
+                throw new IllegalStateException("The collector of " + watched + " judges no filter: "
+                        + read.ability());
+            }
+            if (read.limitReached(gameData, damagedCreature.getId())) continue;
 
-            var match = new TriggerMatchContext(gameData, damagedCreature, controllerId, dispatchedEffect);
-            boolean triggered = dispatch(match, watch, dispatchedEffect, ctx);
-            if (triggered) {
-                OncePerTurnTriggerSupport.markIfNeeded(gameData, damagedCreature, authoredEffect);
+            var match = new TriggerMatchContext(gameData, damagedCreature, controllerId, read.effect());
+            if (dispatch(match, watch, read.effect(), ctx)) {
+                read.markLimit(gameData, damagedCreature.getId());
             }
         }
     }
@@ -8618,7 +8728,7 @@ public class TriggerCollectionService {
             if (!perm.isAttached() || !perm.getAttachedTo().equals(damagedCreature.getId())) {
                 return;
             }
-            for (CardEffect effect : DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE.effectsOf(perm.getCard())) {
+            for (CardEffect effect : DamageAbilityReader.printedEffects(perm.getCard(), DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)) {
                 var match = new TriggerMatchContext(gameData, perm, auraOwnerId, effect);
                 dispatch(match, DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE, effect, ctx);
             }
@@ -8642,7 +8752,7 @@ public class TriggerCollectionService {
             if (!perm.isAttached() || !damagedPlayerId.equals(perm.getAttachedTo())) {
                 return;
             }
-            for (CardEffect effect : DamageWatch.ON_ENCHANTED_PLAYER_DEALT_DAMAGE.effectsOf(perm.getCard())) {
+            for (CardEffect effect : DamageAbilityReader.printedEffects(perm.getCard(), DamageWatch.ON_ENCHANTED_PLAYER_DEALT_DAMAGE)) {
                 var match = new TriggerMatchContext(gameData, perm, auraOwnerId, effect);
                 dispatch(match, DamageWatch.ON_ENCHANTED_PLAYER_DEALT_DAMAGE, effect, ctx);
             }
@@ -8654,7 +8764,7 @@ public class TriggerCollectionService {
             // Only fire when the damaged creature was controlled by an opponent of this permanent's controller
             if (playerId.equals(damagedCreatureControllerId)) return;
 
-            List<CardEffect> effects = DamageWatch.ON_OPPONENT_CREATURE_DEALT_DAMAGE.effectsOf(perm.getCard());
+            List<CardEffect> effects = DamageAbilityReader.printedEffects(perm.getCard(), DamageWatch.ON_OPPONENT_CREATURE_DEALT_DAMAGE);
             if (effects == null || effects.isEmpty()) return;
 
             for (CardEffect effect : effects) {
@@ -8718,9 +8828,9 @@ public class TriggerCollectionService {
 
             List<CardEffect> effects = new ArrayList<>();
             for (DamageWatch watch : watches) {
-                effects.addAll(watch.effectsOf(perm.getCard()));
-                effects.addAll(perm.getLegacyTemporaryTriggerEffects(watch.trigger()));
-                effects.addAll(perm.getLegacyPersistentTriggerEffects(watch.trigger()));
+                effects.addAll(DamageAbilityReader.printedEffects(perm.getCard(), watch));
+                effects.addAll(DamageAbilityReader.temporaryEffects(perm, watch));
+                effects.addAll(DamageAbilityReader.persistentEffects(perm, watch));
             }
             for (CardEffect effect : effects) {
                 if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
@@ -8771,9 +8881,9 @@ public class TriggerCollectionService {
         gameData.forEachPermanent((playerId, perm) -> {
             if (playerId.equals(damagedCreatureControllerId)) return;
 
-            List<CardEffect> effects = new ArrayList<>(DamageWatch.ON_OPPONENT_CREATURE_DEALT_EXCESS_NONCOMBAT_DAMAGE.effectsOf(perm.getCard()));
-            effects.addAll(perm.getLegacyTemporaryTriggerEffects(DamageWatch.ON_OPPONENT_CREATURE_DEALT_EXCESS_NONCOMBAT_DAMAGE.trigger()));
-            effects.addAll(perm.getLegacyPersistentTriggerEffects(DamageWatch.ON_OPPONENT_CREATURE_DEALT_EXCESS_NONCOMBAT_DAMAGE.trigger()));
+            List<CardEffect> effects = new ArrayList<>(DamageAbilityReader.printedEffects(perm.getCard(), DamageWatch.ON_OPPONENT_CREATURE_DEALT_EXCESS_NONCOMBAT_DAMAGE));
+            effects.addAll(DamageAbilityReader.temporaryEffects(perm, DamageWatch.ON_OPPONENT_CREATURE_DEALT_EXCESS_NONCOMBAT_DAMAGE));
+            effects.addAll(DamageAbilityReader.persistentEffects(perm, DamageWatch.ON_OPPONENT_CREATURE_DEALT_EXCESS_NONCOMBAT_DAMAGE));
             for (CardEffect effect : effects) {
                 if (!damageEntry.markNoncombatExcessDamageTriggerFired(perm.getId(), effect)) continue;
                 StackEntry entry = new StackEntry(
@@ -8901,15 +9011,21 @@ public class TriggerCollectionService {
 
         TriggerContext context = new TriggerContext.CreatureDealsDamageToPlaneswalker(
                 damageSource, damagedPlaneswalkerId, damage, combatDamage, deferredTriggers);
+        DamageWatch toPlaneswalker = DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER;
         gameData.forEachPermanent((watcherControllerId, watcher) -> {
             if (!watcherControllerId.equals(damageSourceControllerId)) return;
-            List<CardEffect> effects = new ArrayList<>(
-                    DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER.effectsOf(watcher.getCard()));
-            effects.addAll(watcher.getLegacyTemporaryTriggerEffects(DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER.trigger()));
-            effects.addAll(watcher.getLegacyPersistentTriggerEffects(DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER.trigger()));
-            for (CardEffect effect : effects) {
-                TriggerMatchContext match = new TriggerMatchContext(gameData, watcher, watcherControllerId, effect);
-                registry.dispatch(match, DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER, effect, context);
+            List<TriggeredAbility> abilities = new ArrayList<>(DamageAbilityReader.printed(watcher.getCard(), toPlaneswalker));
+            abilities.addAll(WatchedAbilities.temporary(watcher, toPlaneswalker.trigger()));
+            abilities.addAll(WatchedAbilities.persistent(watcher, toPlaneswalker.trigger()));
+            for (DamageAbilityReader.DamageEffect read : DamageAbilityReader.read(abilities, toPlaneswalker.trigger())) {
+                DamageAbilityReader.requireNoLimitOrMultiplicity(read, toPlaneswalker.trigger());
+                // "Whenever a [filtered] creature you control deals damage to a planeswalker": on the creature.
+                if (read.filter() != null && !damageFilterMatches(gameData, watcher, watcherControllerId,
+                        read.filter(), damageSource)) {
+                    continue;
+                }
+                TriggerMatchContext match = new TriggerMatchContext(gameData, watcher, watcherControllerId, read.effect());
+                registry.dispatch(match, toPlaneswalker, read.effect(), context);
             }
         });
     }
@@ -8929,12 +9045,12 @@ public class TriggerCollectionService {
                 damageSource, damagedPlaneswalkerId, damage, combatDamage, deferredTriggers);
         gameData.forEachPermanent((watcherControllerId, watcher) -> {
             List<CardEffect> effects = new ArrayList<>(
-                    DamageWatch.ON_CREATURE_DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER.effectsOf(watcher.getCard()));
-            effects.addAll(watcher.getLegacyTemporaryTriggerEffects(DamageWatch.ON_CREATURE_DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER.trigger()));
-            effects.addAll(watcher.getLegacyPersistentTriggerEffects(DamageWatch.ON_CREATURE_DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER.trigger()));
-            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                    DamageAbilityReader.printedEffects(watcher.getCard(), DamageWatch.ON_CREATURE_DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER));
+            effects.addAll(DamageAbilityReader.temporaryEffects(watcher, DamageWatch.ON_CREATURE_DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER));
+            effects.addAll(DamageAbilityReader.persistentEffects(watcher, DamageWatch.ON_CREATURE_DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER));
+            effects.addAll(DamageAbilityReader.effects(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
                     gameData, watcher, watcherControllerId,
-                    DamageWatch.ON_CREATURE_DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER.trigger()));
+                    DamageWatch.ON_CREATURE_DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER.trigger()), DamageWatch.ON_CREATURE_DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER.trigger()));
             for (CardEffect effect : effects) {
                 TriggerMatchContext match = new TriggerMatchContext(gameData, watcher, watcherControllerId, effect);
                 registry.dispatch(match, DamageWatch.ON_CREATURE_DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER,
@@ -8982,9 +9098,9 @@ public class TriggerCollectionService {
             effects.addAll(snapshottedEffects);
         } else if (sourcePermanent != null) {
             effects.addAll(CombatAbilityReader.effects(
-                    CombatAbilityReader.temporary(sourcePermanent, watch.trigger()), watch.trigger()));
+                    WatchedAbilities.temporary(sourcePermanent, watch.trigger()), watch.trigger()));
             effects.addAll(CombatAbilityReader.effects(
-                    CombatAbilityReader.persistent(sourcePermanent, watch.trigger()), watch.trigger()));
+                    WatchedAbilities.persistent(sourcePermanent, watch.trigger()), watch.trigger()));
         }
         for (CardEffect effect : effects) {
             var match = new TriggerMatchContext(gameData, sourcePermanent, sourceControllerId, effect);
@@ -9020,7 +9136,11 @@ public class TriggerCollectionService {
                 || gameQueryService.hasLostPrintedAbilities(gameData, watcher)) {
             return;
         }
-        for (CardEffect effect : DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE.effectsOf(watcher.getCard())) {
+        // Only the "a creature under any player's control" effects (Toxin Sliver) apply here; filtered abilities
+        // watch your own creatures.
+        for (CardEffect effect : DamageAbilityReader.effectsOf(DamageAbilityReader.read(DamageAbilityReader.printed(
+                watcher.getCard(), DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE),
+                DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE.trigger()))) {
             if (effect instanceof DestroyCreatureDamagedByMatchingCreatureEffect destroy) {
                 queueAnySourceDestroyTrigger(gameData, watcher, watcherControllerId, destroy, damageSource,
                         damagedCreatureId, combatDamage);
@@ -9060,17 +9180,21 @@ public class TriggerCollectionService {
         if (watcher.isLosesAllAbilitiesUntilEndOfTurn() || gameQueryService.hasLostPrintedAbilities(gameData, watcher)) {
             return;
         }
+        Trigger toCreature = DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE.trigger();
         // A face-down permanent has no printed abilities (CR 708.2).
-        List<CardEffect> effects = watcher.isFaceDown()
+        List<TriggeredAbility> abilities = watcher.isFaceDown()
                 ? new ArrayList<>()
-                : new ArrayList<>(DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE.effectsOf(watcher.getCard()));
+                : new ArrayList<>(DamageAbilityReader.printed(watcher.getCard(),
+                        DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE));
         // Abilities granted until end of turn (Cruel Deceiver) live on the permanent, not the card.
-        effects.addAll(watcher.getLegacyTemporaryTriggerEffects(DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE.trigger()));
+        abilities.addAll(WatchedAbilities.temporary(watcher, toCreature));
         if (watcher.getId().equals(damageSource.getId())) {
-            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
-                    gameData, watcher, damageSourceControllerId,
-                    DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE.trigger()));
+            abilities.addAll(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
+                    gameData, watcher, damageSourceControllerId, toCreature));
         }
+        // "Whenever a [filtered] creature you control deals damage to a creature" (Ohabi Caleria): on the dealer.
+        List<CardEffect> effects = DamageAbilityReader.effects(abilities, toCreature, filter ->
+                damageFilterMatches(gameData, watcher, damageSourceControllerId, filter, damageSource));
 
         TriggerContext context = new TriggerContext.CreatureDealsDamageToCreature(
                 damageSource, damagedCreatureId, damage, combatDamage,
@@ -9355,14 +9479,23 @@ public class TriggerCollectionService {
 
         var ctx = new TriggerContext.AnyCreatureDealtDamage(
                 damagedCreature, damagedCreatureControllerId, damageDealt);
+        DamageWatch creatureDealtDamage = DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE;
         gameData.forEachPermanent((playerId, perm) -> {
-            List<CardEffect> effects = DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE.effectsOf(LayerSystemService.currentCard(gameData, perm));
-            if (effects == null || effects.isEmpty()) return;
+            List<TriggeredAbility> abilities = DamageAbilityReader.printed(
+                    LayerSystemService.currentCard(gameData, perm), creatureDealtDamage);
+            if (abilities.isEmpty()) return;
             if (gameQueryService.hasLostAllAbilities(gameData, perm)) return;
 
-            for (CardEffect effect : effects) {
-                var match = new TriggerMatchContext(gameData, perm, playerId, effect);
-                dispatch(match, DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE, effect, ctx);
+            for (DamageAbilityReader.DamageEffect read : DamageAbilityReader.read(abilities, creatureDealtDamage.trigger())) {
+                // "Whenever a [filtered] creature is dealt damage": the filter is on the damaged creature.
+                if (read.filter() != null
+                        && !damageFilterMatches(gameData, perm, playerId, read.filter(), damagedCreature)) {
+                    continue;
+                }
+                if (read.limitReached(gameData, perm.getId())) continue;
+                if (dispatch(damageMatch(gameData, perm, playerId, read), creatureDealtDamage, read.effect(), ctx)) {
+                    read.markLimit(gameData, perm.getId());
+                }
             }
         });
 
@@ -9407,8 +9540,19 @@ public class TriggerCollectionService {
 
         var ctx = new TriggerContext.AnyPermanentDealtDamage(
                 damagedPermanent, damagedPermanentControllerId, damageDealt);
-        gameData.forEachPermanent((playerId, perm) ->
-                dispatchWatch(gameData, perm, playerId, DamageWatch.ON_ANY_PERMANENT_DEALT_DAMAGE, ctx));
+        DamageWatch watch = DamageWatch.ON_ANY_PERMANENT_DEALT_DAMAGE;
+        Trigger watched = watch.trigger();
+        gameData.forEachPermanent((playerId, perm) -> {
+            // "Whenever a [filtered] permanent you control is dealt damage": the filter is on the damaged permanent.
+            Predicate<PermanentPredicate> onDamaged = filter ->
+                    damageFilterMatches(gameData, perm, playerId, filter, damagedPermanent);
+            dispatchRegistrations(gameData, perm, playerId, watch, ctx, null,
+                    DamageAbilityReader.registrations(DamageAbilityReader.printed(perm.getCard(), watch), watched,
+                            onDamaged),
+                    staticBonus -> DamageAbilityReader.effects(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(
+                            gameData, perm, staticBonus, ability -> ability.hasWatchedTrigger(watched)), watched,
+                            onDamaged));
+        });
     }
 
     public void checkTemporaryGlobalCreatureAttackTriggers(GameData gameData, Permanent attacker) {
@@ -9658,8 +9802,25 @@ public class TriggerCollectionService {
                     }
                 }
             }
+            // A registered damage ability's filter is on the damaged permanent ("a creature an opponent controls").
+            DamageAbilityReader.DamageEffect damageRead = slot instanceof DamageWatch damageWatch
+                    ? DamageAbilityReader.read(watcher.ability(), damageWatch.trigger()).getFirst() : null;
+            if (damageRead != null) {
+                DamageAbilityReader.requireNoLimitOrMultiplicity(damageRead, ((DamageWatch) slot).trigger());
+                if (damageRead.filter() != null) {
+                    Permanent triggeringPermanent = targetId == null ? null
+                            : gameQueryService.findPermanentById(gameData, targetId);
+                    if (triggeringPermanent == null || !predicateEvaluationService.matchesPermanentPredicate(
+                            triggeringPermanent, damageRead.filter(), FilterContext.of(gameData)
+                                    .withSourceCardId(watcher.sourceCard().getId())
+                                    .withSourceControllerId(watcher.controllerId()))) {
+                        continue;
+                    }
+                }
+            }
             CardEffect resolvedEffect = slot == CombatWatch.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER
-                    ? watcher.effect() : combatRead != null ? combatRead.effect() : watcher.legacyEffect();
+                    ? watcher.effect() : combatRead != null ? combatRead.effect()
+                    : damageRead != null ? damageRead.effect() : watcher.legacyEffect();
             if (targetId != null && (slot == CombatWatch.ON_ANY_CREATURE_BLOCKS
                     || slot == TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED
                     || slot == TapWatch.ON_OPPONENT_PERMANENT_BECOMES_TAPPED)
@@ -11909,7 +12070,7 @@ public class TriggerCollectionService {
             if (playerId.equals(damagedPlayerId)) return;
 
             for (Permanent perm : battlefield) {
-                for (CardEffect effect : DamageWatch.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE.effectsOf(perm.getCard())) {
+                for (CardEffect effect : DamageAbilityReader.printedEffects(perm.getCard(), DamageWatch.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE)) {
                     var match = new TriggerMatchContext(gameData, perm, playerId, effect);
                     dispatch(match, DamageWatch.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE, effect, ctx);
                 }
@@ -11922,8 +12083,7 @@ public class TriggerCollectionService {
         if (graveyard == null) return;
 
         for (Card card : new ArrayList<>(graveyard)) {
-            List<CardEffect> effects = gameQueryService.getEffectiveGraveyardLegacyTriggerEffects(
-                    gameData, card, DamageWatch.GRAVEYARD_ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT.trigger());
+            List<CardEffect> effects = graveyardDamageEffects(gameData, card, DamageWatch.GRAVEYARD_ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT);
             if (effects == null || effects.isEmpty()) continue;
 
             for (CardEffect effect : effects) {
@@ -11980,8 +12140,7 @@ public class TriggerCollectionService {
 
         for (Card card : new ArrayList<>(graveyard)) {
             List<CardEffect> effects =
-                    gameQueryService.getEffectiveGraveyardLegacyTriggerEffects(
-                            gameData, card, DamageWatch.GRAVEYARD_ON_OPPONENT_DAMAGED_BY_RED_SPELL_OR_PLANESWALKER.trigger());
+                    graveyardDamageEffects(gameData, card, DamageWatch.GRAVEYARD_ON_OPPONENT_DAMAGED_BY_RED_SPELL_OR_PLANESWALKER);
             if (effects == null || effects.isEmpty()) continue;
 
             for (CardEffect effect : effects) {
@@ -12055,8 +12214,7 @@ public class TriggerCollectionService {
         if (graveyard == null) return;
 
         for (Card card : new ArrayList<>(graveyard)) {
-            List<CardEffect> effects = gameQueryService.getEffectiveGraveyardLegacyTriggerEffects(
-                    gameData, card, DamageWatch.GRAVEYARD_ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_OPPONENT_OR_BATTLE.trigger());
+            List<CardEffect> effects = graveyardDamageEffects(gameData, card, DamageWatch.GRAVEYARD_ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_OPPONENT_OR_BATTLE);
             if (effects == null || effects.isEmpty()) continue;
 
             for (CardEffect effect : effects) {
@@ -15032,7 +15190,7 @@ public class TriggerCollectionService {
 
         var ctx = new TriggerContext.DamageToControllerAmount(damagedPlayerId, amount, null, null);
         for (Permanent perm : List.copyOf(damagedPlayerBattlefield)) {
-            for (CardEffect effect : DamageWatch.ON_CONTROLLER_DAMAGE_PREVENTED.effectsOf(perm.getCard())) {
+            for (CardEffect effect : DamageAbilityReader.printedEffects(perm.getCard(), DamageWatch.ON_CONTROLLER_DAMAGE_PREVENTED)) {
                 var match = new TriggerMatchContext(gameData, perm, damagedPlayerId, effect);
                 dispatch(match, DamageWatch.ON_CONTROLLER_DAMAGE_PREVENTED, effect, ctx);
             }
@@ -15761,11 +15919,11 @@ public class TriggerCollectionService {
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
             List<CardEffect> matchingEffects = new ArrayList<>();
             List<CombatAbilityReader.CombatEffect> attackEffects = new ArrayList<>(CombatAbilityReader.read(
-                    CombatAbilityReader.printed(object.getCard(), CombatWatch.ON_ANY_CREATURE_ATTACKS),
+                    WatchedAbilities.printed(object.getCard(), CombatWatch.ON_ANY_CREATURE_ATTACKS),
                     CombatWatch.ON_ANY_CREATURE_ATTACKS.trigger()));
             if (planarControllerId.equals(attackerControllerId)) {
                 attackEffects.addAll(CombatAbilityReader.read(
-                        CombatAbilityReader.printed(object.getCard(), CombatWatch.ON_ALLY_CREATURE_ATTACKS),
+                        WatchedAbilities.printed(object.getCard(), CombatWatch.ON_ALLY_CREATURE_ATTACKS),
                         CombatWatch.ON_ALLY_CREATURE_ATTACKS.trigger()));
             }
             FilterContext attackerContext = FilterContext.of(gameData)
@@ -15833,7 +15991,7 @@ public class TriggerCollectionService {
                 .withSourceControllerId(planarControllerId);
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
             for (CombatAbilityReader.CombatEffect read : CombatAbilityReader.read(
-                    CombatAbilityReader.printed(object.getCard(), CombatWatch.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER),
+                    WatchedAbilities.printed(object.getCard(), CombatWatch.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER),
                     CombatWatch.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER.trigger())) {
                 if (read.limit() != TriggerLimit.NONE || read.eachBlocker()) {
                     throw new IllegalStateException("The planar combat damage collector reads no " + read.options()
@@ -15879,7 +16037,7 @@ public class TriggerCollectionService {
         return gameData.planechase != null
                 && Objects.equals(gameData.planechase.controllerId, damagedPlayerId)
                 && gameData.planechase.faceUp.stream()
-                .anyMatch(object -> !DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU.effectsOf(object.getCard()).isEmpty());
+                .anyMatch(object -> !DamageAbilityReader.printed(object.getCard(), DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU).isEmpty());
     }
 
     private void checkPlanarPermanentDealsDamageToYouTriggers(
@@ -15893,9 +16051,10 @@ public class TriggerCollectionService {
         TriggerContext context = new TriggerContext.DamageToController(
                 damagedPlayerId, damageSource.getId(), isCombatDamage);
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-            for (CardEffect effect : DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU.effectsOf(object.getCard())) {
+            for (DamageAbilityReader.DamageEffect read : DamageAbilityReader.read(DamageAbilityReader.printed(
+                    object.getCard(), DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU), DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU.trigger())) {
                 dispatchPlanarDamageTrigger(gameData, object,
-                        DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, effect,
+                        DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, read,
                         context, damageSource.getId(), damagedPlayerId);
             }
         }
@@ -15916,9 +16075,10 @@ public class TriggerCollectionService {
         TriggerContext context = new TriggerContext.DamageToControllerAmount(
                 damagedPlayerId, amount, sourcePermanentId, sourceControllerId);
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-            for (CardEffect effect : DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT.effectsOf(object.getCard())) {
+            for (DamageAbilityReader.DamageEffect read : DamageAbilityReader.read(DamageAbilityReader.printed(
+                    object.getCard(), DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT), DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT.trigger())) {
                 dispatchPlanarDamageTrigger(gameData, object,
-                        DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT, effect,
+                        DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT, read,
                         context, sourcePermanentId, sourceControllerId);
             }
         }
@@ -15939,35 +16099,34 @@ public class TriggerCollectionService {
         TriggerContext context = new TriggerContext.DamageToControllerAmount(
                 damagedPlayerId, amount, sourcePermanentId, damagedPlayerId);
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-            for (CardEffect effect : DamageWatch.ON_SOURCE_DEALS_DAMAGE_TO_ITS_CONTROLLER_PLANAR.effectsOf(object.getCard())) {
+            for (DamageAbilityReader.DamageEffect read : DamageAbilityReader.read(DamageAbilityReader.printed(
+                    object.getCard(), DamageWatch.ON_SOURCE_DEALS_DAMAGE_TO_ITS_CONTROLLER_PLANAR), DamageWatch.ON_SOURCE_DEALS_DAMAGE_TO_ITS_CONTROLLER_PLANAR.trigger())) {
                 dispatchPlanarDamageTrigger(gameData, object,
-                        DamageWatch.ON_SOURCE_DEALS_DAMAGE_TO_ITS_CONTROLLER_PLANAR, effect,
+                        DamageWatch.ON_SOURCE_DEALS_DAMAGE_TO_ITS_CONTROLLER_PLANAR, read,
                         context, sourcePermanentId, gameData.planechase.controllerId);
             }
         }
     }
 
+    /**
+     * Dispatches one effect of a face-up plane's damage ability to {@code watch}'s handlers. "Once each turn for each
+     * creature" (Stensia) is marked for the plane and the creature that dealt the damage.
+     */
     private boolean dispatchPlanarDamageTrigger(GameData gameData, PlanarObject object,
-                                                DamageWatch watch, CardEffect authoredEffect,
+                                                DamageWatch watch, DamageAbilityReader.DamageEffect read,
                                                 TriggerContext context, UUID triggeringPermanentId,
                                                 UUID controllerId) {
-        CardEffect effect = authoredEffect;
-        boolean oncePerCreature = false;
-        if (effect instanceof OncePerTurnPerCreatureTriggerEffect once) {
-            Set<UUID> firedCreatures = gameData.oncePerCreatureTriggersFiredThisTurn
-                    .computeIfAbsent(object.getId(), ignored -> ConcurrentHashMap.newKeySet());
-            if (firedCreatures.contains(triggeringPermanentId)) return false;
-            effect = once.wrapped();
-            oncePerCreature = true;
+        if (read.filter() != null) {
+            throw new IllegalStateException("The planar damage collector judges no filter: " + read.ability());
         }
+        if (read.limitReached(gameData, object.getId(), triggeringPermanentId)) return false;
 
+        CardEffect effect = read.effect();
         boolean triggered = registry.dispatch(
                 new TriggerMatchContext(gameData, null, controllerId, effect,
                         object.getCard(), object.copy()), watch, effect, context);
-        if (triggered && oncePerCreature) {
-            gameData.oncePerCreatureTriggersFiredThisTurn
-                    .computeIfAbsent(object.getId(), ignored -> ConcurrentHashMap.newKeySet())
-                    .add(triggeringPermanentId);
+        if (triggered) {
+            read.markLimit(gameData, object.getId(), triggeringPermanentId);
         }
         return triggered;
     }
@@ -16445,10 +16604,18 @@ public class TriggerCollectionService {
         if (watch instanceof SpellAbilityWatch spellWatch) {
             return dispatchSpellWatch(gameData, perm, controllerId, spellWatch, ctx);
         }
+        if (watch instanceof DamageWatch damageWatch) {
+            Trigger watched = damageWatch.trigger();
+            return dispatchRegistrations(gameData, perm, controllerId, watch, ctx, null,
+                    DamageAbilityReader.registrations(DamageAbilityReader.printed(perm.getCard(), damageWatch),
+                            watched),
+                    staticBonus -> DamageAbilityReader.effects(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(
+                            gameData, perm, staticBonus, ability -> ability.hasWatchedTrigger(watched)), watched));
+        }
         if (watch instanceof CombatWatch combatWatch) {
             Trigger watched = combatWatch.trigger();
             return dispatchRegistrations(gameData, perm, controllerId, watch, ctx, null,
-                    CombatAbilityReader.registrations(CombatAbilityReader.printed(perm.getCard(), combatWatch),
+                    CombatAbilityReader.registrations(WatchedAbilities.printed(perm.getCard(), combatWatch),
                             watched),
                     staticBonus -> CombatAbilityReader.effects(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(
                             gameData, perm, staticBonus, ability -> ability.hasWatchedTrigger(watched)), watched));
@@ -17299,7 +17466,7 @@ public class TriggerCollectionService {
         TriggerContext context = new TriggerContext.SourceDealsNoncombatDamageToCreature(
                 damagedCreature, damageDealt, sourceControllerId);
         for (Permanent watcher : List.copyOf(battlefield)) {
-            for (CardEffect effect : DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE.effectsOf(watcher.getCard())) {
+            for (CardEffect effect : DamageAbilityReader.printedEffects(watcher.getCard(), DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE)) {
                 dispatch(new TriggerMatchContext(gameData, watcher, sourceControllerId, effect),
                         DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE, effect, context);
             }

@@ -22,7 +22,11 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.trigger.DamageAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.DamageWatch;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
@@ -1960,7 +1964,7 @@ public class DamageSupport {
             batch = new PendingSourceDamage(sourceCard, sourceControllerId, sourcePermanentId, damage,
                             damagedPlayerId, damagedPermanentControllerId,
                             damagedPermanentId,
-                            snapshotSelfDealsDamageEffects(gameData, sourceCard, sourcePermanentId),
+                            snapshotSelfDealsDamageAbilities(gameData, sourceCard, sourcePermanentId),
                             singleCreatureSpellTargetId);
             gameData.pendingSourceDamageForReflection.put(damageEventKey, batch);
         } else {
@@ -2029,7 +2033,7 @@ public class DamageSupport {
             }
             triggerCollectionService.queueSourceDealsDamageReflections(gameData,
                     batch.getSourceCard(), batch.getControllerId(), batch.getSourcePermanentId(), batch.getAmount(),
-                    batch.getDamageToPlayers(), batch.getSelfDealsDamageEffects(),
+                    batch.getDamageToPlayers(), batch.getSelfDealsDamageAbilities(),
                     batch.getSingleCreatureSpellTargetId(), batch.getDamageToPermanents(), false,
                     batch.getDamagedPermanentSnapshots());
             List<TriggerCollectionService.SourceDamageRecipient> damageRecipients = batch.getDamageRecipients()
@@ -2047,23 +2051,23 @@ public class DamageSupport {
         }
     }
 
-    private List<CardEffect> snapshotSelfDealsDamageEffects(GameData gameData, Card sourceCard,
-                                                             UUID sourcePermanentId) {
+    private List<TriggeredAbility> snapshotSelfDealsDamageAbilities(GameData gameData, Card sourceCard,
+                                                                    UUID sourcePermanentId) {
         if (sourcePermanentId == null) return null;
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         // A source that already left the battlefield when it dealt the damage has no "whenever this
         // creature deals damage" abilities to trigger, so the empty snapshot suppresses the card fallback.
         if (sourcePermanent == null) return List.of();
 
-        List<CardEffect> effects = new ArrayList<>();
+        Trigger selfDealsDamage = DamageWatch.ON_SELF_DEALS_DAMAGE.trigger();
+        List<TriggeredAbility> abilities = new ArrayList<>();
         if (!sourcePermanent.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, sourcePermanent)) {
-            effects.addAll(DamageWatch.ON_SELF_DEALS_DAMAGE.effectsOf(sourceCard));
+            abilities.addAll(DamageAbilityReader.printed(sourceCard, DamageWatch.ON_SELF_DEALS_DAMAGE));
         }
-        effects.addAll(sourcePermanent.getLegacyTemporaryTriggerEffects(DamageWatch.ON_SELF_DEALS_DAMAGE.trigger()));
-        effects.addAll(sourcePermanent.getLegacyPersistentTriggerEffects(DamageWatch.ON_SELF_DEALS_DAMAGE.trigger()));
-        effects.addAll(triggerCollectionService.grantedTriggerEffects(
-                gameData, sourcePermanent, DamageWatch.ON_SELF_DEALS_DAMAGE.trigger()));
-        return effects;
+        abilities.addAll(WatchedAbilities.temporary(sourcePermanent, selfDealsDamage));
+        abilities.addAll(WatchedAbilities.persistent(sourcePermanent, selfDealsDamage));
+        abilities.addAll(triggerCollectionService.grantedWatchedAbilities(gameData, sourcePermanent, selfDealsDamage));
+        return abilities;
     }
 
 

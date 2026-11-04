@@ -1,12 +1,9 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -28,7 +25,7 @@ import java.util.function.Predicate;
 
 /**
  * Reads the combat abilities (a {@link CombatTrigger}: attacks, blocks, becomes blocked, combat damage; CR 508.1,
- * 509.1, 510.2) for the attack, block and combat damage collectors, which have no legacy view of them
+ * 509.1, 510.2), as {@link WatchedAbilities} finds them, for the attack, block and combat damage collectors, which have no legacy view of them
  * ({@link CombatTrigger#collectedAsAbility()}). The collectors judge the ability's trigger-level parts from the
  * ability itself: the filter on the creature ({@link CombatEffect#filter()}), the limit
  * ({@link CombatEffect#limit()}, marked by {@link TriggeredAbility#limitKey()} on the source) and the multiplicity
@@ -148,64 +145,6 @@ public final class CombatAbilityReader {
         return new AllyCombatDamage(effect.filter(), effect.oneOrMore(), false, false, effect.effect());
     }
 
-    /**
-     * The abilities of {@code card} with a trigger condition whose {@link Trigger#watchKey()} is {@code watched} and
-     * that functions in {@code zone}, in the order they were added.
-     */
-    public static List<TriggeredAbility> printed(Card card, Trigger watched, Zone zone) {
-        List<TriggeredAbility> abilities = new ArrayList<>();
-        for (TriggeredAbility ability : card.getTriggeredAbilities()) {
-            if (ability.hasWatchedTrigger(watched, zone)) {
-                abilities.add(ability);
-            }
-        }
-        return abilities;
-    }
-
-    /** The abilities of {@code card} that {@code watch} reads, as {@link #printed(Card, Trigger, Zone)} says. */
-    public static List<TriggeredAbility> printed(Card card, CombatWatch watch) {
-        return printed(card, watch.trigger(), watch.zone());
-    }
-
-    /**
-     * The abilities with a trigger condition watched as {@code watched} granted to {@code permanent} until end of
-     * turn, end of combat or next upkeep.
-     */
-    public static List<TriggeredAbility> temporary(Permanent permanent, Trigger watched) {
-        return withWatchedTrigger(permanent.getTemporaryTriggeredAbilities(), watched);
-    }
-
-    /** The abilities with a trigger condition watched as {@code watched} granted to {@code permanent} until it leaves. */
-    public static List<TriggeredAbility> persistent(Permanent permanent, Trigger watched) {
-        return withWatchedTrigger(permanent.getPersistentTriggeredAbilities(), watched);
-    }
-
-    /** The abilities of {@code abilities} with a trigger condition watched as {@code watched}, in order. */
-    public static List<TriggeredAbility> withWatchedTrigger(List<TriggeredAbility> abilities, Trigger watched) {
-        List<TriggeredAbility> watchedAbilities = new ArrayList<>();
-        for (TriggeredAbility ability : abilities) {
-            if (ability.hasWatchedTrigger(watched)) {
-                watchedAbilities.add(ability);
-            }
-        }
-        return watchedAbilities;
-    }
-
-    /**
-     * The abilities of {@code abilities} with a trigger condition watched as {@code watched} that functions in
-     * {@code zone}, in order: a graveyard card's own and perpetual abilities.
-     */
-    public static List<TriggeredAbility> withWatchedTrigger(List<TriggeredAbility> abilities, Trigger watched,
-                                                            Zone zone) {
-        List<TriggeredAbility> watchedAbilities = new ArrayList<>();
-        for (TriggeredAbility ability : abilities) {
-            if (ability.hasWatchedTrigger(watched, zone)) {
-                watchedAbilities.add(ability);
-            }
-        }
-        return watchedAbilities;
-    }
-
     /** Every effect of {@code abilities}, as their collector reads them for the condition watched as {@code watched}. */
     public static List<CombatEffect> read(List<TriggeredAbility> abilities, Trigger watched) {
         List<CombatEffect> effects = new ArrayList<>();
@@ -283,18 +222,6 @@ public final class CombatAbilityReader {
             }
         }
         return registrationsOf(reads);
-    }
-
-    /**
-     * The effects of {@code abilities} as they are written, without their options: for code that only inspects which
-     * effects a combat ability has (the AI's threat estimates, bushido's static bonus).
-     */
-    public static List<CardEffect> rawEffects(List<TriggeredAbility> abilities) {
-        List<CardEffect> effects = new ArrayList<>();
-        for (TriggeredAbility ability : abilities) {
-            ability.effects().forEach(registration -> effects.add(registration.effect()));
-        }
-        return effects;
     }
 
     /** The effects of {@code effects}, in order. */

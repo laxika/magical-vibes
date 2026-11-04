@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.OnceOnlyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnPerCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCausedDiscardTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.PerDamageSourceTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SchemeSetInMotionTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
@@ -121,8 +120,9 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * "each blocker" "becomes blocked"'s (CR 509.3d), and among the combat events "one or more" is that of "blocks" once
      * each combat (CR 509.3a), "becomes blocked", "a creature you control (or with the same name as this) deals combat
      * damage to a player [or battle, or planeswalker]" and "a creature deals combat damage to you", the combat
-     * collectors that read it. The legacy view checked these as a card's abilities were indexed; the combat collectors
-     * read the ability itself, so the ability checks them as it is built.
+     * collectors that read it; no damage collector reads it (the "one or more" damage events are events of their own).
+     * The legacy view checked these as a card's abilities were indexed; the combat and damage collectors read the
+     * ability itself, so the ability checks them as it is built.
      */
     private static void requireReadableMultiplicity(List<TriggerCondition> conditions,
                                                     TriggerMultiplicity multiplicity) {
@@ -144,6 +144,9 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             case ONE_OR_MORE -> {
                 if (!combat.isEmpty() && combat.stream().noneMatch(TriggeredAbility::readsOneOrMore)) {
                     throw new IllegalArgumentException("No combat collector reads \"one or more\" for " + conditions);
+                }
+                if (conditions.stream().anyMatch(condition -> condition.trigger() instanceof DamageTrigger)) {
+                    throw new IllegalArgumentException("No damage collector reads \"one or more\" for " + conditions);
                 }
             }
             case EACH -> {
@@ -258,8 +261,8 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
 
     /**
      * Whether one of this ability's trigger conditions is a trigger whose collectors read the ability itself
-     * ({@link Trigger#collectedAsAbility()}: a spell, land-play, activation or step trigger): then it has no legacy
-     * view.
+     * ({@link Trigger#collectedAsAbility()}: a spell, land-play, activation, step, combat or damage trigger): then it
+     * has no legacy view.
      */
     public boolean collectedAsAbility() {
         return conditions.stream().anyMatch(condition -> condition.trigger().collectedAsAbility());
@@ -287,10 +290,8 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * {@link #limitKey()}, the key the trigger pipeline marks; "do this only once each turn" one marked as the action
      * is taken (CR 603.2h); "this ability triggers only once" ({@code ONCE}) an {@link OnceOnlyTriggerEffect} inside
      * the intervening "if", as the cards wrote it. An ability with a spell, land-play, activation, "at the beginning of
-     * [step or phase]" or combat trigger ({@link #collectedAsAbility()}) has no legacy view: its collectors read it
-     * itself, and this throws. A damage trigger's filter is a {@link TriggeringPermanentConditionalEffect} outside the limit, and "once for each
-     * source" ({@link TriggerMultiplicity#EACH_SOURCE}) a {@link PerDamageSourceTriggerEffect} outside that, as the
-     * damage cards wrote them. "Once each turn for each creature"
+     * [step or phase]", combat or damage trigger ({@link #collectedAsAbility()}) has no legacy view: its collectors
+     * read it itself, and this throws. "Once each turn for each creature"
      * ({@link TriggerLimit#ONCE_EACH_TURN_FOR_EACH_CREATURE}) is an {@link OncePerTurnPerCreatureTriggerEffect} where
      * the other limits go. A counter trigger's filter ({@link CounterTrigger#qualifier()}) is a
      * {@link TriggeringPermanentConditionalEffect} outside the limit, and the counter triggers the collector of
@@ -343,14 +344,12 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         requireFinalChapterOptions();
         Condition interveningIf = options.interveningIf();
         TriggerLimit limit = options.limit();
-        DamageView damage = damageView();
         CounterView counter = counterView();
         TargetView target = targetView();
         TapView tap = tapView();
         LifeView life = lifeView();
         ObjectActionTrigger object = objectActionView();
         if (interveningIf == null && limit == TriggerLimit.NONE
-                && (damage == null || damage.plain())
                 && (counter == null || counter.plain()) && (target == null || target.plain())
                 && (tap == null || tap.plain()) && (life == null || life.plain()) && object == null) {
             return legacyBaseEffects();
@@ -374,9 +373,6 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             }
             if (life != null) {
                 effect = life.wrap(effect, limitKey());
-            }
-            if (damage != null) {
-                effect = damage.wrap(effect);
             }
             if (counter != null) {
                 effect = counter.wrap(effect);
@@ -495,52 +491,6 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         if (options.interveningIf() != null || options.multiplicity() != TriggerMultiplicity.EACH
                 || (options.limit() != TriggerLimit.NONE && options.limit() != TriggerLimit.ONCE_EACH_TURN)) {
             throw new IllegalStateException("The final-chapter collector doesn't read " + options + ": " + conditions);
-        }
-    }
-
-    /**
-     * What the legacy view adds for this ability's damage conditions, or {@code null} when it has none: their filter
-     * (the one {@link DamageTrigger#watchKey()} drops; the conditions must agree on it) and whether it triggers once for
-     * each source. The damage collectors have no "one or more" or "each blocker" form, and only they have "each
-     * source".
-     */
-    private DamageView damageView() {
-        List<DamageTrigger> damage = conditions.stream().map(TriggerCondition::trigger)
-                .filter(DamageTrigger.class::isInstance).map(DamageTrigger.class::cast).toList();
-        TriggerMultiplicity multiplicity = options.multiplicity();
-        if (damage.isEmpty()) {
-            if (multiplicity == TriggerMultiplicity.EACH_SOURCE) {
-                throw new IllegalStateException("\"Each source\" is a multiplicity of damage triggers: " + conditions);
-            }
-            return null;
-        }
-        List<PermanentPredicate> filters = damage.stream().map(DamageTrigger::filter).distinct().toList();
-        if (filters.size() > 1) {
-            throw new IllegalStateException("The damage conditions of one ability must have the same filter: "
-                    + conditions);
-        }
-        if (multiplicity == TriggerMultiplicity.ONE_OR_MORE || multiplicity == TriggerMultiplicity.EACH_BLOCKER) {
-            throw new IllegalStateException("The legacy view has no " + multiplicity + " form for " + conditions);
-        }
-        return new DamageView(filters.getFirst(), multiplicity == TriggerMultiplicity.EACH_SOURCE);
-    }
-
-    /**
-     * The legacy view of an ability's damage conditions, as {@link #damageView()} builds it.
-     *
-     * @param filter     the conditions' filter, or {@code null}
-     * @param eachSource each effect is wrapped in a {@link PerDamageSourceTriggerEffect}
-     */
-    private record DamageView(PermanentPredicate filter, boolean eachSource) {
-
-        /** Whether the legacy view adds nothing to the effects. */
-        boolean plain() {
-            return filter == null && !eachSource;
-        }
-
-        CardEffect wrap(CardEffect effect) {
-            CardEffect filtered = filter != null ? new TriggeringPermanentConditionalEffect(filter, effect) : effect;
-            return eachSource ? new PerDamageSourceTriggerEffect(filtered) : filtered;
         }
     }
 

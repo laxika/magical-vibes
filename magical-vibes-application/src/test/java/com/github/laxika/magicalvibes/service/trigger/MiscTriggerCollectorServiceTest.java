@@ -382,48 +382,6 @@ class MiscTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("once-per-turn noncombat damage trigger respects controller turn")
-    void noncombatDamageTokenTriggerIsOncePerTurnAndDuringControllerTurn() {
-        Permanent perm = createPermanent("Molten Lavamancer");
-        var token = new CreateTokenEffect(1, "Elemental", 1, 1,
-                com.github.laxika.magicalvibes.model.CardColor.RED,
-                List.of(com.github.laxika.magicalvibes.model.CardSubtype.ELEMENTAL),
-                java.util.Set.of(), java.util.Set.of());
-        var effect = new OncePerTurnTriggerEffect(new ConditionalEffect(
-                new ControllerTurn(), token));
-        var ctx = new TriggerContext.NoncombatDamageToOpponent(player2Id, player1Id, 1);
-        when(conditionEvaluationService.isMet(eq(gd), eq(new ControllerTurn()), any(ConditionContext.class)))
-                .thenReturn(true);
-
-        assertThat(registry.dispatch(match(perm, player1Id, effect),
-                DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, effect, ctx)).isTrue();
-        assertThat(registry.dispatch(match(perm, player1Id, effect),
-                DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, effect, ctx)).isFalse();
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(token);
-    }
-
-    @Test
-    @DisplayName("noncombat damage token trigger does not fire outside controller turn")
-    void noncombatDamageTokenTriggerDoesNotFireOutsideControllerTurn() {
-        Permanent perm = createPermanent("Molten Lavamancer");
-        var token = new CreateTokenEffect(1, "Elemental", 1, 1,
-                com.github.laxika.magicalvibes.model.CardColor.RED,
-                List.of(com.github.laxika.magicalvibes.model.CardSubtype.ELEMENTAL),
-                java.util.Set.of(), java.util.Set.of());
-        var effect = new OncePerTurnTriggerEffect(new ConditionalEffect(
-                new ControllerTurn(), token));
-        var ctx = new TriggerContext.NoncombatDamageToOpponent(player2Id, player1Id, 1);
-        gd.activePlayerId = player2Id;
-        when(conditionEvaluationService.isMet(eq(gd), eq(new ControllerTurn()), any(ConditionContext.class)))
-                .thenReturn(false);
-
-        assertThat(registry.dispatch(match(perm, player1Id, effect),
-                DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, effect, ctx)).isFalse();
-        assertThat(gd.stack).isEmpty();
-    }
-
-    @Test
     @DisplayName("crewed trigger queues a targeted effect for target selection")
     void crewedTargetedTriggerQueuesTargetSelection() {
         Card sourceCard = createCard("Mobilizer Mech");

@@ -21,7 +21,7 @@ import java.util.Objects;
  *                 ({@link DamageEvent#DEALS_DAMAGE} with {@link ObjectRelation#THIS}: "deals damage to one or more
  *                 creatures") it is the damaged permanent; for the other "deals damage" events it is the permanent
  *                 that deals the damage (each of the creatures for "one or more creatures you control deal damage").
- *                 The damage collectors read it from the legacy view ({@code TriggeredAbility.legacyEffects()}), so
+ *                 The damage collectors read it from the ability, through {@code DamageAbilityReader}, so
  *                 {@link #watchKey()} drops it
  */
 public record DamageTrigger(DamageEvent event, ObjectRelation relation, PermanentPredicate filter) implements Trigger {
@@ -46,6 +46,15 @@ public record DamageTrigger(DamageEvent event, ObjectRelation relation, Permanen
             throw new IllegalStateException("This damage trigger already has a filter: " + this);
         }
         return new DamageTrigger(event, relation, filter);
+    }
+
+    /**
+     * The damage collectors read the ability itself (its filter, limit and "once for each source"), through
+     * {@code DamageAbilityReader}: a damage ability has no legacy view (effect-slot-refactor.md step 14, run 16g).
+     */
+    @Override
+    public boolean collectedAsAbility() {
+        return true;
     }
 
     /** The trigger without its filter, so the {@code DamageWatch} of the unfiltered trigger finds the ability. */

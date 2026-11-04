@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.service.trigger.CombatAbilityReader;
+import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -288,7 +289,7 @@ public class CombatAttackService {
      * multiplicity ({@link CombatAbilityReader#effects(List, Trigger)}).
      */
     private static List<CardEffect> printedCombatEffects(Card card, CombatWatch watch) {
-        return CombatAbilityReader.effects(CombatAbilityReader.printed(card, watch), watch.trigger());
+        return CombatAbilityReader.effects(WatchedAbilities.printed(card, watch), watch.trigger());
     }
 
     private record AttackTriggerSource(Permanent permanent, CombatWatch watch,
@@ -1156,7 +1157,7 @@ public class CombatAttackService {
                     && !gameQueryService.hasReconfigure(gameData, attacker);
             Trigger onAttack = CombatWatch.ON_ATTACK.trigger();
             List<CombatAbilityReader.CombatEffect> printedAttack = CombatAbilityReader.read(
-                    CombatAbilityReader.printed(attacker.getCard(), CombatWatch.ON_ATTACK), onAttack);
+                    WatchedAbilities.printed(attacker.getCard(), CombatWatch.ON_ATTACK), onAttack);
             List<CombatAbilityReader.CombatEffect> nativeAttack = attacker.isFaceDown()
                     || gameQueryService.hasLostPrintedAbilities(gameData, attacker)
                     || equipmentAttackTrigger
@@ -1165,9 +1166,9 @@ public class CombatAttackService {
             List<CombatAbilityReader.CombatEffect> temporaryAttack = new ArrayList<>();
             if (!gameQueryService.hasLostAllAbilities(gameData, attacker)) {
                 temporaryAttack.addAll(CombatAbilityReader.read(
-                        CombatAbilityReader.temporary(attacker, onAttack), onAttack));
+                        WatchedAbilities.temporary(attacker, onAttack), onAttack));
                 temporaryAttack.addAll(CombatAbilityReader.read(
-                        CombatAbilityReader.persistent(attacker, onAttack), onAttack));
+                        WatchedAbilities.persistent(attacker, onAttack), onAttack));
             }
             // Continuously granted ON_ATTACK abilities (Thorncaster Sliver giving every Sliver
             // "Whenever this creature attacks, it deals 1 damage to any target").
@@ -1906,7 +1907,7 @@ public class CombatAttackService {
         for (Permanent perm : battlefield) {
             List<CombatAbilityReader.CombatEffect> combinedEffects = new ArrayList<>();
             for (var registration : CombatAbilityReader.read(
-                    CombatAbilityReader.printed(perm.getCard(), CombatWatch.ON_ALLY_CREATURES_ATTACK), youAttack)) {
+                    WatchedAbilities.printed(perm.getCard(), CombatWatch.ON_ALLY_CREATURES_ATTACK), youAttack)) {
                 if (registration.effect() instanceof com.github.laxika.magicalvibes.model.effect.BoostCreaturesInAttackingBandsEffect) {
                     Map<UUID, List<UUID>> declaredBands = new java.util.LinkedHashMap<>();
                     for (int attackerIndex : attackerIndices) {
@@ -2331,7 +2332,7 @@ public class CombatAttackService {
             for (Permanent perm : new ArrayList<>(battlefield)) {
                 Trigger attackPlayer = attackPlayerSlot.trigger();
                 List<CardEffect> effects = new ArrayList<>(CombatAbilityReader.effects(
-                        CombatAbilityReader.printed(perm.getCard(), attackPlayerSlot), attackPlayer));
+                        WatchedAbilities.printed(perm.getCard(), attackPlayerSlot), attackPlayer));
                 effects.addAll(CombatAbilityReader.effects(grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, perm, attackPlayer), attackPlayer));
                 if (effects.isEmpty()) continue;
 
@@ -2409,16 +2410,16 @@ public class CombatAttackService {
             for (Permanent perm : battlefield) {
                 List<CombatAbilityReader.CombatEffect> perCreatureAttackEffects = new ArrayList<>();
                 List<CombatAbilityReader.CombatEffect> printedAttackEffects = CombatAbilityReader.read(
-                        CombatAbilityReader.printed(LayerSystemService.currentCard(gameData, perm),
+                        WatchedAbilities.printed(LayerSystemService.currentCard(gameData, perm),
                                 CombatWatch.ON_ALLY_CREATURE_ATTACKS), allyAttacks);
                 if (!printedAttackEffects.isEmpty() && !perm.isFaceDown()
                         && !gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
                     perCreatureAttackEffects.addAll(printedAttackEffects);
                 }
                 List<CombatAbilityReader.CombatEffect> temporaryAttackEffects = CombatAbilityReader.read(
-                        CombatAbilityReader.temporary(perm, allyAttacks), allyAttacks);
+                        WatchedAbilities.temporary(perm, allyAttacks), allyAttacks);
                 List<CombatAbilityReader.CombatEffect> persistentAttackEffects = CombatAbilityReader.read(
-                        CombatAbilityReader.persistent(perm, allyAttacks), allyAttacks);
+                        WatchedAbilities.persistent(perm, allyAttacks), allyAttacks);
                 if ((!temporaryAttackEffects.isEmpty() || !persistentAttackEffects.isEmpty())
                         && !gameQueryService.hasLostAllAbilities(gameData, perm)) {
                     perCreatureAttackEffects.addAll(temporaryAttackEffects);
@@ -2572,7 +2573,7 @@ public class CombatAttackService {
                         List<CardEffect> bundledEffects = new ArrayList<>(mandatoryEffects);
                         List<List<CardEffect>> abilities = new ArrayList<>();
                         for (var registration : CombatAbilityReader.read(
-                                CombatAbilityReader.printed(perm.getCard(), CombatWatch.ON_ALLY_CREATURE_ATTACKS),
+                                WatchedAbilities.printed(perm.getCard(), CombatWatch.ON_ALLY_CREATURE_ATTACKS),
                                 allyAttacks)) {
                             if (!registration.independent()) {
                                 continue;
@@ -2708,7 +2709,7 @@ public class CombatAttackService {
             if (graveyard == null) continue;
             boolean attackingPlayersGraveyard = graveyardOwnerId.equals(playerId);
             for (Card card : new ArrayList<>(graveyard)) {
-                List<CardEffect> gyAttackEffects = CombatAbilityReader.effects(CombatAbilityReader.withWatchedTrigger(
+                List<CardEffect> gyAttackEffects = CombatAbilityReader.effects(WatchedAbilities.withWatchedTrigger(
                         gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData, card),
                         CombatWatch.GRAVEYARD_ON_ALLY_CREATURES_ATTACK.trigger(), Zone.GRAVEYARD),
                         CombatWatch.GRAVEYARD_ON_ALLY_CREATURES_ATTACK.trigger());
@@ -2806,7 +2807,7 @@ public class CombatAttackService {
                     continue;
                 }
                 List<CardEffect> exileAttackEffects = CombatAbilityReader.effects(
-                        CombatAbilityReader.printed(exiled.card(), CombatWatch.EXILE_ON_ALLY_CREATURES_ATTACK),
+                        WatchedAbilities.printed(exiled.card(), CombatWatch.EXILE_ON_ALLY_CREATURES_ATTACK),
                         CombatWatch.EXILE_ON_ALLY_CREATURES_ATTACK.trigger());
                 if (exileAttackEffects.isEmpty()) {
                     continue;
@@ -2900,7 +2901,7 @@ public class CombatAttackService {
                             CombatWatch.ON_CREATURE_ATTACKS_YOU_DIRECTLY,
                             CombatWatch.ON_CREATURE_ATTACKS_DEFENDING_PLAYER)) {
                         for (var registration : CombatAbilityReader.read(
-                                CombatAbilityReader.printed(perm.getCard(), triggerSlot), triggerSlot.trigger())) {
+                                WatchedAbilities.printed(perm.getCard(), triggerSlot), triggerSlot.trigger())) {
                             if (registration.independent()
                                     && bundledEffects.remove(registration.effect())) {
                                 abilities.add(List.of(registration.effect()));
@@ -3108,7 +3109,7 @@ public class CombatAttackService {
                 UUID permController = bf.getKey();
                 for (Permanent perm : new ArrayList<>(bf.getValue())) {
                     List<CombatAbilityReader.CombatEffect> anyAttackEffects = CombatAbilityReader.read(
-                            CombatAbilityReader.printed(perm.getCard(), CombatWatch.ON_ANY_CREATURE_ATTACKS),
+                            WatchedAbilities.printed(perm.getCard(), CombatWatch.ON_ANY_CREATURE_ATTACKS),
                             CombatWatch.ON_ANY_CREATURE_ATTACKS.trigger());
                     if (anyAttackEffects.isEmpty()) continue;
 
@@ -3348,7 +3349,7 @@ public class CombatAttackService {
                     List<List<CardEffect>> triggerEffectGroups = new ArrayList<>();
                     List<CardEffect> bundledEffects = new ArrayList<>(playerAttackEffects);
                     for (var registration : CombatAbilityReader.read(
-                            CombatAbilityReader.printed(perm.getCard(), CombatWatch.ON_ANY_PLAYER_ATTACKS),
+                            WatchedAbilities.printed(perm.getCard(), CombatWatch.ON_ANY_PLAYER_ATTACKS),
                             CombatWatch.ON_ANY_PLAYER_ATTACKS.trigger())) {
                         if (registration.independent()) {
                             CardEffect registeredEffect = registration.effect();

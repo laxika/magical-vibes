@@ -40,6 +40,6 @@ class CombatWatchTest {
     }
 
     private static List<CardEffect> effects(Card card, CombatWatch watch) {
-        return CombatAbilityReader.effects(CombatAbilityReader.printed(card, watch), watch.trigger());
+        return CombatAbilityReader.effects(WatchedAbilities.printed(card, watch), watch.trigger());
     }
 }

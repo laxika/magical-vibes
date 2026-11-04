@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; runs 16g onward left: the rest of the legacy view's retirement, family by family, with the may-unwrapping, `TriggerMode`, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; runs 16h onward left: the rest of the legacy view's retirement, family by family, with the may-unwrapping, `TriggerMode`, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -608,7 +608,8 @@ no other family still uses. The order:
 | 16d | Family 2's rest: the unfiltered spell and land-play abilities with options, the "when you cast this spell", "when this spell is countered", suspended-card and mana-ability-resolves readers, and the wrappers family 2 cards still author; no family 2 ability has a legacy view |
 | 16e | Step 13's family 1 (steps and phases): every step reader reads the abilities and judges their options through `StepAbilityReader`; no step ability has a legacy view |
 | 16f | Step 13's family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader` (filter, limit and multiplicity from the ability); no combat ability has a legacy view, and `TriggerMode.PER_BLOCKER` / `ONCE_PER_BLOCK` and `BatchedCombatDamageToYouTriggerEffect` are gone |
-| 16g onward | The rest of the legacy view's retirement, family by family: each family's collectors read the ability's options, filters and grouping (no `TriggerMode`), then the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
+| 16g | Step 13's family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader` (filter, limit and "each source" from the ability); no damage ability has a legacy view, and `PerDamageSourceTriggerEffect` is gone |
+| 16h onward | The rest of the legacy view's retirement, family by family: each family's collectors read the ability's options, filters and grouping (no `TriggerMode`), then the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
 
 Mark the step `done` only after the last run of 16.
 
@@ -7675,6 +7676,127 @@ where the legacy view rejected it as the card was indexed.
   `SimulationCopyCompletenessTest` 1).
 - AI: the whole module (1,620 tests), with the same 10 failures as before (two each in the four AI decision engine
   tests and `TargetPolarityGuardTest`).
+- The full suite was not run here.
+
+#### Run 16g: damage reads the ability
+
+Step 13's family 4, next in 16a's order after combat (the plan left 16g unscoped; the run took the next family, as
+16f's findings listed them): every "whenever [a source] deals damage / [a permanent or player] is dealt damage /
+damage to you is prevented" ability (a `DamageTrigger`, collected by `TriggerCollectionService`, `CombatDamageService`,
+`DamageSupport` and the damage handlers of `DamageTriggerCollectorService` and `MiscTriggerCollectorService`) has no
+legacy view any more, and every reader of one reads the ability.
+
+**What the scan found.** A temporary reflection scan of every card class, its own abilities, the abilities its effects
+grant and the cards it makes (279 damage abilities in 288 card classes, 17 only granted): 11 intervening "if"s (Aegar,
+Angel of Deliverance, Crude Abattoir, Farsight Mask, Fear of Burning Alive, Innocent Bystander, Kiyomaro, Molten
+Lavamancer, Pain Magnification, Phyrexian Totem, Spinneret and Spiderling), no event condition, 14 filters (the Pirate
+and Hero "one or more" abilities of Breeches, Malcolm, Francisco and The Thing; Briarbridge Patrol's "to one or more
+creatures"; Donna Noble and the two Wrathful cards' "a permanent you control is dealt damage"; Hooded Blightfang and
+Vraska, Swarm's Eminence's deathtouch dealers; Rite of Passage, Sonic and The Sensational She-Hulk's "a creature you
+control is dealt damage"; Ohabi Caleria's Archers), 5 limits (Hercules and Stick "triggers only once each turn", Molten
+Lavamancer "triggers only once each turn" with its intervening "if", She-Hulk "do this only once each turn", Stensia
+"once each turn for each creature" over three conditions), and one "each source" (Nested Ghoul). No granted damage
+ability has an option or a filter; no ability mixes a damage trigger with another family's; no registration has a
+`TriggerMode`. Off the battlefield: three in a graveyard (Asgardian Inspiration, Bloodfeather Phoenix, Chandra's
+Phoenix) and one plane (Stensia). The only authored wrapper is Zagras's `TriggeringPermanentConditionalEffect
+.combatDamageOnly` (run 8 kept it).
+
+**The model.** `DamageTrigger.collectedAsAbility()` is true: `TriggeredAbility.legacyEffects()`, the `getLegacy…`
+getters and `DamageWatch.effectsOf` / `registrationsOf` throw for a damage ability, and the card's slot index leaves
+damage abilities out of its legacy maps. The legacy view's damage branch (`DamageView`) is gone, with
+`PerDamageSourceTriggerEffect` (only the legacy view built it). `TriggeredAbility` rejects "one or more" on a damage
+condition as it is built (no damage collector reads it; the "one or more" damage events are events of their own); damage
+conditions of one ability may now have different filters, since each watch reads its own condition's.
+
+**The engine.**
+
+- New `WatchedAbilities` (`service/trigger`, static): the generic finders `CombatAbilityReader` had (`printed` by watch
+  key and zone, `temporary`, `persistent`, `withWatchedTrigger`, `rawEffects`), moved so both family readers share them
+  (every caller rewritten by a one-off substitution).
+- New `DamageAbilityReader` (`service/trigger`, static), `CombatAbilityReader`'s shape: each effect as a `DamageEffect`
+  with the intervening "if" around it (a `ConditionalEffect`, CR 603.4) and the event condition inside that (CR 603.2),
+  plus the ability, the watched condition's filter, the limit (`limitReached` / `markLimit` by `limitKey()` on the
+  source; for `ONCE_EACH_TURN_FOR_EACH_CREATURE` by the source and the creature, in
+  `GameData.oncePerCreatureTriggersFiredThisTurn`) and "each source". The strict `effects` / `printedEffects` /
+  `temporaryEffects` / `persistentEffects` / `registrations` serve the bodies whose abilities have no filter, limit or
+  multiplicity and throw on one; the `filterMatches` overloads judge a filter.
+- Every body judges the filter itself, against the permanent and in the filter context the
+  `TriggeringPermanentConditionalEffect` handler judged it in (the watcher as the ability's source): the source for
+  "a source you control deals damage to a player", the dealer for "to a planeswalker" and "to a creature", each dealer
+  for "one or more creatures you control" (creatures only unless filtered, for opponents), the damaged permanent for
+  "a permanent you control / a creature is dealt damage" (and for registered abilities), the damaged permanents' last
+  snapshots for "this deals damage to one or more creatures". The handlers keyed on the wrapper were re-keyed to the
+  effect they enqueue (`CardEffect` defaults for the "source to a player", "one or more" and "to a planeswalker"
+  watches, `DealDamageToPlayersEffect` for Donna Noble, `MayPayManaEffect` for Ohabi Caleria) and lost their filter
+  checks; Zagras's authored wrapper keeps its handler.
+- The limits are read from the ability where the bodies unwrapped `OncePerTurnTriggerEffect`,
+  `OncePerTurnPerCreatureTriggerEffect` and `PerDamageSourceTriggerEffect`: Stick's and Molten Lavamancer's
+  `TriggerMatchContext` carries "triggers only once each turn" (as the wrapper did) and She-Hulk's "do this only once
+  each turn" (the handler marks the stack entry, or wraps the target choice's effect as before); Nested Ghoul's "each
+  source" splits the combat dealt-damage triggers per source; Stensia's limit is marked for the plane and the creature.
+- The self-deals-damage snapshots (`PendingSourceDamage.getSelfDealsDamageAbilities()`,
+  `CombatDamageState.selfDealsDamageAbilities`, copied for simulations as before) hold abilities instead of effects, so
+  Briarbridge Patrol's filter travels with them; the "one or more creatures deal damage to an opponent" snapshot
+  (`AllyDamageTriggerSnapshot`) likewise. `dispatchWatch` has a damage branch; the graveyard damage readers read
+  `getEffectiveGraveyardTriggeredAbilities`.
+
+**Behaviour changes.**
+
+- Molten Lavamancer: its intervening "if" ("if it's your turn") stays on the stack entry and is checked again as the
+  ability resolves (CR 603.4), where the once-per-turn handler stripped it. It can't become false while the ability is
+  on the stack, so no test can observe it.
+- Nothing else is known to change: each body judges the filter, limit and "each source" in the context and at the point
+  the handlers judged the wrappers.
+
+**Kept, with their reason.**
+
+- The intervening "if" and the event condition still reach the handlers as `ConditionalEffect`s (several judge them
+  with the damage amount); step 15 retires that routing.
+- Hercules's "triggers only once each turn" doesn't cap copies from effects that make abilities trigger additional times
+  on the noncombat path, as before: the old body matched the unwrapped effect. Making it consistent with Stick's is a
+  rules question for a run with a test.
+- Zagras's `TriggeringPermanentConditionalEffect.combatDamageOnly` (run 8's reason) and the effect-text
+  `ConditionalEffect.unless`s.
+- The "mixed readings" step 13 run 4 listed (`creatureYouControlDealsDamageToCreature()` effects that say whether the
+  dealer is this creature, equipped creature or any creature, …): event-reading effects for step 15.
+
+**For 16h onward.**
+
+- The other families (counters, targets, library, tap, life, sagas, misc, zone changes), as 16a planned; each can reuse
+  `WatchedAbilities` and a reader of `DamageAbilityReader`'s shape.
+- Combat's grouping by ability and the "when you cast this spell" merges (16d, 16f).
+
+**Tests changed.**
+
+- `DamageTriggerTest`: the legacy-view tests became reader tests: no legacy view (getters and the watch throw), the
+  reader's filter, limit and intervening "if", "triggers only once each turn" marked by the ability, "each source" and
+  "each creature", "one or more" rejected as the ability is built, the strict reader, each condition read with its own
+  filter, granted abilities.
+- `DamageWatchTest`: reads through the reader. `TriggerOptionsTest`: its legacy-view example uses a death trigger.
+- `DamageTriggerCollectorServiceTest`: the handlers that judged a wrapper's filter or limit get the plain effect (the
+  collector judges those now): the two "skips a non-matching permanent / creature" tests are gone (the filter isn't the
+  handler's; the card tests of Wrathful Raptors, Rite of Passage and the rest cover it), She-Hulk's test asserts the
+  stack entry's "mark on acceptance", and two new Molten Lavamancer tests replace the two in
+  `MiscTriggerCollectorServiceTest` (its once-per-turn handler is gone).
+- `CombatTriggerTest`, `CombatWatchTest`: the finders are `WatchedAbilities`'.
+
+**Test runs.**
+
+- Card: the test class of every card with a damage ability (by the scan, back faces and made cards included), and every
+  card test that constructs one (446 classes, 3,883 tests): all passing.
+- Application: the `service.trigger` and `model.trigger` packages and the combat-damage, combat, turn-cleanup,
+  planechase, freeze, simulation-copy, triggered-ability, granted-ability, pipeline, card-abilities and legacy-binding
+  classes (975 tests): 74 failures after the fixes, all failing at HEAD: `CombatDamageServiceTest` 40,
+  `TurnCleanupServiceTest` 10, `DeathTriggerCollectorServiceTest` 6, `CombatServiceTest` 5,
+  `DamageTriggerCollectorServiceTest` 5 (the same names fail at `2f2aa8b384`, checked in a worktree; HEAD's sixth,
+  She-Hulk's once-per-turn wrapper test, was rewritten and passes), `SpellCastTriggerCollectorServiceTest` 2,
+  `LandTapTriggerCollectorServiceTest` 2, `PlanechaseServiceTest` 2, `SimulationCopyCompletenessTest` 1, and
+  `MiscTriggerCollectorServiceTest`'s none. The first run had two more of this run's own: She-Hulk's rewritten test
+  asserted a stack entry where a targeted may opens a target choice, and Zagras's handler judged "combat damage only"
+  before the creature check, leaving a stub unused; both fixed.
+- Engine: the whole module, with one failure, `GameMutationBoundaryRatchetTest`
+  (`GameService.completeTurnFaceUpAfterCostSacrificeAnswers`), which fails at `2f2aa8b384` too (checked in a worktree).
+- AI: the whole module (1,620 tests), with the same 10 failures as before.
 - The full suite was not run here.
 
 ## Prompt

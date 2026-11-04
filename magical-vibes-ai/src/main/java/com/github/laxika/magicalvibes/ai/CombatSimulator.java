@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.service.combat.CombatHelper;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
-import com.github.laxika.magicalvibes.service.trigger.CombatAbilityReader;
+import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import com.github.laxika.magicalvibes.service.trigger.CombatWatch;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -219,25 +219,25 @@ public class CombatSimulator {
 
     private boolean hasPerAttackerAllyTrigger(GameData gameData, UUID playerId, List<Permanent> battlefield) {
         for (Permanent perm : battlefield) {
-            if (!CombatAbilityReader.printed(perm.getCard(), CombatWatch.ON_ALLY_CREATURE_ATTACKS).isEmpty()) return true;
+            if (!WatchedAbilities.printed(perm.getCard(), CombatWatch.ON_ALLY_CREATURE_ATTACKS).isEmpty()) return true;
         }
         for (var card : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
-            if (!CombatAbilityReader.printed(card, CombatWatch.GRAVEYARD_ON_ALLY_CREATURES_ATTACK).isEmpty()) return true;
+            if (!WatchedAbilities.printed(card, CombatWatch.GRAVEYARD_ON_ALLY_CREATURES_ATTACK).isEmpty()) return true;
         }
         return false;
     }
 
     private boolean hasOwnAttackTrigger(GameData gameData, Permanent perm) {
-        if (!CombatAbilityReader.printed(perm.getCard(), CombatWatch.ON_ATTACK).isEmpty()
-                || !CombatAbilityReader.printed(perm.getCard(), CombatWatch.ON_ATTACKS_UNBLOCKED).isEmpty()
-                || !CombatAbilityReader.temporary(perm, CombatWatch.ON_ATTACK.trigger()).isEmpty()) {
+        if (!WatchedAbilities.printed(perm.getCard(), CombatWatch.ON_ATTACK).isEmpty()
+                || !WatchedAbilities.printed(perm.getCard(), CombatWatch.ON_ATTACKS_UNBLOCKED).isEmpty()
+                || !WatchedAbilities.temporary(perm, CombatWatch.ON_ATTACK.trigger()).isEmpty()) {
             return true;
         }
         // Aura-granted attack triggers (e.g. an aura with an ON_ATTACK registration)
         boolean[] found = {false};
         gameData.forEachPermanent((ownerId, p) -> {
             if (p.isAttached() && p.getAttachedTo().equals(perm.getId())
-                    && !CombatAbilityReader.printed(p.getCard(), CombatWatch.ON_ATTACK).isEmpty()) {
+                    && !WatchedAbilities.printed(p.getCard(), CombatWatch.ON_ATTACK).isEmpty()) {
                 found[0] = true;
             }
         });
