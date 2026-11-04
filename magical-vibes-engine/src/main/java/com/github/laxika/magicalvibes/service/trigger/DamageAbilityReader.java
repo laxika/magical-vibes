@@ -21,9 +21,7 @@ import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityS
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 /**
@@ -108,11 +106,8 @@ public final class DamageAbilityReader {
          * the creature for the source, every other limit as {@link #limitReached(GameData, UUID)} says.
          */
         public boolean limitReached(GameData gameData, UUID sourceId, UUID creatureId) {
-            if (limit() == TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE) {
-                return gameData.oncePerCreatureTriggersFiredThisTurn.getOrDefault(sourceId, Set.of())
-                        .contains(creatureId);
-            }
-            return limitReached(gameData, sourceId);
+            return TriggeredAbilityStackService.limitReached(gameData, limit(), sourceId, ability.limitKey(),
+                    creatureId);
         }
 
         /** Marks the ability's limit as used by {@code sourceId}; "do this only once each turn" marks on acceptance. */
@@ -126,12 +121,7 @@ public final class DamageAbilityReader {
          * {@link #markLimit(GameData, UUID)} says.
          */
         public void markLimit(GameData gameData, UUID sourceId, UUID creatureId) {
-            if (limit() == TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE) {
-                gameData.oncePerCreatureTriggersFiredThisTurn
-                        .computeIfAbsent(sourceId, ignored -> ConcurrentHashMap.newKeySet()).add(creatureId);
-                return;
-            }
-            markLimit(gameData, sourceId);
+            TriggeredAbilityStackService.markLimit(gameData, limit(), sourceId, ability.limitKey(), creatureId);
         }
     }
 

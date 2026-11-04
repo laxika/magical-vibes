@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TrainEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
+import com.github.laxika.magicalvibes.service.trigger.CounterAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.CounterWatch;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +47,7 @@ public class TrainEffectHandler implements NormalEffectHandlerBean {
         }
 
         Card card = source.getCard();
-        List<CardEffect> trainTriggers = CounterWatch.ON_SELF_TRAINS.effectsOf(card);
+        List<CardEffect> trainTriggers = CounterAbilityReader.printedEffects(card, CounterWatch.ON_SELF_TRAINS);
         if (trainTriggers.isEmpty()) {
             return;
         }

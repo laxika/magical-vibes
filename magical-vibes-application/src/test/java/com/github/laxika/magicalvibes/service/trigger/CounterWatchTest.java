@@ -35,10 +35,11 @@ class CounterWatchTest {
         card.addTrigger(new TriggerCondition(Triggers.youProliferate(), AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT, fromGraveyard);
 
-        assertThat(CounterWatch.ON_CONTROLLER_PROLIFERATES.effectsOf(card)).containsExactly(fromBattlefield);
-        assertThat(CounterWatch.GRAVEYARD_ON_CONTROLLER_PROLIFERATES.effectsOf(card)).containsExactly(fromGraveyard);
+        assertThat(CounterAbilityReader.printedEffects(card, CounterWatch.ON_CONTROLLER_PROLIFERATES)).containsExactly(fromBattlefield);
+        assertThat(CounterAbilityReader.printedEffects(card,
+                CounterWatch.GRAVEYARD_ON_CONTROLLER_PROLIFERATES)).containsExactly(fromGraveyard);
         assertThat(CounterWatch.GRAVEYARD_ON_CONTROLLER_PROLIFERATES.zone()).isEqualTo(Zone.GRAVEYARD);
-        assertThat(CounterWatch.ON_CONTROLLER_GETS_ENERGY.effectsOf(card)).isEmpty();
+        assertThat(CounterAbilityReader.printedEffects(card, CounterWatch.ON_CONTROLLER_GETS_ENERGY)).isEmpty();
     }
 
     @Test
@@ -48,7 +49,8 @@ class CounterWatchTest {
         card.addTrigger(Triggers.timeCounterRemovedFromThisInExile(), draw);
 
         assertThat(CounterWatch.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE.zone()).isEqualTo(Zone.EXILE);
-        assertThat(CounterWatch.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE.effectsOf(card)).containsExactly(draw);
-        assertThat(CounterWatch.ON_SELF_TIME_COUNTERS_REMOVED.effectsOf(card)).isEmpty();
+        assertThat(CounterAbilityReader.printedEffects(card,
+                CounterWatch.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE)).containsExactly(draw);
+        assertThat(CounterAbilityReader.printedEffects(card, CounterWatch.ON_SELF_TIME_COUNTERS_REMOVED)).isEmpty();
     }
 }

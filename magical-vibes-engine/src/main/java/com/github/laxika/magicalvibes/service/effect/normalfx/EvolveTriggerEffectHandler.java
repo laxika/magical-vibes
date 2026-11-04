@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.trigger.CounterAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.CounterWatch;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -104,7 +105,8 @@ public class EvolveTriggerEffectHandler implements NormalEffectHandlerBean {
      * The keyword-based evolve ability triggers only when its counter is actually placed.
      */
     private void fireEvolvesTriggers(GameData gameData, Permanent source) {
-        List<CardEffect> effects = CounterWatch.ON_SELF_EVOLVES.effectsOf(source.getCard());
+        List<CardEffect> effects = CounterAbilityReader.printedEffects(source.getCard(),
+                CounterWatch.ON_SELF_EVOLVES);
         if (effects.isEmpty()) {
             return;
         }

@@ -1,6 +1,6 @@
 # Trigger Slot Targeting Reference
 
-`Triggers.plusOneCounterPutOnThis()` ("whenever a +1/+1 counter is put on this") triggers for each individual counter, such as Bloodcrazed Hoplite; don't author `TriggerMode.PER_COUNTER`. The counter-placement collector queues a separate ability and mandatory target choice for each counter actually placed; all targets are chosen before those abilities resolve. The default mode still fires once per placement event.
+`Triggers.plusOneCounterPutOnThis()` ("whenever a +1/+1 counter is put on this") triggers for each individual counter, such as Bloodcrazed Hoplite; the counter collector reads that from the trigger. The counter-placement collector queues a separate ability and mandatory target choice for each counter actually placed; all targets are chosen before those abilities resolve. `Triggers.plusOneCountersPutOnThis()` ("one or more") still fires once per placement event.
 
 `Triggers.enters(Triggers.TOKEN, ObjectRelation.YOU_CONTROL)` uses `TriggerMode.PER_TOKEN` for abilities that trigger for each token entering, such as Junk Winder's "whenever a token you control enters". The token-enter collector queues one dispatch per entering token, each seeing only that token. The default mode still fires once per token-creation event.
 

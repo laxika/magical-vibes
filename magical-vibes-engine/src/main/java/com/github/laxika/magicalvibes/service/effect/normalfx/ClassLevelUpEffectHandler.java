@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.trigger.CounterAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.CounterWatch;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,8 +40,8 @@ public class ClassLevelUpEffectHandler implements NormalEffectHandlerBean {
 
         source.setClassLevel(levelUp.level());
         List<CardEffect> levelEffects = levelUp.gainedEffects().isEmpty()
-                ? (levelUp.level() == 2 ? CounterWatch.ON_SELF_REACHES_LEVEL_TWO
-                : CounterWatch.ON_SELF_REACHES_LEVEL_THREE).effectsOf(source.getCard())
+                ? CounterAbilityReader.printedEffects(source.getCard(), levelUp.level() == 2
+                        ? CounterWatch.ON_SELF_REACHES_LEVEL_TWO : CounterWatch.ON_SELF_REACHES_LEVEL_THREE)
                 : levelUp.gainedEffects();
         if (levelEffects.isEmpty()) {
             return;

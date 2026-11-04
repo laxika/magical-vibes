@@ -342,6 +342,34 @@ public class TriggeredAbilityStackService {
         }
     }
 
+    /**
+     * Whether {@code limit} stops the ability keyed {@code key} of the source {@code sourceId} from triggering again for
+     * an event that names the creature {@code creatureId}: "once each turn for each creature" as
+     * {@link #markLimit(GameData, TriggerLimit, UUID, String, UUID)} marked the creature for the source, every other
+     * limit as {@link #limitReached(GameData, TriggerLimit, UUID, String)} says.
+     */
+    public static boolean limitReached(GameData gameData, TriggerLimit limit, UUID sourceId, String key,
+                                       UUID creatureId) {
+        if (limit == TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE) {
+            return gameData.oncePerCreatureTriggersFiredThisTurn.getOrDefault(sourceId, Set.of()).contains(creatureId);
+        }
+        return limitReached(gameData, limit, sourceId, key);
+    }
+
+    /**
+     * Marks the ability keyed {@code key} of the source {@code sourceId} as having triggered, for {@code limit}, for an
+     * event that names the creature {@code creatureId}: "once each turn for each creature" marks the creature for the
+     * source, every other limit as {@link #markLimit(GameData, TriggerLimit, UUID, String)} says.
+     */
+    public static void markLimit(GameData gameData, TriggerLimit limit, UUID sourceId, String key, UUID creatureId) {
+        if (limit == TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE) {
+            gameData.oncePerCreatureTriggersFiredThisTurn
+                    .computeIfAbsent(sourceId, ignored -> ConcurrentHashMap.newKeySet()).add(creatureId);
+            return;
+        }
+        markLimit(gameData, limit, sourceId, key);
+    }
+
     private boolean targets(List<CardEffect> effects) {
         for (CardEffect effect : effects) {
             if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)

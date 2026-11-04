@@ -14,16 +14,13 @@ import java.util.List;
  * (effect-slot-refactor.md step 13, family 5). Each constant is named after the slot whose collector it stands for and
  * names the trigger its cards were converted to and the zone the collector reads them in. The collectors in
  * {@code TriggerCollectionService}, {@code PermanentCounterSupport} and the counter effect handlers still decide when
- * the ability triggers, how its effects group into stack objects and which wrappers filter it, and its
- * {@link CollectsCounterTrigger} handlers bind the event data, as the slot's did, until steps 14 and 15 of the refactor
- * replace them with trigger options and effects that read the event.
+ * the ability triggers and how its effects group into stack objects, and its {@link CollectsCounterTrigger} handlers
+ * bind the event data, as the slot's did, until step 15 of the refactor replaces them with effects that read the event.
  * <p>
- * The collectors read the abilities in the form the cards wrote them before step 14
- * ({@link Card#getLegacyTriggerEffects(Trigger, Zone)}): an intervening "if" and a limit wrapped around each effect, a
- * counter trigger's filter as the {@code TriggeringPermanentConditionalEffect} they judge, "you put counters" and "you
- * remove a time counter" as the {@code YouPutCounterOnControlledCreatureTriggerEffect} and
- * {@code YouRemoveTimeCounterFromExiledCardTriggerEffect} the collectors of the events about any player judge, and "a
- * +1/+1 counter is put on this", once for each counter, as a {@code TriggerMode.PER_COUNTER} registration.
+ * Every collector of these watches reads the abilities themselves ({@link Trigger#collectedAsAbility()}), through
+ * {@link CounterAbilityReader}: the trigger's filter on the permanent, "you put" or "you remove", "once for each
+ * counter" and the limit come from the ability, and the legacy view gives none of them, so {@link #effectsOf} and
+ * {@link #registrationsOf} throw.
  */
 public enum CounterWatch implements TriggerWatch {
     /**
@@ -46,8 +43,7 @@ public enum CounterWatch implements TriggerWatch {
     ON_YOU_PUT_COUNTERS_ON_CREATURE(Triggers.youPutCountersOnCreature(), Zone.BATTLEFIELD),
     /**
      * "Whenever one or more +1/+1 counters are put on this permanent"; also reads "whenever you put one or more +1/+1
-     * counters on this" and "whenever a +1/+1 counter is put on this", once for each counter (a
-     * {@code TriggerMode.PER_COUNTER} registration in the legacy view).
+     * counters on this" and "whenever a +1/+1 counter is put on this", once for each counter.
      */
     ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT(Triggers.plusOneCountersPutOnThis(), Zone.BATTLEFIELD),
     /** "Whenever this creature trains". */
@@ -155,13 +151,15 @@ public enum CounterWatch implements TriggerWatch {
         return zone;
     }
 
+    /** Throws: the collectors of a counter watch read its abilities themselves ({@link CounterAbilityReader}). */
     @Override
     public List<CardEffect> effectsOf(Card card) {
-        return card.getLegacyTriggerEffects(trigger, zone);
+        throw new UnsupportedOperationException(name() + " is read by abilities, not by effects");
     }
 
+    /** Throws: the collectors of a counter watch read its abilities themselves ({@link CounterAbilityReader}). */
     @Override
     public List<EffectRegistration> registrationsOf(Card card) {
-        return card.getLegacyTriggerEffectRegistrations(trigger, zone);
+        throw new UnsupportedOperationException(name() + " is read by abilities, not by effects");
     }
 }

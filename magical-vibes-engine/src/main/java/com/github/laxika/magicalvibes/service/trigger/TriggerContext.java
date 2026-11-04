@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.VotingResult;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 
 import java.util.UUID;
 import java.util.Map;
@@ -415,13 +416,17 @@ public sealed interface TriggerContext {
     record CountersRemovedFromPermanent(Permanent permanent, int amount) implements TriggerContext {}
 
     /**
-     * Context for removing a time counter from a suspended card in exile.
+     * Context for a time counter removed from a card while it's exiled.
      *
-     * @param removerId the player who removed the counter, or {@code null} when it is the card's owner
+     * @param remainingCounters the time counters left on the card
+     * @param removerId         the player who removed the counter, or {@code null} for the card's owner
+     * @param effects           the effects of the card's abilities that trigger, as their collector read them, put on
+     *                          the stack as one object
      */
-    record TimeCounterRemovedFromExile(int remainingCounters, UUID removerId) implements TriggerContext {
-        public TimeCounterRemovedFromExile(int remainingCounters) {
-            this(remainingCounters, null);
+    record TimeCounterRemovedFromExile(int remainingCounters, UUID removerId, List<CardEffect> effects)
+            implements TriggerContext {
+        public TimeCounterRemovedFromExile {
+            effects = List.copyOf(effects);
         }
     }
 
@@ -822,10 +827,17 @@ public sealed interface TriggerContext {
      */
     record PermanentCardPutIntoGraveyard(Card permanentCard, UUID graveyardOwnerId) implements TriggerContext {}
 
-    /** Context for a permanent becoming monstrous. */
-    record SelfBecomesMonstrous(UUID controllerId, int xValue) implements TriggerContext {
-        public SelfBecomesMonstrous(UUID controllerId) {
-            this(controllerId, 0);
+    /**
+     * Context for a permanent becoming monstrous.
+     *
+     * @param controllerId the permanent's controller
+     * @param xValue       the monstrosity X
+     * @param effects      the effects of the permanent's "when this becomes monstrous" abilities, put on the stack as
+     *                     one object
+     */
+    record SelfBecomesMonstrous(UUID controllerId, int xValue, List<CardEffect> effects) implements TriggerContext {
+        public SelfBecomesMonstrous {
+            effects = List.copyOf(effects);
         }
     }
 

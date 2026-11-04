@@ -11,13 +11,11 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.YouRemoveTimeCounterFromExiledCardTriggerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -47,15 +45,6 @@ public class ExiledCardTriggerCollectorService {
         return handleTimeCounterRemoved(match, conditional, ctx);
     }
 
-    @CollectsCounterTrigger(value = YouRemoveTimeCounterFromExiledCardTriggerEffect.class,
-            watch = CounterWatch.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE)
-    private boolean handleYouRemovedTimeCounter(TriggerMatchContext match,
-            YouRemoveTimeCounterFromExiledCardTriggerEffect youRemove, TriggerContext ctx) {
-        UUID removerId = ((TriggerContext.TimeCounterRemovedFromExile) ctx).removerId();
-        if (removerId != null && !removerId.equals(match.controllerId())) return false;
-        return handleTimeCounterRemoved(match, youRemove, ctx);
-    }
-
     @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE)
     private boolean handleTimeCounterRemoved(TriggerMatchContext match, CardEffect effect,
             TriggerContext ctx) {
@@ -66,15 +55,9 @@ public class ExiledCardTriggerCollectorService {
             return false;
         }
 
-        List<CardEffect> triggeredEffects = CounterWatch.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE.effectsOf(card);
-        if (triggeredEffects.isEmpty() || triggeredEffects.getFirst() != effect) {
-            return true;
-        }
-        // The last-counter clause describes the event; adding a counter later does not undo it.
-        triggeredEffects = triggeredEffects.stream().map(triggeredEffect ->
-                triggeredEffect instanceof YouRemoveTimeCounterFromExiledCardTriggerEffect youRemove
-                        ? youRemove.wrapped() : triggeredEffect)
-                .map(triggeredEffect ->
+        // The collector dispatches the first of the effects it read, which go on the stack as one object. The
+        // last-counter clause describes the event; adding a counter later does not undo it.
+        List<CardEffect> triggeredEffects = removed.effects().stream().map(triggeredEffect ->
                 triggeredEffect instanceof ConditionalEffect conditional && isLastCounterEventCondition(conditional)
                         ? conditional.wrapped() : triggeredEffect).toList();
 

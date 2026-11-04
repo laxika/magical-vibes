@@ -23,9 +23,8 @@ import java.util.Objects;
  *                  creature, a Hero, a planeswalker, a Saga. The engine's counter collectors check it
  * @param qualifier what that permanent must also be, or {@code null}: "another colorless creature" is
  *                  {@code Triggers.youPutPlusOneCountersOnAnotherCreature().withFilter(new
- *                  PermanentIsColorlessPredicate())}. The counter collectors read it from the legacy view
- *                  ({@code TriggeredAbility.legacyEffects()}) as the {@code TriggeringPermanentConditionalEffect} they
- *                  judge, so {@link #watchKey()} drops it
+ *                  PermanentIsColorlessPredicate())}. The counter collectors read it from the ability, through
+ *                  {@code CounterAbilityReader}, so {@link #watchKey()} drops it
  */
 public record CounterTrigger(CounterEvent event, ObjectRelation relation, PermanentPredicate filter,
                              PermanentPredicate qualifier) implements Trigger {
@@ -58,6 +57,15 @@ public record CounterTrigger(CounterEvent event, ObjectRelation relation, Perman
     }
 
     /**
+     * The counter collectors read the ability itself (its filter, event, limit and intervening "if"), through
+     * {@code CounterAbilityReader}: a counter ability has no legacy view (effect-slot-refactor.md step 14, run 16h).
+     */
+    @Override
+    public boolean collectedAsAbility() {
+        return true;
+    }
+
+    /**
      * The exile events ({@link CounterEvent#TIME_COUNTER_REMOVED_IN_EXILE},
      * {@link CounterEvent#YOU_REMOVE_TIME_COUNTER_IN_EXILE}) function from exile; every other event from the
      * battlefield.
@@ -76,9 +84,8 @@ public record CounterTrigger(CounterEvent event, ObjectRelation relation, Perman
      * event about any player ({@link CounterEvent#COUNTERS_PUT}, {@link CounterEvent#PLUS_ONE_COUNTERS_PUT}), "you
      * remove a time counter from this card while it's exiled" by the one of
      * {@link CounterEvent#TIME_COUNTER_REMOVED_IN_EXILE}, and "a +1/+1 counter is put on this", once for each counter,
-     * by the one of {@link CounterEvent#PLUS_ONE_COUNTERS_PUT}. The legacy view ({@code
-     * TriggeredAbility.legacyEffects()}) gives them the "you" wrapper or the per-counter trigger mode those collectors
-     * judge.
+     * by the one of {@link CounterEvent#PLUS_ONE_COUNTERS_PUT}. Those collectors judge who put or removed the counters,
+     * or trigger once for each counter, from the ability's own event ({@code CounterAbilityReader}).
      */
     @Override
     public Trigger watchKey() {

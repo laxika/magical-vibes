@@ -358,10 +358,8 @@ public class MiscTriggerCollectorService {
     private boolean handleSelfBecomesMonstrous(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.SelfBecomesMonstrous sm = (TriggerContext.SelfBecomesMonstrous) ctx;
         Card card = match.permanent().getCard();
-        List<CardEffect> triggeredEffects = CounterWatch.ON_SELF_BECOMES_MONSTROUS.effectsOf(card);
-        if (triggeredEffects.isEmpty() || triggeredEffects.getFirst() != effect) {
-            return true;
-        }
+        // The collector dispatches the first of the permanent's monstrous effects, which go on the stack as one object.
+        List<CardEffect> triggeredEffects = sm.effects();
 
         boolean needsTarget = triggeredEffects.stream().anyMatch(triggeredEffect ->
                 triggeredEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)

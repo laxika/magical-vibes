@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
@@ -18,24 +17,21 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnPerCreatureTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSameCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.YouPutCounterOnControlledCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.SagaChapterService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
-import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.trigger.CounterAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.CounterWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -131,7 +127,7 @@ public class PermanentCounterSupport {
         }
         for (Permanent source : new ArrayList<>(battlefield)) {
             Card card = source.getCard();
-            List<CardEffect> effects = CounterWatch.ON_YOU_PUT_COUNTERS_ON_CREATURE.effectsOf(card);
+            List<CardEffect> effects = CounterAbilityReader.printedEffects(card, CounterWatch.ON_YOU_PUT_COUNTERS_ON_CREATURE);
             if (effects.isEmpty()
                     || source.isLosesAllAbilitiesUntilEndOfTurn()
                     || gameQueryService.hasLostPrintedAbilities(gameData, source)) {
@@ -180,7 +176,8 @@ public class PermanentCounterSupport {
                 continue;
             }
             Card card = source.getCard();
-            List<CardEffect> effects = CounterWatch.ON_YOU_PUT_COUNTERS_ON_CREATURE_YOU_DONT_CONTROL.effectsOf(card);
+            List<CardEffect> effects = CounterAbilityReader.printedEffects(card,
+                    CounterWatch.ON_YOU_PUT_COUNTERS_ON_CREATURE_YOU_DONT_CONTROL);
             if (effects.isEmpty()) {
                 continue;
             }
@@ -258,7 +255,8 @@ public class PermanentCounterSupport {
                 continue;
             }
 
-            List<CardEffect> effects = CounterWatch.ON_YOU_PUT_COUNTERS_ON_ANOTHER_CREATURE.effectsOf(source.getCard());
+            List<CardEffect> effects = CounterAbilityReader.printedEffects(source.getCard(),
+                    CounterWatch.ON_YOU_PUT_COUNTERS_ON_ANOTHER_CREATURE);
             if (effects.isEmpty()) {
                 continue;
             }
@@ -331,7 +329,8 @@ public class PermanentCounterSupport {
             }
             for (Permanent source : new ArrayList<>(battlefield)) {
                 List<CardEffect> effects =
-                        CounterWatch.ON_OPPONENT_PUT_COUNTERS_ON_CREATURE_THEY_CONTROL.effectsOf(source.getCard());
+                        CounterAbilityReader.printedEffects(source.getCard(),
+                        CounterWatch.ON_OPPONENT_PUT_COUNTERS_ON_CREATURE_THEY_CONTROL);
                 if (effects.isEmpty()) {
                     continue;
                 }
@@ -415,30 +414,15 @@ public class PermanentCounterSupport {
             if (heroTargets.stream().allMatch(target -> target.getId().equals(source.getId()))) {
                 continue;
             }
-            List<CardEffect> effects =
-                    CounterWatch.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_OTHER_HERO.effectsOf(source.getCard());
-            if (effects.isEmpty()) {
-                continue;
-            }
-
-            List<CardEffect> effectsToResolve = new ArrayList<>();
-            boolean markOnAcceptance = false;
-            boolean markImmediately = false;
-            for (CardEffect effect : effects) {
-                if (effect instanceof OncePerTurnTriggerEffect oncePerTurnTrigger) {
-                    if (gameData.oncePerTurnTriggersFiredThisTurn.contains(source.getId())) {
-                        continue;
-                    }
-                    if (oncePerTurnTrigger.markOnAcceptance()) {
-                        markOnAcceptance = true;
-                    } else {
-                        markImmediately = true;
-                    }
-                    effectsToResolve.add(oncePerTurnTrigger.wrapped());
-                } else {
-                    effectsToResolve.add(effect);
-                }
-            }
+            CounterWatch watch = CounterWatch.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_OTHER_HERO;
+            List<CounterAbilityReader.CounterEffect> effects =
+                    CounterAbilityReader.readPrinted(source.getCard(), watch);
+            effects.forEach(effect -> {
+                CounterAbilityReader.requireNoFilter(effect, watch.trigger());
+                CounterAbilityReader.requireWatchedEvent(effect, watch.trigger());
+            });
+            WithinLimits triggering = withinLimits(gameData, source.getId(), effects);
+            List<CardEffect> effectsToResolve = triggering.effects();
             if (effectsToResolve.isEmpty()) {
                 continue;
             }
@@ -452,11 +436,9 @@ public class PermanentCounterSupport {
                     null,
                     source.getId());
             triggerEntry.setEventValue(count);
-            triggerEntry.setMarkSourceOncePerTurnOnAcceptance(markOnAcceptance);
+            triggerEntry.setMarkSourceOncePerTurnOnAcceptance(triggering.markOnAcceptance());
             gameData.stack.add(triggerEntry);
-            if (markImmediately) {
-                gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
-            }
+            triggering.markLimits(gameData, source.getId());
             gameLogService.append(gameData, GameLog.cardThen(
                     source.getCard(), "'s triggered ability triggers."));
             log.info("Game {} - {} +1/+1 counter-on-other-Hero trigger fires", gameData.id,
@@ -480,38 +462,18 @@ public class PermanentCounterSupport {
                 // A face-down permanent has no abilities (CR 708.2).
                 continue;
             }
-            List<CardEffect> effects =
-                    CounterWatch.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_ANOTHER_CREATURE.effectsOf(source.getCard());
-            if (effects.isEmpty()) {
-                continue;
-            }
-
-            List<CardEffect> effectsToResolve = new ArrayList<>();
-            boolean markOnAcceptance = false;
-            boolean markImmediately = false;
-            for (CardEffect effect : effects) {
-                CardEffect resolved = effect;
-                if (resolved instanceof TriggeringPermanentConditionalEffect conditional) {
-                    if (!predicateEvaluationService.matchesPermanentPredicate(
-                            gameData, target, conditional.predicate())) {
-                        continue;
-                    }
-                    resolved = conditional.wrapped();
-                }
-                if (resolved instanceof OncePerTurnTriggerEffect oncePerTurnTrigger) {
-                    if (gameData.oncePerTurnTriggersFiredThisTurn.contains(source.getId())) {
-                        continue;
-                    }
-                    if (oncePerTurnTrigger.markOnAcceptance()) {
-                        markOnAcceptance = true;
-                    } else {
-                        markImmediately = true;
-                    }
-                    effectsToResolve.add(oncePerTurnTrigger.wrapped());
-                } else {
-                    effectsToResolve.add(resolved);
+            CounterWatch watch = CounterWatch.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_ANOTHER_CREATURE;
+            List<CounterAbilityReader.CounterEffect> matching = new ArrayList<>();
+            for (CounterAbilityReader.CounterEffect effect : CounterAbilityReader.readPrinted(source.getCard(), watch)) {
+                CounterAbilityReader.requireWatchedEvent(effect, watch.trigger());
+                // "Another colorless creature" (Omarthis): the trigger's filter on the creature.
+                if (effect.filter() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(gameData, target, effect.filter())) {
+                    matching.add(effect);
                 }
             }
+            WithinLimits triggering = withinLimits(gameData, source.getId(), matching);
+            List<CardEffect> effectsToResolve = triggering.effects();
             if (effectsToResolve.isEmpty()) {
                 continue;
             }
@@ -525,11 +487,9 @@ public class PermanentCounterSupport {
                     null,
                     source.getId());
             triggerEntry.setEventValue(count);
-            triggerEntry.setMarkSourceOncePerTurnOnAcceptance(markOnAcceptance);
+            triggerEntry.setMarkSourceOncePerTurnOnAcceptance(triggering.markOnAcceptance());
             gameData.stack.add(triggerEntry);
-            if (markImmediately) {
-                gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
-            }
+            triggering.markLimits(gameData, source.getId());
             gameLogService.append(gameData, GameLog.cardThen(
                     source.getCard(), "'s triggered ability triggers."));
             log.info("Game {} - {} +1/+1 counter-on-another-creature trigger fires", gameData.id,
@@ -1212,9 +1172,11 @@ public class PermanentCounterSupport {
 
                 // Per-counter watchers: global (Flourishing Defenses) + you-put (Nest of Scarabs).
                 List<CardEffect> globalEffects =
-                        CounterWatch.ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE.effectsOf(card);
+                        CounterAbilityReader.printedEffects(card,
+                        CounterWatch.ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE);
                 List<CardEffect> youPutEffects = placedByThisController
-                        ? CounterWatch.ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTER_ON_CREATURE.effectsOf(card)
+                        ? CounterAbilityReader.printedEffects(card,
+                        CounterWatch.ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTER_ON_CREATURE)
                         : List.of();
                 List<CardEffect> perCounterEffects = globalEffects.isEmpty() ? youPutEffects
                         : youPutEffects.isEmpty() ? globalEffects
@@ -1240,7 +1202,8 @@ public class PermanentCounterSupport {
                 // is carried as the trigger target so the resolving ability can inspect its current
                 // controller, with its controller at trigger time retained for zone changes.
                 List<CardEffect> globalOnceEffects =
-                        CounterWatch.ON_MINUS_ONE_MINUS_ONE_COUNTERS_PUT_ON_CREATURE.effectsOf(card);
+                        CounterAbilityReader.printedEffects(card,
+                        CounterWatch.ON_MINUS_ONE_MINUS_ONE_COUNTERS_PUT_ON_CREATURE);
                 if (!globalOnceEffects.isEmpty()) {
                     StackEntry triggerEntry = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
@@ -1262,7 +1225,8 @@ public class PermanentCounterSupport {
                 // Once-per-creature you-put watcher (Hapatra, Nest of Scarabs): fires a single trigger
                 // regardless of count; the count is carried as the event value for "that many" effects.
                 List<CardEffect> youPutOnceEffects = placedByThisController
-                        ? CounterWatch.ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTERS_ON_CREATURE.effectsOf(card)
+                        ? CounterAbilityReader.printedEffects(card,
+                        CounterWatch.ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTERS_ON_CREATURE)
                         : List.of();
                 if (!youPutOnceEffects.isEmpty()) {
                     StackEntry youPutOnceTrigger = new StackEntry(
@@ -1297,7 +1261,8 @@ public class PermanentCounterSupport {
      */
     void fireSelfMinusOneMinusOneCountersPutTriggers(GameData gameData, Permanent creature, UUID placingPlayerId) {
         Card card = creature.getCard();
-        List<CardEffect> effects = CounterWatch.ON_SELF_MINUS_ONE_MINUS_ONE_COUNTERS_PUT.effectsOf(card);
+        List<CardEffect> effects = CounterAbilityReader.printedEffects(card,
+                CounterWatch.ON_SELF_MINUS_ONE_MINUS_ONE_COUNTERS_PUT);
         if (effects.isEmpty()) {
             return;
         }
@@ -1360,7 +1325,7 @@ public class PermanentCounterSupport {
     private void queueLevelReachedTriggers(GameData gameData, Permanent permanent, CounterWatch watch,
                                            String eventDescription) {
         Card card = permanent.getCard();
-        List<CardEffect> effects = watch.effectsOf(card);
+        List<CardEffect> effects = CounterAbilityReader.printedEffects(card, watch);
         if (effects.isEmpty()) {
             return;
         }
@@ -1390,6 +1355,55 @@ public class PermanentCounterSupport {
             gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
         }
         log.info("Game {} - {} {} trigger fires", gameData.id, card.getName(), eventDescription);
+    }
+
+    /**
+     * The effects of counter abilities whose limit lets them trigger for their source now, as {@link #withinLimits}
+     * reads them.
+     *
+     * @param effects          the effects to put on the stack
+     * @param read             the same effects as read, whose limits {@link #markLimits} marks once they triggered
+     * @param markOnAcceptance whether one of them is "do this only once each turn", which its stack entry marks as the
+     *                         action is taken
+     */
+    private record WithinLimits(List<CardEffect> effects, List<CounterAbilityReader.CounterEffect> read,
+                                boolean markOnAcceptance) {
+
+        /** Marks the limits of {@link #read} as used by {@code sourceId}. */
+        void markLimits(GameData gameData, UUID sourceId) {
+            read.forEach(effect -> effect.markLimit(gameData, sourceId));
+        }
+    }
+
+    /**
+     * The effects of {@code effects} whose ability's limit hasn't been reached for {@code sourceId}: "triggers only
+     * once each turn" as the ability marked it, "do this only once each turn" as the action was taken (CR 603.2h).
+     */
+    private static WithinLimits withinLimits(GameData gameData, UUID sourceId,
+                                             List<CounterAbilityReader.CounterEffect> effects) {
+        List<CardEffect> resolved = new ArrayList<>();
+        List<CounterAbilityReader.CounterEffect> read = new ArrayList<>();
+        boolean markOnAcceptance = false;
+        for (CounterAbilityReader.CounterEffect effect : effects) {
+            if (effect.limitReached(gameData, sourceId)) {
+                continue;
+            }
+            resolved.add(effect.effect());
+            read.add(effect);
+            markOnAcceptance |= effect.marksLimitOnAcceptance();
+        }
+        return new WithinLimits(resolved, read, markOnAcceptance);
+    }
+
+    /**
+     * Throws when {@code effect}'s ability is "do this only once each turn", which the collector of {@code watch}
+     * doesn't mark as the action is taken.
+     */
+    private static void requireNoDoOnlyOnceEachTurn(CounterAbilityReader.CounterEffect effect, CounterWatch watch) {
+        if (effect.marksLimitOnAcceptance()) {
+            throw new IllegalStateException("The collector of " + watch + " marks no \"do this only once each turn\": "
+                    + effect.ability());
+        }
     }
 
     private UUID controllerOf(GameData gameData, Permanent permanent) {
@@ -1465,31 +1479,20 @@ public class PermanentCounterSupport {
         }
 
         for (Permanent source : new ArrayList<>(battlefield)) {
-            List<CardEffect> effects =
-                    CounterWatch.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_HUMAN.effectsOf(source.getCard());
-            if (effects.isEmpty()) {
-                continue;
-            }
-
-            List<CardEffect> effectsToResolve = new ArrayList<>();
-            boolean oncePerTurnQueued = false;
-            for (CardEffect effect : effects) {
-                if (effect instanceof OncePerTurnTriggerEffect oncePerTurn) {
-                    if (gameData.oncePerTurnTriggersFiredThisTurn.contains(source.getId())) {
-                        continue;
-                    }
-                    effectsToResolve.add(oncePerTurn.wrapped());
-                    oncePerTurnQueued = true;
-                } else {
-                    effectsToResolve.add(effect);
-                }
-            }
+            CounterWatch watch = CounterWatch.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_HUMAN;
+            List<CounterAbilityReader.CounterEffect> effects =
+                    CounterAbilityReader.readPrinted(source.getCard(), watch);
+            effects.forEach(effect -> {
+                CounterAbilityReader.requireNoFilter(effect, watch.trigger());
+                CounterAbilityReader.requireWatchedEvent(effect, watch.trigger());
+                requireNoDoOnlyOnceEachTurn(effect, watch);
+            });
+            WithinLimits triggering = withinLimits(gameData, source.getId(), effects);
+            List<CardEffect> effectsToResolve = triggering.effects();
             if (effectsToResolve.isEmpty()) {
                 continue;
             }
-            if (oncePerTurnQueued) {
-                gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
-            }
+            triggering.markLimits(gameData, source.getId());
 
             Card card = source.getCard();
             gameData.stack.add(new StackEntry(
@@ -1525,49 +1528,36 @@ public class PermanentCounterSupport {
         boolean firstCountersThisTurn = gameData.creaturesThatReceivedCountersThisTurn.add(creature.getId());
         for (Permanent source : new ArrayList<>(battlefield)) {
             Card card = source.getCard();
-            List<CardEffect> effects = CounterWatch.ON_ALLY_COUNTER_PUT_ON_CREATURE.effectsOf(card);
+            CounterWatch watch = CounterWatch.ON_ALLY_COUNTER_PUT_ON_CREATURE;
+            List<CounterAbilityReader.CounterEffect> effects = CounterAbilityReader.readPrinted(card, watch);
             if (effects.isEmpty()) {
                 continue;
             }
+            effects.forEach(effect -> requireNoDoOnlyOnceEachTurn(effect, watch));
             for (int i = 0; i < count; i++) {
                 List<CardEffect> effectsToResolve = new ArrayList<>();
-                boolean oncePerTurnQueued = false;
-                boolean oncePerCreatureQueued = false;
-                for (CardEffect effect : effects) {
-                    // The wrappers in the order the legacy view nests them (TriggeredAbility.legacyEffects()): "you
-                    // put", the filter, the limit, then the intervening "if".
-                    CardEffect resolved = effect;
-                    if (resolved instanceof YouPutCounterOnControlledCreatureTriggerEffect youPut) {
-                        if (!Objects.equals(placingPlayerId, controllerId)) {
+                List<CounterAbilityReader.CounterEffect> queued = new ArrayList<>();
+                for (CounterAbilityReader.CounterEffect read : effects) {
+                    // "You put" (Mikey & Leo, The Great Goblin), the filter, the limit, then the intervening "if"; a
+                    // limit is marked only for an ability that triggers.
+                    if (read.byController() && !Objects.equals(placingPlayerId, controllerId)) {
+                        continue;
+                    }
+                    if (read.filter() != null && !predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, creature, read.filter())) {
+                        continue;
+                    }
+                    if (read.limit() == TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE) {
+                        // "If it's the first time counters have been put on that creature this turn" (Stalwart
+                        // Successor), for each creature.
+                        if (!firstCountersThisTurn
+                                || read.limitReached(gameData, source.getId(), creature.getId())) {
                             continue;
                         }
-                        resolved = youPut.wrapped();
+                    } else if (read.limitReached(gameData, source.getId())) {
+                        continue;
                     }
-                    if (resolved instanceof TriggeringPermanentConditionalEffect conditional) {
-                        if (!predicateEvaluationService.matchesPermanentPredicate(
-                                gameData, creature, conditional.predicate())) {
-                            continue;
-                        }
-                        resolved = conditional.wrapped();
-                    }
-                    boolean oncePerTurn = false;
-                    boolean oncePerCreature = false;
-                    if (resolved instanceof OncePerTurnTriggerEffect once) {
-                        if (gameData.oncePerTurnTriggersFiredThisTurn.contains(source.getId())) {
-                            continue;
-                        }
-                        resolved = once.wrapped();
-                        oncePerTurn = true;
-                    }
-                    if (resolved instanceof OncePerTurnPerCreatureTriggerEffect perCreature) {
-                        Set<UUID> firedCreatures = gameData.oncePerCreatureTriggersFiredThisTurn
-                                .computeIfAbsent(source.getId(), ignored -> ConcurrentHashMap.newKeySet());
-                        if (!firstCountersThisTurn || firedCreatures.contains(creature.getId())) {
-                            continue;
-                        }
-                        resolved = perCreature.wrapped();
-                        oncePerCreature = true;
-                    }
+                    CardEffect resolved = read.effect();
                     if (resolved instanceof ConditionalEffect conditional && conditional.interveningIf()) {
                         if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
                                 ConditionContext.forPermanent(source, controllerId))) {
@@ -1575,21 +1565,13 @@ public class PermanentCounterSupport {
                         }
                         resolved = conditional.wrapped();
                     }
-                    oncePerTurnQueued |= oncePerTurn;
-                    oncePerCreatureQueued |= oncePerCreature;
+                    queued.add(read);
                     effectsToResolve.add(resolved);
                 }
                 if (effectsToResolve.isEmpty()) {
                     continue;
                 }
-                if (oncePerTurnQueued) {
-                    gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
-                }
-                if (oncePerCreatureQueued) {
-                    gameData.oncePerCreatureTriggersFiredThisTurn
-                            .computeIfAbsent(source.getId(), ignored -> ConcurrentHashMap.newKeySet())
-                            .add(creature.getId());
-                }
+                queued.forEach(read -> read.markLimit(gameData, source.getId(), creature.getId()));
                 boolean targetsPermanent = effectsToResolve.stream()
                         .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
                 boolean targetsPlayer = effectsToResolve.stream()
@@ -1662,7 +1644,8 @@ public class PermanentCounterSupport {
             return;
         }
         Card card = source.getCard();
-        List<CardEffect> effects = CounterWatch.ON_YOU_PUT_LOYALTY_COUNTERS_ON_PLANESWALKERS.effectsOf(card);
+        List<CardEffect> effects = CounterAbilityReader.printedEffects(card,
+                CounterWatch.ON_YOU_PUT_LOYALTY_COUNTERS_ON_PLANESWALKERS);
         if (effects.isEmpty()) {
             return;
         }
@@ -1695,10 +1678,15 @@ public class PermanentCounterSupport {
                                                              UUID placingPlayerId, int count) {
         if (gameQueryService.hasLostPrintedAbilities(gameData, target)) return;
         Card card = target.getCard();
-        List<CardEffect> effects = CounterWatch.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT.effectsOf(card);
+        CounterWatch watch = CounterWatch.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT;
+        List<CounterAbilityReader.CounterEffect> effects = CounterAbilityReader.readPrinted(card, watch);
         if (effects.isEmpty()) {
             return;
         }
+        effects.forEach(effect -> {
+            CounterAbilityReader.requireNoFilter(effect, watch.trigger());
+            requireNoDoOnlyOnceEachTurn(effect, watch);
+        });
 
         UUID controllerId = null;
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -1712,10 +1700,14 @@ public class PermanentCounterSupport {
             return;
         }
 
-        List<CardEffect> perCounter = CounterWatch.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT.registrationsOf(card)
-                .stream().filter(registration -> registration.triggerMode()
-                        == com.github.laxika.magicalvibes.model.TriggerMode.PER_COUNTER)
-                .map(registration -> registration.effect()).toList();
+        // "Whenever a +1/+1 counter is put on this" (Fathom Mage, Bloodcrazed Hoplite): once for each counter.
+        List<CardEffect> perCounter = new ArrayList<>();
+        for (CounterAbilityReader.CounterEffect read : effects) {
+            if (read.eachCounter()) {
+                CounterAbilityReader.requireNoLimit(read, watch.trigger());
+                perCounter.add(read.effect());
+            }
+        }
         for (CardEffect effect : perCounter) {
             for (int i = 0; i < count; i++) {
                 if (effect.targetSpec().declaredTarget() != null) {
@@ -1728,30 +1720,20 @@ public class PermanentCounterSupport {
                 }
             }
         }
-        effects = effects.stream().filter(effect -> !perCounter.contains(effect)).toList();
-        List<CardEffect> effectsToResolve = new ArrayList<>();
-        boolean oncePerTurnQueued = false;
-        for (CardEffect effect : effects) {
-            if (effect instanceof YouPutCounterOnControlledCreatureTriggerEffect youPut) {
-                if (!controllerId.equals(placingPlayerId)) continue;
-                effect = youPut.wrapped();
-            }
-            if (effect instanceof OncePerTurnTriggerEffect once) {
-                if (gameData.oncePerTurnTriggersFiredThisTurn.contains(target.getId())) {
-                    continue;
-                }
-                effectsToResolve.add(once.wrapped());
-                oncePerTurnQueued = true;
-            } else {
-                effectsToResolve.add(effect);
+        // "Whenever you put one or more +1/+1 counters on this" (Exemplar of Light, Blaster) only when its
+        // controller puts them.
+        List<CounterAbilityReader.CounterEffect> perEvent = new ArrayList<>();
+        for (CounterAbilityReader.CounterEffect read : effects) {
+            if (!read.eachCounter() && (!read.byController() || controllerId.equals(placingPlayerId))) {
+                perEvent.add(read);
             }
         }
+        WithinLimits triggering = withinLimits(gameData, target.getId(), perEvent);
+        List<CardEffect> effectsToResolve = triggering.effects();
         if (effectsToResolve.isEmpty()) {
             return;
         }
-        if (oncePerTurnQueued) {
-            gameData.oncePerTurnTriggersFiredThisTurn.add(target.getId());
-        }
+        triggering.markLimits(gameData, target.getId());
 
         boolean needsTarget = effectsToResolve.stream()
                 .anyMatch(effect -> effect.targetSpec().declaredTarget() != null);
@@ -1780,15 +1762,19 @@ public class PermanentCounterSupport {
                                               CounterType counterType, int previousCount,
                                               boolean firstPlacementThisTurn) {
         Card card = target.getCard();
-        List<CardEffect> effects = new ArrayList<>(CounterWatch.ON_SELF_COUNTERS_PUT.effectsOf(card));
+        CounterWatch watch = CounterWatch.ON_SELF_COUNTERS_PUT;
+        List<CounterAbilityReader.CounterEffect> effects =
+                new ArrayList<>(CounterAbilityReader.readPrinted(card, watch));
+        // A granted ability with a limit (Danny Pink's "draw a card", once each turn) triggers only on the turn's
+        // first placement.
         gameQueryService.getGrantedEffects(gameData, target).stream()
                 .filter(GrantTriggeredAbilityEffect.class::isInstance)
                 .map(GrantTriggeredAbilityEffect.class::cast)
                 .filter(grant -> grant.grantedAbility() instanceof TriggeredAbility ability
-                        && ability.hasWatchedTrigger(CounterWatch.ON_SELF_COUNTERS_PUT.trigger()))
-                .flatMap(grant -> ((TriggeredAbility) grant.grantedAbility()).legacyEffects().stream()
-                        .map(EffectRegistration::effect))
-                .filter(granted -> firstPlacementThisTurn || !(granted instanceof OncePerTurnTriggerEffect))
+                        && ability.hasWatchedTrigger(watch.trigger()))
+                .flatMap(grant -> CounterAbilityReader.read((TriggeredAbility) grant.grantedAbility(),
+                        watch.trigger()).stream())
+                .filter(granted -> firstPlacementThisTurn || granted.limit() == TriggerLimit.NONE)
                 .forEach(effects::add);
         if (effects.isEmpty()) {
             return;
@@ -1801,11 +1787,15 @@ public class PermanentCounterSupport {
 
         int currentCount = target.getCounterCount(counterType);
         List<CardEffect> effectsToResolve = new ArrayList<>();
-        for (CardEffect authoredEffect : effects) {
-            CardEffect effect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, target, authoredEffect);
-            if (effect == null) {
+        List<CounterAbilityReader.CounterEffect> queued = new ArrayList<>();
+        for (CounterAbilityReader.CounterEffect read : effects) {
+            CounterAbilityReader.requireNoFilter(read, watch.trigger());
+            CounterAbilityReader.requireWatchedEvent(read, watch.trigger());
+            requireNoDoOnlyOnceEachTurn(read, watch);
+            if (read.limitReached(gameData, target.getId())) {
                 continue;
             }
+            CardEffect effect = read.effect();
             if (effect instanceof ConditionalEffect conditional) {
                 if (conditional.condition() instanceof SourceCounterThreshold threshold) {
                     if (conditional.interveningIf()
@@ -1820,12 +1810,13 @@ public class PermanentCounterSupport {
                     continue;
                 }
             }
-            OncePerTurnTriggerSupport.markIfNeeded(gameData, target, authoredEffect);
+            queued.add(read);
             effectsToResolve.add(effect);
         }
         if (effectsToResolve.isEmpty()) {
             return;
         }
+        queued.forEach(read -> read.markLimit(gameData, target.getId()));
 
         boolean needsTarget = effectsToResolve.stream()
                 .anyMatch(effect -> effect.targetSpec().declaredTarget() != null);
@@ -1882,7 +1873,8 @@ public class PermanentCounterSupport {
             }
             Card card = watcher.getCard();
             List<CardEffect> effects =
-                    CounterWatch.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ANOTHER_CREATURE.effectsOf(card);
+                    CounterAbilityReader.printedEffects(card,
+                    CounterWatch.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ANOTHER_CREATURE);
             if (effects.isEmpty()) {
                 continue;
             }
@@ -1934,7 +1926,8 @@ public class PermanentCounterSupport {
         for (Permanent watcher : new ArrayList<>(battlefield)) {
             Card card = watcher.getCard();
             List<CardEffect> effects =
-                    CounterWatch.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_NON_HYDRA_CREATURE.effectsOf(card);
+                    CounterAbilityReader.printedEffects(card,
+                    CounterWatch.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_NON_HYDRA_CREATURE);
             if (effects.isEmpty()
                     || watcher.getId().equals(target.getId()) || excludedSourceIds.contains(watcher.getId())
                     || gameQueryService.hasLostAllAbilities(gameData, watcher)) {
@@ -2095,8 +2088,8 @@ public class PermanentCounterSupport {
                 continue;
             }
             List<CardEffect> effects =
-                    CounterWatch.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ANOTHER_PERMANENT_FIRST_TIME_EACH_TURN
-                            .effectsOf(source.getCard());
+                    CounterAbilityReader.printedEffects(source.getCard(),
+                            CounterWatch.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ANOTHER_PERMANENT_FIRST_TIME_EACH_TURN);
             if (effects.isEmpty()) {
                 continue;
             }
@@ -2133,29 +2126,18 @@ public class PermanentCounterSupport {
             return;
         }
         for (Permanent source : new ArrayList<>(battlefield)) {
-            List<CardEffect> effects = watch.effectsOf(source.getCard());
+            List<CounterAbilityReader.CounterEffect> effects =
+                    CounterAbilityReader.readPrinted(source.getCard(), watch);
             if (effects.isEmpty()) {
                 continue;
             }
+            effects.forEach(effect -> {
+                CounterAbilityReader.requireNoFilter(effect, watch.trigger());
+                CounterAbilityReader.requireWatchedEvent(effect, watch.trigger());
+            });
             Card card = source.getCard();
-            List<CardEffect> effectsToResolve = new ArrayList<>();
-            boolean markOnAcceptance = false;
-            boolean markImmediately = false;
-            for (CardEffect effect : effects) {
-                if (effect instanceof OncePerTurnTriggerEffect oncePerTurnTrigger) {
-                    if (gameData.oncePerTurnTriggersFiredThisTurn.contains(source.getId())) {
-                        continue;
-                    }
-                    if (oncePerTurnTrigger.markOnAcceptance()) {
-                        markOnAcceptance = true;
-                    } else {
-                        markImmediately = true;
-                    }
-                    effectsToResolve.add(oncePerTurnTrigger.wrapped());
-                } else {
-                    effectsToResolve.add(effect);
-                }
-            }
+            WithinLimits triggering = withinLimits(gameData, source.getId(), effects);
+            List<CardEffect> effectsToResolve = triggering.effects();
             if (effectsToResolve.isEmpty()) {
                 continue;
             }
@@ -2184,12 +2166,10 @@ public class PermanentCounterSupport {
                         source.getId()
                 );
                 triggerEntry.setEventValue(count);
-                triggerEntry.setMarkSourceOncePerTurnOnAcceptance(markOnAcceptance);
+                triggerEntry.setMarkSourceOncePerTurnOnAcceptance(triggering.markOnAcceptance());
                 gameData.stack.add(triggerEntry);
             }
-            if (markImmediately) {
-                gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
-            }
+            triggering.markLimits(gameData, source.getId());
             gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
             log.info("Game {} - {} +1/+1 counter-on-controlled-permanent trigger fires", gameData.id,
                     card.getName());

@@ -516,10 +516,9 @@ public class TriggerCollectionService {
         }
 
         for (Card card : new ArrayList<>(graveyard)) {
-            List<CardEffect> effects = gameQueryService.getEffectiveGraveyardLegacyTriggerEffects(
-                    gameData, card,
-                    CounterWatch.GRAVEYARD_ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_CREATURE.trigger());
-            if (effects == null || effects.isEmpty()) {
+            List<CardEffect> effects = graveyardCounterEffects(gameData, card,
+                    CounterWatch.GRAVEYARD_ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_CREATURE);
+            if (effects.isEmpty()) {
                 continue;
             }
 
@@ -613,11 +612,24 @@ public class TriggerCollectionService {
             return;
         }
 
-        TriggerContext context = new TriggerContext.TimeCounterRemovedFromExile(remainingCounters, removerId);
-        for (CardEffect effect : CounterWatch.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE.effectsOf(card)) {
-            dispatch(new TriggerMatchContext(gameData, null, ownerId, effect, card),
-                    CounterWatch.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE, effect, context);
+        CounterWatch watch = CounterWatch.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE;
+        List<CardEffect> effects = new ArrayList<>();
+        for (CounterAbilityReader.CounterEffect read : CounterAbilityReader.readPrinted(card, watch)) {
+            CounterAbilityReader.requireNoFilter(read, watch.trigger());
+            CounterAbilityReader.requireNoLimit(read, watch.trigger());
+            // "Whenever you remove a time counter from this card while it's exiled" (Watcher of Hours).
+            if (read.byController() && removerId != null && !removerId.equals(ownerId)) {
+                continue;
+            }
+            effects.add(read.effect());
         }
+        if (effects.isEmpty()) {
+            return;
+        }
+        // The handler puts all of the card's effects on the stack as one object, as the slot's did.
+        CardEffect first = effects.getFirst();
+        dispatch(new TriggerMatchContext(gameData, null, ownerId, first, card), watch, first,
+                new TriggerContext.TimeCounterRemovedFromExile(remainingCounters, removerId, List.copyOf(effects)));
     }
 
     public void checkSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId) {
@@ -3847,6 +3859,18 @@ public class TriggerCollectionService {
      */
     private List<CardEffect> graveyardDamageEffects(GameData gameData, Card card, DamageWatch watch) {
         return DamageAbilityReader.effects(WatchedAbilities.withWatchedTrigger(
+                gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData, card), watch.trigger(),
+                watch.zone()), watch.trigger());
+    }
+
+    /**
+     * The effects of the abilities {@code watch} reads of {@code card} in a graveyard, its own and its perpetual ones,
+     * or none while cards in graveyards have lost all abilities, each in its intervening "if" (Moss-Pit Skeleton,
+     * Ichor Aberration). No graveyard counter ability is written with a filter, narrower event, limit or
+     * multiplicity, and this throws on one.
+     */
+    private List<CardEffect> graveyardCounterEffects(GameData gameData, Card card, CounterWatch watch) {
+        return CounterAbilityReader.effects(WatchedAbilities.withWatchedTrigger(
                 gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData, card), watch.trigger(),
                 watch.zone()), watch.trigger());
     }
@@ -10532,7 +10556,8 @@ public class TriggerCollectionService {
      * @param controllerId     the player controlling it
      */
     public void checkBecomesRenownedTriggers(GameData gameData, Permanent renownedCreature, UUID controllerId) {
-        for (CardEffect effect : CounterWatch.ON_SELF_BECOMES_RENOWNED.effectsOf(renownedCreature.getCard())) {
+        for (CardEffect effect : CounterAbilityReader.printedEffects(renownedCreature.getCard(),
+                CounterWatch.ON_SELF_BECOMES_RENOWNED)) {
             gameData.enqueueTrigger(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     renownedCreature.getCard(),
@@ -10548,16 +10573,19 @@ public class TriggerCollectionService {
 
         gameData.forEachPermanent((ownerId, perm) -> {
             if (!ownerId.equals(controllerId)) return;
-            for (CardEffect effect : CounterWatch.ON_ALLY_CREATURE_BECOMES_RENOWNED.effectsOf(perm.getCard())) {
-                CardEffect resolved = effect;
-                if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
+            for (CounterAbilityReader.CounterEffect read : CounterAbilityReader.readPrinted(perm.getCard(),
+                    CounterWatch.ON_ALLY_CREATURE_BECOMES_RENOWNED)) {
+                if (read.limit() != TriggerLimit.NONE) {
+                    throw new IllegalStateException("The renowned collector judges no limit: " + read.ability());
+                }
+                CardEffect resolved = read.effect();
+                if (read.filter() != null) {
                     FilterContext filterContext = FilterContext.of(gameData)
                             .withSourceCardId(perm.getOriginalCard().getId())
                             .withSourceControllerId(ownerId);
-                    if (!predicateEvaluationService.matchesPermanentPredicate(renownedCreature, conditional.predicate(), filterContext)) {
+                    if (!predicateEvaluationService.matchesPermanentPredicate(renownedCreature, read.filter(), filterContext)) {
                         continue;
                     }
-                    resolved = conditional.wrapped();
                 }
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
@@ -10665,12 +10693,16 @@ public class TriggerCollectionService {
 
     public void checkBecomesMonstrousTriggers(GameData gameData, Permanent monstrousPermanent,
                                                UUID controllerId, int xValue) {
-        TriggerContext.SelfBecomesMonstrous context =
-                new TriggerContext.SelfBecomesMonstrous(controllerId, xValue);
-        for (CardEffect effect : CounterWatch.ON_SELF_BECOMES_MONSTROUS.effectsOf(monstrousPermanent.getCard())) {
-            var match = new TriggerMatchContext(gameData, monstrousPermanent, controllerId, effect);
-            registry.dispatch(match, CounterWatch.ON_SELF_BECOMES_MONSTROUS, effect, context);
+        List<CardEffect> effects = CounterAbilityReader.printedEffects(monstrousPermanent.getCard(),
+                CounterWatch.ON_SELF_BECOMES_MONSTROUS);
+        if (effects.isEmpty()) {
+            return;
         }
+        // The handler puts all of the permanent's monstrous effects on the stack as one object, as the slot's did.
+        CardEffect first = effects.getFirst();
+        var match = new TriggerMatchContext(gameData, monstrousPermanent, controllerId, first);
+        registry.dispatch(match, CounterWatch.ON_SELF_BECOMES_MONSTROUS, first,
+                new TriggerContext.SelfBecomesMonstrous(controllerId, xValue, effects));
     }
 
     /**
@@ -11977,9 +12009,9 @@ public class TriggerCollectionService {
         if (graveyard == null) return;
 
         for (Card card : new ArrayList<>(graveyard)) {
-            List<CardEffect> effects = gameQueryService.getEffectiveGraveyardLegacyTriggerEffects(
-                    gameData, card, CounterWatch.GRAVEYARD_ON_CONTROLLER_PROLIFERATES.trigger());
-            if (effects == null || effects.isEmpty()) continue;
+            List<CardEffect> effects = graveyardCounterEffects(gameData, card,
+                    CounterWatch.GRAVEYARD_ON_CONTROLLER_PROLIFERATES);
+            if (effects.isEmpty()) continue;
 
             for (int i = 0; i < proliferateCount; i++) {
                 for (CardEffect effect : effects) {
@@ -16612,6 +16644,9 @@ public class TriggerCollectionService {
                     staticBonus -> DamageAbilityReader.effects(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(
                             gameData, perm, staticBonus, ability -> ability.hasWatchedTrigger(watched)), watched));
         }
+        if (watch instanceof CounterWatch counterWatch) {
+            return dispatchCounterWatch(gameData, perm, controllerId, counterWatch, ctx);
+        }
         if (watch instanceof CombatWatch combatWatch) {
             Trigger watched = combatWatch.trigger();
             return dispatchRegistrations(gameData, perm, controllerId, watch, ctx, null,
@@ -16626,6 +16661,63 @@ public class TriggerCollectionService {
                         ? grantedTriggeredAbilitySupport.grantedTriggerEffects(gameData, perm, watch.trigger())
                         : grantedTriggeredAbilitySupport.grantedTriggerEffects(gameData, perm, staticBonus,
                                 watch.trigger()));
+    }
+
+    /**
+     * Dispatches the abilities the counter watch {@code watch} reads on {@code perm}, its own and those other
+     * permanents grant it, to the watch's handlers, as {@link #dispatchRegistrations} does, judging each ability's limit
+     * from the ability: it doesn't trigger once it is reached, and it is marked on {@code perm} by the ability once one
+     * of its effects triggered ("triggers only once each turn", Contagion Dispenser), or as the action is taken ("do
+     * this only once each turn", CR 603.2h). These watches' collectors read no filter or narrower event.
+     */
+    private boolean dispatchCounterWatch(GameData gameData, Permanent perm, UUID controllerId, CounterWatch watch,
+                                         TriggerContext ctx) {
+        if (perm.isLosesAllAbilitiesUntilEndOfTurn()) return false;
+        GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, perm);
+        if (staticBonus.losesAllAbilities() || staticBonus.losesAllNonManaAbilities()) return false;
+        Trigger watched = watch.trigger();
+        boolean triggered = false;
+        // Reused for the granted-ability lookup below unless a printed ability was dispatched in between and may have
+        // changed the game state.
+        boolean staticBonusCurrent = true;
+        List<TriggeredAbility> printed = CounterAbilityReader.printed(perm.getCard(), watch);
+        if (!printed.isEmpty() && !gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
+            staticBonusCurrent = false;
+            List<TextReplacement> globalWordChange = TextChangeTransformer.globalColorWordReplacements(gameData);
+            for (TriggeredAbility ability : printed) {
+                // Layer 3 (CR 612.1): the trigger condition is read from the permanent's text-changed words.
+                triggered |= dispatchCounterAbility(gameData, perm, controllerId, watch, ctx,
+                        CounterAbilityReader.read(ability, watched).stream().map(read -> read.withEffect(
+                                TextChangeTransformer.transform(read.effect(), perm.getTextReplacements(),
+                                        globalWordChange))).toList());
+            }
+        }
+        for (TriggeredAbility ability : grantedTriggeredAbilitySupport.grantedTriggeredAbilities(gameData, perm,
+                staticBonusCurrent ? staticBonus : null, ability -> ability.hasWatchedTrigger(watched))) {
+            triggered |= dispatchCounterAbility(gameData, perm, controllerId, watch, ctx,
+                    CounterAbilityReader.read(ability, watched));
+        }
+        return triggered;
+    }
+
+    /** Dispatches the effects of one counter ability, {@code effects}, judging and marking its limit on {@code perm}. */
+    private boolean dispatchCounterAbility(GameData gameData, Permanent perm, UUID controllerId, CounterWatch watch,
+                                           TriggerContext ctx, List<CounterAbilityReader.CounterEffect> effects) {
+        CounterAbilityReader.CounterEffect first = effects.getFirst();
+        CounterAbilityReader.requireNoFilter(first, watch.trigger());
+        CounterAbilityReader.requireWatchedEvent(first, watch.trigger());
+        if (first.limitReached(gameData, perm.getId())) {
+            return false;
+        }
+        boolean triggered = false;
+        for (CounterAbilityReader.CounterEffect read : effects) {
+            triggered |= dispatchSlotEffect(gameData, perm, controllerId, watch, ctx, read.effect(),
+                    read.marksLimitOnAcceptance(), read.limit() == TriggerLimit.ONCE_EACH_TURN);
+        }
+        if (triggered) {
+            first.markLimit(gameData, perm.getId());
+        }
+        return triggered;
     }
 
     /**
@@ -16974,6 +17066,17 @@ public class TriggerCollectionService {
      */
     private boolean dispatchSlotEffect(GameData gameData, Permanent perm, UUID controllerId,
             Object slot, TriggerContext ctx, CardEffect effect, boolean markOnAcceptance) {
+        return dispatchSlotEffect(gameData, perm, controllerId, slot, ctx, effect, markOnAcceptance, false);
+    }
+
+    /**
+     * {@link #dispatchSlotEffect(GameData, Permanent, UUID, Object, TriggerContext, CardEffect, boolean)}, where
+     * {@code triggersOnlyOnceEachTurn} says that the ability "triggers only once each turn", so nothing makes it trigger
+     * additional times.
+     */
+    private boolean dispatchSlotEffect(GameData gameData, Permanent perm, UUID controllerId,
+            Object slot, TriggerContext ctx, CardEffect effect, boolean markOnAcceptance,
+            boolean triggersOnlyOnceEachTurn) {
         CardEffect conditionedEffect = effect;
         if (slot == LibraryWatch.ON_CONTROLLER_DISCARD_EVENT
                 && ctx instanceof TriggerContext.DiscardEvent discardEvent
@@ -17013,7 +17116,8 @@ public class TriggerCollectionService {
         if (toDispatch == null) return false;
 
         boolean dispatched = dispatch(new TriggerMatchContext(gameData, perm, controllerId, effect,
-                        perm != null ? perm.getCard() : null, markOnAcceptance), slot, toDispatch, ctx);
+                        perm != null ? perm.getCard() : null, null, markOnAcceptance, triggersOnlyOnceEachTurn),
+                slot, toDispatch, ctx);
         if (dispatched && toDispatch != conditionedEffect
                 && !(conditionedEffect instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance())) {
             OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, conditionedEffect);
