@@ -52,9 +52,17 @@ public record LandPlayTrigger(ObjectRelation relation, CardPredicate filter, Zon
         return new LandPlayTrigger(relation, filter, playedFrom, Objects.requireNonNull(zone, "zone"));
     }
 
-    /** The land-play collectors read every land-play ability by its relation; the filters are judged by them. */
-    @Override
-    public Trigger watchKey() {
-        return filter == null && playedFrom == null && notPlayedFrom == null ? this : new LandPlayTrigger(relation);
+    /** Whether this trigger narrows the land played: by a filter or by the zone it is played from. */
+    public boolean filtered() {
+        return filter != null || playedFrom != null || notPlayedFrom != null;
+    }
+
+    /**
+     * This trigger without its filters: the trigger the land filter and zones narrow. A filtered land-play trigger is
+     * its own {@link #watchKey()}: the land-play collectors read such an ability itself (its filters, options and
+     * effects), found by this trigger.
+     */
+    public LandPlayTrigger unfiltered() {
+        return filtered() ? new LandPlayTrigger(relation) : this;
     }
 }

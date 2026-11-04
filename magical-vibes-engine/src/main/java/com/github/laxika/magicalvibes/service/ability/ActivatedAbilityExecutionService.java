@@ -977,10 +977,10 @@ public class ActivatedAbilityExecutionService {
         int stackBeforeActivationTriggers = gameData.stack.size();
         triggerCollectionService.checkControllerActivatesAbilityTriggers(
                 gameData, playerId, permanent, ability, activatedPermanentControllerId,
-                preCostActivationTriggers.effects());
+                preCostActivationTriggers.abilities());
         triggerCollectionService.checkOpponentActivatesAbilityTriggers(
                 gameData, playerId, permanent, ability, activatedPermanentControllerId,
-                preCostActivationTriggers.effects());
+                preCostActivationTriggers.abilities());
         if (ability.isExhaustAbility()) {
             triggerCollectionService.checkControllerActivatesExhaustAbilityTriggers(gameData, playerId);
             triggerCollectionService.checkControllerActivatesExhaustAbilityTriggersFromGraveyard(gameData, playerId);
@@ -1012,7 +1012,7 @@ public class ActivatedAbilityExecutionService {
                     targetZone, targetIds, damageAssignments);
             triggerCollectionService.checkControllerActivatesAbilityCopyTriggers(
                     gameData, playerId, abilitySnapshot, ability, permanent,
-                    preCostActivationTriggers.effects());
+                    preCostActivationTriggers.abilities());
             if (gameData.stack.size() > stackBeforeCopyTriggers) {
                 gameData.pendingManaAbilityTriggers.addAll(
                         gameData.stack.subList(stackBeforeCopyTriggers, gameData.stack.size()));
@@ -1166,16 +1166,16 @@ public class ActivatedAbilityExecutionService {
         triggerCollectionService.checkManaLinkedAbilityCopyTrigger(gameData, playerId, abilityEntry, ability);
         triggerCollectionService.checkControllerActivatesAbilityCopyTriggers(
                 gameData, playerId, abilityEntry, ability, permanent,
-                preCostActivationTriggers.effects());
+                preCostActivationTriggers.abilities());
         triggerCollectionService.checkCrimeTriggers(gameData, abilityEntry);
         triggerCollectionService.checkControllerActivatesNonManaAbilityTriggers(
                 gameData, playerId, abilityEntry, ability, permanent, activatedPermanentControllerId,
-                preCostActivationTriggers.effects());
+                preCostActivationTriggers.abilities());
         // "Whenever an opponent activates a non-mana ability" triggers (Harsh Mentor). Reached only on
         // the non-mana path, so the "if it isn't a mana ability" clause is satisfied automatically.
         triggerCollectionService.checkOpponentActivatesNonManaAbilityTriggers(
                 gameData, playerId, abilityEntry, ability, permanent, activatedPermanentControllerId,
-                preCostActivationTriggers.effects());
+                preCostActivationTriggers.abilities());
         gameData.stack.addAll(preCostActivationTriggers.entries());
         // Add "whenever you activate an ability" triggers ON TOP so they resolve first (per CR rules)
         gameData.stack.addAll(deferredActivationTriggers);

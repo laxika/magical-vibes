@@ -2003,8 +2003,9 @@ public class Card {
      * options ({@link TriggeredAbility#legacyEffects()}), so an intervening "if" is a {@code ConditionalEffect}. The
      * "when this enters" collector and the code that inspects "when this enters" abilities read these until they read
      * abilities. The wrapped effects are built once, with the index, so they keep their identity across calls. An
-     * ability is found by its trigger's {@link Trigger#watchKey()}, so a land-play or activation ability with a filter
-     * is found by the unfiltered trigger, with the filter as a wrapper.
+     * ability is found by its trigger's {@link Trigger#watchKey()}, so an ability whose collector judges a filter from
+     * a wrapper (a Room door, a tap trigger's permanent) is found by the unfiltered trigger, with the filter as a
+     * wrapper.
      */
     public List<CardEffect> getLegacyTriggerEffects(Trigger trigger) {
         TriggerView view = slotIndex().legacyByTrigger().get(trigger);
@@ -2050,7 +2051,7 @@ public class Card {
     /**
      * The effects of this card's triggered abilities that have {@code trigger} as a trigger condition functioning in
      * {@code zone}, each wrapped in its ability's options as {@link #getLegacyTriggerEffects(Trigger)} says: the form
-     * the "at the beginning of [step or phase]" and the spell, land-play and activation collectors read them in (by
+     * the "at the beginning of [step or phase]" and the unfiltered spell and land-play collectors read them in (by
      * the trigger's {@link Trigger#watchKey()}, as {@link #getLegacyTriggerEffects(Trigger)} says). The wrapped
      * effects are the ones
      * {@link #getLegacyTriggerEffects(Trigger)} gives, so they keep their identity across calls.

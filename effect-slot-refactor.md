@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; runs 16c onward left: the rest of the legacy view's retirement, family by family, with the may-unwrapping, `TriggerMode`, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; runs 16d onward left: the rest of the legacy view's retirement, family by family, with the may-unwrapping, `TriggerMode`, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -604,7 +604,8 @@ no other family still uses. The order:
 | 7 to 15 | Step 13's families 3 to 11, in its order |
 | 16a | What no family owns and needs no collector rewritten: the `onlyIfSacrificed` flags, the `atTriggerTime` and die-result conditions as the trigger's event condition, the may questions asked before the stack (CR 603.5), the Eerie merges |
 | 16b | The legacy view's retirement begins: the spell-cast and spell-copy collectors read the filtered abilities themselves |
-| 16c onward | The rest of the legacy view's retirement, family by family: each family's collectors read the ability's options, filters and grouping (no `TriggerMode`), then the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
+| 16c | Family 2's rest: the filtered land-play abilities and every activation ability are read by their collectors themselves; the land-play zone records and the `Triggering…AbilityConditionalEffect`s go |
+| 16d onward | The rest of the legacy view's retirement, family by family: each family's collectors read the ability's options, filters and grouping (no `TriggerMode`), then the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
 
 Mark the step `done` only after the last run of 16.
 
@@ -7209,6 +7210,114 @@ authored extort still need it (step 15).
 - AI: the whole module (1,620 tests), with the same 10 failures as before.
 - `magical-vibes-webservice`'s test sources don't compile (`CardBrowserServiceTest`'s anonymous `CardCatalog` lacks
   `findLoadedPrintingByName`); this run doesn't touch them.
+- The full suite was not run here.
+
+#### Run 16c: the land-play and activation collectors read the ability
+
+The rest of step 13's family 2, as 16b's findings planned: the "whenever [a player] plays a land" abilities with a land
+filter or a zone, and every "whenever [a player] activates an ability" ability (78 card classes by a grep of the
+cards' `Triggers` calls: 36 with a land-play ability, 42 with an activation ability). Their collectors read the
+ability itself, and the legacy view no longer builds a wrapper or a record for them. No card class changed.
+
+**What the scan found.** Every activation ability has one effect; the options are Wizened Mentor's, Elrond's and
+Satoru Umezawa's "triggers only once each turn" and Vazi's intervening "if" ("if mana from a Treasure was spent to
+activate it"). Of the land-play abilities, 9 have a land filter (Hidden Herd's with an intervening "if") and 9 a zone
+("from exile" 8, Shadow of the Goblin's "from anywhere other than your hand"); every one has one effect too (a
+`SequenceEffect` where the card says several things). Hidden Stag's and Fastbond's intervening "if"s are on
+unfiltered abilities. None has a limit, an event condition or a multiplicity, and no land-play or activation ability is
+granted but Tyvar the Bellicose's "a mana ability of this creature resolves", which has no filter.
+
+**The engine.**
+
+- A filtered `LandPlayTrigger` (new `filtered()`: a land filter, `playedFrom` or `notPlayedFrom`) is its own
+  `watchKey()`, and new `unfiltered()` names the trigger it narrows, as 16b made `SpellTrigger`. `AbilityTrigger` is
+  always its own key now, with `unfiltered()` too, and new `AbilityKind.matches(ActivatedAbility)` says what the kind
+  wrappers said. `TriggeredAbility.legacyEffects()` lost its land-play and activation branches
+  (`legacyLandPlayZoneEffects`, `legacyKindWrapper`).
+- Land play: `TriggerCollectionService.dispatchSpellWatch` reads the land-play watches on the battlefield too, and the
+  granted and planar readers (`dispatchCardSpellAbilities`; the face-up planes' land-play abilities go through it now)
+  send a filtered land-play ability to new `PlayedCardNameTriggerCollectorService.collectLandPlayAbility`. It judges
+  the zone, the land filter and the intervening "if" (**CR 603.4**) and puts the effects on the stack as one object
+  (**CR 603.3**), with the player who played the land as "that player" (the non-targeting target) and the land as the
+  triggering card; an intervening "if" is wrapped around the effects for the check on resolution, and so is Cemetery
+  Protector's and Cemetery Gatekeeper's "if it shares a card type with the exiled card" (the land filter as a
+  `TriggeringCardConditionalEffect`, as the old handler kept it). When the effects are bound to a target group or
+  target a permanent (Rocco, Street Chef's "from exile" ability), the targets are chosen as it triggers
+  (**CR 603.3d**), as the zone records' handler did. The limit is judged and marked around the collector by new
+  `collectLimitedAbility`, which 16b's `collectSpellAbility` now uses too. Unfiltered land-play abilities still read
+  the legacy view (their effects are event bindings, or plain effects the default handler takes, with Hidden Stag's
+  and Fastbond's intervening "if"s as `ConditionalEffect`s).
+- Activations: the seven activation collectors (`checkControllerActivatesAbilityTriggers`, its copy, ninjutsu,
+  exhaust, embalm-or-eternalize, non-mana and opponent forms, and `collectNonTapActivationTriggersBeforeCosts`) iterate
+  the card's activation abilities (`activationAbilities`, by `AbilityTrigger.unfiltered()`) instead of the legacy
+  view's effects. New `activationEffects` judges the kind and the source filter (from the watcher's point of view, as
+  `resolveTriggeringPermanentConditional` did), the limit (`TriggeredAbilityStackService.limitReached` / `markLimit`,
+  keyed by `limitKey()`, the key the legacy `OncePerTurnTriggerEffect.keyed` marked), the event condition and the
+  intervening "if": Vazi's Treasure condition from the activation, and not again (as
+  `resolveTreasureManaActivationConditional` did); any other wrapped for the check on resolution. "Do this only once
+  each turn" marks on acceptance (**CR 603.2h**). An ability's effects are one stack object. `PreCostActivationTriggers`
+  names the abilities it collected before the costs (`abilities()`), where it named effects by identity. The graveyard
+  exhaust reader (Afterburner Expert) reads `getEffectiveGraveyardTriggeredAbilities` and throws on options it doesn't
+  judge.
+- Deleted: `LandPlayFromExileTriggerEffect`, the seven `Triggering…AbilityConditionalEffect`s (loyalty, ninjutsu,
+  outlast, power-up, boast, with and without {T}), `CardEffect.resolveForActivatedAbility`, the zone records' and the
+  land filter's land-play handlers, and `PlayFromOutsideHandTriggerCollectorService` (only the legacy view's record
+  reached it; Apple of Eden's registered "this way" abilities are judged by the temporary-global readers through
+  `TemporaryGlobalTriggerEffect.matches`, so `PlayFromOutsideHandTriggerEffect` stays for them).
+  `TriggeringCardConditionalEffect` and `TriggeringPermanentConditionalEffect` stay: other families' legacy view and
+  some cards still give them.
+
+**Behaviour changes.**
+
+- None known. The land-play stack entries now always carry the triggering land and "that player" (Shadow of the
+  Goblin's and an opponent's "from exile" entries didn't; their effects don't read them), and an ability with several
+  effects would be one stack object (no land-play or activation ability has several).
+
+**Kept, with their reason.**
+
+- The land filter is not read through text changes (**CR 612.1**): the old wrapper wasn't either
+  (`TextChangeTransformer` has no `TriggeringCardConditionalEffect` case). Jokulmorder's "whenever you play an Island"
+  under a land-type text change is a later fix (a `transformCardPredicate` like `transformSpellFilter`, with a test).
+- Bill Potts's one "this ability triggers only once each turn" over a cast and an activation trigger is still its two
+  authored `OncePerTurnTriggerEffect`s sharing the source's unkeyed mark; the copy collector unwraps it (one ability of
+  both conditions is a later merge).
+- The Fourth Doctor's `OncePerTurnTriggerEffect(CreateFoodWhenPlayingCardFromTopOfLibraryEffect)` (an event binding,
+  step 15).
+- `collectNonTapActivationTriggersBeforeCosts` reads the non-mana watches' `WITHOUT_TAP_COST` abilities, as before; no
+  card has one (Haunting Wind, Artifact Possession and Powerleech are "activates an ability", read by the activation
+  collectors after the costs).
+- The activation collectors' copies for Clara Oswald's "triggers an additional time" ignore the limit, as before.
+
+**For 16d onward.**
+
+- The unfiltered spell and land-play abilities with options (Hidden Stag, Fastbond, the cast ones 16b listed) still
+  read the legacy view's `ConditionalEffect` / `OncePerTurnTriggerEffect`; a `youPlayLand().anyLand()` like
+  `anySpell()` would let the land-play collector read them, the event bindings staying for step 15.
+- `ON_SELF_MANA_ABILITY_RESOLVES` (Tyvar's granted ability, `OncePerTurnTriggerEffect.perGrant`) reads the legacy view.
+- The other families, as 16a planned.
+
+**Tests changed.**
+
+- `SpellAbilityTriggerTest`: the four tests of the deleted legacy forms (a land filter and a kind as wrappers, the
+  shared land filter of one ability's conditions, the zone records) became a filtered land-play trigger being its own
+  watch key and narrowing `unfiltered()`, the unfiltered trigger's legacy view leaving filtered land-play abilities out
+  (an unfiltered one's intervening "if" still wrapped), an activation trigger's `unfiltered()`, and new
+  `anAbilityKindIsJudgedFromTheActivatedAbility`.
+- `ActivatedAbilityExecutionServiceTest` builds `PreCostActivationTriggers` as before (its second list is now of
+  abilities); unchanged.
+
+**Test runs.**
+
+- Card: the test class of every card with a land-play or activation ability and every card test that uses one of
+  those cards (127 classes, 1,120 tests): all passing.
+- Application: the `service.trigger` and `model.trigger` packages and the activation-execution, ability-activation,
+  pipeline, text-change, freeze, architecture, simulation-copy and targeting-consistency classes (911 tests): 69
+  failures, all known from HEAD (`ActivatedAbilityExecutionServiceTest` 35 and `AbilityActivationServiceTest` 15,
+  checked at HEAD in this run with the change stashed: the same 50; `DeathTriggerCollectorServiceTest` 6,
+  `DamageTriggerCollectorServiceTest` 6, `SpellCastTriggerCollectorServiceTest` 2, `LandTapTriggerCollectorServiceTest`
+  2 and the known one each in `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and
+  `CardEffectTargetingConsistencyTest`).
+- AI: the whole module (1,620 tests), with the same 10 failures as before.
 - The full suite was not run here.
 
 ## Prompt

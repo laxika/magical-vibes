@@ -1,6 +1,11 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.trigger.LandPlayTrigger;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -18,7 +23,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.LandPlayFromExileTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayedCardNameMatchesCardExiledWithSourceTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayedCardExiledWithSourceTriggerEffect;
@@ -44,9 +48,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
- * Trigger collector for "whenever you play a card with the same name as one of the cards exiled with
- * this permanent" (Search the City). "Play a card" covers both halves, so the same effect is
- * collected from {@code ON_CONTROLLER_CASTS_SPELL} and {@code ON_CONTROLLER_PLAYS_LAND}.
+ * Trigger collector for the land-play abilities ("whenever [a player] plays a land"): a filtered one
+ * ({@link #collectLandPlayAbility}) is read as an ability, and the handlers bind the event data of the "play a card"
+ * abilities, such as "whenever you play a card with the same name as one of the cards exiled with this permanent"
+ * (Search the City). "Play a card" covers both halves, so the same effect is collected from
+ * {@code ON_CONTROLLER_CASTS_SPELL} and {@code ON_CONTROLLER_PLAYS_LAND}.
  */
 @Slf4j
 @Service
@@ -151,28 +157,6 @@ public class PlayedCardNameTriggerCollectorService {
         return collect(match, lp.landCard());
     }
 
-    @CollectsSpellAbilityTrigger(value = LandPlayFromExileTriggerEffect.class,
-            watch = SpellAbilityWatch.ON_CONTROLLER_PLAYS_LAND)
-    private boolean handleControllerPlaysLandFromExile(TriggerMatchContext match,
-            LandPlayFromExileTriggerEffect trigger, TriggerContext ctx) {
-        TriggerContext.LandPlayed lp = (TriggerContext.LandPlayed) ctx;
-        if (!lp.fromExile()) {
-            return false;
-        }
-        return enqueueLandPlayTrigger(match, trigger, lp.playingPlayerId(), lp.landCard().getId());
-    }
-
-    @CollectsSpellAbilityTrigger(value = LandPlayFromExileTriggerEffect.class,
-            watch = SpellAbilityWatch.ON_OPPONENT_PLAYS_LAND)
-    private boolean handleOpponentPlaysLandFromExile(TriggerMatchContext match,
-            LandPlayFromExileTriggerEffect trigger, TriggerContext ctx) {
-        TriggerContext.LandPlayed lp = (TriggerContext.LandPlayed) ctx;
-        if (!lp.fromExile()) {
-            return false;
-        }
-        return enqueueLandPlayTrigger(match, trigger, lp.playingPlayerId());
-    }
-
     @CollectsSpellAbilityTrigger(value = DrawCardForTargetPlayerEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_PLAYS_LAND)
     private boolean handleOpponentPlaysLandDraws(TriggerMatchContext match,
             DrawCardForTargetPlayerEffect trigger, TriggerContext ctx) {
@@ -194,29 +178,65 @@ public class PlayedCardNameTriggerCollectorService {
         return true;
     }
 
-    @CollectsSpellAbilityTriggers({
-            @CollectsSpellAbilityTrigger(value = TriggeringCardConditionalEffect.class,
-                    watch = SpellAbilityWatch.ON_CONTROLLER_PLAYS_LAND),
-            @CollectsSpellAbilityTrigger(value = TriggeringCardConditionalEffect.class,
-                    watch = SpellAbilityWatch.ON_OPPONENT_PLAYS_LAND)
-    })
-    private boolean handleConditionalLandPlay(TriggerMatchContext match,
-            TriggeringCardConditionalEffect conditional, TriggerContext ctx) {
-        TriggerContext.LandPlayed landPlayed = (TriggerContext.LandPlayed) ctx;
-        if (!predicateEvaluationService.matchesCardPredicate(landPlayed.landCard(), conditional.predicate(),
-                match.permanent().getOriginalCard().getId(),
-                match.gameData(), match.controllerId())) {
+    /**
+     * Collects {@code ability}, whose land-play trigger {@code trigger} narrows the land played by a filter or by the
+     * zone it was played from, for the land play {@code landPlayed}: the trigger's filters and the intervening "if"
+     * (CR 603.4) are judged as the land is played, and the ability goes on the stack as one object (CR 603.3), with
+     * "that player" the player who played the land. An intervening "if" is checked again as the ability resolves, and
+     * so is a filter that reads the card exiled with the source ("if it shares a card type with the exiled card"). An
+     * ability whose effects are bound to a target of the card, or target a permanent, chooses its targets as it
+     * triggers (CR 603.3d). The ability's limit is judged by the caller.
+     *
+     * @return whether the ability triggered
+     */
+    public boolean collectLandPlayAbility(TriggerMatchContext match, TriggeredAbility ability, LandPlayTrigger trigger,
+                                          TriggerContext.LandPlayed landPlayed) {
+        if (trigger.playedFrom() != null && landPlayed.playZone() != trigger.playedFrom()
+                || trigger.notPlayedFrom() != null && landPlayed.playZone() == trigger.notPlayedFrom()) {
             return false;
         }
-
-        CardEffect resolved = conditional.predicate() instanceof CardSharesCardTypeWithImprintedCardPredicate imprint
-                && imprint.requireImprintedCard() ? conditional : conditional.wrapped();
-        if (!interveningIfMet(match, resolved)) {
+        Card sourceCard = match.sourceCard();
+        UUID sourceCardId = match.permanent() != null ? match.permanent().getOriginalCard().getId() : sourceCard.getId();
+        CardPredicate filter = trigger.filter();
+        if (filter != null && !predicateEvaluationService.matchesCardPredicate(landPlayed.landCard(), filter,
+                sourceCardId, match.gameData(), match.controllerId())) {
             return false;
         }
-
-        return enqueueLandPlayTrigger(match, List.of(resolved), landPlayed.playingPlayerId(),
-                landPlayed.landCard().getId());
+        Condition interveningIf = ability.options().interveningIf();
+        if (interveningIf != null && !conditionEvaluationService.isMet(match.gameData(), interveningIf,
+                match.permanent() != null
+                        ? ConditionContext.forPermanent(match.permanent(), match.controllerId())
+                        : ConditionContext.forCard(sourceCard, match.controllerId()))) {
+            return false;
+        }
+        boolean recheckFilter = filter instanceof CardSharesCardTypeWithImprintedCardPredicate imprint
+                && imprint.requireImprintedCard();
+        List<CardEffect> effects = new ArrayList<>(ability.effects().size());
+        for (EffectRegistration registration : ability.effects()) {
+            CardEffect effect = registration.effect();
+            if (interveningIf != null) {
+                effect = new ConditionalEffect(interveningIf, effect, true);
+            }
+            if (recheckFilter) {
+                effect = new TriggeringCardConditionalEffect(filter, effect);
+            }
+            effects.add(effect);
+        }
+        TargetFilter boundFilter = boundTargetFilter(sourceCard, ability.effects().stream()
+                .map(EffectRegistration::effect).toList());
+        boolean needsPermanentTarget = effects.stream()
+                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+        if (needsPermanentTarget || boundFilter != null) {
+            boolean needsPlayerTarget = effects.stream()
+                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+            match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    sourceCard, match.controllerId(), effects, needsPlayerTarget && !needsPermanentTarget,
+                    boundFilter, 0, match.permanent() != null ? match.permanent().getId() : null));
+            gameLogService.append(match.gameData(), GameLog.cardThen(sourceCard,
+                    "'s triggered ability triggers — choose a target."));
+            return true;
+        }
+        return enqueueLandPlayTrigger(match, effects, landPlayed.playingPlayerId(), landPlayed.landCard().getId());
     }
 
     @CollectsSpellAbilityTrigger(value = CreateFoodWhenPlayingCardFromTopOfLibraryEffect.class,
@@ -254,9 +274,6 @@ public class PlayedCardNameTriggerCollectorService {
     @CollectsSpellAbilityTrigger(value = CardEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_PLAYS_ANOTHER_LAND)
     private boolean handleControllerPlaysLandDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
-        if (effect instanceof TriggeringCardConditionalEffect) {
-            return false;
-        }
         if (!interveningIfMet(match, effect)) {
             return false;
         }
@@ -270,9 +287,6 @@ public class PlayedCardNameTriggerCollectorService {
     @CollectsSpellAbilityTrigger(value = CardEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_PLAYS_LAND)
     private boolean handleOpponentPlaysLandDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
-        if (effect instanceof TriggeringCardConditionalEffect) {
-            return false;
-        }
         if (!interveningIfMet(match, effect)) {
             return false;
         }
@@ -294,33 +308,6 @@ public class PlayedCardNameTriggerCollectorService {
         return enqueueLandPlayTrigger(match, List.of(effect), playingPlayerId);
     }
 
-    private boolean enqueueLandPlayTrigger(TriggerMatchContext match,
-                                           LandPlayFromExileTriggerEffect trigger, UUID playingPlayerId) {
-        return enqueueLandPlayTrigger(match, trigger, playingPlayerId, null);
-    }
-
-    private boolean enqueueLandPlayTrigger(TriggerMatchContext match,
-                                           LandPlayFromExileTriggerEffect trigger,
-                                           UUID playingPlayerId, UUID triggeringCardId) {
-        boolean needsPlayerTarget = trigger.resolvedEffects().stream()
-                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-        boolean needsPermanentTarget = trigger.resolvedEffects().stream()
-                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
-        if (needsPlayerTarget || needsPermanentTarget) {
-            match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                    match.permanent().getCard(), match.controllerId(),
-                    new ArrayList<>(trigger.resolvedEffects()),
-                    needsPlayerTarget && !needsPermanentTarget,
-                    trigger.targetFilter() != null ? trigger.targetFilter()
-                            : boundTargetFilter(match.permanent().getCard(), trigger.resolvedEffects()),
-                    0, match.permanent().getId()));
-            gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
-                    "'s triggered ability triggers — choose a target."));
-            return true;
-        }
-        return enqueueLandPlayTrigger(match, trigger.resolvedEffects(), playingPlayerId, triggeringCardId);
-    }
-
     /**
      * The filter of the target group the ability's effects are bound to, or {@code null} for none: a "whenever you
      * play a land from exile" ability declares its target as a target group of the card.
@@ -339,7 +326,7 @@ public class PlayedCardNameTriggerCollectorService {
 
     private boolean enqueueLandPlayTrigger(TriggerMatchContext match, List<CardEffect> effects,
                                            UUID playingPlayerId, UUID triggeringCardId) {
-        Card sourceCard = match.permanent().getCard();
+        Card sourceCard = match.permanent() != null ? match.permanent().getCard() : match.sourceCard();
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
@@ -347,13 +334,17 @@ public class PlayedCardNameTriggerCollectorService {
                 sourceCard.getName() + "'s ability",
                 new ArrayList<>(effects),
                 null,
-                match.permanent().getId());
+                match.permanent() != null ? match.permanent().getId() : null);
+        if (match.sourcePlanarObject() != null) {
+            entry.setSourcePlanarObject(match.sourcePlanarObject());
+        }
         entry.setTargetId(playingPlayerId);
         if (triggeringCardId != null) {
             entry.setTriggeringCardId(triggeringCardId);
         }
         entry.setNonTargeting(true);
-        if (effects.stream().anyMatch(SourcePermanentSnapshotRequiredEffect.class::isInstance)) {
+        if (match.permanent() != null
+                && effects.stream().anyMatch(SourcePermanentSnapshotRequiredEffect.class::isInstance)) {
             entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
         }
         match.gameData().stack.add(entry);

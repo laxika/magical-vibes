@@ -6,7 +6,12 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import java.util.List;
 import java.util.UUID;
 
-/** Trigger descriptor for casting a spell or playing a land from a zone other than hand. */
+/**
+ * The effects of a temporary global "whenever you cast a spell or play a land from among the cards exiled with it this
+ * turn" ability (Apple of Eden, Isu Relic), bound as it is registered to the permanent whose exiled cards it watches. A
+ * printed "from anywhere other than your hand" ability is a trigger filter instead
+ * ({@code Triggers.youCastSpell().notCastFrom(Zone.HAND)}, {@code Triggers.youPlayLand().notPlayedFrom(Zone.HAND)}).
+ */
 public record PlayFromOutsideHandTriggerEffect(List<CardEffect> resolvedEffects,
                                                UUID sourcePermanentId,
                                                UUID targetPlayerId,

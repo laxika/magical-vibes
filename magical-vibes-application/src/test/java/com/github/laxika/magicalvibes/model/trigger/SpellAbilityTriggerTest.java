@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.model.trigger;
 
 import com.github.laxika.magicalvibes.model.AbilityZones;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -13,17 +13,10 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LandPlayFromExileTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayFromOutsideHandTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovePerpetualTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringNinjutsuAbilityConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryKickedPredicate;
 import org.junit.jupiter.api.Test;
@@ -121,17 +114,51 @@ class SpellAbilityTriggerTest {
     }
 
     @Test
-    void aFilteredLandPlayOrActivationTriggerIsWatchedByItsUnfilteredTrigger() {
+    void aFilteredLandPlayTriggerIsItsOwnWatchKeyAndNarrowsItsUnfilteredTrigger() {
         LandPlayTrigger island = Triggers.youPlayLand().withFilter(new CardSubtypePredicate(CardSubtype.ISLAND));
+        LandPlayTrigger fromExile = Triggers.opponentPlaysLand().playedFrom(Zone.EXILE);
+
+        assertThat(island).isNotEqualTo(Triggers.youPlayLand());
+        assertThat(island.filtered()).isTrue();
+        assertThat(island.watchKey()).isEqualTo(island);
+        assertThat(island.unfiltered()).isEqualTo(Triggers.youPlayLand());
+        assertThat(fromExile.filtered()).isTrue();
+        assertThat(fromExile.watchKey()).isEqualTo(fromExile);
+        assertThat(fromExile.unfiltered()).isEqualTo(Triggers.opponentPlaysLand());
+        LandPlayTrigger unfiltered = Triggers.youPlayLand();
+        assertThat(unfiltered.filtered()).isFalse();
+        assertThat(unfiltered.unfiltered()).isSameAs(unfiltered);
+        assertThatThrownBy(() -> Triggers.youPlayLand().withFilter(null)).isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> Triggers.youPlayLand().playedFrom(Zone.EXILE).notPlayedFrom(Zone.HAND))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void theLegacyViewOfTheUnfilteredLandPlayTriggerLeavesOutFilteredLandPlayAbilities() {
+        Card card = new Card();
+        card.addTrigger(Triggers.youPlayLand().withFilter(new CardSubtypePredicate(CardSubtype.ISLAND)),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW);
+        card.addTrigger(Triggers.youPlayLand().notPlayedFrom(Zone.HAND), LOSE);
+        card.addTrigger(Triggers.youPlayLand(), TriggerOptions.DEFAULT.withInterveningIf(new SourceIsEnchantment()),
+                GAIN);
+
+        // The land-play collector reads a filtered ability itself; an unfiltered one is still read by its effects.
+        assertThat(card.getLegacyTriggerEffects(Triggers.youPlayLand(), Zone.BATTLEFIELD))
+                .containsExactly(new ConditionalEffect(new SourceIsEnchantment(), GAIN, true));
+        assertThat(card.getLegacyTriggerEffects(Triggers.youPlayLand(), Zone.BATTLEFIELD).getFirst())
+                .isSameAs(card.getLegacyTriggerEffects(Triggers.youPlayLand(), Zone.BATTLEFIELD).getFirst());
+        assertThat(card.getLegacyTriggerEffects(Triggers.opponentPlaysLand(), Zone.BATTLEFIELD)).isEmpty();
+    }
+
+    @Test
+    void anActivationTriggerNarrowsItsUnfilteredTriggerByKindAndSource() {
         AbilityTrigger loyalty = Triggers.youActivateAbility().withKind(AbilityTrigger.AbilityKind.LOYALTY)
                 .withSource(new PermanentIsCreaturePredicate());
 
-        assertThat(island).isNotEqualTo(Triggers.youPlayLand());
-        assertThat(island.watchKey()).isEqualTo(Triggers.youPlayLand());
-        assertThat(loyalty.watchKey()).isEqualTo(Triggers.youActivateAbility());
-        assertThat(Triggers.opponentPlaysLand().watchKey()).isEqualTo(Triggers.opponentPlaysLand());
-        assertThat(Triggers.youCastSpell().watchKey()).isEqualTo(Triggers.youCastSpell());
-        assertThatThrownBy(() -> Triggers.youPlayLand().withFilter(null)).isInstanceOf(NullPointerException.class);
+        assertThat(loyalty.watchKey()).isEqualTo(loyalty);
+        assertThat(loyalty.unfiltered()).isEqualTo(Triggers.youActivateAbility());
+        AbilityTrigger unfiltered = Triggers.opponentActivatesAbility();
+        assertThat(unfiltered.unfiltered()).isSameAs(unfiltered);
         assertThatThrownBy(() -> Triggers.youActivateAbility().withSource(null))
                 .isInstanceOf(NullPointerException.class);
         assertThatThrownBy(() -> Triggers.youActivateAbility().withKind(null))
@@ -139,56 +166,19 @@ class SpellAbilityTriggerTest {
     }
 
     @Test
-    void theLegacyViewGivesALandPlayFilterAsAWrapperInsideTheLimitAndOutsideTheInterveningIf() {
-        Card card = new Card();
-        var island = new CardSubtypePredicate(CardSubtype.ISLAND);
-        card.addTrigger(Triggers.youPlayLand().withFilter(island), TriggerOptions.DEFAULT
-                .withLimit(TriggerLimit.ONCE_EACH_TURN).withInterveningIf(new SourceIsEnchantment()), DRAW);
-        card.addTrigger(Triggers.youPlayLand(), GAIN);
-        String key = card.getTriggeredAbilities().getFirst().limitKey();
+    void anAbilityKindIsJudgedFromTheActivatedAbility() {
+        ActivatedAbility tap = new ActivatedAbility(true, null, List.of(DRAW), "{T}: Draw a card.");
+        ActivatedAbility mana = new ActivatedAbility(false, "{1}", List.of(DRAW), "{1}: Draw a card.");
+        ActivatedAbility loyalty = new ActivatedAbility(1, List.of(DRAW), "+1: Draw a card.");
 
-        assertThat(card.getTriggerEffects(Triggers.youPlayLand(), Zone.BATTLEFIELD)).containsExactly(GAIN);
-        assertThat(card.getLegacyTriggerEffects(Triggers.youPlayLand(), Zone.BATTLEFIELD)).containsExactly(
-                OncePerTurnTriggerEffect.keyed(new TriggeringCardConditionalEffect(island,
-                        new ConditionalEffect(new SourceIsEnchantment(), DRAW, true)), key),
-                GAIN);
-        assertThat(card.getLegacyTriggerEffects(Triggers.youPlayLand(), Zone.BATTLEFIELD).getFirst())
-                .isSameAs(card.getLegacyTriggerEffects(Triggers.youPlayLand(), Zone.BATTLEFIELD).getFirst());
-        assertThat(card.getLegacyTriggerEffects(Triggers.opponentPlaysLand(), Zone.BATTLEFIELD)).isEmpty();
-    }
-
-    @Test
-    void theLegacyViewGivesAnAbilityKindOutsideTheLimitAndASourceFilterInsideIt() {
-        Card card = new Card();
-        card.addTrigger(Triggers.youActivateAbility().withKind(AbilityTrigger.AbilityKind.NINJUTSU)
-                        .withSource(new PermanentIsArtifactPredicate()),
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW);
-        String key = card.getTriggeredAbilities().getFirst().limitKey();
-
-        assertThat(card.getLegacyTriggerEffects(Triggers.youActivateAbility(), Zone.BATTLEFIELD)).containsExactly(
-                new TriggeringNinjutsuAbilityConditionalEffect(OncePerTurnTriggerEffect.keyed(
-                        new TriggeringPermanentConditionalEffect(new PermanentIsArtifactPredicate(), DRAW), key)));
-        assertThat(card.getLegacyTriggerEffects(Triggers.opponentActivatesAbility(), Zone.BATTLEFIELD)).isEmpty();
-    }
-
-    @Test
-    void theConditionsOfOneAbilityShareTheirLandPlayFilter() {
-        var desert = new CardSubtypePredicate(CardSubtype.DESERT);
-        Card shared = new Card();
-        shared.addTriggeredAbility(new TriggeredAbility(List.of(
-                new TriggerCondition(Triggers.youPlayLand().withFilter(desert)),
-                new TriggerCondition(Triggers.opponentPlaysLand().withFilter(desert))),
-                TriggerOptions.DEFAULT, List.of(new EffectRegistration(DRAW))));
-        Card mixed = new Card();
-        mixed.addTriggeredAbility(new TriggeredAbility(List.of(
-                new TriggerCondition(Triggers.youPlayLand().withFilter(desert)),
-                new TriggerCondition(Triggers.opponentPlaysLand())),
-                TriggerOptions.DEFAULT, List.of(new EffectRegistration(DRAW))));
-
-        assertThat(shared.getLegacyTriggerEffects(Triggers.opponentPlaysLand(), Zone.BATTLEFIELD))
-                .containsExactly(new TriggeringCardConditionalEffect(desert, DRAW));
-        assertThatThrownBy(() -> mixed.getLegacyTriggerEffects(Triggers.youPlayLand(), Zone.BATTLEFIELD))
-                .isInstanceOf(IllegalStateException.class);
+        assertThat(AbilityTrigger.AbilityKind.WITH_TAP_COST.matches(tap)).isTrue();
+        assertThat(AbilityTrigger.AbilityKind.WITH_TAP_COST.matches(mana)).isFalse();
+        assertThat(AbilityTrigger.AbilityKind.WITHOUT_TAP_COST.matches(mana)).isTrue();
+        assertThat(AbilityTrigger.AbilityKind.WITHOUT_TAP_COST.matches(tap)).isFalse();
+        assertThat(AbilityTrigger.AbilityKind.LOYALTY.matches(loyalty)).isTrue();
+        assertThat(AbilityTrigger.AbilityKind.LOYALTY.matches(mana)).isFalse();
+        assertThat(AbilityTrigger.AbilityKind.NINJUTSU.matches(tap)).isFalse();
+        assertThat(AbilityTrigger.AbilityKind.BOAST.matches(tap)).isFalse();
     }
 
     @Test
@@ -259,25 +249,5 @@ class SpellAbilityTriggerTest {
         assertThatThrownBy(() -> Triggers.youCopySpell().nthThisTurn(1)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> Triggers.youCopySpell().castFrom(Zone.HAND))
                 .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    void aLandPlayTriggerWithAZoneGivesTheLandPlayRecordOfItsEffects() {
-        LandPlayTrigger fromExile = Triggers.youPlayLand().playedFrom(Zone.EXILE);
-        Card card = new Card();
-        card.addTrigger(fromExile, DRAW, GAIN);
-        card.addTrigger(Triggers.opponentPlaysLand().notPlayedFrom(Zone.HAND), LOSE);
-
-        assertThat(fromExile.watchKey()).isEqualTo(Triggers.youPlayLand());
-        assertThat(card.getLegacyTriggerEffects(Triggers.youPlayLand(), Zone.BATTLEFIELD)).containsExactly(
-                new LandPlayFromExileTriggerEffect(List.of(DRAW, GAIN)));
-        assertThat(card.getLegacyTriggerEffects(Triggers.opponentPlaysLand(), Zone.BATTLEFIELD)).containsExactly(
-                new PlayFromOutsideHandTriggerEffect(List.of(LOSE)));
-        assertThatThrownBy(() -> Triggers.youPlayLand().playedFrom(Zone.EXILE).notPlayedFrom(Zone.HAND))
-                .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> new TriggeredAbility(fromExile,
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
-                List.of(new EffectRegistration(DRAW))).legacyEffects())
-                .isInstanceOf(IllegalStateException.class);
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.trigger;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.Objects;
@@ -36,9 +37,11 @@ public record AbilityTrigger(AbilityEvent event, PlayerRelation player, Permanen
         return new AbilityTrigger(event, player, source, Objects.requireNonNull(kind, "kind"));
     }
 
-    /** The activation collectors read every ability of an event by its player; the filters are judged by them. */
-    @Override
-    public Trigger watchKey() {
+    /**
+     * This trigger without its filters: the trigger the source and kind narrow. The activation collectors read every
+     * ability of an event by this trigger, and judge the filters themselves.
+     */
+    public AbilityTrigger unfiltered() {
         return source == null && kind == null ? this : new AbilityTrigger(event, player);
     }
 
@@ -71,6 +74,19 @@ public record AbilityTrigger(AbilityEvent event, PlayerRelation player, Permanen
         /** An ability with {T} in its activation cost. */
         WITH_TAP_COST,
         /** An ability without {T} in its activation cost. */
-        WITHOUT_TAP_COST
+        WITHOUT_TAP_COST;
+
+        /** Whether {@code ability}, the activated ability, is of this kind. */
+        public boolean matches(ActivatedAbility ability) {
+            return switch (this) {
+                case LOYALTY -> ability.getLoyaltyCost() != null;
+                case NINJUTSU -> ability.isNinjutsuAbility();
+                case OUTLAST -> ability.isOutlastAbility();
+                case POWER_UP -> ability.isPowerUpAbility();
+                case BOAST -> ability.isBoast();
+                case WITH_TAP_COST -> ability.isRequiresTap();
+                case WITHOUT_TAP_COST -> !ability.isRequiresTap();
+            };
+        }
     }
 }

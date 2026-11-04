@@ -17,12 +17,13 @@ import java.util.List;
  * the stack, as the slot's handlers did, until steps 14 and 15 of the refactor replace them with trigger options and
  * effects that read the event.
  * <p>
- * The collectors read the abilities in the form the cards wrote them before step 14
+ * The collectors of unfiltered cast and land-play abilities read them in the form the cards wrote them before step 14
  * ({@link Card#getLegacyTriggerEffects(com.github.laxika.magicalvibes.model.trigger.Trigger, Zone)}): an intervening
- * "if" and a limit wrapped around each effect, and a land-play or activation trigger's filters as the
- * {@code Triggering…ConditionalEffect} wrappers they judge. A cast or copy ability with a spell filter is no part of
- * that view: the spell-cast and spell-copy collectors read it itself (its filter, options and effects), found by the
- * filter's {@link com.github.laxika.magicalvibes.model.trigger.SpellTrigger#unfiltered()} trigger.
+ * "if" and a limit wrapped around each effect. A cast or copy ability with a spell filter and a land-play ability with
+ * a land filter or zone are no part of that view: the spell-cast, spell-copy and land-play collectors read such an
+ * ability itself (its filters, options and effects), found by the trigger's {@code unfiltered()} trigger. The
+ * activation collectors read every activation ability itself, by
+ * {@link com.github.laxika.magicalvibes.model.trigger.AbilityTrigger#unfiltered()}.
  */
 public enum SpellAbilityWatch implements TriggerWatch {
     /** "Whenever a mana ability of this creature resolves" (granted only: Tyvar the Bellicose). */
