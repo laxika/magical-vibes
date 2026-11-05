@@ -1132,6 +1132,15 @@ public class TokenCopySupport {
                     continue;
                 }
                 if (ability instanceof TriggeredAbility triggered && LegacySlots.slotOf(ability) == null) {
+                    if (triggered.conditions().stream().anyMatch(condition -> condition.trigger()
+                            instanceof com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger move
+                            && !move.ownEntry() || condition.trigger()
+                            instanceof com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger)) {
+                        // The trigger pipeline puts a zone-change or permanent-change ability on the stack as one
+                        // object of its own (CR 603.3), and the ability takes no trigger mode.
+                        tokenCard.addTriggeredAbility(triggered);
+                        continue;
+                    }
                     // The token's added abilities are its own objects on the stack, not part of the copied card's
                     // "when this enters" ability (CR 603.3).
                     tokenCard.addTriggeredAbility(triggered.withEffects(triggered.effects().stream()

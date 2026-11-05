@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; run 16l, family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader`; run 16m, family 10 (sagas): no chapter or final-chapter ability has a legacy view, and the final-chapter collectors read the abilities through `SagaAbilityReader`; run 16n, family 11's player and keyword actions: every `ActionWatch` collector reads the abilities through `ActionAbilityReader`; run 16o, family 11's rest: every `MiscWatch` collector and the planar reader read the abilities through `MiscAbilityReader`; runs 16p onward left: the rest of the legacy view's retirement (the zone changes and the own enters abilities), with the may-unwrapping, `TriggerMode`, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; run 16l, family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader`; run 16m, family 10 (sagas): no chapter or final-chapter ability has a legacy view, and the final-chapter collectors read the abilities through `SagaAbilityReader`; run 16n, family 11's player and keyword actions: every `ActionWatch` collector reads the abilities through `ActionAbilityReader`; run 16o, family 11's rest: every `MiscWatch` collector and the planar reader read the abilities through `MiscAbilityReader`; run 16p, the zone changes but "when this enters" and the permanent changes: no such ability has a legacy view, and the readers outside the trigger pipeline read them through `ZoneChangeAbilityReader`; runs 16q onward left: the own enters abilities' legacy view, with the may-unwrapping, `TriggerMode`, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -617,7 +617,8 @@ no other family still uses. The order:
 | 16m | Step 13's family 10 (sagas): no chapter or final-chapter ability has a legacy view; the final-chapter collectors read the abilities through `SagaAbilityReader` ("triggers only once each turn" from the ability), and the ability rejects the options they don't read as it is built |
 | 16n | Step 13's family 11, its first half (step 13 run 11a's player and keyword actions): every `ActionWatch` collector reads the abilities through `ActionAbilityReader` (the explore, exploit and scheme filters and "triggers only once each turn" from the ability); no action ability has a legacy view, and `SchemeSetInMotionTriggerEffect` and `SchemeTriggerCollectorService` are gone |
 | 16o | Step 13's family 11, its second half (step 13 run 11b): every `MiscWatch` collector (control change, attaching, crew, saddle and station, Room doors and full unlocks, day and night, state triggers) and the planar reader read the abilities through `MiscAbilityReader` (the door, the first crew or saddle each turn and "triggers only once each turn" from the ability, a state trigger's game state); no family 11 ability has a legacy view, and `TriggeringRoomDoorConditionalEffect` is gone |
-| 16p onward | The rest of the legacy view's retirement, family by family (the zone changes and the own enters abilities): each family's collectors read the ability's options, filters and grouping (no `TriggerMode`), then the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
+| 16p | The zone changes but "when this enters" and the permanent changes (steps 10 to 12a's pipeline families): no such ability has a legacy view; the readers outside the pipeline (face-up planes, schemes, registered abilities) read them through `ZoneChangeAbilityReader`, and the ability rejects what the pipeline can't read as it is built |
+| 16q onward | The own enters abilities (`EtbTriggerService` and its about 60 readers): their collectors read the ability's options, filters and grouping (no `TriggerMode`), then the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
 
 Mark the step `done` only after the last run of 16.
 
@@ -8722,6 +8723,119 @@ and indexes its triggers as before. The new rejections change no card.
   `ActionTriggerTest`, `StateTriggerServiceTest` and `MiscTriggerCollectorServiceTest` pass.
 - Engine: the whole module, with the one failure at HEAD, `GameMutationBoundaryRatchetTest`.
 - AI: the whole module, with the same 10 failures as before.
+- The full suite was not run here.
+
+#### Run 16p: the zone changes and the permanent changes read the ability
+
+The first of the "16p onward" runs, split as 16n and 16o split family 11: the zone changes but "when this enters" and
+the permanent changes (phasing, transforming, being turned face up), the families steps 10 to 12a moved to the trigger
+pipeline. No such ability has a legacy view any more; "when this enters" and its about 60 readers are left for 16q.
+
+**What the scan found.** A temporary reflection scan (every registered card class and back face, their abilities and
+the `TriggeredAbility` values nested in their effects and static abilities) found 3,091 abilities with a zone-change
+trigger other than "when this enters" or a permanent-change trigger, in 2,901 card classes (236 nested: registered,
+granted or delayed). None has a trigger mode other than `NORMAL`. 229 have options (102 "one or more", 64 "triggers only
+once each turn", 13 "do this only once each turn", 70 an intervening "if", 1 `ONCE`, 1 an event condition, some
+together); the pipeline judges all of them. Of the nested ones only Polluted Cistern's ("one or more", an ability a
+static ability grants, which the pipeline reads) has an option. 64 abilities pair "when this enters" with another zone change (constellation's "whenever this or another
+enchantment you control enters"), 17 a zone change with a trigger already read as an ability (the Eerie abilities). No
+card changed.
+
+What still reads the legacy view was already only "when this enters": every `getLegacy…` call is with
+`Triggers.enters(ObjectRelation.THIS)`, the granted readers (`Permanent.getGrantedTriggerEffects`,
+`GrantedTriggeredAbilitySupport.grantedTriggerEffects`) are called only by `EtbTriggerService` with it, and the pipeline
+(`TriggeredAbilityStackService.trigger`, `triggerOnce`, `triggerPermanentChange`) reads the abilities' effects and
+options itself. What dropped options was the readers outside the pipeline, which read the raw effects.
+
+**The model.**
+
+- `ZoneChangeTrigger.ownEntry()` (new): whether the trigger is `Triggers.enters(ObjectRelation.THIS)` (**CR 603.6a**,
+  checked). `ZoneChangeTrigger.collectedAsAbility()` is true for every other zone change, and
+  `PermanentChangeTrigger.collectedAsAbility()` for every permanent change, so `TriggeredAbility.legacyEffects()`, the
+  `getLegacy…` getters and `requireLegacyView` throw for them and the card's slot index leaves them out of its legacy
+  maps. An ability with "when this enters" and another zone change keeps its legacy view for the own entry only (its
+  other trigger isn't a legacy key any more); the Eerie abilities have none now.
+- `TriggeredAbility` rejects, as it is built, on a zone change other than "when this enters" or a permanent change,
+  what the pipeline doesn't read: "once each turn for each creature" (`limitReached` threw on it as the ability
+  triggered) and a trigger mode (the pipeline puts the ability on the stack as one object, **CR 603.3**, checked, and
+  ignored it). No card writes either.
+
+**The engine.**
+
+- New `ZoneChangeAbilityReader` (`service/trigger`, static): `printed(card, trigger)` (the abilities with the trigger,
+  in any zone), `strictEffects(abilities)` and `strictEffect(ability)` (one effect), which throw on any option or
+  trigger mode (and `strictEffect` on more than one effect), which these readers don't judge and dropped before.
+- The readers outside the pipeline read through it: the face-up planes' creature-death (Agyrem, **CR 901.7**,
+  checked), nonblack-card-to-graveyard, creature-leaves (Takenuma), landfall and creature-enters readers
+  (`planarEnteringEffects`), the face-up schemes' "another permanent leaves the battlefield" reader, and the abilities a
+  resolved spell or ability registered (**CR 603.7**, checked): "whenever a creature dies" (and "when it dies this
+  turn"), "when it leaves the battlefield", "whenever a creature you control enters", "whenever a creature or
+  enchantment you control enters" and "whenever a creature an opponent controls enters". `ZoneChangeWatch.effectsOf`
+  stays for the code that only inspects which effects a card has (`PermanentRemovalService`).
+- `TokenCopySupport`: a token copy's added zone-change or permanent-change ability keeps its trigger mode (`NORMAL`)
+  instead of being marked `INDEPENDENT`, which only the "when this enters" collector reads and the ability now rejects
+  (Jaxis, the Troublemaker's "when this creature dies, draw a card"). The other families' added abilities are marked as
+  before.
+
+**Behaviour changes.** None known: no card's zone-change or permanent-change ability has an option the readers outside
+the pipeline would now reject, and the pipeline read `INDEPENDENT` on none.
+
+**Kept, with their reason.**
+
+- The cards still author trigger-level wrappers inside zone-change abilities, kept by the earlier runs: the keyed
+  `OncePerTurnTriggerEffect` factories (Akim's first token creation, Crawling Sensation's first land card to the
+  graveyard, Dennick's "triggers only once each turn"), the `TriggeringCardConditionalEffect` /
+  `TriggeringPermanentConditionalEffect` / `TriggeringArtifactControllerConditionalEffect` filters (Agyrem, Emeria
+  Shepherd, Oran-Rief Hydra, Disa, Oathkeeper, The Master, Urza's Miter, …), 12 intervening-if `ConditionalEffect`s at
+  the top of an ability (Academy Rector, Bridge from Below, Tunnel Ignus, Trail of Mystery, …) and `EvolveTriggerEffect`
+  / `ChampionOfTheHareishTriggerEffect`. Their handlers judge them as before; turning them into filters, limits and
+  options is the zone-change part of 16q onward.
+- The handlers' event bindings (`LegacyTriggerBindings`, `DeathTriggerCollectorService`) and their may-unwrapping
+  (step 15).
+- `GameQueryService.getEffectiveGraveyardTriggerEffects` has no caller; left for the step 16 cleanup.
+- The pipeline still drops a "one or more" ability whose watch has no "one or more" key (`ZoneChangeWatch.of` is
+  `null`); no card has one. A check needs the engine's watch table, so it isn't in `TriggeredAbility`.
+
+**For 16q onward.**
+
+- "When this enters" is the last family with a legacy view: `EtbTriggerService` and the readers that inspect a card's
+  own enters effects (`TargetLegalityService`, `ValidTargetService`, `SpellCastingService`, `EffectResolution`, the AI,
+  `CardViewFactory`, …). When it leaves, `hasLegacyView()`, `legacyEffects()`, the `getLegacy…` getters and the
+  granted legacy readers go, and with them `OncePerTurnTriggerEffect`'s keyed form and `OnceOnlyTriggerEffect` as
+  wrappers the legacy view builds.
+- Then `TriggerMode` (read only by the own enters collectors, combat's grouping and `TokenCopySupport`), the
+  may-unwrapping, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes the zone-change cards above still
+  author.
+
+**Tests changed.**
+
+- `ZoneChangeTriggerTest`: new reader tests: only "when this enters" has a legacy view (every other zone change and the
+  permanent changes are read as abilities, the getters throw, the plain effects still read), an ability of "when this
+  enters" and another zone change keeps its legacy view for the own entry only, what the pipeline can't read rejected as
+  the ability is built ("once each turn for each creature", a trigger mode; "when this enters" still takes one), and
+  `ZoneChangeAbilityReader` reading an ability without options and rejecting a limit, an intervening "if" and a second
+  effect.
+- `TriggeredAbilityTest#aSpellLandPlayOrActivationAbilityHasNoLegacyView` and
+  `TriggerOptionsTest#theLegacyViewGivesTheEventConditionAsATriggerTimeOnlyConditionalInsideTheOtherWrappers` use
+  `Triggers.enters(THIS)` as the trigger that still has a legacy view, where they used `Triggers.dies(THIS)`.
+- `MiscTriggerTest`: `anEerieAbilityKeepsItsLegacyViewForItsEntersConditionAndIsReadAsAnAbilityForTheUnlock` became
+  `anEerieAbilityHasNoLegacyViewAndIsReadAsAnAbilityForTheUnlock`.
+
+**Test runs.**
+
+- Card: the test class of every card with a zone-change or permanent-change ability other than "when this enters" (by
+  the scan), and every card test that mentions Planechase, a scheme, a token copy or the Eerie unlocks (3,298 classes,
+  25,904 tests): all passing.
+
+- Application: the `service.trigger` and `model` packages and the state-trigger, Planechase, stack-resolution,
+  spell-casting, creature-control, state-based action, game-query, freeze, granted-ability, simulation-copy,
+  architecture, targeting-consistency, legacy-slot, pipeline, zone-change, scheme and ETB-resolver classes (1,618
+  tests): 53 failures, all failing at HEAD: the 45 of 16o's set and 8 in the classes this run's wider filter took in
+  (`EtbEffectResolverTest` 3, known since 16a, and one each in `EffectResolutionServiceTest`, `CombatDamageServiceTest`,
+  `DealDamageToPlayersEffectHandlerTest`, `InputCompletionServiceTest` and `PermanentRemovalServiceTest`, checked at
+  HEAD in this run).
+- Engine: the whole module, with the one failure at HEAD, `GameMutationBoundaryRatchetTest`.
+- AI: the whole module (1,620 tests), with the same 10 failures as before.
 - The full suite was not run here.
 
 ## Prompt

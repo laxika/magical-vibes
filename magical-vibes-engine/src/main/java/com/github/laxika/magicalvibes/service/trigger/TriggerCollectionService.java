@@ -13636,7 +13636,7 @@ public class TriggerCollectionService {
                     || !dyingPermanent.getId().equals(watcher.watchedPermanentId())) {
                 return;
             }
-            CardEffect effect = watcher.effect();
+            CardEffect effect = ZoneChangeAbilityReader.strictEffect(watcher.ability());
             if (effect instanceof TriggeringPermanentControllerConditionalEffect conditional) {
                 if (!watcher.controllerId().equals(dyingControllerId)) return;
                 effect = conditional.wrapped();
@@ -13687,7 +13687,7 @@ public class TriggerCollectionService {
                 watcher.sourceCard(),
                 watcher.controllerId(),
                 watcher.sourceCard().getName() + "'s ability",
-                new ArrayList<>(List.of(watcher.effect())));
+                new ArrayList<>(List.of(ZoneChangeAbilityReader.strictEffect(watcher.ability()))));
         entry.setTargetId(targetId);
         entry.setEventValue(eventValue);
         entry.setNonTargeting(true);
@@ -14054,7 +14054,8 @@ public class TriggerCollectionService {
 
         UUID planarControllerId = gameData.planechase.controllerId;
         for (var object : List.copyOf(gameData.planechase.faceUp)) {
-            for (CardEffect effect : object.getCard().getTriggerEffects(Triggers.creatureDies(ObjectRelation.ANY))) {
+            for (CardEffect effect : ZoneChangeAbilityReader.strictEffects(ZoneChangeAbilityReader.printed(
+                    object.getCard(), Triggers.creatureDies(ObjectRelation.ANY)))) {
                 CardEffect resolved = unwrapCreatureDeathConditional(
                         effect, dyingCard, dyingPermanent, gameData, planarControllerId);
                 if (resolved == null) continue;
@@ -14096,7 +14097,8 @@ public class TriggerCollectionService {
         var ctx = new TriggerContext.CardPutIntoGraveyard(card, graveyardOwnerId);
         var trigger = Triggers.putIntoGraveyardFromAnywhere(Triggers.NONBLACK_CARD, ObjectRelation.ANOTHER);
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-            for (CardEffect effect : object.getCard().getTriggerEffects(trigger)) {
+            for (CardEffect effect : ZoneChangeAbilityReader.strictEffects(
+                    ZoneChangeAbilityReader.printed(object.getCard(), trigger))) {
                 registry.dispatch(new TriggerMatchContext(gameData, null, gameData.planechase.controllerId,
                                 effect, object.getCard(), object.copy()),
                         ZoneChangeWatch.ON_NONBLACK_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, effect, ctx);
@@ -14317,7 +14319,7 @@ public class TriggerCollectionService {
                     watcher.sourceCard(),
                     watcher.controllerId(),
                     watcher.sourceCard().getName() + "'s delayed trigger",
-                    new ArrayList<>(List.of(watcher.effect())),
+                    new ArrayList<>(List.of(ZoneChangeAbilityReader.strictEffect(watcher.ability()))),
                     null,
                     target.getId());
             entry.setNonTargeting(true);
@@ -14525,8 +14527,8 @@ public class TriggerCollectionService {
             return;
         }
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-            for (CardEffect effect : object.getCard().getTriggerEffects(
-                    Triggers.leavesBattlefield(Triggers.CREATURE, ObjectRelation.ANOTHER))) {
+            for (CardEffect effect : ZoneChangeAbilityReader.strictEffects(ZoneChangeAbilityReader.printed(
+                    object.getCard(), Triggers.leavesBattlefield(Triggers.CREATURE, ObjectRelation.ANOTHER)))) {
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         object.getCard(),
@@ -14621,7 +14623,7 @@ public class TriggerCollectionService {
                             || predicateEvaluationService.matchesPermanentPredicate(leaving, move.filter(),
                             filterContext)));
             if (matches) {
-                ability.effects().forEach(registration -> effects.add(registration.effect()));
+                effects.addAll(ZoneChangeAbilityReader.strictEffects(List.of(ability)));
             }
         }
         return effects;
@@ -14937,7 +14939,7 @@ public class TriggerCollectionService {
                     watcher.sourceCard(),
                     watcher.controllerId(),
                     watcher.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(watcher.effect())));
+                    new ArrayList<>(List.of(ZoneChangeAbilityReader.strictEffect(watcher.ability()))));
             entry.setNonTargeting(true);
             gameData.enqueueTrigger(entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
@@ -15183,7 +15185,7 @@ public class TriggerCollectionService {
                             && (trigger.filter() == null || entering != null && predicateEvaluationService
                             .matchesPermanentPredicate(entering, trigger.filter(), context)));
             if (matched) {
-                ability.effects().forEach(registration -> effects.add(registration.effect()));
+                effects.addAll(ZoneChangeAbilityReader.strictEffects(List.of(ability)));
             }
         }
         return effects;
@@ -15290,7 +15292,7 @@ public class TriggerCollectionService {
                     watcher.sourceCard(),
                     watcher.controllerId(),
                     watcher.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(watcher.effect())));
+                    new ArrayList<>(List.of(ZoneChangeAbilityReader.strictEffect(watcher.ability()))));
             entry.setNonTargeting(true);
             gameData.enqueueTrigger(entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
@@ -15351,7 +15353,8 @@ public class TriggerCollectionService {
             }
 
             CardEffect resolvedEffect = unwrapTriggeringCardConditional(
-                    watcher.effect(), enteringCreature, gameData, watcher.controllerId());
+                    ZoneChangeAbilityReader.strictEffect(watcher.ability()), enteringCreature, gameData,
+                    watcher.controllerId());
             if (resolvedEffect == null) continue;
 
             enqueueTemporaryGlobalTrigger(gameData, watcher, resolvedEffect, enteringPermanent.getId(), 0);
@@ -15985,7 +15988,7 @@ public class TriggerCollectionService {
                 : ZoneChangeWatch.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD;
 
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-            List<CardEffect> effects = slot.effectsOf(object.getCard());
+            List<CardEffect> effects = ZoneChangeAbilityReader.strictEffects(slot.abilitiesOf(object.getCard()));
             if (effects.isEmpty()) continue;
 
             StackEntry entry = new StackEntry(

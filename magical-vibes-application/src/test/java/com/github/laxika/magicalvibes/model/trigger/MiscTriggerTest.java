@@ -144,14 +144,14 @@ class MiscTriggerTest {
     }
 
     @Test
-    void anEerieAbilityKeepsItsLegacyViewForItsEntersConditionAndIsReadAsAnAbilityForTheUnlock() {
+    void anEerieAbilityHasNoLegacyViewAndIsReadAsAnAbilityForTheUnlock() {
         TriggeredAbility eerie = new TriggeredAbility(List.of(
                 new TriggerCondition(Triggers.enters(ObjectRelation.ANOTHER_YOU_CONTROL)),
                 new TriggerCondition(Triggers.youFullyUnlockRoom())), TriggerOptions.DEFAULT,
                 List.of(new EffectRegistration(DRAW)));
 
-        assertThat(eerie.hasLegacyView()).isTrue();
-        assertThat(eerie.legacyEffects()).extracting(EffectRegistration::effect).containsExactly(DRAW);
+        assertThat(eerie.hasLegacyView()).isFalse();
+        assertThatThrownBy(eerie::legacyEffects).isInstanceOf(IllegalStateException.class);
         assertThat(MiscAbilityReader.effects(List.of(eerie), MiscWatch.ON_ALLY_ROOM_FULLY_UNLOCKED.trigger()))
                 .containsExactly(DRAW);
     }

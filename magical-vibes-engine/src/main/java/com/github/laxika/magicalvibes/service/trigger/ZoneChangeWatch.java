@@ -543,7 +543,11 @@ public enum ZoneChangeWatch {
                 .toList();
     }
 
-    /** The effects of {@link #abilitiesOf}. */
+    /**
+     * The effects of {@link #abilitiesOf} as they are written, without their options: for code that only inspects
+     * which effects a card's abilities have. A reader that puts them on the stack reads them through
+     * {@link ZoneChangeAbilityReader}.
+     */
     public List<CardEffect> effectsOf(Card card) {
         return abilitiesOf(card).stream()
                 .flatMap(ability -> ability.effects().stream().map(EffectRegistration::effect))

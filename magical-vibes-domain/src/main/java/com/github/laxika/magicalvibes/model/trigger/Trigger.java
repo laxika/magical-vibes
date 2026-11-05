@@ -41,11 +41,12 @@ public sealed interface Trigger permits AbilityTrigger, AttachTrigger, ChapterTr
      * discard triggers (family 7, run 16j), the tap and untap triggers (family 8, run 16k), the life gain, loss and
      * payment triggers (family 9, run 16l), the Saga chapter and final-chapter triggers (family 10, run 16m), the
      * player and keyword action triggers (family 11's first half, run 16n) and the control change, attach, crew,
-     * saddle and station, Room, day and night, state and planar triggers (family 11's rest, run 16o). Only the zone
-     * change and permanent change triggers and the legacy slot trigger still have a legacy view. An ability with such
-     * a trigger and another (MACH-1's "when this enters and whenever you gain life", the Eerie "whenever an
-     * enchantment you control enters and whenever you fully unlock a Room") keeps a legacy view for the other's
-     * collectors ({@code TriggeredAbility.hasLegacyView()}).
+     * saddle and station, Room, day and night, state and planar triggers (family 11's rest, run 16o) and every zone
+     * change but "when this enters" and every permanent change (run 16p). Only "when this enters"
+     * ({@code ZoneChangeTrigger.ownEntry()}) and the legacy slot trigger still have a legacy view. An ability with
+     * such a trigger and another (MACH-1's "when this enters and whenever you gain life", constellation's "whenever
+     * this or another enchantment you control enters") keeps a legacy view for the first's collectors
+     * ({@code TriggeredAbility.hasLegacyView()}).
      */
     default boolean collectedAsAbility() {
         return false;

@@ -2034,8 +2034,8 @@ public class Card {
      * "when this enters" collector and the code that inspects "when this enters" abilities read these until they read
      * abilities. The wrapped effects are built once, with the index, so they keep their identity across calls. An
      * ability is found by its trigger's {@link Trigger#watchKey()}, so an ability whose collector judges a filter from
-     * a wrapper is found by the unfiltered trigger, with the filter as a wrapper. Only a zone change, permanent change
-     * or legacy slot trigger has a legacy view: any other ({@link Trigger#collectedAsAbility()}) throws.
+     * a wrapper is found by the unfiltered trigger, with the filter as a wrapper. Only "when this enters" and a legacy
+     * slot trigger have a legacy view: any other ({@link Trigger#collectedAsAbility()}) throws.
      */
     public List<CardEffect> getLegacyTriggerEffects(Trigger trigger) {
         TriggeredAbility.requireLegacyView(trigger);

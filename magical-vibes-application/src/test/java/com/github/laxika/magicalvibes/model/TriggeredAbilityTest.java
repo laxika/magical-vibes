@@ -101,17 +101,17 @@ class TriggeredAbilityTest {
         TriggeredAbility cast = new TriggeredAbility(Triggers.youCastSpell(), new DrawCardEffect(1));
         TriggeredAbility landPlay = new TriggeredAbility(Triggers.youPlayLand(), new DrawCardEffect(1));
         TriggeredAbility activation = new TriggeredAbility(Triggers.youActivateAbility(), new DrawCardEffect(1));
-        TriggeredAbility dies = new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new DrawCardEffect(1));
+        TriggeredAbility enters = new TriggeredAbility(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1));
 
         assertThat(cast.collectedAsAbility()).isTrue();
         assertThat(landPlay.collectedAsAbility()).isTrue();
         assertThat(activation.collectedAsAbility()).isTrue();
-        assertThat(dies.collectedAsAbility()).isFalse();
+        assertThat(enters.collectedAsAbility()).isFalse();
         assertThatThrownBy(cast::legacyEffects).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> TriggeredAbility.requireLegacyView(Triggers.youPlayLand()))
                 .isInstanceOf(IllegalArgumentException.class);
-        TriggeredAbility.requireLegacyView(Triggers.dies(ObjectRelation.THIS));
-        assertThat(dies.legacyEffects()).isEqualTo(dies.effects());
+        TriggeredAbility.requireLegacyView(Triggers.enters(ObjectRelation.THIS));
+        assertThat(enters.legacyEffects()).isEqualTo(enters.effects());
     }
 
     @Test

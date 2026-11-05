@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.trigger.LibraryTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LifeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ObjectActionTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.PlanarTrigger;
 import com.github.laxika.magicalvibes.model.trigger.PlayerActionTrigger;
 import com.github.laxika.magicalvibes.model.trigger.StateTrigger;
@@ -30,6 +31,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -94,6 +96,34 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         }
         requireFinalChapterOptions(conditions, options);
         requireStateOptions(conditions, options);
+        requireZoneChangeOptions(conditions, options, effects);
+    }
+
+    /**
+     * Rejects what the trigger pipeline that reads the abilities of a zone change other than "when this enters" and of
+     * a permanent change doesn't read: "once each turn for each creature" (only the damage and counter collectors know
+     * it; the pipeline judges every other limit as the ability triggers) and a trigger mode (the pipeline puts the
+     * ability on the stack as one object, CR 603.3). The legacy view checked these as a card's abilities were indexed;
+     * the pipeline reads the ability itself, so the ability checks them as it is built.
+     */
+    private static void requireZoneChangeOptions(List<TriggerCondition> conditions, TriggerOptions options,
+                                                 List<EffectRegistration> effects) {
+        boolean zoneChange = conditions.stream().map(TriggerCondition::trigger).anyMatch(trigger
+                -> trigger instanceof ZoneChangeTrigger move && !move.ownEntry()
+                || trigger instanceof PermanentChangeTrigger);
+        if (!zoneChange) {
+            return;
+        }
+        if (options.limit() == TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE) {
+            throw new IllegalArgumentException("No zone-change or permanent-change collector reads "
+                    + options.limit() + ": " + conditions);
+        }
+        for (EffectRegistration registration : effects) {
+            if (registration.triggerMode() != TriggerMode.NORMAL) {
+                throw new IllegalArgumentException("No zone-change or permanent-change collector reads a trigger mode ("
+                        + registration.triggerMode() + "): " + conditions);
+            }
+        }
     }
 
     /**
@@ -304,8 +334,7 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
 
     /**
      * Whether one of this ability's trigger conditions is a trigger whose collectors read the ability itself
-     * ({@link Trigger#collectedAsAbility()}: every trigger but a zone change, permanent change or legacy slot
-     * trigger).
+     * ({@link Trigger#collectedAsAbility()}: every trigger but "when this enters" and a legacy slot trigger).
      */
     public boolean collectedAsAbility() {
         return conditions.stream().anyMatch(condition -> condition.trigger().collectedAsAbility());
@@ -313,9 +342,10 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
 
     /**
      * Whether one of this ability's trigger conditions is a trigger whose collectors still read the legacy view
-     * ({@link #legacyEffects()}). An ability with such a condition and one read as an ability (MACH-1's "when this
-     * enters and whenever you gain life") has a legacy view for the first's collectors only: the second's read the
-     * ability itself, and the ability's limit, marked by {@link #limitKey()}, is shared by both.
+     * ({@link #legacyEffects()}): "when this enters" ({@link ZoneChangeTrigger#ownEntry()}) or a legacy slot trigger.
+     * An ability with such a condition and one read as an ability (MACH-1's "when this enters and whenever you gain
+     * life") has a legacy view for the first's collectors only: the second's read the ability itself, and the
+     * ability's limit, marked by {@link #limitKey()}, is shared by both.
      */
     public boolean hasLegacyView() {
         return conditions.stream().anyMatch(condition -> !condition.trigger().collectedAsAbility());
@@ -342,8 +372,8 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * checked only as the ability triggers (CR 603.2); "triggers only once each turn" is a {@link OncePerTurnTriggerEffect} keyed by
      * {@link #limitKey()}, the key the trigger pipeline marks; "do this only once each turn" one marked as the action
      * is taken (CR 603.2h); "this ability triggers only once" ({@code ONCE}) an {@link OnceOnlyTriggerEffect} inside
-     * the intervening "if", as the cards wrote it. Only an ability with a zone change, permanent change or legacy slot
-     * trigger has a legacy view ({@link #hasLegacyView()}); the collectors of every other trigger
+     * the intervening "if", as the cards wrote it. Only an ability with a "when this enters" or legacy slot trigger
+     * has a legacy view ({@link #hasLegacyView()}); the collectors of every other trigger
      * ({@link Trigger#collectedAsAbility()}) read the ability itself, and for an ability with only such triggers this
      * throws. "Once each turn for each creature" ({@link TriggerLimit#ONCE_EACH_TURN_FOR_EACH_CREATURE}) is an
      * {@link OncePerTurnPerCreatureTriggerEffect} where the other limits go. An ability without options returns its
