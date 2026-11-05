@@ -32,11 +32,11 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingConundrumDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentDrawTwoOrMoreReplacedEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.QuantumRiddlerDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -381,10 +381,10 @@ class DrawServiceTest {
     }
 
     @Test
-    void opponentDrawTriggerHonorsOncePerTurnWrapper() {
+    void opponentDrawTriggerHonorsItsOncePerTurnLimit() {
         Card card = createCard("Tataru Taru", CardType.CREATURE);
-        card.addTrigger(Triggers.opponentDrawsCard(),
-                new OncePerTurnTriggerEffect(new BoostSelfEffect(1, 1)));
+        card.addTrigger(Triggers.opponentDrawsCard(), TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new BoostSelfEffect(1, 1));
         Permanent source = new Permanent(card);
         gd.playerBattlefields.get(player1Id).add(source);
 
@@ -394,7 +394,9 @@ class DrawServiceTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEffectsToResolve())
                 .containsExactly(new BoostSelfEffect(1, 1));
-        assertThat(gd.oncePerTurnTriggersFiredThisTurn).contains(source.getId());
+        assertThat(gd.keyedOncePerTurnTriggersFiredThisTurn.get(source.getId()))
+                .containsExactly(card.getTriggeredAbilities().getFirst().limitKey());
+        assertThat(gd.oncePerTurnTriggersFiredThisTurn).doesNotContain(source.getId());
     }
 
     @Test

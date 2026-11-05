@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileBottomCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -72,9 +71,7 @@ public class ScryTriggerCollectorService {
             entry.setEventValue(scry.bottomedCardCount());
             entry.setCardsLookedAtWhileScrying(scry.cardsLookedAt());
             entry.setNonTargeting(true);
-            if (match.rawEffect() instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance()) {
-                entry.setMarkSourceOncePerTurnOnAcceptance(true);
-            }
+            entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
             match.gameData().enqueueTrigger(entry);
         } else if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)
                 || targetSpec.admits(TargetPredicate.Kind.PLAYER)) {
@@ -97,9 +94,7 @@ public class ScryTriggerCollectorService {
                     match.permanent().getId());
             entry.setEventValue(scry.bottomedCardCount());
             entry.setCardsLookedAtWhileScrying(scry.cardsLookedAt());
-            if (match.rawEffect() instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance()) {
-                entry.setMarkSourceOncePerTurnOnAcceptance(true);
-            }
+            entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
             match.gameData().enqueueTrigger(entry);
         }
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));

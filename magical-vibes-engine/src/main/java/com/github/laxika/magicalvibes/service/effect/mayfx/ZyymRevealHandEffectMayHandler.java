@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.trigger.LibraryAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
@@ -122,7 +123,7 @@ public class ZyymRevealHandEffectMayHandler implements MayEffectHandlerBean {
         triggerCollectionService.beginDiscardEvent(gameData, playerId);
 
         boolean replacedByBattlefield = gameData.discardCausedByOpponent
-                && LibraryWatch.ON_SELF_DISCARDED_BY_OPPONENT.effectsOf(card).stream()
+                && LibraryAbilityReader.printedEffects(card, LibraryWatch.ON_SELF_DISCARDED_BY_OPPONENT).stream()
                 .anyMatch(EnterBattlefieldOnDiscardEffect.class::isInstance);
         if (replacedByBattlefield) {
             battlefieldEntryService.putPermanentOntoBattlefieldFromOpponentDiscard(

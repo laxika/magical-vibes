@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealHandAndDiscardDuplicate
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.trigger.LibraryAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
@@ -93,7 +94,7 @@ public class RevealHandAndDiscardDuplicateNonlandCardsEffectHandler implements N
             return;
         }
         boolean entersBattlefield = gameData.discardCausedByOpponent
-                && LibraryWatch.ON_SELF_DISCARDED_BY_OPPONENT.effectsOf(card).stream()
+                && LibraryAbilityReader.printedEffects(card, LibraryWatch.ON_SELF_DISCARDED_BY_OPPONENT).stream()
                 .anyMatch(EnterBattlefieldOnDiscardEffect.class::isInstance);
         if (entersBattlefield) {
             battlefieldEntryService.putPermanentOntoBattlefieldFromOpponentDiscard(

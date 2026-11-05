@@ -3008,36 +3008,6 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsLibraryTrigger(value = OncePerTurnTriggerEffect.class, watch = LibraryWatch.ON_CONTROLLER_SURVEILS)
-    @CollectsLibraryTrigger(value = OncePerTurnTriggerEffect.class, watch = LibraryWatch.ON_OPPONENT_SURVEILS)
-    private boolean handleSurveilOncePerTurn(TriggerMatchContext match,
-            OncePerTurnTriggerEffect effect, TriggerContext ctx) {
-        var gameData = match.gameData();
-        Permanent source = match.permanent();
-        if (gameData.oncePerTurnTriggersFiredThisTurn.contains(source.getId())) {
-            return false;
-        }
-
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                source.getCard(),
-                match.controllerId(),
-                source.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect.wrapped())),
-                !match.controllerId().equals(((TriggerContext.Surveil) ctx).surveilingPlayerId())
-                        ? ((TriggerContext.Surveil) ctx).surveilingPlayerId() : null,
-                source.getId());
-        if (!match.controllerId().equals(((TriggerContext.Surveil) ctx).surveilingPlayerId())) {
-            entry.setNonTargeting(true);
-        }
-        gameData.enqueueTrigger(entry);
-        gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
-
-        gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
-        log.info("Game {} - {} triggers on surveil (once per turn)", gameData.id, source.getCard().getName());
-        return true;
-    }
-
     @CollectsLibraryTrigger(value = CardEffect.class, watch = LibraryWatch.ON_CONTROLLER_SURVEILS)
     @CollectsLibraryTrigger(value = CardEffect.class, watch = LibraryWatch.ON_OPPONENT_SURVEILS)
     private boolean handleSurveilDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
@@ -3057,9 +3027,7 @@ public class MiscTriggerCollectorService {
         if (opponentSurveil) {
             entry.setNonTargeting(true);
         }
-        if (match.rawEffect() instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance()) {
-            entry.setMarkSourceOncePerTurnOnAcceptance(true);
-        }
+        entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
         gameData.enqueueTrigger(entry);
 
         gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));

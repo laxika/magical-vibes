@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -41,7 +42,6 @@ import com.github.laxika.magicalvibes.model.effect.CounterThresholdDrawReplaceme
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CyclingDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawExceptFirstDrawStepDrawEffect;
-import com.github.laxika.magicalvibes.model.effect.FirstDrawStepDrawOnlyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentExtraDrawsRedirectedEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentExtraDrawsCreateTreasureEffect;
@@ -66,12 +66,10 @@ import com.github.laxika.magicalvibes.service.effect.DredgeSupport;
 import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileBottomRandomSupport;
 import com.github.laxika.magicalvibes.model.effect.DrawRestrictionEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawRevealTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawnCardTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstDrawRevealTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealDrawnCardIfInstantOrSorceryEffect;
-import com.github.laxika.magicalvibes.model.effect.ExceptFirstDrawStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmptyLibraryDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EmptyHandDrawExtraCardAndLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardFaceDownInsteadOfDrawReplacement;
@@ -99,8 +97,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
-import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
-import com.github.laxika.magicalvibes.service.effect.OnceOnlyTriggerSupport;
 import com.github.laxika.magicalvibes.service.effect.mayfx.BreathstealersCryptDrawReplacementHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerReturnsPermanentToHandEffectHandler;
@@ -112,6 +108,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
+import com.github.laxika.magicalvibes.service.trigger.LibraryAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
@@ -2851,26 +2848,16 @@ public class DrawService {
         int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
 
         for (Permanent perm : battlefield) {
-            List<CardEffect> drawEffects = watch.effectsOf(perm.getCard());
-            drawEffects = drawEffects == null || gameQueryService.hasLostAllAbilities(gameData, perm)
-                    ? new ArrayList<>() : new ArrayList<>(drawEffects);
-            drawEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(gameData, perm, watch.trigger()));
+            List<LibraryAbilityReader.LibraryEffect> drawEffects = gameQueryService.hasLostAllAbilities(gameData, perm)
+                    ? new ArrayList<>() : new ArrayList<>(LibraryAbilityReader.readPrinted(perm.getCard(), watch));
+            drawEffects.addAll(LibraryAbilityReader.read(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
+                    gameData, perm, watch.trigger()), watch.trigger()));
             if (drawEffects.isEmpty()) continue;
 
-            for (CardEffect authoredEffect : drawEffects) {
-                CardEffect effect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, authoredEffect);
-                if (effect == null) continue;
-                effect = OnceOnlyTriggerSupport.unwrapIfAvailable(gameData, perm, effect);
-                if (effect == null) continue;
-
-                if (effect instanceof ExceptFirstDrawStepTriggerEffect
-                        && Boolean.TRUE.equals(gameData.pendingDrawFirstDrawStepFlags.get(drawingPlayerId))) {
-                    continue;
-                }
-                if (effect instanceof FirstDrawStepDrawOnlyTriggerEffect
-                        && !Boolean.TRUE.equals(gameData.pendingDrawFirstDrawStepFlags.get(drawingPlayerId))) {
-                    continue;
-                }
+            for (LibraryAbilityReader.LibraryEffect read : drawEffects) {
+                if (!drawTriggers(gameData, perm, drawingPlayerId, read, cardsDrawnThisTurn)) continue;
+                CardEffect authoredEffect = read.effect();
+                CardEffect effect = authoredEffect;
 
                 if (effect instanceof FirstDrawRevealTriggerEffect firstDraw) {
                     if (drawn == null
@@ -2899,12 +2886,6 @@ public class DrawService {
                 }
                 if (effect instanceof DrawnCardTriggerEffect drawnCardTrigger) {
                     effect = drawnCardTrigger.effectForDrawnCard(drawn);
-                    if (effect == null) {
-                        continue;
-                    }
-                }
-                if (effect instanceof DrawTriggerEffect drawTrigger) {
-                    effect = drawTrigger.effectForDrawCount(cardsDrawnThisTurn).orElse(null);
                     if (effect == null) {
                         continue;
                     }
@@ -3004,8 +2985,7 @@ public class DrawService {
                                 gameData.id, perm.getCard().getName());
                     }
                 }
-                OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
-                OnceOnlyTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+                read.markLimit(gameData, perm.getId());
             }
         }
 
@@ -3019,12 +2999,10 @@ public class DrawService {
 
         int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
         for (Card card : new ArrayList<>(graveyard)) {
-            for (CardEffect authoredEffect : watch.effectsOf(card)) {
-                CardEffect effect = authoredEffect;
-                if (effect instanceof DrawTriggerEffect drawTrigger) {
-                    effect = drawTrigger.effectForDrawCount(cardsDrawnThisTurn).orElse(null);
-                    if (effect == null) continue;
-                }
+            for (LibraryAbilityReader.LibraryEffect read : LibraryAbilityReader.readPrinted(card, watch)) {
+                requireNoLimit(read, watch);
+                if (!drawEventMatches(gameData, drawingPlayerId, read, cardsDrawnThisTurn)) continue;
+                CardEffect effect = read.effect();
                 if (!effect.triggersOnControllerDrawCount(cardsDrawnThisTurn)) continue;
 
                 StackEntry trigger = new StackEntry(
@@ -3056,15 +3034,11 @@ public class DrawService {
             if (graveyard == null) continue;
 
             for (Card card : new ArrayList<>(graveyard)) {
-                List<CardEffect> effects = LibraryWatch.GRAVEYARD_ON_OPPONENT_DRAWS.effectsOf(card);
-                if (effects == null || effects.isEmpty()) continue;
-
-                for (CardEffect authoredEffect : effects) {
-                    CardEffect effect = authoredEffect;
-                    if (effect instanceof DrawTriggerEffect drawTrigger) {
-                        effect = drawTrigger.effectForDrawCount(cardsDrawnThisTurn).orElse(null);
-                        if (effect == null) continue;
-                    }
+                LibraryWatch watch = LibraryWatch.GRAVEYARD_ON_OPPONENT_DRAWS;
+                for (LibraryAbilityReader.LibraryEffect read : LibraryAbilityReader.readPrinted(card, watch)) {
+                    requireNoLimit(read, watch);
+                    if (!drawEventMatches(gameData, drawingPlayerId, read, cardsDrawnThisTurn)) continue;
+                    CardEffect effect = read.effect();
 
                     gameData.enqueueTrigger(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
@@ -3154,18 +3128,13 @@ public class DrawService {
 
             for (Permanent perm : battlefield) {
                 if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-                List<CardEffect> drawEffects = LibraryWatch.ON_OPPONENT_DRAWS.effectsOf(perm.getCard());
-                if (drawEffects == null || drawEffects.isEmpty()) continue;
+                List<LibraryAbilityReader.LibraryEffect> drawEffects =
+                        LibraryAbilityReader.readPrinted(perm.getCard(), LibraryWatch.ON_OPPONENT_DRAWS);
+                if (drawEffects.isEmpty()) continue;
 
-                for (CardEffect authoredEffect : drawEffects) {
-                    CardEffect effect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, authoredEffect);
-                    if (effect == null) continue;
-                    effect = OnceOnlyTriggerSupport.unwrapIfAvailable(gameData, perm, effect);
-                    if (effect == null) continue;
-                    if (effect instanceof ExceptFirstDrawStepTriggerEffect
-                            && Boolean.TRUE.equals(gameData.pendingDrawFirstDrawStepFlags.get(drawingPlayerId))) {
-                        continue;
-                    }
+                for (LibraryAbilityReader.LibraryEffect read : drawEffects) {
+                    if (!drawTriggers(gameData, perm, drawingPlayerId, read, cardsDrawnThisTurn)) continue;
+                    CardEffect effect = read.effect();
                     if (effect instanceof DrawRevealTriggerEffect drawReveal) {
                         if (drawn == null) {
                             continue;
@@ -3175,9 +3144,6 @@ public class DrawService {
                         if (effect == null) {
                             continue;
                         }
-                    } else if (effect instanceof DrawTriggerEffect drawTrigger) {
-                        effect = drawTrigger.effectForDrawCount(cardsDrawnThisTurn).orElse(null);
-                        if (effect == null) continue;
                     }
                     if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()) {
                         if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
@@ -3217,8 +3183,7 @@ public class DrawService {
                         gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                         log.info("Game {} - {} triggers on opponent draw", gameData.id, perm.getCard().getName());
                     }
-                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
-                    OnceOnlyTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+                    read.markLimit(gameData, perm.getId());
                 }
             }
         });
@@ -3237,17 +3202,13 @@ public class DrawService {
 
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
             Card card = object.getCard();
-            List<CardEffect> drawEffects = watch.effectsOf(card);
-            for (CardEffect authoredEffect : drawEffects) {
-                CardEffect effect = authoredEffect;
+            for (LibraryAbilityReader.LibraryEffect read : LibraryAbilityReader.readPrinted(card, watch)) {
+                requireNoLimit(read, watch);
+                if (!drawEventMatches(gameData, drawingPlayerId, read, cardsDrawnThisTurn)) continue;
+                CardEffect effect = read.effect();
                 if (effect instanceof DrawRevealTriggerEffect drawReveal) {
                     logDrawReveal(gameData, drawingPlayerId, drawn, card);
                     effect = drawReveal.effectFor(drawn);
-                    if (effect == null) {
-                        continue;
-                    }
-                } else if (effect instanceof DrawTriggerEffect drawTrigger) {
-                    effect = drawTrigger.effectForDrawCount(cardsDrawnThisTurn).orElse(null);
                     if (effect == null) {
                         continue;
                     }
@@ -3273,6 +3234,44 @@ public class DrawService {
         }
     }
 
+    /**
+     * Whether {@code read}'s ability triggers from {@code perm} for this draw: its limit isn't reached ("triggers only
+     * once each turn", "this ability triggers only once") and the draw is its event ({@link #drawEventMatches}). The
+     * draw collectors mark no "do this only once each turn".
+     */
+    private static boolean drawTriggers(GameData gameData, Permanent perm, UUID drawingPlayerId,
+                                        LibraryAbilityReader.LibraryEffect read, int cardsDrawnThisTurn) {
+        if (read.limit() == TriggerLimit.DO_ONLY_ONCE_EACH_TURN) {
+            throw new IllegalStateException("The draw collectors mark no \"do this only once each turn\": "
+                    + read.ability());
+        }
+        return !read.limitReached(gameData, perm.getId())
+                && drawEventMatches(gameData, drawingPlayerId, read, cardsDrawnThisTurn);
+    }
+
+    /**
+     * Whether the draw by {@code drawingPlayerId} is the event of {@code read}'s ability: any draw, every draw but the
+     * player's first in their draw step, or only that one, and, for "your Nth card each turn", the player's
+     * {@code cardsDrawnThisTurn}th draw this turn (CR 121.1).
+     */
+    private static boolean drawEventMatches(GameData gameData, UUID drawingPlayerId,
+                                            LibraryAbilityReader.LibraryEffect read, int cardsDrawnThisTurn) {
+        boolean firstDrawStepDraw = Boolean.TRUE.equals(gameData.pendingDrawFirstDrawStepFlags.get(drawingPlayerId));
+        boolean eventMatches = switch (read.event()) {
+            case DRAWS, ENCHANTED_PLAYER_DRAWS -> true;
+            case DRAWS_EXCEPT_FIRST_IN_DRAW_STEP -> !firstDrawStepDraw;
+            case DRAWS_FIRST_IN_DRAW_STEP -> firstDrawStepDraw;
+            default -> throw new IllegalStateException("The draw collectors read no " + read.event() + ": "
+                    + read.ability());
+        };
+        return eventMatches && read.countMatches(cardsDrawnThisTurn);
+    }
+
+    /** Throws when {@code read}'s ability has a limit, which the collector of {@code watch} doesn't read. */
+    private static void requireNoLimit(LibraryAbilityReader.LibraryEffect read, LibraryWatch watch) {
+        LibraryAbilityReader.requireNoLimit(read, watch.trigger());
+    }
+
     private void logDrawReveal(GameData gameData, UUID drawingPlayerId, Card drawn, Card sourceCard) {
         String drawerName = gameData.playerIdToName.get(drawingPlayerId);
         gameLogService.append(gameData, GameLog.builder()
@@ -3290,15 +3289,11 @@ public class DrawService {
             for (Permanent perm : battlefield) {
                 if (!perm.isAttached() || !drawingPlayerId.equals(perm.getAttachedTo())) continue;
 
-                List<CardEffect> drawEffects = LibraryWatch.ON_ENCHANTED_PLAYER_DRAWS.effectsOf(perm.getCard());
-                if (drawEffects == null || drawEffects.isEmpty()) continue;
+                List<CardEffect> drawEffects = LibraryAbilityReader.printedEffects(perm.getCard(),
+                        LibraryWatch.ON_ENCHANTED_PLAYER_DRAWS);
+                if (drawEffects.isEmpty()) continue;
 
-                for (CardEffect authoredEffect : drawEffects) {
-                    CardEffect effect = authoredEffect;
-                    if (effect instanceof DrawTriggerEffect drawTrigger) {
-                        effect = drawTrigger.effectForDrawCount(cardsDrawnThisTurn).orElse(null);
-                        if (effect == null) continue;
-                    }
+                for (CardEffect effect : drawEffects) {
                     int triggerCopies = 1 + gameQueryService.countAdditionalDrawTriggeredAbilityTriggers(
                             gameData, auraControllerId, perm);
                     for (int copy = 0; copy < triggerCopies; copy++) {

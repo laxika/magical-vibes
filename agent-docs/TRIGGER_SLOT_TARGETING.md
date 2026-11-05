@@ -236,7 +236,7 @@ combat damage step is processed.
 | `Triggers.opponentGainsLife() from the graveyard` | `TriggerCollectionService.checkLifeGainTriggers` | None (graveyard-resident, non-targeting) |
 | `Triggers.youGainLife() from the graveyard` | `TriggerCollectionService.checkLifeGainTriggers` | None (graveyard-resident, non-targeting) |
 | `Triggers.milled(Triggers.NONLAND, ObjectRelation.OPPONENT_OWNS)` | `TriggerCollectionService.checkGraveyardOpponentNonlandCardMilledTriggers` | None (graveyard-resident, non-targeting; one trigger per nonland card milled) |
-| `Triggers.opponentDrawsSecondCardEachTurn() from the graveyard` | `DrawService.checkOpponentDrawTriggers` scans each non-drawing player's graveyard on every draw (`LibraryWatch.GRAVEYARD_ON_OPPONENT_DRAWS`); the legacy view's `NthCardDrawTriggerEffect` fires it on the second | None (graveyard-resident, non-targeting) |
+| `Triggers.opponentDrawsSecondCardEachTurn() from the graveyard` | `DrawService.checkOpponentDrawTriggers` scans each non-drawing player's graveyard on every draw (`LibraryWatch.GRAVEYARD_ON_OPPONENT_DRAWS`); the collector judges the ability's count (`LibraryAbilityReader`) and fires it on the second | None (graveyard-resident, non-targeting) |
 | `Triggers.youDrawCard()` (any-target effects) | `DrawService.checkControllerDrawTriggers` → `DrawTriggerAnyTarget` (queued when the effect's `targetSpec().declares(TargetPredicates.anyTarget())`, e.g. Niv-Mizzet, the Firemind's "deals 1 damage to any target"). Processed by `TriggeredAbilityQueueService.processNextDrawTriggerTarget` (creature/player any-target choice). Non–any-target draw triggers (Psychosis Crawler) still push a non-targeting entry straight to the stack. | Draw (any target) |
 | `Triggers.opponentDrawsCard()` (any-target effects) | `DrawService.checkOpponentDrawTriggers` → `DrawTriggerAnyTarget` (the source controller chooses the target before the ability goes on the stack). | Draw (any target) |
 | `Triggers.entersFrom(Zone.GRAVEYARD, Triggers.CREATURE, ObjectRelation.ANY)` | `TriggerCollectionService.checkEntersFromGraveyardTriggers` | Enters-from-graveyard (any target) |
@@ -804,9 +804,9 @@ ability's own event (`TargetAbilityReader`) as the trigger is collected.
 
 `Triggers.youDrawSecondCardEachTurn()` (and `youDrawNthCardEachTurn(n)`, the opponent forms and
 "first or second" as two conditions of one ability) is read by the `Triggers.youDrawCard()`
-collector in `DrawService.checkControllerDrawTriggers`: the legacy view hands it an
-`NthCardDrawTriggerEffect`, so the ability fires only when the controller's per-turn draw count
-reaches exactly that number, with the same stack and any-target handling.
+collector in `DrawService.checkControllerDrawTriggers`, which judges the ability's count
+(`LibraryAbilityReader`), so the ability fires only when the controller's per-turn draw count is
+exactly that number, with the same stack and any-target handling.
 
 `Triggers.creatureDealtDamage()` also captures the damaged creature's controller as
 `triggeringPermanentControllerId`. Pair that capture with `MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER`

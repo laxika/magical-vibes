@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
+import com.github.laxika.magicalvibes.model.trigger.LibraryTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
@@ -370,6 +371,9 @@ public class TriggerCollectionService {
     @Autowired
     @Lazy
     private PlayedCardNameTriggerCollectorService playedCardNameTriggerCollectorService;
+    @Autowired
+    @Lazy
+    private DiscardTriggerCollectorService discardTriggerCollectorService;
     @Autowired
     @Lazy
     private TurnFaceUpCopyService turnFaceUpCopyService;
@@ -2816,15 +2820,18 @@ public class TriggerCollectionService {
 
             for (Permanent perm : battlefield) {
                 if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-                for (CardEffect effect : LibraryWatch.ON_OPPONENT_DISCARDS.effectsOf(perm.getCard())) {
+                LibraryWatch watch = LibraryWatch.ON_OPPONENT_DISCARDS;
+                for (TriggeredAbility ability : LibraryAbilityReader.printed(perm.getCard(), watch)) {
+                    List<LibraryAbilityReader.LibraryEffect> reads = LibraryAbilityReader.read(ability, watch.trigger());
+                    LibraryAbilityReader.LibraryEffect first = reads.getFirst();
+                    LibraryAbilityReader.requireWatchedEvent(first, watch.trigger());
+                    LibraryAbilityReader.requireNoCount(first, watch.trigger());
                     // "Whenever an opponent discards a creature/land/noncreature-nonland card, …"
                     // (Waste Not) — the discarded card gates the trigger.
-                    CardEffect resolved = !characteristicsKnown
-                            ? (effect instanceof TriggeringCardConditionalEffect ? null : effect)
-                            : unwrapTriggeringCardConditional(effect, discardedCard, gameData, playerId);
-                    if (resolved == null) continue;
-                    if (dispatchSlotEffect(gameData, perm, playerId,
-                            LibraryWatch.ON_OPPONENT_DISCARDS, ctx, resolved)) {
+                    if (!discardedCardMatches(gameData, first, discardedCard, characteristicsKnown, playerId)) {
+                        continue;
+                    }
+                    if (dispatchLibraryAbility(gameData, perm, playerId, watch, ctx, reads)) {
                         anyTriggered[0] = true;
                     }
                 }
@@ -2839,36 +2846,9 @@ public class TriggerCollectionService {
         List<Permanent> ownBattlefield = gameData.playerBattlefields.get(discardingPlayerId);
         if (ownBattlefield != null) {
             for (Permanent perm : List.copyOf(ownBattlefield)) {
-                for (CardEffect effect : LibraryWatch.ON_CONTROLLER_DISCARDS.effectsOf(perm.getCard())) {
-                    CardEffect resolved = !characteristicsKnown
-                            ? (effect instanceof TriggeringCardConditionalEffect ? null : effect)
-                            : unwrapTriggeringCardConditional(effect, discardedCard, gameData, discardingPlayerId);
-                    if (resolved == null) continue;
-                    boolean firstCycling = resolved instanceof OncePerTurnTriggerEffect once && once.firstCycling();
-                    boolean firstNonlandDiscard = resolved instanceof OncePerTurnTriggerEffect once
-                            && OncePerTurnTriggerEffect.FIRST_NONLAND_DISCARD_KEY.equals(once.key());
-                    boolean oncePerTurn = resolved instanceof OncePerTurnTriggerEffect
-                            && !firstCycling && !firstNonlandDiscard;
-                    if (firstNonlandDiscard) {
-                        if (gameData.nonlandCardsDiscardedThisTurn.getOrDefault(discardingPlayerId, 0) != 1) continue;
-                        resolved = ((OncePerTurnTriggerEffect) resolved).wrapped();
-                    } else if (firstCycling) {
-                        if (!cycled || gameData.cardsCycledThisTurn.getOrDefault(discardingPlayerId, 0) != 1) continue;
-                        resolved = ((OncePerTurnTriggerEffect) resolved).wrapped();
-                    }
-                    CardEffect limited = resolved;
-                    if (oncePerTurn) {
-                        resolved = unwrapOncePerTurnTrigger(gameData, perm, resolved);
-                        if (resolved == null) continue;
-                    }
-                    var match = new TriggerMatchContext(gameData, perm, discardingPlayerId, resolved);
-                    boolean triggered = dispatch(match, LibraryWatch.ON_CONTROLLER_DISCARDS, resolved, ctx);
-                    if (triggered && oncePerTurn) {
-                        OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, limited);
-                    }
-                    if (triggered) {
-                        anyTriggered[0] = true;
-                    }
+                if (collectControllerDiscardAbilities(gameData, perm, discardingPlayerId, discardedCard, cycled,
+                        characteristicsKnown, ctx)) {
+                    anyTriggered[0] = true;
                 }
             }
         }
@@ -2892,7 +2872,8 @@ public class TriggerCollectionService {
             // "When you discard this card" — any discard (Edgar's Awakening). Non-targeting effects
             // (e.g. MayPayManaEffect) go straight onto the stack; any-target effects use the
             // DiscardTriggerAnyTarget pipeline (same as Guerrilla Tactics).
-            List<CardEffect> anyDiscardTriggers = LibraryWatch.ON_SELF_DISCARDED.effectsOf(discardedCard);
+            List<CardEffect> anyDiscardTriggers = LibraryAbilityReader.printedEffects(discardedCard,
+                    LibraryWatch.ON_SELF_DISCARDED);
             if (!anyDiscardTriggers.isEmpty()) {
                 boolean needsAnyTarget = anyDiscardTriggers.stream()
                         .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
@@ -2918,7 +2899,8 @@ public class TriggerCollectionService {
 
             // Skip EnterBattlefieldOnDiscardEffect — it's a replacement effect handled earlier in the discard flow
             if (gameData.discardCausedByOpponent) {
-                List<CardEffect> selfTriggers = LibraryWatch.ON_SELF_DISCARDED_BY_OPPONENT.effectsOf(discardedCard).stream()
+                List<CardEffect> selfTriggers = LibraryAbilityReader.printedEffects(discardedCard,
+                                LibraryWatch.ON_SELF_DISCARDED_BY_OPPONENT).stream()
                         .filter(e -> !(e instanceof EnterBattlefieldOnDiscardEffect))
                         .filter(e -> !(e instanceof ConditionalEffect conditional) || !conditional.interveningIf()
                                 || conditionEvaluationService.isMet(gameData, conditional.condition(),
@@ -2976,7 +2958,8 @@ public class TriggerCollectionService {
     public void checkCycleTriggers(GameData gameData, UUID cyclingPlayerId, Card cycledCard, int cyclingXValue,
                                    com.github.laxika.magicalvibes.model.ActivatedAbility targetingCyclingAbility,
                                    List<UUID> announcedTargetIds) {
-        List<CardEffect> selfEffects = LibraryWatch.ON_SELF_CYCLED.effectsOf(cycledCard).stream()
+        List<CardEffect> selfEffects = LibraryAbilityReader.printedEffects(cycledCard, LibraryWatch.ON_SELF_CYCLED)
+                .stream()
                 .filter(e -> !(e instanceof ConditionalEffect conditional) || !conditional.interveningIf()
                         || conditionEvaluationService.isMet(gameData, conditional.condition(),
                                 ConditionContext.forCard(cycledCard, cyclingPlayerId)))
@@ -3309,9 +3292,11 @@ public class TriggerCollectionService {
             return;
         }
 
+        LibraryWatch graveyardWatch = LibraryWatch.GRAVEYARD_ON_CONTROLLER_SURVEILS;
         for (Card card : List.copyOf(graveyard)) {
-            for (CardEffect effect : gameQueryService.getEffectiveGraveyardLegacyTriggerEffects(
-                    gameData, card, LibraryWatch.GRAVEYARD_ON_CONTROLLER_SURVEILS.trigger())) {
+            for (CardEffect effect : LibraryAbilityReader.effects(WatchedAbilities.withWatchedTrigger(
+                    gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData, card),
+                    graveyardWatch.trigger(), graveyardWatch.zone()), graveyardWatch.trigger())) {
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         card,
@@ -16392,7 +16377,7 @@ public class TriggerCollectionService {
         boolean triggersOnlyOnceEachTurn = match.triggersOnlyOnceEachTurn()
                 || match.rawEffect() instanceof OncePerTurnTriggerEffect once
                 && !once.firstTokenCreation() && !once.firstLifeGain()
-                && !once.firstLandGraveyardEvent() && !once.firstLifeLoss() && !once.firstCycling();
+                && !once.firstLandGraveyardEvent() && !once.firstLifeLoss();
         int previousCopies = match.gameData().beginTriggeredAbilityCopies(
                 grantedSpellCascade || triggersOnlyOnceEachTurn ? 1 : 1 +
                 gameQueryService.countAdditionalTriggeredAbilityTriggers(
@@ -16684,6 +16669,9 @@ public class TriggerCollectionService {
         if (watch instanceof CounterWatch counterWatch) {
             return dispatchCounterWatch(gameData, perm, controllerId, counterWatch, ctx);
         }
+        if (watch instanceof LibraryWatch libraryWatch) {
+            return dispatchLibraryWatch(gameData, perm, controllerId, libraryWatch, ctx);
+        }
         if (watch instanceof CombatWatch combatWatch) {
             Trigger watched = combatWatch.trigger();
             return dispatchRegistrations(gameData, perm, controllerId, watch, ctx, null,
@@ -16755,6 +16743,191 @@ public class TriggerCollectionService {
             first.markLimit(gameData, perm.getId());
         }
         return triggered;
+    }
+
+    /** "A nonland card", the discarded card the "first nonland discard each turn" ability counts. */
+    private static final CardPredicate NONLAND_CARD = new CardNotPredicate(new CardTypePredicate(CardType.LAND));
+
+    /**
+     * Dispatches the abilities the library watch {@code watch} reads on {@code perm}, its own and those other
+     * permanents grant it, to the watch's handlers, as {@link #dispatchRegistrations} does, judging each ability from
+     * the ability itself: the discarded cards' filter and "for the first time each turn" from the event
+     * ({@link #watchedLibraryEventMatches}), then its limit ({@link #dispatchLibraryAbility}). These watches'
+     * collectors read no narrower event.
+     */
+    private boolean dispatchLibraryWatch(GameData gameData, Permanent perm, UUID controllerId, LibraryWatch watch,
+                                         TriggerContext ctx) {
+        if (perm.isLosesAllAbilitiesUntilEndOfTurn()) return false;
+        GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, perm);
+        if (staticBonus.losesAllAbilities() || staticBonus.losesAllNonManaAbilities()) return false;
+        Trigger watched = watch.trigger();
+        boolean triggered = false;
+        // Reused for the granted-ability lookup below unless a printed ability was dispatched in between and may have
+        // changed the game state.
+        boolean staticBonusCurrent = true;
+        List<TriggeredAbility> printed = LibraryAbilityReader.printed(perm.getCard(), watch);
+        if (!printed.isEmpty() && !gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
+            staticBonusCurrent = false;
+            List<TextReplacement> globalWordChange = TextChangeTransformer.globalColorWordReplacements(gameData);
+            for (TriggeredAbility ability : printed) {
+                // Layer 3 (CR 612.1): the trigger condition is read from the permanent's text-changed words.
+                List<LibraryAbilityReader.LibraryEffect> reads = LibraryAbilityReader.read(ability, watched).stream()
+                        .map(read -> read.withEffect(TextChangeTransformer.transform(read.effect(),
+                                perm.getTextReplacements(), globalWordChange))).toList();
+                if (watchedLibraryEventMatches(gameData, controllerId, watch, ctx, reads.getFirst())) {
+                    triggered |= dispatchLibraryAbility(gameData, perm, controllerId, watch, ctx, reads);
+                }
+            }
+        }
+        for (TriggeredAbility ability : grantedTriggeredAbilitySupport.grantedTriggeredAbilities(gameData, perm,
+                staticBonusCurrent ? staticBonus : null, ability -> ability.hasWatchedTrigger(watched))) {
+            List<LibraryAbilityReader.LibraryEffect> reads = LibraryAbilityReader.read(ability, watched);
+            if (watchedLibraryEventMatches(gameData, controllerId, watch, ctx, reads.getFirst())) {
+                triggered |= dispatchLibraryAbility(gameData, perm, controllerId, watch, ctx, reads);
+            }
+        }
+        return triggered;
+    }
+
+    /**
+     * Whether the event {@code ctx} matches {@code read}'s ability as the collector of {@code watch}, which reads no
+     * narrower event, judges it: one of the discarded cards matches the filter ("whenever you discard one or more land
+     * cards"), and "for the first time each turn" is the player's first discard event or surveil this turn, counting
+     * those before the source was on the battlefield.
+     */
+    private boolean watchedLibraryEventMatches(GameData gameData, UUID controllerId, LibraryWatch watch,
+                                               TriggerContext ctx, LibraryAbilityReader.LibraryEffect read) {
+        LibraryAbilityReader.requireWatchedEvent(read, watch.trigger());
+        if (read.filter() != null) {
+            if (!(ctx instanceof TriggerContext.DiscardEvent discardEvent)) {
+                throw new IllegalStateException("The collector of " + watch.trigger() + " judges no filter: "
+                        + read.ability());
+            }
+            if (discardEvent.discardedCards().stream().noneMatch(card -> predicateEvaluationService
+                    .matchesCardPredicate(card, read.filter(), null, gameData, controllerId))) {
+                return false;
+            }
+        }
+        if (read.counts().isEmpty()) {
+            return true;
+        }
+        LibraryAbilityReader.requireNoCountButFirst(read, watch.trigger());
+        if (ctx instanceof TriggerContext.DiscardEvent discardEvent) {
+            return gameData.cardsDiscardedThisTurn.getOrDefault(controllerId, 0) == discardEvent.discardedCount();
+        }
+        if (ctx instanceof TriggerContext.Surveil surveil) {
+            return surveil.firstThisTurn();
+        }
+        throw new IllegalStateException("The collector of " + watch.trigger() + " counts no events: " + read.ability());
+    }
+
+    /**
+     * Dispatches the effects of one library ability, {@code effects}, whose filter, event and count matched, to
+     * {@code watch}'s handlers: it doesn't trigger once its limit is reached, and the limit is marked on {@code perm}
+     * by the ability once one of its effects triggered ("triggers only once each turn", "this ability triggers only
+     * once"), or as the action is taken ("do this only once each turn", CR 603.2h).
+     */
+    private boolean dispatchLibraryAbility(GameData gameData, Permanent perm, UUID controllerId, LibraryWatch watch,
+                                           TriggerContext ctx, List<LibraryAbilityReader.LibraryEffect> effects) {
+        LibraryAbilityReader.LibraryEffect first = effects.getFirst();
+        if (first.limitReached(gameData, perm.getId())) {
+            return false;
+        }
+        // A limit or a first-time count is one trigger a turn, so nothing makes the ability trigger additional times.
+        boolean triggersOnlyOnceEachTurn = first.limit() == TriggerLimit.ONCE_EACH_TURN
+                || first.limit() == TriggerLimit.DO_ONLY_ONCE_EACH_TURN || first.firstTimeEachTurn();
+        boolean triggered = false;
+        for (LibraryAbilityReader.LibraryEffect read : effects) {
+            triggered |= dispatchSlotEffect(gameData, perm, controllerId, watch, ctx, read.effect(),
+                    read.marksLimitOnAcceptance(), triggersOnlyOnceEachTurn);
+        }
+        if (triggered) {
+            first.markLimit(gameData, perm.getId());
+        }
+        return triggered;
+    }
+
+    /** Whether {@code read}'s filter, if any, matches {@code discardedCard}, judged for {@code controllerId}. */
+    private boolean discardedCardMatches(GameData gameData, LibraryAbilityReader.LibraryEffect read,
+                                         Card discardedCard, boolean characteristicsKnown, UUID controllerId) {
+        if (read.filter() == null) {
+            return true;
+        }
+        return characteristicsKnown && predicateEvaluationService.matchesCardPredicate(discardedCard, read.filter(),
+                null, gameData, controllerId);
+    }
+
+    /**
+     * Collects the "whenever you discard a card" abilities of {@code perm}, which its controller discarded
+     * {@code discardedCard} under: each ability's filter, own event ("you cycle a card", "an opponent's spell or
+     * ability causes you to discard a card") and "for the first time each turn" are judged from the ability, then its
+     * limit, around its effects' dispatch. "You cycle a card" and "an opponent causes you to discard" put the effect on
+     * the stack as the handlers of their old wrappers did.
+     */
+    private boolean collectControllerDiscardAbilities(GameData gameData, Permanent perm, UUID discardingPlayerId,
+                                                      Card discardedCard, boolean cycled, boolean characteristicsKnown,
+                                                      TriggerContext ctx) {
+        LibraryWatch watch = LibraryWatch.ON_CONTROLLER_DISCARDS;
+        boolean anyTriggered = false;
+        for (TriggeredAbility ability : LibraryAbilityReader.printed(perm.getCard(), watch)) {
+            List<LibraryAbilityReader.LibraryEffect> reads = LibraryAbilityReader.read(ability, watch.trigger());
+            LibraryAbilityReader.LibraryEffect first = reads.getFirst();
+            if (first.limit() == TriggerLimit.DO_ONLY_ONCE_EACH_TURN) {
+                throw new IllegalStateException("The \"you discard a card\" collector marks no \"do this only once "
+                        + "each turn\": " + ability);
+            }
+            if (!discardedCardMatches(gameData, first, discardedCard, characteristicsKnown, discardingPlayerId)
+                    || !controllerDiscardEventMatches(gameData, first, discardingPlayerId, cycled)
+                    || first.limitReached(gameData, perm.getId())) {
+                continue;
+            }
+            boolean triggered = false;
+            for (LibraryAbilityReader.LibraryEffect read : reads) {
+                CardEffect effect = read.effect();
+                var match = new TriggerMatchContext(gameData, perm, discardingPlayerId, effect);
+                triggered |= switch (read.event()) {
+                    case CYCLES -> dispatch(match, watch, effect, ctx,
+                            () -> discardTriggerCollectorService.collectCycling(match, effect));
+                    case DISCARDS_BY_OPPONENT -> dispatch(match, watch, effect, ctx,
+                            () -> discardTriggerCollectorService.collectOpponentCausedDiscard(match, effect));
+                    default -> dispatch(match, watch, effect, ctx);
+                };
+            }
+            if (triggered) {
+                first.markLimit(gameData, perm.getId());
+                anyTriggered = true;
+            }
+        }
+        return anyTriggered;
+    }
+
+    /**
+     * Whether a discard by {@code playerId} is the event of {@code read}'s ability, read by the "whenever you discard a
+     * card" collector: any discard, a cycling ("whenever you cycle a card"), or a discard an opponent's spell or ability
+     * causes; and, for "for the first time each turn", the player's first cycling or first nonland discard this turn,
+     * counting those before the source was on the battlefield.
+     */
+    private static boolean controllerDiscardEventMatches(GameData gameData, LibraryAbilityReader.LibraryEffect read,
+                                                         UUID playerId, boolean cycled) {
+        boolean eventMatches = switch (read.event()) {
+            case DISCARDS -> true;
+            case CYCLES -> cycled;
+            case DISCARDS_BY_OPPONENT -> gameData.discardCausedByOpponent;
+            default -> throw new IllegalStateException("The \"you discard a card\" collector reads no "
+                    + read.event() + ": " + read.ability());
+        };
+        if (!eventMatches || read.counts().isEmpty()) {
+            return eventMatches;
+        }
+        LibraryAbilityReader.requireNoCountButFirst(read, LibraryWatch.ON_CONTROLLER_DISCARDS.trigger());
+        if (read.event() == LibraryTrigger.LibraryEvent.CYCLES && read.filter() == null) {
+            return gameData.cardsCycledThisTurn.getOrDefault(playerId, 0) == 1;
+        }
+        if (read.event() == LibraryTrigger.LibraryEvent.DISCARDS && NONLAND_CARD.equals(read.filter())) {
+            return gameData.nonlandCardsDiscardedThisTurn.getOrDefault(playerId, 0) == 1;
+        }
+        throw new IllegalStateException("The \"you discard a card\" collector counts only the first cycling and the "
+                + "first nonland discard of the turn: " + read.ability());
     }
 
     /**
@@ -17115,17 +17288,6 @@ public class TriggerCollectionService {
             Object slot, TriggerContext ctx, CardEffect effect, boolean markOnAcceptance,
             boolean triggersOnlyOnceEachTurn) {
         CardEffect conditionedEffect = effect;
-        if (slot == LibraryWatch.ON_CONTROLLER_DISCARD_EVENT
-                && ctx instanceof TriggerContext.DiscardEvent discardEvent
-                && effect instanceof TriggeringCardConditionalEffect conditional) {
-            boolean matches = discardEvent.discardedCards().stream()
-                    .anyMatch(card -> predicateEvaluationService.matchesCardPredicate(
-                            card, conditional.predicate(), null, gameData, controllerId));
-            if (!matches) {
-                return false;
-            }
-            conditionedEffect = conditional.wrapped();
-        }
         if (effect instanceof ConditionalEffect conditional
                 && conditional.condition() instanceof SourceHasChosenMode) {
             if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
@@ -17133,21 +17295,6 @@ public class TriggerCollectionService {
                 return false;
             }
             conditionedEffect = conditional.wrapped();
-        }
-        if (slot == LibraryWatch.ON_CONTROLLER_DISCARD_EVENT
-                && ctx instanceof TriggerContext.DiscardEvent firstDiscardEvent
-                && conditionedEffect instanceof OncePerTurnTriggerEffect firstOnly
-                && OncePerTurnTriggerEffect.FIRST_DISCARD_EVENT_KEY.equals(firstOnly.key())
-                && gameData.cardsDiscardedThisTurn.getOrDefault(controllerId, 0)
-                        != firstDiscardEvent.discardedCount()) {
-            return false;
-        }
-        if (slot == LibraryWatch.ON_CONTROLLER_SURVEILS
-                && ctx instanceof TriggerContext.Surveil surveil
-                && !surveil.firstThisTurn()
-                && conditionedEffect instanceof OncePerTurnTriggerEffect firstOnly
-                && OncePerTurnTriggerEffect.FIRST_SURVEIL_KEY.equals(firstOnly.key())) {
-            return false;
         }
         CardEffect toDispatch = unwrapOncePerTurnTrigger(gameData, perm, conditionedEffect);
         if (toDispatch == null) return false;

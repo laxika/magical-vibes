@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.trigger.LibraryAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
@@ -134,7 +135,7 @@ public class TargetPlayerDiscardsAndDestroysCreaturesOfChosenTypeEffectHandler i
     }
 
     private boolean hasEnterBattlefieldOnDiscardEffect(Card card) {
-        return LibraryWatch.ON_SELF_DISCARDED_BY_OPPONENT.effectsOf(card).stream()
+        return LibraryAbilityReader.printedEffects(card, LibraryWatch.ON_SELF_DISCARDED_BY_OPPONENT).stream()
                 .anyMatch(EnterBattlefieldOnDiscardEffect.class::isInstance);
     }
 

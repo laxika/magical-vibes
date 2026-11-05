@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.CastDiscardedCardFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CyclingTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -34,7 +33,6 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentCausedDiscardTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -89,17 +87,17 @@ public class DiscardTriggerCollectorService {
         return enqueueDiscardTrigger(match, trigger, "untap source");
     }
 
-    @CollectsLibraryTrigger(value = CyclingTriggerEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
-    private boolean handleCyclingTrigger(TriggerMatchContext match,
-            CyclingTriggerEffect trigger, TriggerContext ctx) {
-        if (!(ctx instanceof TriggerContext.Discard discard) || !discard.cycled()) return false;
-
+    /**
+     * Puts the effect of a "whenever you cycle a card" ability on the stack for a cycling the collector judged
+     * ({@code LibraryTrigger.LibraryEvent.CYCLES}), choosing its target first if it has one.
+     */
+    public boolean collectCycling(TriggerMatchContext match, CardEffect effect) {
         var gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
-        if (trigger.wrapped().targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || trigger.wrapped().targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
             gameData.queueInteraction(new PermanentChoiceContext.DiscardControllerTriggerTarget(
-                    sourceCard, match.controllerId(), new ArrayList<>(List.of(trigger.wrapped())),
+                    sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)),
                     match.permanent().getId()));
         } else {
             gameData.enqueueTrigger(new StackEntry(
@@ -107,7 +105,7 @@ public class DiscardTriggerCollectorService {
                     sourceCard,
                     match.controllerId(),
                     sourceCard.getName() + "'s ability",
-                    new ArrayList<>(List.of(trigger.wrapped())),
+                    new ArrayList<>(List.of(effect)),
                     null,
                     match.permanent().getId()));
         }
@@ -116,11 +114,11 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsLibraryTrigger(value = OpponentCausedDiscardTriggerEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
-    private boolean handleOpponentCausedDiscard(TriggerMatchContext match,
-            OpponentCausedDiscardTriggerEffect trigger, TriggerContext ctx) {
-        if (!match.gameData().discardCausedByOpponent) return false;
-
+    /**
+     * Puts the effect of a "whenever a spell or ability an opponent controls causes you to discard a card" ability on
+     * the stack for a discard the collector judged ({@code LibraryTrigger.LibraryEvent.DISCARDS_BY_OPPONENT}).
+     */
+    public boolean collectOpponentCausedDiscard(TriggerMatchContext match, CardEffect effect) {
         var gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
         gameData.enqueueTrigger(new StackEntry(
@@ -128,7 +126,7 @@ public class DiscardTriggerCollectorService {
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(trigger.wrapped())),
+                new ArrayList<>(List.of(effect)),
                 null,
                 match.permanent().getId()));
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 
+import com.github.laxika.magicalvibes.service.trigger.LibraryAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,9 +41,9 @@ public final class LibrarySearchTriggerHelper {
             for (var perm : List.copyOf(battlefield)) {
                 if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
                 boolean controllerSearch = controllerId.equals(searchingPlayerId);
-                List<CardEffect> effects = (controllerSearch
+                List<CardEffect> effects = LibraryAbilityReader.printedEffects(perm.getCard(), controllerSearch
                         ? LibraryWatch.ON_CONTROLLER_SEARCHES_LIBRARY
-                        : LibraryWatch.ON_OPPONENT_SEARCHES_LIBRARY).effectsOf(perm.getCard());
+                        : LibraryWatch.ON_OPPONENT_SEARCHES_LIBRARY);
                 if (effects.isEmpty()) continue;
 
                 StackEntry trigger = new StackEntry(
@@ -72,8 +73,9 @@ public final class LibrarySearchTriggerHelper {
         boolean[] found = {false};
         gameData.forEachBattlefield((controllerId, battlefield) -> {
             for (var perm : battlefield) {
-                if (!LibraryWatch.ON_CONTROLLER_SEARCHES_LIBRARY.effectsOf(perm.getCard()).isEmpty()
-                        || !LibraryWatch.ON_OPPONENT_SEARCHES_LIBRARY.effectsOf(perm.getCard()).isEmpty()) {
+                if (!LibraryAbilityReader.printed(perm.getCard(), LibraryWatch.ON_CONTROLLER_SEARCHES_LIBRARY).isEmpty()
+                        || !LibraryAbilityReader.printed(perm.getCard(), LibraryWatch.ON_OPPONENT_SEARCHES_LIBRARY)
+                        .isEmpty()) {
                     found[0] = true;
                 }
             }

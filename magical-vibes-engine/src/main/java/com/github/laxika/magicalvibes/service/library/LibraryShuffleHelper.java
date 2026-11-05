@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 
+import com.github.laxika.magicalvibes.service.trigger.LibraryAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -53,12 +54,12 @@ public final class LibraryShuffleHelper {
         boolean causedByOwnSpellOrAbility = shufflingPlayerId.equals(causingControllerId);
         gameData.forEachPermanent((controllerId, perm) -> {
             List<CardEffect> effects = new ArrayList<>(
-                    LibraryWatch.ON_ANY_PLAYER_SHUFFLES_LIBRARY.effectsOf(perm.getCard()));
+                    LibraryAbilityReader.printedEffects(perm.getCard(), LibraryWatch.ON_ANY_PLAYER_SHUFFLES_LIBRARY));
             if (!controllerId.equals(shufflingPlayerId)) {
-                effects.addAll(LibraryWatch.ON_OPPONENT_SHUFFLES_LIBRARY.effectsOf(perm.getCard()));
+                effects.addAll(LibraryAbilityReader.printedEffects(perm.getCard(), LibraryWatch.ON_OPPONENT_SHUFFLES_LIBRARY));
             }
             if (causedByOwnSpellOrAbility) {
-                effects.addAll(LibraryWatch.ON_SPELL_OR_ABILITY_CAUSES_CONTROLLER_SHUFFLE.effectsOf(perm.getCard()));
+                effects.addAll(LibraryAbilityReader.printedEffects(perm.getCard(), LibraryWatch.ON_SPELL_OR_ABILITY_CAUSES_CONTROLLER_SHUFFLE));
             }
             for (CardEffect effect : effects) {
                 StackEntry trigger = new StackEntry(

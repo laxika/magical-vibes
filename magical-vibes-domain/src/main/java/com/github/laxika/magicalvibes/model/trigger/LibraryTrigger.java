@@ -17,15 +17,14 @@ import java.util.Objects;
  *                  that names its player itself is {@link PlayerRelation#ANY}
  * @param qualifier what the discarded card must be, or {@code null} for any card: "whenever you discard a creature
  *                  card" is {@code Triggers.youDiscardCard().withFilter(new CardTypePredicate(CardType.CREATURE))}.
- *                  For "one or more cards" it is enough that one of them matches. The collectors read it from the
- *                  legacy view ({@code TriggeredAbility.legacyEffects()}) as the {@code TriggeringCardConditionalEffect}
- *                  they judge, so {@link #watchKey()} drops it
+ *                  For "one or more cards" it is enough that one of them matches. The collectors judge it from the
+ *                  ability ({@code LibraryAbilityReader}), so {@link #watchKey()} drops it
  * @param nth       which of the player's events of this kind this turn triggers the ability, or {@code 0} for every
  *                  one: "whenever you draw your second card each turn" is {@code 2}, "whenever you cycle a card for
  *                  the first time each turn" {@code 1}. The count includes the events before the source was on the
  *                  battlefield. With a {@link #qualifier} it counts the matching events ("whenever you discard one or
- *                  more nonland cards for the first time each turn"). The collectors read it from the legacy view
- *                  as the wrapper they judge, so {@link #watchKey()} drops it
+ *                  more nonland cards for the first time each turn"). The collectors judge it from the ability
+ *                  ({@code LibraryAbilityReader}), so {@link #watchKey()} drops it
  */
 public record LibraryTrigger(LibraryEvent event, PlayerRelation player, CardPredicate qualifier, int nth)
         implements Trigger {
@@ -96,11 +95,21 @@ public record LibraryTrigger(LibraryEvent event, PlayerRelation player, CardPred
     }
 
     /**
+     * The library, draw and discard collectors read this trigger's abilities themselves ({@code LibraryAbilityReader}):
+     * the discarded card's filter, the count of the player's events this turn, the event a collector of another event
+     * reads and the ability's options come from the ability, so it has no legacy view.
+     */
+    @Override
+    public boolean collectedAsAbility() {
+        return true;
+    }
+
+    /**
      * The trigger the {@code LibraryWatch} collectors read this one's abilities by: without its {@link #qualifier} and
      * {@link #nth}, and, for the events no collector of their own reads, with the event whose collector reads them.
      * "You cycle a card" and "an opponent's spell or ability causes you to discard a card" are read by the "you discard
-     * a card" collector, and a draw in or out of a draw step by the collector of every draw. The legacy view ({@code
-     * TriggeredAbility.legacyEffects()}) gives them the wrapper those collectors judge.
+     * a card" collector, and a draw in or out of a draw step by the collector of every draw. Those collectors judge the
+     * ability's own event ({@code LibraryAbilityReader}).
      */
     @Override
     public Trigger watchKey() {

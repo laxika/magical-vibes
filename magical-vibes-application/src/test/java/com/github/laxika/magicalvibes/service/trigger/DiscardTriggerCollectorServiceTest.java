@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.CastDiscardedCardFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CyclingTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -228,19 +227,16 @@ class DiscardTriggerCollectorServiceTest {
     }
 
     @Nested
-    @DisplayName("ON_CONTROLLER_DISCARDS — CyclingTriggerEffect")
+    @DisplayName("ON_CONTROLLER_DISCARDS — \"whenever you cycle a card\"")
     class ControllerCycling {
 
         @Test
-        @DisplayName("queues the wrapped effect only for a cycling discard")
-        void queuesOnlyForCyclingDiscard() {
+        @DisplayName("puts the effect on the stack for a cycling the collector judged")
+        void queuesTheEffect() {
             Permanent healer = createPermanent("Drannith Healer");
-            var effect = new CyclingTriggerEffect(new GainLifeEffect(1));
-            var ctx = new TriggerContext.Discard(player1Id, createCard("Censor"), true);
+            var effect = new GainLifeEffect(1);
 
-            boolean result = registry.dispatch(
-                    match(healer, player1Id, effect),
-                    LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+            boolean result = sut.collectCycling(match(healer, player1Id, effect), effect);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -249,37 +245,33 @@ class DiscardTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("does not queue the wrapped effect for an ordinary discard")
-        void ignoresOrdinaryDiscard() {
+        @DisplayName("queues a target choice for a targeted cycling trigger")
+        void queuesTargetChoiceForTargetedCyclingTrigger() {
+            Permanent tactician = createPermanent("Snare Tactician");
+            var effect = new TapPermanentsEffect(TapUntapScope.TARGET);
+
+            boolean result = sut.collectCycling(match(tactician, player1Id, effect), effect);
+
+            assertThat(result).isTrue();
+            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class))
+                    .isTrue();
+            assertThat(gd.peekPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class)
+                    .effects()).containsExactly(effect);
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("the cycling handler is no longer keyed on a wrapper")
+        void noHandlerIsKeyedOnTheCyclingEvent() {
             Permanent healer = createPermanent("Drannith Healer");
-            var effect = new CyclingTriggerEffect(new GainLifeEffect(1));
-            var ctx = new TriggerContext.Discard(player1Id, createCard("Censor"));
+            var effect = new GainLifeEffect(1);
+            var ctx = new TriggerContext.Discard(player1Id, createCard("Censor"), true);
 
             boolean result = registry.dispatch(
                     match(healer, player1Id, effect),
                     LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
 
             assertThat(result).isFalse();
-            assertThat(gd.stack).isEmpty();
-        }
-
-        @Test
-        @DisplayName("queues a target choice for a targeted cycling trigger")
-        void queuesTargetChoiceForTargetedCyclingTrigger() {
-            Permanent tactician = createPermanent("Snare Tactician");
-            var wrapped = new TapPermanentsEffect(TapUntapScope.TARGET);
-            var effect = new CyclingTriggerEffect(wrapped);
-            var ctx = new TriggerContext.Discard(player1Id, createCard("Censor"), true);
-
-            boolean result = registry.dispatch(
-                    match(tactician, player1Id, effect),
-                    LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class))
-                    .isTrue();
-            assertThat(gd.peekPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class)
-                    .effects()).containsExactly(wrapped);
             assertThat(gd.stack).isEmpty();
         }
     }

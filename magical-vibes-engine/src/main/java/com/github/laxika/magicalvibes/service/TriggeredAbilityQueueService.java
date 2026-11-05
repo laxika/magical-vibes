@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.LibraryAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
@@ -36,7 +37,6 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -832,9 +832,7 @@ public class TriggeredAbilityQueueService {
                     .filter(authored -> effects.stream()
                             .anyMatch(queued -> authored.getClass().equals(queued.getClass())
                                     || authored instanceof AllyCombatDamageTriggerEffect ally
-                                    && ally.effect().equals(queued)
-                                    || authored instanceof NthCardDrawTriggerEffect nth
-                                    && nth.resolvedEffect().equals(queued)))
+                                    && ally.effect().equals(queued)))
                     .mapToInt(sourceCard::getEffectTargetIndex)
                     .filter(index -> index >= 0 && index < sourceCard.getTargetGroups().size())
                     .boxed()
@@ -1567,7 +1565,7 @@ public class TriggeredAbilityQueueService {
             int exactTargets = pending.sourcePermanentId() == null
                     ? pending.sourceCard().getSelfCycledTriggerPermanentTargets() : 0;
             if (exactTargets > 0 && pending.effects().equals(
-                    LibraryWatch.ON_SELF_CYCLED.effectsOf(pending.sourceCard()))) {
+                    LibraryAbilityReader.printedEffects(pending.sourceCard(), LibraryWatch.ON_SELF_CYCLED))) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class);
                 if (result.validTargets().size() < exactTargets) {
                     gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),

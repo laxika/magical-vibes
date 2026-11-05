@@ -348,24 +348,6 @@ class MiscTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("surveil once-per-turn trigger queues its wrapped effect only once")
-    void surveilOncePerTurnTriggerQueuesWrappedEffectOnlyOnce() {
-        Permanent perm = createPermanent("Whispering Snitch");
-        var effect = new OncePerTurnTriggerEffect(SequenceEffect.of(
-                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
-                new GainLifeEffect(1)));
-        var ctx = new TriggerContext.Surveil(player1Id, true);
-
-        assertThat(registry.dispatch(
-                match(perm, player1Id, effect), LibraryWatch.ON_CONTROLLER_SURVEILS, effect, ctx)).isTrue();
-        assertThat(registry.dispatch(
-                match(perm, player1Id, effect), LibraryWatch.ON_CONTROLLER_SURVEILS, effect, ctx)).isFalse();
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect.wrapped());
-        assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
-    }
-
-    @Test
     @DisplayName("surveil default trigger queues the original effect")
     void surveilDefaultTriggerQueuesOriginalEffect() {
         Permanent perm = createPermanent("Disinformation Campaign");
@@ -412,17 +394,17 @@ class MiscTriggerCollectorServiceTest {
     @DisplayName("surveil mark-on-acceptance trigger keeps its marker on the stack entry")
     void surveilMarkOnAcceptanceTriggerKeepsMarker() {
         Permanent perm = createPermanent("Planetarium of Wan Shi Tong");
-        var effect = OncePerTurnTriggerEffect.markOnAcceptance(new DrawCardEffect(1));
+        var effect = new DrawCardEffect(1);
         var ctx = new TriggerContext.Surveil(player1Id, true);
 
         boolean result = registry.dispatch(
-                match(perm, player1Id, effect), LibraryWatch.ON_CONTROLLER_SURVEILS,
-                effect.wrapped(), ctx);
+                new TriggerMatchContext(gd, perm, player1Id, effect, perm.getCard(), true),
+                LibraryWatch.ON_CONTROLLER_SURVEILS, effect, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).singleElement().satisfies(entry -> {
             assertThat(entry.isMarkSourceOncePerTurnOnAcceptance()).isTrue();
-            assertThat(entry.getEffectsToResolve()).containsExactly(effect.wrapped());
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
         });
     }
 

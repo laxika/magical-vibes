@@ -3,24 +3,16 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CyclingTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.ExceptFirstDrawStepTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.FirstDrawStepDrawOnlyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstOpponentLifeLossEachTurnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.FirstOrSecondCardDrawTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OnceOnlyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnPerCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentCausedDiscardTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SchemeSetInMotionTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -50,8 +42,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * A triggered ability (CR 113.3c): its trigger conditions, the options that apply to them and its
@@ -118,10 +108,11 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * damage to a player [or battle, or planeswalker]" and "a creature deals combat damage to you", the combat
      * collectors that read it; no damage collector reads it (the "one or more" damage events are events of their own),
      * no counter collector does (a counter event is once for each permanent, or once for each counter, by its own
-     * event), and no becomes-the-target collector does ("one or more creatures you control become the target of an
-     * activated ability" is an event of its own). The legacy view checked these as a card's abilities were indexed;
-     * the combat, damage, counter and becomes-the-target collectors read the ability itself, so the ability checks
-     * them as it is built.
+     * event), no becomes-the-target collector does ("one or more creatures you control become the target of an
+     * activated ability" is an event of its own), and no library, draw or discard collector does ("whenever you discard
+     * one or more cards" is an event of its own). The legacy view checked these as a card's abilities were indexed;
+     * the combat, damage, counter, becomes-the-target and library collectors read the ability itself, so the ability
+     * checks them as it is built.
      */
     private static void requireReadableMultiplicity(List<TriggerCondition> conditions,
                                                     TriggerMultiplicity multiplicity) {
@@ -153,6 +144,10 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
                 if (conditions.stream().anyMatch(condition -> condition.trigger() instanceof TargetTrigger)) {
                     throw new IllegalArgumentException("No becomes-the-target collector reads \"one or more\" for "
                             + conditions);
+                }
+                if (conditions.stream().anyMatch(condition -> condition.trigger() instanceof LibraryTrigger)) {
+                    throw new IllegalArgumentException("No library, draw or discard collector reads \"one or more\" "
+                            + "for " + conditions);
                 }
             }
             case EACH -> {
@@ -267,8 +262,8 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
 
     /**
      * Whether one of this ability's trigger conditions is a trigger whose collectors read the ability itself
-     * ({@link Trigger#collectedAsAbility()}: a spell, land-play, activation, step, combat, damage, counter or
-     * becomes-the-target trigger): then it has no legacy view.
+     * ({@link Trigger#collectedAsAbility()}: a spell, land-play, activation, step, combat, damage, counter,
+     * becomes-the-target or library, draw and discard trigger): then it has no legacy view.
      */
     public boolean collectedAsAbility() {
         return conditions.stream().anyMatch(condition -> condition.trigger().collectedAsAbility());
@@ -296,16 +291,14 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * {@link #limitKey()}, the key the trigger pipeline marks; "do this only once each turn" one marked as the action
      * is taken (CR 603.2h); "this ability triggers only once" ({@code ONCE}) an {@link OnceOnlyTriggerEffect} inside
      * the intervening "if", as the cards wrote it. An ability with a spell, land-play, activation, "at the beginning of
-     * [step or phase]", combat, damage, counter or becomes-the-target trigger ({@link #collectedAsAbility()}) has no
-     * legacy view: its collectors read it itself, and this throws. "Once each turn for each creature"
+     * [step or phase]", combat, damage, counter, becomes-the-target or library, draw and discard trigger
+     * ({@link #collectedAsAbility()}) has no legacy view: its collectors read it itself, and this throws. "Once each turn for each creature"
      * ({@link TriggerLimit#ONCE_EACH_TURN_FOR_EACH_CREATURE}) is an {@link OncePerTurnPerCreatureTriggerEffect} where
      * the other limits go. A tap or untap trigger's
      * filter ("this permanent" for a {@link TapTrigger#narrowed()} trigger, and its {@link TapTrigger#qualifier()}) is
      * a {@link TriggeringPermanentConditionalEffect} outside the limit, "for the first time during your turn" the
      * global {@link OncePerTurnPerCreatureTriggerEffect} inside that filter, and "one or more" the registrations'
-     * {@link TriggerMode#ONCE_PER_BATCH}, as {@link #tapView()} says and the tap cards wrote them. A library, draw or
-     * discard trigger that its collectors read by another trigger ({@link LibraryTrigger#watchKey()}) is given in the
-     * order {@link #legacyLibraryEffects} says. A life trigger's "for the first time each turn"
+     * {@link TriggerMode#ONCE_PER_BATCH}, as {@link #tapView()} says and the tap cards wrote them. A life trigger's "for the first time each turn"
      * ({@link LifeTrigger#firstEachTurn()}) is the counting {@link OncePerTurnTriggerEffect} the life collectors judge,
      * where the limits go, as {@link #lifeView()} says, and "an opponent loses life for the first time during each of
      * their turns" makes the ability one {@link FirstOpponentLifeLossEachTurnTriggerEffect} of all its effects. A
@@ -321,10 +314,6 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         if (collectedAsAbility()) {
             throw new IllegalStateException("The collectors of " + conditions + " read the ability itself; it has no "
                     + "legacy view");
-        }
-        if (conditions.stream().anyMatch(condition -> condition.trigger() instanceof LibraryTrigger library
-                && !library.watchKey().equals(library))) {
-            return legacyLibraryEffects();
         }
         if (conditions.stream().anyMatch(condition -> condition.trigger() instanceof LifeTrigger life
                 && life.event() == LifeTrigger.LifeEvent.LOSES_FOR_FIRST_TIME_DURING_THEIR_TURN)) {
@@ -691,144 +680,6 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         List<CardEffect> resolved = legacyBaseEffects().stream().map(EffectRegistration::effect).toList();
         return List.of(new EffectRegistration(new FirstOpponentLifeLossEachTurnTriggerEffect(resolved),
                 effects.getFirst().triggerMode(), false));
-    }
-
-    /** "A nonland card", the discarded card the "first nonland discard each turn" collector counts. */
-    private static final CardPredicate NONLAND = new CardNotPredicate(new CardTypePredicate(CardType.LAND));
-
-    /**
-     * The ability in the form the library, draw and discard collectors judge it in when one of its conditions is read
-     * by another trigger ({@link LibraryTrigger#watchKey()}). Each effect is wrapped, outermost first, in:
-     * <ol>
-     *     <li>"this ability triggers only once" ({@code ONCE}), an {@link OnceOnlyTriggerEffect};</li>
-     *     <li>the discarded card's filter ({@link LibraryTrigger#qualifier()}), a
-     *     {@link TriggeringCardConditionalEffect};</li>
-     *     <li>"triggers only once each turn", an {@link OncePerTurnTriggerEffect} keyed by {@link #limitKey()}, or "do
-     *     this only once each turn", one marked as the action is taken;</li>
-     *     <li>"for the first time each turn" ({@link LibraryTrigger#nth()} {@code 1} off a draw), the
-     *     {@link OncePerTurnTriggerEffect} that counts the player's events of the turn: the first cycling, the first
-     *     nonland discard, the first discard event or the first surveil;</li>
-     *     <li>the event's wrapper: "you cycle a card" a {@link CyclingTriggerEffect}, "an opponent causes you to
-     *     discard" an {@link OpponentCausedDiscardTriggerEffect}, "your Nth card each turn" an
-     *     {@link NthCardDrawTriggerEffect} ("your first or second card" a {@link FirstOrSecondCardDrawTriggerEffect},
-     *     from two conditions), and the draws in or out of a draw step an {@link ExceptFirstDrawStepTriggerEffect} or
-     *     {@link FirstDrawStepDrawOnlyTriggerEffect};</li>
-     *     <li>the intervening "if", a {@link ConditionalEffect} checked as the ability triggers and again as it
-     *     resolves.</li>
-     * </ol>
-     * That is the order the library cards nested them in. Every condition of the ability must be a library trigger,
-     * of one event, player and filter; only a draw's count may differ, as "first or second". A count, filter or
-     * multiplicity no collector reads throws.
-     */
-    private List<EffectRegistration> legacyLibraryEffects() {
-        if (!conditions.stream().allMatch(condition -> condition.trigger() instanceof LibraryTrigger)) {
-            throw new IllegalStateException("The legacy view takes a library trigger read by another trigger only "
-                    + "with other library triggers: " + conditions);
-        }
-        List<LibraryTrigger> library = conditions.stream().map(condition -> (LibraryTrigger) condition.trigger())
-                .toList();
-        LibraryTrigger first = library.getFirst();
-        Set<Integer> counts = library.stream().map(LibraryTrigger::nth).collect(Collectors.toSet());
-        if (library.stream().anyMatch(trigger -> trigger.event() != first.event() || trigger.player() != first.player()
-                || !Objects.equals(trigger.qualifier(), first.qualifier()))
-                || (counts.size() > 1 && !(first.event() == LibraryTrigger.LibraryEvent.DRAWS
-                && counts.equals(Set.of(1, 2))))) {
-            throw new IllegalStateException("The library conditions of one ability must have one event, player and "
-                    + "filter, and one count but a draw's first or second: " + conditions);
-        }
-        if (options.multiplicity() != TriggerMultiplicity.EACH) {
-            throw new IllegalStateException("The legacy view has no " + options.multiplicity() + " form for "
-                    + conditions);
-        }
-        if (first.qualifier() != null && first.event() != LibraryTrigger.LibraryEvent.DISCARDS
-                && first.event() != LibraryTrigger.LibraryEvent.DISCARDS_ONE_OR_MORE
-                && first.event() != LibraryTrigger.LibraryEvent.DISCARDS_BY_OPPONENT) {
-            throw new IllegalStateException("Only the discard collectors judge a discarded card's filter: " + first);
-        }
-        boolean firstTime = first.nth() == 1 && first.event() != LibraryTrigger.LibraryEvent.DRAWS;
-        TriggerLimit limit = options.limit();
-        if (firstTime && (limit == TriggerLimit.ONCE_EACH_TURN || limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN)) {
-            throw new IllegalStateException("The legacy view has one once-each-turn wrapper: " + conditions
-                    + " with " + limit);
-        }
-        if (limit == TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE) {
-            throw new IllegalStateException("No library collector reads " + limit + ": " + conditions);
-        }
-        List<EffectRegistration> wrapped = new ArrayList<>(effects.size());
-        for (EffectRegistration registration : legacyBaseEffects()) {
-            CardEffect effect = registration.effect();
-            if (options.interveningIf() != null) {
-                effect = new ConditionalEffect(options.interveningIf(), effect, true);
-            }
-            effect = libraryEventWrapper(first, counts, effect);
-            if (firstTime) {
-                effect = firstTimeEachTurnWrapper(first, effect);
-            } else if (first.nth() > 0 && first.event() != LibraryTrigger.LibraryEvent.DRAWS) {
-                throw new IllegalStateException("No library collector counts " + first);
-            }
-            if (limit == TriggerLimit.ONCE_EACH_TURN) {
-                effect = OncePerTurnTriggerEffect.keyed(effect, limitKey());
-            } else if (limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN) {
-                effect = OncePerTurnTriggerEffect.markOnAcceptance(effect);
-            }
-            if (first.qualifier() != null) {
-                effect = new TriggeringCardConditionalEffect(first.qualifier(), effect);
-            }
-            if (limit == TriggerLimit.ONCE) {
-                effect = new OnceOnlyTriggerEffect(effect);
-            }
-            wrapped.add(new EffectRegistration(effect, registration.triggerMode(),
-                    registration.simultaneousWithPrevious()));
-        }
-        return List.copyOf(wrapped);
-    }
-
-    /** The wrapper the collector of {@code trigger}'s watched event judges its event, and a draw's count, by. */
-    private static CardEffect libraryEventWrapper(LibraryTrigger trigger, Set<Integer> counts, CardEffect effect) {
-        boolean draw = trigger.event() == LibraryTrigger.LibraryEvent.DRAWS;
-        if (!draw && trigger.nth() > 0 && trigger.nth() != 1) {
-            throw new IllegalStateException("Only a draw counts past the first event of the turn: " + trigger);
-        }
-        return switch (trigger.event()) {
-            case DRAWS -> {
-                if (counts.size() > 1) {
-                    yield new FirstOrSecondCardDrawTriggerEffect(effect);
-                }
-                yield trigger.nth() > 0 ? new NthCardDrawTriggerEffect(trigger.nth(), effect) : effect;
-            }
-            case CYCLES -> trigger.player() == PlayerRelation.YOU ? new CyclingTriggerEffect(effect) : effect;
-            case DISCARDS_BY_OPPONENT -> new OpponentCausedDiscardTriggerEffect(effect);
-            case DRAWS_EXCEPT_FIRST_IN_DRAW_STEP -> new ExceptFirstDrawStepTriggerEffect(effect);
-            case DRAWS_FIRST_IN_DRAW_STEP -> {
-                if (trigger.player() != PlayerRelation.YOU) {
-                    throw new IllegalStateException("Only the \"you draw\" collector judges a first draw-step draw: "
-                            + trigger);
-                }
-                yield new FirstDrawStepDrawOnlyTriggerEffect(effect);
-            }
-            default -> effect;
-        };
-    }
-
-    /**
-     * The wrapper the collectors judge "for the first time each turn" by, counting the player's events before the
-     * source was on the battlefield too.
-     */
-    private static CardEffect firstTimeEachTurnWrapper(LibraryTrigger trigger, CardEffect effect) {
-        boolean you = trigger.player() == PlayerRelation.YOU;
-        if (you && trigger.event() == LibraryTrigger.LibraryEvent.CYCLES && trigger.qualifier() == null) {
-            return OncePerTurnTriggerEffect.firstCycling(effect);
-        }
-        if (you && trigger.event() == LibraryTrigger.LibraryEvent.DISCARDS && NONLAND.equals(trigger.qualifier())) {
-            return OncePerTurnTriggerEffect.firstNonlandDiscard(effect);
-        }
-        if (you && trigger.event() == LibraryTrigger.LibraryEvent.DISCARDS_ONE_OR_MORE && trigger.qualifier() == null) {
-            return OncePerTurnTriggerEffect.firstDiscardEvent(effect);
-        }
-        if (you && trigger.event() == LibraryTrigger.LibraryEvent.SURVEILS) {
-            return OncePerTurnTriggerEffect.firstSurveil(effect);
-        }
-        throw new IllegalStateException("No library collector counts the first event of the turn for " + trigger);
     }
 
     /**

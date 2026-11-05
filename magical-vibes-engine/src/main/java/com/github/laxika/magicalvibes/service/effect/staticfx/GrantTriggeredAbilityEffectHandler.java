@@ -79,7 +79,7 @@ public class GrantTriggeredAbilityEffectHandler implements StaticEffectHandlerBe
         }
         var keyed = new OncePerTurnTriggerEffect(once.wrapped(), once.markOnAcceptance(),
                 "granted-by:" + grantingPermanentId, once.firstTokenCreation(), once.firstLifeGain(),
-                once.firstLandGraveyardEvent(), once.firstLifeLoss(), once.firstCycling());
+                once.firstLandGraveyardEvent(), once.firstLifeLoss());
         return new GrantTriggeredAbilityEffect(LegacySlots.withEffect(grant.grantedAbility(), keyed), grant.scope(),
                 grant.filter());
     }

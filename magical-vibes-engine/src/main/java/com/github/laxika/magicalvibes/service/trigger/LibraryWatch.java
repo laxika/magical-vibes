@@ -14,17 +14,15 @@ import java.util.List;
  * real trigger (effect-slot-refactor.md step 13, family 7). Each constant is named after the slot whose collector it
  * stands for and names the trigger its cards were converted to and the zone the collector reads them in. The
  * collectors in {@code DrawService}, {@code TriggerCollectionService}, {@code LibrarySearchTriggerHelper} and
- * {@code LibraryShuffleHelper} still decide when the ability triggers, how its effects group into stack objects, which
- * wrappers filter it and which event data it is bound to, as the slot's did, until steps 14 and 15 of the refactor
- * replace them with trigger options and effects that read the event. A "this card is cycled or discarded" ability
+ * {@code LibraryShuffleHelper} still decide when the ability triggers, how its effects group into stack objects and
+ * which event data it is bound to, as the slot's did, until step 15 of the refactor replaces them with effects that
+ * read the event. A "this card is cycled or discarded" ability
  * functions from the zone the card winds up in; its collectors read it as a graveyard ability wherever the card is.
  * <p>
- * The collectors read the abilities in the form the cards wrote them before step 14
- * ({@link Card#getLegacyTriggerEffects(Trigger, Zone)}): a limit wrapped around each effect, a discarded card's filter
- * as the {@code TriggeringCardConditionalEffect} they judge, a draw's count as the {@code NthCardDrawTriggerEffect},
- * "for the first time each turn" as the counting {@code OncePerTurnTriggerEffect}, and "you cycle a card", "an
- * opponent causes you to discard a card" and the draw-step draws as the wrappers the "you discard" and draw collectors
- * judge.
+ * Every collector of these watches reads the abilities themselves ({@link Trigger#collectedAsAbility()}), through
+ * {@link LibraryAbilityReader}: the discarded card's filter, a draw's count, "for the first time each turn", "you cycle
+ * a card", "an opponent causes you to discard a card", the draw-step draws and the limit come from the ability, and the
+ * legacy view gives none of them, so {@link #effectsOf} and {@link #registrationsOf} throw.
  */
 public enum LibraryWatch implements TriggerWatch {
     /** "Whenever you draw a card", once for each card. */
@@ -91,13 +89,15 @@ public enum LibraryWatch implements TriggerWatch {
         return zone;
     }
 
+    /** Throws: the collectors of a library watch read its abilities themselves ({@link LibraryAbilityReader}). */
     @Override
     public List<CardEffect> effectsOf(Card card) {
-        return card.getLegacyTriggerEffects(trigger, zone);
+        throw new UnsupportedOperationException(name() + " is read by abilities, not by effects");
     }
 
+    /** Throws: the collectors of a library watch read its abilities themselves ({@link LibraryAbilityReader}). */
     @Override
     public List<EffectRegistration> registrationsOf(Card card) {
-        return card.getLegacyTriggerEffectRegistrations(trigger, zone);
+        throw new UnsupportedOperationException(name() + " is read by abilities, not by effects");
     }
 }

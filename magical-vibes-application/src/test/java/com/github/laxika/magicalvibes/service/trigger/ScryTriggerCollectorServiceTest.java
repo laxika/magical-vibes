@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -105,19 +104,18 @@ class ScryTriggerCollectorServiceTest {
         Card card = new Card();
         card.setName("Planetarium of Wan Shi Tong");
         Permanent permanent = new Permanent(card);
-        OncePerTurnTriggerEffect effect = OncePerTurnTriggerEffect.markOnAcceptance(
-                new BoostSelfEffect(1, 0));
+        BoostSelfEffect effect = new BoostSelfEffect(1, 0);
 
         boolean triggered = registry.dispatch(
-                new TriggerMatchContext(gameData, permanent, playerId, effect),
+                new TriggerMatchContext(gameData, permanent, playerId, effect, card, true),
                 LibraryWatch.ON_CONTROLLER_SCRIES,
-                effect.wrapped(),
+                effect,
                 new TriggerContext.Scry(playerId));
 
         assertThat(triggered).isTrue();
         assertThat(gameData.stack).singleElement().satisfies(entry -> {
             assertThat(entry.isMarkSourceOncePerTurnOnAcceptance()).isTrue();
-            assertThat(entry.getEffectsToResolve()).containsExactly(effect.wrapped());
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
         });
     }
 }

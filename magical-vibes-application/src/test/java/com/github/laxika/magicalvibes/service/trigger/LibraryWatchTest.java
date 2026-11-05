@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.LibraryTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -14,9 +13,11 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 class LibraryWatchTest {
 
@@ -50,11 +51,13 @@ class LibraryWatchTest {
                 TriggerOptions.DEFAULT, fromGraveyard);
         card.addTrigger(Triggers.youDrawCard(), everyDraw);
 
-        assertThat(LibraryWatch.ON_CONTROLLER_DRAWS.effectsOf(card))
-                .containsExactly(new NthCardDrawTriggerEffect(2, onBattlefield), everyDraw);
-        assertThat(LibraryWatch.GRAVEYARD_ON_CONTROLLER_DRAWS.effectsOf(card))
-                .containsExactly(new NthCardDrawTriggerEffect(2, fromGraveyard));
-        assertThat(LibraryWatch.ON_OPPONENT_DRAWS.effectsOf(card)).isEmpty();
+        assertThat(LibraryAbilityReader.readPrinted(card, LibraryWatch.ON_CONTROLLER_DRAWS))
+                .extracting(LibraryAbilityReader.LibraryEffect::effect, LibraryAbilityReader.LibraryEffect::counts)
+                .containsExactly(tuple(onBattlefield, Set.of(2)), tuple(everyDraw, Set.of()));
+        assertThat(LibraryAbilityReader.readPrinted(card, LibraryWatch.GRAVEYARD_ON_CONTROLLER_DRAWS))
+                .extracting(LibraryAbilityReader.LibraryEffect::effect, LibraryAbilityReader.LibraryEffect::counts)
+                .containsExactly(tuple(fromGraveyard, Set.of(2)));
+        assertThat(LibraryAbilityReader.printed(card, LibraryWatch.ON_OPPONENT_DRAWS)).isEmpty();
     }
 
     @Test
@@ -66,8 +69,9 @@ class LibraryWatchTest {
         card.addTrigger(Triggers.opponentCausesYouToDiscardThisCard(), discardedByOpponent);
 
         assertThat(LibraryWatch.ON_SELF_CYCLED.zone()).isEqualTo(Zone.GRAVEYARD);
-        assertThat(LibraryWatch.ON_SELF_CYCLED.effectsOf(card)).containsExactly(cycled);
-        assertThat(LibraryWatch.ON_SELF_DISCARDED_BY_OPPONENT.effectsOf(card)).containsExactly(discardedByOpponent);
-        assertThat(LibraryWatch.ON_SELF_DISCARDED.effectsOf(card)).isEmpty();
+        assertThat(LibraryAbilityReader.printedEffects(card, LibraryWatch.ON_SELF_CYCLED)).containsExactly(cycled);
+        assertThat(LibraryAbilityReader.printedEffects(card, LibraryWatch.ON_SELF_DISCARDED_BY_OPPONENT))
+                .containsExactly(discardedByOpponent);
+        assertThat(LibraryAbilityReader.printedEffects(card, LibraryWatch.ON_SELF_DISCARDED)).isEmpty();
     }
 }
