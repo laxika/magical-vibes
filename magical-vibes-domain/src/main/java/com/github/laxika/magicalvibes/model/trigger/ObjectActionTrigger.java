@@ -21,9 +21,8 @@ import java.util.Objects;
  *               {@link ObjectAction#DOOR_UNLOCKED} ("when you unlock this door", CR 709.5h:
  *               {@code Triggers.doorUnlocked(1)}); {@code null} for every other action and for the trigger the
  *               collector watches. The explore and exploit collectors judge the filter from the ability
- *               ({@code ActionAbilityReader}), and the door collector reads the door from the legacy view
- *               ({@code TriggeredAbility.legacyEffects()}) as the {@code TriggeringRoomDoorConditionalEffect} it
- *               judges, so {@link #watchKey()} drops them
+ *               ({@code ActionAbilityReader}), and the door collector the door ({@code MiscAbilityReader}), so
+ *               {@link #watchKey()} drops them
  */
 public record ObjectActionTrigger(ObjectAction action, ObjectRelation object, CardPredicate filter, Integer door)
         implements Trigger {
@@ -60,7 +59,7 @@ public record ObjectActionTrigger(ObjectAction action, ObjectRelation object, Ca
     /**
      * The trigger the collectors read this one's abilities by: without its {@link #filter} and {@link #door}, and,
      * for "becomes crewed / saddled for the first time each turn", the "becomes crewed / saddled" trigger, whose
-     * collector judges the first time from the {@code OncePerTurnTriggerEffect} the legacy view gives.
+     * collector judges the first time from the ability's trigger ({@code MiscAbilityReader}).
      */
     @Override
     public Trigger watchKey() {
@@ -73,17 +72,14 @@ public record ObjectActionTrigger(ObjectAction action, ObjectRelation object, Ca
     }
 
     /**
-     * The player and keyword action collectors ({@code ActionWatch}: fights, explores, connives, exploits, champions,
-     * becomes plotted, mutates) read this trigger's abilities themselves ({@code ActionAbilityReader}), so it has no
-     * legacy view; the crew, saddle, station and door collectors ({@code MiscWatch}) still read the legacy view.
+     * Every collector of this trigger reads its abilities themselves, so it has no legacy view: the player and keyword
+     * action collectors ({@code ActionWatch}: fights, explores, connives, exploits, champions, becomes plotted,
+     * mutates) through {@code ActionAbilityReader}, the crew, saddle, station and door collectors ({@code MiscWatch})
+     * through {@code MiscAbilityReader}.
      */
     @Override
     public boolean collectedAsAbility() {
-        return switch (action) {
-            case FIGHTS, EXPLORES, CONNIVES, EXPLOITS, EXPLOITS_NONTOKEN_CREATURE, CHAMPIONS, BECOMES_PLOTTED,
-                 MUTATES -> true;
-            default -> false;
-        };
+        return true;
     }
 
     /** A card becomes plotted in exile (CR 702.170a), so its "becomes plotted" ability functions from there. */

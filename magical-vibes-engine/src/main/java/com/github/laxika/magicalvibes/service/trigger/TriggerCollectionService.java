@@ -838,17 +838,13 @@ public class TriggerCollectionService {
 
     }
 
-    private void queueGraveyardEerieTriggers(GameData gameData, UUID controllerId, Card card,
-                                              TriggerWatch watch, Card triggeringCard) {
-        List<CardEffect> effects = watch.effectsOf(card);
-        if (effects == null || effects.isEmpty()) return;
-
-        for (CardEffect effect : effects) {
-            CardEffect resolved = triggeringCard == null
-                    ? effect
-                    : unwrapTriggeringCardConditional(effect, triggeringCard, gameData, controllerId);
-            if (resolved == null) continue;
-
+    /**
+     * Queues the "whenever you fully unlock a Room" abilities of {@code card} in its owner's graveyard (Fear of
+     * Infinity), each effect as it is; their collector judges no door, first time or limit.
+     */
+    private void queueGraveyardEerieTriggers(GameData gameData, UUID controllerId, Card card) {
+        for (CardEffect resolved : MiscAbilityReader.printedEffects(card,
+                MiscWatch.GRAVEYARD_ON_ALLY_ROOM_FULLY_UNLOCKED)) {
             if (resolved instanceof MayEffect may) {
                 gameData.queueMayAbility(card, controllerId, may);
             } else {
@@ -10313,7 +10309,8 @@ public class TriggerCollectionService {
         if (controllerId == null) {
             return;
         }
-        for (CardEffect effect : MiscWatch.ON_CREWS_VEHICLE.effectsOf(crewingCreature.getCard())) {
+        for (CardEffect effect : MiscAbilityReader.printedEffects(crewingCreature.getCard(),
+                MiscWatch.ON_CREWS_VEHICLE)) {
             if (effect instanceof com.github.laxika.magicalvibes.model.effect.RegisterDelayedVehicleAttackEffect registration) {
                 if (!gameData.hasDelayedAction(com.github.laxika.magicalvibes.model.action.DelayedVehicleAttack.class,
                         action -> action.sourcePermanentId().equals(crewingCreature.getId())
@@ -11069,10 +11066,11 @@ public class TriggerCollectionService {
                 .orElse(null);
         if (watcher == null || watcher.isLosesAllAbilitiesUntilEndOfTurn()) return;
 
-        List<CardEffect> effects = new ArrayList<>(
-                MiscWatch.ON_SELF_SADDLES_OR_CREWS_DURING_MAIN_PHASE.effectsOf(watcher.getCard()));
-        effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
-                gameData, watcher, MiscWatch.ON_SELF_SADDLES_OR_CREWS_DURING_MAIN_PHASE.trigger()));
+        MiscWatch watch = MiscWatch.ON_SELF_SADDLES_OR_CREWS_DURING_MAIN_PHASE;
+        List<CardEffect> effects = new ArrayList<>(MiscAbilityReader.printedEffects(watcher.getCard(), watch));
+        effects.addAll(MiscAbilityReader.effects(
+                grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, watcher, watch.trigger()),
+                watch.trigger()));
         if (effects.isEmpty()) return;
 
         int triggerCopies = 1 +
@@ -12497,6 +12495,17 @@ public class TriggerCollectionService {
      */
     private List<CardEffect> graveyardActionEffects(GameData gameData, Card card, ActionWatch watch) {
         return ActionAbilityReader.effects(WatchedAbilities.withWatchedTrigger(
+                gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData, card), watch.trigger(),
+                watch.zone()), watch.trigger());
+    }
+
+    /**
+     * The effects of the abilities the graveyard misc watch {@code watch} reads of {@code card} in a graveyard, its own
+     * and those perpetually granted to it, or none while cards in graveyards have lost all abilities; its collectors
+     * judge no door, first time or limit.
+     */
+    private List<CardEffect> graveyardMiscEffects(GameData gameData, Card card, MiscWatch watch) {
+        return MiscAbilityReader.effects(WatchedAbilities.withWatchedTrigger(
                 gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData, card), watch.trigger(),
                 watch.zone()), watch.trigger());
     }
@@ -14852,8 +14861,7 @@ public class TriggerCollectionService {
         if (graveyard == null) return;
 
         for (Card card : new ArrayList<>(graveyard)) {
-            for (CardEffect effect : gameQueryService.getEffectiveGraveyardLegacyTriggerEffects(
-                    gameData, card, MiscWatch.GRAVEYARD_ON_DAY_NIGHT_CHANGE.trigger())) {
+            for (CardEffect effect : graveyardMiscEffects(gameData, card, MiscWatch.GRAVEYARD_ON_DAY_NIGHT_CHANGE)) {
                 StackEntry triggerEntry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         card,
@@ -15633,7 +15641,8 @@ public class TriggerCollectionService {
         UUID controllerId = gameQueryService.findPermanentController(gameData, enchantedPermanentId);
         if (controllerId == null) return;
 
-        for (CardEffect effect : MiscWatch.ON_AURA_ATTACHED_TO_SELF.effectsOf(enchanted.getCard())) {
+        for (CardEffect effect : MiscAbilityReader.printedEffects(enchanted.getCard(),
+                MiscWatch.ON_AURA_ATTACHED_TO_SELF)) {
             gameData.enqueueTrigger(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     enchanted.getCard(),
@@ -15663,8 +15672,8 @@ public class TriggerCollectionService {
             if (alliedBattlefield != null) {
                 for (Permanent watcher : List.copyOf(alliedBattlefield)) {
                     if (gameQueryService.hasLostAllAbilities(gameData, watcher)) continue;
-                    for (CardEffect effect :
-                            MiscWatch.ON_ALLY_AURA_ATTACHED_TO_ALLY_CREATURE.effectsOf(watcher.getCard())) {
+                    for (CardEffect effect : MiscAbilityReader.printedEffects(watcher.getCard(),
+                            MiscWatch.ON_ALLY_AURA_ATTACHED_TO_ALLY_CREATURE)) {
                         StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
                                 watcher.getCard(), auraControllerId,
                                 watcher.getCard().getName() + "'s ability",
@@ -15685,8 +15694,8 @@ public class TriggerCollectionService {
         if (battlefield == null) return;
         for (Permanent watcher : List.copyOf(battlefield)) {
             if (gameQueryService.hasLostAllAbilities(gameData, watcher)) continue;
-            for (CardEffect effect :
-                    MiscWatch.ON_ALLY_AURA_ATTACHED_TO_OPPONENT_NONLAND_PERMANENT.effectsOf(watcher.getCard())) {
+            for (CardEffect effect : MiscAbilityReader.printedEffects(watcher.getCard(),
+                    MiscWatch.ON_ALLY_AURA_ATTACHED_TO_OPPONENT_NONLAND_PERMANENT)) {
                 StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
                         watcher.getCard(), auraControllerId, watcher.getCard().getName() + "'s ability",
                         new ArrayList<>(List.of(effect)), enchanted.getId(), aura.getId());
@@ -15711,67 +15720,73 @@ public class TriggerCollectionService {
         UUID controllerId = gameQueryService.findPermanentController(gameData, equipment.getId());
         if (controllerId == null) return;
 
-        List<CardEffect> effects = MiscWatch.ON_EQUIPMENT_ATTACHED.effectsOf(equipment.getCard());
-        if (effects == null || effects.isEmpty()) return;
+        MiscWatch watch = MiscWatch.ON_EQUIPMENT_ATTACHED;
+        for (TriggeredAbility ability : MiscAbilityReader.printed(equipment.getCard(), watch)) {
+            List<MiscAbilityReader.MiscEffect> reads = MiscAbilityReader.read(ability, watch.trigger());
+            // "This ability triggers only once each turn" (Inchblade Companion) is judged and marked by the ability.
+            if (reads.getFirst().limitReached(gameData, equipment.getId())) continue;
+            boolean triggered = false;
+            for (MiscAbilityReader.MiscEffect read : reads) {
+                CardEffect effect = read.effect();
 
-        for (CardEffect authoredEffect : effects) {
-            CardEffect effect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, equipment, authoredEffect);
-            if (effect == null) continue;
+                if (effect instanceof ChooseColorForSourceEffect) {
+                    // "As this Equipment becomes attached to a creature, choose a color" is not a triggered
+                    // ability, so the choice is made during the attachment rather than put on the stack.
+                    playerInputService.beginColorChoice(gameData, controllerId, equipment.getId(), null);
+                    continue;
+                }
 
-            if (effect instanceof ChooseColorForSourceEffect) {
-                // "As this Equipment becomes attached to a creature, choose a color" is not a triggered
-                // ability, so the choice is made during the attachment rather than put on the stack.
-                playerInputService.beginColorChoice(gameData, controllerId, equipment.getId(), null);
-                continue;
+                if (effect instanceof SequenceEffect sequence && sequence.steps().size() == 2
+                        && sequence.steps().get(0) instanceof ChooseCardNameAtResolutionEffect nameChoice
+                        && sequence.steps().get(1) instanceof ChooseSubtypeForSourceEffect subtypeChoice) {
+                    // "As this Equipment becomes attached to a creature, choose a creature card name and a creature
+                    // type" is not a triggered ability, so both choices are made during the attachment.
+                    chooseCardNameHandler.begin(gameData, equipment.getCard(), controllerId, equipment.getId(),
+                            nameChoice, subtypeChoice);
+                    continue;
+                }
+
+                if (effect instanceof AttachedCreatureBecomesCopyOfExiledCreatureEffect copy && copy.asAttaches()) {
+                    // "As this Equipment becomes attached to a creature, choose an exiled creature card ..." is not a
+                    // triggered ability, so the copy is made as the equipment attaches, without another stack resolution.
+                    StackEntry attachment = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            equipment.getCard(),
+                            controllerId,
+                            equipment.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(effect)),
+                            null,
+                            equipment.getId());
+                    attachment.setTriggeringPermanentId(equipped.getId());
+                    attachedCreatureCopyHandler.resolve(gameData, attachment, effect);
+                    continue;
+                }
+
+                if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+                    gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
+                            equipment.getCard(), controllerId, new ArrayList<>(List.of(effect)),
+                            equipment.getId(), equipment.getCard().getTargetFilter(), equipped.getId()));
+                } else {
+                    StackEntry entry = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            equipment.getCard(),
+                            controllerId,
+                            equipment.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(effect)),
+                            null,
+                            equipment.getId());
+                    entry.setTriggeringPermanentId(equipped.getId());
+                    gameData.enqueueTrigger(entry);
+                }
+                triggered = true;
+                gameLogService.append(gameData, GameLog.abilityTriggers(equipment.getCard()));
+                log.info("Game {} - {} triggers when attached to {}", gameData.id,
+                        equipment.getCard().getName(), equipped.getCard().getName());
             }
-
-            if (effect instanceof SequenceEffect sequence && sequence.steps().size() == 2
-                    && sequence.steps().get(0) instanceof ChooseCardNameAtResolutionEffect nameChoice
-                    && sequence.steps().get(1) instanceof ChooseSubtypeForSourceEffect subtypeChoice) {
-                // "As this Equipment becomes attached to a creature, choose a creature card name and a creature
-                // type" is not a triggered ability, so both choices are made during the attachment.
-                chooseCardNameHandler.begin(gameData, equipment.getCard(), controllerId, equipment.getId(),
-                        nameChoice, subtypeChoice);
-                continue;
+            if (triggered) {
+                reads.getFirst().markLimit(gameData, equipment.getId());
             }
-
-            if (effect instanceof AttachedCreatureBecomesCopyOfExiledCreatureEffect copy && copy.asAttaches()) {
-                // "As this Equipment becomes attached to a creature, choose an exiled creature card ..." is not a
-                // triggered ability, so the copy is made as the equipment attaches, without another stack resolution.
-                StackEntry attachment = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        equipment.getCard(),
-                        controllerId,
-                        equipment.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(effect)),
-                        null,
-                        equipment.getId());
-                attachment.setTriggeringPermanentId(equipped.getId());
-                attachedCreatureCopyHandler.resolve(gameData, attachment, effect);
-                continue;
-            }
-
-            if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                    || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-                gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
-                        equipment.getCard(), controllerId, new ArrayList<>(List.of(effect)),
-                        equipment.getId(), equipment.getCard().getTargetFilter(), equipped.getId()));
-            } else {
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        equipment.getCard(),
-                        controllerId,
-                        equipment.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(effect)),
-                        null,
-                        equipment.getId());
-                entry.setTriggeringPermanentId(equipped.getId());
-                gameData.enqueueTrigger(entry);
-            }
-            OncePerTurnTriggerSupport.markIfNeeded(gameData, equipment, authoredEffect);
-            gameLogService.append(gameData, GameLog.abilityTriggers(equipment.getCard()));
-            log.info("Game {} - {} triggers when attached to {}", gameData.id,
-                    equipment.getCard().getName(), equipped.getCard().getName());
         }
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)
@@ -15840,8 +15855,7 @@ public class TriggerCollectionService {
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         if (graveyard != null) {
             for (Card card : new ArrayList<>(graveyard)) {
-                queueGraveyardEerieTriggers(gameData, controllerId, card,
-                        MiscWatch.GRAVEYARD_ON_ALLY_ROOM_FULLY_UNLOCKED, null);
+                queueGraveyardEerieTriggers(gameData, controllerId, card);
             }
         }
     }
@@ -16807,6 +16821,9 @@ public class TriggerCollectionService {
         if (watch instanceof ActionWatch actionWatch) {
             return dispatchActionWatch(gameData, perm, controllerId, actionWatch, ctx);
         }
+        if (watch instanceof MiscWatch miscWatch) {
+            return dispatchMiscWatch(gameData, perm, controllerId, miscWatch, ctx);
+        }
         if (watch instanceof CombatWatch combatWatch) {
             Trigger watched = combatWatch.trigger();
             return dispatchRegistrations(gameData, perm, controllerId, watch, ctx, null,
@@ -16815,12 +16832,7 @@ public class TriggerCollectionService {
                     staticBonus -> CombatAbilityReader.effects(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(
                             gameData, perm, staticBonus, ability -> ability.hasWatchedTrigger(watched)), watched));
         }
-        return dispatchRegistrations(gameData, perm, controllerId, watch, ctx, null,
-                watch.registrationsOf(perm.getCard()),
-                staticBonus -> staticBonus == null
-                        ? grantedTriggeredAbilitySupport.grantedTriggerEffects(gameData, perm, watch.trigger())
-                        : grantedTriggeredAbilitySupport.grantedTriggerEffects(gameData, perm, staticBonus,
-                                watch.trigger()));
+        throw new IllegalArgumentException("No collector dispatches " + watch + " here");
     }
 
     /**
@@ -17014,6 +17026,130 @@ public class TriggerCollectionService {
             first.markLimit(gameData, perm.getId());
         }
         return triggered;
+    }
+
+    /**
+     * Dispatches the abilities the misc watch {@code watch} reads on {@code perm}, its own and those other permanents
+     * grant it, to the watch's handlers, as {@link #dispatchRegistrations} does, judging each ability's trigger-level
+     * parts from the ability ({@link MiscAbilityReader}): a door ability triggers only for its own door, and an ability
+     * doesn't trigger once its "triggers only once each turn" is reached and is marked on {@code perm} by the ability
+     * once one of its effects triggered.
+     */
+    private boolean dispatchMiscWatch(GameData gameData, Permanent perm, UUID controllerId, MiscWatch watch,
+                                      TriggerContext ctx) {
+        if (perm.isLosesAllAbilitiesUntilEndOfTurn()) return false;
+        GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, perm);
+        if (staticBonus.losesAllAbilities() || staticBonus.losesAllNonManaAbilities()) return false;
+        Trigger watched = watch.trigger();
+        boolean triggered = false;
+        // Reused for the granted-ability lookup below unless a printed ability was dispatched in between and may have
+        // changed the game state.
+        boolean staticBonusCurrent = true;
+        List<TriggeredAbility> printed = MiscAbilityReader.printed(perm.getCard(), watch);
+        if (!printed.isEmpty() && !gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
+            staticBonusCurrent = false;
+            List<TextReplacement> globalWordChange = TextChangeTransformer.globalColorWordReplacements(gameData);
+            for (TriggeredAbility ability : printed) {
+                // Layer 3 (CR 612.1): the trigger condition is read from the permanent's text-changed words.
+                triggered |= dispatchMiscAbility(gameData, perm, controllerId, watch, ctx,
+                        MiscAbilityReader.read(ability, watched).stream().map(read -> read.withEffect(
+                                TextChangeTransformer.transform(read.effect(), perm.getTextReplacements(),
+                                        globalWordChange))).toList());
+            }
+        }
+        for (TriggeredAbility ability : grantedTriggeredAbilitySupport.grantedTriggeredAbilities(gameData, perm,
+                staticBonusCurrent ? staticBonus : null, ability -> ability.hasWatchedTrigger(watched))) {
+            triggered |= dispatchMiscAbility(gameData, perm, controllerId, watch, ctx,
+                    MiscAbilityReader.read(ability, watched));
+        }
+        return triggered;
+    }
+
+    /**
+     * Dispatches the effects of one misc ability, {@code effects}, judging its door against the door unlocked and
+     * judging and marking its limit on {@code perm}. A "when you unlock this door" ability is one stack object of all
+     * its effects (CR 603.3), put on the stack by {@link #collectDoorAbility}.
+     */
+    private boolean dispatchMiscAbility(GameData gameData, Permanent perm, UUID controllerId, MiscWatch watch,
+                                        TriggerContext ctx, List<MiscAbilityReader.MiscEffect> effects) {
+        MiscAbilityReader.MiscEffect first = effects.getFirst();
+        if (watch == MiscWatch.ON_SELF_ROOM_DOOR_UNLOCKED) {
+            if (first.door() == null) {
+                throw new IllegalStateException("A \"when you unlock this door\" ability names its door: "
+                        + first.ability());
+            }
+            if (!(ctx instanceof TriggerContext.RoomDoorUnlocked unlocked) || unlocked.doorIndex() != first.door()) {
+                return false;
+            }
+        }
+        if (first.limitReached(gameData, perm.getId())) {
+            return false;
+        }
+        boolean triggered = false;
+        if (watch == MiscWatch.ON_SELF_ROOM_DOOR_UNLOCKED) {
+            List<CardEffect> abilityEffects = effects.stream().map(MiscAbilityReader.MiscEffect::effect).toList();
+            CardEffect firstEffect = abilityEffects.getFirst();
+            triggered = dispatch(new TriggerMatchContext(gameData, perm, controllerId, firstEffect), watch,
+                    firstEffect, ctx, () -> collectDoorAbility(gameData, perm, controllerId, abilityEffects,
+                            first.door()));
+        } else {
+            for (MiscAbilityReader.MiscEffect read : effects) {
+                triggered |= dispatchSlotEffect(gameData, perm, controllerId, watch, ctx, read.effect(), false,
+                        read.triggersOnlyOnceEachTurn());
+            }
+        }
+        if (triggered) {
+            first.markLimit(gameData, perm.getId());
+        }
+        return triggered;
+    }
+
+    /**
+     * Puts a "when you unlock this door" ability of the Room {@code room} on the stack, all its {@code effects} one
+     * object (CR 603.3), once the door unlocks, as it enters or later (CR 709.5h); a targeted ability waits for its
+     * targets.
+     */
+    private boolean collectDoorAbility(GameData gameData, Permanent room, UUID controllerId, List<CardEffect> effects,
+                                       int doorIndex) {
+        Card card = room.getCard();
+        boolean needsTarget = effects.stream()
+                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                        || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                        || card.getEffectTargetIndex(effect) >= 0);
+        if (needsTarget) {
+            boolean multiTarget = card.getTargetGroups().stream()
+                    .anyMatch(target -> target.getMaxTargets() > 1 || target.getMinTargets() == 0)
+                    || card.getTargetGroups().size() > 1;
+            if (multiTarget) {
+                gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                        card, controllerId, new ArrayList<>(effects), room.getId(),
+                        List.of(), 0, 0, List.of(), 0));
+            } else {
+                gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                        card, controllerId, new ArrayList<>(effects),
+                        "unlocks a Room door", room.getId(), null,
+                        effects.stream().anyMatch(candidate ->
+                                candidate instanceof OptionalTargetEffect || candidate.hasOptionalTarget())
+                                || card.getTargetGroups().stream().anyMatch(target -> target.getMinTargets() == 0
+                                && effects.stream().anyMatch(candidate ->
+                                card.getEffectTargetIndex(candidate) == target.getIndex()))));
+            }
+        } else {
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    controllerId,
+                    card.getName() + "'s ability",
+                    new ArrayList<>(effects),
+                    null,
+                    room.getId());
+            trigger.setSourcePermanentSnapshot(new Permanent(room));
+            gameData.enqueueTrigger(trigger);
+        }
+        gameLogService.append(gameData, GameLog.abilityTriggers(card));
+        log.info("Game {} - {} triggers when Room door {} unlocks", gameData.id, card.getName(), doorIndex);
+        return true;
     }
 
     /**
@@ -18006,11 +18142,8 @@ public class TriggerCollectionService {
 
     public void checkBecomesCrewedTriggers(GameData gameData, Permanent crewedPermanent,
                                            UUID controllerId) {
-        TriggerContext context = new TriggerContext.SelfBecomesCrewed(controllerId);
-        for (CardEffect effect : MiscWatch.ON_SELF_BECOMES_CREWED.effectsOf(crewedPermanent.getCard())) {
-            registry.dispatch(new TriggerMatchContext(gameData, crewedPermanent, controllerId, effect),
-                    MiscWatch.ON_SELF_BECOMES_CREWED, effect, context);
-        }
+        dispatchPrintedMiscAbilities(gameData, crewedPermanent, controllerId, MiscWatch.ON_SELF_BECOMES_CREWED,
+                new TriggerContext.SelfBecomesCrewed(controllerId));
     }
 
     /** Collects abilities on a Spacecraft that trigger when a creature stations it. */
@@ -18019,19 +18152,38 @@ public class TriggerCollectionService {
         if (spacecraft == null || stationingCreature == null || controllerId == null) {
             return;
         }
-        TriggerContext context = new TriggerContext.CreatureStationed(stationingCreature.getCard());
-        for (CardEffect effect : MiscWatch.ON_SELF_BECOMES_STATIONED.effectsOf(spacecraft.getCard())) {
-            registry.dispatch(new TriggerMatchContext(gameData, spacecraft, controllerId, effect),
-                    MiscWatch.ON_SELF_BECOMES_STATIONED, effect, context);
-        }
+        dispatchPrintedMiscAbilities(gameData, spacecraft, controllerId, MiscWatch.ON_SELF_BECOMES_STATIONED,
+                new TriggerContext.CreatureStationed(stationingCreature.getCard()));
     }
 
     public void checkBecomesSaddledTriggers(GameData gameData, Permanent saddledPermanent,
                                              UUID controllerId) {
-        TriggerContext context = new TriggerContext.SelfBecomesSaddled(controllerId);
-        for (CardEffect effect : MiscWatch.ON_SELF_BECOMES_SADDLED.effectsOf(saddledPermanent.getCard())) {
-            registry.dispatch(new TriggerMatchContext(gameData, saddledPermanent, controllerId, effect),
-                    MiscWatch.ON_SELF_BECOMES_SADDLED, effect, context);
+        dispatchPrintedMiscAbilities(gameData, saddledPermanent, controllerId, MiscWatch.ON_SELF_BECOMES_SADDLED,
+                new TriggerContext.SelfBecomesSaddled(controllerId));
+    }
+
+    /**
+     * Dispatches the printed abilities {@code watch} reads of {@code perm} to the watch's handlers, judging each one's
+     * limit from the ability ({@link MiscAbilityReader}): "becomes crewed / saddled for the first time each turn"
+     * (Mindlink Mech, Stubborn Burrowfiend), judged and marked by the unkeyed once-each-turn mark on the Vehicle or
+     * Mount as before, and "triggers only once each turn", by the ability.
+     */
+    private void dispatchPrintedMiscAbilities(GameData gameData, Permanent perm, UUID controllerId, MiscWatch watch,
+                                              TriggerContext context) {
+        for (TriggeredAbility ability : MiscAbilityReader.printed(perm.getCard(), watch)) {
+            List<MiscAbilityReader.MiscEffect> reads = MiscAbilityReader.read(ability, watch.trigger());
+            MiscAbilityReader.MiscEffect first = reads.getFirst();
+            if (first.limitReached(gameData, perm.getId())) {
+                continue;
+            }
+            boolean triggered = false;
+            for (MiscAbilityReader.MiscEffect read : reads) {
+                triggered |= registry.dispatch(new TriggerMatchContext(gameData, perm, controllerId, read.effect()),
+                        watch, read.effect(), context);
+            }
+            if (triggered) {
+                first.markLimit(gameData, perm.getId());
+            }
         }
     }
 

@@ -51,10 +51,11 @@ class MiscWatchTest {
                 TriggerOptions.DEFAULT, unlockedFromGraveyard);
         card.addTrigger(Triggers.becomesCrewed(), crewed);
 
-        assertThat(MiscWatch.ON_ALLY_ROOM_FULLY_UNLOCKED.effectsOf(card)).containsExactly(unlocked);
-        assertThat(MiscWatch.GRAVEYARD_ON_ALLY_ROOM_FULLY_UNLOCKED.effectsOf(card))
+        assertThat(MiscAbilityReader.printedEffects(card, MiscWatch.ON_ALLY_ROOM_FULLY_UNLOCKED))
+                .containsExactly(unlocked);
+        assertThat(MiscAbilityReader.printedEffects(card, MiscWatch.GRAVEYARD_ON_ALLY_ROOM_FULLY_UNLOCKED))
                 .containsExactly(unlockedFromGraveyard);
-        assertThat(MiscWatch.ON_SELF_BECOMES_CREWED.effectsOf(card)).containsExactly(crewed);
-        assertThat(MiscWatch.ON_SELF_BECOMES_SADDLED.effectsOf(card)).isEmpty();
+        assertThat(MiscAbilityReader.printedEffects(card, MiscWatch.ON_SELF_BECOMES_CREWED)).containsExactly(crewed);
+        assertThat(MiscAbilityReader.printedEffects(card, MiscWatch.ON_SELF_BECOMES_SADDLED)).isEmpty();
     }
 }

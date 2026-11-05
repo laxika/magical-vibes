@@ -36,7 +36,9 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.MiscAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.MiscWatch;
+import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -470,10 +472,7 @@ public class CreatureControlService {
     }
 
     private void queueSelfControlChangeTriggers(GameData gameData, Permanent permanent, UUID controllerId) {
-        List<CardEffect> effects = new ArrayList<>(
-                MiscWatch.ON_SELF_BECOMES_CONTROLLED.effectsOf(permanent.getCard()));
-        effects.addAll(permanent.getLegacyTemporaryTriggerEffects(MiscWatch.ON_SELF_BECOMES_CONTROLLED.trigger()));
-        effects.addAll(permanent.getLegacyPersistentTriggerEffects(MiscWatch.ON_SELF_BECOMES_CONTROLLED.trigger()));
+        List<CardEffect> effects = selfControlChangeEffects(permanent, MiscWatch.ON_SELF_BECOMES_CONTROLLED);
 
         for (CardEffect effect : effects) {
             StackEntry entry = new StackEntry(
@@ -493,10 +492,7 @@ public class CreatureControlService {
 
     private void queueSelfControlLossTriggers(GameData gameData, Permanent permanent,
                                               UUID controllerId) {
-        List<CardEffect> effects = new ArrayList<>(
-                MiscWatch.ON_SELF_LOSES_CONTROL.effectsOf(permanent.getCard()));
-        effects.addAll(permanent.getLegacyTemporaryTriggerEffects(MiscWatch.ON_SELF_LOSES_CONTROL.trigger()));
-        effects.addAll(permanent.getLegacyPersistentTriggerEffects(MiscWatch.ON_SELF_LOSES_CONTROL.trigger()));
+        List<CardEffect> effects = selfControlChangeEffects(permanent, MiscWatch.ON_SELF_LOSES_CONTROL);
 
         for (CardEffect effect : effects) {
             StackEntry entry = new StackEntry(
@@ -512,6 +508,19 @@ public class CreatureControlService {
             gameData.enqueueTrigger(entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
         }
+    }
+
+    /**
+     * The effects of {@code permanent}'s abilities {@code watch} reads: its printed ones, then those granted to it for a
+     * duration and until it leaves, read through {@link MiscAbilityReader}; no control-change ability takes a limit.
+     */
+    private static List<CardEffect> selfControlChangeEffects(Permanent permanent, MiscWatch watch) {
+        List<CardEffect> effects = new ArrayList<>(MiscAbilityReader.printedEffects(permanent.getCard(), watch));
+        effects.addAll(MiscAbilityReader.effects(WatchedAbilities.temporary(permanent, watch.trigger()),
+                watch.trigger()));
+        effects.addAll(MiscAbilityReader.effects(WatchedAbilities.persistent(permanent, watch.trigger()),
+                watch.trigger()));
+        return effects;
     }
 
     private void removeFromCombat(GameData gameData, Permanent permanent) {

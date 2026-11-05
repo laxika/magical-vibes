@@ -5,4 +5,13 @@ package com.github.laxika.magicalvibes.model.trigger;
  * the other (CR 731.1a). It doesn't trigger when it first becomes day or night. Build it through {@link Triggers}.
  */
 public record DayNightTrigger() implements Trigger {
+
+    /**
+     * The day and night collectors ({@code MiscWatch}) read this trigger's abilities themselves
+     * ({@code MiscAbilityReader}), so it has no legacy view.
+     */
+    @Override
+    public boolean collectedAsAbility() {
+        return true;
+    }
 }

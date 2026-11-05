@@ -77,4 +77,13 @@ public record StateTrigger(StateTriggerPredicate predicate, PermanentPredicate s
     public Trigger watchKey() {
         return hasState() || referencedPermanentPredicate != null ? new StateTrigger() : this;
     }
+
+    /**
+     * The state-trigger reader ({@code StateTriggerService}) reads this trigger's abilities itself
+     * ({@code MiscAbilityReader}), so it has no legacy view.
+     */
+    @Override
+    public boolean collectedAsAbility() {
+        return true;
+    }
 }

@@ -70,7 +70,9 @@ import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeredModalEffect;
 import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
+import com.github.laxika.magicalvibes.service.trigger.MiscAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.MiscWatch;
+import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
@@ -1159,8 +1161,10 @@ public class StackResolutionService {
             Card enteringCharacteristics = characteristics;
             if (card.getSelectedRoomDoor() != null && characteristics.getTargetGroups().isEmpty()) {
                 enteringCharacteristics = characteristics.createRuntimeCopy();
+                // The door abilities' effects as the card bound them to their target groups.
                 enteringCharacteristics.appendSpellTargetingForEffectsFrom(entry.getPhysicalCard(),
-                        MiscWatch.ON_SELF_ROOM_DOOR_UNLOCKED.effectsOf(entry.getPhysicalCard()));
+                        WatchedAbilities.rawEffects(MiscAbilityReader.printed(entry.getPhysicalCard(),
+                                MiscWatch.ON_SELF_ROOM_DOOR_UNLOCKED)));
             }
             Permanent enchPerm = createEnteringPermanent(entry, card, enteringCharacteristics);
             if (card.getSelectedRoomDoor() != null) {

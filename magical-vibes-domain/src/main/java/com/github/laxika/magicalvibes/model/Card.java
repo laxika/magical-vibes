@@ -55,7 +55,6 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
@@ -1118,7 +1117,6 @@ public class Card {
             case TriggeringPermanentConditionalEffect e -> bindEffectToTargetGroup(e.wrapped(), targetIndex);
             case TriggeringArtifactControllerConditionalEffect e -> bindEffectToTargetGroup(e.wrapped(), targetIndex);
             case TriggeringPermanentControllerConditionalEffect e -> bindEffectToTargetGroup(e.wrapped(), targetIndex);
-            case TriggeringRoomDoorConditionalEffect e -> bindEffectToTargetGroup(e.wrapped(), targetIndex);
             default -> { }
         }
     }
@@ -1435,9 +1433,6 @@ public class Card {
         // in the wrappers its collector judges; they target through the effect they wrap.
         if (effect instanceof OncePerTurnTriggerEffect once) {
             return targetIndicesForEffect(once.wrapped());
-        }
-        if (effect instanceof TriggeringRoomDoorConditionalEffect door) {
-            return targetIndicesForEffect(door.wrapped());
         }
         if (effect instanceof TriggeringCardConditionalEffect cardConditional) {
             return targetIndicesForEffect(cardConditional.wrapped());
@@ -2039,9 +2034,8 @@ public class Card {
      * "when this enters" collector and the code that inspects "when this enters" abilities read these until they read
      * abilities. The wrapped effects are built once, with the index, so they keep their identity across calls. An
      * ability is found by its trigger's {@link Trigger#watchKey()}, so an ability whose collector judges a filter from
-     * a wrapper (a Room door, a tap trigger's permanent) is found by the unfiltered trigger, with the filter as a
-     * wrapper. A spell, land-play or activation trigger ({@link Trigger#collectedAsAbility()}) has no legacy view, and
-     * throws.
+     * a wrapper is found by the unfiltered trigger, with the filter as a wrapper. Only a zone change, permanent change
+     * or legacy slot trigger has a legacy view: any other ({@link Trigger#collectedAsAbility()}) throws.
      */
     public List<CardEffect> getLegacyTriggerEffects(Trigger trigger) {
         TriggeredAbility.requireLegacyView(trigger);
@@ -2153,8 +2147,8 @@ public class Card {
 
     /**
      * A state trigger's game state is its {@link StateTrigger}'s components (CR 603.8), so it names one, is the only
-     * condition of its ability, and has no {@link StateTriggerEffect} among the ability's effects: the legacy view
-     * ({@link TriggeredAbility#legacyEffects()}) builds that record for the state-trigger reader.
+     * condition of its ability, and has no {@link StateTriggerEffect} among the ability's effects: the state-trigger reader
+     * builds that record from the ability.
      */
     private static void validateStateTriggerEffects(TriggeredAbility ability) {
         if (ability.conditions().stream().noneMatch(condition -> condition.trigger() instanceof StateTrigger)) {

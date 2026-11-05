@@ -799,7 +799,6 @@ Planar source note: `PutCountersOnSelfEffect(CounterType)` can place the counter
 `EachOpponentMayDiscardOrSacrificePermanentEffect` also accepts a `DynamicAmount` damage value and a `PermanentPredicate` sacrifice filter; the fixed-damage form defaults to any permanent. Osseous Sticktwister (`DSK`) uses source power with a nonland filter.
 
 - `ConditionalEffect(new ControlsDistinctUnlockedRoomNamesCount(minCount), WinGameEffect())` â€” checks the number of distinct names among unlocked doors of Rooms the controller currently controls; use `ConditionalEffect.unless(...)` when it follows another effect in the same ability (Central Elevator // Promising Stairs, `DSK`).
-- `TriggeringRoomDoorConditionalEffect(int doorIndex, CardEffect)` — don't author: "when you unlock this door" is `Triggers.doorUnlocked(door)` (0 for the left door, 1 for the right one); the legacy view builds this wrapper for the door collector. It fires when that door of the source Room becomes unlocked, including when the door unlocks as the Room enters (Grand Entryway // Elegant Rotunda, `DSK`).
 
 - `ShuffleUpToNCardsFromOutsideGameIntoLibraryEffect(int maxCount)` — resolution-time choice of up to `maxCount` cards from the controller's outside-the-game pool; selected cards are shuffled into their library (Research, DIS).
 - `AnyOpponentMayDrawOrCreateTokenEffect(CreateTokenEffect tokenEffect)` — each opponent gets a choice in APNAP order; the first acceptance has the controller draw one card, while an all-decline result creates the supplied token (Development, DIS).

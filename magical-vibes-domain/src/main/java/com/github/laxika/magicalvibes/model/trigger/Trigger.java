@@ -23,10 +23,9 @@ public sealed interface Trigger permits AbilityTrigger, AttachTrigger, ChapterTr
 
     /**
      * The trigger the old collectors read this one's abilities by (a {@code TriggerWatch}'s trigger): this trigger
-     * without the filters they still judge from the wrappers {@code TriggeredAbility.legacyEffects()} gives (a filter,
-     * a Room door, a state trigger's game state), and for some the trigger of the event whose collector reads it (a
-     * counter or tap trigger, "becomes crewed for the first time each turn"). A trigger without such filters is its own
-     * key.
+     * without the filters they judge from the ability (a filter, a Room door, a state trigger's game state), and for
+     * some the trigger of the event whose collector reads it (a counter or tap trigger, "becomes crewed for the first
+     * time each turn"). A trigger without such filters is its own key.
      */
     default Trigger watchKey() {
         return this;
@@ -40,10 +39,13 @@ public sealed interface Trigger permits AbilityTrigger, AttachTrigger, ChapterTr
      * run 16e), the combat triggers (family 3, run 16f), the damage triggers (family 4, run 16g), the counter
      * triggers (family 5, run 16h), the becomes-the-target triggers (family 6, run 16i), the library, draw and
      * discard triggers (family 7, run 16j), the tap and untap triggers (family 8, run 16k), the life gain, loss and
-     * payment triggers (family 9, run 16l), the Saga chapter and final-chapter triggers (family 10, run 16m) and the
-     * player and keyword action triggers (family 11's first half, run 16n). An ability with such a trigger and another
-     * (MACH-1's "when this enters and whenever you gain life") keeps a legacy view for the other's collectors
-     * ({@code TriggeredAbility.hasLegacyView()}).
+     * payment triggers (family 9, run 16l), the Saga chapter and final-chapter triggers (family 10, run 16m), the
+     * player and keyword action triggers (family 11's first half, run 16n) and the control change, attach, crew,
+     * saddle and station, Room, day and night, state and planar triggers (family 11's rest, run 16o). Only the zone
+     * change and permanent change triggers and the legacy slot trigger still have a legacy view. An ability with such
+     * a trigger and another (MACH-1's "when this enters and whenever you gain life", the Eerie "whenever an
+     * enchantment you control enters and whenever you fully unlock a Room") keeps a legacy view for the other's
+     * collectors ({@code TriggeredAbility.hasLegacyView()}).
      */
     default boolean collectedAsAbility() {
         return false;

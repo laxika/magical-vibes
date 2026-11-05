@@ -113,7 +113,7 @@ class ActionTriggerTest {
     }
 
     @Test
-    void everyActionWatchTriggerIsReadAsAnAbilityAndTheMiscActionsStillHaveALegacyView() {
+    void everyActionTriggerIsReadAsAnAbilityTheMiscActionsIncluded() {
         assertThat(ActionWatch.values()).allSatisfy(watch ->
                 assertThat(watch.trigger().collectedAsAbility()).as(watch.name()).isTrue());
         assertThat(List.of(Triggers.youFullyUnlockRoom(), Triggers.crewsVehicle(),
@@ -121,7 +121,7 @@ class ActionTriggerTest {
                 Triggers.becomesCrewed(), Triggers.becomesCrewedForFirstTimeEachTurn(), Triggers.becomesSaddled(),
                 Triggers.becomesSaddledForFirstTimeEachTurn(), Triggers.becomesStationed(), Triggers.doorUnlocked(),
                 Triggers.doorUnlocked(1))).allSatisfy(trigger ->
-                assertThat(trigger.collectedAsAbility()).as(trigger.toString()).isFalse());
+                assertThat(trigger.collectedAsAbility()).as(trigger.toString()).isTrue());
     }
 
     @Test
@@ -200,7 +200,7 @@ class ActionTriggerTest {
     @Test
     void whatTheActionCollectorsCannotReadIsRejected() {
         assertThatThrownBy(() -> new TriggeredAbility(Triggers.youRollOneOrMoreDice(), TriggerOptions.ONE_OR_MORE,
-                DRAW)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("action collector");
+                DRAW)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("player or keyword action");
         assertThat(List.of(TriggerLimit.DO_ONLY_ONCE_EACH_TURN, TriggerLimit.ONCE)).allSatisfy(limit ->
                 assertThatThrownBy(() -> ActionAbilityReader.read(new TriggeredAbility(Triggers.youCommitCrime(),
                         TriggerOptions.DEFAULT.withLimit(limit), DRAW), Triggers.youCommitCrime()))

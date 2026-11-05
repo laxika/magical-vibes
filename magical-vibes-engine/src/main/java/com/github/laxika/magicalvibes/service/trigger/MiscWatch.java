@@ -15,12 +15,13 @@ import java.util.List;
  * night, Rooms and state triggers; Planechase reads its triggers directly). Each constant is named after the slot whose
  * collector it stands for and names the trigger its cards were converted to and the zone the collector reads them in.
  * The collectors in {@code TriggerCollectionService}, {@code CreatureControlService} and {@code StateTriggerService}
- * still decide when the ability triggers, how its effects group into stack objects, which wrappers filter it and which
- * event data it is bound to, as the slot's did, until step 15 of the refactor replaces them with effects that read the
- * event. They read the abilities in the legacy form ({@code TriggeredAbility.legacyEffects()}, step 14, run 15): a
- * limit as the keyed {@code OncePerTurnTriggerEffect}, "becomes crewed / saddled for the first time each turn" as the
- * unkeyed one, a Room door as a {@code TriggeringRoomDoorConditionalEffect}, and a state trigger as one
- * {@code StateTriggerEffect} of its game state.
+ * still decide when the ability triggers, how its effects group into stack objects and which event data it is bound
+ * to, as the slot's did, until step 15 of the refactor replaces them with effects that read the event.
+ * <p>
+ * Every collector of these watches reads the abilities themselves ({@link Trigger#collectedAsAbility()}), through
+ * {@link MiscAbilityReader}: a Room door, "becomes crewed / saddled for the first time each turn", "triggers only once
+ * each turn" and a state trigger's game state come from the ability, and the legacy view gives none of them, so
+ * {@link #effectsOf} and {@link #registrationsOf} throw.
  */
 public enum MiscWatch implements TriggerWatch {
     /** "When you gain control of this from another player". */
@@ -86,13 +87,15 @@ public enum MiscWatch implements TriggerWatch {
         return zone;
     }
 
+    /** Throws: the collectors of a misc watch read its abilities themselves ({@link MiscAbilityReader}). */
     @Override
     public List<CardEffect> effectsOf(Card card) {
-        return card.getLegacyTriggerEffects(trigger, zone);
+        throw new UnsupportedOperationException(name() + " is read by abilities, not by effects");
     }
 
+    /** Throws: the collectors of a misc watch read its abilities themselves ({@link MiscAbilityReader}). */
     @Override
     public List<EffectRegistration> registrationsOf(Card card) {
-        return card.getLegacyTriggerEffectRegistrations(trigger, zone);
+        throw new UnsupportedOperationException(name() + " is read by abilities, not by effects");
     }
 }

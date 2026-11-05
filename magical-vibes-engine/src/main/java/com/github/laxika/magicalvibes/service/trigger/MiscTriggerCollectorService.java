@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFro
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardsAwareEffect;
-import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CradleOfVitalityLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -90,7 +89,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
-import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.DrawService;
@@ -263,72 +261,6 @@ public class MiscTriggerCollectorService {
         }
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(card));
         log.info("Game {} - {} triggers on becoming untapped", match.gameData().id, card.getName());
-        return true;
-    }
-
-    @CollectsMiscTrigger(value = TriggeringRoomDoorConditionalEffect.class,
-            watch = MiscWatch.ON_SELF_ROOM_DOOR_UNLOCKED)
-    private boolean handleSelfRoomDoorUnlocked(TriggerMatchContext match,
-                                                TriggeringRoomDoorConditionalEffect effect,
-                                                TriggerContext ctx) {
-        TriggerContext.RoomDoorUnlocked unlocked = (TriggerContext.RoomDoorUnlocked) ctx;
-        if (effect.doorIndex() != unlocked.doorIndex()) {
-            return false;
-        }
-
-        Card card = match.permanent().getCard();
-        List<TriggeringRoomDoorConditionalEffect> matchingEffects = MiscWatch.ON_SELF_ROOM_DOOR_UNLOCKED.effectsOf(card)
-                .stream()
-                .filter(TriggeringRoomDoorConditionalEffect.class::isInstance)
-                .map(TriggeringRoomDoorConditionalEffect.class::cast)
-                .filter(candidate -> candidate.doorIndex() == unlocked.doorIndex())
-                .toList();
-        if (matchingEffects.isEmpty() || matchingEffects.getFirst() != effect) {
-            return false;
-        }
-
-        List<CardEffect> triggeredEffects = matchingEffects.stream()
-                .map(TriggeringRoomDoorConditionalEffect::wrapped)
-                .toList();
-        boolean needsTarget = triggeredEffects.stream()
-                .anyMatch(triggeredEffect ->
-                        triggeredEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                                || triggeredEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                                || triggeredEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
-                                || card.getEffectTargetIndex(triggeredEffect) >= 0);
-        if (needsTarget) {
-            boolean multiTarget = card.getTargetGroups().stream()
-                    .anyMatch(target -> target.getMaxTargets() > 1 || target.getMinTargets() == 0)
-                    || card.getTargetGroups().size() > 1;
-            if (multiTarget) {
-                match.gameData().queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                        card, match.controllerId(), new ArrayList<>(triggeredEffects), match.permanent().getId(),
-                        List.of(), 0, 0, List.of(), 0));
-            } else {
-                match.gameData().queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                        card, match.controllerId(), new ArrayList<>(triggeredEffects),
-                        "unlocks a Room door", match.permanent().getId(), null,
-                        triggeredEffects.stream().anyMatch(candidate ->
-                                candidate instanceof OptionalTargetEffect || candidate.hasOptionalTarget())
-                                || card.getTargetGroups().stream().anyMatch(target -> target.getMinTargets() == 0
-                                && matchingEffects.stream().anyMatch(candidate ->
-                                card.getEffectTargetIndex(candidate) == target.getIndex()))));
-            }
-        } else {
-            StackEntry trigger = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    card,
-                    match.controllerId(),
-                    card.getName() + "'s ability",
-                    new ArrayList<>(triggeredEffects),
-                    null,
-                    match.permanent().getId());
-            trigger.setSourcePermanentSnapshot(new Permanent(match.permanent()));
-            match.gameData().enqueueTrigger(trigger);
-        }
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(card));
-        log.info("Game {} - {} triggers when Room door {} unlocks", match.gameData().id,
-                card.getName(), unlocked.doorIndex());
         return true;
     }
 
@@ -2600,31 +2532,6 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsMiscTrigger(value = OncePerTurnTriggerEffect.class,
-            watch = MiscWatch.ON_SELF_BECOMES_SADDLED)
-    private boolean handleBecomesSaddledOncePerTurn(TriggerMatchContext match,
-            OncePerTurnTriggerEffect effect, TriggerContext ctx) {
-        GameData gameData = match.gameData();
-        Permanent source = match.permanent();
-        if (source == null || gameData.oncePerTurnTriggersFiredThisTurn.contains(source.getId())) {
-            return false;
-        }
-
-        gameData.enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                source.getCard(),
-                match.controllerId(),
-                source.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect.wrapped())),
-                null,
-                source.getId()));
-        gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
-        gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
-        log.info("Game {} - {} triggers on becoming saddled (once per turn)",
-                gameData.id, source.getCard().getName());
-        return true;
-    }
-
     @CollectsMiscTrigger(value = CardEffect.class, watch = MiscWatch.ON_SELF_BECOMES_SADDLED)
     private boolean handleBecomesSaddledDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
@@ -2643,42 +2550,6 @@ public class MiscTriggerCollectorService {
         gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
         log.info("Game {} - {} triggers on becoming saddled",
                 gameData.id, source.getCard().getName());
-        return true;
-    }
-
-    @CollectsMiscTrigger(value = OncePerTurnTriggerEffect.class,
-            watch = MiscWatch.ON_SELF_BECOMES_CREWED)
-    private boolean handleBecomesCrewedOncePerTurn(TriggerMatchContext match,
-            OncePerTurnTriggerEffect effect, TriggerContext ctx) {
-        GameData gameData = match.gameData();
-        Permanent source = match.permanent();
-        if (source == null || gameData.oncePerTurnTriggersFiredThisTurn.contains(source.getId())) {
-            return false;
-        }
-
-        CardEffect wrapped = effect.wrapped();
-        Card sourceCard = match.sourceCard() != null ? match.sourceCard() : source.getCard();
-        boolean needsTarget = wrapped.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || wrapped.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                || wrapped.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD);
-        if (needsTarget) {
-            gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                    sourceCard, match.controllerId(), new ArrayList<>(List.of(wrapped)),
-                    "becomes crewed", source.getId(), new Permanent(source), null));
-        } else {
-            gameData.enqueueTrigger(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    match.controllerId(),
-                    sourceCard.getName() + "'s ability",
-                    new ArrayList<>(List.of(wrapped)),
-                    null,
-                    source.getId()));
-        }
-        gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
-        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on becoming crewed (once per turn)",
-                gameData.id, sourceCard.getName());
         return true;
     }
 

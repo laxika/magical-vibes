@@ -48,12 +48,12 @@ public record PlayerActionTrigger(PlayerAction action, PlayerRelation player, Ca
 
     /**
      * The player and keyword action collectors ({@code ActionWatch}) read this trigger's abilities themselves
-     * ({@code ActionAbilityReader}), so it has no legacy view, but "you fully unlock a Room", whose collector
-     * ({@code MiscWatch}) still reads the legacy view.
+     * ({@code ActionAbilityReader}), and so do those of "you fully unlock a Room" ({@code MiscWatch},
+     * {@code MiscAbilityReader}), so it has no legacy view.
      */
     @Override
     public boolean collectedAsAbility() {
-        return action != PlayerAction.FULLY_UNLOCKS_ROOM;
+        return true;
     }
 
     /** What a player does, or what happens to them. */

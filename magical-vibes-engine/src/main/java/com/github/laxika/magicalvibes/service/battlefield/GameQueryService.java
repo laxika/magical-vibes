@@ -2730,20 +2730,6 @@ public class GameQueryService {
     }
 
     /**
-     * Like {@link #getEffectiveGraveyardTriggerEffects}, with the card's own and its perpetual abilities wrapped in
-     * their options and filters ({@link Card#getLegacyTriggerEffects(Trigger, Zone)}): the form the combat and other
-     * graveyard collectors that still read effects take them in.
-     */
-    public List<CardEffect> getEffectiveGraveyardLegacyTriggerEffects(GameData gameData, Card card, Trigger trigger) {
-        if (graveyardCardsHaveLostAllAbilities(gameData)) {
-            return List.of();
-        }
-        List<CardEffect> effects = new ArrayList<>(card.getLegacyTriggerEffects(trigger, Zone.GRAVEYARD));
-        effects.addAll(gameData.perpetualLegacyTriggerEffects(card.getId(), trigger, Zone.GRAVEYARD));
-        return List.copyOf(effects);
-    }
-
-    /**
      * The triggered abilities of a card in a graveyard, its own and those perpetually granted to it, in that order,
      * or none while cards in graveyards have lost all abilities: for a reader that reads abilities themselves.
      */

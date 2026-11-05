@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.MiscWatch;
+import com.github.laxika.magicalvibes.service.trigger.MiscAbilityReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +34,7 @@ import java.util.UUID;
  * Implements MTG rule 603.8 — state-triggered abilities.
  *
  * <p>After state-based actions run, this service checks every permanent for
- * state-triggered abilities ({@code Triggers.state()}, read through {@link MiscWatch#STATE_TRIGGERED} as one
+ * state-triggered abilities ({@code Triggers.state()}, read by {@link MiscAbilityReader#stateTriggers} as one
  * {@link StateTriggerEffect} of each ability's game state) whose condition is met. If the
  * ability is not already on the stack (tracked via
  * {@link GameData#stateTriggerOnStack}), a triggered ability is pushed onto
@@ -117,8 +117,8 @@ public class StateTriggerService {
     }
 
     /**
-     * Whether the intervening "if" of a state trigger holds as its game state triggers it (CR 603.4): the legacy view
-     * ({@code TriggeredAbility.legacyEffects()}) wraps each of the ability's effects in it, as a
+     * Whether the intervening "if" of a state trigger holds as its game state triggers it (CR 603.4): the reader
+     * ({@link MiscAbilityReader#stateTriggers}) wraps each of the ability's effects in it, as a
      * {@link ConditionalEffect} that is checked again as the ability resolves. Without a condition evaluator (the
      * unit-test constructors) nothing is checked here.
      */
@@ -164,9 +164,9 @@ public class StateTriggerService {
             for (Permanent perm : snapshot) {
                 if (perm.isFaceDown()) continue;
                 if (gameQueryService != null && gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-                List<CardEffect> effects = stateTriggeredEffects(gameData, perm);
+                List<StateTriggerEffect> effects = stateTriggeredEffects(gameData, perm);
                 for (int i = 0; i < effects.size(); i++) {
-                    StateTriggerEffect trigger = (StateTriggerEffect) effects.get(i);
+                    StateTriggerEffect trigger = effects.get(i);
 
                     // Rule 603.8: don't retrigger while already on the stack
                     StateTriggerKey key = new StateTriggerKey(perm.getId(), i);
@@ -228,15 +228,15 @@ public class StateTriggerService {
             return;
         }
         for (var source : gameData.planechase.faceUp) {
-            List<CardEffect> effects = MiscWatch.STATE_TRIGGERED.effectsOf(source.getCard());
+            List<StateTriggerEffect> effects = MiscAbilityReader.stateTriggers(source.getCard());
             if (effects.isEmpty()) {
                 continue;
             }
             Permanent counterSnapshot = new Permanent(source.getCard());
             counterSnapshot.getCounters().putAll(source.getCounters());
             for (int i = 0; i < effects.size(); i++) {
-                if (!(effects.get(i) instanceof StateTriggerEffect trigger)
-                        || !conditionMet(gameData, trigger, counterSnapshot, gameData.planechase.controllerId)
+                StateTriggerEffect trigger = effects.get(i);
+                if (!conditionMet(gameData, trigger, counterSnapshot, gameData.planechase.controllerId)
                         || !interveningIfMet(gameData, trigger, counterSnapshot, gameData.planechase.controllerId)) {
                     continue;
                 }
@@ -264,11 +264,16 @@ public class StateTriggerService {
                         || effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PLAYER));
     }
 
-    private List<CardEffect> stateTriggeredEffects(GameData gameData, Permanent permanent) {
-        List<CardEffect> effects = new ArrayList<>(MiscWatch.STATE_TRIGGERED.effectsOf(permanent.getCard()));
+    /**
+     * The state triggers of {@code permanent}: its printed ones, read from its abilities, then those a static ability
+     * grants it as a {@link StateTriggerEffect} (Olivia, Crimson Bride).
+     */
+    private List<StateTriggerEffect> stateTriggeredEffects(GameData gameData, Permanent permanent) {
+        List<StateTriggerEffect> effects = new ArrayList<>(MiscAbilityReader.stateTriggers(permanent.getCard()));
         if (gameQueryService != null) {
             gameQueryService.getGrantedEffects(gameData, permanent).stream()
                     .filter(StateTriggerEffect.class::isInstance)
+                    .map(StateTriggerEffect.class::cast)
                     .forEach(effects::add);
         }
         return effects;

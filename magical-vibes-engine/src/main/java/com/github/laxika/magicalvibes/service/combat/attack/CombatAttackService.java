@@ -222,6 +222,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.CombatWatch;
+import com.github.laxika.magicalvibes.service.trigger.MiscAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.MiscWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.*;
@@ -3901,7 +3902,7 @@ public class CombatAttackService {
                     || source.isLosesAllAbilitiesUntilEndOfTurn()
                     || sourceStaticBonus.losesAllAbilities()
                     || sourceStaticBonus.losesAllNonManaAbilities()
-                    || MiscWatch.ON_CREWS_VEHICLE.effectsOf(source.getCard()).stream()
+                    || MiscAbilityReader.printedEffects(source.getCard(), MiscWatch.ON_CREWS_VEHICLE).stream()
                     .noneMatch(RegisterDelayedVehicleAttackEffect.class::isInstance)
                     || !gameQueryService.hasEffectiveSubtype(gameData, vehicle, CardSubtype.VEHICLE)) {
                 continue;

@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; run 16l, family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader`; run 16m, family 10 (sagas): no chapter or final-chapter ability has a legacy view, and the final-chapter collectors read the abilities through `SagaAbilityReader`; run 16n, family 11's player and keyword actions: every `ActionWatch` collector reads the abilities through `ActionAbilityReader`; runs 16o onward left: the rest of the legacy view's retirement, family by family, with the may-unwrapping, `TriggerMode`, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; run 16l, family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader`; run 16m, family 10 (sagas): no chapter or final-chapter ability has a legacy view, and the final-chapter collectors read the abilities through `SagaAbilityReader`; run 16n, family 11's player and keyword actions: every `ActionWatch` collector reads the abilities through `ActionAbilityReader`; run 16o, family 11's rest: every `MiscWatch` collector and the planar reader read the abilities through `MiscAbilityReader`; runs 16p onward left: the rest of the legacy view's retirement (the zone changes and the own enters abilities), with the may-unwrapping, `TriggerMode`, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -616,7 +616,8 @@ no other family still uses. The order:
 | 16l | Step 13's family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader` (own event, "for the first time each turn" and limit from the ability); no life ability has a legacy view, an ability with a life and a legacy condition (MACH-1) keeps one for the other condition only, and `FirstOpponentLifeLossEachTurnTriggerEffect` and `OncePerTurnTriggerEffect`'s `firstLifeGain` / `firstLifeLoss` components are gone |
 | 16m | Step 13's family 10 (sagas): no chapter or final-chapter ability has a legacy view; the final-chapter collectors read the abilities through `SagaAbilityReader` ("triggers only once each turn" from the ability), and the ability rejects the options they don't read as it is built |
 | 16n | Step 13's family 11, its first half (step 13 run 11a's player and keyword actions): every `ActionWatch` collector reads the abilities through `ActionAbilityReader` (the explore, exploit and scheme filters and "triggers only once each turn" from the ability); no action ability has a legacy view, and `SchemeSetInMotionTriggerEffect` and `SchemeTriggerCollectorService` are gone |
-| 16o onward | The rest of the legacy view's retirement, family by family: each family's collectors read the ability's options, filters and grouping (no `TriggerMode`), then the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
+| 16o | Step 13's family 11, its second half (step 13 run 11b): every `MiscWatch` collector (control change, attaching, crew, saddle and station, Room doors and full unlocks, day and night, state triggers) and the planar reader read the abilities through `MiscAbilityReader` (the door, the first crew or saddle each turn and "triggers only once each turn" from the ability, a state trigger's game state); no family 11 ability has a legacy view, and `TriggeringRoomDoorConditionalEffect` is gone |
+| 16p onward | The rest of the legacy view's retirement, family by family (the zone changes and the own enters abilities): each family's collectors read the ability's options, filters and grouping (no `TriggerMode`), then the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
 
 Mark the step `done` only after the last run of 16.
 
@@ -8603,6 +8604,124 @@ their own).
   pass.
 - Engine: the whole module, with the one failure at HEAD, `GameMutationBoundaryRatchetTest`.
 - AI: the whole module (1,620 tests), with the same 10 failures as before.
+- The full suite was not run here.
+
+#### Run 16o: the rest of family 11 reads the ability
+
+Step 13's family 11, its second half (step 13 run 11b), as 16n's findings left it: no control change, attach, crew,
+saddle or station, Room door or full unlock, day and night, state or planar ability has a legacy view any more, and every
+reader of one reads the ability. With it no family 11 ability has a legacy view: only the zone change and permanent
+change triggers (and `LegacySlotTrigger`) still have one.
+
+**What the scan found.** A temporary reflection scan (every registered card class and back face, their abilities and the
+`TriggeredAbility` values nested in their effects) found 336 abilities of the family in 293 card classes, all printed
+(none granted, temporary or built by the engine), every registration `TriggerMode.NORMAL`: 189 planar (143 chaos), 30
+Room doors (no Room has two abilities on one door, and every door and full-unlock ability has one effect), 17 full
+unlocks (the Eerie abilities, each with its enters condition), 62 state triggers, 10 day and night, 11 attach,
+3 control change and 14 crew, saddle and station abilities. The options: Inchblade Companion's "triggers only once each
+turn" (Equipment attach) and the four state triggers' intervening "if" (Opal Avenger, Lurking Jackals, Veiled
+Crocodile, Hidden Predators); the first crew or saddle each turn is Mindlink Mech's and Stubborn Burrowfiend's event. No
+card changed.
+
+**The model.**
+
+- `collectedAsAbility()` is true for `ControlChangeTrigger`, `AttachTrigger`, `DayNightTrigger`, `StateTrigger`,
+  `PlanarTrigger` and every `ObjectActionTrigger` and `PlayerActionTrigger` action: `TriggeredAbility.legacyEffects()`,
+  the `getLegacy…` getters and `MiscWatch.effectsOf` / `registrationsOf` throw for them, and the card's slot index leaves
+  them out of its legacy maps. An Eerie ability ("whenever an enchantment you control enters and whenever you fully
+  unlock a Room") keeps its legacy view for the enters collectors, as MACH-1's does.
+- The legacy view's state branch (`legacyStateEffects`), its door and first-time wrappers (`objectActionView`,
+  `legacyObjectActionWrapper`, `filteredTrigger`) are gone, and with them `TriggeringRoomDoorConditionalEffect` (only the
+  legacy view built it) and `Card`'s target binding through it. `legacyEffects()` now wraps only the options.
+- `TriggeredAbility` rejects as it is built "one or more" on any family 11 condition (no collector of the family reads
+  it), and on a state trigger (**CR 603.8**, checked) any option but an intervening "if" (**CR 603.4**, checked): a limit,
+  a multiplicity or an event condition (**CR 603.2**, checked), which the legacy view rejected as a card's abilities were
+  indexed. No card writes one.
+
+**The engine.**
+
+- New `MiscAbilityReader` (`service/trigger`, static), `ActionAbilityReader`'s shape: each effect as a `MiscEffect` with
+  its ability, the watched condition's door, "for the first time each turn" and the limit (`limitReached` / `markLimit`:
+  the first crew or saddle by the unkeyed once-each-turn mark on the Vehicle or Mount, as the collectors judged it
+  before; "triggers only once each turn" by `limitKey()`). The intervening "if" and the event condition still wrap the
+  effects. It throws on a trigger mode, a limit other than "triggers only once each turn", and a limit next to a first
+  time; the strict `printedEffects` / `effects` throw on a door, a first time or a limit. `stateTriggers(card)` reads a
+  card's state triggers as one `StateTriggerEffect` of its game state and effects each, the form `StateTriggerService`
+  judges (Olivia's granted `StateTriggerEffect` is unchanged).
+- `TriggerCollectionService.dispatchWatch` has a misc branch, `dispatchMiscWatch` (`dispatchActionWatch`'s shape): the
+  printed abilities (text-changed, **CR 612.1**, checked) and those static abilities grant; a door ability triggers only
+  for its own door (**CR 709.5h**, checked) and is one stack object of all its effects (**CR 603.3**, checked), put on the
+  stack by `collectDoorAbility`, the former `MiscTriggerCollectorService` door handler moved into the collector; the
+  limit is judged before and marked once one effect triggered. The generic legacy branch of `dispatchWatch` is gone (no
+  watch reaches it).
+- The direct readers read the abilities: crewed, saddled and stationed (`dispatchPrintedMiscAbilities`, which judges the
+  first time and the limit per ability, so the crewed and saddled `OncePerTurnTriggerEffect` handlers are gone), the
+  Equipment attach collector (Inchblade Companion's limit by the ability, where `OncePerTurnTriggerSupport` judged the
+  keyed wrapper by the same key), the crew, saddle-or-crew-during-main-phase (printed and granted), Aura attach,
+  graveyard day and night (`graveyardMiscEffects`, as `getEffectiveGraveyardLegacyTriggerEffects` read them; that method
+  and `GameData.perpetualLegacyTriggerEffects` are gone) and graveyard Eerie readers, `CreatureControlService` (printed,
+  temporary and persistent control-change abilities), `CombatAttackService`'s delayed Vehicle attack, `StateTriggerService`
+  (battlefield and planar state triggers), `PlanechaseService.trigger` (its non-step triggers) and the Room's door target
+  groups copied as it enters (`StackResolutionService`, from the door abilities' effects as the card bound them).
+
+**Behaviour changes.** None known. Each collector judges the door, the first time and the limit at the point and by the
+key it judged the wrappers, and every ability of the family has one effect where a collector groups (the door handler
+merged the effects of all of a card's abilities on the unlocked door; no Room has two). The state-trigger reader names
+and indexes its triggers as before. The new rejections change no card.
+
+**Kept, with their reason.**
+
+- The intervening "if" and the event condition still reach the collectors as `ConditionalEffect`s, as the earlier runs
+  left them (step 15). The first crew or saddle each turn is still the unkeyed mark set when the ability triggers, not
+  the first time the Vehicle or Mount became crewed or saddled that turn whether or not it triggered.
+- `StateTriggerEffect` stays: the reader builds it, and Olivia, Crimson Bride grants one through a static ability.
+- `TriggerWatch.effectsOf` / `registrationsOf` now throw for every watch; deleting them (and their tests' throw checks)
+  is a later cleanup. Step 13 run 11b's and step 15's items (the event bindings, the planar and state readers' zones).
+- `OncePerTurnTriggerEffect` and `OnceOnlyTriggerEffect` stay: the zone-change and own enters legacy views still build
+  them.
+
+**For 16p onward.**
+
+- The families left on the legacy view: the zone changes (`ZoneChangeWatch`, the creature-death and pilot collectors,
+  the permanent changes) and the own enters abilities, as 16a planned; each can reuse `WatchedAbilities` and a reader of
+  `MiscAbilityReader`'s shape. When the own enters abilities leave, MACH-1's and the Eerie abilities' legacy view goes and
+  `hasLegacyView()` can go with the legacy view.
+- Combat's, counters', the self-untap handler's and the final-chapter handler's grouping by ability, and the "when you
+  cast this spell" merges (16d, 16f).
+
+**Tests changed.**
+
+- `MiscTriggerTest`: the legacy-view tests became reader tests: no legacy view for any trigger of the family (the
+  abilities, the getters and every `MiscWatch` throw; the plain effects still read), the Eerie ability's legacy view kept
+  for its enters condition and its unlock read as an ability, a state trigger read as one `StateTriggerEffect` (two
+  abilities, with and without an intervening "if") and the options a state trigger can't take rejected as it is built,
+  the door read from the ability (the strict reader rejects it), the first crew or saddle each turn judged and marked by
+  the unkeyed mark (a limit next to it rejected), Inchblade's limit marked by the ability, the event condition inside
+  the intervening "if", and what the collectors can't read rejected ("one or more" on every factory, the other limits, a
+  trigger mode, an unwatched condition).
+- `ActionTriggerTest`: `everyActionWatchTriggerIsReadAsAnAbilityAndTheMiscActionsStillHaveALegacyView` became
+  `everyActionTriggerIsReadAsAnAbilityTheMiscActionsIncluded`; the "one or more" rejection expects the new message.
+- `MiscWatchTest#aWatchReadsOnlyTheAbilitiesOfItsTriggerAndZone` reads through the reader.
+- `TriggeredAbilityTest#aSpellLandPlayOrActivationAbilityHasNoLegacyView` uses `Triggers.dies(THIS)` as the trigger that
+  still has a legacy view, where it used `youLoseControlOfThis()`.
+
+**Test runs.**
+
+- Card: the test class of every card with a family 11 ability of this run (by the scan), every card test that
+  constructs one of those cards, and every card test that mentions crewing, saddling, stationing, unlocking, Rooms, day
+  and night, Planechase or chaos, state triggers, control changes or attaching (1,793 classes, 15,958 tests): all
+  passing.
+- Application: the `service.trigger` and `model.trigger` packages and the state-trigger, Planechase, stack-resolution,
+  spell-casting, creature-control, state-based action, game-query, freeze, triggered-ability, card-ability,
+  granted-ability, granted-ability view, simulation-copy, architecture, targeting-consistency, legacy-slot and pipeline
+  classes (1,402 tests): 45 failures, all failing at HEAD: `StateBasedActionServiceTest` 13, `SpellCastingServiceTest`
+  10, `DeathTriggerCollectorServiceTest` 6, `DamageTriggerCollectorServiceTest` 5, `SpellCastTriggerCollectorServiceTest`
+  2, `LandTapTriggerCollectorServiceTest` 2, `PlanechaseServiceTest` 2 (the source-less planeswalking cases),
+  `CreatureControlServiceTest` 1, `GameQueryServiceTest` 1, and the known one each in `SimulationCopyCompletenessTest`,
+  `CardImmutabilityArchTest` and `CardEffectTargetingConsistencyTest`. `MiscTriggerTest`, `MiscWatchTest`,
+  `ActionTriggerTest`, `StateTriggerServiceTest` and `MiscTriggerCollectorServiceTest` pass.
+- Engine: the whole module, with the one failure at HEAD, `GameMutationBoundaryRatchetTest`.
+- AI: the whole module, with the same 10 failures as before.
 - The full suite was not run here.
 
 ## Prompt

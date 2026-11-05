@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AscendEffectHandler;
 import com.github.laxika.magicalvibes.service.turn.PhasingService;
+import com.github.laxika.magicalvibes.service.trigger.MiscAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import org.springframework.context.annotation.Lazy;
@@ -356,15 +357,15 @@ public class PlanechaseService {
 
     /**
      * Puts the planar object's abilities with {@code trigger} on the stack, under {@code controller}. A step or phase
-     * ability's options are judged as it triggers ({@link StepAbilityReader}); the others' are read from the legacy
-     * view's wrappers.
+     * ability's options are judged as it triggers ({@link StepAbilityReader}); a planar ability's
+     * ({@link MiscAbilityReader}) intervening "if" is checked as it triggers, below, and it takes no other option.
      */
     public void trigger(GameData game, PlanarObject object, Trigger trigger, UUID controller) {
         Card card = object.getCard();
         List<CardEffect> effects = trigger instanceof StepTrigger
                 ? new StepAbilityReader(conditionEvaluationService).effects(game, card.getTriggeredAbilities(trigger),
                         ConditionContext.forCard(card, controller))
-                : card.getLegacyTriggerEffects(trigger);
+                : MiscAbilityReader.effects(card.getTriggeredAbilities(trigger), trigger);
         trigger(game, object, effects, controller);
     }
 

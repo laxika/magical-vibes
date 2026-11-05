@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
@@ -100,7 +101,7 @@ class TriggeredAbilityTest {
         TriggeredAbility cast = new TriggeredAbility(Triggers.youCastSpell(), new DrawCardEffect(1));
         TriggeredAbility landPlay = new TriggeredAbility(Triggers.youPlayLand(), new DrawCardEffect(1));
         TriggeredAbility activation = new TriggeredAbility(Triggers.youActivateAbility(), new DrawCardEffect(1));
-        TriggeredAbility dies = new TriggeredAbility(Triggers.youLoseControlOfThis(), new DrawCardEffect(1));
+        TriggeredAbility dies = new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new DrawCardEffect(1));
 
         assertThat(cast.collectedAsAbility()).isTrue();
         assertThat(landPlay.collectedAsAbility()).isTrue();
@@ -109,7 +110,7 @@ class TriggeredAbilityTest {
         assertThatThrownBy(cast::legacyEffects).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> TriggeredAbility.requireLegacyView(Triggers.youPlayLand()))
                 .isInstanceOf(IllegalArgumentException.class);
-        TriggeredAbility.requireLegacyView(Triggers.youLoseControlOfThis());
+        TriggeredAbility.requireLegacyView(Triggers.dies(ObjectRelation.THIS));
         assertThat(dies.legacyEffects()).isEqualTo(dies.effects());
     }
 
