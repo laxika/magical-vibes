@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
@@ -27,7 +26,6 @@ import com.github.laxika.magicalvibes.service.trigger.CombatWatch;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -276,8 +274,7 @@ class CombatTriggerTest {
         assertThat(read.filter()).isEqualTo(new PermanentIsTokenPredicate());
         assertThat(read.effect()).isEqualTo(new ConditionalEffect(ALONE, DRAW));
         assertThat(permanent.getTemporaryTriggerEffects(Triggers.creatureAttacks())).isEmpty();
-        assertThatThrownBy(() -> new TemporaryGlobalTriggeredAbility(UUID.randomUUID(), new Card(), ability)
-                .legacyEffect()).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(ability::legacyEffects).isInstanceOf(IllegalStateException.class);
     }
 
     @Test

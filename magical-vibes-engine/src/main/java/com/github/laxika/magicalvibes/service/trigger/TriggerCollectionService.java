@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.LibraryTrigger;
+import com.github.laxika.magicalvibes.model.trigger.LifeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
@@ -9863,10 +9864,16 @@ public class TriggerCollectionService {
                     }
                 }
             }
+            // A registered life ability (False Cure's "whenever a player gains life") is read without a count or limit.
+            CardEffect lifeEffect = slot instanceof LifeWatch lifeWatch
+                    ? LifeAbilityReader.effects(List.of(watcher.ability()), lifeWatch.trigger()).getFirst() : null;
             CardEffect resolvedEffect = slot == CombatWatch.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER
                     ? watcher.effect() : combatRead != null ? combatRead.effect()
                     : damageRead != null ? damageRead.effect() : tapRead != null ? tapRead.effect()
-                    : watcher.legacyEffect();
+                    : lifeEffect;
+            if (resolvedEffect == null) {
+                throw new IllegalStateException("No temporary global watcher is read for " + slot);
+            }
             if (targetId != null && slot == CombatWatch.ON_ANY_CREATURE_BLOCKS
                     && resolvedEffect instanceof TriggeringPermanentConditionalEffect conditional) {
                 Permanent triggeringPermanent = gameQueryService.findPermanentById(gameData, targetId);
@@ -11766,9 +11773,9 @@ public class TriggerCollectionService {
 
             for (Permanent perm : List.copyOf(battlefield)) {
                 if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-                for (CardEffect effect : LifeWatch.ON_OPPONENT_LOSES_LIFE.effectsOf(perm.getCard())) {
-                    var match = new TriggerMatchContext(gameData, perm, playerId, effect);
-                    if (dispatch(match, LifeWatch.ON_OPPONENT_LOSES_LIFE, effect, ctx)) {
+                for (TriggeredAbility ability : LifeAbilityReader.printed(perm.getCard(),
+                        LifeWatch.ON_OPPONENT_LOSES_LIFE)) {
+                    if (collectOpponentLifeLossAbility(gameData, perm, playerId, ability, ctx)) {
                         anyTriggered[0] = true;
                     }
                 }
@@ -11782,28 +11789,10 @@ public class TriggerCollectionService {
 
             for (Permanent perm : List.copyOf(battlefield)) {
                 if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-                for (CardEffect effect : LifeWatch.ON_CONTROLLER_LOSES_LIFE.effectsOf(perm.getCard())) {
-                    CardEffect toDispatch = effect;
-                    if (effect instanceof OncePerTurnTriggerEffect once) {
-                        if (once.firstLifeLoss()) {
-                            if (gameData.lifeLostThisTurn.getOrDefault(playerId, 0) != lifeLostAmount) {
-                                continue;
-                            }
-                        } else if (OncePerTurnTriggerSupport.isFired(gameData, perm, once)) {
-                            continue;
-                        }
-                        toDispatch = once.wrapped();
-                    }
-                    toDispatch = unwrapLifeChangeConditional(gameData, perm, playerId, toDispatch);
-                    if (toDispatch == null) {
-                        continue;
-                    }
-                    var match = new TriggerMatchContext(gameData, perm, playerId, effect);
-                    if (registry.dispatch(match, LifeWatch.ON_CONTROLLER_LOSES_LIFE, toDispatch, ctx)) {
+                for (TriggeredAbility ability : LifeAbilityReader.printed(perm.getCard(),
+                        LifeWatch.ON_CONTROLLER_LOSES_LIFE)) {
+                    if (collectControllerLifeLossAbility(gameData, perm, playerId, ability, lifeLostAmount, ctx)) {
                         anyTriggered[0] = true;
-                        if (effect instanceof OncePerTurnTriggerEffect once && !once.firstLifeLoss()) {
-                            OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, once);
-                        }
                     }
                 }
             }
@@ -11812,6 +11801,110 @@ public class TriggerCollectionService {
         if (anyTriggered[0]) {
             gameOutcomeService.checkWinCondition(gameData);
         }
+    }
+
+    /**
+     * Collects one "whenever an opponent loses life" ability of {@code perm}: "for the first time during each of their
+     * turns" is judged from the ability ({@link #collectFirstOpponentLifeLossEachTurn}), any other its limit, around its
+     * effects' dispatch to the watch's handlers; "do this only once each turn" is marked as the action is taken.
+     */
+    private boolean collectOpponentLifeLossAbility(GameData gameData, Permanent perm, UUID controllerId,
+                                                   TriggeredAbility ability, TriggerContext.LifeLoss ctx) {
+        LifeWatch watch = LifeWatch.ON_OPPONENT_LOSES_LIFE;
+        List<LifeAbilityReader.LifeEffect> reads = LifeAbilityReader.read(ability, watch.trigger());
+        LifeAbilityReader.LifeEffect first = reads.getFirst();
+        if (first.event() == LifeTrigger.LifeEvent.LOSES_FOR_FIRST_TIME_DURING_THEIR_TURN) {
+            List<CardEffect> effects = LifeAbilityReader.effectsOf(reads);
+            var match = new TriggerMatchContext(gameData, perm, controllerId, effects.getFirst());
+            return dispatch(match, watch, effects.getFirst(), ctx,
+                    () -> collectFirstOpponentLifeLossEachTurn(match, effects, ctx));
+        }
+        if (first.limitReached(gameData, perm.getId())) {
+            return false;
+        }
+        boolean triggered = false;
+        for (LifeAbilityReader.LifeEffect read : reads) {
+            CardEffect effect = read.effect();
+            var match = new TriggerMatchContext(gameData, perm, controllerId, effect, perm.getCard(), null,
+                    read.marksLimitOnAcceptance(), read.triggersOnlyOnceEachTurn());
+            triggered |= dispatch(match, watch, effect, ctx);
+        }
+        if (triggered) {
+            first.markLimit(gameData, perm.getId());
+        }
+        return triggered;
+    }
+
+    /**
+     * "Whenever an opponent loses life for the first time during each of their turns" (Valgavoth): the losing player
+     * is the active player, it is their first loss of life this turn, counting those before the source was on the
+     * battlefield, and the ability hasn't triggered for them this turn yet. All the ability's effects are one stack
+     * object (CR 603.3).
+     */
+    private boolean collectFirstOpponentLifeLossEachTurn(TriggerMatchContext match, List<CardEffect> effects,
+                                                         TriggerContext.LifeLoss lifeLoss) {
+        GameData gameData = match.gameData();
+        if (!lifeLoss.losingPlayerId().equals(gameData.activePlayerId)) {
+            return false;
+        }
+        int lifeLostEarlierThisTurn = gameData.lifeLostThisTurn.getOrDefault(lifeLoss.losingPlayerId(), 0)
+                - lifeLoss.lifeLostAmount();
+        if (lifeLostEarlierThisTurn > 0) {
+            return false;
+        }
+        Set<UUID> firedForOpponents = gameData.firstOpponentLifeLossTriggersFiredThisTurn.computeIfAbsent(
+                match.permanent().getId(), ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet());
+        if (!firedForOpponents.add(lifeLoss.losingPlayerId())) {
+            return false;
+        }
+        Card sourceCard = match.permanent().getCard();
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(effects),
+                null,
+                match.permanent().getId()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on an opponent's first life loss during their turn",
+                gameData.id, sourceCard.getName());
+        return true;
+    }
+
+    /**
+     * Collects one "whenever you lose life" ability of {@code perm}: "for the first time each turn" (the player's
+     * first loss of life this turn, counting those before the source was on the battlefield) and the limit are judged
+     * from the ability, and the intervening "if" as it triggers, around its effects' dispatch to the watch's handlers.
+     * Nothing makes these abilities trigger additional times, as before.
+     */
+    private boolean collectControllerLifeLossAbility(GameData gameData, Permanent perm, UUID controllerId,
+                                                     TriggeredAbility ability, int lifeLostAmount,
+                                                     TriggerContext.LifeLoss ctx) {
+        LifeWatch watch = LifeWatch.ON_CONTROLLER_LOSES_LIFE;
+        List<LifeAbilityReader.LifeEffect> reads = LifeAbilityReader.read(ability, watch.trigger());
+        LifeAbilityReader.LifeEffect first = reads.getFirst();
+        LifeAbilityReader.requireNoLimitOnAcceptance(first, watch.trigger());
+        if (first.firstTimeEachTurn()
+                && gameData.lifeLostThisTurn.getOrDefault(controllerId, 0) != lifeLostAmount) {
+            return false;
+        }
+        if (first.limitReached(gameData, perm.getId())) {
+            return false;
+        }
+        boolean triggered = false;
+        for (LifeAbilityReader.LifeEffect read : reads) {
+            CardEffect toDispatch = unwrapLifeChangeConditional(gameData, perm, controllerId, read.effect());
+            if (toDispatch == null) {
+                continue;
+            }
+            var match = new TriggerMatchContext(gameData, perm, controllerId, read.effect());
+            triggered |= registry.dispatch(match, watch, toDispatch, ctx);
+        }
+        if (triggered) {
+            first.markLimit(gameData, perm.getId());
+        }
+        return triggered;
     }
 
     // ── Life-gain triggers ──────────────────────────────────────────────
@@ -11827,22 +11920,25 @@ public class TriggerCollectionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(payingPlayerId);
         if (battlefield == null) return;
 
+        LifeWatch watch = LifeWatch.ON_CONTROLLER_PAYS_LIFE;
         for (Permanent perm : List.copyOf(battlefield)) {
-            List<CardEffect> effects = new ArrayList<>(
-                    LifeWatch.ON_CONTROLLER_PAYS_LIFE.effectsOf(perm.getCard()));
-            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
-                    gameData, perm, LifeWatch.ON_CONTROLLER_PAYS_LIFE.trigger()));
-            for (CardEffect effect : effects) {
-                CardEffect toDispatch = effect;
-                if (effect instanceof OncePerTurnTriggerEffect once) {
-                    if (OncePerTurnTriggerSupport.isFired(gameData, perm, once)) {
-                        continue;
-                    }
-                    toDispatch = once.wrapped();
+            List<TriggeredAbility> abilities = new ArrayList<>(LifeAbilityReader.printed(perm.getCard(), watch));
+            abilities.addAll(grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, perm, watch.trigger()));
+            for (TriggeredAbility ability : abilities) {
+                List<LifeAbilityReader.LifeEffect> reads = LifeAbilityReader.read(ability, watch.trigger());
+                LifeAbilityReader.LifeEffect first = reads.getFirst();
+                LifeAbilityReader.requireNoLimitOnAcceptance(first, watch.trigger());
+                if (first.limitReached(gameData, perm.getId())) {
+                    continue;
                 }
-                var match = new TriggerMatchContext(gameData, perm, payingPlayerId, effect);
-                if (dispatch(match, LifeWatch.ON_CONTROLLER_PAYS_LIFE, toDispatch, ctx)) {
-                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, effect);
+                boolean triggered = false;
+                for (LifeAbilityReader.LifeEffect read : reads) {
+                    var match = new TriggerMatchContext(gameData, perm, payingPlayerId, read.effect(), perm.getCard(),
+                            null, false, read.triggersOnlyOnceEachTurn());
+                    triggered |= dispatch(match, watch, read.effect(), ctx);
+                }
+                if (triggered) {
+                    first.markLimit(gameData, perm.getId());
                 }
             }
         }
@@ -11907,36 +12003,36 @@ public class TriggerCollectionService {
         gameData.forEachBattlefield((playerId, battlefield) -> {
             if (!playerId.equals(gainingPlayerId)) return;
 
+            LifeWatch watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE;
             for (Permanent perm : battlefield) {
-                List<CardEffect> effects = new ArrayList<>();
+                List<TriggeredAbility> abilities = new ArrayList<>();
                 if (!gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
-                    effects.addAll(LifeWatch.ON_CONTROLLER_GAINS_LIFE.effectsOf(perm.getCard()));
+                    abilities.addAll(LifeAbilityReader.printed(perm.getCard(), watch));
                 }
-                effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
-                        gameData, perm, LifeWatch.ON_CONTROLLER_GAINS_LIFE.trigger()));
-                for (CardEffect effect : effects) {
-                    CardEffect toDispatch = effect;
-                    if (effect instanceof OncePerTurnTriggerEffect once) {
-                        if (once.firstLifeGain()
-                                && gameData.getLifeGainedThisTurn(gainingPlayerId) != lifeGainedAmount) {
-                            continue;
-                        }
-                        if (!once.markOnAcceptance()
-                                && OncePerTurnTriggerSupport.isFired(gameData, perm, once)) {
-                            continue;
-                        }
-                        toDispatch = once.wrapped();
-                    }
-                    toDispatch = unwrapLifeChangeConditional(gameData, perm, playerId, toDispatch);
-                    if (toDispatch == null) {
+                abilities.addAll(grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, perm,
+                        watch.trigger()));
+                for (TriggeredAbility ability : abilities) {
+                    List<LifeAbilityReader.LifeEffect> reads = LifeAbilityReader.read(ability, watch.trigger());
+                    LifeAbilityReader.LifeEffect first = reads.getFirst();
+                    if (first.firstTimeEachTurn()
+                            && gameData.getLifeGainedThisTurn(gainingPlayerId) != lifeGainedAmount) {
                         continue;
                     }
-                    boolean markOnAcceptance = effect instanceof OncePerTurnTriggerEffect once
-                            && once.markOnAcceptance();
-                    var match = new TriggerMatchContext(gameData, perm, playerId, effect,
-                            perm.getCard(), markOnAcceptance);
-                    if (dispatch(match, LifeWatch.ON_CONTROLLER_GAINS_LIFE, toDispatch, ctx)) {
-                        OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, effect);
+                    if (first.limitReached(gameData, perm.getId())) {
+                        continue;
+                    }
+                    boolean triggered = false;
+                    for (LifeAbilityReader.LifeEffect read : reads) {
+                        CardEffect toDispatch = unwrapLifeChangeConditional(gameData, perm, playerId, read.effect());
+                        if (toDispatch == null) {
+                            continue;
+                        }
+                        var match = new TriggerMatchContext(gameData, perm, playerId, read.effect(), perm.getCard(),
+                                null, read.marksLimitOnAcceptance(), read.triggersOnlyOnceEachTurn());
+                        triggered |= dispatch(match, watch, toDispatch, ctx);
+                    }
+                    if (triggered) {
+                        first.markLimit(gameData, perm.getId());
                     }
                 }
             }
@@ -12055,9 +12151,10 @@ public class TriggerCollectionService {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null) continue;
 
+            LifeWatch watch = LifeWatch.GRAVEYARD_ON_OPPONENT_GAINS_LIFE;
             for (Card card : new ArrayList<>(graveyard)) {
-                for (CardEffect effect : gameQueryService.getEffectiveGraveyardLegacyTriggerEffects(
-                        gameData, card, LifeWatch.GRAVEYARD_ON_OPPONENT_GAINS_LIFE.trigger())) {
+                for (CardEffect effect : LifeAbilityReader.effects(graveyardLifeAbilities(gameData, card, watch),
+                        watch.trigger())) {
                     gameData.enqueueTrigger(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             card,
@@ -12368,20 +12465,14 @@ public class TriggerCollectionService {
         List<Card> graveyard = gameData.playerGraveyards.get(gainingPlayerId);
         if (graveyard == null) return;
 
+        LifeWatch watch = LifeWatch.GRAVEYARD_ON_CONTROLLER_GAINS_LIFE;
         for (Card card : new ArrayList<>(graveyard)) {
-            for (CardEffect effect : gameQueryService.getEffectiveGraveyardLegacyTriggerEffects(
-                    gameData, card, LifeWatch.GRAVEYARD_ON_CONTROLLER_GAINS_LIFE.trigger())) {
-                CardEffect resolved = effect;
-                boolean oncePerTurn = effect instanceof OncePerTurnTriggerEffect;
-                if (oncePerTurn) {
-                    if (((OncePerTurnTriggerEffect) effect).firstLifeGain()
-                            && gameData.getLifeGainedThisTurn(gainingPlayerId) != lifeGainedAmount) {
-                        continue;
-                    }
-                    if (gameData.oncePerTurnTriggersFiredThisTurn.contains(card.getId())) {
-                        continue;
-                    }
-                    resolved = ((OncePerTurnTriggerEffect) effect).wrapped();
+            for (LifeAbilityReader.LifeEffect read : LifeAbilityReader.read(graveyardLifeAbilities(gameData, card,
+                    watch), watch.trigger())) {
+                LifeAbilityReader.requireNoLimit(read, watch.trigger());
+                if (read.firstTimeEachTurn()
+                        && gameData.getLifeGainedThisTurn(gainingPlayerId) != lifeGainedAmount) {
+                    continue;
                 }
 
                 gameData.enqueueTrigger(new StackEntry(
@@ -12389,16 +12480,22 @@ public class TriggerCollectionService {
                         card,
                         gainingPlayerId,
                         card.getName() + "'s ability",
-                        new ArrayList<>(List.of(resolved))
+                        new ArrayList<>(List.of(read.effect()))
                 ));
-                if (oncePerTurn) {
-                    gameData.oncePerTurnTriggersFiredThisTurn.add(card.getId());
-                }
                 gameLogService.append(gameData, GameLog.abilityTriggers(card));
                 log.info("Game {} - {} triggers from the graveyard when its controller gains life",
                         gameData.id, card.getName());
             }
         }
+    }
+
+    /**
+     * The abilities {@code watch} reads of {@code card} in a graveyard, its own and those perpetually granted to it,
+     * or none while cards in graveyards have lost all abilities.
+     */
+    private List<TriggeredAbility> graveyardLifeAbilities(GameData gameData, Card card, LifeWatch watch) {
+        return WatchedAbilities.withWatchedTrigger(gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData,
+                card), watch.trigger(), watch.zone());
     }
 
     public void processNextEnteringPermanentAnyTarget(GameData gameData) {
@@ -16365,8 +16462,7 @@ public class TriggerCollectionService {
         // effect that makes it trigger additional times (Clara Oswald) cannot add a second copy.
         boolean triggersOnlyOnceEachTurn = match.triggersOnlyOnceEachTurn()
                 || match.rawEffect() instanceof OncePerTurnTriggerEffect once
-                && !once.firstTokenCreation() && !once.firstLifeGain()
-                && !once.firstLandGraveyardEvent() && !once.firstLifeLoss();
+                && !once.firstTokenCreation() && !once.firstLandGraveyardEvent();
         int previousCopies = match.gameData().beginTriggeredAbilityCopies(
                 grantedSpellCascade || triggersOnlyOnceEachTurn ? 1 : 1 +
                 gameQueryService.countAdditionalTriggeredAbilityTriggers(
@@ -16668,6 +16764,14 @@ public class TriggerCollectionService {
             return dispatchRegistrations(gameData, perm, controllerId, watch, ctx, null,
                     TapAbilityReader.printedRegistrations(perm.getCard(), tapWatch),
                     staticBonus -> TapAbilityReader.effects(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(
+                            gameData, perm, staticBonus, ability -> ability.hasWatchedTrigger(watched)), watched));
+        }
+        if (watch instanceof LifeWatch lifeWatch) {
+            // The watch dispatched here ("an opponent gains life") judges no count or limit.
+            Trigger watched = lifeWatch.trigger();
+            return dispatchRegistrations(gameData, perm, controllerId, watch, ctx, null,
+                    LifeAbilityReader.printedRegistrations(perm.getCard(), lifeWatch),
+                    staticBonus -> LifeAbilityReader.effects(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(
                             gameData, perm, staticBonus, ability -> ability.hasWatchedTrigger(watched)), watched));
         }
         if (watch instanceof CombatWatch combatWatch) {

@@ -7,34 +7,11 @@ package com.github.laxika.magicalvibes.model.effect;
  * track multiple independent once-per-turn abilities on the same source.
  */
 public record OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAcceptance, String key,
-                                      boolean firstTokenCreation, boolean firstLifeGain,
-                                      boolean firstLandGraveyardEvent, boolean firstLifeLoss) implements CardEffect {
-
-    public OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAcceptance, String key,
-                                   boolean firstTokenCreation, boolean firstLifeGain,
-                                   boolean firstLandGraveyardEvent) {
-        this(wrapped, markOnAcceptance, key, firstTokenCreation, firstLifeGain, firstLandGraveyardEvent, false);
-    }
-
-    public OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAcceptance, String key,
-                                   boolean firstTokenCreation, boolean firstLifeGain) {
-        this(wrapped, markOnAcceptance, key, firstTokenCreation, firstLifeGain, false, false);
-    }
-
-    /**
-     * Triggers only for the controller's first life loss event each turn, counting events before the
-     * source entered. The limit belongs to the controller rather than the source, so every copy
-     * present for that first event triggers and no copy triggers on later events (Gonti's Machinations). Not authored
-     * on a card: the legacy view ({@code TriggeredAbility.legacyEffects()}) builds it from
-     * {@code Triggers.youLoseLife().firstTimeEachTurn()}.
-     */
-    public static OncePerTurnTriggerEffect firstLifeLoss(CardEffect wrapped) {
-        return new OncePerTurnTriggerEffect(wrapped, false, null, false, false, false, true);
-    }
+                                      boolean firstTokenCreation, boolean firstLandGraveyardEvent) implements CardEffect {
 
     /** Includes land-graveyard events that occurred before the source entered. */
     public static OncePerTurnTriggerEffect firstLandGraveyardEvent(CardEffect wrapped) {
-        return new OncePerTurnTriggerEffect(wrapped, false, null, false, false, true);
+        return new OncePerTurnTriggerEffect(wrapped, false, null, false, true);
     }
 
     public OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAcceptance, String key,
@@ -49,15 +26,6 @@ public record OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAccepta
     /** Triggers for the controller's first token creation event, including events before entry. */
     public static OncePerTurnTriggerEffect firstTokenCreation(CardEffect wrapped) {
         return new OncePerTurnTriggerEffect(wrapped, false, null, true);
-    }
-
-    /**
-     * Triggers for the controller's first life gain event, including events before entry. Not authored on a card: the
-     * legacy view ({@code TriggeredAbility.legacyEffects()}) builds it, keyed by the ability, from
-     * {@code Triggers.youGainLife().firstTimeEachTurn()}.
-     */
-    public static OncePerTurnTriggerEffect firstLifeGain(CardEffect wrapped) {
-        return new OncePerTurnTriggerEffect(wrapped, false, null, false, true);
     }
 
     @Override

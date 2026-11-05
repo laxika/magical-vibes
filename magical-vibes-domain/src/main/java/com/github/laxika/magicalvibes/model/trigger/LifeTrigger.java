@@ -12,9 +12,8 @@ import java.util.Objects;
  * @param firstEachTurn whether only the player's first such event each turn counts, the events before the source was
  *                      on the battlefield included: "whenever you gain life for the first time each turn" is {@code
  *                      Triggers.youGainLife().firstTimeEachTurn()}. A count of the player's events, not a limit on the
- *                      ability's triggers. The collectors read it from the legacy view ({@code
- *                      TriggeredAbility.legacyEffects()}) as the counting {@code OncePerTurnTriggerEffect} they judge,
- *                      so {@link #watchKey()} drops it
+ *                      ability's triggers. The collectors judge it from the ability ({@code LifeAbilityReader}), so
+ *                      {@link #watchKey()} drops it
  */
 public record LifeTrigger(LifeEvent event, PlayerRelation player, boolean firstEachTurn) implements Trigger {
 
@@ -43,9 +42,19 @@ public record LifeTrigger(LifeEvent event, PlayerRelation player, boolean firstE
     }
 
     /**
+     * The life gain, loss and payment collectors read this trigger's abilities themselves ({@code LifeAbilityReader}):
+     * "for the first time each turn", "for the first time during each of their turns" and the ability's options come
+     * from the ability, so it has no legacy view.
+     */
+    @Override
+    public boolean collectedAsAbility() {
+        return true;
+    }
+
+    /**
      * The trigger the {@code LifeWatch} collectors read this one's abilities by: without {@link #firstEachTurn}, and,
      * for {@link LifeEvent#LOSES_FOR_FIRST_TIME_DURING_THEIR_TURN}, the loss of life of the same player, whose
-     * collector judges the rest in a wrapper the legacy view ({@code TriggeredAbility.legacyEffects()}) gives.
+     * collector judges the rest from the ability ({@code LifeAbilityReader}).
      */
     @Override
     public Trigger watchKey() {

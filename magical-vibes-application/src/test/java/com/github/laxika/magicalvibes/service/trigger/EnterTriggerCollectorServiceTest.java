@@ -44,7 +44,6 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
@@ -56,6 +55,7 @@ import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
@@ -310,10 +310,9 @@ class EnterTriggerCollectorServiceTest {
     void lifeGainOncePerTurnTriggerFiresOnlyOnce() {
         when(gameQueryService.computeStaticBonus(eq(gd), any(Permanent.class), isNull())).thenReturn(EMPTY_BONUS);
         CardEffect inner = new GainLifeEffect(1);
-        OncePerTurnTriggerEffect effect = new OncePerTurnTriggerEffect(inner);
         Card source = new Card();
         source.setName("Source");
-        source.addTrigger(Triggers.youGainLife(), effect);
+        source.addTrigger(Triggers.youGainLife(), TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), inner);
         gd.playerBattlefields.get(player1Id).add(new Permanent(source));
 
         AtomicInteger dispatchCount = new AtomicInteger();
@@ -327,8 +326,9 @@ class EnterTriggerCollectorServiceTest {
         service.checkLifeGainTriggers(gd, player1Id, 3);
 
         assertThat(dispatchCount).hasValue(1);
-        assertThat(gd.oncePerTurnTriggersFiredThisTurn)
-                .containsExactly(gd.playerBattlefields.get(player1Id).getFirst().getId());
+        assertThat(gd.keyedOncePerTurnTriggersFiredThisTurn.get(gd.playerBattlefields.get(player1Id).getFirst().getId()))
+                .containsExactly(source.getTriggeredAbilities().getFirst().limitKey());
+        assertThat(gd.oncePerTurnTriggersFiredThisTurn).isEmpty();
     }
 
     @Test

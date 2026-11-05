@@ -41,7 +41,6 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFrom
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardsExiledWithSourceOnUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringPermanentCardFromLibraryWithCroakCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.FirstOpponentLifeLossEachTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherPermanentUnlessDiscardForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificedPermanentManaValueAwareEffect;
@@ -110,7 +109,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -925,57 +923,19 @@ public class MiscTriggerCollectorService {
 
     // ── ON_OPPONENT_LOSES_LIFE ─────────────────────────────────────────
 
-    @CollectsLifeTrigger(value = OncePerTurnTriggerEffect.class, watch = LifeWatch.ON_OPPONENT_LOSES_LIFE)
-    private boolean handleOpponentLifeLossOncePerTurn(TriggerMatchContext match,
-            OncePerTurnTriggerEffect effect, TriggerContext ctx) {
-        CardEffect resolved = OncePerTurnTriggerSupport.unwrapIfAvailable(
-                match.gameData(), match.permanent(), effect);
-        if (!(resolved instanceof CastTargetInstantOrSorceryFromGraveyardEffect)) {
-            return false;
-        }
-
-        match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                match.permanent().getCard(), match.controllerId(), List.of(resolved),
-                null, 1, 0, 1, null, false, null, match.permanent().getId()));
-        OncePerTurnTriggerSupport.markIfNeeded(match.gameData(), match.permanent(), effect);
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        return true;
-    }
-
-    @CollectsLifeTrigger(value = FirstOpponentLifeLossEachTurnTriggerEffect.class,
+    /**
+     * "Whenever one or more opponents lose life, you may cast target instant or sorcery card from your graveyard. Do
+     * this only once each turn" (Emet-Selch of the Third Seat): the collector judges the limit, and accepting the cast
+     * marks it (CR 603.2h).
+     */
+    @CollectsLifeTrigger(value = CastTargetInstantOrSorceryFromGraveyardEffect.class,
             watch = LifeWatch.ON_OPPONENT_LOSES_LIFE)
-    private boolean handleFirstOpponentLifeLossEachTurn(TriggerMatchContext match,
-                                                         FirstOpponentLifeLossEachTurnTriggerEffect trigger,
-                                                         TriggerContext ctx) {
-        TriggerContext.LifeLoss lifeLoss = (TriggerContext.LifeLoss) ctx;
-        GameData gameData = match.gameData();
-        if (!lifeLoss.losingPlayerId().equals(gameData.activePlayerId)) {
-            return false;
-        }
-        int lifeLostEarlierThisTurn = gameData.lifeLostThisTurn.getOrDefault(lifeLoss.losingPlayerId(), 0)
-                - lifeLoss.lifeLostAmount();
-        if (lifeLostEarlierThisTurn > 0) {
-            return false;
-        }
-
-        Set<UUID> firedForOpponents = gameData.firstOpponentLifeLossTriggersFiredThisTurn
-                .computeIfAbsent(match.permanent().getId(), ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet());
-        if (!firedForOpponents.add(lifeLoss.losingPlayerId())) {
-            return false;
-        }
-
-        Card sourceCard = match.permanent().getCard();
-        gameData.enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(trigger.resolvedEffects()),
-                null,
-                match.permanent().getId()));
-        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on an opponent's first life loss during their turn",
-                gameData.id, sourceCard.getName());
+    private boolean handleOpponentLifeLossCastFromGraveyard(TriggerMatchContext match,
+            CastTargetInstantOrSorceryFromGraveyardEffect effect, TriggerContext ctx) {
+        match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                match.permanent().getCard(), match.controllerId(), List.of(effect),
+                null, 1, 0, 1, null, false, null, match.permanent().getId()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         return true;
     }
 
@@ -2368,10 +2328,6 @@ public class MiscTriggerCollectorService {
         if (source == null || lifeGain.lifeGainedAmount() <= 0) {
             return false;
         }
-        if (match.rawEffect() instanceof OncePerTurnTriggerEffect once
-                && OncePerTurnTriggerSupport.isFired(gameData, source, once)) {
-            return false;
-        }
 
         MayEffect may = new MayEffect(
                 new PutCounterOnEachControlledPermanentEffect(
@@ -3403,45 +3359,6 @@ public class MiscTriggerCollectorService {
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on controller life loss during controller's turn",
                 match.gameData().id, sourceCard.getName());
-        return true;
-    }
-
-    @CollectsLifeTrigger(value = OncePerTurnTriggerEffect.class, watch = LifeWatch.ON_CONTROLLER_LOSES_LIFE)
-    private boolean handleLifeLossOncePerTurn(TriggerMatchContext match,
-            OncePerTurnTriggerEffect effect, TriggerContext ctx) {
-        GameData gameData = match.gameData();
-        Permanent source = match.permanent();
-        if (source == null || gameData.oncePerTurnTriggersFiredThisTurn.contains(source.getId())) {
-            return false;
-        }
-
-        CardEffect wrapped = effect.wrapped();
-        Card sourceCard = source.getCard();
-        boolean needsTarget = wrapped.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || wrapped.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                || wrapped.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD);
-        if (needsTarget) {
-            gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                    sourceCard,
-                    match.controllerId(),
-                    List.of(wrapped),
-                    "life loss",
-                    source.getId(),
-                    ((TriggerContext.LifeLoss) ctx).lifeLostAmount()));
-        } else {
-            gameData.enqueueTrigger(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    match.controllerId(),
-                    sourceCard.getName() + "'s ability",
-                    new ArrayList<>(List.of(wrapped)),
-                    null,
-                    source.getId()));
-        }
-        gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
-        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on controller life loss (once per turn)",
-                gameData.id, sourceCard.getName());
         return true;
     }
 

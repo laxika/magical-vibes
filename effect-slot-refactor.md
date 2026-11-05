@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; runs 16l onward left: the rest of the legacy view's retirement, family by family, with the may-unwrapping, `TriggerMode`, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; run 16l, family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader`; runs 16m onward left: the rest of the legacy view's retirement, family by family, with the may-unwrapping, `TriggerMode`, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -613,7 +613,8 @@ no other family still uses. The order:
 | 16i | Step 13's family 6 (becomes the target): every becomes-the-target and target-choice collector reads the abilities through `TargetAbilityReader` (filter, "you control" event and limit from the ability); no target ability has a legacy view, and `TriggeringSpellControllerConditionalEffect`, `AbilityTargetChoiceTriggerEffect` and `TargetChoiceTriggerEffect` are gone |
 | 16j | Step 13's family 7 (library, draw and discard): every draw, discard, cycle, scry, surveil, library search and shuffle collector reads the abilities through `LibraryAbilityReader` (filter, own event, count and limit from the ability); no library ability has a legacy view, and `CyclingTriggerEffect`, `OpponentCausedDiscardTriggerEffect`, `NthCardDrawTriggerEffect`, `FirstOrSecondCardDrawTriggerEffect`, `ExceptFirstDrawStepTriggerEffect`, `FirstDrawStepDrawOnlyTriggerEffect`, `DrawTriggerEffect` and the four counting `OncePerTurnTriggerEffect` factories are gone |
 | 16k | Step 13's family 8 (tap and untap): every tap, untap and tap-for-mana collector reads the abilities through `TapAbilityReader` (filter, "for the first time during your turn", "one or more" and limit from the ability); no tap ability has a legacy view, and `OncePerTurnPerCreatureTriggerEffect`'s `global` component is gone |
-| 16l onward | The rest of the legacy view's retirement, family by family: each family's collectors read the ability's options, filters and grouping (no `TriggerMode`), then the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
+| 16l | Step 13's family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader` (own event, "for the first time each turn" and limit from the ability); no life ability has a legacy view, an ability with a life and a legacy condition (MACH-1) keeps one for the other condition only, and `FirstOpponentLifeLossEachTurnTriggerEffect` and `OncePerTurnTriggerEffect`'s `firstLifeGain` / `firstLifeLoss` components are gone |
+| 16m onward | The rest of the legacy view's retirement, family by family: each family's collectors read the ability's options, filters and grouping (no `TriggerMode`), then the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
 
 Mark the step `done` only after the last run of 16.
 
@@ -8262,6 +8263,127 @@ opponent controls").
   6, `DamageTriggerCollectorServiceTest` 5, `SpellCastTriggerCollectorServiceTest` 2, `LandTapTriggerCollectorServiceTest`
   2, and the known one each in `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and
   `CardEffectTargetingConsistencyTest`. `TapTriggerTest` and `TapWatchTest` pass.
+- Engine: the whole module, with the one failure at HEAD, `GameMutationBoundaryRatchetTest`.
+- AI: the whole module (1,620 tests), with the same 10 failures as before.
+- The full suite was not run here.
+
+#### Run 16l: life reads the ability
+
+Step 13's family 9, next in 16a's order after tap and untap, as 16k's findings listed the families left: every
+"whenever [you, an opponent, a player] gains life [for the first time each turn]", "loses life [for the first time each
+turn, for the first time during each of their turns]" and "whenever you pay life" ability (a `LifeTrigger`, collected
+by the life-gain, life-loss and life-payment collectors of `TriggerCollectionService`, the two graveyard life-gain
+collectors and the temporary global watchers) has no legacy view any more, and every reader of one reads the ability.
+
+**What the scan found.** A temporary reflection scan of every card class (32,373), its own abilities and every ability
+reachable from its fields (111 life abilities in 106 card classes, 8 of them reachable: the static grants of
+Field-Tested Frying Pan, Light of Promise and Sunbond, False Cure's temporary global one, Ajani, Strength of the Pride's
+Pridemate token, the back faces Kefka, Court Mage and Valentin, Dean of the Vein), and Shadowheart's specialized ability,
+built in its handler: every registration is `TriggerMode.NORMAL` and every multiplicity `EACH`. 10 intervening "if"s
+(the "during your turn" ones of Vampire Scrivener, Kefka, Cat Collector, Wax-Wane Witness, Moonstone Harbinger,
+Shadowheart; the Class levels of Gourmand's Talent, Cleric Class, Intermediate Chirography), 1 event condition (Wedding
+Ring), 14 counts (Attended Healer, Cleric of Life's Bond, Vanguard Seraph, Leech Collector, Gourmand's Talent's two, Cat
+Collector, Deathless Knight in the graveyard, Gonti's Machinations, Vengeful Warchief, Intermediate Chirography), 2
+"triggers only once each turn" (Moonstone Harbinger, MACH-1), 2 "do this only once each turn" (Nykthos Paragon,
+Emet-Selch), Valgavoth's first loss during their turn (two effects, the only ability with more than one). Three abilities
+have two conditions: Wax-Wane Witness and Moonstone Harbinger (gain and loss), The Master of Lake-town (you and an
+opponent lose life), and one mixes families: MACH-1 (enters and gain life).
+
+**The model.** `LifeTrigger.collectedAsAbility()` is true: `TriggeredAbility.legacyEffects()`, the `getLegacy…` getters
+and `LifeWatch.effectsOf` / `registrationsOf` throw for a life ability, and the card's slot index leaves life abilities
+out of its legacy maps. The legacy view's life branches (`lifeView()`, `LifeView`, `legacyFirstOpponentLifeLossEffects`)
+are gone, with `FirstOpponentLifeLossEachTurnTriggerEffect`, `OncePerTurnTriggerEffect`'s `firstLifeGain` and
+`firstLifeLoss` components and factories (only the legacy view built them) and
+`TemporaryGlobalTriggeredAbility.legacyEffect()` (the life watchers were its last readers). `TriggeredAbility` rejects
+"one or more" on a life condition as it is built.
+
+MACH-1 is the first ability that mixes a condition read as an ability with one read by the legacy view (the own enters
+collector). New `TriggeredAbility.hasLegacyView()` (some condition isn't collected as an ability): `legacyEffects()` throws
+only when it is false, and the slot index files a mixed ability under its legacy conditions' watch keys only, so the
+enters collector still finds MACH-1 (with its keyed `OncePerTurnTriggerEffect`) and the life collector reads the same
+ability; both mark `limitKey()` in `keyedOncePerTurnTriggersFiredThisTurn`, so the limit stays shared, as run 13 left it.
+`CastTargetInstantOrSorceryFromGraveyardHandler` reads the legacy view of the abilities that have one.
+
+**The engine.**
+
+- New `LifeAbilityReader` (`service/trigger`, static), `TapAbilityReader`'s shape on `WatchedAbilities`' finders: each
+  effect as a `LifeEffect` with the intervening "if" around it (a `ConditionalEffect`, **CR 603.4**, checked) and the
+  event condition inside that (**CR 603.2**, checked), plus the ability, its own event (`event()`: the watched one or
+  "for the first time during each of their turns"), `firstTimeEachTurn()` and the limit (`limitReached` / `markLimit` by
+  `limitKey()`, `marksLimitOnAcceptance()` for "do this only once each turn", **CR 603.2h**, checked,
+  `triggersOnlyOnceEachTurn()`). It throws on a trigger mode, on `ONCE` and the per-creature limit, on a count of
+  another player's or a payment's events, on a limit next to a count, on options next to "for the first time during each
+  of their turns" and on two conditions one watch reads. The strict `printedEffects` / `printedRegistrations` /
+  `effects` serve the readers that judge none of them and throw on one.
+- `TriggerCollectionService`: the "an opponent loses life" collector (`collectOpponentLifeLossAbility`) judges the limit
+  and puts Valgavoth's ability on the stack itself (`collectFirstOpponentLifeLossEachTurn`, the old wrapper handler's
+  body: the active player's first loss of the turn, once for each opponent, all effects one stack object, **CR 603.3**,
+  checked); the "you lose life" collector (`collectControllerLifeLossAbility`) the count and the limit; the "you gain
+  life" collector the count and the limit, for printed and statically granted abilities; the pay-life collector the
+  limit; the graveyard "you gain life" collector the count. `dispatchWatch` has a life branch for "an opponent gains
+  life" (strict); the graveyard "an opponent gains life" collector and the temporary global watchers (False Cure) read
+  the strict effects, the graveyard ones through `getEffectiveGraveyardTriggeredAbilities`.
+- `MiscTriggerCollectorService`: Emet-Selch's handler is keyed on `CastTargetInstantOrSorceryFromGraveyardEffect` (it was
+  keyed on the wrapper; the collector judges the limit, accepting the cast marks it); Valgavoth's handler moved into the
+  collector; the "you lose life" `OncePerTurnTriggerEffect` handler is gone (the collector always unwrapped the wrapper
+  before dispatching, so nothing reached it); Nykthos Paragon's handler no longer checks the wrapper (the collector
+  judges the limit).
+
+**Behaviour changes.**
+
+- "Whenever you gain life for the first time each turn" is judged by the count alone; the wrapper also marked a keyed
+  limit (and, from the graveyard, Deathless Knight's unkeyed card mark), which could never be set without the count
+  failing afterwards. As 16j did for the first discard event.
+- Nykthos Paragon's "do this only once each turn" is judged by the collector before the intervening "if" and the
+  dispatch, where the handler judged it; it has no intervening "if", so nothing else differs.
+- Nothing else is known to change: each collector judges the count and limit in the context and at the point it
+  judged the wrappers, passes the same "triggers only once each turn" flag (a count is not one, so "for the first time
+  each turn" abilities still get additional triggers, as before), and the "you lose life" collector still dispatches
+  through the registry directly (no additional-trigger copies).
+
+**Kept, with their reason.**
+
+- The intervening "if" and the event condition still reach the collectors as `ConditionalEffect`s, and the "you gain /
+  lose life" collectors still check the intervening "if" only as the ability triggers (`unwrapLifeChangeConditional`),
+  as run 13 noted: rechecking it on resolution (CR 603.4) changes behaviour and is a rules fix for a run with its tests.
+- Ob Nixilis's "exactly 1 life" `SequenceEffect` handler and Emet-Selch's "one or more opponents" (run 13's notes);
+  the step 1 surprises (the opponent-loses and you-lose collectors read no granted abilities, the pay-life collector has
+  no ability-loss check on printed abilities, the duplicate `MayPayManaEffect` / `SequenceEffect` handlers).
+- `OncePerTurnTriggerEffect` and `OnceOnlyTriggerEffect` stay: other families' legacy views and the enters collector
+  (MACH-1) still build them.
+
+**For 16m onward.**
+
+- The other families (sagas, misc, zone changes), as 16a planned; each can reuse `WatchedAbilities` and a reader of
+  `LifeAbilityReader`'s shape. When the own enters abilities leave the legacy view, MACH-1's limit is read from the
+  ability by both collectors and `hasLegacyView()` can go with the legacy view.
+- Combat's, counters' and the self-untap handler's grouping by ability, and the "when you cast this spell" merges (16d,
+  16f).
+
+**Tests changed.**
+
+- `LifeTriggerTest`: the legacy-view tests became reader tests: no legacy view (the ability, the getters and the watch
+  throw), the count and the intervening "if", the event condition inside the intervening "if", a graveyard count read in
+  the graveyard, the gain-and-loss ability's shared keyed limit, "do this only once each turn" marked as taken, the
+  first loss during their turn read with every effect (and rejected by the strict reader), MACH-1's enters-and-gain
+  ability (legacy view for the enters condition only, one limit), the strict reader, what the life collectors can't
+  read rejected ("one or more" as the ability is built, a count of an opponent's gains or of payments, a limit next to a
+  count, `ONCE`, options on the first loss during their turn, two conditions one watch reads, a trigger mode).
+- `LifeWatchTest`: reads through the reader. `EnterTriggerCollectorServiceTest#lifeGainOncePerTurnTriggerFiresOnlyOnce`
+  authors the limit as an option (it authored the unkeyed wrapper, which no card does) and asserts the ability's keyed
+  mark. `CombatTriggerTest#grantedAndRegisteredAbilitiesAreReadByTheReader` asserts that the ability has no legacy view
+  instead of calling the removed `TemporaryGlobalTriggeredAbility.legacyEffect()`.
+
+**Test runs.**
+
+- Card: the test class of every card with a life ability (by the scan, granting cards and Shadowheart included) and
+  every card test that constructs one of them (163 classes, 1,376 tests): all passing.
+- Application: the `service.trigger` and `model.trigger` packages and the freeze, triggered-ability, card-ability,
+  granted-ability, granted-ability view, simulation-copy, architecture, targeting-consistency, enters-trigger and
+  pipeline classes (828 tests): 18 failures, all failing at HEAD: `DeathTriggerCollectorServiceTest` 6,
+  `DamageTriggerCollectorServiceTest` 5, `SpellCastTriggerCollectorServiceTest` 2, `LandTapTriggerCollectorServiceTest`
+  2, and the known one each in `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and
+  `CardEffectTargetingConsistencyTest`. `LifeTriggerTest`, `LifeWatchTest` and `EnterTriggerCollectorServiceTest` pass.
 - Engine: the whole module, with the one failure at HEAD, `GameMutationBoundaryRatchetTest`.
 - AI: the whole module (1,620 tests), with the same 10 failures as before.
 - The full suite was not run here.

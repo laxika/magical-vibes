@@ -48,10 +48,12 @@ class LifeWatchTest {
                 gainedFromGraveyard);
         card.addTrigger(Triggers.opponentLosesLife(), opponentLost);
 
-        assertThat(LifeWatch.ON_CONTROLLER_GAINS_LIFE.effectsOf(card)).containsExactly(gained);
-        assertThat(LifeWatch.GRAVEYARD_ON_CONTROLLER_GAINS_LIFE.effectsOf(card)).containsExactly(gainedFromGraveyard);
-        assertThat(LifeWatch.ON_OPPONENT_LOSES_LIFE.effectsOf(card)).containsExactly(opponentLost);
-        assertThat(LifeWatch.ON_CONTROLLER_LOSES_LIFE.effectsOf(card)).isEmpty();
-        assertThat(LifeWatch.ON_OPPONENT_GAINS_LIFE.effectsOf(card)).isEmpty();
+        assertThat(LifeAbilityReader.printedEffects(card, LifeWatch.ON_CONTROLLER_GAINS_LIFE)).containsExactly(gained);
+        assertThat(LifeAbilityReader.printedEffects(card, LifeWatch.GRAVEYARD_ON_CONTROLLER_GAINS_LIFE))
+                .containsExactly(gainedFromGraveyard);
+        assertThat(LifeAbilityReader.printedEffects(card, LifeWatch.ON_OPPONENT_LOSES_LIFE))
+                .containsExactly(opponentLost);
+        assertThat(LifeAbilityReader.printedEffects(card, LifeWatch.ON_CONTROLLER_LOSES_LIFE)).isEmpty();
+        assertThat(LifeAbilityReader.printedEffects(card, LifeWatch.ON_OPPONENT_GAINS_LIFE)).isEmpty();
     }
 }

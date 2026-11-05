@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.FirstOpponentLifeLossEachTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OnceOnlyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnPerCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
@@ -23,7 +22,6 @@ import com.github.laxika.magicalvibes.model.trigger.LifeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ObjectActionTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.PlayerActionTrigger;
-import com.github.laxika.magicalvibes.model.trigger.PlayerRelation;
 import com.github.laxika.magicalvibes.model.trigger.StateTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TapTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TargetTrigger;
@@ -106,11 +104,12 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * no counter collector does (a counter event is once for each permanent, or once for each counter, by its own
      * event), no becomes-the-target collector does ("one or more creatures you control become the target of an
      * activated ability" is an event of its own), and no library, draw or discard collector does ("whenever you discard
-     * one or more cards" is an event of its own), and of the tap and untap collectors only those of "a permanent you
+     * one or more cards" is an event of its own), of the tap and untap collectors only those of "a permanent you
      * control / an opponent controls becomes tapped" and "you tap a permanent an opponent controls" read it, as they
-     * batch the permanents tapped together. The legacy view checked these as a card's abilities were indexed; the
-     * combat, damage, counter, becomes-the-target, library and tap collectors read the ability itself, so the ability
-     * checks them as it is built.
+     * batch the permanents tapped together, and no life gain, loss or payment collector does (each life event triggers
+     * once). The legacy view checked these as a card's abilities were indexed; the combat, damage, counter,
+     * becomes-the-target, library, tap and life collectors read the ability itself, so the ability checks them as it is
+     * built.
      */
     private static void requireReadableMultiplicity(List<TriggerCondition> conditions,
                                                     TriggerMultiplicity multiplicity) {
@@ -151,6 +150,10 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
                         && !readsOneOrMore(tap))) {
                     throw new IllegalArgumentException("No tap or untap collector reads \"one or more\" for "
                             + conditions);
+                }
+                if (conditions.stream().anyMatch(condition -> condition.trigger() instanceof LifeTrigger)) {
+                    throw new IllegalArgumentException("No life gain, loss or payment collector reads \"one or more\" "
+                            + "for " + conditions);
                 }
             }
             case EACH -> {
@@ -283,10 +286,20 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
     /**
      * Whether one of this ability's trigger conditions is a trigger whose collectors read the ability itself
      * ({@link Trigger#collectedAsAbility()}: a spell, land-play, activation, step, combat, damage, counter,
-     * becomes-the-target, library, draw and discard, or tap and untap trigger): then it has no legacy view.
+     * becomes-the-target, library, draw and discard, tap and untap, or life trigger).
      */
     public boolean collectedAsAbility() {
         return conditions.stream().anyMatch(condition -> condition.trigger().collectedAsAbility());
+    }
+
+    /**
+     * Whether one of this ability's trigger conditions is a trigger whose collectors still read the legacy view
+     * ({@link #legacyEffects()}). An ability with such a condition and one read as an ability (MACH-1's "when this
+     * enters and whenever you gain life") has a legacy view for the first's collectors only: the second's read the
+     * ability itself, and the ability's limit, marked by {@link #limitKey()}, is shared by both.
+     */
+    public boolean hasLegacyView() {
+        return conditions.stream().anyMatch(condition -> !condition.trigger().collectedAsAbility());
     }
 
     /**
@@ -310,15 +323,12 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * checked only as the ability triggers (CR 603.2); "triggers only once each turn" is a {@link OncePerTurnTriggerEffect} keyed by
      * {@link #limitKey()}, the key the trigger pipeline marks; "do this only once each turn" one marked as the action
      * is taken (CR 603.2h); "this ability triggers only once" ({@code ONCE}) an {@link OnceOnlyTriggerEffect} inside
-     * the intervening "if", as the cards wrote it. An ability with a spell, land-play, activation, "at the beginning of
-     * [step or phase]", combat, damage, counter, becomes-the-target, library, draw and discard, or tap and untap
-     * trigger ({@link #collectedAsAbility()}) has no legacy view: its collectors read it itself, and this throws. "Once
-     * each turn for each creature" ({@link TriggerLimit#ONCE_EACH_TURN_FOR_EACH_CREATURE}) is an
-     * {@link OncePerTurnPerCreatureTriggerEffect} where the other limits go. A life trigger's "for the first time each turn"
-     * ({@link LifeTrigger#firstEachTurn()}) is the counting {@link OncePerTurnTriggerEffect} the life collectors judge,
-     * where the limits go, as {@link #lifeView()} says, and "an opponent loses life for the first time during each of
-     * their turns" makes the ability one {@link FirstOpponentLifeLossEachTurnTriggerEffect} of all its effects. A
-     * final-chapter trigger ({@link FinalChapterTrigger}) takes only "triggers only once each turn", as
+     * the intervening "if", as the cards wrote it. An ability whose every trigger is a spell, land-play, activation, "at
+     * the beginning of [step or phase]", combat, damage, counter, becomes-the-target, library, draw and discard, tap and
+     * untap, or life trigger ({@link Trigger#collectedAsAbility()}) has no legacy view ({@link #hasLegacyView()}): its
+     * collectors read it itself, and this throws. "Once each turn for each creature"
+     * ({@link TriggerLimit#ONCE_EACH_TURN_FOR_EACH_CREATURE}) is an {@link OncePerTurnPerCreatureTriggerEffect} where the
+     * other limits go. A final-chapter trigger ({@link FinalChapterTrigger}) takes only "triggers only once each turn", as
      * {@link #requireFinalChapterOptions()} says. A state trigger ({@link StateTrigger}) makes the ability one
      * {@link StateTriggerEffect} of its game state and all its effects, as {@link #legacyStateEffects} says, and a
      * "you set a scheme in motion" trigger one {@link SchemeSetInMotionTriggerEffect}, as {@link #legacySchemeEffects}
@@ -327,13 +337,9 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * returns its registrations as they are.
      */
     public List<EffectRegistration> legacyEffects() {
-        if (collectedAsAbility()) {
+        if (!hasLegacyView()) {
             throw new IllegalStateException("The collectors of " + conditions + " read the ability itself; it has no "
                     + "legacy view");
-        }
-        if (conditions.stream().anyMatch(condition -> condition.trigger() instanceof LifeTrigger life
-                && life.event() == LifeTrigger.LifeEvent.LOSES_FOR_FIRST_TIME_DURING_THEIR_TURN)) {
-            return legacyFirstOpponentLifeLossEffects();
         }
         if (conditions.getFirst().trigger() instanceof StateTrigger state) {
             return legacyStateEffects(state);
@@ -345,10 +351,8 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         requireFinalChapterOptions();
         Condition interveningIf = options.interveningIf();
         TriggerLimit limit = options.limit();
-        LifeView life = lifeView();
         ObjectActionTrigger object = objectActionView();
-        if (interveningIf == null && limit == TriggerLimit.NONE
-                && (life == null || life.plain()) && object == null) {
+        if (interveningIf == null && limit == TriggerLimit.NONE && object == null) {
             return legacyBaseEffects();
         }
         String key = limit == TriggerLimit.ONCE_EACH_TURN ? limitKey() : null;
@@ -367,9 +371,6 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
                 effect = OncePerTurnTriggerEffect.markOnAcceptance(effect);
             } else if (limit == TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE) {
                 effect = new OncePerTurnPerCreatureTriggerEffect(effect);
-            }
-            if (life != null) {
-                effect = life.wrap(effect, limitKey());
             }
             if (object != null) {
                 effect = legacyObjectActionWrapper(object, effect);
@@ -474,88 +475,6 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
                 || (options.limit() != TriggerLimit.NONE && options.limit() != TriggerLimit.ONCE_EACH_TURN)) {
             throw new IllegalStateException("The final-chapter collector doesn't read " + options + ": " + conditions);
         }
-    }
-
-    /**
-     * What the legacy view adds for this ability's life conditions, or {@code null} when it has none: the event whose
-     * first occurrence each turn the conditions count ({@link LifeTrigger#firstEachTurn()}). Only the "you gain life"
-     * and "you lose life" collectors count; they read no "one or more", per-creature limit or "triggers only once", and
-     * a limit next to a count, conditions that count different events or that count and don't, throw.
-     */
-    private LifeView lifeView() {
-        List<LifeTrigger> life = conditions.stream().map(TriggerCondition::trigger)
-                .filter(LifeTrigger.class::isInstance).map(LifeTrigger.class::cast).toList();
-        if (life.isEmpty()) {
-            return null;
-        }
-        if (options.multiplicity() != TriggerMultiplicity.EACH) {
-            throw new IllegalStateException("The legacy view has no " + options.multiplicity() + " form for "
-                    + conditions);
-        }
-        TriggerLimit limit = options.limit();
-        if (limit == TriggerLimit.ONCE || limit == TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE) {
-            throw new IllegalStateException("No life collector reads " + limit + ": " + conditions);
-        }
-        List<LifeTrigger> counted = life.stream().filter(LifeTrigger::firstEachTurn).toList();
-        if (counted.isEmpty()) {
-            return new LifeView(null);
-        }
-        LifeTrigger first = counted.getFirst();
-        if (counted.size() != life.size() || counted.stream().anyMatch(trigger -> !trigger.equals(first))) {
-            throw new IllegalStateException("The life conditions of one ability must all count the same event: "
-                    + conditions);
-        }
-        if (first.player() != PlayerRelation.YOU || first.event() == LifeTrigger.LifeEvent.PAYS) {
-            throw new IllegalStateException("No life collector counts " + first);
-        }
-        if (limit != TriggerLimit.NONE) {
-            throw new IllegalStateException("The legacy view has one once-each-turn wrapper: " + conditions
-                    + " with " + limit);
-        }
-        return new LifeView(first.event());
-    }
-
-    /**
-     * The legacy view of an ability's life conditions, as {@link #lifeView()} builds it.
-     *
-     * @param firstTime the event whose first occurrence each turn the conditions count, or {@code null}
-     */
-    private record LifeView(LifeTrigger.LifeEvent firstTime) {
-
-        /** Whether the legacy view adds nothing to the effects. */
-        boolean plain() {
-            return firstTime == null;
-        }
-
-        /**
-         * {@code effect} in the counting wrapper of {@link #firstTime}: the "you gain life" collector's keyed by
-         * {@code key}, so it marks no other ability of the source, and the "you lose life" collector's, which marks
-         * nothing.
-         */
-        CardEffect wrap(CardEffect effect, String key) {
-            if (firstTime == null) {
-                return effect;
-            }
-            return firstTime == LifeTrigger.LifeEvent.GAINS
-                    ? new OncePerTurnTriggerEffect(effect, false, key, false, true)
-                    : OncePerTurnTriggerEffect.firstLifeLoss(effect);
-        }
-    }
-
-    /**
-     * The ability in the form the "an opponent loses life" collector judges a "whenever an opponent loses life for the
-     * first time during each of their turns" ability in: one {@link FirstOpponentLifeLossEachTurnTriggerEffect} of all
-     * its effects, one stack object (CR 603.3), the ability's only condition, without options.
-     */
-    private List<EffectRegistration> legacyFirstOpponentLifeLossEffects() {
-        if (conditions.size() > 1) {
-            throw new IllegalStateException("The legacy view takes \"loses life for the first time during their turn\" "
-                    + "only as the ability's one condition: " + conditions);
-        }
-        requireNoOptions("first-life-loss");
-        List<CardEffect> resolved = legacyBaseEffects().stream().map(EffectRegistration::effect).toList();
-        return List.of(new EffectRegistration(new FirstOpponentLifeLossEachTurnTriggerEffect(resolved),
-                effects.getFirst().triggerMode(), false));
     }
 
     /**

@@ -15,8 +15,12 @@ import java.util.List;
  * stands for and names the trigger its cards were converted to and the zone the collector reads them in. The
  * collectors in {@code TriggerCollectionService} still decide when the ability triggers, how its effects group into
  * stack objects and which event data it is bound to, as the slot's did, until step 15 of the refactor replaces them
- * with effects that read the event. They read the abilities in the legacy form ({@code TriggeredAbility.legacyEffects()}):
- * the options and "for the first time each turn" as the wrappers they judge (step 14, run 13).
+ * with effects that read the event.
+ * <p>
+ * Every collector of these watches reads the abilities themselves ({@link Trigger#collectedAsAbility()}), through
+ * {@link LifeAbilityReader}: "for the first time each turn", "for the first time during each of their turns" and the
+ * limit come from the ability, and the legacy view gives none of them, so {@link #effectsOf} and
+ * {@link #registrationsOf} throw.
  */
 public enum LifeWatch implements TriggerWatch {
     /** "Whenever an opponent loses life", damage included, once for each life-loss event. */
@@ -54,13 +58,15 @@ public enum LifeWatch implements TriggerWatch {
         return zone;
     }
 
+    /** Throws: the collectors of a life watch read its abilities themselves ({@link LifeAbilityReader}). */
     @Override
     public List<CardEffect> effectsOf(Card card) {
-        return card.getLegacyTriggerEffects(trigger, zone);
+        throw new UnsupportedOperationException(name() + " is read by abilities, not by effects");
     }
 
+    /** Throws: the collectors of a life watch read its abilities themselves ({@link LifeAbilityReader}). */
     @Override
     public List<EffectRegistration> registrationsOf(Card card) {
-        return card.getLegacyTriggerEffectRegistrations(trigger, zone);
+        throw new UnsupportedOperationException(name() + " is read by abilities, not by effects");
     }
 }

@@ -2,24 +2,29 @@ package com.github.laxika.magicalvibes.model.trigger;
 
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
+import com.github.laxika.magicalvibes.model.condition.TargetPlayerTurn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.FirstOpponentLifeLossEachTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.service.trigger.LifeAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.LifeWatch;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 /** The life gain, loss and payment triggers: {@link LifeTrigger}. */
 class LifeTriggerTest {
@@ -95,36 +100,63 @@ class LifeTriggerTest {
     }
 
     @Test
-    void theLegacyViewGivesTheFirstTimeEachTurnOutsideTheInterveningIf() {
-        Card gain = new Card();
-        gain.addTrigger(Triggers.youGainLife().firstTimeEachTurn(),
-                TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()), DRAW);
-        TriggeredAbility gainAbility = gain.getTriggeredAbilities().getFirst();
-        Card loss = new Card();
-        loss.addTrigger(Triggers.youLoseLife().firstTimeEachTurn(), DRAW);
+    void aLifeAbilityHasNoLegacyView() {
+        Card card = new Card();
+        card.addTrigger(Triggers.youGainLife(), DRAW);
+        TriggeredAbility ability = card.getTriggeredAbilities().getFirst();
 
-        List<CardEffect> legacy = LifeWatch.ON_CONTROLLER_GAINS_LIFE.effectsOf(gain);
-
-        assertThat(legacy).containsExactly(new OncePerTurnTriggerEffect(
-                new ConditionalEffect(new ControllerTurn(), DRAW), false, gainAbility.limitKey(), false, true));
-        assertThat(LifeWatch.ON_CONTROLLER_GAINS_LIFE.effectsOf(gain).getFirst()).isSameAs(legacy.getFirst());
-        assertThat(LifeWatch.ON_CONTROLLER_LOSES_LIFE.effectsOf(loss))
-                .containsExactly(OncePerTurnTriggerEffect.firstLifeLoss(DRAW));
-        assertThat(gain.getTriggerEffects(Triggers.youGainLife(), Zone.BATTLEFIELD)).isEmpty();
+        assertThat(ability.collectedAsAbility()).isTrue();
+        assertThat(ability.hasLegacyView()).isFalse();
+        assertThatThrownBy(ability::legacyEffects).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.youGainLife()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> LifeWatch.ON_CONTROLLER_GAINS_LIFE.effectsOf(card))
+                .isInstanceOf(UnsupportedOperationException.class);
+        assertThatThrownBy(() -> LifeWatch.ON_CONTROLLER_GAINS_LIFE.registrationsOf(card))
+                .isInstanceOf(UnsupportedOperationException.class);
+        assertThat(card.getTriggerEffects(Triggers.youGainLife(), Zone.BATTLEFIELD)).containsExactly(DRAW);
     }
 
     @Test
-    void theLegacyViewReadsAGraveyardFirstTimeEachTurnInTheGraveyard() {
+    void theReaderGivesTheFirstTimeEachTurnAndWrapsTheInterveningIfAroundTheEffect() {
+        Card card = new Card();
+        card.addTrigger(Triggers.youGainLife().firstTimeEachTurn(),
+                TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()), DRAW);
+
+        assertThat(LifeAbilityReader.readPrinted(card, LifeWatch.ON_CONTROLLER_GAINS_LIFE)).singleElement()
+                .satisfies(read -> {
+                    assertThat(read.effect()).isEqualTo(new ConditionalEffect(new ControllerTurn(), DRAW, true));
+                    assertThat(read.event()).isEqualTo(LifeTrigger.LifeEvent.GAINS);
+                    assertThat(read.firstTimeEachTurn()).isTrue();
+                    assertThat(read.limit()).isEqualTo(TriggerLimit.NONE);
+                    assertThat(read.triggersOnlyOnceEachTurn()).isFalse();
+                });
+        assertThat(card.getTriggerEffects(Triggers.youGainLife(), Zone.BATTLEFIELD)).isEmpty();
+    }
+
+    @Test
+    void theEventConditionIsInsideTheInterveningIf() {
+        Card card = new Card();
+        card.addTrigger(Triggers.opponentGainsLife(), TriggerOptions.DEFAULT
+                .withInterveningIf(new ControllerTurn()).withEventCondition(new TargetPlayerTurn()), DRAW);
+
+        assertThat(LifeAbilityReader.printedEffects(card, LifeWatch.ON_OPPONENT_GAINS_LIFE))
+                .containsExactly(new ConditionalEffect(new ControllerTurn(),
+                        ConditionalEffect.atTriggerTime(new TargetPlayerTurn(), DRAW), true));
+    }
+
+    @Test
+    void aGraveyardCountIsReadInTheGraveyard() {
         Card card = new Card();
         card.addTrigger(new TriggerCondition(Triggers.youGainLife().firstTimeEachTurn(), AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT, DRAW);
 
-        assertThat(card.getLegacyTriggerEffects(LifeWatch.GRAVEYARD_ON_CONTROLLER_GAINS_LIFE.trigger(),
-                Zone.GRAVEYARD)).singleElement().isInstanceOfSatisfying(OncePerTurnTriggerEffect.class, once -> {
-                    assertThat(once.firstLifeGain()).isTrue();
-                    assertThat(once.wrapped()).isEqualTo(DRAW);
+        assertThat(LifeAbilityReader.readPrinted(card, LifeWatch.GRAVEYARD_ON_CONTROLLER_GAINS_LIFE)).singleElement()
+                .satisfies(read -> {
+                    assertThat(read.effect()).isEqualTo(DRAW);
+                    assertThat(read.firstTimeEachTurn()).isTrue();
                 });
-        assertThat(LifeWatch.ON_CONTROLLER_GAINS_LIFE.effectsOf(card)).isEmpty();
+        assertThat(LifeAbilityReader.printed(card, LifeWatch.ON_CONTROLLER_GAINS_LIFE)).isEmpty();
     }
 
     @Test
@@ -133,47 +165,128 @@ class LifeTriggerTest {
         card.addTrigger(List.of(Triggers.youGainLife(), Triggers.youLoseLife()),
                 TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()).withLimit(TriggerLimit.ONCE_EACH_TURN),
                 DRAW);
-        TriggeredAbility ability = card.getTriggeredAbilities().getFirst();
-        CardEffect expected = OncePerTurnTriggerEffect.keyed(new ConditionalEffect(new ControllerTurn(), DRAW),
-                ability.limitKey());
+        LifeAbilityReader.LifeEffect gain =
+                LifeAbilityReader.readPrinted(card, LifeWatch.ON_CONTROLLER_GAINS_LIFE).getFirst();
+        LifeAbilityReader.LifeEffect loss =
+                LifeAbilityReader.readPrinted(card, LifeWatch.ON_CONTROLLER_LOSES_LIFE).getFirst();
+        GameData gameData = new GameData(UUID.randomUUID(), "test", UUID.randomUUID(), "owner");
+        UUID sourceId = UUID.randomUUID();
 
-        assertThat(LifeWatch.ON_CONTROLLER_GAINS_LIFE.effectsOf(card)).containsExactly(expected);
-        assertThat(LifeWatch.ON_CONTROLLER_LOSES_LIFE.effectsOf(card)).containsExactly(expected);
+        gain.markLimit(gameData, sourceId);
+
+        assertThat(gain.ability()).isSameAs(loss.ability());
+        assertThat(loss.effect()).isEqualTo(new ConditionalEffect(new ControllerTurn(), DRAW, true));
+        assertThat(loss.limitReached(gameData, sourceId)).isTrue();
+        assertThat(loss.triggersOnlyOnceEachTurn()).isTrue();
+        assertThat(gameData.keyedOncePerTurnTriggersFiredThisTurn.get(sourceId))
+                .containsExactly(gain.ability().limitKey());
+        assertThat(gameData.oncePerTurnTriggersFiredThisTurn).doesNotContain(sourceId);
     }
 
     @Test
-    void theLegacyViewMakesAnOpponentsFirstLossDuringTheirTurnOneRecordOfEveryEffect() {
+    void doThisOnlyOnceEachTurnIsMarkedAsTheActionIsTaken() {
+        Card card = new Card();
+        card.addTrigger(Triggers.opponentLosesLife(),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.DO_ONLY_ONCE_EACH_TURN), DRAW);
+        LifeAbilityReader.LifeEffect read =
+                LifeAbilityReader.readPrinted(card, LifeWatch.ON_OPPONENT_LOSES_LIFE).getFirst();
+        GameData gameData = new GameData(UUID.randomUUID(), "test", UUID.randomUUID(), "owner");
+        UUID sourceId = UUID.randomUUID();
+
+        read.markLimit(gameData, sourceId);
+
+        assertThat(read.marksLimitOnAcceptance()).isTrue();
+        assertThat(read.triggersOnlyOnceEachTurn()).isTrue();
+        assertThat(read.limitReached(gameData, sourceId)).isFalse();
+        gameData.oncePerTurnTriggersFiredThisTurn.add(sourceId);
+        assertThat(read.limitReached(gameData, sourceId)).isTrue();
+        assertThatThrownBy(() -> LifeAbilityReader.requireNoLimitOnAcceptance(read,
+                LifeWatch.ON_OPPONENT_LOSES_LIFE.trigger())).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void anOpponentsFirstLossDuringTheirTurnIsReadWithEveryEffectByAnOpponentLosesLife() {
         Card card = new Card();
         card.addTrigger(Triggers.opponentLosesLifeForFirstTimeDuringTheirTurn(), DRAW, GAIN);
 
-        assertThat(LifeWatch.ON_OPPONENT_LOSES_LIFE.effectsOf(card))
-                .containsExactly(new FirstOpponentLifeLossEachTurnTriggerEffect(List.of(DRAW, GAIN)));
+        assertThat(LifeAbilityReader.readPrinted(card, LifeWatch.ON_OPPONENT_LOSES_LIFE))
+                .extracting(LifeAbilityReader.LifeEffect::effect, LifeAbilityReader.LifeEffect::event)
+                .containsExactly(tuple(DRAW, LifeTrigger.LifeEvent.LOSES_FOR_FIRST_TIME_DURING_THEIR_TURN),
+                        tuple(GAIN, LifeTrigger.LifeEvent.LOSES_FOR_FIRST_TIME_DURING_THEIR_TURN));
+        assertThatThrownBy(() -> LifeAbilityReader.printedEffects(card, LifeWatch.ON_OPPONENT_LOSES_LIFE))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    void theLegacyViewRejectsWhatNoLifeCollectorReads() {
-        assertThatThrownBy(() -> legacy(Triggers.opponentGainsLife().firstTimeEachTurn(), TriggerOptions.DEFAULT))
-                .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> legacy(Triggers.youPayLife().firstTimeEachTurn(), TriggerOptions.DEFAULT))
-                .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> legacy(Triggers.youGainLife().firstTimeEachTurn(),
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN)))
-                .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> legacy(Triggers.youGainLife(), TriggerOptions.ONE_OR_MORE))
-                .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> legacy(Triggers.youGainLife(), TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE)))
-                .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> legacy(Triggers.opponentLosesLifeForFirstTimeDuringTheirTurn(),
-                TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn())))
-                .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> new TriggeredAbility(List.of(new TriggerCondition(Triggers.youGainLife()),
-                new TriggerCondition(Triggers.youLoseLife().firstTimeEachTurn())), TriggerOptions.DEFAULT,
-                List.of(new EffectRegistration(DRAW))).legacyEffects())
-                .isInstanceOf(IllegalStateException.class);
+    void anEntersAndLifeGainAbilityKeepsItsLegacyViewForTheEntersCollectorAndSharesItsLimit() {
+        Card card = new Card();
+        card.addTrigger(List.of(Triggers.enters(ObjectRelation.THIS), Triggers.youGainLife()),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW);
+        TriggeredAbility ability = card.getTriggeredAbilities().getFirst();
+        GameData gameData = new GameData(UUID.randomUUID(), "test", UUID.randomUUID(), "owner");
+        UUID sourceId = UUID.randomUUID();
+
+        assertThat(ability.collectedAsAbility()).isTrue();
+        assertThat(ability.hasLegacyView()).isTrue();
+        assertThat(card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)))
+                .containsExactly(OncePerTurnTriggerEffect.keyed(DRAW, ability.limitKey()));
+        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.youGainLife()))
+                .isInstanceOf(IllegalArgumentException.class);
+        LifeAbilityReader.LifeEffect read =
+                LifeAbilityReader.readPrinted(card, LifeWatch.ON_CONTROLLER_GAINS_LIFE).getFirst();
+        assertThat(read.effect()).isEqualTo(DRAW);
+        read.markLimit(gameData, sourceId);
+        assertThat(gameData.keyedOncePerTurnTriggersFiredThisTurn.get(sourceId))
+                .containsExactly(ability.limitKey());
     }
 
-    private static List<?> legacy(LifeTrigger trigger, TriggerOptions options) {
-        return new TriggeredAbility(trigger, options, DRAW).legacyEffects();
+    @Test
+    void theStrictReaderRejectsACountALimitOrANarrowerEvent() {
+        Card counted = new Card();
+        counted.addTrigger(Triggers.youGainLife().firstTimeEachTurn(), DRAW);
+        Card limited = new Card();
+        limited.addTrigger(Triggers.opponentGainsLife(),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW);
+        Card plain = new Card();
+        plain.addTrigger(Triggers.opponentGainsLife(), DRAW);
+
+        assertThatThrownBy(() -> LifeAbilityReader.printedEffects(counted, LifeWatch.ON_CONTROLLER_GAINS_LIFE))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> LifeAbilityReader.printedRegistrations(limited, LifeWatch.ON_OPPONENT_GAINS_LIFE))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(LifeAbilityReader.printedRegistrations(plain, LifeWatch.ON_OPPONENT_GAINS_LIFE))
+                .containsExactly(new EffectRegistration(DRAW));
+    }
+
+    @Test
+    void whatTheLifeCollectorsCantReadIsRejected() {
+        assertThatThrownBy(() -> new TriggeredAbility(Triggers.youGainLife(), TriggerOptions.ONE_OR_MORE, DRAW))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> read(Triggers.opponentGainsLife().firstTimeEachTurn(), TriggerOptions.DEFAULT,
+                LifeWatch.ON_OPPONENT_GAINS_LIFE)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> read(Triggers.youPayLife().firstTimeEachTurn(), TriggerOptions.DEFAULT,
+                LifeWatch.ON_CONTROLLER_PAYS_LIFE)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> read(Triggers.youGainLife().firstTimeEachTurn(),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), LifeWatch.ON_CONTROLLER_GAINS_LIFE))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> read(Triggers.youGainLife(), TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE),
+                LifeWatch.ON_CONTROLLER_GAINS_LIFE)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> read(Triggers.opponentLosesLifeForFirstTimeDuringTheirTurn(),
+                TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()), LifeWatch.ON_OPPONENT_LOSES_LIFE))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> LifeAbilityReader.read(new TriggeredAbility(List.of(
+                        new TriggerCondition(Triggers.youGainLife()),
+                        new TriggerCondition(Triggers.youGainLife().firstTimeEachTurn())), TriggerOptions.DEFAULT,
+                List.of(new EffectRegistration(DRAW))), Triggers.youGainLife()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> LifeAbilityReader.read(new TriggeredAbility(Triggers.youGainLife(),
+                TriggerOptions.DEFAULT, List.of(new EffectRegistration(DRAW, TriggerMode.INDEPENDENT))),
+                Triggers.youGainLife())).isInstanceOf(IllegalStateException.class);
+    }
+
+    private static List<LifeAbilityReader.LifeEffect> read(LifeTrigger trigger, TriggerOptions options,
+                                                           LifeWatch watch) {
+        return LifeAbilityReader.read(new TriggeredAbility(trigger, options, DRAW), watch.trigger());
     }
 
     private static List<LifeTrigger> allFactories() {

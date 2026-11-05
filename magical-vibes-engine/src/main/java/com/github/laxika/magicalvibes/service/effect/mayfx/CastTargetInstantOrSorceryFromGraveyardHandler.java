@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -74,7 +75,7 @@ public class CastTargetInstantOrSorceryFromGraveyardHandler implements MayEffect
             return;
         }
         List<CardEffect> effects = source.getCard().getTriggeredAbilities().stream()
-                .filter(triggered -> !triggered.collectedAsAbility())
+                .filter(TriggeredAbility::hasLegacyView)
                 .flatMap(triggered -> triggered.legacyEffects().stream())
                 .map(EffectRegistration::effect)
                 .toList();

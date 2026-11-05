@@ -2359,13 +2359,15 @@ public class Card {
                     triggered.conditions().stream().map(TriggerCondition::trigger).distinct().forEach(trigger ->
                             registrationsByTrigger.computeIfAbsent(trigger, ignored -> new ArrayList<>())
                                     .addAll(triggered.effects()));
-                    // The spell, land-play and activation collectors read their abilities themselves.
-                    if (triggered.collectedAsAbility()) {
+                    // The collectors of a trigger collected as an ability read the ability themselves; an ability
+                    // with another trigger too is in the legacy view only for that one's collectors.
+                    if (!triggered.hasLegacyView()) {
                         continue;
                     }
                     List<EffectRegistration> legacy = triggered.legacyEffects();
                     legacyByAbility.put(triggered, legacy);
-                    triggered.conditions().stream().map(condition -> condition.trigger().watchKey()).distinct()
+                    triggered.conditions().stream().map(TriggerCondition::trigger)
+                            .filter(trigger -> !trigger.collectedAsAbility()).map(Trigger::watchKey).distinct()
                             .forEach(trigger -> legacyRegistrationsByTrigger
                                     .computeIfAbsent(trigger, ignored -> new ArrayList<>()).addAll(legacy));
                 }
