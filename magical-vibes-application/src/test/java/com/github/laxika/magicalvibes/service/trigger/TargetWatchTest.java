@@ -43,8 +43,11 @@ class TargetWatchTest {
                 TriggerOptions.DEFAULT, fromGraveyard);
         card.addTrigger(Triggers.becomesTargetOfOpponentSpell(), onSpell);
 
-        assertThat(TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL.effectsOf(card)).containsExactly(ward);
-        assertThat(TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL_ONLY.effectsOf(card)).containsExactly(onSpell);
-        assertThat(TargetWatch.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY.effectsOf(card)).isEmpty();
+        assertThat(TargetAbilityReader.printedEffects(card, TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL))
+                .containsExactly(ward);
+        assertThat(TargetAbilityReader.printedEffects(card, TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL_ONLY))
+                .containsExactly(onSpell);
+        assertThat(TargetAbilityReader.printedEffects(card, TargetWatch.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY))
+                .isEmpty();
     }
 }

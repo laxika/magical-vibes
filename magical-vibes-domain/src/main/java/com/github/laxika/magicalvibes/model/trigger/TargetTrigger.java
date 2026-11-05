@@ -23,8 +23,8 @@ import java.util.Objects;
  * @param qualifier what that permanent must also be, or {@code null}: "whenever a Dragon you control becomes the
  *                  target of a spell or ability an opponent controls" is {@code
  *                  Triggers.creatureYouControlBecomesTargetOfOpponentSpellOrAbility().withFilter(dragon)}. The
- *                  collectors read it from the legacy view ({@code TriggeredAbility.legacyEffects()}) as the
- *                  {@code TriggeringPermanentConditionalEffect} they judge, so {@link #watchKey()} drops it
+ *                  collectors read it from the ability, through {@code TargetAbilityReader}, so {@link #watchKey()}
+ *                  drops it
  */
 public record TargetTrigger(TargetEvent event, ObjectRelation relation, PermanentPredicate filter,
                             PermanentPredicate qualifier) implements Trigger {
@@ -57,13 +57,23 @@ public record TargetTrigger(TargetEvent event, ObjectRelation relation, Permanen
     }
 
     /**
+     * The becomes-the-target collectors read the ability itself (its filter, event, limit and intervening "if"),
+     * through {@code TargetAbilityReader}: a becomes-the-target ability has no legacy view (effect-slot-refactor.md
+     * step 14, run 16i).
+     */
+    @Override
+    public boolean collectedAsAbility() {
+        return true;
+    }
+
+    /**
      * The trigger the {@code TargetWatch} collectors read this one's abilities by: without its {@link #qualifier},
      * and, for the events no collector of their own reads, with the event whose collector reads them. "This permanent
      * becomes the target of a spell you control" and "of a spell or ability you control" are read by the collectors of
      * the event about any controller ({@link TargetEvent#BECOMES_TARGET_OF_SPELL},
      * {@link TargetEvent#BECOMES_TARGET_OF_SPELL_OR_ABILITY}), and "a player or permanent becomes the target of an
-     * ability you control" by the one of {@link TargetEvent#PLAYER_CHOOSES_TARGETS}. The legacy view ({@code
-     * TriggeredAbility.legacyEffects()}) gives them the wrapper those collectors judge.
+     * ability you control" by the one of {@link TargetEvent#PLAYER_CHOOSES_TARGETS}. Those collectors judge whose
+     * spell or ability it is from the ability's own event ({@code TargetAbilityReader}).
      */
     @Override
     public Trigger watchKey() {

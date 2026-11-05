@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.condition.Condition;
-import com.github.laxika.magicalvibes.model.effect.AbilityTargetChoiceTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CyclingTriggerEffect;
@@ -19,7 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringSpellControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -119,9 +117,11 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * each combat (CR 509.3a), "becomes blocked", "a creature you control (or with the same name as this) deals combat
      * damage to a player [or battle, or planeswalker]" and "a creature deals combat damage to you", the combat
      * collectors that read it; no damage collector reads it (the "one or more" damage events are events of their own),
-     * and no counter collector does (a counter event is once for each permanent, or once for each counter, by its own
-     * event). The legacy view checked these as a card's abilities were indexed; the combat, damage and counter
-     * collectors read the ability itself, so the ability checks them as it is built.
+     * no counter collector does (a counter event is once for each permanent, or once for each counter, by its own
+     * event), and no becomes-the-target collector does ("one or more creatures you control become the target of an
+     * activated ability" is an event of its own). The legacy view checked these as a card's abilities were indexed;
+     * the combat, damage, counter and becomes-the-target collectors read the ability itself, so the ability checks
+     * them as it is built.
      */
     private static void requireReadableMultiplicity(List<TriggerCondition> conditions,
                                                     TriggerMultiplicity multiplicity) {
@@ -149,6 +149,10 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
                 }
                 if (conditions.stream().anyMatch(condition -> condition.trigger() instanceof CounterTrigger)) {
                     throw new IllegalArgumentException("No counter collector reads \"one or more\" for " + conditions);
+                }
+                if (conditions.stream().anyMatch(condition -> condition.trigger() instanceof TargetTrigger)) {
+                    throw new IllegalArgumentException("No becomes-the-target collector reads \"one or more\" for "
+                            + conditions);
                 }
             }
             case EACH -> {
@@ -263,8 +267,8 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
 
     /**
      * Whether one of this ability's trigger conditions is a trigger whose collectors read the ability itself
-     * ({@link Trigger#collectedAsAbility()}: a spell, land-play, activation, step, combat, damage or counter trigger):
-     * then it has no legacy view.
+     * ({@link Trigger#collectedAsAbility()}: a spell, land-play, activation, step, combat, damage, counter or
+     * becomes-the-target trigger): then it has no legacy view.
      */
     public boolean collectedAsAbility() {
         return conditions.stream().anyMatch(condition -> condition.trigger().collectedAsAbility());
@@ -292,15 +296,10 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * {@link #limitKey()}, the key the trigger pipeline marks; "do this only once each turn" one marked as the action
      * is taken (CR 603.2h); "this ability triggers only once" ({@code ONCE}) an {@link OnceOnlyTriggerEffect} inside
      * the intervening "if", as the cards wrote it. An ability with a spell, land-play, activation, "at the beginning of
-     * [step or phase]", combat, damage or counter trigger ({@link #collectedAsAbility()}) has no legacy view: its
-     * collectors read it itself, and this throws. "Once each turn for each creature"
+     * [step or phase]", combat, damage, counter or becomes-the-target trigger ({@link #collectedAsAbility()}) has no
+     * legacy view: its collectors read it itself, and this throws. "Once each turn for each creature"
      * ({@link TriggerLimit#ONCE_EACH_TURN_FOR_EACH_CREATURE}) is an {@link OncePerTurnPerCreatureTriggerEffect} where
-     * the other limits go. A becomes-the-target
-     * trigger's filter ({@link TargetTrigger#qualifier()}) is a {@link TriggeringPermanentConditionalEffect} outside the
-     * limit, and the target triggers the collector of another event reads ({@link TargetTrigger#watchedEvent()}) that
-     * collector's wrapper outside that: "this becomes the target of a spell [or ability] you control" a
-     * {@link TriggeringSpellControllerConditionalEffect}, "a player or permanent becomes the target of an ability you
-     * control" an {@link AbilityTargetChoiceTriggerEffect}, as the target cards wrote them. A tap or untap trigger's
+     * the other limits go. A tap or untap trigger's
      * filter ("this permanent" for a {@link TapTrigger#narrowed()} trigger, and its {@link TapTrigger#qualifier()}) is
      * a {@link TriggeringPermanentConditionalEffect} outside the limit, "for the first time during your turn" the
      * global {@link OncePerTurnPerCreatureTriggerEffect} inside that filter, and "one or more" the registrations'
@@ -341,12 +340,10 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         requireFinalChapterOptions();
         Condition interveningIf = options.interveningIf();
         TriggerLimit limit = options.limit();
-        TargetView target = targetView();
         TapView tap = tapView();
         LifeView life = lifeView();
         ObjectActionTrigger object = objectActionView();
         if (interveningIf == null && limit == TriggerLimit.NONE
-                && (target == null || target.plain())
                 && (tap == null || tap.plain()) && (life == null || life.plain()) && object == null) {
             return legacyBaseEffects();
         }
@@ -369,9 +366,6 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             }
             if (life != null) {
                 effect = life.wrap(effect, limitKey());
-            }
-            if (target != null) {
-                effect = target.wrap(effect);
             }
             if (tap != null) {
                 effect = tap.wrap(effect);
@@ -481,61 +475,6 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         if (options.interveningIf() != null || options.multiplicity() != TriggerMultiplicity.EACH
                 || (options.limit() != TriggerLimit.NONE && options.limit() != TriggerLimit.ONCE_EACH_TURN)) {
             throw new IllegalStateException("The final-chapter collector doesn't read " + options + ": " + conditions);
-        }
-    }
-
-    /**
-     * What the legacy view adds for this ability's becomes-the-target conditions, or {@code null} when it has none:
-     * their filter (the {@link TargetTrigger#qualifier()} {@link TargetTrigger#watchKey()} drops) and the event the
-     * collector that reads them judges in a wrapper. The conditions must agree on both. The becomes-the-target
-     * collectors have no multiplicity option.
-     */
-    private TargetView targetView() {
-        List<TargetTrigger> target = conditions.stream().map(TriggerCondition::trigger)
-                .filter(TargetTrigger.class::isInstance).map(TargetTrigger.class::cast).toList();
-        if (target.isEmpty()) {
-            return null;
-        }
-        List<TargetView> views = target.stream()
-                .map(trigger -> new TargetView(trigger.qualifier(),
-                        trigger.watchedEvent() == trigger.event() ? null : trigger.event()))
-                .distinct().toList();
-        if (views.size() > 1) {
-            throw new IllegalStateException("The becomes-the-target conditions of one ability must have the same "
-                    + "filter and watched event: " + conditions);
-        }
-        if (options.multiplicity() != TriggerMultiplicity.EACH) {
-            throw new IllegalStateException("The legacy view has no " + options.multiplicity() + " form for "
-                    + conditions);
-        }
-        return views.getFirst();
-    }
-
-    /**
-     * The legacy view of an ability's becomes-the-target conditions, as {@link #targetView()} builds it.
-     *
-     * @param filter   the conditions' filter, or {@code null}
-     * @param narrowed the event read by another event's collector, which judges it as a wrapper, or {@code null}
-     */
-    private record TargetView(PermanentPredicate filter, TargetTrigger.TargetEvent narrowed) {
-
-        /** Whether the legacy view adds nothing to the effects. */
-        boolean plain() {
-            return filter == null && narrowed == null;
-        }
-
-        CardEffect wrap(CardEffect effect) {
-            CardEffect filtered = filter != null ? new TriggeringPermanentConditionalEffect(filter, effect) : effect;
-            if (narrowed == null) {
-                return filtered;
-            }
-            return switch (narrowed) {
-                case BECOMES_TARGET_OF_YOUR_SPELL, BECOMES_TARGET_OF_YOUR_SPELL_OR_ABILITY ->
-                        new TriggeringSpellControllerConditionalEffect(filtered);
-                case PLAYER_OR_PERMANENT_BECOMES_TARGET_OF_YOUR_ABILITY ->
-                        new AbilityTargetChoiceTriggerEffect(filtered);
-                default -> throw new IllegalStateException("No legacy wrapper for " + narrowed);
-            };
         }
     }
 

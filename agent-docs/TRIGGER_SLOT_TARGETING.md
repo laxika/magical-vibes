@@ -799,8 +799,8 @@ permanent id remains available so an Aura effect can re-derive its host at resol
 "Whenever this permanent becomes the target of a spell [or ability] you control" is
 `Triggers.becomesTargetOfYourSpell()` / `Triggers.becomesTargetOfYourSpellOrAbility()` (valiant, with
 `TriggerLimit.ONCE_EACH_TURN` for "for the first time each turn"). The collectors of
-`becomesTargetOfSpell()` / `becomesTargetOfSpellOrAbility()` read them, and the legacy view hands them
-the `TriggeringSpellControllerConditionalEffect` those collectors judge as the trigger is collected.
+`becomesTargetOfSpell()` / `becomesTargetOfSpellOrAbility()` read them, judging "you control" from the
+ability's own event (`TargetAbilityReader`) as the trigger is collected.
 
 `Triggers.youDrawSecondCardEachTurn()` (and `youDrawNthCardEachTurn(n)`, the opponent forms and
 "first or second" as two conditions of one ability) is read by the `Triggers.youDrawCard()`
