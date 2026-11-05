@@ -35,11 +35,12 @@ public class ExtinguisherBattleship extends Card {
     public ExtinguisherBattleship() {
         PermanentPredicate noncreaturePermanent =
                 new PermanentNotPredicate(new PermanentIsCreaturePredicate());
+        var destroyTargetPermanent = new DestroyTargetPermanentEffect();
         target(new PermanentPredicateTargetFilter(
                 noncreaturePermanent,
                 "Target must be a noncreature permanent"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS), new DestroyTargetPermanentEffect());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new MassDamageEffect(4));
+        )).bindEffect(destroyTargetPermanent);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), destroyTargetPermanent, new MassDamageEffect(4));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

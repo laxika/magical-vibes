@@ -46,14 +46,11 @@ public class KitesailLarcenist extends Card {
                 "Target must be another artifact or creature"), 0, 99)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.TARGET,
-                                EffectDuration.WHILE_SOURCE_REMAINS))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                                EffectDuration.WHILE_SOURCE_REMAINS),
                         new GrantSubtypeToTargetCreatureEffect(CardSubtype.TREASURE,
-                                EffectDuration.WHILE_SOURCE_REMAINS, true))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                                EffectDuration.WHILE_SOURCE_REMAINS, true),
                         new LosesAllAbilitiesEffect(GrantScope.TARGET,
-                                EffectDuration.WHILE_SOURCE_REMAINS))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                                EffectDuration.WHILE_SOURCE_REMAINS),
                         new GrantActivatedAbilityEffect(
                                 new ActivatedAbility(
                                         true,

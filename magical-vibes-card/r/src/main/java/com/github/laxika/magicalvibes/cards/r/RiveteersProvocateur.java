@@ -24,9 +24,7 @@ public class RiveteersProvocateur extends Card {
                 new ChooseCardFromHandAndApplyPerpetualBlitzEffect());
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()),
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
-                TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()),
+                new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF),
                 new SacrificeSelfAtEndStepEffect());
         addTrigger(Triggers.dies(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()),

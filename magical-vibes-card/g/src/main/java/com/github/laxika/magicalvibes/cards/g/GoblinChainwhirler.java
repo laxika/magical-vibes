@@ -15,8 +15,7 @@ public class GoblinChainwhirler extends Card {
         // When Goblin Chainwhirler enters the battlefield, it deals 1 damage to each opponent
         // and each creature and planeswalker they control.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
                 new DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect(1));
     }
 }

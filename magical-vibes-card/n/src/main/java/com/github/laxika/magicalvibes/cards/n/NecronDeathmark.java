@@ -22,7 +22,10 @@ public class NecronDeathmark extends Card {
                 "Target must be a player"));
         SpellTarget creatureTarget = target(TargetFilters.creature(), 0, 1);
 
-        creatureTarget.addTrigger(Triggers.enters(ObjectRelation.THIS), new DestroyTargetPermanentEffect());
-        playerTarget.addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(3, MillRecipient.TARGET_PLAYER));
+        var destroyTargetPermanent = new DestroyTargetPermanentEffect();
+        creatureTarget.bindEffect(destroyTargetPermanent);
+        var mill = new MillEffect(3, MillRecipient.TARGET_PLAYER);
+        playerTarget.bindEffect(mill);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), destroyTargetPermanent, mill);
     }
 }

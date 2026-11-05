@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class TerritorialAetherkite extends Card {
 
     public TerritorialAetherkite() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new EnergyCountersEffect(2));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new EnergyCountersEffect(2),
                 new PayAnyAmountOfEnergyToDealDamageToEachOtherCreatureEffect());
     }
 }

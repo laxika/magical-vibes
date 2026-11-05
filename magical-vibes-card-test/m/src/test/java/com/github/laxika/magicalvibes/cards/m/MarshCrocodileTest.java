@@ -35,7 +35,7 @@ class MarshCrocodileTest extends BaseCardTest {
         harness.addToBattlefield(player2, new StormscapeFamiliar());
 
         castMarshCrocodile();
-        resolveAllTriggers();
+        resolveReturnFirst();
 
         GameData gd = harness.getGameData();
         UUID crocodileId = harness.getPermanentId(player1, "Marsh Crocodile");
@@ -59,7 +59,7 @@ class MarshCrocodileTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);
-        resolveAllTriggers();
+        resolveReturnFirst();
         harness.handlePermanentChosen(player1, blueId);
         resolveAllTriggers();
 
@@ -94,7 +94,7 @@ class MarshCrocodileTest extends BaseCardTest {
         harness.setHand(player2, List.of(discardedByPlayer2));
 
         harness.castFromHand(player1, new MarshCrocodile(), "{2}{U}{B}");
-        resolveAllTriggers();
+        resolveReturnFirst();
         harness.handlePermanentChosen(player1, stolenCreature.getId());
         resolveAllTriggers();
 
@@ -110,6 +110,21 @@ class MarshCrocodileTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Alpha Kavu");
         harness.assertOnBattlefield(player1, "Marsh Crocodile");
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+
+    /**
+     * Marsh Crocodile's two abilities are separate objects whose order their controller chooses (CR 603.3b): the
+     * discard goes on the stack first, so the return resolves first. Call it before the spell resolves; it resolves
+     * up to the return's choice.
+     */
+    private void resolveReturnFirst() {
+        harness.setAutoOrderTriggers(player1, false);
+        resolveAllTriggers();
+        PendingInteraction.ColorChoice order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(order).isNotNull();
+        harness.handleListChoice(player1, order.options().get(1));
+        resolveAllTriggers();
     }
 
     private void castMarshCrocodile() {
@@ -132,7 +147,7 @@ class MarshCrocodileTest extends BaseCardTest {
     @DisplayName("Marsh Crocodile can return itself and be discarded after returning")
     void canReturnItselfAndBeDiscarded() {
         castMarshCrocodile();
-        resolveAllTriggers();
+        resolveReturnFirst();
 
         UUID crocodileId = harness.getPermanentId(player1, "Marsh Crocodile");
         harness.handlePermanentChosen(player1, crocodileId);

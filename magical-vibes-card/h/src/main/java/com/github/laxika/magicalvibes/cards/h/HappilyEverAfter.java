@@ -25,8 +25,8 @@ public class HappilyEverAfter extends Card {
 
     public HappilyEverAfter() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new GainLifeEffect(new Fixed(5), GainLifeRecipient.EACH_PLAYER));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new EachPlayerDrawsCardEffect(1));
+                new GainLifeEffect(new Fixed(5), GainLifeRecipient.EACH_PLAYER),
+                new EachPlayerDrawsCardEffect(1));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new AllOf(List.of(

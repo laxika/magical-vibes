@@ -40,10 +40,8 @@ public class OpportunisticDragon extends Card {
                 "Target must be a Human or artifact an opponent controls"
         ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_REMAINS))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.WHILE_SOURCE_REMAINS))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_REMAINS),
+                        new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.WHILE_SOURCE_REMAINS),
                         new LockTargetPermanentEffect(true, true, false,
                                 EffectDuration.WHILE_SOURCE_REMAINS, TargetPredicates.permanent()));
     }

@@ -14,8 +14,8 @@ public class MostValuableSlayer extends Card {
 
     public MostValuableSlayer() {
         target(TargetFilters.attackingCreature())
-                .addTrigger(Triggers.youAttack(), new BoostTargetCreatureEffect(1, 0))
                 .addTrigger(Triggers.youAttack(),
+                        new BoostTargetCreatureEffect(1, 0),
                         new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET));
     }
 }

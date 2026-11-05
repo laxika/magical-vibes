@@ -17,11 +17,14 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class VolcanoHellion extends Card {
 
     public VolcanoHellion() {
+        var chooseAnyNumber = new ChooseAnyNumberEffect();
+        var dealDamageToTargetCreature = new DealDamageToTargetCreatureEffect(new ChosenNumberOnSource(), true);
         target(TargetFilters.creature())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseAnyNumberEffect())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new DealDamageToTargetCreatureEffect(new ChosenNumberOnSource(), true));
+                .bindEffect(chooseAnyNumber)
+                .bindEffect(dealDamageToTargetCreature);
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                chooseAnyNumber,
+                dealDamageToTargetCreature,
                 new DealDamageToPlayersEffect(new ChosenNumberOnSource(), DamageRecipient.CONTROLLER, true));
         addStaticEffect(new RegisterEchoAtNextUpkeepEffect(new ControllerLifeTotal()));
     }

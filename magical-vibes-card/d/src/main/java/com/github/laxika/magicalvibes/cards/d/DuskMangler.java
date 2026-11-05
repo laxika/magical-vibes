@@ -20,8 +20,8 @@ public class DuskMangler extends Card {
         addCastingCost(new SacrificeCreatureOrDiscardCardOrPayLifeCost(4));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new SacrificePermanentsEffect(
-                        1, new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new LoseLifeEffect(4, LoseLifeRecipient.EACH_OPPONENT));
+                        1, new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_OPPONENT),
+                new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT),
+                new LoseLifeEffect(4, LoseLifeRecipient.EACH_OPPONENT));
     }
 }

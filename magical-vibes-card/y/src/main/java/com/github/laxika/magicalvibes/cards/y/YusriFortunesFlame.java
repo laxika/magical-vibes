@@ -16,8 +16,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class YusriFortunesFlame extends Card {
 
     public YusriFortunesFlame() {
-        addTrigger(Triggers.attacks(), new ChooseNumberAtResolutionEffect(1, 5));
-        addTrigger(Triggers.attacks(), new FlipCoinsWithResultEffectsEffect(
+        addTrigger(Triggers.attacks(), new ChooseNumberAtResolutionEffect(1, 5),
+                new FlipCoinsWithResultEffectsEffect(
                 new XValue(),
                 new DrawCardEffect(1),
                 new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER),

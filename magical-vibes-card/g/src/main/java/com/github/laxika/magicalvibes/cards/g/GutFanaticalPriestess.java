@@ -47,9 +47,10 @@ public class GutFanaticalPriestess extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Second target must be a creature you don't control"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                MarkTargetCreatureExileInsteadOfDieThisTurnEffect.withSourceTracking())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new FightTargetsEffect());
+        ))
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        MarkTargetCreatureExileInsteadOfDieThisTurnEffect.withSourceTracking(),
+                        new FightTargetsEffect());
 
         addSpecializeAbility(CardColor.WHITE, CardSubtype.PLAINS);
         addSpecializeAbility(CardColor.BLUE, CardSubtype.ISLAND);

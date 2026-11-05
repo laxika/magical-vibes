@@ -14,8 +14,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class PsychicPickpocket extends Card {
 
     public PsychicPickpocket() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawDiscardAndConniveEffect());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new QueueReflexiveAbilityEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawDiscardAndConniveEffect(),
+                new QueueReflexiveAbilityEffect(
                 ReturnToHandEffect.target(new PermanentNotPredicate(new PermanentIsLandPredicate())), true));
     }
 }

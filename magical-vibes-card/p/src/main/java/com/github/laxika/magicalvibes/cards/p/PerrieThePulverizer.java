@@ -23,9 +23,10 @@ public class PerrieThePulverizer extends Card {
                 new PutCounterOnTargetPermanentEffect(CounterType.SHIELD));
 
         target(TargetFilters.creatureYouControl())
-                .addTrigger(Triggers.attacks(), new BoostTargetCreatureEffect(
+                .addTrigger(Triggers.attacks(),
+                        new BoostTargetCreatureEffect(
                         new DistinctCounterKindsAmongControlledPermanents(),
-                        new DistinctCounterKindsAmongControlledPermanents()))
-                .addTrigger(Triggers.attacks(), new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
+                        new DistinctCounterKindsAmongControlledPermanents()),
+                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
     }
 }

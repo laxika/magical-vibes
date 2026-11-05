@@ -12,7 +12,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SkyEelSchool extends Card {
 
     public SkyEelSchool() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new DrawCardEffect(),
+                new DiscardEffect(1, DiscardRecipient.CONTROLLER));
     }
 }

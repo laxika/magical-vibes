@@ -19,8 +19,9 @@ import java.util.List;
 public class LaquatussChampion extends Card {
 
     public LaquatussChampion() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new RememberTargetPlayerEffect());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new LoseLifeEffect(6, LoseLifeRecipient.TARGET_PLAYER));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new RememberTargetPlayerEffect(),
+                new LoseLifeEffect(6, LoseLifeRecipient.TARGET_PLAYER));
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new TargetPlayerGainsLifeEffect(6));
         addActivatedAbility(new ActivatedAbility(false, "{B}", List.of(new RegenerateEffect()),
                 "{B}: Regenerate Laquatus's Champion."));

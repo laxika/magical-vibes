@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
@@ -35,7 +34,6 @@ public class NightscapeBattlemage extends Card {
         targetWhenKicked(new PermanentPredicateTargetFilter(
                 new PermanentIsLandPredicate(), "Target must be a land"),
                 0, 0, 1, 1).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        TriggerMode.INDEPENDENT,
                         TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
                         new DestroyTargetPermanentEffect());
 
@@ -44,7 +42,6 @@ public class NightscapeBattlemage extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK)))
                 )), "Target must be a nonblack creature"), 2).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        TriggerMode.INDEPENDENT,
                         TriggerOptions.DEFAULT.withInterveningIf(new RepeatedAdditionalCostPaid("{2}{U}")),
                         ReturnToHandEffect.target());
     }

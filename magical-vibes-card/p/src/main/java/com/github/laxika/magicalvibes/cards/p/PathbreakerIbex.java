@@ -19,8 +19,9 @@ public class PathbreakerIbex extends Card {
     public PathbreakerIbex() {
         // Whenever this creature attacks, creatures you control gain trample and get +X/+X
         // until end of turn, where X is the greatest power among creatures you control.
-        addTrigger(Triggers.attacks(), new BoostAllOwnCreaturesEffect(
-                new GreatestPowerAmongControlled(), new GreatestPowerAmongControlled()));
-        addTrigger(Triggers.attacks(), new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES));
+        addTrigger(Triggers.attacks(),
+                new BoostAllOwnCreaturesEffect(
+                new GreatestPowerAmongControlled(), new GreatestPowerAmongControlled()),
+                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES));
     }
 }

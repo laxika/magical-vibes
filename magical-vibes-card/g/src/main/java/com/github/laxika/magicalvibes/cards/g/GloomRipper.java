@@ -25,9 +25,10 @@ public class GloomRipper extends Card {
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.ELF), CountScope.CONTROLLER),
                 new CardsInGraveyard(new CardSubtypePredicate(CardSubtype.ELF), CountScope.CONTROLLER));
 
-        target(TargetFilters.creatureYouControl()).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new BoostTargetCreatureEffect(elfCount, new Fixed(0)));
-        target(TargetFilters.creatureAnOpponentControls(), 0, 1).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new BoostTargetCreatureEffect(new Fixed(0), new Scaled(elfCount, -1)));
+        var boostTargetCreature = new BoostTargetCreatureEffect(elfCount, new Fixed(0));
+        target(TargetFilters.creatureYouControl()).bindEffect(boostTargetCreature);
+        var boostTargetCreature2 = new BoostTargetCreatureEffect(new Fixed(0), new Scaled(elfCount, -1));
+        target(TargetFilters.creatureAnOpponentControls(), 0, 1).bindEffect(boostTargetCreature2);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), boostTargetCreature, boostTargetCreature2);
     }
 }

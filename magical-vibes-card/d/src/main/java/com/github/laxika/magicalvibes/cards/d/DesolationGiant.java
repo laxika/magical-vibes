@@ -29,8 +29,8 @@ public class DesolationGiant extends Card {
                 new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentControlledBySourceControllerPredicate(),
-                        new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))))));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new Kicked(),
+                        new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))))),
+                new ConditionalEffect(new Kicked(),
                 new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))))));

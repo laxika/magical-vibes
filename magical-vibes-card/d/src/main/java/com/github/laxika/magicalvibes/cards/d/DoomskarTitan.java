@@ -14,8 +14,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class DoomskarTitan extends Card {
 
     public DoomskarTitan() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostAllOwnCreaturesEffect(1, 0));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new BoostAllOwnCreaturesEffect(1, 0),
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES));
         addCastingOption(new ForetellCast("{4}{R}"));
     }

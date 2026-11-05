@@ -23,12 +23,8 @@ public class LoveOnTheBattlefield extends Card {
         // attackers, so a creature that left combat before resolution still gains first strike.
         addTrigger(Triggers.youAttack(),
                 TriggerOptions.DEFAULT.withInterveningIf(new ExactlyAttackers(2)),
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGETS));
-        addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new ExactlyAttackers(2)),
-                new DrawCardEffect(1));
-        addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new ExactlyAttackers(2)),
+                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGETS),
+                new DrawCardEffect(1),
                 new GrantEffectToOwnCreaturesUntilEndOfCombatEffect(
                         new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                         new PutCountersOnSourceEffect(1, 1, 1)),

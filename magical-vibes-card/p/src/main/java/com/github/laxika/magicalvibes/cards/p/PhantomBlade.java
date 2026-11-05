@@ -17,11 +17,13 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class PhantomBlade extends Card {
 
     public PhantomBlade() {
+        var attachSourceEquipmentToTargetCreature = new AttachSourceEquipmentToTargetCreatureEffect();
         target(TargetFilters.creatureYouControl(), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new AttachSourceEquipmentToTargetCreatureEffect());
+                .bindEffect(attachSourceEquipmentToTargetCreature);
+        var destroyTargetPermanent = new DestroyTargetPermanentEffect();
         target(TargetFilters.creature(), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new DestroyTargetPermanentEffect());
+                .bindEffect(destroyTargetPermanent);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), attachSourceEquipmentToTargetCreature, destroyTargetPermanent);
 
         addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.EQUIPPED_CREATURE));

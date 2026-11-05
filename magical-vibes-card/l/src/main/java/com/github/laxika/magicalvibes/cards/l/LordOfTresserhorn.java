@@ -29,12 +29,13 @@ public class LordOfTresserhorn extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         ));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new LoseLifeEffect(2));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificePermanentsEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new LoseLifeEffect(2),
+                new SacrificePermanentsEffect(
                 2,
                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate())),
-                SacrificeRecipient.CONTROLLER));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardForTargetPlayerEffect(2, false, true));
+                SacrificeRecipient.CONTROLLER),
+                new DrawCardForTargetPlayerEffect(2, false, true));
 
         addActivatedAbility(new ActivatedAbility(false, "{B}", List.of(new RegenerateEffect()),
                 "{B}: Regenerate Lord of Tresserhorn."));

@@ -17,8 +17,8 @@ public class DalekDrone extends Card {
 
     public DalekDrone() {
         target(TargetFilters.creatureAnOpponentControls())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new DestroyTargetPermanentEffect())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new DestroyTargetPermanentEffect(),
                         new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER));
     }
 }

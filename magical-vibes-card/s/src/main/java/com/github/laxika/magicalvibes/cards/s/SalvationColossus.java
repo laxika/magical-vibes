@@ -26,8 +26,7 @@ public class SalvationColossus extends Card {
     public SalvationColossus() {
         var otherCreature = new PermanentNotPredicate(new PermanentIsSourceCardPredicate());
         addTrigger(Triggers.youAttack(),
-                new BoostAllOwnCreaturesEffect(2, 2, otherCreature));
-        addTrigger(Triggers.youAttack(),
+                new BoostAllOwnCreaturesEffect(2, 2, otherCreature),
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.OWN_CREATURES, otherCreature));
 
         addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(

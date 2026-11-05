@@ -19,13 +19,13 @@ public class Biomathematician extends Card {
 
     public Biomathematician() {
         // When this creature enters, create a 0/0 green and blue Fractal creature token.
+
+        // Put a +1/+1 counter on each Fractal you control.
         addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
                 "Fractal", 0, 0,
                 CardColor.GREEN, Set.of(CardColor.GREEN, CardColor.BLUE),
-                List.of(CardSubtype.FRACTAL)));
-
-        // Put a +1/+1 counter on each Fractal you control.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new PutCounterOnEachControlledPermanentEffect(
+                List.of(CardSubtype.FRACTAL)),
+                new PutCounterOnEachControlledPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, 1,
                 new PermanentHasSubtypePredicate(CardSubtype.FRACTAL)));
     }

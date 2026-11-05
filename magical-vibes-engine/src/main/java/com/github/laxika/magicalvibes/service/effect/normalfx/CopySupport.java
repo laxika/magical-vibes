@@ -441,7 +441,7 @@ public class CopySupport {
                 if (withoutEpic && reg.effect() instanceof EpicEffect) {
                     continue;
                 }
-                copy.addEffect(slot, reg.effect(), reg.triggerMode());
+                copy.addEffect(slot, reg.effect());
             }
         }
         for (TriggeredAbility ability : original.getUnslottedTriggeredAbilities()) {

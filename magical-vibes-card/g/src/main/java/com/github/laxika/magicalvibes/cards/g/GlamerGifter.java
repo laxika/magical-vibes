@@ -27,8 +27,8 @@ public class GlamerGifter extends Card {
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
         ));
         target(new PermanentPredicateTargetFilter(anotherCreature, "Target must be another creature"), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new SetBasePowerToughnessEffect(4, 4))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new SetBasePowerToughnessEffect(4, 4),
                         new GrantAllCreatureTypesToOwnCreaturesEffect(GrantScope.TARGET));
     }
 }

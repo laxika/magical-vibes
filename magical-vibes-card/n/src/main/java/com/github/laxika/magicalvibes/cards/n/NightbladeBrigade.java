@@ -18,7 +18,7 @@ public class NightbladeBrigade extends Card {
     public NightbladeBrigade() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new SurveilEffect(1));
         addTrigger(Triggers.attacks(),
-                new CreateTokenEffect(1, "Warrior", 1, 1, CardColor.RED, List.of(CardSubtype.WARRIOR), true));
-        addTrigger(Triggers.attacks(), new SacrificeCreatedPermanentsAtEndStepEffect());
+                new CreateTokenEffect(1, "Warrior", 1, 1, CardColor.RED, List.of(CardSubtype.WARRIOR), true),
+                new SacrificeCreatedPermanentsAtEndStepEffect());
     }
 }

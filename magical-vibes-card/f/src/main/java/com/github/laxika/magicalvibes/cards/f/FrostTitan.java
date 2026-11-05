@@ -24,9 +24,11 @@ public class FrostTitan extends Card {
 
         // Whenever Frost Titan enters the battlefield or attacks,
         // tap target permanent. It doesn't untap during its controller's next untap step.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.TARGET));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SkipNextUntapEffect(TapUntapScope.TARGET));
-        addTrigger(Triggers.attacks(), new TapPermanentsEffect(TapUntapScope.TARGET));
-        addTrigger(Triggers.attacks(), new SkipNextUntapEffect(TapUntapScope.TARGET));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new TapPermanentsEffect(TapUntapScope.TARGET),
+                new SkipNextUntapEffect(TapUntapScope.TARGET));
+        addTrigger(Triggers.attacks(),
+                new TapPermanentsEffect(TapUntapScope.TARGET),
+                new SkipNextUntapEffect(TapUntapScope.TARGET));
     }
 }

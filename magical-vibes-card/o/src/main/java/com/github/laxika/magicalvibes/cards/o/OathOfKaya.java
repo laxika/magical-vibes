@@ -22,6 +22,7 @@ import java.util.List;
 public class OathOfKaya extends Card {
 
     public OathOfKaya() {
+        var dealDamageToAnyTarget = new DealDamageToAnyTargetEffect(3);
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
@@ -30,8 +31,8 @@ public class OathOfKaya extends Card {
                 )),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any target"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(3));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(3));
+        )).bindEffect(dealDamageToAnyTarget);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), dealDamageToAnyTarget, new GainLifeEffect(3));
 
         addTrigger(Triggers.opponentAttacksYourPlaneswalker(),
                 new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER));

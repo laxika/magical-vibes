@@ -22,8 +22,7 @@ public class SpecimenCollector extends Card {
     public SpecimenCollector() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new CreateTokenEffect("Squirrel", 1, 1, CardColor.GREEN, List.of(CardSubtype.SQUIRREL),
-                        Set.of(), Set.of()));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        Set.of(), Set.of()),
                 new CreateTokenEffect("Crab", 0, 3, CardColor.BLUE, List.of(CardSubtype.CRAB),
                         Set.of(), Set.of()));
 

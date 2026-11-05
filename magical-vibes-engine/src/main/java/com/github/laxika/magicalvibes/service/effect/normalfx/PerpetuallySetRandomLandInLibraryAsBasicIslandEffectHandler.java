@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallySetRandomLandInLibraryAsBasicIslandEffect;
@@ -60,7 +59,7 @@ public class PerpetuallySetRandomLandInLibraryAsBasicIslandEffectHandler impleme
             subtypes.add(CardSubtype.ISLAND);
         }
         modified.setSubtypes(subtypes);
-        modified.addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT, new DrawCardEffect());
+        modified.addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
         String cardText = modified.getCardText();
         modified.setCardText((cardText == null || cardText.isBlank() ? "" : cardText + "\n") + GAINED_ABILITY);
         modified.freeze();

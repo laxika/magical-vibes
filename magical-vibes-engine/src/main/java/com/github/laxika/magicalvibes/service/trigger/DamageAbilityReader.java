@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -48,18 +47,16 @@ public final class DamageAbilityReader {
      * One effect of a damage ability as its collector reads it.
      *
      * @param effect  the effect, wrapped in the ability's event condition and intervening "if" as the class says
-     * @param mode    the registration's trigger mode
      * @param ability the ability the effect belongs to
      * @param filter  what the permanent must be for the watched condition (the filter its {@link Trigger#watchKey()}
      *                drops), or {@code null}
      * @param simultaneousWithPrevious the registration happens at the same time as the effect before it
      */
-    public record DamageEffect(CardEffect effect, TriggerMode mode, TriggeredAbility ability,
+    public record DamageEffect(CardEffect effect, TriggeredAbility ability,
                                PermanentPredicate filter, boolean simultaneousWithPrevious) {
 
         public DamageEffect {
             Objects.requireNonNull(effect, "effect");
-            Objects.requireNonNull(mode, "mode");
             Objects.requireNonNull(ability, "ability");
         }
 
@@ -87,7 +84,7 @@ public final class DamageAbilityReader {
 
         /** This effect read as {@code effect} instead, as a collector binds it. */
         public DamageEffect withEffect(CardEffect effect) {
-            return new DamageEffect(effect, mode, ability, filter, simultaneousWithPrevious);
+            return new DamageEffect(effect, ability, filter, simultaneousWithPrevious);
         }
 
         /**
@@ -178,7 +175,7 @@ public final class DamageAbilityReader {
             if (interveningIf != null) {
                 effect = new ConditionalEffect(interveningIf, effect, true);
             }
-            effects.add(new DamageEffect(effect, registration.triggerMode(), ability, filter,
+            effects.add(new DamageEffect(effect, ability, filter,
                     registration.simultaneousWithPrevious()));
         }
         return effects;
@@ -212,7 +209,7 @@ public final class DamageAbilityReader {
     }
 
     /**
-     * The registrations of {@code abilities} for the condition watched as {@code watched}, with their trigger modes,
+     * The registrations of {@code abilities} for the condition watched as {@code watched},
      * for a collector that reads no filter, limit or multiplicity: none of its abilities is written with one, and this
      * throws on one.
      */
@@ -234,8 +231,7 @@ public final class DamageAbilityReader {
         for (DamageEffect effect : read(abilities, watched)) {
             requireNoLimitOrMultiplicity(effect, watched);
             if (effect.filter() == null || filterMatches.test(effect.filter())) {
-                registrations.add(new EffectRegistration(effect.effect(), effect.mode(),
-                        effect.simultaneousWithPrevious()));
+                registrations.add(new EffectRegistration(effect.effect(), effect.simultaneousWithPrevious()));
             }
         }
         return registrations;

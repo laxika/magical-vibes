@@ -18,8 +18,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class KardumPatronOfFlames extends Card {
 
     public KardumPatronOfFlames() {
-        addTrigger(Triggers.attacks(), new PutCountersOnSelfEffect(CounterType.FLAME));
-        addTrigger(Triggers.attacks(), new SeekLibraryEffect(
+        addTrigger(Triggers.attacks(), new PutCountersOnSelfEffect(CounterType.FLAME),
+                new SeekLibraryEffect(
                 new Fixed(1), new CardTruePredicate(), LibrarySearchDestination.EXILE_WITH_SOURCE,
                 new ManaValueBound(new CountersOnSource(CounterType.FLAME), true, 0), true));
         addTrigger(Triggers.dies(ObjectRelation.THIS),

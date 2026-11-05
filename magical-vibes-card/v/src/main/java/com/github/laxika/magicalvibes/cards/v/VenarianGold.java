@@ -20,8 +20,7 @@ public class VenarianGold extends Card {
     public VenarianGold() {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new TapPermanentsEffect(TapUntapScope.TARGET),
                         new PutCounterOnReferencedPermanentEffect(CounterType.SLEEP, new XValue()));
 
         addStaticEffect(DoesntUntapWithCounterEffect.enchantedWithCounterOnEnchantedPermanent(CounterType.SLEEP));

@@ -17,8 +17,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class DovinsAcuity extends Card {
 
     public DovinsAcuity() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2), new DrawCardEffect(1));
         addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.INSTANT)),
                 TriggerOptions.DEFAULT.withInterveningIf(new ControllerMainPhase()),
                 new MayEffect(ReturnToHandEffect.self(), "Return Dovin's Acuity to its owner's hand?"));

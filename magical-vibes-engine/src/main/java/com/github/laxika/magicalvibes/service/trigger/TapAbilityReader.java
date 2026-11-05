@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -130,8 +129,7 @@ public final class TapAbilityReader {
     public static List<EffectRegistration> registrations(List<TriggeredAbility> abilities, Trigger watched) {
         List<TapEffect> effects = read(abilities, watched);
         effects.forEach(effect -> requireNothingToJudge(effect, watched));
-        return effects.stream().map(effect -> new EffectRegistration(effect.effect(), TriggerMode.NORMAL,
-                effect.simultaneousWithPrevious())).toList();
+        return effects.stream().map(effect -> new EffectRegistration(effect.effect(), effect.simultaneousWithPrevious())).toList();
     }
 
     /**
@@ -157,7 +155,7 @@ public final class TapAbilityReader {
      * The effects of {@code ability}, as its collector reads it for the condition watched as {@code watched}. The tap
      * and untap collectors read "one or more" (the ability checks as it is built that its collector batches the
      * permanents tapped together) and of the limits only "triggers only once each turn", which they don't read next
-     * to "for the first time during your turn"; they read no trigger mode.
+     * to "for the first time during your turn".
      */
     public static List<TapEffect> read(TriggeredAbility ability, Trigger watched) {
         TapTrigger condition = watchedCondition(ability, watched);
@@ -175,10 +173,6 @@ public final class TapAbilityReader {
         Condition interveningIf = options.interveningIf();
         List<TapEffect> effects = new ArrayList<>(ability.effects().size());
         for (EffectRegistration registration : ability.effects()) {
-            if (registration.triggerMode() != TriggerMode.NORMAL) {
-                throw new IllegalStateException("The tap and untap collectors read no trigger mode ("
-                        + registration.triggerMode() + "); \"one or more\" is TriggerOptions.ONE_OR_MORE: " + ability);
-            }
             CardEffect effect = registration.effect();
             if (eventCondition != null) {
                 effect = ConditionalEffect.atTriggerTime(eventCondition, effect);

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
@@ -284,9 +283,6 @@ class MiscTriggerTest {
                 assertThatThrownBy(() -> MiscAbilityReader.read(new TriggeredAbility(Triggers.becomesCrewed(),
                         TriggerOptions.DEFAULT.withLimit(limit), DRAW), Triggers.becomesCrewed()))
                         .as(limit.toString()).isInstanceOf(IllegalStateException.class));
-        assertThatThrownBy(() -> MiscAbilityReader.read(new TriggeredAbility(Triggers.chaosEnsues(),
-                TriggerOptions.DEFAULT, List.of(new EffectRegistration(DRAW, TriggerMode.INDEPENDENT))),
-                Triggers.chaosEnsues())).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> MiscAbilityReader.read(new TriggeredAbility(Triggers.chaosEnsues(), DRAW),
                 Triggers.encounterThis())).isInstanceOf(IllegalArgumentException.class);
     }

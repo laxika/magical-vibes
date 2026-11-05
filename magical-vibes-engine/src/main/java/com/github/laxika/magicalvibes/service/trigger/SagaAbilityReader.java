@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.trigger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.trigger.FinalChapterTrigger;
@@ -73,8 +72,7 @@ public final class SagaAbilityReader {
     }
 
     /**
-     * The effects of {@code ability}, as its collector reads them for the condition watched as {@code watched}. Throws
-     * on a registration's trigger mode, which the collectors don't read.
+     * The effects of {@code ability}, as its collector reads them for the condition watched as {@code watched}.
      */
     public static List<SagaEffect> read(TriggeredAbility ability, Trigger watched) {
         if (!ability.hasWatchedTrigger(watched)) {
@@ -82,10 +80,6 @@ public final class SagaAbilityReader {
         }
         List<SagaEffect> effects = new ArrayList<>(ability.effects().size());
         for (EffectRegistration registration : ability.effects()) {
-            if (registration.triggerMode() != TriggerMode.NORMAL) {
-                throw new IllegalStateException("The collector of " + watched + " reads no "
-                        + registration.triggerMode() + ": " + ability);
-            }
             effects.add(new SagaEffect(registration.effect(), ability));
         }
         return effects;

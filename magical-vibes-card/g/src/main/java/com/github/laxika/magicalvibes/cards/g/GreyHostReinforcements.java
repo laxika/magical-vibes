@@ -19,7 +19,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class GreyHostReinforcements extends Card {
 
     public GreyHostReinforcements() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ExileGraveyardCardsEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new ExileGraveyardCardsEffect(
                 0,
                 GraveyardExileScope.TARGET_PLAYER_ALL_MATCHING,
                 null,
@@ -28,8 +29,7 @@ public class GreyHostReinforcements extends Card {
                 false,
                 false,
                 new CardTypePredicate(CardType.CREATURE),
-                false));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                false),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue()));
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(3));
     }

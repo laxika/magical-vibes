@@ -20,8 +20,7 @@ public class VaultPlunderer extends Card {
                 "Target must be a player"
         ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new DrawCardForTargetPlayerEffect(1, false, true))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new DrawCardForTargetPlayerEffect(1, false, true),
                         new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
     }
 }

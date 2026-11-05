@@ -26,8 +26,7 @@ public class FloodpitsDrowner extends Card {
     public FloodpitsDrowner() {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new TapPermanentsEffect(TapUntapScope.TARGET),
                         new PutCounterOnTargetPermanentEffect(CounterType.STUN));
 
         PermanentPredicate creatureWithStunCounter = new PermanentAllOfPredicate(List.of(

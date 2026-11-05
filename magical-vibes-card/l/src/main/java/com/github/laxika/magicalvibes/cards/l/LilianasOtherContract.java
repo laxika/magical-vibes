@@ -14,8 +14,7 @@ public class LilianasOtherContract extends Card {
     public LilianasOtherContract() {
         setBackFaceCard(new LilianasUndeadMinion());
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(3));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new LoseLifeEffect(3));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(3), new LoseLifeEffect(3));
         addStaticEffect(new ReplaceControllerLossWithExileAndReturnTransformedEffect());
     }
 

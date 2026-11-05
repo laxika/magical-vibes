@@ -29,14 +29,16 @@ public class AmyRose extends Card {
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
         ));
 
+        var attachTargetEquipmentToTriggeringPermanent = new AttachTargetEquipmentToTriggeringPermanentEffect();
         target(new PermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),
                 "Target must be an Equipment"), 0, 1)
-                .addTrigger(Triggers.attacks(), new AttachTargetEquipmentToTriggeringPermanentEffect());
+                .bindEffect(attachTargetEquipmentToTriggeringPermanent);
 
+        var boostTargetCreature = new BoostTargetCreatureEffect(new SourcePower(), new Fixed(0));
         target(new PermanentPredicateTargetFilter(otherAttackingCreature,
                 "Target must be another attacking creature"), 0, 1)
-                .addTrigger(Triggers.attacks(),
-                        new BoostTargetCreatureEffect(new SourcePower(), new Fixed(0)));
+                .bindEffect(boostTargetCreature);
+        addTrigger(Triggers.attacks(), attachTargetEquipmentToTriggeringPermanent, boostTargetCreature);
     }
 }

@@ -49,8 +49,9 @@ public class CloakAndDaggerEntwined extends Card {
                         "Exile the chosen creature.", exileCreature)
         )));
 
-        opponentTarget.addTrigger(Triggers.enters(ObjectRelation.THIS), revealHand);
-        creatureTarget.addTrigger(Triggers.enters(ObjectRelation.THIS), choice);
+        opponentTarget.bindEffect(revealHand);
+        creatureTarget.bindEffect(choice);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), revealHand, choice);
         registerEffectTargetIndex(exileFromHand, opponentTarget.getIndex());
         registerEffectTargetIndex(exileCreature, creatureTarget.getIndex());
 

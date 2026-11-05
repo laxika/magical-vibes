@@ -14,9 +14,10 @@ import java.util.List;
 public class DalkovanPackbeasts extends Card {
 
     public DalkovanPackbeasts() {
-        addTrigger(Triggers.attacks(), new CreateTokenEffect(
+        addTrigger(Triggers.attacks(),
+                new CreateTokenEffect(
                 3, "Warrior", 1, 1, CardColor.RED, List.of(CardSubtype.WARRIOR), true
-        ));
-        addTrigger(Triggers.attacks(), new SacrificeCreatedPermanentsAtEndStepEffect());
+        ),
+                new SacrificeCreatedPermanentsAtEndStepEffect());
     }
 }

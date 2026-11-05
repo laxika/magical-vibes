@@ -36,7 +36,7 @@ class TriggeredAbilityTest {
     @Test
     void keepsEffectsThatHappenAtTheSameTimeAsTheOneBefore() {
         EffectRegistration first = new EffectRegistration(new DrawCardEffect(1));
-        EffectRegistration simultaneous = new EffectRegistration(new DrawCardEffect(2), TriggerMode.NORMAL, true);
+        EffectRegistration simultaneous = new EffectRegistration(new DrawCardEffect(2), true);
 
         TriggeredAbility ability = new TriggeredAbility(Triggers.youLoseControlOfThis(),
                 TriggerOptions.DEFAULT, List.of(first, simultaneous));
@@ -73,7 +73,7 @@ class TriggeredAbilityTest {
 
     @Test
     void firstEffectCannotBeSimultaneousWithAPreviousOne() {
-        EffectRegistration simultaneous = new EffectRegistration(new DrawCardEffect(1), TriggerMode.NORMAL, true);
+        EffectRegistration simultaneous = new EffectRegistration(new DrawCardEffect(1), true);
 
         assertThatThrownBy(() -> new TriggeredAbility(Triggers.youLoseControlOfThis(),
                 TriggerOptions.DEFAULT, List.of(simultaneous)))

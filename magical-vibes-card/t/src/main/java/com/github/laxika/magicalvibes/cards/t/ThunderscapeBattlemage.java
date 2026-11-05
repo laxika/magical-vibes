@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -41,7 +40,6 @@ public class ThunderscapeBattlemage extends Card {
         targetWithDynamicCount(new RepeatedAdditionalCostCount("{G}"), new PermanentPredicateTargetFilter(
                 new PermanentIsEnchantmentPredicate(), "Target must be an enchantment"), 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        TriggerMode.INDEPENDENT,
                         TriggerOptions.DEFAULT.withInterveningIf(new RepeatedAdditionalCostPaid("{G}")),
                         new DestroyTargetPermanentEffect());
     }

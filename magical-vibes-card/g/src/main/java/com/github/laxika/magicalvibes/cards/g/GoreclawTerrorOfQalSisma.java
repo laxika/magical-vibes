@@ -48,8 +48,8 @@ public class GoreclawTerrorOfQalSisma extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentPowerAtLeastPredicate(4)
         ));
-        addTrigger(Triggers.attacks(), new BoostAllOwnCreaturesEffect(1, 1, qualifyingCreature));
-        addTrigger(Triggers.attacks(), new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_CREATURES,
+        addTrigger(Triggers.attacks(), new BoostAllOwnCreaturesEffect(1, 1, qualifyingCreature),
+                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_CREATURES,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentControlledBySourceControllerPredicate(),
                         qualifyingCreature

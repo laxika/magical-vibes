@@ -93,19 +93,17 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         }
         requireFinalChapterOptions(conditions, options);
         requireStateOptions(conditions, options);
-        requireZoneChangeOptions(conditions, options, effects);
+        requireZoneChangeOptions(conditions, options);
         requireOwnEntryOptions(conditions, options);
     }
 
     /**
      * Rejects what the trigger pipeline that reads the abilities of a zone change other than "when this enters" and of
      * a permanent change doesn't read: "once each turn for each creature" (only the damage and counter collectors know
-     * it; the pipeline judges every other limit as the ability triggers) and a trigger mode (the pipeline puts the
-     * ability on the stack as one object, CR 603.3). The legacy view checked these as a card's abilities were indexed;
-     * the pipeline reads the ability itself, so the ability checks them as it is built.
+     * it; the pipeline judges every other limit as the ability triggers). The legacy view checked this as a card's
+     * abilities were indexed; the pipeline reads the ability itself, so the ability checks it as it is built.
      */
-    private static void requireZoneChangeOptions(List<TriggerCondition> conditions, TriggerOptions options,
-                                                 List<EffectRegistration> effects) {
+    private static void requireZoneChangeOptions(List<TriggerCondition> conditions, TriggerOptions options) {
         boolean zoneChange = conditions.stream().map(TriggerCondition::trigger).anyMatch(trigger
                 -> trigger instanceof ZoneChangeTrigger move && !move.ownEntry()
                 || trigger instanceof PermanentChangeTrigger);
@@ -115,12 +113,6 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         if (options.limit() == TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE) {
             throw new IllegalArgumentException("No zone-change or permanent-change collector reads "
                     + options.limit() + ": " + conditions);
-        }
-        for (EffectRegistration registration : effects) {
-            if (registration.triggerMode() != TriggerMode.NORMAL) {
-                throw new IllegalArgumentException("No zone-change or permanent-change collector reads a trigger mode ("
-                        + registration.triggerMode() + "): " + conditions);
-            }
         }
     }
 
@@ -368,8 +360,7 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             if (interveningIf != null) {
                 effect = new ConditionalEffect(interveningIf, effect, true);
             }
-            wrapped.add(new EffectRegistration(effect, registration.triggerMode(),
-                    registration.simultaneousWithPrevious()));
+            wrapped.add(new EffectRegistration(effect, registration.simultaneousWithPrevious()));
         }
         return List.copyOf(wrapped);
     }

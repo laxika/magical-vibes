@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
@@ -39,7 +38,6 @@ public class AnaBattlemage extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         ), 0, 0, 1, 1).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                TriggerMode.INDEPENDENT,
                 TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
                 new DiscardEffect(3, DiscardRecipient.TARGET_PLAYER));
 
@@ -49,7 +47,6 @@ public class AnaBattlemage extends Card {
                         new PermanentNotPredicate(new PermanentIsTappedPredicate())
                 )), "Target must be an untapped creature"), 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        TriggerMode.INDEPENDENT,
                         TriggerOptions.DEFAULT.withInterveningIf(new RepeatedAdditionalCostPaid("{1}{B}")),
                         SequenceEffect.of(new TapPermanentsEffect(TapUntapScope.TARGET),
                                 new TargetCreatureDealsPowerDamageToControllerEffect()));

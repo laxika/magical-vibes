@@ -22,8 +22,8 @@ public class RampagingSpiketail extends Card {
 
     public RampagingSpiketail() {
         target(TargetFilters.creatureYouControl())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(2, 0))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new BoostTargetCreatureEffect(2, 0),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{2}",

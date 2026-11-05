@@ -16,12 +16,12 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SkymarchBloodletter extends Card {
 
     public SkymarchBloodletter() {
+        var loseLife = new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER);
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         ))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(1));
+                .bindEffect(loseLife);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), loseLife, new GainLifeEffect(1));
     }
 }

@@ -35,11 +35,10 @@ public class ThievingSkydiver extends Card {
                         new PermanentManaValueAtMostXPredicate()
                 )),
                 "Target must be an artifact with mana value X or less"
-        ), 0, 0, 1, 1).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT))
+        ), 0, 0, 1, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT),
                         new ConditionalEffect(new TargetPermanentMatches(
                                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT)),
                                 new AttachTargetToSourcePermanentEffect()));

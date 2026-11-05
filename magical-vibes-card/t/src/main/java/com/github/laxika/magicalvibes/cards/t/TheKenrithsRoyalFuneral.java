@@ -34,9 +34,8 @@ public class TheKenrithsRoyalFuneral extends Card {
         var greatestExiledManaValue = new GreatestManaValueAmongCardsExiledWithSource();
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ExileCardsFromGraveyardEffect(2, legendaryCreature, true, true, true));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(greatestExiledManaValue));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new ExileCardsFromGraveyardEffect(2, legendaryCreature, true, true, true),
+                new DrawCardEffect(greatestExiledManaValue),
                 new LoseLifeEffect(greatestExiledManaValue, LoseLifeRecipient.CONTROLLER));
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardSupertypePredicate(CardSupertype.LEGENDARY),

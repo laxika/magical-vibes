@@ -21,8 +21,7 @@ public class KarrthusTyrantOfJund extends Card {
     public KarrthusTyrantOfJund() {
         // When Karrthus enters, gain control of all Dragons, then untap all Dragons.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new GainControlOfAllPermanentsMatchingEffect(new PermanentHasSubtypePredicate(CardSubtype.DRAGON)));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new GainControlOfAllPermanentsMatchingEffect(new PermanentHasSubtypePredicate(CardSubtype.DRAGON)),
                 new UntapPermanentsEffect(TapUntapScope.ALL_PERMANENTS, new PermanentHasSubtypePredicate(CardSubtype.DRAGON)));
 
         // Other Dragon creatures you control have haste.

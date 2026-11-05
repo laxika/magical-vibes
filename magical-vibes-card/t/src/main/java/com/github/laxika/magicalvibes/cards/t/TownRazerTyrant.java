@@ -39,10 +39,9 @@ public class TownRazerTyrant extends Card {
                 nonbasicLandYouDoNotControl,
                 "Target must be a nonbasic land you don't control"
         ))
-        .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new GrantStaticEffectToTargetEffect(
-                        new LosesAllNonManaAbilitiesEffect(GrantScope.SELF)))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new GrantStaticEffectToTargetEffect(
+                        new LosesAllNonManaAbilitiesEffect(GrantScope.SELF)),
                         new GrantStaticEffectToTargetEffect(new GrantTriggeredAbilityEffect(
                                 new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
                                 new ForcedCostOrElseEffect(

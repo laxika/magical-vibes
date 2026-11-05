@@ -52,7 +52,9 @@ public class RestlessRidgeline extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )),
                 "Target must be another attacking creature"
-        )).addTrigger(Triggers.attacks(), new BoostTargetCreatureEffect(2, 0))
-                .addTrigger(Triggers.attacks(), new UntapPermanentsEffect(TapUntapScope.TARGET));
+        ))
+                .addTrigger(Triggers.attacks(),
+                        new BoostTargetCreatureEffect(2, 0),
+                        new UntapPermanentsEffect(TapUntapScope.TARGET));
     }
 }

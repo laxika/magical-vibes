@@ -16,8 +16,7 @@ import java.util.List;
 public class WoodweaversPuzzleknot extends Card {
 
     public WoodweaversPuzzleknot() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(3));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new EnergyCountersEffect(3));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(3), new EnergyCountersEffect(3));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

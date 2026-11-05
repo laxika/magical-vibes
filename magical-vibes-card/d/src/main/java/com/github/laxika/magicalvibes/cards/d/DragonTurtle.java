@@ -18,9 +18,10 @@ public class DragonTurtle extends Card {
         // When this creature enters, tap it and up to one target creature an opponent controls.
         // They don't untap during their controllers' next untap steps.
         target(TargetFilters.creatureAnOpponentControls(), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.SELF))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new SkipNextUntapEffect(TapUntapScope.SELF))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new SkipNextUntapEffect(TapUntapScope.TARGET));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new TapPermanentsEffect(TapUntapScope.SELF),
+                        new TapPermanentsEffect(TapUntapScope.TARGET),
+                        new SkipNextUntapEffect(TapUntapScope.SELF),
+                        new SkipNextUntapEffect(TapUntapScope.TARGET));
     }
 }

@@ -1113,7 +1113,7 @@ public class TokenCopySupport {
                 if (hasPTOverride && registration.effect().isPowerToughnessDefining()) {
                     continue;
                 }
-                tokenCard.addEffect(slot, registration.effect(), registration.triggerMode());
+                tokenCard.addEffect(slot, registration.effect());
             }
         }
         for (TriggeredAbility ability : sourceCard.getUnslottedTriggeredAbilities()) {
@@ -1137,22 +1137,17 @@ public class TokenCopySupport {
                             && !move.ownEntry() || condition.trigger()
                             instanceof com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger)) {
                         // The trigger pipeline puts a zone-change or permanent-change ability on the stack as one
-                        // object of its own (CR 603.3), and the ability takes no trigger mode.
+                        // object of its own (CR 603.3).
                         tokenCard.addTriggeredAbility(triggered);
                         continue;
                     }
-                    // The token's added abilities are its own objects on the stack, not part of the copied card's
-                    // "when this enters" ability (CR 603.3).
-                    tokenCard.addTriggeredAbility(triggered.withEffects(triggered.effects().stream()
-                            .map(registration -> new EffectRegistration(registration.effect(),
-                                    com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT,
-                                    registration.simultaneousWithPrevious()))
-                            .toList()));
+                    // The token's added abilities are its own objects on the stack, as every triggered ability is,
+                    // not part of the copied card's abilities (CR 603.3).
+                    tokenCard.addTriggeredAbility(triggered);
                     continue;
                 }
                 EffectSlot slot = LegacySlots.slotOf(ability);
-                LegacySlots.effectsOf(ability).forEach(additionalEffect -> tokenCard.addEffect(slot, additionalEffect,
-                        com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT));
+                LegacySlots.effectsOf(ability).forEach(additionalEffect -> tokenCard.addEffect(slot, additionalEffect));
             }
         }
         for (ActivatedAbility ability : sourceCard.getActivatedAbilities(Zone.BATTLEFIELD)) {

@@ -14,8 +14,8 @@ public class InvasionOfVryn extends Card {
 
     public InvasionOfVryn() {
         setBackFaceCard(new OverloadedMageRing());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(3));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new DrawCardEffect(3),
                 new DiscardEffect(1, DiscardRecipient.CONTROLLER));
     }
 

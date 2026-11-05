@@ -25,10 +25,8 @@ public class ZidaneTantalusThief extends Card {
     public ZidaneTantalusThief() {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                        new UntapPermanentsEffect(TapUntapScope.TARGET),
                         new GrantKeywordEffect(Set.of(Keyword.LIFELINK, Keyword.HASTE), GrantScope.TARGET));
 
         addTrigger(Triggers.opponentGainsControlOfPermanentYouControl(),

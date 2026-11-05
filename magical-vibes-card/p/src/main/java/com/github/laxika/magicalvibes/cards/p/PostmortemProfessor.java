@@ -22,8 +22,7 @@ public class PostmortemProfessor extends Card {
 
     public PostmortemProfessor() {
         addStaticEffect(new CantBlockEffect());
-        addTrigger(Triggers.attacks(), new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.attacks(), new GainLifeEffect(1));
+        addTrigger(Triggers.attacks(), new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT), new GainLifeEffect(1));
 
         addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,

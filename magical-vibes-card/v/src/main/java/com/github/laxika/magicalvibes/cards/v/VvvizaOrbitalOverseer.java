@@ -53,7 +53,6 @@ public class VvvizaOrbitalOverseer extends Card {
                 KavaronMemorialWorld::new,
                 SusurSecundiVoidAltar::new,
                 UthrosTitanicGodcore::new)));
-        addTrigger(Triggers.youAttack(), LANDER);
-        addTrigger(Triggers.youAttack(), ANIMATE_LANDER);
+        addTrigger(Triggers.youAttack(), LANDER, ANIMATE_LANDER);
     }
 }

@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class InspiringOverseer extends Card {
 
     public InspiringOverseer() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(1));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(1), new DrawCardEffect(1));
     }
 }

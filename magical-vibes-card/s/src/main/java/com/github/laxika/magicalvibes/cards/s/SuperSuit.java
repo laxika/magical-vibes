@@ -17,8 +17,9 @@ public class SuperSuit extends Card {
 
     public SuperSuit() {
         target(TargetFilters.creatureYouControl())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new AttachSourceEquipmentToTargetCreatureEffect())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new UntapPermanentsEffect(TapUntapScope.TARGET));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new AttachSourceEquipmentToTargetCreatureEffect(),
+                        new UntapPermanentsEffect(TapUntapScope.TARGET));
 
         addStaticEffect(new StaticBoostEffect(1, 2, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{2}"));

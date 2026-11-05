@@ -49,13 +49,11 @@ public class ElugeTheShorelessSea extends Card {
 
         target(TargetFilters.land())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new PutCounterOnTargetPermanentEffect(CounterType.FLOOD))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new PutCounterOnTargetPermanentEffect(CounterType.FLOOD),
                         new GrantSubtypeToTargetWhileHasCounterEffect(CardSubtype.ISLAND, CounterType.FLOOD));
         target(TargetFilters.land())
                 .addTrigger(Triggers.attacks(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.FLOOD))
-                .addTrigger(Triggers.attacks(),
+                        new PutCounterOnTargetPermanentEffect(CounterType.FLOOD),
                         new GrantSubtypeToTargetWhileHasCounterEffect(CardSubtype.ISLAND, CounterType.FLOOD));
 
         addStaticEffect(new ConditionalEffect(

@@ -25,7 +25,7 @@ public class WarkiteMarauder extends Card {
                         new PermanentControlledByDefendingPlayerPredicate())),
                 "Target must be a creature defending player controls"))
                 .addTrigger(Triggers.attacks(),
-                        new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN))
-                .addTrigger(Triggers.attacks(), new SetBasePowerToughnessEffect(0, 1));
+                        new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN),
+                        new SetBasePowerToughnessEffect(0, 1));
     }
 }

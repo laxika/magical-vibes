@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -52,7 +51,6 @@ public final class LibraryAbilityReader {
      * One effect of a library, draw or discard ability as its collector reads it.
      *
      * @param effect  the effect, wrapped in the ability's event condition and intervening "if" as the class says
-     * @param mode    the registration's trigger mode
      * @param ability the ability the effect belongs to
      * @param filter  what the discarded card must be for the watched condition (its {@link LibraryTrigger#qualifier()}),
      *                or {@code null}
@@ -63,12 +61,11 @@ public final class LibraryAbilityReader {
      *                {@code {1, 2}}), or none for every event
      * @param simultaneousWithPrevious the registration happens at the same time as the effect before it
      */
-    public record LibraryEffect(CardEffect effect, TriggerMode mode, TriggeredAbility ability, CardPredicate filter,
+    public record LibraryEffect(CardEffect effect, TriggeredAbility ability, CardPredicate filter,
                                 LibraryEvent event, Set<Integer> counts, boolean simultaneousWithPrevious) {
 
         public LibraryEffect {
             Objects.requireNonNull(effect, "effect");
-            Objects.requireNonNull(mode, "mode");
             Objects.requireNonNull(ability, "ability");
             Objects.requireNonNull(event, "event");
             counts = Set.copyOf(Objects.requireNonNull(counts, "counts"));
@@ -115,7 +112,7 @@ public final class LibraryAbilityReader {
 
         /** This read with {@code effect} in place of its effect. */
         public LibraryEffect withEffect(CardEffect effect) {
-            return new LibraryEffect(effect, mode, ability, filter, event, counts, simultaneousWithPrevious);
+            return new LibraryEffect(effect, ability, filter, event, counts, simultaneousWithPrevious);
         }
     }
 
@@ -138,14 +135,13 @@ public final class LibraryAbilityReader {
     }
 
     /**
-     * The registrations of the abilities of {@code card} that {@code watch} reads, with their trigger modes, for a
-     * collector that reads no filter, narrower event, count or limit (this throws on one).
+     * The registrations of the abilities of {@code card} that {@code watch} reads, for a collector
+     * that reads no filter, narrower event, count or limit (this throws on one).
      */
     public static List<EffectRegistration> printedRegistrations(Card card, LibraryWatch watch) {
         List<LibraryEffect> effects = readPrinted(card, watch);
         effects.forEach(effect -> requireNothingToJudge(effect, watch.trigger()));
-        return effects.stream().map(effect -> new EffectRegistration(effect.effect(), effect.mode(),
-                effect.simultaneousWithPrevious())).toList();
+        return effects.stream().map(effect -> new EffectRegistration(effect.effect(), effect.simultaneousWithPrevious())).toList();
     }
 
     /**
@@ -203,7 +199,7 @@ public final class LibraryAbilityReader {
             if (interveningIf != null) {
                 effect = new ConditionalEffect(interveningIf, effect, true);
             }
-            effects.add(new LibraryEffect(effect, registration.triggerMode(), ability, condition.qualifier(),
+            effects.add(new LibraryEffect(effect, ability, condition.qualifier(),
                     condition.event(), counts, registration.simultaneousWithPrevious()));
         }
         return effects;

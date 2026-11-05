@@ -21,8 +21,7 @@ public class TheThanosCopter extends Card {
     public TheThanosCopter() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new GrantCardTypeToOwnPermanentsUntilEndOfTurnEffect(
-                        CardType.CREATURE, new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        CardType.CREATURE, new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)),
                 new GrantCardTypeToOwnPermanentsUntilEndOfTurnEffect(
                         CardType.ARTIFACT, new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)));
 

@@ -102,8 +102,7 @@ public class BecomeCopyOfTargetPermanentUntilYourNextTurnEffectHandler implement
             for (EffectRegistration registration : retainedTriggers) {
                 if (!source.getCard().getTriggerEffectRegistrations(copyEffect.retainedTrigger())
                         .contains(registration)) {
-                    source.getCard().addTrigger(copyEffect.retainedTrigger(),
-                            registration.triggerMode(), registration.effect());
+                    source.getCard().addTrigger(copyEffect.retainedTrigger(), registration.effect());
                 }
             }
         }

@@ -17,8 +17,9 @@ import java.util.Set;
 public class GoblinPlateMail extends Card {
 
     public GoblinPlateMail() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new AmassGoblinsEffect(1));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new AttachSourceEquipmentToChosenPermanentEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new AmassGoblinsEffect(1),
+                new AttachSourceEquipmentToChosenPermanentEffect());
         addStaticEffect(new StaticBoostEffect(1, 0, Set.of(Keyword.MENACE), GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{4}"));
     }

@@ -12,7 +12,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class BazaarTrademage extends Card {
 
     public BazaarTrademage() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(2));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DiscardEffect(3, DiscardRecipient.CONTROLLER));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new DrawCardEffect(2),
+                new DiscardEffect(3, DiscardRecipient.CONTROLLER));
     }
 }

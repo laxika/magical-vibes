@@ -12,7 +12,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class OverwhelmedApprentice extends Card {
 
     public OverwhelmedApprentice() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(2, MillRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new MillEffect(2, MillRecipient.EACH_OPPONENT),
+                new ScryEffect(2));
     }
 }

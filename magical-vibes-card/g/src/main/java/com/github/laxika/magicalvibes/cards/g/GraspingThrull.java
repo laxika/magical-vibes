@@ -13,7 +13,7 @@ public class GraspingThrull extends Card {
 
     public GraspingThrull() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2));
+                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT),
+                new GainLifeEffect(2));
     }
 }

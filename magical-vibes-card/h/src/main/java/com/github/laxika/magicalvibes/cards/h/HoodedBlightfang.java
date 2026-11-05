@@ -17,9 +17,7 @@ public class HoodedBlightfang extends Card {
     public HoodedBlightfang() {
         addTrigger(Triggers.creatureYouControlAttacks()
                         .withFilter(new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH)),
-                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.creatureYouControlAttacks()
-                        .withFilter(new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH)),
+                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
                 new GainLifeEffect(1));
         addTrigger(Triggers.creatureYouControlDealsDamageToPlaneswalker()
                         .withFilter(new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH)),

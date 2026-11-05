@@ -23,8 +23,7 @@ public class MoodmarkPainter extends Card {
                 new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER);
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new BoostTargetCreatureEffect(creatureCards, new Fixed(0)))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new BoostTargetCreatureEffect(creatureCards, new Fixed(0)),
                         new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET));
     }
 }

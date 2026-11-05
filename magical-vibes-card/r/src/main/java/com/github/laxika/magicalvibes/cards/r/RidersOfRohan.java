@@ -25,7 +25,7 @@ public class RidersOfRohan extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new CreateTokenEffect(2, "Human Knight", 2, 2, CardColor.RED,
                         List.of(CardSubtype.HUMAN, CardSubtype.KNIGHT),
-                        Set.of(Keyword.TRAMPLE, Keyword.HASTE), Set.of()));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ReturnSelfToHandIfDashCostPaidEffect());
+                        Set.of(Keyword.TRAMPLE, Keyword.HASTE), Set.of()),
+                new ReturnSelfToHandIfDashCostPaidEffect());
     }
 }

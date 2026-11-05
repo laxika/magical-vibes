@@ -32,8 +32,7 @@ public class CaptainAmericaSteveRogers extends Card {
                 targetCreature,
                 "Target must be another creature you control"))
                 .addTrigger(Triggers.attacks(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE))
-                .addTrigger(Triggers.attacks(),
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
     }
 }

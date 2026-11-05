@@ -13,8 +13,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SoulScourge extends Card {
 
     public SoulScourge() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new RememberTargetPlayerEffect());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new RememberTargetPlayerEffect(),
+                new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER));
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new TargetPlayerGainsLifeEffect(3));
     }
 }

@@ -14,8 +14,8 @@ public class ZulaportDuelist extends Card {
 
     public ZulaportDuelist() {
         target(TargetFilters.creature(), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(-2, 0))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new BoostTargetCreatureEffect(-2, 0),
                         new MillEffect(2, MillRecipient.TARGET_PERMANENT_CONTROLLER));
     }
 }

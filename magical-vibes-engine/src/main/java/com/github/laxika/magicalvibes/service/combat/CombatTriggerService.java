@@ -145,19 +145,11 @@ public class CombatTriggerService {
                         .filter(r -> !r.eachBlocker())
                         .filter(r -> !r.oneOrMore() || includeOncePerBlockRegistration)
                         .toList();
-                List<List<CardEffect>> effectGroups = new ArrayList<>();
-                List<CardEffect> sharedEffects = queuedRegistrations.stream()
-                        .filter(r -> !r.independent())
-                        .map(CombatAbilityReader.CombatEffect::effect)
+                // Each ability is one object on the stack (CR 603.3): Reaper's Talisman's two.
+                List<List<CardEffect>> effectGroups = CombatAbilityReader.byAbility(queuedRegistrations).stream()
+                        .map(CombatAbilityReader::effectsOf)
                         .toList();
-                if (!sharedEffects.isEmpty()) {
-                    effectGroups.add(sharedEffects);
-                }
-                queuedRegistrations.stream()
-                        .filter(CombatAbilityReader.CombatEffect::independent)
-                        .forEach(r -> effectGroups.add(List.of(r.effect())));
                 for (List<CardEffect> nonPerBlockerEffects : effectGroups) {
-                    // Each INDEPENDENT registration is its own triggered ability (Reaper's Talisman).
                     if (nonPerBlockerEffects.isEmpty()) continue;
                     // Bake the creature's controller into effects that need it,
                     // and transform subtype-filtered combat effects

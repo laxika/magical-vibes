@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandToPerpetuallyGrantEnterExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
@@ -21,7 +20,7 @@ public class PullOfTheMistMoon extends Card {
         // When Pull of the Mist Moon enters, exile target nonland permanent an opponent controls
         // until Pull of the Mist Moon leaves the battlefield.
         target(TargetFilters.nonlandPermanentAnOpponentControls())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new ExileTargetPermanentUntilSourceLeavesEffect(
                                 false, TargetFilters.nonlandPermanentAnOpponentControls().predicate()));
 

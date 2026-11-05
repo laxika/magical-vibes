@@ -25,10 +25,9 @@ public class Goatnapper extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.GOAT),
                 "Target must be a Goat"
         ))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new UntapPermanentsEffect(TapUntapScope.TARGET))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new UntapPermanentsEffect(TapUntapScope.TARGET),
+                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
     }
 }

@@ -30,10 +30,10 @@ public class SephirothFallenHero extends Card {
 
     public SephirothFallenHero() {
         target(TargetFilters.creature())
-                .addTrigger(Triggers.attacks(), new MayEffect(
-                        new PutCounterOnTargetPermanentEffect(CounterType.CELL),
-                        "Put a cell counter on target creature?"))
                 .addTrigger(Triggers.attacks(),
+                        new MayEffect(
+                        new PutCounterOnTargetPermanentEffect(CounterType.CELL),
+                        "Put a cell counter on target creature?"),
                         new SetAllOwnCreaturesBasePowerToughnessEffect(7, 5,
                                 new PermanentIsModifiedPredicate()));
 

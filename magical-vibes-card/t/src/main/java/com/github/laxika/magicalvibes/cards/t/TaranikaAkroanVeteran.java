@@ -33,10 +33,10 @@ public class TaranikaAkroanVeteran extends Card {
         target(new PermanentPredicateTargetFilter(
                 anotherCreatureYouControl,
                 "Target must be another creature you control"
-        )).addTrigger(Triggers.attacks(),
-                new UntapPermanentsEffect(TapUntapScope.TARGET, anotherCreatureYouControl))
-                .addTrigger(Triggers.attacks(), new SetBasePowerToughnessEffect(4, 4))
+        ))
                 .addTrigger(Triggers.attacks(),
+                        new UntapPermanentsEffect(TapUntapScope.TARGET, anotherCreatureYouControl),
+                        new SetBasePowerToughnessEffect(4, 4),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
     }
 }

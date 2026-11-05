@@ -16,8 +16,8 @@ public class KarfellKennelMaster extends Card {
     public KarfellKennelMaster() {
         // Up to two target creatures each get +1/+0 and gain indestructible until end of turn.
         target(TargetFilters.creature(), 0, 2)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(1, 0))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new BoostTargetCreatureEffect(1, 0),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
     }
 }

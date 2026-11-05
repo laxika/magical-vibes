@@ -32,13 +32,15 @@ public class WaspShrinkingSavior extends Card {
                 new PermanentPowerAtMostPredicate(-1)
         ));
 
+        var boostTargetCreature = new BoostTargetCreatureEffect(new Fixed(-3), new Fixed(0), otherCreature,
+                        GrantDuration.UNTIL_YOUR_NEXT_TURN);
         target(new PermanentPredicateTargetFilter(
                 otherCreature,
                 "Target must be another creature"
-        ), 0, 1).addTrigger(Triggers.attacks(),
-                new BoostTargetCreatureEffect(new Fixed(-3), new Fixed(0), otherCreature,
-                        GrantDuration.UNTIL_YOUR_NEXT_TURN));
-        addTrigger(Triggers.attacks(), new DrawCardEffect(
+        ), 0, 1).bindEffect(boostTargetCreature);
+        addTrigger(Triggers.attacks(),
+                boostTargetCreature,
+                new DrawCardEffect(
                 new PermanentCount(creatureWithNegativePower, CountScope.ANY_PLAYER)));
     }
 }

@@ -56,7 +56,7 @@ public class GrimgrinCorpseBorn extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Target must be a creature defending player controls"
-        )).addTrigger(Triggers.attacks(), new DestroyTargetPermanentEffect())
-          .addTrigger(Triggers.attacks(), new PutCountersOnSourceEffect(1, 1, 1));
+        ))
+          .addTrigger(Triggers.attacks(), new DestroyTargetPermanentEffect(), new PutCountersOnSourceEffect(1, 1, 1));
     }
 }

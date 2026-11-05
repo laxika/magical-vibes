@@ -24,8 +24,8 @@ public class RixMaadiReveler extends Card {
         // When this creature enters, discard a card, then draw a card. If its spectacle cost was
         // paid, instead discard your hand, then draw three cards.
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                new CastForSpectacleCost(), new DiscardOwnHandThenDrawEffect(new Fixed(3))));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
+                new CastForSpectacleCost(), new DiscardOwnHandThenDrawEffect(new Fixed(3))),
+                new ConditionalEffect(
                 new NotCondition(new CastForSpectacleCost()),
                 new DiscardCardThenEffect(null, new DrawCardEffect(1), "a card", null, false, null, null,
                         DiscardRecipient.CONTROLLER, true, true)));

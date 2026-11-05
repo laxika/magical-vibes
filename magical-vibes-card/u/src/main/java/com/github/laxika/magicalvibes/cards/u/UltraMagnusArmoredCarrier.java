@@ -23,8 +23,8 @@ public class UltraMagnusArmoredCarrier extends Card {
         addTrigger(Triggers.attacks(), new GrantKeywordEffect(
                 Keyword.INDESTRUCTIBLE,
                 GrantScope.ALL_OWN_CREATURES,
-                new PermanentIsAttackingPredicate()));
-        addTrigger(Triggers.attacks(), new ConditionalEffect(
+                new PermanentIsAttackingPredicate()),
+                new ConditionalEffect(
                 new AttackingCreaturesTotalPowerAtLeast(8),
                 new TransformSelfEffect(), false));
     }

@@ -20,7 +20,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
@@ -194,7 +193,7 @@ class TriggerPipelineTest extends BaseCardTest {
                 new TriggerCondition(Triggers.putIntoGraveyardFrom(Zone.HAND, ObjectRelation.THIS)),
                 new TriggerCondition(Triggers.putIntoGraveyardFrom(Zone.LIBRARY, ObjectRelation.THIS))),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
-                List.of(new EffectRegistration(DRAW, TriggerMode.NORMAL))));
+                List.of(new EffectRegistration(DRAW))));
         harness.setHand(player1, List.of(card));
 
         harness.inMutationScope(() -> {
@@ -451,12 +450,11 @@ class TriggerPipelineTest extends BaseCardTest {
     }
 
     @Test
-    void plainWhenThisEntersAbilitiesShareOneStackObjectAndAnIndependentOneHasItsOwn() {
+    void eachWhenThisEntersAbilityIsOneStackObjectOfItsOwn() {
         Card card = new GrizzlyBears();
-        card.addTrigger(Triggers.enters(ObjectRelation.THIS), DRAW);
-        card.addTrigger(Triggers.enters(ObjectRelation.THIS), GAIN);
+        card.addTrigger(Triggers.enters(ObjectRelation.THIS), DRAW, GAIN);
         CardEffect independent = new GainLifeEffect(1);
-        card.addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT, independent);
+        card.addTrigger(Triggers.enters(ObjectRelation.THIS), independent);
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.GREEN, 2);
 

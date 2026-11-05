@@ -17,10 +17,11 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ShredderShadowMaster extends Card {
 
     public ShredderShadowMaster() {
+        // One ability (CR 603.3): the end-of-combat sacrifice is of the tokens this ability creates.
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withInterveningIf(new AttackedTargetIsOpponent()),
-                CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect.mandatoryNonLegendary());
-        addTrigger(Triggers.attacks(), new SacrificeCreatedPermanentsAtEndOfCombatEffect());
+                CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect.mandatoryNonLegendary(),
+                new SacrificeCreatedPermanentsAtEndOfCombatEffect());
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new LoseLifeEffect(new HalvedRoundedUp(new TargetPlayerLifeTotal()),
                         LoseLifeRecipient.TARGET_PLAYER));

@@ -1528,13 +1528,9 @@ public class CombatAttackService {
                                     abilities.add(List.of(granted));
                                 }
                             }
-                            for (var registration : CombatAbilityReader.registrationsOf(printedAttack)) {
-                                if (registration.triggerMode()
-                                        == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT
-                                        && bundledEffects.remove(registration.effect())) {
-                                    abilities.add(List.of(registration.effect()));
-                                }
-                            }
+                            // Each printed attack ability is one object on the stack (CR 603.3).
+                            abilities.addAll(CombatAbilityReader.splitLaterAbilities(
+                                    printedAttack, bundledEffects, effect -> effect));
                             if (!bundledEffects.isEmpty()) {
                                 abilities.addFirst(bundledEffects);
                             }
@@ -1606,13 +1602,9 @@ public class CombatAttackService {
                                     abilities.add(List.of(granted));
                                 }
                             }
-                            for (var registration : CombatAbilityReader.registrationsOf(printedAttack)) {
-                                if (registration.triggerMode()
-                                        == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT
-                                        && bundledEffects.remove(registration.effect())) {
-                                    abilities.add(List.of(registration.effect()));
-                                }
-                            }
+                            // Each printed attack ability is one object on the stack (CR 603.3).
+                            abilities.addAll(CombatAbilityReader.splitLaterAbilities(
+                                    printedAttack, bundledEffects, effect -> effect));
                             if (!bundledEffects.isEmpty()) {
                                 abilities.addFirst(bundledEffects);
                             }
@@ -1906,8 +1898,13 @@ public class CombatAttackService {
         Trigger youAttack = CombatWatch.ON_ALLY_CREATURES_ATTACK.trigger();
         for (Permanent perm : battlefield) {
             List<CombatAbilityReader.CombatEffect> combinedEffects = new ArrayList<>();
-            for (var registration : CombatAbilityReader.read(
-                    WatchedAbilities.printed(perm.getCard(), CombatWatch.ON_ALLY_CREATURES_ATTACK), youAttack)) {
+            List<CombatAbilityReader.CombatEffect> printedYouAttack = CombatAbilityReader.read(
+                    WatchedAbilities.printed(perm.getCard(), CombatWatch.ON_ALLY_CREATURES_ATTACK), youAttack);
+            // Each printed ability is one object on the stack (CR 603.3): the first shares one with the granted ones.
+            TriggeredAbility firstYouAttackAbility = printedYouAttack.isEmpty() ? null
+                    : printedYouAttack.getFirst().ability();
+            List<CombatAbilityReader.CombatEffect> laterYouAttack = new ArrayList<>();
+            for (var registration : printedYouAttack) {
                 if (registration.effect() instanceof com.github.laxika.magicalvibes.model.effect.BoostCreaturesInAttackingBandsEffect) {
                     Map<UUID, List<UUID>> declaredBands = new java.util.LinkedHashMap<>();
                     for (int attackerIndex : attackerIndices) {
@@ -1925,17 +1922,19 @@ public class CombatAttackService {
                     }
                     continue;
                 }
-                if (registration.independent()) {
-                    attackTriggerSources.add(new AttackTriggerSource(perm,
-                            CombatWatch.ON_ALLY_CREATURES_ATTACK, List.of(registration)));
-                } else {
+                if (registration.ability() == firstYouAttackAbility) {
                     combinedEffects.add(registration);
+                } else {
+                    laterYouAttack.add(registration);
                 }
             }
             combinedEffects.addAll(CombatAbilityReader.read(grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, perm, youAttack), youAttack));
             if (!combinedEffects.isEmpty()) {
                 attackTriggerSources.add(new AttackTriggerSource(perm,
                         CombatWatch.ON_ALLY_CREATURES_ATTACK, combinedEffects));
+            }
+            for (List<CombatAbilityReader.CombatEffect> ability : CombatAbilityReader.byAbility(laterYouAttack)) {
+                attackTriggerSources.add(new AttackTriggerSource(perm, CombatWatch.ON_ALLY_CREATURES_ATTACK, ability));
             }
         }
         for (AttackTriggerSource triggerSource : attackTriggerSources) {
@@ -2496,6 +2495,13 @@ public class CombatAttackService {
                         && ce.condition() instanceof AttacksAlone ? ce.wrapped() : e);
                 matchingEffects.replaceAll(e -> e instanceof ConditionalEffect ce
                         && ce.condition() instanceof AttacksPlayerAlone ? ce.wrapped() : e);
+                // An intervening "if" inside the attacks-alone one ("attacks alone, if it's the first combat
+                // phase", Finest Hour) is judged once that one is taken off.
+                matchingEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.interveningIf()
+                        && !(ce.condition() instanceof AttacksPlayerAlone)
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(perm, playerId)));
 
                 if (matchingEffects.isEmpty()) continue;
 
@@ -2565,26 +2571,22 @@ public class CombatAttackService {
                     if (!mandatoryEffects.isEmpty()) {
                         List<CardEffect> bundledEffects = new ArrayList<>(mandatoryEffects);
                         List<List<CardEffect>> abilities = new ArrayList<>();
-                        for (var registration : CombatAbilityReader.read(
+                        // Each printed ability is one object on the stack (CR 603.3), its effects in the form
+                        // the collector bundled them, without the wrappers it judged.
+                        abilities.addAll(CombatAbilityReader.splitLaterAbilities(CombatAbilityReader.read(
                                 WatchedAbilities.printed(perm.getCard(), CombatWatch.ON_ALLY_CREATURE_ATTACKS),
-                                allyAttacks)) {
-                            if (!registration.independent()) {
-                                continue;
-                            }
-                            CardEffect registeredEffect = registration.effect();
+                                allyAttacks), bundledEffects, registeredEffect -> {
                             if (registeredEffect instanceof TriggeringCardConditionalEffect conditional) {
-                                registeredEffect = conditional.wrapped();
+                                return conditional.wrapped();
                             } else if (registeredEffect instanceof TriggeringPermanentConditionalEffect conditional) {
-                                registeredEffect = conditional.wrapped();
+                                return conditional.wrapped();
                             } else if (registeredEffect instanceof ConditionalEffect conditional
                                     && (conditional.condition() instanceof AttacksAlone
                                     || conditional.condition() instanceof AttacksPlayerAlone)) {
-                                registeredEffect = conditional.wrapped();
+                                return conditional.wrapped();
                             }
-                            if (bundledEffects.remove(registeredEffect)) {
-                                abilities.add(List.of(registeredEffect));
-                            }
-                        }
+                            return registeredEffect;
+                        }));
                         for (CardEffect grantedEffect : grantedAttackEffects) {
                             CardEffect unwrappedGranted = grantedEffect;
                             if (unwrappedGranted instanceof TriggeringCardConditionalEffect conditional) {
@@ -2890,17 +2892,16 @@ public class CombatAttackService {
                 try {
                     List<List<CardEffect>> abilities = new ArrayList<>();
                     List<CardEffect> bundledEffects = new ArrayList<>(attackedTriggerEffects);
+                    // Each printed ability is one object on the stack (CR 603.3).
+                    List<CombatAbilityReader.CombatEffect> printedAttacked = new ArrayList<>();
                     for (CombatWatch triggerSlot : List.of(CombatWatch.ON_CREATURE_ATTACKS_YOU,
                             CombatWatch.ON_CREATURE_ATTACKS_YOU_DIRECTLY,
                             CombatWatch.ON_CREATURE_ATTACKS_DEFENDING_PLAYER)) {
-                        for (var registration : CombatAbilityReader.read(
-                                WatchedAbilities.printed(perm.getCard(), triggerSlot), triggerSlot.trigger())) {
-                            if (registration.independent()
-                                    && bundledEffects.remove(registration.effect())) {
-                                abilities.add(List.of(registration.effect()));
-                            }
-                        }
+                        printedAttacked.addAll(CombatAbilityReader.read(
+                                WatchedAbilities.printed(perm.getCard(), triggerSlot), triggerSlot.trigger()));
                     }
+                    abilities.addAll(CombatAbilityReader.splitLaterAbilities(
+                            printedAttacked, bundledEffects, effect -> effect));
                     if (!bundledEffects.isEmpty()) abilities.addFirst(bundledEffects);
                     for (List<CardEffect> abilityEffects : abilities) {
                         StackEntry attackedTrigger = new StackEntry(
@@ -3341,20 +3342,13 @@ public class CombatAttackService {
                 try {
                     List<List<CardEffect>> triggerEffectGroups = new ArrayList<>();
                     List<CardEffect> bundledEffects = new ArrayList<>(playerAttackEffects);
-                    for (var registration : CombatAbilityReader.read(
+                    // Each printed ability is one object on the stack (CR 603.3), its effects in the form the
+                    // collector bundled them: with the condition it kept, or without the one it judged.
+                    triggerEffectGroups.addAll(CombatAbilityReader.splitLaterAbilities(CombatAbilityReader.read(
                             WatchedAbilities.printed(perm.getCard(), CombatWatch.ON_ANY_PLAYER_ATTACKS),
-                            CombatWatch.ON_ANY_PLAYER_ATTACKS.trigger())) {
-                        if (registration.independent()) {
-                            CardEffect registeredEffect = registration.effect();
-                            CardEffect resolvedEffect = registeredEffect instanceof ConditionalEffect conditional
-                                    ? conditional.wrapped() : registeredEffect;
-                            CardEffect bundledEffect = bundledEffects.contains(registeredEffect)
-                                    ? registeredEffect : resolvedEffect;
-                            if (bundledEffects.remove(bundledEffect)) {
-                                triggerEffectGroups.add(List.of(bundledEffect));
-                            }
-                        }
-                    }
+                            CombatWatch.ON_ANY_PLAYER_ATTACKS.trigger()), bundledEffects, registeredEffect ->
+                            bundledEffects.contains(registeredEffect) || !(registeredEffect instanceof ConditionalEffect conditional)
+                                    ? registeredEffect : conditional.wrapped()));
                     if (!bundledEffects.isEmpty()) {
                         triggerEffectGroups.addFirst(bundledEffects);
                     }

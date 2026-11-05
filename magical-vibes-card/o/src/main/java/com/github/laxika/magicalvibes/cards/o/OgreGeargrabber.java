@@ -27,8 +27,9 @@ public class OgreGeargrabber extends Card {
                 )),
                 "Target must be an Equipment an opponent controls"
         ))
-                .addTrigger(Triggers.attacks(), new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
-                .addTrigger(Triggers.attacks(), new RegisterControlLossUnattachTriggerEffect())
-                .addTrigger(Triggers.attacks(), new AttachTargetToSourcePermanentEffect());
+                .addTrigger(Triggers.attacks(),
+                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                        new RegisterControlLossUnattachTriggerEffect(),
+                        new AttachTargetToSourcePermanentEffect());
     }
 }

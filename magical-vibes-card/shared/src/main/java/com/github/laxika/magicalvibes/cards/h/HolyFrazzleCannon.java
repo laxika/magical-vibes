@@ -21,10 +21,9 @@ import java.util.List;
 public class HolyFrazzleCannon extends Card {
 
     public HolyFrazzleCannon() {
-        addTrigger(Triggers.attacks(),
-                new PutCounterOnReferencedPermanentEffect(
-                        PermanentReference.TRIGGERING, CounterType.PLUS_ONE_PLUS_ONE));
-        addTrigger(Triggers.attacks(), new PutCounterOnEachMatchingPermanentEffect(
+        addTrigger(Triggers.attacks(), new PutCounterOnReferencedPermanentEffect(
+                        PermanentReference.TRIGGERING, CounterType.PLUS_ONE_PLUS_ONE),
+                new PutCounterOnEachMatchingPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE,
                 1,
                 new PermanentAllOfPredicate(List.of(

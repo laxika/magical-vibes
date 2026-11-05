@@ -18,15 +18,18 @@ public class ManticoreOfTheGauntlet extends Card {
 
     public ManticoreOfTheGauntlet() {
         // "When this creature enters, put a -1/-1 counter on target creature you control."
-        target(TargetFilters.creatureYouControl()).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1));
+        var putCounterOnTargetPermanent = new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        target(TargetFilters.creatureYouControl()).bindEffect(putCounterOnTargetPermanent);
 
         // "This creature deals 3 damage to target opponent or planeswalker."
+        var dealDamageToTargetPlayerOrPlaneswalker = new DealDamageToTargetPlayerOrPlaneswalkerEffect(3, PlayerRelation.OPPONENT);
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentIsPlaneswalkerPredicate(),
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent or planeswalker"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToTargetPlayerOrPlaneswalkerEffect(3, PlayerRelation.OPPONENT));
+        )).bindEffect(dealDamageToTargetPlayerOrPlaneswalker);
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                putCounterOnTargetPermanent,
+                dealDamageToTargetPlayerOrPlaneswalker);
     }
 }

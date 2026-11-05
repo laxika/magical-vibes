@@ -28,8 +28,8 @@ public class Rumbleweed extends Card {
                 new CardsInGraveyard(new CardTypePredicate(CardType.LAND), CountScope.CONTROLLER)));
 
         PermanentPredicate otherCreature = new PermanentNotPredicate(new PermanentIsSourceCardPredicate());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostAllOwnCreaturesEffect(3, 3, otherCreature));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new BoostAllOwnCreaturesEffect(3, 3, otherCreature),
                 new GrantKeywordEffect(Set.of(Keyword.TRAMPLE), GrantScope.OWN_CREATURES, otherCreature));
     }
 }

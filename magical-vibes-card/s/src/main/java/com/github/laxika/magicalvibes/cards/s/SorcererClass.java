@@ -38,8 +38,9 @@ public class SorcererClass extends Card {
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(2));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DiscardEffect(2, DiscardRecipient.CONTROLLER));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new DrawCardEffect(2),
+                new DiscardEffect(2, DiscardRecipient.CONTROLLER));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

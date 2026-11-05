@@ -20,8 +20,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class FearOfMissingOut extends Card {
 
     public FearOfMissingOut() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DiscardEffect(1, DiscardRecipient.CONTROLLER));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new DiscardEffect(1, DiscardRecipient.CONTROLLER),
+                new DrawCardEffect());
         target(TargetFilters.creature()).addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withInterveningIf(new Delirium()).withLimit(TriggerLimit.ONCE_EACH_TURN),
                 SequenceEffect.of(new UntapPermanentsEffect(TapUntapScope.TARGET), new AdditionalCombatPhaseEffect(1)));

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreLifeThanController;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreCreatures;
@@ -24,11 +23,9 @@ public class LinvalaThePreserver extends Card {
 
     public LinvalaThePreserver() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                TriggerMode.INDEPENDENT,
                 TriggerOptions.DEFAULT.withInterveningIf(new AnOpponentHasMoreLifeThanController()),
                 new GainLifeEffect(5));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                TriggerMode.INDEPENDENT,
                 TriggerOptions.DEFAULT.withInterveningIf(new OpponentControlsMoreCreatures(1)),
                 new CreateTokenEffect(1, "Angel", 3, 3, CardColor.WHITE,
                         List.of(CardSubtype.ANGEL), Set.of(Keyword.FLYING), Set.of()));

@@ -17,8 +17,9 @@ public class JadziStewardOfFateOraclesGift extends Card {
         setBackFaceCard(new OraclesGift());
 
         addStaticEffect(new BecomePreparedEffect());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(2));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DiscardEffect(2, DiscardRecipient.CONTROLLER));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new DrawCardEffect(2),
+                new DiscardEffect(2, DiscardRecipient.CONTROLLER));
     }
 
     @Override

@@ -21,8 +21,8 @@ public class TurncoatKunoichi extends Card {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                         new NotCondition(new CastForAlternateCost()),
-                        new ExileTargetPermanentUntilSourceLeavesEffect()))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
+                        new ExileTargetPermanentUntilSourceLeavesEffect()),
+                        new ConditionalEffect(
                         new CastForAlternateCost(), new ExileTargetPermanentEffect()));
     }
 }

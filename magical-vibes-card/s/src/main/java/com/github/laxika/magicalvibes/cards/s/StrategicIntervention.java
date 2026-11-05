@@ -21,18 +21,17 @@ public class StrategicIntervention extends Card {
 
     public StrategicIntervention() {
         // Whenever a creature you control attacks alone, it gets +1/+1 until end of turn.
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
-                new BoostAllOwnCreaturesEffect(1, 1, new PermanentIsTriggeringPermanentPredicate()));
 
         // Tap up to one target creature defending player controls.
+        var tapPermanents = new TapPermanentsEffect(TapUntapScope.TARGET);
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentControlledByDefendingPlayerPredicate())),
                 "Target must be a creature defending player controls"), 0, 1)
-                .addTrigger(Triggers.creatureYouControlAttacks(),
-                        TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
-                        new TapPermanentsEffect(TapUntapScope.TARGET));
+                .bindEffect(tapPermanents);
+        addTrigger(Triggers.creatureYouControlAttacks(), TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                new BoostAllOwnCreaturesEffect(1, 1, new PermanentIsTriggeringPermanentPredicate()),
+                tapPermanents);
     }
 }

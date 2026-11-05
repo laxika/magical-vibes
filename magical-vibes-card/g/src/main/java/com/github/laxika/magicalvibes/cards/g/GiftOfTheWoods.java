@@ -20,12 +20,11 @@ public class GiftOfTheWoods extends Card {
         // Whenever enchanted creature blocks or becomes blocked, it gets +0/+3 until end of turn
         // and you gain 1 life. No "by a creature" clause, so it triggers once per combat event
         // regardless of how many creatures are involved.
-        addTrigger(Triggers.blocks(),
-                TriggerOptions.ONE_OR_MORE,
-                new BoostEquippedCreatureUntilEndOfTurnEffect(new Fixed(0), new Fixed(3)));
-        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, new GainLifeEffect(1));
+        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE,
+                new BoostEquippedCreatureUntilEndOfTurnEffect(new Fixed(0), new Fixed(3)),
+                new GainLifeEffect(1));
         addTrigger(Triggers.becomesBlocked(),
-                new BoostEquippedCreatureUntilEndOfTurnEffect(new Fixed(0), new Fixed(3)));
-        addTrigger(Triggers.becomesBlocked(), new GainLifeEffect(1));
+                new BoostEquippedCreatureUntilEndOfTurnEffect(new Fixed(0), new Fixed(3)),
+                new GainLifeEffect(1));
     }
 }

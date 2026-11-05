@@ -28,10 +28,10 @@ public class WallCrawl extends Card {
     public WallCrawl() {
         PermanentHasSubtypePredicate spiders = new PermanentHasSubtypePredicate(CardSubtype.SPIDER);
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
-                "Spider", 2, 1, CardColor.GREEN, List.of(CardSubtype.SPIDER),
-                Set.of(Keyword.REACH), Set.of()));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new CreateTokenEffect(
+                "Spider", 2, 1, CardColor.GREEN, List.of(CardSubtype.SPIDER),
+                Set.of(Keyword.REACH), Set.of()),
                 new GainLifeEffect(new PermanentCount(spiders, CountScope.CONTROLLER)));
         addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES, spiders));
         addStaticEffect(new GrantEffectEffect(

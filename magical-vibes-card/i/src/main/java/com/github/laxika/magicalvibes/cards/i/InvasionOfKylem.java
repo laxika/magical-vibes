@@ -20,8 +20,8 @@ public class InvasionOfKylem extends Card {
         setBackFaceCard(new ValorsReachTagTeam());
 
         target(TargetFilters.creature(), 0, 2)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(2, 0))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new BoostTargetCreatureEffect(2, 0),
                         new GrantKeywordEffect(Set.of(Keyword.VIGILANCE, Keyword.HASTE), GrantScope.TARGET));
     }
 

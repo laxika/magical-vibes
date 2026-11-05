@@ -20,11 +20,12 @@ public class HavocEater extends Card {
 
     public HavocEater() {
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
+        var goadTargetCreatureUntilNextTurn = new GoadTargetCreatureUntilNextTurnEffect();
         targetUpTo(new Sum(new PlayersInGame(), new Fixed(-1)),
                 TargetFilters.creatureAnOpponentControls(), 99)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GoadTargetCreatureUntilNextTurnEffect());
+                .bindEffect(goadTargetCreatureUntilNextTurn);
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                goadTargetCreatureUntilNextTurn,
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE,
                         new TotalPowerOfTargetGroup(0)));
     }

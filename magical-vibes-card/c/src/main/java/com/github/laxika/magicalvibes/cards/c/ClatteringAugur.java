@@ -23,8 +23,7 @@ public class ClatteringAugur extends Card {
         addStaticEffect(new CantBlockEffect());
 
         // When this creature enters, you draw a card and you lose 1 life.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new LoseLifeEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1), new LoseLifeEffect(1));
 
         // {2}{B}{B}: Return this card from your graveyard to your hand.
         addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(

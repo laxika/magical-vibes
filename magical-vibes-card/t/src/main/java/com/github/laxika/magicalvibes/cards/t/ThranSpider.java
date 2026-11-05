@@ -26,8 +26,7 @@ public class ThranSpider extends Card {
                 "Target must be an opponent"
         ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        CreateTokenEffect.ofPowerstoneToken(new Fixed(1)))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        CreateTokenEffect.ofPowerstoneToken(new Fixed(1)),
                         new CreateTokenForTargetPlayerEffect(
                                 CreateTokenEffect.ofPowerstoneToken(new Fixed(1))));
 

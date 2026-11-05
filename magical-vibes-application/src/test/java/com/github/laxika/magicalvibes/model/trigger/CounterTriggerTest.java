@@ -3,10 +3,8 @@ package com.github.laxika.magicalvibes.model.trigger;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
@@ -292,18 +290,5 @@ class CounterTriggerTest {
                 .containsExactly(DRAW);
         assertThat(card.getTriggerEffects(Triggers.timeCounterRemovedFromThisInExile(), Zone.BATTLEFIELD))
                 .isEmpty();
-    }
-
-    @Test
-    void aRegistrationKeepsItsTriggerMode() {
-        Card card = new Card();
-        card.addTrigger(Triggers.plusOneCountersPutOnThis(), TriggerMode.INDEPENDENT, DRAW);
-        card.addTrigger(Triggers.plusOneCountersPutOnThis(), GAIN);
-
-        assertThat(card.getTriggerEffectRegistrations(Triggers.plusOneCountersPutOnThis(), Zone.BATTLEFIELD))
-                .extracting(EffectRegistration::effect, EffectRegistration::triggerMode)
-                .containsExactly(
-                        tuple(DRAW, TriggerMode.INDEPENDENT),
-                        tuple(GAIN, TriggerMode.NORMAL));
     }
 }

@@ -35,7 +35,8 @@ public class KavLandseeker extends Card {
     );
 
     public KavLandseeker() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), LANDER);
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeCreatedPermanentsAtNextTurnEndStepEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                LANDER,
+                new SacrificeCreatedPermanentsAtNextTurnEndStepEffect());
     }
 }

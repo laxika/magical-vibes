@@ -16,8 +16,9 @@ import java.util.List;
 public class TheBelligerent extends Card {
 
     public TheBelligerent() {
-        addTrigger(Triggers.attacks(), CreateTokenEffect.ofTreasureToken(1));
-        addTrigger(Triggers.attacks(), new AllowPlayFromTopOfLibraryUntilEndOfTurnEffect());
+        addTrigger(Triggers.attacks(),
+                CreateTokenEffect.ofTreasureToken(1),
+                new AllowPlayFromTopOfLibraryUntilEndOfTurnEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

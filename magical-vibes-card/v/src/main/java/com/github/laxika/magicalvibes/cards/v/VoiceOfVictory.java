@@ -15,10 +15,11 @@ import java.util.List;
 public class VoiceOfVictory extends Card {
 
     public VoiceOfVictory() {
-        addTrigger(Triggers.attacks(), new CreateTokenEffect(
+        addTrigger(Triggers.attacks(),
+                new CreateTokenEffect(
                 2, "Warrior", 1, 1, CardColor.RED, List.of(CardSubtype.WARRIOR), true
-        ));
-        addTrigger(Triggers.attacks(), new SacrificeCreatedPermanentsAtEndStepEffect());
+        ),
+                new SacrificeCreatedPermanentsAtEndStepEffect());
         addStaticEffect(new OpponentsCantCastOrActivateDuringYourTurnEffect(false));
     }
 }

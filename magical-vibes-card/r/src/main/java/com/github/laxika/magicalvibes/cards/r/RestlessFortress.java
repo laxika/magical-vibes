@@ -38,7 +38,8 @@ public class RestlessFortress extends Card {
                 "{2}{W}{B}: This land becomes a 1/4 white and black Nightmare creature until end of turn. "
                         + "It's still a land."
         ));
-        addTrigger(Triggers.attacks(), new LoseLifeEffect(2, LoseLifeRecipient.DEFENDING_PLAYER));
-        addTrigger(Triggers.attacks(), new GainLifeEffect(2));
+        addTrigger(Triggers.attacks(),
+                new LoseLifeEffect(2, LoseLifeRecipient.DEFENDING_PLAYER),
+                new GainLifeEffect(2));
     }
 }

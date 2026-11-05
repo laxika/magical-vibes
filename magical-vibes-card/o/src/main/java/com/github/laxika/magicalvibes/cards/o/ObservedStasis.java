@@ -25,9 +25,8 @@ public class ObservedStasis extends Card {
 
     public ObservedStasis() {
         target(TargetFilters.creatureAnOpponentControls())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new RemoveReferencedPermanentFromCombatEffect(PermanentReference.ATTACHED))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(new PermanentCount(
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new RemoveReferencedPermanentFromCombatEffect(PermanentReference.ATTACHED),
+                        new DrawCardEffect(new PermanentCount(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentIsTappedPredicate()

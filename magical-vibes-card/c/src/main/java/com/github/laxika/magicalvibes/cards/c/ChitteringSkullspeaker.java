@@ -16,9 +16,9 @@ public class ChitteringSkullspeaker extends Card {
     private static final String CARD_NAME = "Chittering Skullspeaker";
 
     public ChitteringSkullspeaker() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new IntensifyNamedCardsEffect(CARD_NAME));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(new SourceIntensity()));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new IntensifyNamedCardsEffect(CARD_NAME),
+                new DrawCardEffect(new SourceIntensity()),
                 new LoseLifeEffect(new SourceIntensity(), LoseLifeRecipient.CONTROLLER));
     }
 }

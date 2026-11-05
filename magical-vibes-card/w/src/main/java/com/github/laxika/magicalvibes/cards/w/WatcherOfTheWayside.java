@@ -15,10 +15,11 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class WatcherOfTheWayside extends Card {
 
     public WatcherOfTheWayside() {
+        var mill = new MillEffect(2, MillRecipient.TARGET_PLAYER);
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(2, MillRecipient.TARGET_PLAYER));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2));
+        )).bindEffect(mill);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), mill, new GainLifeEffect(2));
     }
 }

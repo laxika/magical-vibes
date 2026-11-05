@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.amount.ControllerExperienceCounters;
 import com.github.laxika.magicalvibes.model.amount.PlayersWhoDiscardedThisTurn;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
@@ -26,9 +25,9 @@ import java.util.List;
 public class AzulaRuthlessFirebender extends Card {
 
     public AzulaRuthlessFirebender() {
-        addTrigger(Triggers.attacks(), TriggerMode.INDEPENDENT,
+        addTrigger(Triggers.attacks(),
                 new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 1));
-        addTrigger(Triggers.attacks(), TriggerMode.INDEPENDENT, SequenceEffect.of(
+        addTrigger(Triggers.attacks(), SequenceEffect.of(
                 new MayEffect(new DiscardEffect(1, DiscardRecipient.CONTROLLER),
                         "Discard a card?"),
                 new ExperienceCountersEffect(new PlayersWhoDiscardedThisTurn())));

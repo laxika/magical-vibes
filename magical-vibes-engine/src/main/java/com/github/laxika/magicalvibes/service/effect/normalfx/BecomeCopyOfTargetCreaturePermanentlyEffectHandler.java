@@ -86,7 +86,7 @@ public class BecomeCopyOfTargetCreaturePermanentlyEffectHandler implements Norma
         }
         if (retainedRegistration != null) {
             EffectSlot slot = ((LegacySlotTrigger) copyEffect.retainedTrigger()).slot();
-            source.getCard().addEffect(slot, retainedRegistration.effect(), retainedRegistration.triggerMode());
+            source.getCard().addEffect(slot, retainedRegistration.effect());
         }
         if (retainedAbility != null) {
             source.getCard().addTriggeredAbility(retainedAbility);

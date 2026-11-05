@@ -24,8 +24,8 @@ public class BelakorTheDarkMaster extends Card {
     public BelakorTheDarkMaster() {
         PermanentCount demons = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.DEMON), CountScope.CONTROLLER);
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(demons));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new DrawCardEffect(demons),
                 new LoseLifeEffect(demons, LoseLifeRecipient.CONTROLLER));
 
         addTrigger(Triggers.enters(

@@ -14,8 +14,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class OrcishBowmasters extends Card {
 
     public OrcishBowmasters() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(1));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new AmassGoblinsEffect(1, CardSubtype.ORC));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new DealDamageToAnyTargetEffect(1),
+                new AmassGoblinsEffect(1, CardSubtype.ORC));
         addTrigger(Triggers.opponentDrawsCardExceptFirstInDrawStep(),
                 SequenceEffect.of(
                         new DealDamageToAnyTargetEffect(1),

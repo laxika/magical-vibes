@@ -16,8 +16,8 @@ public class SphinxOfLostTruths extends Card {
 
     public SphinxOfLostTruths() {
         addStaticEffect(new KickerEffect("{1}{U}"));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(3));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(3),
+                new ConditionalEffect(
                 new NotKicked(), new DiscardEffect(3, DiscardRecipient.CONTROLLER)));
     }
 }

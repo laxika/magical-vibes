@@ -26,8 +26,8 @@ public class InnerFlameAcolyte extends Card {
 
         // When this creature enters, target creature gets +2/+0 and gains haste until end of turn.
         target(TargetFilters.creature())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(2, 0))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new BoostTargetCreatureEffect(2, 0),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
 
         // Evoke sacrifice: if it was cast for its evoke cost, sacrifice it as it enters.

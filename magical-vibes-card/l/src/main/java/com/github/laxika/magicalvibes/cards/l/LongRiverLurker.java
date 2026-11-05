@@ -33,8 +33,8 @@ public class LongRiverLurker extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.FROG)));
 
         target(TargetFilters.creatureYouControl())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new MakeCreatureUnblockableEffect())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new MakeCreatureUnblockableEffect(),
                         new RegisterDelayedWatchedCreaturesCombatDamageEffect(
                                 List.of(new MayEffect(
                                         new FlickerEffect(

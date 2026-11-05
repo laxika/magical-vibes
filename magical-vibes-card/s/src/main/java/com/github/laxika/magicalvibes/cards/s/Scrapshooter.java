@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.GiftPromised;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOtherPlayerDrawsCardEffect;
@@ -27,7 +26,6 @@ public class Scrapshooter extends Card {
     public Scrapshooter() {
         addStaticEffect(new GiftEffect(0));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                TriggerMode.INDEPENDENT,
                 TriggerOptions.DEFAULT.withInterveningIf(new GiftPromised()),
                 new EachOtherPlayerDrawsCardEffect(1));
 

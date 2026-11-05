@@ -50,7 +50,6 @@ public class RestlessCottage extends Card {
                 "{2}{B}{G}: This land becomes a 4/4 black and green Horror creature until end of turn. "
                         + "It's still a land."
         ));
-        addTrigger(Triggers.attacks(), FOOD_TOKEN);
-        addTrigger(Triggers.attacks(), new ExileCardsFromGraveyardEffect(1, 0));
+        addTrigger(Triggers.attacks(), FOOD_TOKEN, new ExileCardsFromGraveyardEffect(1, 0));
     }
 }

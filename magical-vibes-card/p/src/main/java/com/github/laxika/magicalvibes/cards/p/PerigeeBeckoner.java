@@ -32,8 +32,8 @@ public class PerigeeBeckoner extends Card {
                 )),
                 "Target must be another creature you control"
         ))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(2, 0))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new GrantEffectToTargetUntilEndOfTurnEffect(
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(2, 0),
+                        new GrantEffectToTargetUntilEndOfTurnEffect(
                         new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
                         new ReturnSourceCardFromGraveyardToBattlefieldEffect(true))));
     }

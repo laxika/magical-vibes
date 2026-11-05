@@ -12,9 +12,11 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class FoodComa extends Card {
 
     public FoodComa() {
+        var exileTargetPermanentUntilSourceLeaves = new ExileTargetPermanentUntilSourceLeavesEffect();
         target(TargetFilters.creatureAnOpponentControls())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new ExileTargetPermanentUntilSourceLeavesEffect());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.ofFoodToken(1));
+                .bindEffect(exileTargetPermanentUntilSourceLeaves);
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                exileTargetPermanentUntilSourceLeaves,
+                CreateTokenEffect.ofFoodToken(1));
     }
 }

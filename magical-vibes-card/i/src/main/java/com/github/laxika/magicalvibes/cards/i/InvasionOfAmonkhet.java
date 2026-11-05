@@ -17,11 +17,11 @@ public class InvasionOfAmonkhet extends Card {
     public InvasionOfAmonkhet() {
         setBackFaceCard(new LazotepConvert());
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(3, MillRecipient.CONTROLLER));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(3, MillRecipient.EACH_OPPONENT));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1));
+                new MillEffect(3, MillRecipient.CONTROLLER),
+                new MillEffect(3, MillRecipient.EACH_OPPONENT),
+                new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT),
+                new DrawCardEffect(1));
     }
 
     @Override

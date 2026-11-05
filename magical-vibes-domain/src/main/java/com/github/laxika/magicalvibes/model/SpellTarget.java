@@ -143,46 +143,12 @@ public final class SpellTarget {
     }
 
     /**
-     * Adds a triggered ability whose registrations carry {@code triggerMode} ({@link Card#addTrigger(Trigger,
-     * TriggerMode, CardEffect...)}) and binds the effects to this group.
-     */
-    public SpellTarget addTrigger(Trigger trigger, TriggerMode triggerMode, CardEffect... effects) {
-        card.addTrigger(trigger, triggerMode, effects);
-        for (CardEffect effect : effects) {
-            card.registerEffectTargetIndex(effect, this.index);
-        }
-        return this;
-    }
-
-    /**
-     * Adds a triggered ability whose registrations carry {@code triggerMode}, with {@code options}
-     * ({@link Card#addTrigger(Trigger, TriggerMode, TriggerOptions, CardEffect...)}), and binds the effects to this
-     * group.
-     */
-    public SpellTarget addTrigger(Trigger trigger, TriggerMode triggerMode, TriggerOptions options,
-                                  CardEffect... effects) {
-        card.addTrigger(trigger, triggerMode, options, effects);
-        for (CardEffect effect : effects) {
-            card.registerEffectTargetIndex(effect, this.index);
-        }
-        return this;
-    }
-
-    /**
-     * Binds an effect that is already registered through another target group to this group as well,
-     * so one effect instance resolves against the targets of several groups at once (Don and Leo
-     * exiles its artifact and creature targets together before returning them).
+     * Binds {@code effect} to this group: an effect of an ability whose effects target through different groups or
+     * none, added with the ability on the card ("when this creature enters, target player mills two cards. You gain
+     * 2 life"), or one already registered through another group, so one effect instance resolves against the targets
+     * of several groups at once (Don and Leo exiles its artifact and creature targets together before returning them).
      */
     public SpellTarget bindEffect(CardEffect effect) {
-        card.registerEffectTargetIndex(effect, this.index);
-        return this;
-    }
-
-    /**
-     * Adds an effect with a specific trigger mode to this target group.
-     */
-    public SpellTarget addEffect(EffectSlot slot, CardEffect effect, TriggerMode triggerMode) {
-        card.addEffect(slot, effect, triggerMode);
         card.registerEffectTargetIndex(effect, this.index);
         return this;
     }

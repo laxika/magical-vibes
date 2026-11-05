@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class EliteGuardmage extends Card {
 
     public EliteGuardmage() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(3));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(3), new DrawCardEffect(1));
     }
 }

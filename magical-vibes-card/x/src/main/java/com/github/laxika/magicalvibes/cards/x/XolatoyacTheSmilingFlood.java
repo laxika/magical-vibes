@@ -24,10 +24,8 @@ public class XolatoyacTheSmilingFlood extends Card {
                 CardSubtype.ISLAND, CounterType.FLOOD);
 
         target(TargetFilters.land())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), putFloodCounter)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), grantIsland)
-                .addTrigger(Triggers.attacks(), putFloodCounter)
-                .addTrigger(Triggers.attacks(), grantIsland);
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), putFloodCounter, grantIsland)
+                .addTrigger(Triggers.attacks(), putFloodCounter, grantIsland);
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new UntapPermanentsEffect(

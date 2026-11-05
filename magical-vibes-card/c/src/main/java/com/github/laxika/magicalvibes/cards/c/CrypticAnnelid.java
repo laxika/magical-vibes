@@ -12,8 +12,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class CrypticAnnelid extends Card {
 
     public CrypticAnnelid() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(1));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(2));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(3));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(1), new ScryEffect(2), new ScryEffect(3));
     }
 }

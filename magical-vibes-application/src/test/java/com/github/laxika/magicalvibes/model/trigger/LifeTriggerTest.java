@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
@@ -271,9 +270,6 @@ class LifeTriggerTest {
                         new TriggerCondition(Triggers.youGainLife().firstTimeEachTurn())), TriggerOptions.DEFAULT,
                 List.of(new EffectRegistration(DRAW))), Triggers.youGainLife()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> LifeAbilityReader.read(new TriggeredAbility(Triggers.youGainLife(),
-                TriggerOptions.DEFAULT, List.of(new EffectRegistration(DRAW, TriggerMode.INDEPENDENT))),
-                Triggers.youGainLife())).isInstanceOf(IllegalStateException.class);
     }
 
     private static List<LifeAbilityReader.LifeEffect> read(LifeTrigger trigger, TriggerOptions options,

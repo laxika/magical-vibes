@@ -29,12 +29,8 @@ public class KeldonOverseer extends Card {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
-                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
+                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                        new UntapPermanentsEffect(TapUntapScope.TARGET),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
     }
 }

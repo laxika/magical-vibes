@@ -390,27 +390,29 @@ public class EtbTriggerService {
                 .areOpponentPermanentETBTriggersSuppressed(gameData, controllerId);
         int extraEtbTriggers = gameQueryService.countETBExtraTriggers(gameData, controllerId, controllerId, card);
 
-        // Each "when this enters" ability is judged as a whole: "triggers only once each turn" (MACH-1, Oasis of
-        // Renewal) is read from the ability and marked by its key, which the ability's other conditions share.
-        List<CardEffect> triggeredEffects = new ArrayList<>();
-        List<TriggeredAbility> limitedAbilities = new ArrayList<>();
+        // Each "when this enters" ability is one object on the stack (CR 603.3), judged as a whole: "triggers only
+        // once each turn" (MACH-1, Oasis of Renewal) is read from the ability and marked by its key, which the
+        // ability's other conditions share. The card's printed abilities come first, then the granted ones, each
+        // ability's effects in the form TriggeredAbility.ownEntryEffects() gives.
+        List<OwnEntryAbility> printedAbilities = new ArrayList<>();
         if (!enteringPermanentTriggersSuppressed && !printedAbilitiesRemoved) {
             for (TriggeredAbility ability : card.getOwnEntryAbilities()) {
-                if (ownEntryLimitAvailable(gameData, enteringPermanent, ability, limitedAbilities)) {
-                    for (EffectRegistration registration : card.getOwnEntryEffectRegistrations(ability)) {
-                        triggeredEffects.add(registration.effect());
-                    }
+                if (ownEntryLimitAvailable(gameData, enteringPermanent, ability)) {
+                    printedAbilities.add(new OwnEntryAbility(ability, card.getOwnEntryEffectRegistrations(ability)
+                            .stream().map(EffectRegistration::effect).toList()));
                 }
             }
         }
-        List<CardEffect> independentlyGrantedEffects = new ArrayList<>();
+        List<OwnEntryAbility> grantedAbilities = new ArrayList<>();
         if (!enteringPermanentTriggersSuppressed && enteringPermanent != null) {
-            addGrantedOwnEntryEffects(gameData, enteringPermanent, enteringPermanent.getGrantedOwnEntryAbilities(),
-                    limitedAbilities, independentlyGrantedEffects);
+            addGrantedOwnEntryAbilities(gameData, enteringPermanent, enteringPermanent.getGrantedOwnEntryAbilities(),
+                    grantedAbilities);
         }
         if (!enteringPermanentTriggersSuppressed && !printedAbilitiesRemoved) {
-            independentlyGrantedEffects.addAll(gameData.perpetualEnterEffectsByCardId
-                    .getOrDefault(card.getId(), List.of()));
+            // A perpetual "when this enters" grant is an ability of its own.
+            for (CardEffect effect : gameData.perpetualEnterEffectsByCardId.getOrDefault(card.getId(), List.of())) {
+                grantedAbilities.add(new OwnEntryAbility(null, List.of(effect)));
+            }
         }
         int additionalElementalTriggers = enteringPermanent == null ? 0
                 : gameQueryService.countAdditionalTriggeredAbilityTriggers(
@@ -419,20 +421,14 @@ public class EtbTriggerService {
         if (!enteringPermanentTriggersSuppressed && battlefield != null) {
             for (Permanent permanent : battlefield) {
                 if (permanent.getCard() == card) {
-                    addGrantedOwnEntryEffects(gameData, enteringPermanent,
+                    addGrantedOwnEntryAbilities(gameData, enteringPermanent,
                             triggerCollectionService.grantedOwnEntryAbilities(gameData, permanent),
-                            limitedAbilities, independentlyGrantedEffects);
+                            grantedAbilities);
                     break;
                 }
             }
         }
-        triggeredEffects.addAll(independentlyGrantedEffects);
-        if (!triggeredEffects.isEmpty()) {
-            if (triggeredEffects.isEmpty()) {
-                processCreatureEntersTriggers(gameData, controllerId, card, extraEtbTriggers, false);
-                return;
-            }
-
+        if (!printedAbilities.isEmpty() || !grantedAbilities.isEmpty()) {
             // A modal ETB on a permanent that was not cast has no cast-time mode; its mode is chosen
             // when the trigger is put on the stack (CR 603.3c), so it takes the trigger-time path.
             // A mandatory exact choose-one ETB on a cast creature whose spell declared no mode
@@ -440,116 +436,72 @@ public class EtbTriggerService {
             boolean modeNotDeclaredAtCast = wasCastFromHand && etbMode < 0;
             if ((!wasCastFromHand && enteringPermanent != null && !enteringPermanent.isCast())
                     || modeNotDeclaredAtCast) {
-                triggeredEffects = triggeredEffects.stream()
-                        .map(e -> e instanceof ChooseOneEffect coe && coe.choicesRequired() <= 1
+                java.util.function.UnaryOperator<CardEffect> toTriggerTime = e ->
+                        e instanceof ChooseOneEffect coe && coe.choicesRequired() <= 1
                                 && (!modeNotDeclaredAtCast || (!coe.optional() && coe.choicesMax() <= 1))
-                                ? new ChooseOneAtTriggerTimeEffect(coe) : e)
-                        .toList();
+                                ? new ChooseOneAtTriggerTimeEffect(coe) : e;
+                printedAbilities.replaceAll(ability -> ability.map(toTriggerTime));
+                grantedAbilities.replaceAll(ability -> ability.map(toTriggerTime));
             }
 
-            // Extract per-mode targetFilter from ChooseOneEffect (if present)
+            // The per-mode targetFilter of a cast-time ChooseOneEffect, for the ability that has it.
             TargetFilter modeTargetFilter = null;
-            for (CardEffect e : triggeredEffects) {
-                if (e instanceof ChooseOneEffect coe) {
-                    int idx = (etbMode >= 0 && etbMode < coe.options().size()) ? etbMode : 0;
-                    modeTargetFilter = coe.options().get(idx).targetFilter();
-                    break;
+            OwnEntryAbility modalAbility = null;
+            for (OwnEntryAbility ability : concat(printedAbilities, grantedAbilities)) {
+                for (CardEffect e : ability.effects()) {
+                    if (modalAbility == null && e instanceof ChooseOneEffect coe) {
+                        int idx = (etbMode >= 0 && etbMode < coe.options().size()) ? etbMode : 0;
+                        modeTargetFilter = coe.options().get(idx).targetFilter();
+                        modalAbility = ability;
+                    }
                 }
             }
 
-            List<CardEffect> mayEffects = triggeredEffects.stream().filter(e -> e instanceof MayEffect).toList();
-            List<ChooseOneAtTriggerTimeEffect> triggerTimeChoices = triggeredEffects.stream()
+            // An ability that is one "you may" goes through the may paths, which ask before it targets nothing
+            // (CR 603.3d); a "you may" among an ability's other effects is asked as that ability resolves (CR 603.5).
+            List<CardEffect> mayEffects = concat(printedAbilities, grantedAbilities).stream()
+                    .filter(ability -> ability.effects().size() == 1
+                            && ability.effects().getFirst() instanceof MayEffect)
+                    .map(ability -> ability.effects().getFirst())
+                    .toList();
+            List<ChooseOneAtTriggerTimeEffect> triggerTimeChoices = concat(printedAbilities, grantedAbilities)
+                    .stream().flatMap(ability -> ability.effects().stream())
                     .filter(ChooseOneAtTriggerTimeEffect.class::isInstance)
                     .map(ChooseOneAtTriggerTimeEffect.class::cast)
                     .toList();
             // Evoke sacrifice gate (CR 603.4): read the just-entered permanent's evoked flag, which
             // was stamped from the spell's cast context at resolution time.
-            List<Permanent> evokeBf = gameData.playerBattlefields.get(controllerId);
             boolean evoked = enteringPermanent != null && enteringPermanent.isEvoked();
+            boolean hasEvokeSacrifice = printedAbilities.stream().flatMap(ability -> ability.effects().stream())
+                    .anyMatch(com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect.class::isInstance);
             // Prowl gate (CR 603.4): read the just-entered permanent's prowl flag, stamped from the
             // spell's cast context at resolution time.
             boolean prowl = enteringPermanent != null && enteringPermanent.isProwl();
             boolean madness = enteringPermanent != null && enteringPermanent.isMadness();
             boolean alternateCost = enteringPermanent != null && enteringPermanent.isAlternateCost();
             // Resolve each mandatory effect into its trigger-time form: modal unwrap, value
-            // materialisation, and intervening-if gating (CR 603.4) — a null result drops the trigger.
+            // materialisation, and intervening-if gating (CR 603.4) — a null result drops the effect, and an
+            // ability with no effect left doesn't trigger.
             EtbEffectContext etbCtx = new EtbEffectContext(gameData, card, controllerId, wasCastFromHand, etbMode,
                     kicked, evoked, prowl, madness, alternateCost, enteringPermanent, repeatedAdditionalCosts,
                     targetId, xValue);
-            List<CardEffect> mandatoryEffects = triggeredEffects.stream()
-                    .filter(e -> !(e instanceof MayEffect))
-                    .filter(e -> !(e instanceof ChooseOneAtTriggerTimeEffect))
-                    .filter(e -> !(e instanceof com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect))
-                    .map(e -> e instanceof ChooseOneEffect chooseOne && chooseOne.choicesRequired() > 1
-                            ? e : etbEffectResolver.resolve(etbCtx, e))
-                    .filter(Objects::nonNull)
-                    .toList();
-
             UUID triggerSourcePermanentId = enteringPermanent != null ? enteringPermanent.getId() : null;
-            List<CardEffect> independentEffects = new ArrayList<>(card.getOwnEntryEffectRegistrations().stream()
-                    .filter(registration -> registration.triggerMode() == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT)
-                    .filter(registration -> !(registration.effect() instanceof MayEffect))
-                    .filter(registration -> !(registration.effect() instanceof ChooseOneAtTriggerTimeEffect))
-                    .filter(registration -> !(registration.effect() instanceof com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect))
-                    .map(registration -> etbEffectResolver.resolve(etbCtx, registration.effect()))
-                    .filter(Objects::nonNull).toList());
-            independentlyGrantedEffects.stream()
-                    .filter(effect -> !(effect instanceof MayEffect))
-                    .filter(effect -> !(effect instanceof ChooseOneAtTriggerTimeEffect))
-                    .map(effect -> etbEffectResolver.resolve(etbCtx, effect))
-                    .filter(Objects::nonNull)
-                    .forEach(independentEffects::add);
-            if (!independentEffects.isEmpty()) {
-                List<CardEffect> combinedEffects = new ArrayList<>(mandatoryEffects);
-                independentEffects.forEach(combinedEffects::remove);
-                mandatoryEffects = List.copyOf(combinedEffects);
-                for (CardEffect independentEffect : independentEffects) {
-                    int independentGroup = card.getEffectTargetIndex(independentEffect);
-                    TargetFilter independentFilter = modeTargetFilter;
-                    List<UUID> independentTargets = targetIds;
-                    if (independentGroup < 0 && com.github.laxika.magicalvibes.model.effect.TargetSpec.NONE
-                            .equals(independentEffect.targetSpec())) {
-                        // An ability that declares no target of its own (a second, separate "when this
-                        // enters" ability) never inherits another ability's target, so losing that
-                        // target cannot make it fizzle.
-                        independentFilter = null;
-                        independentTargets = List.of();
-                    } else if (independentGroup >= 0) {
-                        int offset = 0;
-                        independentTargets = List.of();
-                        for (TargetGroup group : card.getTargetGroups()) {
-                            int maximum = kicked ? group.getKickedMaxTargets() : group.getMaxTargets();
-                            if (group.getDynamicMaxTargets() != null) {
-                                maximum = amountEvaluationService.evaluate(gameData, group.getDynamicMaxTargets(),
-                                        new AmountContext(controllerId, enteringPermanent, null, xValue, 0, false,
-                                                null, repeatedAdditionalCosts == null ? List.of() : repeatedAdditionalCosts,
-                                                card));
-                            }
-                            if (group.isXScaled()) maximum = Math.min(maximum, xValue);
-                            int size = Math.min(Math.max(0, maximum), targetIds.size() - offset);
-                            if (group.getIndex() == independentGroup) {
-                                independentFilter = kicked ? group.getKickedFilter() : group.getFilter();
-                                independentTargets = List.copyOf(targetIds.subList(offset, offset + size));
-                                break;
-                            }
-                            offset += size;
-                        }
-                    }
-                    if (independentFilter == null
-                            && independentEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
-                        independentFilter = new com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter(
-                                new com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate(),
-                                "Target must satisfy this ability's restrictions");
-                    }
-                    UUID independentTargetId = independentTargets.isEmpty()
-                            ? independentGroup == 0 || (independentGroup < 0 && !com.github.laxika.magicalvibes.model.effect.TargetSpec.NONE.equals(independentEffect.targetSpec())) ? targetId : null : independentTargets.getFirst();
-                    queueMandatoryETBEffects(gameData, controllerId, card, independentTargetId, independentTargets,
-                            List.of(independentEffect), independentFilter, extraTriggerCopies, etbMode, xValue,
-                            repeatedAdditionalCosts, convokeCreatureIds);
+            List<OwnEntryAbility> triggered = new ArrayList<>();
+            List<CardEffect> grantedMandatoryEffects = new ArrayList<>();
+            // The granted abilities, each an object of its own with its own targets.
+            for (OwnEntryAbility ability : grantedAbilities) {
+                List<CardEffect> abilityEffects = mandatoryEffects(etbCtx, ability.effects());
+                grantedMandatoryEffects.addAll(abilityEffects);
+                if (!abilityEffects.isEmpty() || ability.triggersWithoutMandatoryEffects()) {
+                    triggered.add(ability);
+                }
+                if (!abilityEffects.isEmpty()) {
+                    queueSeparateOwnEntryAbility(gameData, controllerId, card, targetId, targetIds, abilityEffects,
+                            ability == modalAbility ? modeTargetFilter : null, extraTriggerCopies, etbMode, xValue,
+                            kicked, enteringPermanent, repeatedAdditionalCosts, convokeCreatureIds);
                 }
             }
-            if (evoked && triggeredEffects.stream().anyMatch(
-                    com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect.class::isInstance)) {
+            if (evoked && hasEvokeSacrifice) {
                 queueMandatoryETBEffects(gameData, controllerId, card, null, List.of(),
                         List.of(new com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect(true)),
                         null, extraTriggerCopies, etbMode, xValue, repeatedAdditionalCosts, convokeCreatureIds);
@@ -654,12 +606,12 @@ public class EtbTriggerService {
                         || mayTargetSpec.admits(TargetPredicate.Kind.SPELL)
                         || mayTargetSpec.admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
                     queueMandatoryETBEffects(gameData, controllerId, card, targetId, targetIds,
-                            List.of(may), modeTargetFilter, extraTriggerCopies, etbMode, xValue,
+                            List.of(may), null, extraTriggerCopies, etbMode, xValue,
                             repeatedAdditionalCosts, convokeCreatureIds);
                     continue;
                 }
                 queueMandatoryETBEffects(gameData, controllerId, card, targetId, targetIds,
-                        List.of(may), modeTargetFilter, extraTriggerCopies, etbMode, xValue,
+                        List.of(may), null, extraTriggerCopies, etbMode, xValue,
                         repeatedAdditionalCosts, convokeCreatureIds);
             }
 
@@ -671,23 +623,45 @@ public class EtbTriggerService {
                 triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
             }
 
-            if (!mandatoryEffects.isEmpty()) {
-                // A separate "when this enters" ability that declares no target of its own never inherits the
-                // target another ability of the card chose, so losing that target cannot make it fizzle.
-                boolean mandatoryDeclaresNoTarget = independentEffects.stream().anyMatch(effect ->
-                        card.getEffectTargetIndex(effect) >= 0
-                                || !com.github.laxika.magicalvibes.model.effect.TargetSpec.NONE.equals(effect.targetSpec()))
-                        && mandatoryEffects.stream().allMatch(effect -> card.getEffectTargetIndex(effect) < 0
-                        && com.github.laxika.magicalvibes.model.effect.TargetSpec.NONE.equals(effect.targetSpec()));
+
+            List<OwnEntryAbility> printedMandatory = new ArrayList<>();
+            for (OwnEntryAbility ability : printedAbilities) {
+                List<CardEffect> abilityEffects = mandatoryEffects(etbCtx, ability.effects());
+                if (!abilityEffects.isEmpty() || ability.triggersWithoutMandatoryEffects()) {
+                    triggered.add(ability);
+                }
+                if (!abilityEffects.isEmpty()) {
+                    printedMandatory.add(new OwnEntryAbility(ability.ability(), abilityEffects,
+                            ability == modalAbility));
+                }
+            }
+            if (printedMandatory.size() == 1) {
+                // The card's one ability takes the targets the entering event supplied. It never inherits a target
+                // a granted ability declares, so losing that target cannot make it fizzle.
+                List<CardEffect> abilityEffects = printedMandatory.getFirst().effects();
+                boolean declaresNoTarget = grantedMandatoryEffects.stream()
+                        .anyMatch(effect -> declaresTarget(card, effect))
+                        && abilityEffects.stream().noneMatch(effect -> declaresTarget(card, effect));
                 queueMandatoryETBEffects(gameData, controllerId, card,
-                        mandatoryDeclaresNoTarget ? null : targetId,
-                        mandatoryDeclaresNoTarget ? List.of() : targetIds,
-                        mandatoryEffects, mandatoryDeclaresNoTarget ? null : modeTargetFilter,
+                        declaresNoTarget ? null : targetId,
+                        declaresNoTarget ? List.of() : targetIds,
+                        abilityEffects,
+                        declaresNoTarget || !printedMandatory.getFirst().modal() ? null : modeTargetFilter,
                         extraTriggerCopies, etbMode, xValue, repeatedAdditionalCosts, convokeCreatureIds);
-                if (enteringPermanent != null) {
-                    for (TriggeredAbility limited : limitedAbilities) {
-                        TriggeredAbilityStackService.markLimit(gameData, limited.options().limit(),
-                                enteringPermanent.getId(), limited.limitKey());
+            } else {
+                // In the order the card prints them, as the trigger pipeline puts a source's abilities on the stack;
+                // their controller orders them (CR 603.3b).
+                for (OwnEntryAbility ability : printedMandatory) {
+                    queueSeparateOwnEntryAbility(gameData, controllerId, card, targetId, targetIds,
+                            ability.effects(), ability.modal() ? modeTargetFilter : null, extraTriggerCopies,
+                            etbMode, xValue, kicked, enteringPermanent, repeatedAdditionalCosts, convokeCreatureIds);
+                }
+            }
+            if (enteringPermanent != null) {
+                for (OwnEntryAbility ability : triggered) {
+                    if (ability.ability() != null && ability.ability().options().limit() != TriggerLimit.NONE) {
+                        TriggeredAbilityStackService.markLimit(gameData, ability.ability().options().limit(),
+                                enteringPermanent.getId(), ability.ability().limitKey());
                     }
                 }
             }
@@ -697,36 +671,140 @@ public class EtbTriggerService {
     }
 
     /**
+     * One "when this enters" ability as the collector reads it: the ability ({@code null} for a perpetual grant,
+     * which is only its effect), its effects, and whether it is the ability whose cast-time mode chose the target
+     * filter.
+     */
+    private record OwnEntryAbility(TriggeredAbility ability, List<CardEffect> effects, boolean modal) {
+
+        OwnEntryAbility(TriggeredAbility ability, List<CardEffect> effects) {
+            this(ability, effects, false);
+        }
+
+        OwnEntryAbility map(java.util.function.UnaryOperator<CardEffect> operator) {
+            return new OwnEntryAbility(ability, effects.stream().map(operator).toList(), modal);
+        }
+
+        /** Whether the ability goes on the stack through the may, modal or evoke paths rather than as effects. */
+        boolean triggersWithoutMandatoryEffects() {
+            return effects.size() == 1 && effects.getFirst() instanceof MayEffect
+                    || effects.stream().anyMatch(effect -> effect instanceof ChooseOneAtTriggerTimeEffect
+                    || effect instanceof com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect);
+        }
+    }
+
+    private static <T> List<T> concat(List<T> first, List<T> second) {
+        List<T> all = new ArrayList<>(first);
+        all.addAll(second);
+        return all;
+    }
+
+    /**
+     * The effects of one "when this enters" ability that go on the stack as that ability, in their trigger-time form
+     * (modal unwrap, value materialisation, intervening-if gating, CR 603.4): not an ability that is one "you may"
+     * (the may paths put it there), a trigger-time mode choice (CR 603.3c) or the evoke sacrifice, which have paths
+     * of their own. Empty when none is left, and then the ability doesn't trigger.
+     */
+    private List<CardEffect> mandatoryEffects(EtbEffectContext etbCtx, List<CardEffect> effects) {
+        if (effects.size() == 1 && effects.getFirst() instanceof MayEffect) {
+            return List.of();
+        }
+        return effects.stream()
+                .filter(e -> !(e instanceof ChooseOneAtTriggerTimeEffect))
+                .filter(e -> !(e instanceof com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect))
+                .map(e -> e instanceof ChooseOneEffect chooseOne && chooseOne.choicesRequired() > 1
+                        ? e : etbEffectResolver.resolve(etbCtx, e))
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    /** Whether {@code effect} targets: it is bound to one of the card's target groups or declares a target. */
+    private static boolean declaresTarget(Card card, CardEffect effect) {
+        return card.getEffectTargetIndex(effect) >= 0
+                || !com.github.laxika.magicalvibes.model.effect.TargetSpec.NONE.equals(effect.targetSpec());
+    }
+
+    /**
+     * Puts one "when this enters" ability of a card with several, or a granted one, on the stack as an object of its
+     * own (CR 603.3) with its own targets: those of its target group among the targets the entering event supplied,
+     * none when it declares no target (so losing another ability's target cannot make it fizzle), and otherwise the
+     * entering event's target.
+     */
+    private void queueSeparateOwnEntryAbility(GameData gameData, UUID controllerId, Card card, UUID targetId,
+                                              List<UUID> targetIds, List<CardEffect> abilityEffects,
+                                              TargetFilter modeTargetFilter, int extraTriggerCopies, int etbMode,
+                                              int xValue, boolean kicked, Permanent enteringPermanent,
+                                              List<String> repeatedAdditionalCosts, List<UUID> convokeCreatureIds) {
+        int abilityGroup = abilityEffects.stream().mapToInt(card::getEffectTargetIndex)
+                .filter(index -> index >= 0).findFirst().orElse(-1);
+        boolean declaresTarget = abilityEffects.stream()
+                .anyMatch(effect -> !com.github.laxika.magicalvibes.model.effect.TargetSpec.NONE.equals(effect.targetSpec()));
+        TargetFilter abilityFilter = modeTargetFilter;
+        List<UUID> abilityTargets = targetIds;
+        if (abilityGroup < 0 && !declaresTarget) {
+            abilityFilter = null;
+            abilityTargets = List.of();
+        } else if (abilityGroup >= 0) {
+            int offset = 0;
+            abilityTargets = List.of();
+            for (TargetGroup group : card.getTargetGroups()) {
+                int maximum = kicked ? group.getKickedMaxTargets() : group.getMaxTargets();
+                if (group.getDynamicMaxTargets() != null) {
+                    maximum = amountEvaluationService.evaluate(gameData, group.getDynamicMaxTargets(),
+                            new AmountContext(controllerId, enteringPermanent, null, xValue, 0, false,
+                                    null, repeatedAdditionalCosts == null ? List.of() : repeatedAdditionalCosts,
+                                    card));
+                }
+                if (group.isXScaled()) maximum = Math.min(maximum, xValue);
+                int size = Math.min(Math.max(0, maximum), targetIds.size() - offset);
+                if (group.getIndex() == abilityGroup) {
+                    abilityFilter = kicked ? group.getKickedFilter() : group.getFilter();
+                    abilityTargets = List.copyOf(targetIds.subList(offset, offset + size));
+                    break;
+                }
+                offset += size;
+            }
+        }
+        if (abilityFilter == null && abilityEffects.stream()
+                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))) {
+            abilityFilter = new com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter(
+                    new com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate(),
+                    "Target must satisfy this ability's restrictions");
+        }
+        UUID abilityTargetId = abilityTargets.isEmpty()
+                ? abilityGroup == 0 || (abilityGroup < 0 && declaresTarget) ? targetId : null
+                : abilityTargets.getFirst();
+        queueMandatoryETBEffects(gameData, controllerId, card, abilityTargetId, abilityTargets, abilityEffects,
+                abilityFilter, extraTriggerCopies, etbMode, xValue, repeatedAdditionalCosts, convokeCreatureIds);
+    }
+
+    /**
      * Whether the "when this enters" ability {@code ability} of {@code enteringPermanent} can trigger as far as its
      * limit goes ("triggers only once each turn", the only limit such an ability takes): its key isn't marked yet on
-     * the permanent. A limited ability that can trigger joins {@code limitedAbilities}, marked once the collector put
-     * the abilities on the stack. Without the entering permanent nothing is judged, as nothing could be marked.
+     * the permanent. The collector marks it once the ability went on the stack. Without the entering permanent
+     * nothing is judged, as nothing could be marked.
      */
     private static boolean ownEntryLimitAvailable(GameData gameData, Permanent enteringPermanent,
-                                                  TriggeredAbility ability, List<TriggeredAbility> limitedAbilities) {
+                                                  TriggeredAbility ability) {
         TriggerLimit limit = ability.options().limit();
         if (limit == TriggerLimit.NONE || enteringPermanent == null) {
             return true;
         }
-        if (TriggeredAbilityStackService.limitReached(gameData, limit, enteringPermanent.getId(),
-                ability.limitKey())) {
-            return false;
-        }
-        limitedAbilities.add(ability);
-        return true;
+        return !TriggeredAbilityStackService.limitReached(gameData, limit, enteringPermanent.getId(),
+                ability.limitKey());
     }
 
     /**
-     * Adds to {@code effects} the effects of {@code granted}, "when this enters" abilities a resolved effect or a
-     * static ability gave the entering permanent, in the form {@link TriggeredAbility#ownEntryEffects()} gives, each
-     * ability's limit judged as {@link #ownEntryLimitAvailable} says.
+     * Adds to {@code abilities} each of {@code granted}, "when this enters" abilities a resolved effect or a static
+     * ability gave the entering permanent, with its effects in the form {@link TriggeredAbility#ownEntryEffects()}
+     * gives, if its limit lets it trigger ({@link #ownEntryLimitAvailable}).
      */
-    private static void addGrantedOwnEntryEffects(GameData gameData, Permanent enteringPermanent,
-                                                  List<TriggeredAbility> granted,
-                                                  List<TriggeredAbility> limitedAbilities, List<CardEffect> effects) {
+    private static void addGrantedOwnEntryAbilities(GameData gameData, Permanent enteringPermanent,
+                                                    List<TriggeredAbility> granted, List<OwnEntryAbility> abilities) {
         for (TriggeredAbility ability : granted) {
-            if (ownEntryLimitAvailable(gameData, enteringPermanent, ability, limitedAbilities)) {
-                ability.ownEntryEffects().forEach(registration -> effects.add(registration.effect()));
+            if (ownEntryLimitAvailable(gameData, enteringPermanent, ability)) {
+                abilities.add(new OwnEntryAbility(ability, ability.ownEntryEffects().stream()
+                        .map(EffectRegistration::effect).toList()));
             }
         }
     }
@@ -1128,10 +1206,7 @@ public class EtbTriggerService {
                 if (enteringPermanent != null && enteringPermanent.isKicked()) {
                     etbEntry.setKicked(true);
                 }
-                if (enteringPermanent != null && enteringPermanent.isEvoked()
-                        && card.getOwnEntryEffectRegistrations().stream()
-                        .anyMatch(registration -> registration.triggerMode()
-                                == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT)) {
+                if (enteringPermanent != null && enteringPermanent.isEvoked() && card.hasSeveralOwnEntryAbilities()) {
                     etbEntry.setTriggeringCardId(card.getId());
                 }
                 if (card.isAura() && !etbNeedsTarget

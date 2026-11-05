@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
@@ -20,7 +19,6 @@ public class ThornplateIntimidator extends Card {
     public ThornplateIntimidator() {
         addStaticEffect(new KickerEffect("{3}", false));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                TriggerMode.INDEPENDENT,
                 TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
                 new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1));
         target(new PlayerPredicateTargetFilter(

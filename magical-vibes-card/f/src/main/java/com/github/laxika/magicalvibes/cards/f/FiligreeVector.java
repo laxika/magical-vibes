@@ -21,12 +21,13 @@ public class FiligreeVector extends Card {
     public FiligreeVector() {
         setAllowSharedTargets(true);
 
+        var putCounterOnTargetPermanent = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE);
         target(TargetFilters.creature(), 0, Integer.MAX_VALUE)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
+                .bindEffect(putCounterOnTargetPermanent);
+        var putCounterOnTargetPermanent2 = new PutCounterOnTargetPermanentEffect(CounterType.CHARGE);
         target(TargetFilters.artifact(), 0, Integer.MAX_VALUE)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new PutCounterOnTargetPermanentEffect(CounterType.CHARGE));
+                .bindEffect(putCounterOnTargetPermanent2);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), putCounterOnTargetPermanent, putCounterOnTargetPermanent2);
 
         addActivatedAbility(new ActivatedAbility(
                 true,

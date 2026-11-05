@@ -29,9 +29,9 @@ public class TeganJovanka extends Card {
                         new PermanentIsHistoricPredicate()
                 )),
                 "Target must be an attacking historic creature"
-        )).addTrigger(Triggers.youAttack(),
-                new BoostTargetCreatureEffect(1, 1))
+        ))
                 .addTrigger(Triggers.youAttack(),
+                        new BoostTargetCreatureEffect(1, 1),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
     }
 }

@@ -20,11 +20,13 @@ import java.util.List;
 public class ThunderingRaiju extends Card {
 
     public ThunderingRaiju() {
+        var putCounterOnTargetPermanent = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE);
         target(TargetFilters.creatureYouControl())
-                .addTrigger(Triggers.attacks(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
+                .bindEffect(putCounterOnTargetPermanent);
 
-        addTrigger(Triggers.attacks(), new DealDamageToPlayersEffect(
+        addTrigger(Triggers.attacks(),
+                putCounterOnTargetPermanent,
+                new DealDamageToPlayersEffect(
                 new PermanentCount(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

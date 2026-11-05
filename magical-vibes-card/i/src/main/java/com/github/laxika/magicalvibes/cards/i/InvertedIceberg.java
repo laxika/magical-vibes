@@ -21,8 +21,9 @@ public class InvertedIceberg extends Card {
     public InvertedIceberg() {
         setBackFaceCard(new IcebergTitan());
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(1, MillRecipient.CONTROLLER));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new MillEffect(1, MillRecipient.CONTROLLER),
+                new DrawCardEffect(1));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}{U}{U}",

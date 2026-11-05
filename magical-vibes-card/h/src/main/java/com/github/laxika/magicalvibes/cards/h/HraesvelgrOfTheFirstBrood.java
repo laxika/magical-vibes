@@ -19,8 +19,9 @@ public class HraesvelgrOfTheFirstBrood extends Card {
     public HraesvelgrOfTheFirstBrood() {
         // Both abilities target a creature: one target group, each ability choosing its own target.
         target(TargetFilters.creature())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(1, 0))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new MakeCreatureUnblockableEffect())
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new BoostTargetCreatureEffect(1, 0),
+                        new MakeCreatureUnblockableEffect())
                 .addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
                         new BoostTargetCreatureEffect(1, 0),
                         new MakeCreatureUnblockableEffect());

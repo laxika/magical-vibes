@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.trigger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -126,8 +125,7 @@ public final class LifeAbilityReader {
     public static List<EffectRegistration> printedRegistrations(Card card, LifeWatch watch) {
         List<LifeEffect> effects = read(printed(card, watch), watch.trigger());
         effects.forEach(effect -> requireNothingToJudge(effect, watch.trigger()));
-        return effects.stream().map(effect -> new EffectRegistration(effect.effect(), TriggerMode.NORMAL,
-                effect.simultaneousWithPrevious())).toList();
+        return effects.stream().map(effect -> new EffectRegistration(effect.effect(), effect.simultaneousWithPrevious())).toList();
     }
 
     /** Every effect of {@code abilities}, as their collector reads them for the condition watched as {@code watched}. */
@@ -143,8 +141,8 @@ public final class LifeAbilityReader {
      * The effects of {@code ability}, as its collector reads it for the condition watched as {@code watched}. The life
      * collectors read of the limits "triggers only once each turn" and "do this only once each turn", neither next to
      * "for the first time each turn"; only the "you gain life" and "you lose life" collectors count events; "an
-     * opponent loses life for the first time during each of their turns" takes no options; they read no trigger mode,
-     * and the ability rejects "one or more" as it is built.
+     * opponent loses life for the first time during each of their turns" takes no options, and the
+     * ability rejects "one or more" as it is built.
      */
     public static List<LifeEffect> read(TriggeredAbility ability, Trigger watched) {
         LifeTrigger condition = watchedCondition(ability, watched);
@@ -172,10 +170,6 @@ public final class LifeAbilityReader {
         Condition interveningIf = options.interveningIf();
         List<LifeEffect> effects = new ArrayList<>(ability.effects().size());
         for (EffectRegistration registration : ability.effects()) {
-            if (registration.triggerMode() != TriggerMode.NORMAL) {
-                throw new IllegalStateException("The life collectors read no trigger mode ("
-                        + registration.triggerMode() + "): " + ability);
-            }
             CardEffect effect = registration.effect();
             if (eventCondition != null) {
                 effect = ConditionalEffect.atTriggerTime(eventCondition, effect);

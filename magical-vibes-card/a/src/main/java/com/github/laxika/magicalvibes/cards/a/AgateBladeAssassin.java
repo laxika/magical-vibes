@@ -11,7 +11,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class AgateBladeAssassin extends Card {
 
     public AgateBladeAssassin() {
-        addTrigger(Triggers.attacks(), new LoseLifeEffect(1, LoseLifeRecipient.DEFENDING_PLAYER));
-        addTrigger(Triggers.attacks(), new GainLifeEffect(1));
+        addTrigger(Triggers.attacks(),
+                new LoseLifeEffect(1, LoseLifeRecipient.DEFENDING_PLAYER),
+                new GainLifeEffect(1));
     }
 }

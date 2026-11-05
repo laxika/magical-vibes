@@ -28,8 +28,8 @@ public class ShadowgrangeArchfiend extends Card {
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new SacrificePermanentsEffect(1, greatestPowerCreature, SacrificeRecipient.EACH_OPPONENT)
-                        .withRecordedSacrificedPower());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(new EventValue()));
+                        .withRecordedSacrificedPower(),
+                new GainLifeEffect(new EventValue()));
 
         addCastingOption(new MadnessCast(List.of(
                 new ManaCastingCost("{2}{B}"),

@@ -23,7 +23,8 @@ public class DungeonGeists extends Card {
         // When this creature enters, tap target creature an opponent controls. That creature
         // doesn't untap during its controller's untap step for as long as you control this creature.
         target(TargetFilters.creatureAnOpponentControls())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), DoesntUntapEffect.targetWhileSourceControlled());
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new TapPermanentsEffect(TapUntapScope.TARGET),
+                        DoesntUntapEffect.targetWhileSourceControlled());
     }
 }

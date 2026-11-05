@@ -18,8 +18,8 @@ public class VictorysHerald extends Card {
         // Whenever Victory's Herald attacks, attacking creatures gain flying and lifelink until end of turn.
         addTrigger(Triggers.attacks(), new GrantKeywordEffect(
                 Keyword.FLYING, GrantScope.ALL_CREATURES, new PermanentIsAttackingPredicate()
-        ));
-        addTrigger(Triggers.attacks(), new GrantKeywordEffect(
+        ),
+                new GrantKeywordEffect(
                 Keyword.LIFELINK, GrantScope.ALL_CREATURES, new PermanentIsAttackingPredicate()
         ));
     }

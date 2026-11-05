@@ -20,7 +20,8 @@ public class KorHookmaster extends Card {
         // When this creature enters, tap target creature an opponent controls.
         // That creature doesn't untap during its controller's next untap step.
         target(TargetFilters.creatureAnOpponentControls())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new SkipNextUntapEffect(TapUntapScope.TARGET));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new TapPermanentsEffect(TapUntapScope.TARGET),
+                        new SkipNextUntapEffect(TapUntapScope.TARGET));
     }
 }

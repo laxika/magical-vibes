@@ -20,8 +20,7 @@ public class OutOfTime extends Card {
 
     public OutOfTime() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new UntapPermanentsEffect(TapUntapScope.ALL_CREATURES));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new UntapPermanentsEffect(TapUntapScope.ALL_CREATURES),
                 new PhaseOutAllCreaturesUntilSourceLeavesEffect());
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));

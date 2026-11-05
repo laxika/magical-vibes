@@ -20,8 +20,8 @@ public class SandstoneBridge extends Card {
         addStaticEffect(new EntersTappedEffect());
 
         target(TargetFilters.creature())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(1, 1))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new BoostTargetCreatureEffect(1, 1),
                         new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET));
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.WHITE));

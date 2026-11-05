@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -29,7 +28,6 @@ public class NoggleHedgeMage extends Card {
         // goes on the stack (group 0, min=max=2); the "you may" only decides whether to tap them.
         target(TargetFilters.permanent(), 2, 2)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        TriggerMode.INDEPENDENT,
                         TriggerOptions.DEFAULT.withInterveningIf(
                                 new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.ISLAND))),
                         new MayEffect(new TapPermanentsEffect(TapUntapScope.TARGET), "Tap two target permanents?"));
@@ -41,7 +39,6 @@ public class NoggleHedgeMage extends Card {
         target(new AnyTargetPredicateTargetFilter(new PermanentIsPlaneswalkerPredicate(), new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player or planeswalker"), 1, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        TriggerMode.INDEPENDENT,
                         TriggerOptions.DEFAULT.withInterveningIf(
                                 new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN))),
                         new MayEffect(new DealDamageToTargetPlayerOrPlaneswalkerEffect(2),

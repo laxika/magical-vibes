@@ -39,8 +39,9 @@ public class StanggEchoWarrior extends Card {
                 0,
                 Set.of());
 
-        addTrigger(Triggers.attacks(), twin);
-        addTrigger(Triggers.attacks(), new CreateTokenCopiesOfAttachedAurasAndEquipmentEffect());
-        addTrigger(Triggers.attacks(), new SacrificeCreatedPermanentsAtEndStepEffect());
+        addTrigger(Triggers.attacks(),
+                twin,
+                new CreateTokenCopiesOfAttachedAurasAndEquipmentEffect(),
+                new SacrificeCreatedPermanentsAtEndStepEffect());
     }
 }

@@ -27,11 +27,11 @@ public class AdditiveEvolution extends Card {
     public AdditiveEvolution() {
         // When this enchantment enters, create a 0/0 green and blue Fractal creature token.
         // Put three +1/+1 counters on it.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new CreateTokenEffect(
                 "Fractal", 0, 0,
                 CardColor.GREEN, Set.of(CardColor.GREEN, CardColor.BLUE),
-                List.of(CardSubtype.FRACTAL), 0));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                List.of(CardSubtype.FRACTAL), 0),
                 new com.github.laxika.magicalvibes.model.effect.PutCountersOnCreatedPermanentsEffect(
                         CounterType.PLUS_ONE_PLUS_ONE,
                         new com.github.laxika.magicalvibes.model.amount.Fixed(3)));

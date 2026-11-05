@@ -24,8 +24,8 @@ public class ChampionsOfTheShoal extends Card {
                 new TapPermanentsEffect(TapUntapScope.TARGET),
                 new PutCounterOnTargetPermanentEffect(CounterType.STUN));
         target(TargetFilters.creature(), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.TARGET))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new TapPermanentsEffect(TapUntapScope.TARGET),
                         new PutCounterOnTargetPermanentEffect(CounterType.STUN))
                 .addTrigger(Triggers.becomesTapped(), tapAndStun);
     }

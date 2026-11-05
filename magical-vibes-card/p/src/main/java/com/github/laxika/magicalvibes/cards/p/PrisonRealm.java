@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -30,8 +29,8 @@ public class PrisonRealm extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Target must be a creature or planeswalker an opponent controls"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
+        )).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ExileTargetPermanentUntilSourceLeavesEffect());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT, new ScryEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(1));
     }
 }

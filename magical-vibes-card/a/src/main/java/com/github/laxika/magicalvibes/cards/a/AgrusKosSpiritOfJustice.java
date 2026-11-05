@@ -20,10 +20,8 @@ public class AgrusKosSpiritOfJustice extends Card {
 
     public AgrusKosSpiritOfJustice() {
         target(TargetFilters.creature(), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), exileIfSuspected())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), suspectIfNotSuspected())
-                .addTrigger(Triggers.attacks(), exileIfSuspected())
-                .addTrigger(Triggers.attacks(), suspectIfNotSuspected());
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), exileIfSuspected(), suspectIfNotSuspected())
+                .addTrigger(Triggers.attacks(), exileIfSuspected(), suspectIfNotSuspected());
     }
 
     private ConditionalEffect exileIfSuspected() {

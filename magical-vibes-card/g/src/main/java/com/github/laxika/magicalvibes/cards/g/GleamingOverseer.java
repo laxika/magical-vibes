@@ -44,8 +44,7 @@ public class GleamingOverseer extends Card {
                         SequenceEffect.of(
                                 new PutCounterOnChosenOwnPermanentEffect(
                                         CounterType.PLUS_ONE_PLUS_ONE, 1, army),
-                                new GrantSubtypeToChosenPermanentEffect(CardSubtype.ZOMBIE))));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                                new GrantSubtypeToChosenPermanentEffect(CardSubtype.ZOMBIE))),
                 ConditionalEffect.unless(new NotCondition(controlsArmy),
                         new CreateTokenEffect(
                                 CardType.CREATURE, 1, "Zombie Army", 0, 0, CardColor.BLACK, null,

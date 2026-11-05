@@ -24,8 +24,8 @@ public class VeneratedStormsinger extends Card {
 
     public VeneratedStormsinger() {
         addTrigger(Triggers.attacks(),
-                new CreateTokenEffect(1, "Warrior", 1, 1, CardColor.RED, List.of(CardSubtype.WARRIOR), true));
-        addTrigger(Triggers.attacks(), new SacrificeCreatedPermanentsAtEndStepEffect());
+                new CreateTokenEffect(1, "Warrior", 1, 1, CardColor.RED, List.of(CardSubtype.WARRIOR), true),
+                new SacrificeCreatedPermanentsAtEndStepEffect());
         addTrigger(Triggers.creatureDies(ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL), DEATH_TRIGGER);
     }
 }

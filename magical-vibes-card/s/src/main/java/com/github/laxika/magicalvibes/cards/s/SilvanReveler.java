@@ -22,8 +22,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SilvanReveler extends Card {
 
     public SilvanReveler() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DiscardCardThenEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1),
+                new DiscardCardThenEffect(
                 null,
                 new ReturnDiscardedCardFromGraveyardToBattlefieldEffect(true),
                 "a card",

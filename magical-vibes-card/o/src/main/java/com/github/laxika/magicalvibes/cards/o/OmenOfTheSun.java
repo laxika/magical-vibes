@@ -21,8 +21,8 @@ public class OmenOfTheSun extends Card {
     public OmenOfTheSun() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new CreateTokenEffect(2, "Human Soldier", 1, 1, CardColor.WHITE,
-                        List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of()));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2));
+                        List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of()),
+                new GainLifeEffect(2));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

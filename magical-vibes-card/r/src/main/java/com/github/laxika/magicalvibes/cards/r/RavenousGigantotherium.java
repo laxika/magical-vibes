@@ -21,8 +21,7 @@ public class RavenousGigantotherium extends Card {
         targetUpTo(new SourcePower(), TargetFilters.creature(), 99)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new DealDividedDamageEffect(new SourcePower(), null, DivisionMode.CHOSEN,
-                                new PermanentIsCreaturePredicate(), 0, false, false, true))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                                new PermanentIsCreaturePredicate(), 0, false, false, true),
                         new EachTargetCreatureDealsPowerDamageToSourceEffect());
     }
 }

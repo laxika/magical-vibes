@@ -27,13 +27,13 @@ public class InvasionOfAzgol extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player."
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificePermanentsEffect(
+        )).addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new SacrificePermanentsEffect(
                 1,
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsPlaneswalkerPredicate())),
-                SacrificeRecipient.TARGET_PLAYER)
-        ).addTrigger(Triggers.enters(ObjectRelation.THIS),
+                SacrificeRecipient.TARGET_PLAYER),
                 new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
     }
 

@@ -22,8 +22,7 @@ public class TreeguardDuo extends Card {
         var creatureCount = new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
         target(TargetFilters.creatureYouControl())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET),
                         new BoostTargetCreatureEffect(creatureCount, creatureCount));
     }
 }

@@ -22,9 +22,7 @@ public class GoblinBushwhacker extends Card {
         addStaticEffect(new KickerEffect("{R}"));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
-                new BoostAllOwnCreaturesEffect(1, 0));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
-                TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
+                new BoostAllOwnCreaturesEffect(1, 0),
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES));
     }
 }

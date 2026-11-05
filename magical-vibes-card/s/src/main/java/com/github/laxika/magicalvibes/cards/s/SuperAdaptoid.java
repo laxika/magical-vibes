@@ -44,40 +44,29 @@ public class SuperAdaptoid extends Card {
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
         target(new PermanentPredicateTargetFilter(anotherCreature, "Target must be another creature"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        copyKeywordAsCounter(Keyword.HASTE, CounterType.HASTE))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        copyKeywordAsCounter(Keyword.FLYING, CounterType.FLYING))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        copyKeywordAsCounter(Keyword.FIRST_STRIKE, CounterType.FIRST_STRIKE))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        copyKeywordAsCounter(Keyword.DOUBLE_STRIKE, CounterType.DOUBLE_STRIKE))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        copyKeywordAsCounter(Keyword.DEATHTOUCH, CounterType.DEATHTOUCH))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        copyKeywordAsCounter(Keyword.INDESTRUCTIBLE, CounterType.INDESTRUCTIBLE))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        copyKeywordAsCounter(Keyword.LIFELINK, CounterType.LIFELINK))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        copyKeywordAsCounter(Keyword.MENACE, CounterType.MENACE))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        copyKeywordAsCounter(Keyword.REACH, CounterType.REACH))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        copyKeywordAsCounter(Keyword.TRAMPLE, CounterType.TRAMPLE))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        copyKeywordAsCounter(Keyword.HASTE, CounterType.HASTE),
+                        copyKeywordAsCounter(Keyword.FLYING, CounterType.FLYING),
+                        copyKeywordAsCounter(Keyword.FIRST_STRIKE, CounterType.FIRST_STRIKE),
+                        copyKeywordAsCounter(Keyword.DOUBLE_STRIKE, CounterType.DOUBLE_STRIKE),
+                        copyKeywordAsCounter(Keyword.DEATHTOUCH, CounterType.DEATHTOUCH),
+                        copyKeywordAsCounter(Keyword.INDESTRUCTIBLE, CounterType.INDESTRUCTIBLE),
+                        copyKeywordAsCounter(Keyword.LIFELINK, CounterType.LIFELINK),
+                        copyKeywordAsCounter(Keyword.MENACE, CounterType.MENACE),
+                        copyKeywordAsCounter(Keyword.REACH, CounterType.REACH),
+                        copyKeywordAsCounter(Keyword.TRAMPLE, CounterType.TRAMPLE),
                         copyKeywordAsCounter(Keyword.VIGILANCE, CounterType.VIGILANCE))
-                .addTrigger(Triggers.attacks(), copyKeywordAsCounter(Keyword.HASTE, CounterType.HASTE))
-                .addTrigger(Triggers.attacks(), copyKeywordAsCounter(Keyword.FLYING, CounterType.FLYING))
-                .addTrigger(Triggers.attacks(), copyKeywordAsCounter(Keyword.FIRST_STRIKE, CounterType.FIRST_STRIKE))
                 .addTrigger(Triggers.attacks(),
-                        copyKeywordAsCounter(Keyword.DOUBLE_STRIKE, CounterType.DOUBLE_STRIKE))
-                .addTrigger(Triggers.attacks(), copyKeywordAsCounter(Keyword.DEATHTOUCH, CounterType.DEATHTOUCH))
-                .addTrigger(Triggers.attacks(),
-                        copyKeywordAsCounter(Keyword.INDESTRUCTIBLE, CounterType.INDESTRUCTIBLE))
-                .addTrigger(Triggers.attacks(), copyKeywordAsCounter(Keyword.LIFELINK, CounterType.LIFELINK))
-                .addTrigger(Triggers.attacks(), copyKeywordAsCounter(Keyword.MENACE, CounterType.MENACE))
-                .addTrigger(Triggers.attacks(), copyKeywordAsCounter(Keyword.REACH, CounterType.REACH))
-                .addTrigger(Triggers.attacks(), copyKeywordAsCounter(Keyword.TRAMPLE, CounterType.TRAMPLE))
-                .addTrigger(Triggers.attacks(), copyKeywordAsCounter(Keyword.VIGILANCE, CounterType.VIGILANCE));
+                        copyKeywordAsCounter(Keyword.HASTE, CounterType.HASTE),
+                        copyKeywordAsCounter(Keyword.FLYING, CounterType.FLYING),
+                        copyKeywordAsCounter(Keyword.FIRST_STRIKE, CounterType.FIRST_STRIKE),
+                        copyKeywordAsCounter(Keyword.DOUBLE_STRIKE, CounterType.DOUBLE_STRIKE),
+                        copyKeywordAsCounter(Keyword.DEATHTOUCH, CounterType.DEATHTOUCH),
+                        copyKeywordAsCounter(Keyword.INDESTRUCTIBLE, CounterType.INDESTRUCTIBLE),
+                        copyKeywordAsCounter(Keyword.LIFELINK, CounterType.LIFELINK),
+                        copyKeywordAsCounter(Keyword.MENACE, CounterType.MENACE),
+                        copyKeywordAsCounter(Keyword.REACH, CounterType.REACH),
+                        copyKeywordAsCounter(Keyword.TRAMPLE, CounterType.TRAMPLE),
+                        copyKeywordAsCounter(Keyword.VIGILANCE, CounterType.VIGILANCE));
     }
 
     private static CardEffect copyKeywordAsCounter(Keyword keyword, CounterType counterType) {

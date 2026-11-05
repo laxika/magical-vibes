@@ -16,8 +16,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class HeroInTraining extends Card {
 
     public HeroInTraining() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), ConditionalEffect.unless(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(),
+                ConditionalEffect.unless(
                 new ControlsAnotherPermanent(new PermanentHasSubtypePredicate(CardSubtype.HERO)),
                 new GainLifeEffect(2)));
     }

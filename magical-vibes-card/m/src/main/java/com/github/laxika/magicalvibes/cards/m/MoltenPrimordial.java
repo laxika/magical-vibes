@@ -21,10 +21,8 @@ public class MoltenPrimordial extends Card {
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
         target(TargetFilters.creatureAnOpponentControls(), 0, 99)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                        new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
     }
 }

@@ -12,7 +12,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class DoomsServoGuards extends Card {
 
     public DoomsServoGuards() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(2, MillRecipient.CONTROLLER));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new GainLifeEffect(2),
+                new MillEffect(2, MillRecipient.CONTROLLER));
     }
 }

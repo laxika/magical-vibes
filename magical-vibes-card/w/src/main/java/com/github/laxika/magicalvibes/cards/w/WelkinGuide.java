@@ -17,8 +17,8 @@ public class WelkinGuide extends Card {
     public WelkinGuide() {
         // When this creature enters, target creature gets +2/+2 and gains flying until end of turn.
         target(TargetFilters.creature())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(2, 2))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new BoostTargetCreatureEffect(2, 2),
                         new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
     }
 }

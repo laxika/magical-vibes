@@ -16,8 +16,9 @@ public class MesmerizingDose extends Card {
     public MesmerizingDose() {
         target(TargetFilters.creature())
                 // When this Aura enters, tap enchanted creature, then proliferate.
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.ENCHANTED))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new ProliferateEffect())
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new TapPermanentsEffect(TapUntapScope.ENCHANTED),
+                        new ProliferateEffect())
                 // Enchanted creature doesn't untap during its controller's untap step.
                 .addStaticEffect(DoesntUntapEffect.enchanted());
     }

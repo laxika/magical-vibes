@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.MayCastCardExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
@@ -21,7 +20,7 @@ import java.util.List;
 public class BoilingRockRioter extends Card {
 
     public BoilingRockRioter() {
-        addTrigger(Triggers.attacks(), TriggerMode.INDEPENDENT, new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 1));
+        addTrigger(Triggers.attacks(), new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 1));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
@@ -33,7 +32,7 @@ public class BoilingRockRioter extends Card {
                 "Tap an untapped Ally you control: Exile target card from a graveyard."
         ));
 
-        addTrigger(Triggers.attacks(), TriggerMode.INDEPENDENT,
+        addTrigger(Triggers.attacks(),
                 new MayCastCardExiledWithSourceEffect(
                         null, new CardSubtypePredicate(CardSubtype.ALLY), false, false, null, true));
     }

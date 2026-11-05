@@ -25,8 +25,9 @@ import java.util.List;
 public class MasterOfWinds extends Card {
 
     public MasterOfWinds() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(2));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new DrawCardEffect(2),
+                new DiscardEffect(1, DiscardRecipient.CONTROLLER));
 
         CardAnyOfPredicate instantSorceryOrWizard = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),

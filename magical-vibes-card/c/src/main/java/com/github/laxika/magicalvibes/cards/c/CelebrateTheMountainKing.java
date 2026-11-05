@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -28,10 +27,10 @@ public class CelebrateTheMountainKing extends Card {
     public CelebrateTheMountainKing() {
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
         target(TargetFilters.nonlandPermanentAnOpponentControls(), 0, Integer.MAX_VALUE)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new ExileTargetPermanentUntilSourceLeavesEffect());
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 SequenceEffect.of(
                         new DrawCardEffect(1),
                         new DiscardCardThenEffect(

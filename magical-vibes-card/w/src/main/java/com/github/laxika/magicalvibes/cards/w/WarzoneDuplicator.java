@@ -22,6 +22,7 @@ public class WarzoneDuplicator extends Card {
     public WarzoneDuplicator() {
         addPrototype("{3}{U}", CardColor.BLUE, 3, 3);
 
+        var returnToHand = ReturnToHandEffect.target();
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
@@ -29,7 +30,9 @@ public class WarzoneDuplicator extends Card {
                         new PermanentPowerLessThanSourcePowerPredicate()
                 )),
                 "Target must be a creature an opponent controls with power less than Warzone Duplicator's power"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS), ReturnToHandEffect.target());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConjureDuplicateOfReturnedPermanentIntoHandEffect());
+        )).bindEffect(returnToHand);
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                returnToHand,
+                new ConjureDuplicateOfReturnedPermanentIntoHandEffect());
     }
 }

@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; run 16l, family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader`; run 16m, family 10 (sagas): no chapter or final-chapter ability has a legacy view, and the final-chapter collectors read the abilities through `SagaAbilityReader`; run 16n, family 11's player and keyword actions: every `ActionWatch` collector reads the abilities through `ActionAbilityReader`; run 16o, family 11's rest: every `MiscWatch` collector and the planar reader read the abilities through `MiscAbilityReader`; run 16p, the zone changes but "when this enters" and the permanent changes: no such ability has a legacy view, and the readers outside the trigger pipeline read them through `ZoneChangeAbilityReader`; run 16q, "when this enters": no ability has a legacy view; the own enters collector reads the abilities and judges their limit, the other readers read `Card.getOwnEntryEffects()`, and `OnceOnlyTriggerEffect` is gone; runs 16r onward left: the own enters collector's grouping by ability (`TriggerMode`), the may-unwrapping, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; run 16l, family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader`; run 16m, family 10 (sagas): no chapter or final-chapter ability has a legacy view, and the final-chapter collectors read the abilities through `SagaAbilityReader`; run 16n, family 11's player and keyword actions: every `ActionWatch` collector reads the abilities through `ActionAbilityReader`; run 16o, family 11's rest: every `MiscWatch` collector and the planar reader read the abilities through `MiscAbilityReader`; run 16p, the zone changes but "when this enters" and the permanent changes: no such ability has a legacy view, and the readers outside the trigger pipeline read them through `ZoneChangeAbilityReader`; run 16q, "when this enters": no ability has a legacy view; the own enters collector reads the abilities and judges their limit, the other readers read `Card.getOwnEntryEffects()`, and `OnceOnlyTriggerEffect` is gone; run 16r, every triggered ability is one object on the stack: the abilities of one Oracle ability are merged by script, the own enters and combat collectors group effects by ability, and `TriggerMode` is gone; runs 16s onward left: the may-unwrapping, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -619,7 +619,8 @@ no other family still uses. The order:
 | 16o | Step 13's family 11, its second half (step 13 run 11b): every `MiscWatch` collector (control change, attaching, crew, saddle and station, Room doors and full unlocks, day and night, state triggers) and the planar reader read the abilities through `MiscAbilityReader` (the door, the first crew or saddle each turn and "triggers only once each turn" from the ability, a state trigger's game state); no family 11 ability has a legacy view, and `TriggeringRoomDoorConditionalEffect` is gone |
 | 16p | The zone changes but "when this enters" and the permanent changes (steps 10 to 12a's pipeline families): no such ability has a legacy view; the readers outside the pipeline (face-up planes, schemes, registered abilities) read them through `ZoneChangeAbilityReader`, and the ability rejects what the pipeline can't read as it is built |
 | 16q | The own enters abilities (`EtbTriggerService` and its about 55 readers): no ability has a legacy view; the collector reads the abilities and judges their limit, the readers read the own-entry effects (`Card.getOwnEntryEffects()`); `legacyEffects()`, `hasLegacyView()`, the `getLegacy…` getters, `Trigger.collectedAsAbility()` and `OnceOnlyTriggerEffect` are gone |
-| 16r onward | The own enters collector groups effects by ability (no `TriggerMode`), then the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
+| 16r | The own enters collector and the combat collectors that split by `TriggerMode.INDEPENDENT` put each ability on the stack as one object, after a card script merges the abilities of one Oracle ability; `TriggerMode` is deleted |
+| 16s onward | The may-unwrapping, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
 
 Mark the step `done` only after the last run of 16.
 
@@ -8965,6 +8966,148 @@ form) and the implement-card and review-card skills; `ARCHITECTURE.md` was edite
   `LandTapTriggerCollectorServiceTest` 2, and one each in `GameQueryServiceTest`, `CreatureControlServiceTest`,
   `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and `CardEffectTargetingConsistencyTest`), but for
   `EtbTriggerServiceTest#oncePerTurnEtbSkipsAfterTheSourceHasTriggered`, rewritten above, which passes.
+- Engine: the whole module, with the one failure at HEAD, `GameMutationBoundaryRatchetTest`.
+- AI: the whole module (1,620 tests), with the same 10 failures as before.
+- The full suite was not run here.
+
+#### Run 16r: every triggered ability is one object on the stack, and `TriggerMode` is gone
+
+The third of the "16p onward" runs: the own enters collector puts each "when this enters" ability on the stack as one
+object (CR 603.3, checked) instead of pooling a card's plain abilities into one, the combat collectors that split
+abilities by `TriggerMode.INDEPENDENT` split them by ability, and `TriggerMode` is deleted. Done in one run with the
+user, the card merges and the combat collectors included.
+
+**What the scan found.** 463 card classes had two or more printed "when this enters" abilities (16q counted 466 with
+its reflection scan; the regex scan misses lists of triggers). About 360 were one Oracle ability written as one
+`addTrigger` per effect, mostly `target(F).addTrigger(T, a).addTrigger(T, b)`, which the collector pooled; 53 marked
+an ability of its own with `TriggerMode.INDEPENDENT`. The combat collectors pooled the same way: 109 card classes had
+two or more "whenever this attacks" statements, 23 "whenever you attack", 8 "whenever a creature you control attacks"
+(more with a filter), and `TriggerMode.INDEPENDENT` was on 11 combat statements and on the abilities Clone and token
+copies add. `TriggerMode.ONCE_PER_BATCH` was read by one dispatch whose callers all passed "don't care", and the other
+constants by nothing.
+
+**The cards.** `scripts/step14-own-enters-ability-merge.py` (one `--family` per trigger) merges the statements of one
+Oracle ability into one `addTrigger` of all their effects, in the constructor only, by the same trigger (a combat
+trigger with the same `.withFilter(…)`) and the same options, leaving out `INDEPENDENT` ones and those of a keyword's
+own trigger (evoke, living weapon, soulbond, exploit, champion, partner with). It merges a card only when its Oracle
+text has one ability of that trigger (and no keyword line of its own ability: gift, CR 702.174b, checked; myriad,
+exalted, …), else as its `MANUAL_GROUPS` say (Vibrance's {G}{G} ability, Finest Hour's second ability). An ability
+whose effects target through different groups or none ("target player mills two cards. You gain 2 life") keeps each
+effect's binding: the targeted effect becomes a local variable bound with `target(F).bindEffect(v)` in place, and one
+`addTrigger` takes every effect (Watcher of the Wayside, Gurmag Rakshasa, Sting, Bilbo's Sword, …; 51 card classes). Merged: 384 card classes' "when this enters" abilities, 102 "whenever this attacks" (mobilize's
+token creation and end-step sacrifice are one ability, CR 702.181a, checked), 21 "whenever you attack", 9 "whenever a
+creature you control attacks", 4 "blocks", 4 "becomes blocked" and Revenge of Ravens. Shredder, Shadow Master's
+"attacks a player" ability (its intervening "if" on one statement only) was merged on its own. `scripts/step14-trigger-
+mode-removal.py` took `TriggerMode.INDEPENDENT` / `NORMAL` and the import out of 71 card classes.
+
+**The model.**
+
+- `TriggerMode` is deleted. `EffectRegistration` is `(effect, simultaneousWithPrevious)`; `Card.addTrigger(trigger,
+  mode, …)`, `addSimultaneousTrigger(trigger, mode, …)`, `addEffect(slot, effect, mode)`,
+  `addSimultaneousEffects(slot, mode, …)` and `SpellTarget`'s mode overloads are gone, and with them the rejections of a
+  mode in `TriggeredAbility`, `SpellAbility` and the family readers, and the `mode` component of the readers' effect
+  records (`CombatEffect`, `CounterEffect`, `DamageEffect`, `LibraryEffect`, `TargetEffect`).
+- `Card.hasSeveralOwnEntryAbilities()` (new): more than one "when this enters" ability besides the evoke sacrifice. It
+  replaces "has an `INDEPENDENT` registration" where an evoked permanent's abilities are marked with their triggering
+  card, so its controller orders them with the sacrifice (CR 603.3b, checked; `EtbTriggerService`,
+  `ETBTokenTargetService`, `PermanentChoiceTriggerHandlerService`). Emptiness is newly marked, Briarhorn no longer.
+- `SpellTarget.bindEffect`'s Javadoc names the new use: an effect of an ability whose effects target through
+  different groups.
+
+**The engine.**
+
+- `EtbTriggerService.processCreatureETBEffects` reads each printed and granted "when this enters" ability as an
+  `OwnEntryAbility` (the ability and its own-entry effects). An ability that is one `MayEffect` takes the may paths, a
+  trigger-time mode choice (CR 603.3c, checked) and the evoke sacrifice (CR 702.74a, checked) theirs, as before; every
+  other ability's effects go on the stack as one object (`mandatoryEffects`, then `queueMandatoryETBEffects`), a "you
+  may" among them asked as it resolves (CR 603.5, checked). A card's only ability takes the targets the entering
+  event supplied, as the pooled object did; with several, `queueSeparateOwnEntryAbility` (the old per-effect
+  `INDEPENDENT` path, generalized to an ability) gives each its target group's share, and they go on the stack in
+  printed order, as the trigger pipeline puts a source's abilities there. A granted ability is one object with all its
+  effects (it was one per effect). The cast-time mode's target filter goes only to the ability with the mode. The
+  limit is marked for each ability that triggered.
+- `CombatAbilityReader.byAbility` / `splitLaterAbilities` (new): the self attack collector (both branches), "whenever
+  a creature you control attacks", "a creature attacks you" and "a player attacks" keep the source's first printed
+  ability where they bundled its effects and put every later printed ability on the stack as an object of its own;
+  "whenever you attack" bundles the first with the granted ones as before; the attached Aura and Equipment collector
+  (`CombatTriggerService`) puts each ability on the stack as one object. `CombatEffect.independent()` is gone.
+- The "whenever a creature you control attacks" collector judges an intervening "if" again after it takes the
+  attacks-alone one off (Finest Hour's "if it's the first combat phase", now an intervening "if" in the card, CR 603.4,
+  checked).
+- `TokenCopySupport` adds a token copy's added abilities as they are; Clone's dethrone and the perpetual Island's draw
+  are plain abilities; the copy handlers and `PermanentCopierService`, `MutationSupport`, `LayerSystemService` copy
+  registrations without a mode. `TriggerCollectionService.dispatchRegistrations` lost its `oncePerBatchOnly` parameter.
+
+**Behaviour changes** (rules fixes, CR 603.3).
+
+- Separate "when this enters" abilities the collector pooled are separate objects: Squealing Devil, Emptiness, Night
+  Clubber and Riveteers Provocateur (blitz's haste and sacrifice ability), Finch Formation, Fountainport Charmer,
+  Intrepid Rabbit (offspring), and the cards whose keyword ability shares its trigger. Invasion of Ergamon's Treasure
+  and "then you may discard a card" are one object, the may asked as it resolves.
+- Separate combat abilities the collectors pooled are separate objects: Scurry of Squirrels' two myriad, Finest Hour,
+  Angelic Benediction and Sovereigns of Lost Alara (exalted and their other ability), Barbed Foliage and Aurelia, the
+  Law Above; Conclave Sledge-Captain's three backup abilities each choose their own target as
+  they go on the stack.
+- Finest Hour's second ability doesn't trigger in a later combat phase (CR 603.4).
+- The order of a card's several abilities on the stack, which their controller chooses (CR 603.3b): with automatic
+  ordering the last printed resolves first. The pooled object resolved its effects in printed order, the
+  `INDEPENDENT` ones went below it; no order keeps both, so the tests that assumed one were changed (below).
+
+**Kept, with their reason.**
+
+- The may-unwrapping (the event bindings 16a listed and Pontiff of Blight, step 15), `ConditionalEffect`'s
+  `interveningIf` / `triggerTimeOnly` flags, which the collectors and readers still get the intervening "if" and the
+  event condition through, and the wrapper classes cards still author (16p's list, run 4c's `KEEP` cards).
+- The block, becomes-blocked and combat damage collectors read abilities without `INDEPENDENT` and weren't regrouped;
+  the merged block cards keep their pooled behaviour. A collector that pools still needs its family's statements of
+  one ability merged.
+- `scripts/step8-etb-scan.java` still names `TriggerMode`; it is a historical scan, not built.
+
+**For 16s onward.**
+
+- The may-unwrapping, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left, as
+  16p and 16q listed. The own enters collector still gets the intervening "if" as a `ConditionalEffect` around each
+  effect (`TriggeredAbility.ownEntryEffects()`).
+- `scripts/step14-own-enters-ability-merge.py` takes a `--family`; another collector that starts grouping by ability
+  needs its family added first.
+
+**Docs.** `scripts/step14-trigger-mode-docs.py` rewrote the passages that named `TriggerMode` in the implement-card and
+review-card skills (one Oracle ability is one `addTrigger`; an ability whose effects target through different groups
+binds them with `bindEffect`), `EFFECTS_QUICK_REFERENCE.md`, `TRIGGER_SLOT_TARGETING.md`, `ACTIVATED_ABILITY_GUIDE.md`,
+`CARD_IMPLEMENTATION_PLAYBOOK.md` (whose `ONCE_PER_BATCH` / `TOKEN_CREATION` examples were already stale) and
+`ARCHITECTURE.md`'s token-copy note; `ARCHITECTURE.md`'s enters-collector, combat and tap passages were edited by hand.
+
+**Tests changed.**
+
+- `TriggerPipelineTest#plainWhenThisEntersAbilitiesShareOneStackObjectAndAnIndependentOneHasItsOwn` became
+  `eachWhenThisEntersAbilityIsOneStackObjectOfItsOwn`: an ability of two effects is one object, a second ability
+  another.
+- `CombatTriggerTest#aRegistrationKeepsItsTriggerMode` became `theEffectsAreReadByAbilityAndKeepTheirSimultaneity`
+  (`byAbility` tells two equal abilities apart, `splitLaterAbilities` keeps the first one bundled).
+- Removed with the API they tested: `CounterTriggerTest#aRegistrationKeepsItsTriggerMode`,
+  `SagaTriggerTest#theReaderRejectsATriggerMode`, `SpellAbilityTest#aSpellAbilityDoesNotTrigger`, and the trigger-mode
+  rejections in `ZoneChangeTriggerTest`, `LifeTriggerTest`, `ActionTriggerTest`, `MiscTriggerTest` and
+  `TapTriggerTest`. `CardAbilitiesTest`, `TriggeredAbilityTest` and `SpellAbilityTest` build `EffectRegistration`s
+  without a mode.
+- Card tests, for the separate objects: `SquealingDevilTest` (two cases: the sacrifice resolves on a pass of its own),
+  `FinestHourTest` (two cases: exalted and the untap ability both resolve), `IntrepidRabbitTest` (offspring and the
+  boost resolve before the token copy's target), `ConclaveSledgeCaptainTest` (the three backup targets are chosen
+  before any resolves, `resolveBackupTargets`), `BroodlordTest` (one case) and `CourtHussarTest` (three: both
+  abilities resolve before the choice), `HagHedgeMageTest` (one: the player target is chosen first, as its ability goes
+  on the stack first), and `MarshCrocodileTest` (four) and `SawtoothLoonTest` (three), whose cases are about the
+  return resolving first: they turn automatic ordering off and put the other ability on the stack first, as
+  `DeceitTest` does.
+
+**Test runs.**
+
+- Card: the test class of every card with a "when this enters" ability, a combat trigger whose collector changed
+  (attacks, "you attack", "a creature you control attacks", a creature attacks you, a player attacks, blocks, becomes
+  blocked), an evoke sacrifice, a token copy, Clone or "becomes a copy" effect, and of every card the run changed
+  (6,775 classes, 52,546 tests): all passing.
+- Application: the whole module (5,025 tests), with a HEAD baseline in a worktree (with main's card-data cache): the
+  same 621 failures at HEAD and here, none new. Most were outside the classes earlier runs took in (for example
+  `CastingCostServiceTest` 44, `EffectResolutionServiceTest` 43, `ActivatedAbilityExecutionServiceTest` 35,
+  `MayCastHandlerServiceTest` 30 and many effect-handler tests, Mockito wiring).
 - Engine: the whole module, with the one failure at HEAD, `GameMutationBoundaryRatchetTest`.
 - AI: the whole module (1,620 tests), with the same 10 failures as before.
 - The full suite was not run here.

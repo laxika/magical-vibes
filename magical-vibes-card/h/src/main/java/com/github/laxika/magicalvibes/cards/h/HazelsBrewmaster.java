@@ -16,11 +16,11 @@ public class HazelsBrewmaster extends Card {
 
     public HazelsBrewmaster() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                ExileGraveyardCardsEffect.upToOneTargetFromAnyGraveyardWithSource());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.ofFoodToken(1));
+                ExileGraveyardCardsEffect.upToOneTargetFromAnyGraveyardWithSource(),
+                CreateTokenEffect.ofFoodToken(1));
         addTrigger(Triggers.attacks(),
-                ExileGraveyardCardsEffect.upToOneTargetFromAnyGraveyardWithSource());
-        addTrigger(Triggers.attacks(), CreateTokenEffect.ofFoodToken(1));
+                ExileGraveyardCardsEffect.upToOneTargetFromAnyGraveyardWithSource(),
+                CreateTokenEffect.ofFoodToken(1));
         addStaticEffect(new GrantActivatedAbilitiesOfCreatureCardsExiledWithSourceToMatchingPermanentsEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.FOOD)));
     }

@@ -13,7 +13,8 @@ public class BlitzLeech extends Card {
 
     public BlitzLeech() {
         target(TargetFilters.creatureAnOpponentControls())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(-2, -2))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new RemoveAllCountersFromTargetPermanentEffect());
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new BoostTargetCreatureEffect(-2, -2),
+                        new RemoveAllCountersFromTargetPermanentEffect());
     }
 }

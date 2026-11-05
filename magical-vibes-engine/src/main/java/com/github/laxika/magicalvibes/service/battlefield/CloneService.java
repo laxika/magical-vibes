@@ -974,7 +974,7 @@ public class CloneService {
         }
         if (additionalKeywords != null && !additionalKeywords.isEmpty()) {
             if (additionalKeywords.contains(Keyword.DETHRONE) && copy.getKeywords().contains(Keyword.DETHRONE)) {
-                copy.addTrigger(Triggers.attacks(), com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT,
+                copy.addTrigger(Triggers.attacks(),
                         new com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect(
                                 new com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate(List.of(
                                         new com.github.laxika.magicalvibes.model.filter.PermanentAttacksPlayerWithMostLifePredicate(),

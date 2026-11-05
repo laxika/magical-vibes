@@ -15,7 +15,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class MireTriton extends Card {
 
     public MireTriton() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(2, MillRecipient.CONTROLLER));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new MillEffect(2, MillRecipient.CONTROLLER),
+                new GainLifeEffect(2));
     }
 }

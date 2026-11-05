@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class FirstSphereGargantua extends Card {
 
     public FirstSphereGargantua() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new LoseLifeEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(), new LoseLifeEffect(1));
 
         addUnearth("{2}{B}");
     }

@@ -29,12 +29,9 @@ public class AbigaleEloquentFirstYear extends Card {
         ));
         target(new PermanentPredicateTargetFilter(otherCreature, "Target must be another creature"), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.PERMANENT))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new PutCounterOnTargetPermanentEffect(CounterType.FLYING))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new PutCounterOnTargetPermanentEffect(CounterType.FIRST_STRIKE))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.PERMANENT),
+                        new PutCounterOnTargetPermanentEffect(CounterType.FLYING),
+                        new PutCounterOnTargetPermanentEffect(CounterType.FIRST_STRIKE),
                         new PutCounterOnTargetPermanentEffect(CounterType.LIFELINK));
     }
 }

@@ -16,9 +16,7 @@ public class LunkErrant extends Card {
     public LunkErrant() {
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
-                new BoostSelfEffect(1, 1));
-        addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                new BoostSelfEffect(1, 1),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF));
     }
 }

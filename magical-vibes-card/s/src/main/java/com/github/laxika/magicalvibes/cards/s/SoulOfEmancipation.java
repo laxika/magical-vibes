@@ -29,8 +29,8 @@ public class SoulOfEmancipation extends Card {
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
                 )),
                 "Target must be another nonland permanent"), 0, 3);
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DestroyEachTargetPermanentEffect());
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new DestroyEachTargetPermanentEffect(),
                 CreateTokenForEachDestroyedPermanentControllerEffect.forEachTarget(
                         new CreateTokenEffect("Angel", 3, 3, CardColor.WHITE,
                                 List.of(CardSubtype.ANGEL), Set.of(Keyword.FLYING), Set.of())));

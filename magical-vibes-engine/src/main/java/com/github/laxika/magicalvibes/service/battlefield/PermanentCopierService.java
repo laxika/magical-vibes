@@ -152,7 +152,7 @@ public class PermanentCopierService {
             for (EffectRegistration registration : original.getEffectRegistrations(slot)) {
                 CardEffect chosen = chosenModeEffect(copy, permanent, registration.effect());
                 if (chosen != null) {
-                    copy.addEffect(slot, chosen, registration.triggerMode());
+                    copy.addEffect(slot, chosen);
                 }
             }
         }
@@ -161,7 +161,7 @@ public class PermanentCopierService {
                 CardEffect chosen = chosenModeEffect(copy, permanent, registration.effect());
                 if (chosen != null) {
                     copy.addTriggeredAbility(ability.withEffects(List.of(
-                            new EffectRegistration(chosen, registration.triggerMode()))));
+                            new EffectRegistration(chosen))));
                 }
             }
         }
@@ -241,7 +241,7 @@ public class PermanentCopierService {
                 if (hasPTOverride && reg.effect().isPowerToughnessDefining()) {
                     continue;
                 }
-                copy.addEffect(slot, reg.effect(), reg.triggerMode());
+                copy.addEffect(slot, reg.effect());
             }
         }
         for (TriggeredAbility ability : target.getUnslottedTriggeredAbilities()) {

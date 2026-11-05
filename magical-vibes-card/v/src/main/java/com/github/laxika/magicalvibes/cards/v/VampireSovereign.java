@@ -21,7 +21,7 @@ public class VampireSovereign extends Card {
                 "Target must be an opponent"
         ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(3));
+                        new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER),
+                        new GainLifeEffect(3));
     }
 }

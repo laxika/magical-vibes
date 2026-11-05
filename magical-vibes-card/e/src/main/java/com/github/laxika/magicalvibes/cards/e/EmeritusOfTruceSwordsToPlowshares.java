@@ -32,16 +32,19 @@ public class EmeritusOfTruceSwordsToPlowshares extends Card {
     public EmeritusOfTruceSwordsToPlowshares() {
         setBackFaceCard(new SwordsToPlowshares());
 
-        target(new PlayerPredicateTargetFilter(
-                new PlayerRelationPredicate(PlayerRelation.ANY),
-                "Target must be a player"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenForTargetPlayerEffect(
+        var createTokenForTargetPlayer = new CreateTokenForTargetPlayerEffect(
                 new CreateTokenEffect(1, "Inkling", 1, 1,
                         CardColor.WHITE, Set.of(CardColor.WHITE, CardColor.BLACK),
                         List.of(CardSubtype.INKLING), Set.of(Keyword.FLYING), Set.of())
-        ));
+        );
+        target(new PlayerPredicateTargetFilter(
+                new PlayerRelationPredicate(PlayerRelation.ANY),
+                "Target must be a player"
+        )).bindEffect(createTokenForTargetPlayer);
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                createTokenForTargetPlayer,
+                new ConditionalEffect(
                 new OpponentControlsMoreCreatures(1), BecomePreparedEffect.triggerOnly(), false));
     }
 

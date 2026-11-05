@@ -21,8 +21,7 @@ public class PossessionEngine extends Card {
     public PossessionEngine() {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD),
                         new LockTargetPermanentEffect(true, true, false,
                                 EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD));
 

@@ -23,8 +23,8 @@ public class ZurgoStormrender extends Card {
 
     public ZurgoStormrender() {
         addTrigger(Triggers.attacks(),
-                new CreateTokenEffect(1, "Warrior", 1, 1, CardColor.RED, List.of(CardSubtype.WARRIOR), true));
-        addTrigger(Triggers.attacks(), new SacrificeCreatedPermanentsAtEndStepEffect());
+                new CreateTokenEffect(1, "Warrior", 1, 1, CardColor.RED, List.of(CardSubtype.WARRIOR), true),
+                new SacrificeCreatedPermanentsAtEndStepEffect());
 
         PermanentAllOfPredicate attackingToken = new PermanentAllOfPredicate(List.of(
                 new PermanentIsTokenPredicate(),

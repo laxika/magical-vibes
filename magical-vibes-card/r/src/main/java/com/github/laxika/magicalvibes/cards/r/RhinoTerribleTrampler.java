@@ -29,18 +29,23 @@ public class RhinoTerribleTrampler extends Card {
         PermanentPredicate artifactOrLand = new PermanentAnyOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(),
                 new PermanentIsLandPredicate()));
+        var destroyTargetPermanent = new DestroyTargetPermanentEffect(false);
         target(new PermanentPredicateTargetFilter(artifactOrLand,
                 "Target must be an artifact or land"))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new DestroyTargetPermanentEffect(false));
+                .bindEffect(destroyTargetPermanent);
 
         PermanentPredicate otherCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())));
+        var distributeCountersAmongTargets = DistributeCountersAmongTargetsEffect.chosenAmongTargetCreaturesEtb(
+                                CounterType.PLUS_ONE_PLUS_ONE, 3, otherCreature);
+        var grantKeyword = new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGETS);
         target(new PermanentPredicateTargetFilter(otherCreature, "Target must be another creature"), 0, 3)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        DistributeCountersAmongTargetsEffect.chosenAmongTargetCreaturesEtb(
-                                CounterType.PLUS_ONE_PLUS_ONE, 3, otherCreature))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGETS));
+                .bindEffect(distributeCountersAmongTargets)
+                .bindEffect(grantKeyword);
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                destroyTargetPermanent,
+                distributeCountersAmongTargets,
+                grantKeyword);
     }
 }

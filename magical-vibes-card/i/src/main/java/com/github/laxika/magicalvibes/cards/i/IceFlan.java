@@ -34,8 +34,8 @@ public class IceFlan extends Card {
                                 new PermanentIsCreaturePredicate())),
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
                 "Target must be an artifact or creature an opponent controls"))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.TARGET))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new TapPermanentsEffect(TapUntapScope.TARGET),
                         new PutCounterOnTargetPermanentEffect(CounterType.STUN));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{2}",

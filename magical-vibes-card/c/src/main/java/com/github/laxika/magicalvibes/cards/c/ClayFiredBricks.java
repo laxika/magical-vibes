@@ -28,13 +28,14 @@ public class ClayFiredBricks extends Card {
     public ClayFiredBricks() {
         setBackFaceCard(new CosmiumKiln());
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SearchLibraryEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new SearchLibraryEffect(
                 new CardAllOfPredicate(List.of(
                         new CardSupertypePredicate(CardSupertype.BASIC),
                         new CardTypePredicate(CardType.LAND),
                         new CardSubtypePredicate(CardSubtype.PLAINS))),
-                LibrarySearchDestination.HAND));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2));
+                LibrarySearchDestination.HAND),
+                new GainLifeEffect(2));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{5}{W}{W}",

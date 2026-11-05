@@ -23,8 +23,8 @@ import java.util.List;
 public class CarrionCruiser extends Card {
 
     public CarrionCruiser() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(2, MillRecipient.CONTROLLER));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(2, MillRecipient.CONTROLLER),
+                ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .mandatory(true)
                 .filter(new CardAnyOfPredicate(List.of(

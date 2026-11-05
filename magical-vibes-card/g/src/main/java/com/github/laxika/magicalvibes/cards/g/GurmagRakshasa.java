@@ -11,10 +11,13 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class GurmagRakshasa extends Card {
 
     public GurmagRakshasa() {
+        var boostTargetCreature = new BoostTargetCreatureEffect(-2, -2);
         target(TargetFilters.creatureAnOpponentControls())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(-2, -2));
+                .bindEffect(boostTargetCreature);
 
+        var boostTargetCreature2 = new BoostTargetCreatureEffect(2, 2);
         target(TargetFilters.creatureYouControl())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(2, 2));
+                .bindEffect(boostTargetCreature2);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), boostTargetCreature, boostTargetCreature2);
     }
 }

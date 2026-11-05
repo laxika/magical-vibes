@@ -21,8 +21,8 @@ public class BlindHunter extends Card {
     public BlindHunter() {
         target(anyPlayer())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2));
+                        new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER),
+                        new GainLifeEffect(2));
         target(TargetFilters.creature()).addTrigger(Triggers.dies(ObjectRelation.THIS), new HauntEffect());
         target(anyPlayer())
                 .addTrigger(Triggers.dies(ObjectRelation.HAUNTED),

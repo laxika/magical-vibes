@@ -18,9 +18,9 @@ public class SunderingSentinel extends Card {
         setStartingIntensity(2);
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToAnyTargetEffect(new SourceIntensity()));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(new SourceIntensity()));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new IntensifySourceCardEffect(1));
+                new DealDamageToAnyTargetEffect(new SourceIntensity()),
+                new GainLifeEffect(new SourceIntensity()),
+                new IntensifySourceCardEffect(1));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ExileSelfReturnAtNextUpkeepWithHasteEffect());

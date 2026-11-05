@@ -37,13 +37,9 @@ public class GodoBanditWarlord extends Card {
         // not a Samurai, so untapping itself is a separate SELF scope from the Samurai sweep.
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
-                new UntapPermanentsEffect(TapUntapScope.SELF));
-        addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new UntapPermanentsEffect(TapUntapScope.SELF),
                 new UntapPermanentsEffect(TapUntapScope.CONTROLLED,
-                        new PermanentHasSubtypePredicate(CardSubtype.SAMURAI)));
-        addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                        new PermanentHasSubtypePredicate(CardSubtype.SAMURAI)),
                 new AdditionalCombatPhaseEffect(1));
     }
 }

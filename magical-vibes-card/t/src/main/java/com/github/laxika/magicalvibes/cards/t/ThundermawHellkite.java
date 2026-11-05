@@ -26,8 +26,8 @@ public class ThundermawHellkite extends Card {
                 new PermanentHasKeywordPredicate(Keyword.FLYING),
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new MassDamageEffect(1, false, false, opponentFliers));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new MassDamageEffect(1, false, false, opponentFliers),
                 new TapPermanentsEffect(TapUntapScope.ALL_CREATURES, opponentFliers));
     }
 }

@@ -14,7 +14,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SiegeRhino extends Card {
 
     public SiegeRhino() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(3));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT),
+                new GainLifeEffect(3));
     }
 }

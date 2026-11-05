@@ -15,9 +15,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class PutridCyclops extends Card {
 
     public PutridCyclops() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(1));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new RevealTopCardOfLibraryEffect(LibraryOwner.CONTROLLER));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostSelfEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(1),
+                new RevealTopCardOfLibraryEffect(LibraryOwner.CONTROLLER),
+                new BoostSelfEffect(
                 new Scaled(new TopCardOfLibraryManaValue(), -1),
                 new Scaled(new TopCardOfLibraryManaValue(), -1)));
     }

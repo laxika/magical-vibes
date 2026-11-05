@@ -22,7 +22,8 @@ import java.util.Set;
 public class ParhelionII extends Card {
 
     public ParhelionII() {
-        addTrigger(Triggers.attacks(), new CreateTokenEffect(
+        addTrigger(Triggers.attacks(),
+                new CreateTokenEffect(
                 CardType.CREATURE,
                 2,
                 "Angel",
@@ -41,8 +42,8 @@ public class ParhelionII extends Card {
                 false,
                 false,
                 0,
-                Set.of()));
-        addTrigger(Triggers.attacks(), new MakeCreatedPermanentsAttackingEffect());
+                Set.of()),
+                new MakeCreatedPermanentsAttackingEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

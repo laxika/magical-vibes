@@ -14,8 +14,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class AngelOfTheDawn extends Card {
 
     public AngelOfTheDawn() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostAllOwnCreaturesEffect(1, 1));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new BoostAllOwnCreaturesEffect(1, 1),
                 new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES));
     }
 }

@@ -24,8 +24,7 @@ public class LostInTheMaze extends Card {
     public LostInTheMaze() {
         targetWithDynamicCount(new XValue(), TargetFilters.creature(), Integer.MAX_VALUE)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new TapPermanentsEffect(TapUntapScope.TARGET),
                         PutCounterOnTargetPermanentEffect.withResolutionCondition(
                                 CounterType.STUN, 1,
                                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));

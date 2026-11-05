@@ -18,8 +18,8 @@ public class GallantFowlknight extends Card {
 
     public GallantFowlknight() {
         var kithkin = new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.KITHKIN));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostAllOwnCreaturesEffect(1, 0));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new BoostAllOwnCreaturesEffect(1, 0),
                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.ALL_OWN_CREATURES, kithkin));
     }
 }

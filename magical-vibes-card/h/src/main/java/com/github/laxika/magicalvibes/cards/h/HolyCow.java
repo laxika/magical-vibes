@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class HolyCow extends Card {
 
     public HolyCow() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2), new ScryEffect(1));
     }
 }

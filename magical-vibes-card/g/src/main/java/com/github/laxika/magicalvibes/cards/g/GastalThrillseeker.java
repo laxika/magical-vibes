@@ -25,9 +25,10 @@ public class GastalThrillseeker extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(1));
+        ))
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER),
+                        new GainLifeEffect(1));
 
         addStaticEffect(new ConditionalEffect(new MaxSpeed(),
                 new GrantKeywordEffect(Set.of(Keyword.DEATHTOUCH, Keyword.HASTE), GrantScope.SELF)));

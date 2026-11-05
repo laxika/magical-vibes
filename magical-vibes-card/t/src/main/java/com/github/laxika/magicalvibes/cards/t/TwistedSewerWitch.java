@@ -26,7 +26,8 @@ import java.util.Set;
 public class TwistedSewerWitch extends Card {
 
     public TwistedSewerWitch() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new CreateTokenEffect(
                 1,
                 "Rat",
                 1,
@@ -35,8 +36,7 @@ public class TwistedSewerWitch extends Card {
                 List.of(CardSubtype.RAT),
                 Set.of(),
                 Set.of(),
-                List.of(StaticAbility.of(new CantBlockEffect()))));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                List.of(StaticAbility.of(new CantBlockEffect()))),
                 new CreateTokensAttachedToControlledCreaturesEffect(
                         wickedRoleToken(), new PermanentHasSubtypePredicate(CardSubtype.RAT)));
     }

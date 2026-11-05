@@ -21,8 +21,8 @@ public class TrialOfSolidarity extends Card {
 
     public TrialOfSolidarity() {
         // When this enchantment enters, creatures you control get +2/+1 and gain vigilance until end of turn.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostAllOwnCreaturesEffect(2, 1));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new BoostAllOwnCreaturesEffect(2, 1),
                 new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES));
 
         // When a Cartouche you control enters, return this enchantment to its owner's hand.

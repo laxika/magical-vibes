@@ -19,7 +19,6 @@ public class PhyrexianGargantua extends Card {
 
     public PhyrexianGargantua() {
         // When this creature enters, you draw two cards and you lose 2 life.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(2));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new LoseLifeEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(2), new LoseLifeEffect(2));
     }
 }

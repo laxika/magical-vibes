@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -39,7 +38,7 @@ public class OniCultAnvil extends Card {
                 new TriggerCondition(Triggers.leavesBattlefield(Triggers.ARTIFACT, ObjectRelation.THIS)
                         .onlyDuringYourTurn())),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
-                List.of(new EffectRegistration(createConstruct, TriggerMode.NORMAL))));
+                List.of(new EffectRegistration(createConstruct))));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

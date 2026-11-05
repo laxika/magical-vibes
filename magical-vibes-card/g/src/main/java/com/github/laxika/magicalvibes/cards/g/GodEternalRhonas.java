@@ -17,8 +17,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class GodEternalRhonas extends Card {
 
     public GodEternalRhonas() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DoubleOtherOwnCreaturesPowerEffect());
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new DoubleOtherOwnCreaturesPowerEffect(),
                 new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES));
 
         addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(

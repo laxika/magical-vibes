@@ -21,9 +21,7 @@ public class AllOutAssault extends Card {
         addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.DEATHTOUCH), GrantScope.ALL_OWN_CREATURES));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new ControllerMainPhase()),
-                new AdditionalCombatMainPhaseEffect(1));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
-                TriggerOptions.DEFAULT.withInterveningIf(new ControllerMainPhase()),
+                new AdditionalCombatMainPhaseEffect(1),
                 new RegisterDelayedAttackUntapEffect());
     }
 }

@@ -20,12 +20,13 @@ public class VojaJawsOfTheConclave extends Card {
     public VojaJawsOfTheConclave() {
         PermanentCount elvesYouControl =
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.ELF), CountScope.CONTROLLER);
-        addTrigger(Triggers.attacks(), new PutCounterOnEachControlledPermanentEffect(
-                CounterType.PLUS_ONE_PLUS_ONE, elvesYouControl, new PermanentIsCreaturePredicate()));
 
         PermanentCount wolvesYouControl =
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.WOLF), CountScope.CONTROLLER);
-        addTrigger(Triggers.attacks(), new DrawCardEffect(wolvesYouControl));
+        addTrigger(Triggers.attacks(),
+                new PutCounterOnEachControlledPermanentEffect(
+                CounterType.PLUS_ONE_PLUS_ONE, elvesYouControl, new PermanentIsCreaturePredicate()),
+                new DrawCardEffect(wolvesYouControl));
 
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(3));
     }

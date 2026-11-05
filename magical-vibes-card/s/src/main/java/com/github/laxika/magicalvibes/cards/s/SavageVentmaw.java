@@ -14,7 +14,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SavageVentmaw extends Card {
 
     public SavageVentmaw() {
-        addTrigger(Triggers.attacks(), new AwardPersistentManaEffect(ManaColor.RED, new Fixed(3)));
-        addTrigger(Triggers.attacks(), new AwardPersistentManaEffect(ManaColor.GREEN, new Fixed(3)));
+        addTrigger(Triggers.attacks(),
+                new AwardPersistentManaEffect(ManaColor.RED, new Fixed(3)),
+                new AwardPersistentManaEffect(ManaColor.GREEN, new Fixed(3)));
     }
 }

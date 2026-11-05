@@ -20,8 +20,7 @@ public class SilverShroudCostume extends Card {
     public SilverShroudCostume() {
         target(TargetFilters.creatureYouControl())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new AttachSourceEquipmentToTargetCreatureEffect())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new AttachSourceEquipmentToTargetCreatureEffect(),
                         new GrantKeywordEffect(Keyword.SHROUD, GrantScope.TARGET));
         addStaticEffect(new CantBeBlockedEffect());
         addActivatedAbility(new EquipActivatedAbility("{3}"));

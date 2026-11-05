@@ -13,7 +13,7 @@ public class SkirmishRhino extends Card {
 
     public SkirmishRhino() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2));
+                new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
+                new GainLifeEffect(2));
     }
 }

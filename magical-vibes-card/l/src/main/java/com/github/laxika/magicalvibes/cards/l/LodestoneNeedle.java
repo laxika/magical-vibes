@@ -34,8 +34,8 @@ public class LodestoneNeedle extends Card {
                 )),
                 "Target must be an artifact or creature"
         ), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.TARGET))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new TapPermanentsEffect(TapUntapScope.TARGET),
                         new PutCounterOnTargetPermanentEffect(CounterType.STUN, 2));
 
         addActivatedAbility(new ActivatedAbility(

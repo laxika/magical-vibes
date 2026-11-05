@@ -24,9 +24,9 @@ public class AzulaCunningUsurper extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new TargetPlayerChoosesCreatureExileEffect(false, true, true))
+        ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new TargetPlayerChoosesCreatureExileEffect(false, true, true),
                         new TargetPlayerExilesCardFromGraveyardEffect(
                                 0, new CardNotPredicate(new CardTypePredicate(CardType.LAND)), true));
         addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(

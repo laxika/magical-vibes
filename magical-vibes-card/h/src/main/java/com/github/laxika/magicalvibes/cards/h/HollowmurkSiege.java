@@ -31,9 +31,7 @@ public class HollowmurkSiege extends Card {
         target(TargetFilters.attackingCreature())
                 .addTrigger(Triggers.youAttack(),
                         TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode("Abzan")),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))
-                .addTrigger(Triggers.youAttack(),
-                        TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode("Abzan")),
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                         new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET));
     }
 }

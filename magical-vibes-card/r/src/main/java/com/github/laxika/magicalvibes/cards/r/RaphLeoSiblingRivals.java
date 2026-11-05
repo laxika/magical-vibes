@@ -15,12 +15,11 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class RaphLeoSiblingRivals extends Card {
 
     public RaphLeoSiblingRivals() {
+        var untapPermanents = new UntapPermanentsEffect(TapUntapScope.TARGET);
         target(TargetFilters.attackingCreature(), 1, 2)
-                .addTrigger(Triggers.attacks(),
-                        TriggerOptions.DEFAULT.withInterveningIf(new FirstCombatPhase()),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET));
-        addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new FirstCombatPhase()),
+                .bindEffect(untapPermanents);
+        addTrigger(Triggers.attacks(), TriggerOptions.DEFAULT.withInterveningIf(new FirstCombatPhase()),
+                untapPermanents,
                 new AdditionalCombatPhaseEffect(1));
     }
 }

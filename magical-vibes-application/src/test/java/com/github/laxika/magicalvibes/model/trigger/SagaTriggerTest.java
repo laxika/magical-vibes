@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.SagaChapterTargets;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
@@ -212,15 +211,5 @@ class SagaTriggerTest {
                             .isInstanceOf(IllegalArgumentException.class);
                 });
         assertThat(card.getTriggeredAbilities()).isEmpty();
-    }
-
-    @Test
-    void theReaderRejectsATriggerMode() {
-        TriggeredAbility ability = new TriggeredAbility(Triggers.finalChapterAbilityResolves(), TriggerOptions.DEFAULT,
-                List.of(new EffectRegistration(DRAW, TriggerMode.INDEPENDENT)));
-
-        assertThatThrownBy(() -> SagaAbilityReader.read(ability,
-                SagaWatch.ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES.trigger()))
-                .isInstanceOf(IllegalStateException.class);
     }
 }

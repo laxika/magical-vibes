@@ -35,9 +35,7 @@ public class OxDrover extends Card {
         var oxToken = new CreateTokenForTargetPlayerEffect(new CreateTokenEffect(
                 "Ox", 2, 4, CardColor.WHITE, List.of(CardSubtype.OX), Set.of(), Set.of()));
         target(opponentTarget)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), oxToken)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1))
-                .addTrigger(Triggers.attacks(), oxToken)
-                .addTrigger(Triggers.attacks(), new DrawCardEffect(1));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), oxToken, new DrawCardEffect(1))
+                .addTrigger(Triggers.attacks(), oxToken, new DrawCardEffect(1));
     }
 }

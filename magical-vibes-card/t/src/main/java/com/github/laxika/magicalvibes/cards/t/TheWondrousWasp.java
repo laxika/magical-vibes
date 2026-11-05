@@ -19,8 +19,7 @@ public class TheWondrousWasp extends Card {
         // for as long as The Wondrous Wasp remains on the battlefield.
         target(TargetFilters.creature(), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new TapPermanentsEffect(TapUntapScope.TARGET),
                         new LosesAllAbilitiesEffect(GrantScope.TARGET,
                                 EffectDuration.WHILE_SOURCE_REMAINS));
     }

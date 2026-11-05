@@ -26,8 +26,7 @@ public class FearOfFalling extends Card {
                         new PermanentControlledByDefendingPlayerPredicate())),
                 "Target must be a creature defending player controls"))
                 .addTrigger(Triggers.attacks(),
-                        new BoostTargetCreatureEffect(-2, 0, GrantDuration.UNTIL_YOUR_NEXT_TURN))
-                .addTrigger(Triggers.attacks(),
+                        new BoostTargetCreatureEffect(-2, 0, GrantDuration.UNTIL_YOUR_NEXT_TURN),
                         new RemoveKeywordEffect(Keyword.FLYING, GrantScope.TARGET,
                                 EffectDuration.UNTIL_YOUR_NEXT_TURN));
     }

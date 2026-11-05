@@ -15,8 +15,7 @@ public class SeaGateStormcaller extends Card {
     public SeaGateStormcaller() {
         addStaticEffect(new KickerEffect("{4}{U}"));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new CopyNextInstantOrSorceryCastThisTurnEffect(2));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new CopyNextInstantOrSorceryCastThisTurnEffect(2),
                 new ConditionalEffect(new Kicked(), new CopyNextInstantOrSorceryCastThisTurnEffect(2)));
     }
 }

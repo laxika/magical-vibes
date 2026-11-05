@@ -15,7 +15,8 @@ public class SifterWurm extends Card {
         // Trample is auto-loaded from Scryfall.
         // When this creature enters, scry 3, then reveal the top card of your library.
         // You gain life equal to that card's mana value.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(3));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new RevealTopCardGainLifeEqualToManaValueEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new ScryEffect(3),
+                new RevealTopCardGainLifeEqualToManaValueEffect());
     }
 }

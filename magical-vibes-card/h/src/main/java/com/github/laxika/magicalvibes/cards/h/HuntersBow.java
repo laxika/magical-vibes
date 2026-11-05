@@ -21,12 +21,15 @@ import java.util.Set;
 public class HuntersBow extends Card {
 
     public HuntersBow() {
+        var attachSourceEquipmentToTargetCreature = new AttachSourceEquipmentToTargetCreatureEffect();
         target(TargetFilters.creatureYouControl())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new AttachSourceEquipmentToTargetCreatureEffect());
+                .bindEffect(attachSourceEquipmentToTargetCreature);
+        var targetDealsPowerDamageToTarget = new TargetDealsPowerDamageToTargetEffect();
         target(TargetFilters.creatureAnOpponentControls(), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new TargetDealsPowerDamageToTargetEffect());
+                .bindEffect(targetDealsPowerDamageToTarget);
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                attachSourceEquipmentToTargetCreature,
+                targetDealsPowerDamageToTarget);
 
         addStaticEffect(new GrantKeywordEffect(Set.of(Keyword.REACH), GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantTriggeredAbilityEffect(

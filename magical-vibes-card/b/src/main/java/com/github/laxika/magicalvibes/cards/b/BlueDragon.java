@@ -12,14 +12,18 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class BlueDragon extends Card {
 
     public BlueDragon() {
+        var boostTargetCreature = new BoostTargetCreatureEffect(-3, 0, GrantDuration.UNTIL_YOUR_NEXT_TURN);
         target(TargetFilters.creatureAnOpponentControls())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new BoostTargetCreatureEffect(-3, 0, GrantDuration.UNTIL_YOUR_NEXT_TURN));
+                .bindEffect(boostTargetCreature);
+        var boostTargetCreature2 = new BoostTargetCreatureEffect(-2, 0, GrantDuration.UNTIL_YOUR_NEXT_TURN);
         target(TargetFilters.creature(), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new BoostTargetCreatureEffect(-2, 0, GrantDuration.UNTIL_YOUR_NEXT_TURN));
+                .bindEffect(boostTargetCreature2);
+        var boostTargetCreature3 = new BoostTargetCreatureEffect(-1, 0, GrantDuration.UNTIL_YOUR_NEXT_TURN);
         target(TargetFilters.creature(), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new BoostTargetCreatureEffect(-1, 0, GrantDuration.UNTIL_YOUR_NEXT_TURN));
+                .bindEffect(boostTargetCreature3);
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                boostTargetCreature,
+                boostTargetCreature2,
+                boostTargetCreature3);
     }
 }

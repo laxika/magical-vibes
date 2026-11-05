@@ -31,9 +31,9 @@ public class RasputinTheOneiromancer extends Card {
 
     public RasputinTheOneiromancer() {
         // When Rasputin enters, put a dream counter on it for each opponent, and each opponent creates a Goblin.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new PutCountersOnSelfEffect(
-                CounterType.DREAM, new Sum(new PlayersInGame(), new Fixed(-1))));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new PutCountersOnSelfEffect(
+                CounterType.DREAM, new Sum(new PlayersInGame(), new Fixed(-1))),
                 new EachOpponentCreatesTokenEffect(goblinToken()));
 
         addActivatedAbility(new ActivatedAbility(

@@ -18,8 +18,8 @@ public class DebrisBeetle extends Card {
 
     public DebrisBeetle() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(3));
+                new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT),
+                new GainLifeEffect(3));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

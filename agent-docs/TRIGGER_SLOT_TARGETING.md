@@ -2,7 +2,7 @@
 
 `Triggers.plusOneCounterPutOnThis()` ("whenever a +1/+1 counter is put on this") triggers for each individual counter, such as Bloodcrazed Hoplite; the counter collector reads that from the trigger. The counter-placement collector queues a separate ability and mandatory target choice for each counter actually placed; all targets are chosen before those abilities resolve. `Triggers.plusOneCountersPutOnThis()` ("one or more") still fires once per placement event.
 
-`Triggers.enters(Triggers.TOKEN, ObjectRelation.YOU_CONTROL)` uses `TriggerMode.PER_TOKEN` for abilities that trigger for each token entering, such as Junk Winder's "whenever a token you control enters". The token-enter collector queues one dispatch per entering token, each seeing only that token. The default mode still fires once per token-creation event.
+`Triggers.enters(Triggers.TOKEN, ObjectRelation.YOU_CONTROL)` triggers for each token entering, such as Junk Winder's "whenever a token you control enters". The token-enter collector queues one dispatch per entering token, each seeing only that token. The default mode still fires once per token-creation event.
 
 `MultiTargetConstraint.ONE_PER_OPPONENT` requires one legal permanent target controlled by every opponent, even when an opponent has no legal targets. Spells using it cannot be cast without satisfying every opponent's target requirement. `ONE_PER_CONTROLLER_IF_ABLE` retains its optional omission for opponents without legal targets. `ONE_PER_OPPONENT_IF_ABLE` is the same optional omission applied to opponents only, with the controller never required (Sylvan Primordial, "for each opponent").
 

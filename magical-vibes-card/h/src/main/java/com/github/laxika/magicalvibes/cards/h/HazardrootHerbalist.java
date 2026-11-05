@@ -14,8 +14,8 @@ public class HazardrootHerbalist extends Card {
 
     public HazardrootHerbalist() {
         target(TargetFilters.creatureYouControl())
-                .addTrigger(Triggers.youAttack(), new BoostTargetCreatureEffect(1, 0))
                 .addTrigger(Triggers.youAttack(),
+                        new BoostTargetCreatureEffect(1, 0),
                         GrantKeywordEffect.toTargetIf(Keyword.DEATHTOUCH, new PermanentIsTokenPredicate()));
     }
 }

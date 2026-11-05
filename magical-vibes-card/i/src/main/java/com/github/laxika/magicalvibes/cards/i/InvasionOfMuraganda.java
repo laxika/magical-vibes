@@ -23,19 +23,21 @@ public class InvasionOfMuraganda extends Card {
     public InvasionOfMuraganda() {
         setBackFaceCard(new PrimordialPlasm());
 
+        var putCounterOnTargetPermanent = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1);
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature you control"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
+        )).bindEffect(putCounterOnTargetPermanent);
 
+        var fightTargets = new FightTargetsEffect();
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Target must be a creature you don't control"
-        ), 0, 1).addTrigger(Triggers.enters(ObjectRelation.THIS), new FightTargetsEffect());
+        ), 0, 1).bindEffect(fightTargets);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), putCounterOnTargetPermanent, fightTargets);
     }
 
     @Override

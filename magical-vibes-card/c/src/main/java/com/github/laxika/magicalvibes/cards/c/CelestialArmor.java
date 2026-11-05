@@ -22,8 +22,8 @@ public class CelestialArmor extends Card {
 
     public CelestialArmor() {
         target(TargetFilters.creatureYouControl())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new AttachSourceEquipmentToTargetCreatureEffect())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new AttachSourceEquipmentToTargetCreatureEffect(),
                         new GrantKeywordEffect(Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), GrantScope.TARGET));
 
         addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));

@@ -21,7 +21,7 @@ class SpellAbilityTest {
         // Char: "deals 4 damage to any target and 2 damage to you" is one damage event.
         EffectRegistration toAnyTarget = new EffectRegistration(new DealDamageToAnyTargetEffect(4));
         EffectRegistration toYou = new EffectRegistration(
-                new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER), TriggerMode.NORMAL, true);
+                new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER), true);
 
         SpellAbility ability = new SpellAbility(List.of(toAnyTarget, toYou));
 
@@ -47,19 +47,10 @@ class SpellAbilityTest {
 
     @Test
     void firstEffectCannotBeSimultaneousWithAPreviousOne() {
-        EffectRegistration simultaneous = new EffectRegistration(new DrawCardEffect(1), TriggerMode.NORMAL, true);
+        EffectRegistration simultaneous = new EffectRegistration(new DrawCardEffect(1), true);
 
         assertThatThrownBy(() -> new SpellAbility(List.of(simultaneous)))
                 .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    void aSpellAbilityDoesNotTrigger() {
-        EffectRegistration independent = new EffectRegistration(new DrawCardEffect(1), TriggerMode.INDEPENDENT);
-
-        assertThatThrownBy(() -> new SpellAbility(List.of(independent)))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("INDEPENDENT");
     }
 
     @Test

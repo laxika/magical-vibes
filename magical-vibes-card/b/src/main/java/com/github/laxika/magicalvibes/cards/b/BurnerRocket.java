@@ -23,8 +23,9 @@ public class BurnerRocket extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature you control"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(2, 0))
+        ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new BoostTargetCreatureEffect(2, 0),
                         new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
 
         addActivatedAbility(new ActivatedAbility(

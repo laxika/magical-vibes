@@ -22,11 +22,12 @@ public class TataruTaru extends Card {
 
     public TataruTaru() {
         // When Tataru Taru enters, you draw a card and target opponent may draw a card.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
+        var targetOpponentMayDrawCard = TargetOpponentMayDrawCardEffect.ofChosenTarget();
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS), TargetOpponentMayDrawCardEffect.ofChosenTarget());
+        )).bindEffect(targetOpponentMayDrawCard);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(), targetOpponentMayDrawCard);
 
         // Whenever an opponent draws a card, if it isn't that player's turn, create a tapped
         // Treasure token. This ability triggers only once each turn.

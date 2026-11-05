@@ -44,8 +44,8 @@ public class ObsessivePursuit extends Card {
                         null,
                         attackingCreature,
                         false,
-                        null))
-                .addTrigger(Triggers.youAttack(), ConditionalEffect.unless(
+                        null),
+                        ConditionalEffect.unless(
                         new ControllerSacrificedPermanentsAtLeastThisTurn(3),
                         new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET)));
     }

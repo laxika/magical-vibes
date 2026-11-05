@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
@@ -49,18 +48,16 @@ public final class CombatAbilityReader {
      * One effect of a combat ability as its collector reads it.
      *
      * @param effect  the effect, wrapped in the ability's event condition and intervening "if" as the class says
-     * @param mode    the registration's trigger mode ({@link TriggerMode#INDEPENDENT}: an ability of its own)
      * @param ability the ability the effect belongs to
      * @param filter  what the creature must be for the watched condition (the filter its {@link Trigger#watchKey()}
      *                drops), or {@code null}
      * @param simultaneousWithPrevious the registration happens at the same time as the effect before it
      */
-    public record CombatEffect(CardEffect effect, TriggerMode mode, TriggeredAbility ability,
+    public record CombatEffect(CardEffect effect, TriggeredAbility ability,
                                PermanentPredicate filter, boolean simultaneousWithPrevious) {
 
         public CombatEffect {
             Objects.requireNonNull(effect, "effect");
-            Objects.requireNonNull(mode, "mode");
             Objects.requireNonNull(ability, "ability");
         }
 
@@ -86,14 +83,9 @@ public final class CombatAbilityReader {
             return multiplicity() == TriggerMultiplicity.EACH_BLOCKER;
         }
 
-        /** Whether the registration is an ability of its own ({@link TriggerMode#INDEPENDENT}). */
-        public boolean independent() {
-            return mode == TriggerMode.INDEPENDENT;
-        }
-
         /** This effect read as {@code effect} instead, as a collector snapshots or binds it. */
         public CombatEffect withEffect(CardEffect effect) {
-            return new CombatEffect(effect, mode, ability, filter, simultaneousWithPrevious);
+            return new CombatEffect(effect, ability, filter, simultaneousWithPrevious);
         }
 
         /**
@@ -174,7 +166,7 @@ public final class CombatAbilityReader {
             }
             CardEffect read = authoredAlly == null ? inner
                     : inner == authoredAlly.effect() ? authoredAlly : authoredAlly.withEffect(inner);
-            effects.add(new CombatEffect(read, registration.triggerMode(), ability, filter,
+            effects.add(new CombatEffect(read, ability, filter,
                     registration.simultaneousWithPrevious()));
         }
         return effects;
@@ -208,8 +200,8 @@ public final class CombatAbilityReader {
     }
 
     /**
-     * The registrations of {@code abilities} for the condition watched as {@code watched}, with their trigger modes,
-     * for a collector that reads no filter, limit or multiplicity: none of its abilities is written with one, and this
+     * The registrations of {@code abilities} for the condition watched as {@code watched}, for a
+     * collector that reads no filter, limit or multiplicity: none of its abilities is written with one, and this
      * throws on one.
      */
     public static List<EffectRegistration> registrations(List<TriggeredAbility> abilities, Trigger watched) {
@@ -224,15 +216,65 @@ public final class CombatAbilityReader {
         return registrationsOf(reads);
     }
 
+    /**
+     * {@code effects} grouped by the ability they belong to, the abilities in the order their first effect comes, so
+     * that each triggered ability goes on the stack as one object (CR 603.3). Abilities are told apart by identity:
+     * a card may have two equal abilities ("myriad, myriad").
+     */
+    public static List<List<CombatEffect>> byAbility(List<CombatEffect> effects) {
+        List<List<CombatEffect>> groups = new ArrayList<>();
+        List<TriggeredAbility> abilities = new ArrayList<>();
+        for (CombatEffect effect : effects) {
+            int index = -1;
+            for (int i = 0; i < abilities.size(); i++) {
+                if (abilities.get(i) == effect.ability()) {
+                    index = i;
+                    break;
+                }
+            }
+            if (index < 0) {
+                abilities.add(effect.ability());
+                groups.add(new ArrayList<>());
+                index = groups.size() - 1;
+            }
+            groups.get(index).add(effect);
+        }
+        return groups;
+    }
+
+    /**
+     * Takes out of {@code bundled}, the effects a collector put on the stack as one object, those of every ability of
+     * {@code printed} after the first, each ability's effects as an object of its own (CR 603.3), in order. The first
+     * ability's effects stay in {@code bundled}. {@code bundledForm} gives the form in which the collector bundled a
+     * printed effect (the effect itself, or the effect without a wrapper the collector judged).
+     */
+    public static List<List<CardEffect>> splitLaterAbilities(List<CombatEffect> printed, List<CardEffect> bundled,
+                                                             java.util.function.UnaryOperator<CardEffect> bundledForm) {
+        List<List<CardEffect>> separate = new ArrayList<>();
+        List<List<CombatEffect>> abilities = byAbility(printed);
+        for (List<CombatEffect> ability : abilities.subList(Math.min(1, abilities.size()), abilities.size())) {
+            List<CardEffect> abilityEffects = new ArrayList<>();
+            for (CombatEffect effect : ability) {
+                CardEffect form = bundledForm.apply(effect.effect());
+                if (bundled.remove(form)) {
+                    abilityEffects.add(form);
+                }
+            }
+            if (!abilityEffects.isEmpty()) {
+                separate.add(abilityEffects);
+            }
+        }
+        return separate;
+    }
+
     /** The effects of {@code effects}, in order. */
     public static List<CardEffect> effectsOf(List<CombatEffect> effects) {
         return effects.stream().map(CombatEffect::effect).toList();
     }
 
-    /** The registrations of {@code effects}, with their trigger modes, in order. */
+    /** The registrations of {@code effects}, in order. */
     public static List<EffectRegistration> registrationsOf(List<CombatEffect> effects) {
-        return effects.stream().map(effect -> new EffectRegistration(effect.effect(), effect.mode(),
-                effect.simultaneousWithPrevious())).toList();
+        return effects.stream().map(effect -> new EffectRegistration(effect.effect(), effect.simultaneousWithPrevious())).toList();
     }
 
     /** Throws when {@code effect}'s ability has a limit or multiplicity, which the collector of {@code watched} doesn't read. */

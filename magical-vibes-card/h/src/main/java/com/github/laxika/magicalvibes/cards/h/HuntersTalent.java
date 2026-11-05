@@ -59,10 +59,7 @@ public class HuntersTalent extends Card {
                 .addTrigger(Triggers.youAttack(),
                         TriggerOptions.DEFAULT.withEventCondition(
                                 new SourceClassLevelAtLeast(2)),
-                                new BoostTargetCreatureEffect(1, 0))
-                .addTrigger(Triggers.youAttack(),
-                        TriggerOptions.DEFAULT.withEventCondition(
-                                new SourceClassLevelAtLeast(2)),
+                                new BoostTargetCreatureEffect(1, 0),
                                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),

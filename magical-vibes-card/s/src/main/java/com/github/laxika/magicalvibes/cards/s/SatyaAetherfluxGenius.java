@@ -34,12 +34,14 @@ public class SatyaAetherfluxGenius extends Card {
                 new PermanentNotPredicate(new PermanentIsTokenPredicate())
         ));
 
+        var createTokenCopyOfTargetPermanentUnlessPayEnergyEqualToManaValue = new CreateTokenCopyOfTargetPermanentUnlessPayEnergyEqualToManaValueEffect(
+                        new CreateTokenCopyOfTargetPermanentEffect(false, false, false, true));
         target(new ControlledPermanentPredicateTargetFilter(
                 targetFilter,
                 "Target must be another nontoken creature you control"
-        ), 0, 1).addTrigger(Triggers.attacks(),
-                new CreateTokenCopyOfTargetPermanentUnlessPayEnergyEqualToManaValueEffect(
-                        new CreateTokenCopyOfTargetPermanentEffect(false, false, false, true)));
-        addTrigger(Triggers.attacks(), new EnergyCountersEffect(2));
+        ), 0, 1).bindEffect(createTokenCopyOfTargetPermanentUnlessPayEnergyEqualToManaValue);
+        addTrigger(Triggers.attacks(),
+                createTokenCopyOfTargetPermanentUnlessPayEnergyEqualToManaValue,
+                new EnergyCountersEffect(2));
     }
 }

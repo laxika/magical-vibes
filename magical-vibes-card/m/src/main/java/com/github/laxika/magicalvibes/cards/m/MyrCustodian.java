@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class MyrCustodian extends Card {
 
     public MyrCustodian() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(2));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), EachPlayerMayScryEffect.forOpponents(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(2), EachPlayerMayScryEffect.forOpponents(1));
     }
 }

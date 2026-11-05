@@ -12,15 +12,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.Set;
 
 @CardRegistration(set = "GN2", collectorNumber = "5")
 public class EarthshakerGiant extends Card {
 
     public EarthshakerGiant() {
         PermanentPredicate otherCreature = new PermanentNotPredicate(new PermanentIsSourceCardPredicate());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostAllOwnCreaturesEffect(3, 3, otherCreature));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new BoostAllOwnCreaturesEffect(3, 3, otherCreature),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES, otherCreature));
     }
 }

@@ -30,8 +30,8 @@ public class TriceratonCommander extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR),
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
         ));
-        addTrigger(Triggers.attacks(), new BoostAllOwnCreaturesEffect(1, 1, otherDinosaur));
-        addTrigger(Triggers.attacks(), new GrantKeywordEffect(
+        addTrigger(Triggers.attacks(), new BoostAllOwnCreaturesEffect(1, 1, otherDinosaur),
+                new GrantKeywordEffect(
                 Keyword.FLYING, GrantScope.OWN_CREATURES, otherDinosaur));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
                 new XValue(), "Dinosaur Soldier", 2, 2, CardColor.WHITE,

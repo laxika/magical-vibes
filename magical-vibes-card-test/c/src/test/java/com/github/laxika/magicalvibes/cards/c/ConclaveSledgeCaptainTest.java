@@ -21,9 +21,7 @@ class ConclaveSledgeCaptainTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         castSledgeCaptain();
 
-        resolveBackupTarget(bears);
-        resolveBackupTarget(bears);
-        resolveBackupTarget(bears);
+        resolveBackupTargets(bears, bears, bears);
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
 
@@ -52,9 +50,7 @@ class ConclaveSledgeCaptainTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         castSledgeCaptain();
 
-        resolveBackupTarget(bears);
-        resolveBackupTarget(bears);
-        resolveBackupTarget(bears);
+        resolveBackupTargets(bears, bears, bears);
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
     }
@@ -62,9 +58,7 @@ class ConclaveSledgeCaptainTest extends BaseCardTest {
     @Test
     void selfBackupDoesNotMultiplyPrintedCombatDamageAbility() {
         Permanent captain = castSledgeCaptain();
-        resolveBackupTarget(captain);
-        resolveBackupTarget(captain);
-        resolveBackupTarget(captain);
+        resolveBackupTargets(captain, captain, captain);
         assertThat(captain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
 
         captain.setSummoningSick(false);
@@ -80,9 +74,7 @@ class ConclaveSledgeCaptainTest extends BaseCardTest {
     void backupTargetsCanBeSplitBetweenSourceAndOpponentsCreature() {
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
         Permanent captain = castSledgeCaptain();
-        resolveBackupTarget(captain);
-        resolveBackupTarget(bears);
-        resolveBackupTarget(bears);
+        resolveBackupTargets(captain, bears, bears);
 
         assertThat(captain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -99,9 +91,7 @@ class ConclaveSledgeCaptainTest extends BaseCardTest {
     void grantedCombatDamageAbilitiesExpireButCountersRemain() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         castSledgeCaptain();
-        resolveBackupTarget(bears);
-        resolveBackupTarget(bears);
-        resolveBackupTarget(bears);
+        resolveBackupTargets(bears, bears, bears);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -145,5 +135,16 @@ class ConclaveSledgeCaptainTest extends BaseCardTest {
     private void resolveBackupTarget(Permanent target) {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
+    }
+
+    /**
+     * The three backup abilities are separate objects (CR 603.3): each chooses its target as it is put on the stack,
+     * all before any of them resolves (CR 603.3b).
+     */
+    private void resolveBackupTargets(Permanent... targets) {
+        for (Permanent target : targets) {
+            harness.handlePermanentChosen(player1, target.getId());
+        }
+        resolveAllTriggers();
     }
 }

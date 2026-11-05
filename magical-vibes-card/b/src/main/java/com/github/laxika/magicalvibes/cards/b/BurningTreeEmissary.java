@@ -16,7 +16,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class BurningTreeEmissary extends Card {
 
     public BurningTreeEmissary() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new AwardManaEffect(ManaColor.RED));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new AwardManaEffect(ManaColor.GREEN));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new AwardManaEffect(ManaColor.RED),
+                new AwardManaEffect(ManaColor.GREEN));
     }
 }

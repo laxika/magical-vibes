@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger;
@@ -37,7 +35,7 @@ public final class ZoneChangeAbilityReader {
 
     /**
      * The effects of {@code abilities}, in order, for a reader that judges none of their options: throws when one has
-     * an option or a trigger mode.
+     * an option.
      */
     public static List<CardEffect> strictEffects(List<TriggeredAbility> abilities) {
         List<CardEffect> effects = new ArrayList<>();
@@ -50,7 +48,7 @@ public final class ZoneChangeAbilityReader {
 
     /**
      * The effect of {@code ability}, a registered ability that its reader puts on the stack as one effect: throws when
-     * it has an option, a trigger mode or more than one effect, which the reader would drop.
+     * it has an option or more than one effect, which the reader would drop.
      */
     public static CardEffect strictEffect(TriggeredAbility ability) {
         requireNothingToJudge(ability);
@@ -61,17 +59,11 @@ public final class ZoneChangeAbilityReader {
         return ability.effects().getFirst().effect();
     }
 
-    /** Throws when {@code ability} has an option or a trigger mode, which the readers here don't judge. */
+    /** Throws when {@code ability} has an option, which the readers here don't judge. */
     public static void requireNothingToJudge(TriggeredAbility ability) {
         if (!ability.options().equals(TriggerOptions.DEFAULT)) {
             throw new IllegalStateException("No zone-change reader outside the trigger pipeline reads "
                     + ability.options() + ": " + ability);
-        }
-        for (EffectRegistration registration : ability.effects()) {
-            if (registration.triggerMode() != TriggerMode.NORMAL) {
-                throw new IllegalStateException("No zone-change reader reads a trigger mode ("
-                        + registration.triggerMode() + "): " + ability);
-            }
         }
     }
 }

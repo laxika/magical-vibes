@@ -642,7 +642,7 @@ public class LayerSystemService {
                 boolean alreadyPresent = copy.getEffectRegistrations(slot).stream()
                         .anyMatch(existing -> existing.effect().equals(registration.effect()));
                 if (!alreadyPresent) {
-                    copy.addEffect(slot, registration.effect(), registration.triggerMode());
+                    copy.addEffect(slot, registration.effect());
                 }
             }
         }

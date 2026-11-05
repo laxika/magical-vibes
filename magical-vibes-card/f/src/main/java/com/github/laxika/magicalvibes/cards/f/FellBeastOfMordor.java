@@ -29,9 +29,7 @@ public class FellBeastOfMordor extends Card {
         var gainLife = new GainLifeEffect(counters);
 
         target(targetOpponent)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), loseLife)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), gainLife)
-                .addTrigger(Triggers.attacks(), loseLife)
-                .addTrigger(Triggers.attacks(), gainLife);
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), loseLife, gainLife)
+                .addTrigger(Triggers.attacks(), loseLife, gainLife);
     }
 }

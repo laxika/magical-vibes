@@ -26,9 +26,7 @@ public class NightClubber extends Card {
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()),
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
-                TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()),
+                new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF),
                 new SacrificeSelfAtEndStepEffect());
         addTrigger(Triggers.dies(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()),

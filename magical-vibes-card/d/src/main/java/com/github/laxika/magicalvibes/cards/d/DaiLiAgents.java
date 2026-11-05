@@ -24,10 +24,13 @@ public class DaiLiAgents extends Card {
     public DaiLiAgents() {
         setAllowSharedTargets(true);
 
+        var earthbendTargetLand = new EarthbendTargetLandEffect(1);
         target(TargetFilters.landYouControl())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new EarthbendTargetLandEffect(1));
+                .bindEffect(earthbendTargetLand);
+        var earthbendTargetLand2 = new EarthbendTargetLandEffect(1);
         target(TargetFilters.landYouControl())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new EarthbendTargetLandEffect(1));
+                .bindEffect(earthbendTargetLand2);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), earthbendTargetLand, earthbendTargetLand2);
 
         PermanentCount creaturesWithCounters = new PermanentCount(
                 new PermanentAllOfPredicate(List.of(
@@ -36,7 +39,7 @@ public class DaiLiAgents extends Card {
                 )),
                 CountScope.CONTROLLER);
         addTrigger(Triggers.attacks(),
-                new LoseLifeEffect(creaturesWithCounters, LoseLifeRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.attacks(), new GainLifeEffect(creaturesWithCounters));
+                new LoseLifeEffect(creaturesWithCounters, LoseLifeRecipient.EACH_OPPONENT),
+                new GainLifeEffect(creaturesWithCounters));
     }
 }

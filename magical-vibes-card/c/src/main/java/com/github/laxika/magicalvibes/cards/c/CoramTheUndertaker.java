@@ -29,8 +29,9 @@ public class CoramTheUndertaker extends Card {
                         new CardTypePredicate(CardType.CREATURE), CountScope.ANY_PLAYER),
                 new Fixed(0), GrantScope.SELF));
 
-        addTrigger(Triggers.attacks(), new MillEffect(1, MillRecipient.CONTROLLER));
-        addTrigger(Triggers.attacks(), new MillEffect(1, MillRecipient.EACH_OPPONENT));
+        addTrigger(Triggers.attacks(),
+                new MillEffect(1, MillRecipient.CONTROLLER),
+                new MillEffect(1, MillRecipient.EACH_OPPONENT));
 
         addStaticEffect(new PlayLandAndCastSpellFromCardsPutIntoGraveyardsFromLibrariesThisTurnEffect());
     }

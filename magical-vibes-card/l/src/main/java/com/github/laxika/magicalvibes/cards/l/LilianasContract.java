@@ -20,8 +20,7 @@ public class LilianasContract extends Card {
 
     public LilianasContract() {
         // When this enchantment enters, you draw four cards and you lose 4 life.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(4));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new LoseLifeEffect(4));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(4), new LoseLifeEffect(4));
 
         // At the beginning of your upkeep, if you control four or more Demons with different names,
         // you win the game.

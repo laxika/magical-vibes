@@ -41,16 +41,18 @@ public class OmoQueenOfVesuva extends Card {
     public OmoQueenOfVesuva() {
         setAllowSharedTargets(true);
 
+        var putCounterOnTargetPermanent = new PutCounterOnTargetPermanentEffect(CounterType.EVERYTHING);
+        var putCounterOnTargetPermanent3 = new PutCounterOnTargetPermanentEffect(CounterType.EVERYTHING);
         target(TargetFilters.land(), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new PutCounterOnTargetPermanentEffect(CounterType.EVERYTHING))
-                .addTrigger(Triggers.attacks(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.EVERYTHING));
+                .bindEffect(putCounterOnTargetPermanent)
+                .bindEffect(putCounterOnTargetPermanent3);
+        var putCounterOnTargetPermanent2 = new PutCounterOnTargetPermanentEffect(CounterType.EVERYTHING);
+        var putCounterOnTargetPermanent4 = new PutCounterOnTargetPermanentEffect(CounterType.EVERYTHING);
         target(TargetFilters.creature(), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new PutCounterOnTargetPermanentEffect(CounterType.EVERYTHING))
-                .addTrigger(Triggers.attacks(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.EVERYTHING));
+                .bindEffect(putCounterOnTargetPermanent2)
+                .bindEffect(putCounterOnTargetPermanent4);
+        addTrigger(Triggers.attacks(), putCounterOnTargetPermanent3, putCounterOnTargetPermanent4);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), putCounterOnTargetPermanent, putCounterOnTargetPermanent2);
 
         addStaticEffect(new GrantAllCreatureTypesToOwnCreaturesEffect(
                 GrantScope.ALL_CREATURES_INCLUDING_SELF, NONLAND_CREATURE));

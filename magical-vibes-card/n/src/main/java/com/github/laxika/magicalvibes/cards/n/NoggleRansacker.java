@@ -15,7 +15,8 @@ public class NoggleRansacker extends Card {
 
     public NoggleRansacker() {
         // When this creature enters, each player draws two cards, then discards a card at random.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new EachPlayerDrawsCardEffect(2));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DiscardEffect(1, DiscardRecipient.EACH_PLAYER, true));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new EachPlayerDrawsCardEffect(2),
+                new DiscardEffect(1, DiscardRecipient.EACH_PLAYER, true));
     }
 }

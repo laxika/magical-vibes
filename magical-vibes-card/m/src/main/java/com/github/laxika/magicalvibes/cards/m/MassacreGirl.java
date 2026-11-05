@@ -21,8 +21,8 @@ public class MassacreGirl extends Card {
     public MassacreGirl() {
         CardEffect weakenOtherCreatures = new BoostAllCreaturesEffect(-1, -1,
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate()));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), weakenOtherCreatures);
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                weakenOtherCreatures,
                 new RegisterDelayedCreatureDeathTriggerEffect(weakenOtherCreatures));
     }
 }

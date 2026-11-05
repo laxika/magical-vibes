@@ -21,8 +21,7 @@ public class HiddenBlade extends Card {
         // When this Equipment enters, attach it to target creature you control.
         target(TargetFilters.creatureYouControl())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new AttachSourceEquipmentToTargetCreatureEffect())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new AttachSourceEquipmentToTargetCreatureEffect(),
                         GrantKeywordEffect.toTargetIf(Keyword.DEATHTOUCH,
                                 new PermanentHasSubtypePredicate(CardSubtype.ASSASSIN)));
 

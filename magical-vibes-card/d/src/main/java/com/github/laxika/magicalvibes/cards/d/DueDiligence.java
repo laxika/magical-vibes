@@ -35,8 +35,8 @@ public class DueDiligence extends Card {
                 new PermanentIsCreaturePredicate(), new PermanentControlledBySourceControllerPredicate(),
                 new PermanentNotPredicate(new PermanentIsHostOfSourceAuraPredicate()))),
                 "Target must be another creature you control"))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(2, 2))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new BoostTargetCreatureEffect(2, 2),
                         new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET));
     }
 }

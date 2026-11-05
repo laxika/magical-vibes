@@ -27,7 +27,7 @@ public class CraterhoofBehemoth extends Card {
         // turn, where X is the number of creatures you control (this one included).
         var creatureCount = new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostAllOwnCreaturesEffect(creatureCount, creatureCount));
+                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES),
+                new BoostAllOwnCreaturesEffect(creatureCount, creatureCount));
     }
 }

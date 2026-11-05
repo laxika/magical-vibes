@@ -14,7 +14,8 @@ public class BattlesongBerserker extends Card {
 
     public BattlesongBerserker() {
         target(TargetFilters.creatureYouControl())
-                .addTrigger(Triggers.youAttack(), new BoostTargetCreatureEffect(1, 0))
-                .addTrigger(Triggers.youAttack(), new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET));
+                .addTrigger(Triggers.youAttack(),
+                        new BoostTargetCreatureEffect(1, 0),
+                        new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET));
     }
 }

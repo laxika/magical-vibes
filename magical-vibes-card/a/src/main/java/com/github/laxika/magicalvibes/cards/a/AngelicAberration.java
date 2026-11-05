@@ -30,8 +30,8 @@ public class AngelicAberration extends Card {
     ));
 
     public AngelicAberration() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeAnyNumberOfPermanentsEffect(SMALL_CREATURE));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeAnyNumberOfPermanentsEffect(SMALL_CREATURE),
+                new CreateTokenEffect(
                 new EventValue(),
                 "Eldrazi Angel",
                 4,

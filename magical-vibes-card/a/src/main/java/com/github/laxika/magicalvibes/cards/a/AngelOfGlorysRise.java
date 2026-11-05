@@ -21,9 +21,8 @@ import java.util.List;
 public class AngelOfGlorysRise extends Card {
 
     public AngelOfGlorysRise() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ExileAllPermanentsEffect(new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ExileAllPermanentsEffect(new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)),
+                ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardAllOfPredicate(List.of(new CardTypePredicate(CardType.CREATURE), new CardSubtypePredicate(CardSubtype.HUMAN))))
                 .returnAll(true)

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -30,17 +29,17 @@ public class Catharsis extends Card {
     public Catharsis() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{R/W}{R/W}"))));
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new ColorSpentToCast(ManaColor.WHITE, 2)),
                 new CreateTokenEffect(
                         2, "Kithkin", 1, 1, CardColor.WHITE,
                         Set.of(CardColor.GREEN, CardColor.WHITE), List.of(CardSubtype.KITHKIN)));
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new ColorSpentToCast(ManaColor.RED, 2)),
                 SequenceEffect.of(new BoostAllOwnCreaturesEffect(1, 1),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES)));
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT, new SacrificeSelfIfEvokedEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
     }
 }

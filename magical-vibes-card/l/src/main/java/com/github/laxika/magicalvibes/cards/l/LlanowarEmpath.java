@@ -17,8 +17,8 @@ public class LlanowarEmpath extends Card {
     public LlanowarEmpath() {
         // When this creature enters, scry 2, then reveal the top card of your library.
         // If it's a creature card, put it into your hand.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(2));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new ScryEffect(2),
                 new RevealTopCardMatchingToHandEffect(new CardTypePredicate(CardType.CREATURE)));
     }
 }

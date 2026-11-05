@@ -31,8 +31,8 @@ public class EelHounds extends Card {
                 targetFilter,
                 "Target must be another creature you control"
         ))
-                .addTrigger(Triggers.attacks(), new BoostTargetCreatureEffect(2, 2, targetFilter))
                 .addTrigger(Triggers.attacks(),
+                        new BoostTargetCreatureEffect(2, 2, targetFilter),
                         new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET, targetFilter));
     }
 }

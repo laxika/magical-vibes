@@ -18,11 +18,12 @@ public class MonoistCircuitFeeder extends Card {
     public MonoistCircuitFeeder() {
         PermanentCount artifacts = new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER);
 
+        var boostTargetCreature = new BoostTargetCreatureEffect(artifacts, new Fixed(0));
         target(TargetFilters.creatureYouControl())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new BoostTargetCreatureEffect(artifacts, new Fixed(0)));
+                .bindEffect(boostTargetCreature);
+        var boostTargetCreature2 = new BoostTargetCreatureEffect(new Fixed(0), new Scaled(artifacts, -1));
         target(TargetFilters.creatureAnOpponentControls())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new BoostTargetCreatureEffect(new Fixed(0), new Scaled(artifacts, -1)));
+                .bindEffect(boostTargetCreature2);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), boostTargetCreature, boostTargetCreature2);
     }
 }

@@ -17,8 +17,7 @@ public class AmblingStormshell extends Card {
 
     public AmblingStormshell() {
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
-        addTrigger(Triggers.attacks(), new PutCountersOnSelfEffect(CounterType.STUN, 3));
-        addTrigger(Triggers.attacks(), new DrawCardEffect(3));
+        addTrigger(Triggers.attacks(), new PutCountersOnSelfEffect(CounterType.STUN, 3), new DrawCardEffect(3));
 
         addTrigger(Triggers.youCastSpell().withFilter(new CardSubtypePredicate(CardSubtype.TURTLE)),
                 new UntapPermanentsEffect(TapUntapScope.SELF));

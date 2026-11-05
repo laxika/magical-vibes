@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class Cloudblazer extends Card {
 
     public Cloudblazer() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2), new DrawCardEffect(2));
     }
 }

@@ -30,8 +30,7 @@ public class ShieldBroker extends Card {
         target(new PermanentPredicateTargetFilter(
                 targetFilter, "Target must be a noncommander creature you don't control"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new PutCounterOnTargetPermanentEffect(CounterType.SHIELD))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new PutCounterOnTargetPermanentEffect(CounterType.SHIELD),
                         new GainControlOfTargetWhileHasCounterEffect(CounterType.SHIELD));
     }
 }

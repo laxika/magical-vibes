@@ -45,7 +45,7 @@ public class PhantomSteed extends Card {
                 List.of(),
                 List.of(), false, false, new Fixed(1), false, Set.of(), false);
         addTrigger(Triggers.attacks(),
-                new CreateTokenCopyOfExiledCreatureWithSourceEffect(tokenCopy, false, true));
-        addTrigger(Triggers.attacks(), new SacrificeCreatedPermanentsAtEndOfCombatEffect());
+                new CreateTokenCopyOfExiledCreatureWithSourceEffect(tokenCopy, false, true),
+                new SacrificeCreatedPermanentsAtEndOfCombatEffect());
     }
 }

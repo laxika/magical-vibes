@@ -14,8 +14,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class DisinformationCampaign extends Card {
 
     public DisinformationCampaign() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new DrawCardEffect(),
                 new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT));
         addTrigger(Triggers.youSurveil(), ReturnToHandEffect.self());
     }

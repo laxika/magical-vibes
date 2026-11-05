@@ -18,8 +18,8 @@ public class SquiresLightblade extends Card {
     public SquiresLightblade() {
         // When this Equipment enters, attach it to target creature you control.
         target(TargetFilters.creatureYouControl())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new AttachSourceEquipmentToTargetCreatureEffect())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new AttachSourceEquipmentToTargetCreatureEffect(),
                         new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET));
 
         // Equipped creature gets +1/+0.

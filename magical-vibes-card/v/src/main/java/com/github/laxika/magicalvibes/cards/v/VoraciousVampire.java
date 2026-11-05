@@ -29,8 +29,8 @@ public class VoraciousVampire extends Card {
                 )),
                 "Target must be a Vampire creature you control"
         ))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(1, 1))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new BoostTargetCreatureEffect(1, 1),
                         new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET));
     }
 }

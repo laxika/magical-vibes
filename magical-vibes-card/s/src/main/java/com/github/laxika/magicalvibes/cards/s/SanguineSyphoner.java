@@ -12,7 +12,6 @@ public class SanguineSyphoner extends Card {
 
     public SanguineSyphoner() {
         // Whenever this creature attacks, each opponent loses 1 life and you gain 1 life.
-        addTrigger(Triggers.attacks(), new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.attacks(), new GainLifeEffect(1));
+        addTrigger(Triggers.attacks(), new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT), new GainLifeEffect(1));
     }
 }

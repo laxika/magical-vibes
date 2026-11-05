@@ -28,14 +28,12 @@ public class SpiderManMilesMorales extends Card {
     public SpiderManMilesMorales() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new PutCounterOnEachControlledPermanentEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE, 1, OTHER_CREATURES));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        CounterType.PLUS_ONE_PLUS_ONE, 1, OTHER_CREATURES),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
 
         addTrigger(Triggers.attacks(),
                 new PutCounterOnEachControlledPermanentEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE, 1, OTHER_CREATURES));
-        addTrigger(Triggers.attacks(),
+                        CounterType.PLUS_ONE_PLUS_ONE, 1, OTHER_CREATURES),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
     }
 }

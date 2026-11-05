@@ -26,8 +26,9 @@ import java.util.List;
 public class CauldronFamiliar extends Card {
 
     public CauldronFamiliar() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
+                new GainLifeEffect(1));
 
         addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,

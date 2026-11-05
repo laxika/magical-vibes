@@ -38,8 +38,7 @@ public class AzureBeastbinder extends Card {
                 targetPermanent,
                 "Target must be an artifact, creature, or planeswalker an opponent controls"), 0, 1)
                 .addTrigger(Triggers.attacks(),
-                        new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.UNTIL_YOUR_NEXT_TURN))
-                .addTrigger(Triggers.attacks(),
+                        new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.UNTIL_YOUR_NEXT_TURN),
                         new SetBasePowerToughnessEffect(2, 2, EffectDuration.UNTIL_YOUR_NEXT_TURN,
                                 new PermanentIsCreaturePredicate()));
     }

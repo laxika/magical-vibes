@@ -20,8 +20,7 @@ import java.util.Set;
 public class PucasEye extends Card {
 
     public PucasEye() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseColorForSourceEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(), new ChooseColorForSourceEffect());
         addStaticEffect(new BecomeChosenColorEffect());
 
         addActivatedAbility(new ActivatedAbility(

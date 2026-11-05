@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ObscuraInterceptor extends Card {
 
     public ObscuraInterceptor() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawDiscardAndConniveEffect());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new QueueReflexiveAbilityEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawDiscardAndConniveEffect(),
+                new QueueReflexiveAbilityEffect(
                 new ReturnTargetSpellToHandEffect(), true));
     }
 }

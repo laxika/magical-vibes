@@ -13,8 +13,7 @@ public class InvasionOfDominaria extends Card {
 
     public InvasionOfDominaria() {
         setBackFaceCard(new SerraFaithkeeper());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(4));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(4), new DrawCardEffect(1));
     }
 
     @Override

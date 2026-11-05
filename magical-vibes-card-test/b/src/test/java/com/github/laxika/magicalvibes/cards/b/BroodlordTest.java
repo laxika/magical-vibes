@@ -37,7 +37,8 @@ class BroodlordTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         castBroodlord(5);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        // Ravenous's draw and Brood Telepathy are separate abilities (CR 603.3).
+        resolveAllTriggers();
 
         assertThat(findPermanent(player1, "Broodlord")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);

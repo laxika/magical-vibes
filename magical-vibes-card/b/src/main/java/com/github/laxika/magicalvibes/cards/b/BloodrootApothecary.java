@@ -23,12 +23,14 @@ import java.util.List;
 public class BloodrootApothecary extends Card {
 
     public BloodrootApothecary() {
+        var createTokenForTargetPlayer = new CreateTokenForTargetPlayerEffect(CreateTokenEffect.ofTreasureToken(1));
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new CreateTokenForTargetPlayerEffect(CreateTokenEffect.ofTreasureToken(1)));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.ofTreasureToken(1));
+        )).bindEffect(createTokenForTargetPlayer);
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                createTokenForTargetPlayer,
+                CreateTokenEffect.ofTreasureToken(1));
 
         addTrigger(Triggers.sacrificed(
                         new PermanentAllOfPredicate(List.of(

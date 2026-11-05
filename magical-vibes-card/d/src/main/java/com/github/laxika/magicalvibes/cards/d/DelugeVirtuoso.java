@@ -24,8 +24,8 @@ public class DelugeVirtuoso extends Card {
 
     public DelugeVirtuoso() {
         target(TargetFilters.creatureAnOpponentControls())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.TARGET))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new TapPermanentsEffect(TapUntapScope.TARGET),
                         new PutCounterOnTargetPermanentEffect(CounterType.STUN, 1));
 
         // Opus — Whenever you cast an instant or sorcery spell, this creature gets +1/+1 until end of turn.

@@ -23,8 +23,9 @@ public class HonestWork extends Card {
 
     public HonestWork() {
         target(TargetFilters.creatureAnOpponentControls())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.ENCHANTED))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new RemoveAllCountersFromEnchantedCreatureEffect())
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new TapPermanentsEffect(TapUntapScope.ENCHANTED),
+                        new RemoveAllCountersFromEnchantedCreatureEffect())
                 .addStaticEffect(new SetNameEffect("Humble Merchant", GrantScope.ENCHANTED_CREATURE))
                 .addStaticEffect(new GrantSubtypeEffect(CardSubtype.CITIZEN, GrantScope.ENCHANTED_CREATURE, true))
                 .addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE))

@@ -30,8 +30,7 @@ public class FoggyNelsonOnRetainer extends Card {
                 )),
                 "Target must be another creature you control"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                         new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.TARGET));
     }
 }

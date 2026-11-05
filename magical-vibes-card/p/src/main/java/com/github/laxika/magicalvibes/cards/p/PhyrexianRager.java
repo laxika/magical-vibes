@@ -22,7 +22,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class PhyrexianRager extends Card {
 
     public PhyrexianRager() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new LoseLifeEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(), new LoseLifeEffect(1));
     }
 }

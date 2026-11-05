@@ -18,8 +18,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class AlpharaelDreamingAcolyte extends Card {
 
     public AlpharaelDreamingAcolyte() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(2));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new DrawCardEffect(2),
                 new DiscardEffect(2, DiscardRecipient.CONTROLLER, CardType.ARTIFACT));
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)));

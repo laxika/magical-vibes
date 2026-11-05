@@ -11,7 +11,6 @@ public class MoongloveExtractor extends Card {
 
     public MoongloveExtractor() {
         // Whenever this creature attacks, you draw a card and lose 1 life.
-        addTrigger(Triggers.attacks(), new DrawCardEffect(1));
-        addTrigger(Triggers.attacks(), new LoseLifeEffect(1));
+        addTrigger(Triggers.attacks(), new DrawCardEffect(1), new LoseLifeEffect(1));
     }
 }

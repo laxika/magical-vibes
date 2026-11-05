@@ -32,9 +32,7 @@ public class TheGoldenGearColossus extends Card {
 
     public TheGoldenGearColossus() {
         target(OTHER_DOUBLE_FACED_ARTIFACT, 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TransformTargetPermanentEffect())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), CREATE_GNOMES)
-                .addTrigger(Triggers.attacks(), new TransformTargetPermanentEffect())
-                .addTrigger(Triggers.attacks(), CREATE_GNOMES);
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TransformTargetPermanentEffect(), CREATE_GNOMES)
+                .addTrigger(Triggers.attacks(), new TransformTargetPermanentEffect(), CREATE_GNOMES);
     }
 }

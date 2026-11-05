@@ -16,8 +16,8 @@ public class CavalryDrillmaster extends Card {
     public CavalryDrillmaster() {
         // When this creature enters, target creature gets +2/+0 and gains first strike until end of turn.
         target(TargetFilters.creature())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(2, 0))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new BoostTargetCreatureEffect(2, 0),
                         new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET));
     }
 }

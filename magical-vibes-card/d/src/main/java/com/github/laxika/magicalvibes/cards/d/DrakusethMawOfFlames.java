@@ -18,9 +18,10 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class DrakusethMawOfFlames extends Card {
 
     public DrakusethMawOfFlames() {
-        target(1, 1).addTrigger(Triggers.attacks(),
-                DealDamageToAnyTargetEffect.forTargetGroup(4, 0));
-        target(0, 2).addTrigger(Triggers.attacks(),
-                new DealDamageToEachTargetEffect(new Fixed(3)));
+        var dealDamageToAnyTarget = DealDamageToAnyTargetEffect.forTargetGroup(4, 0);
+        target(1, 1).bindEffect(dealDamageToAnyTarget);
+        var dealDamageToEachTarget = new DealDamageToEachTargetEffect(new Fixed(3));
+        target(0, 2).bindEffect(dealDamageToEachTarget);
+        addTrigger(Triggers.attacks(), dealDamageToAnyTarget, dealDamageToEachTarget);
     }
 }

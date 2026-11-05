@@ -14,8 +14,7 @@ public class ThayanEvokers extends Card {
 
     public ThayanEvokers() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConjureCardToHandEffect("M10", "146"));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new ConjureCardToHandEffect("M10", "146"),
                 new DiscardEffect(1, DiscardRecipient.CONTROLLER));
         addTrigger(Triggers.youConjure(),
                 new PutCountersOnSourceEffect(1, 1, 1));

@@ -21,8 +21,7 @@ public class MoonshakerCavalry extends Card {
         PermanentCount creaturesYouControl =
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new BoostAllOwnCreaturesEffect(creaturesYouControl, creaturesYouControl));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new BoostAllOwnCreaturesEffect(creaturesYouControl, creaturesYouControl),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.ALL_OWN_CREATURES));
     }
 }

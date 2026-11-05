@@ -14,7 +14,7 @@ public class RadiantEpicure extends Card {
 
     public RadiantEpicure() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new LoseLifeEffect(new XValue(), LoseLifeRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(new XValue()));
+                new LoseLifeEffect(new XValue(), LoseLifeRecipient.EACH_OPPONENT),
+                new GainLifeEffect(new XValue()));
     }
 }

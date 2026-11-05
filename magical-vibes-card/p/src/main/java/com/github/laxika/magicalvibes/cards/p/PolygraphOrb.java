@@ -18,8 +18,8 @@ public class PolygraphOrb extends Card {
 
     public PolygraphOrb() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(4, 2));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new LoseLifeEffect(2));
+                LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(4, 2),
+                new LoseLifeEffect(2));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}",

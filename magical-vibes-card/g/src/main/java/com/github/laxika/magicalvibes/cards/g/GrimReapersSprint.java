@@ -29,9 +29,8 @@ public class GrimReapersSprint extends Card {
         addStaticEffect(new ConditionalEffect(
                 new Morbid(), new ReduceOwnCastCostEffect(new Fixed(3))));
         target(TargetFilters.creature())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate()))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate()),
+                        new ConditionalEffect(
                         new ControllerMainPhase(), new AdditionalCombatPhaseEffect(1)))
                 .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
                 .addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ENCHANTED_CREATURE));

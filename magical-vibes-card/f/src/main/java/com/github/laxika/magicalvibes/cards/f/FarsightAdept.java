@@ -14,11 +14,11 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class FarsightAdept extends Card {
 
     public FarsightAdept() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1));
+        var drawCardForTargetPlayer = new DrawCardForTargetPlayerEffect(1, false, true);
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DrawCardForTargetPlayerEffect(1, false, true));
+        )).bindEffect(drawCardForTargetPlayer);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1), drawCardForTargetPlayer);
     }
 }

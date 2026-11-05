@@ -31,9 +31,9 @@ public class HamaTheBloodbender extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new MillEffect(3, MillRecipient.TARGET_PLAYER))
+        ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new MillEffect(3, MillRecipient.TARGET_PLAYER),
                         new ExileMatchingCardFromTargetGraveyardEffect(noncreatureNonland, true, true));
     }
 }

@@ -16,7 +16,7 @@ public class RevengeOfRavens extends Card {
         // loses 1 life and you gain 1 life. The attacking creature is the trigger's non-targeting
         // targetId, so TARGET_PERMANENT_CONTROLLER routes the life loss to its controller.
         addTrigger(Triggers.creatureAttacksYouOrYourPlaneswalker(),
-                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER));
-        addTrigger(Triggers.creatureAttacksYouOrYourPlaneswalker(), new GainLifeEffect(1));
+                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER),
+                new GainLifeEffect(1));
     }
 }

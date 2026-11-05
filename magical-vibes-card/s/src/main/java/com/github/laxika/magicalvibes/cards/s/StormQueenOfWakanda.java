@@ -34,8 +34,7 @@ public class StormQueenOfWakanda extends Card {
                 "Target must be another attacking creature"
         ))
                 .addTrigger(Triggers.attacks(),
-                        new BoostTargetCreatureEffect(new SourcePower(), new Fixed(0), anotherAttackingCreature))
-                .addTrigger(Triggers.attacks(),
+                        new BoostTargetCreatureEffect(new SourcePower(), new Fixed(0), anotherAttackingCreature),
                         new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET, anotherAttackingCreature));
 
         addTrigger(Triggers.creatureAttacksYou(),

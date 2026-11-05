@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
@@ -18,7 +17,7 @@ public class StaticNet extends Card {
     public StaticNet() {
         target(TargetFilters.nonlandPermanentAnOpponentControls())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new ExileTargetPermanentUntilSourceLeavesEffect());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT, SequenceEffect.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new GainLifeEffect(2),
                 CreateTokenEffect.ofPowerstoneToken(new Fixed(1))));
     }

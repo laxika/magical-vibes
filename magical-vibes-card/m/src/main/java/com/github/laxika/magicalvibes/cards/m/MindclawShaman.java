@@ -25,8 +25,8 @@ public class MindclawShaman extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         ))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new RevealTargetHandEffect())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new RevealTargetHandEffect(),
                         new MayCastFromTargetPlayerHandWithoutPayingManaCostEffect(
                                 new CardAnyOfPredicate(List.of(
                                         new CardTypePredicate(CardType.INSTANT),

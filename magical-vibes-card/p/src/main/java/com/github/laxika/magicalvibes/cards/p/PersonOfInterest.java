@@ -17,8 +17,8 @@ import java.util.Set;
 public class PersonOfInterest extends Card {
 
     public PersonOfInterest() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SuspectEffect(GrantScope.SELF));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SuspectEffect(GrantScope.SELF),
+                new CreateTokenEffect(
                 1, "Detective", 2, 2, CardColor.WHITE,
                 Set.of(CardColor.WHITE, CardColor.BLUE), List.of(CardSubtype.DETECTIVE)));
     }

@@ -38,12 +38,12 @@ public class TheFloodOfMars extends Card {
         target(new PermanentPredicateTargetFilter(
                 anotherCreatureOrLand,
                 "Target must be another creature or land"))
-                .addTrigger(Triggers.attacks(), new PutCounterOnTargetPermanentEffect(CounterType.FLOOD))
-                .addTrigger(Triggers.attacks(), new ConditionalEffect(
+                .addTrigger(Triggers.attacks(), new PutCounterOnTargetPermanentEffect(CounterType.FLOOD),
+                        new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentIsCreaturePredicate()),
                         new BecomeTargetPermanentCopyOfSourceEffect(),
-                        false))
-                .addTrigger(Triggers.attacks(), new ConditionalEffect(
+                        false),
+                        new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentIsLandPredicate()),
                         new GrantSubtypeEffect(CardSubtype.ISLAND, GrantScope.TARGET),
                         false));

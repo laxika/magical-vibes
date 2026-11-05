@@ -34,8 +34,9 @@ public class SleepWithTheFishes extends Card {
         );
 
         target(TargetFilters.creature())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.ENCHANTED))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), fish)
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new TapPermanentsEffect(TapUntapScope.ENCHANTED),
+                        fish)
                 .addStaticEffect(DoesntUntapEffect.enchanted());
     }
 }

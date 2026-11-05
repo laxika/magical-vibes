@@ -26,8 +26,8 @@ public class HeronsGraceChampion extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.HUMAN),
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
         ));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostAllOwnCreaturesEffect(1, 1, otherHumans));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new BoostAllOwnCreaturesEffect(1, 1, otherHumans),
                 new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.OWN_CREATURES, otherHumans));
     }
 }

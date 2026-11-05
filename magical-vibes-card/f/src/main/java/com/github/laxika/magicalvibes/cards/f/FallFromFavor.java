@@ -19,8 +19,8 @@ public class FallFromFavor extends Card {
     public FallFromFavor() {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new TapPermanentsEffect(TapUntapScope.ENCHANTED))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BecomeMonarchEffect())
+                        new TapPermanentsEffect(TapUntapScope.ENCHANTED),
+                        new BecomeMonarchEffect())
                 .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentControlledByMonarchPredicate(),
                         null,

@@ -15,7 +15,7 @@ public class MakeshiftBinding extends Card {
     public MakeshiftBinding() {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new ExileTargetPermanentUntilSourceLeavesEffect())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2));
+                        new ExileTargetPermanentUntilSourceLeavesEffect(),
+                        new GainLifeEffect(2));
     }
 }

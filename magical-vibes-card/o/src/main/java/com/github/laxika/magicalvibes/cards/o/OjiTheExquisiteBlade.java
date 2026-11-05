@@ -13,8 +13,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class OjiTheExquisiteBlade extends Card {
 
     public OjiTheExquisiteBlade() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2), new ScryEffect(2));
 
         var creatureYouControl = TargetFilters.creatureYouControl();
         target(creatureYouControl, 0, 1)

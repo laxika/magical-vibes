@@ -23,8 +23,8 @@ public class ZurgoThundersDecree extends Card {
 
     public ZurgoThundersDecree() {
         addTrigger(Triggers.attacks(),
-                new CreateTokenEffect(2, "Warrior", 1, 1, CardColor.RED, List.of(CardSubtype.WARRIOR), true));
-        addTrigger(Triggers.attacks(), new SacrificeCreatedPermanentsAtEndStepEffect());
+                new CreateTokenEffect(2, "Warrior", 1, 1, CardColor.RED, List.of(CardSubtype.WARRIOR), true),
+                new SacrificeCreatedPermanentsAtEndStepEffect());
         addStaticEffect(new ConditionalEffect(new ControllerEndStep(),
                 new GrantEffectEffect(new CantBeSacrificedEffect(), GrantScope.OWN_PERMANENTS,
                         new PermanentAllOfPredicate(List.of(

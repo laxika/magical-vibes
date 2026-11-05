@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -30,7 +29,6 @@ public class PreacherOfTheSchism extends Card {
                         .withFilter(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsSourcePermanentPredicate(),
                                 new PermanentAttacksPlayerWithMostLifePredicate()))),
-                TriggerMode.INDEPENDENT,
                 new CreateTokenEffect("Vampire", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.VAMPIRE), Set.of(Keyword.LIFELINK), Set.of()));
         // Whenever this creature attacks while you have the most life or are tied for most life, you
@@ -38,7 +36,8 @@ public class PreacherOfTheSchism extends Card {
         PermanentPredicate attacksWhileLeading = new PermanentAllOfPredicate(List.of(
                 new PermanentIsSourcePermanentPredicate(),
                 new PermanentAttacksWhileSourceControllerHasMostLifePredicate()));
-        addTrigger(Triggers.creatureYouControlAttacks().withFilter(attacksWhileLeading), new DrawCardEffect());
-        addTrigger(Triggers.creatureYouControlAttacks().withFilter(attacksWhileLeading), new LoseLifeEffect(1));
+        addTrigger(Triggers.creatureYouControlAttacks().withFilter(attacksWhileLeading),
+                new DrawCardEffect(),
+                new LoseLifeEffect(1));
     }
 }

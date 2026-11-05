@@ -31,8 +31,8 @@ public class HardenedEscort extends Card {
                 targetFilter,
                 "Target must be another creature you control"
         ))
-                .addTrigger(Triggers.attacks(), new BoostTargetCreatureEffect(1, 0, targetFilter))
                 .addTrigger(Triggers.attacks(),
+                        new BoostTargetCreatureEffect(1, 0, targetFilter),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET, targetFilter));
     }
 }

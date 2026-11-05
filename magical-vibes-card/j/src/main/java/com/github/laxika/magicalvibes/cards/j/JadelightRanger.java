@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class JadelightRanger extends Card {
 
     public JadelightRanger() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ExploreEffect());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ExploreEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ExploreEffect(), new ExploreEffect());
     }
 }

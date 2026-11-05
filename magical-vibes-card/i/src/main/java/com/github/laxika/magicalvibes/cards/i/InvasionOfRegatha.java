@@ -25,6 +25,7 @@ public class InvasionOfRegatha extends Card {
         setBackFaceCard(new DisciplesOfTheInferno());
         setAllowSharedTargets(true);
 
+        var dealDamageToAnyTarget = new DealDamageToAnyTargetEffect(4);
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsBattlePredicate(),
@@ -32,9 +33,11 @@ public class InvasionOfRegatha extends Card {
                 )),
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be another battle or opponent"))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(4));
+                .bindEffect(dealDamageToAnyTarget);
+        var dealDamageToTargetCreature = new DealDamageToTargetCreatureEffect(1);
         target(TargetFilters.creature(), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToTargetCreatureEffect(1));
+                .bindEffect(dealDamageToTargetCreature);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), dealDamageToAnyTarget, dealDamageToTargetCreature);
     }
 
     @Override

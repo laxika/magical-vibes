@@ -16,8 +16,9 @@ public class ScrappyBruiser extends Card {
 
     public ScrappyBruiser() {
         target(TargetFilters.attackingCreature(), 0, 1)
-                .addTrigger(Triggers.attacks(), new BoostTargetCreatureEffect(2, 0))
-                .addTrigger(Triggers.attacks(), new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
-                .addTrigger(Triggers.attacks(), new ReturnTargetPermanentToHandAtEndOfCombatEffect());
+                .addTrigger(Triggers.attacks(),
+                        new BoostTargetCreatureEffect(2, 0),
+                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET),
+                        new ReturnTargetPermanentToHandAtEndOfCombatEffect());
     }
 }

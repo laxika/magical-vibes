@@ -152,7 +152,7 @@ public class MutationSupport {
         inheritedEffects.addAll(underlying.getStaticEffects());
         for (EffectSlot slot : EffectSlot.values()) {
             for (var registration : underlying.getEffectRegistrations(slot)) {
-                merged.addEffect(slot, registration.effect(), registration.triggerMode());
+                merged.addEffect(slot, registration.effect());
                 inheritedEffects.add(registration.effect());
             }
         }

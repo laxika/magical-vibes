@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -39,15 +38,12 @@ public class Vibrance extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any target"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        TriggerMode.INDEPENDENT,
                         TriggerOptions.DEFAULT.withInterveningIf(new ColorSpentToCast(ManaColor.RED, 2)),
                         new DealDamageToAnyTargetEffect(3));
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new ColorSpentToCast(ManaColor.GREEN, 2)),
-                new SearchLibraryEffect(new CardTypePredicate(CardType.LAND)));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
-                TriggerOptions.DEFAULT.withInterveningIf(new ColorSpentToCast(ManaColor.GREEN, 2)),
+                new SearchLibraryEffect(new CardTypePredicate(CardType.LAND)),
                 new GainLifeEffect(2));
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());

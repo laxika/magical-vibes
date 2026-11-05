@@ -21,8 +21,9 @@ public class DisturbingConversion extends Card {
         CardsInGraveyard attachedControllersGraveyard =
                 new CardsInGraveyard(null, CountScope.ATTACHED_CONTROLLER);
         target(TargetFilters.creature())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(2, MillRecipient.CONTROLLER))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(2, MillRecipient.EACH_OPPONENT))
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new MillEffect(2, MillRecipient.CONTROLLER),
+                        new MillEffect(2, MillRecipient.EACH_OPPONENT))
                 .addStaticEffect(new AttachedBoostEffect(
                         new Scaled(attachedControllersGraveyard, -1),
                         new Fixed(0),

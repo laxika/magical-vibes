@@ -15,8 +15,8 @@ public class InvasionOfErgamon extends Card {
     public InvasionOfErgamon() {
         setBackFaceCard(new TrugaCliffcharger());
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.ofTreasureToken(1));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                CreateTokenEffect.ofTreasureToken(1),
                 new MayEffect(new DiscardAndDrawCardEffect(), "Discard a card to draw a card?"));
     }
 

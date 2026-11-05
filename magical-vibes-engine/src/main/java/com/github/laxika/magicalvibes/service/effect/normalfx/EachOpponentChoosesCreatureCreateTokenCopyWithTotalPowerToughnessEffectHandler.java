@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEffect;
@@ -171,7 +170,7 @@ public class EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEf
         });
         for (EffectSlot slot : EffectSlot.values()) {
             for (var registration : original.getEffectRegistrations(slot)) {
-                copy.addEffect(slot, registration.effect(), registration.triggerMode());
+                copy.addEffect(slot, registration.effect());
             }
         }
         original.getUnslottedTriggeredAbilities().forEach(copy::addTriggeredAbility);

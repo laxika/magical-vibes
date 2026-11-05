@@ -16,8 +16,7 @@ import java.util.List;
 public class BoostedSloop extends Card {
 
     public BoostedSloop() {
-        addTrigger(Triggers.youAttack(), new DrawCardEffect());
-        addTrigger(Triggers.youAttack(), new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+        addTrigger(Triggers.youAttack(), new DrawCardEffect(), new DiscardEffect(1, DiscardRecipient.CONTROLLER));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

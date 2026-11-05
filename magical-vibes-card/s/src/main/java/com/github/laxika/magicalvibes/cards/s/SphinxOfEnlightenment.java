@@ -16,11 +16,11 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SphinxOfEnlightenment extends Card {
 
     public SphinxOfEnlightenment() {
+        var drawCardForTargetPlayer = new DrawCardForTargetPlayerEffect(1, false, true);
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DrawCardForTargetPlayerEffect(1, false, true));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(3));
+        )).bindEffect(drawCardForTargetPlayer);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), drawCardForTargetPlayer, new DrawCardEffect(3));
     }
 }

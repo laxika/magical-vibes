@@ -17,8 +17,8 @@ public class ImodanesRecruiter extends Card {
     public ImodanesRecruiter() {
         setBackFaceCard(new TrainTroops());
         addCastingOption(new AdventureCast("{4}{W}"));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostAllOwnCreaturesEffect(1, 0));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new BoostAllOwnCreaturesEffect(1, 0),
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES));
     }
 

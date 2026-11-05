@@ -49,8 +49,8 @@ public class GladeOfThePumpSpells extends Card {
 
     public GladeOfThePumpSpells() {
         target(TargetFilters.creature(), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(2, 2))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new BoostTargetCreatureEffect(2, 2),
                         new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
         addActivatedAbility(new ActivatedAbility(
                 true,

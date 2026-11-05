@@ -20,8 +20,8 @@ public class AgrusKosWojekVeteran extends Card {
         addTrigger(Triggers.attacks(), new BoostAllCreaturesEffect(2, 0,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsAttackingPredicate(),
-                        new PermanentColorInPredicate(Set.of(CardColor.RED))))));
-        addTrigger(Triggers.attacks(), new BoostAllCreaturesEffect(0, 2,
+                        new PermanentColorInPredicate(Set.of(CardColor.RED))))),
+                new BoostAllCreaturesEffect(0, 2,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsAttackingPredicate(),
                         new PermanentColorInPredicate(Set.of(CardColor.WHITE))))));

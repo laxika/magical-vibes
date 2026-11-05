@@ -13,7 +13,8 @@ public class DwarvenBerserker extends Card {
 
     public DwarvenBerserker() {
         // Whenever this creature becomes blocked, it gets +3/+0 and gains trample until end of turn.
-        addTrigger(Triggers.becomesBlocked(), new BoostSelfEffect(3, 0));
-        addTrigger(Triggers.becomesBlocked(), new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF));
+        addTrigger(Triggers.becomesBlocked(),
+                new BoostSelfEffect(3, 0),
+                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF));
     }
 }

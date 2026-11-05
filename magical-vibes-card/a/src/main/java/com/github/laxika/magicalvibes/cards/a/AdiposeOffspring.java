@@ -40,8 +40,7 @@ public class AdiposeOffspring extends Card {
                 List.of(CardSubtype.ALIEN), java.util.Set.of(), java.util.Set.of());
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new NotCondition(new CastForAlternateCost()), oneAlien));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new ConditionalEffect(new NotCondition(new CastForAlternateCost()), oneAlien),
                 new ConditionalEffect(new CastForAlternateCost(), emergeAliens));
     }
 }

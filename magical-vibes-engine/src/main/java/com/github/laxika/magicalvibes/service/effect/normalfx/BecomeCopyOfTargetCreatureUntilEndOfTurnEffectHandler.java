@@ -107,14 +107,12 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
         if (retainedRegistration != null) {
             sourcePermanent.getCard().copyTargetingFrom(originalCard);
             if (copyEffect.retainedTrigger() instanceof LegacySlotTrigger legacy) {
-                sourcePermanent.getCard().addEffect(legacy.slot(),
-                        retainedRegistration.effect(), retainedRegistration.triggerMode());
+                sourcePermanent.getCard().addEffect(legacy.slot(), retainedRegistration.effect());
             } else if (retainedAbility != null) {
                 // "Except it has this ability": the ability as the card wrote it, its trigger's filter included.
                 sourcePermanent.getCard().addTriggeredAbility(retainedAbility);
             } else {
-                sourcePermanent.getCard().addTrigger(copyEffect.retainedTrigger(),
-                        retainedRegistration.triggerMode(), retainedRegistration.effect());
+                sourcePermanent.getCard().addTrigger(copyEffect.retainedTrigger(), retainedRegistration.effect());
             }
         }
         copyEffect.additionalAbilitiesOverride().forEach(sourcePermanent.getCard()::addAbility);

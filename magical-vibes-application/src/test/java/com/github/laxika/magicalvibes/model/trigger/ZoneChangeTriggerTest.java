@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.model.trigger;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
@@ -137,15 +136,6 @@ class ZoneChangeTriggerTest {
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("ONCE_EACH_TURN_FOR_EACH_CREATURE");
         assertThatThrownBy(() -> new TriggeredAbility(Triggers.phasesOut(null, ObjectRelation.THIS), eachCreature,
                 DRAW)).isInstanceOf(IllegalArgumentException.class);
-        List<EffectRegistration> independent = List.of(new EffectRegistration(DRAW, TriggerMode.INDEPENDENT));
-        assertThatThrownBy(() -> new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), TriggerOptions.DEFAULT,
-                independent)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("trigger mode");
-        assertThatThrownBy(() -> new TriggeredAbility(Triggers.transforms(null, ObjectRelation.YOU_CONTROL),
-                TriggerOptions.DEFAULT, independent)).isInstanceOf(IllegalArgumentException.class);
-
-        TriggeredAbility ownEntry = new TriggeredAbility(Triggers.enters(ObjectRelation.THIS), TriggerOptions.DEFAULT,
-                independent);
-        assertThat(ownEntry.effects()).containsExactlyElementsOf(independent);
     }
 
     @Test

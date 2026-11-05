@@ -20,9 +20,11 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class NellyBorcaImpulsiveAccuser extends Card {
 
     public NellyBorcaImpulsiveAccuser() {
+        var suspect = new SuspectEffect(GrantScope.TARGET);
         target(TargetFilters.creature())
-                .addTrigger(Triggers.attacks(), new SuspectEffect(GrantScope.TARGET));
+                .bindEffect(suspect);
         addTrigger(Triggers.attacks(),
+                suspect,
                 new GoadCreaturesUntilNextTurnSnapshotEffect(new PermanentIsSuspectedPredicate()));
 
         addTrigger(Triggers.creatureDealsCombatDamageToOpponent()

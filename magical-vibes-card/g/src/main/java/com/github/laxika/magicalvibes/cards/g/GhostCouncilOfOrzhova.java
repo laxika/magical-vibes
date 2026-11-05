@@ -27,8 +27,8 @@ public class GhostCouncilOfOrzhova extends Card {
                 "Target must be an opponent"
         ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(1));
+                        new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),
+                        new GainLifeEffect(1));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

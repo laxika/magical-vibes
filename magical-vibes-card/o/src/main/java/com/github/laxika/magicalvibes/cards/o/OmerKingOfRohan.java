@@ -38,11 +38,13 @@ public class OmerKingOfRohan extends Card {
                         CountScope.CONTROLLER,
                         true)));
 
+        var targetPlayerBecomesMonarch = new TargetPlayerBecomesMonarchEffect();
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TargetPlayerBecomesMonarchEffect());
+                .bindEffect(targetPlayerBecomesMonarch);
 
+        var dealDamageToAnyTarget = DealDamageToAnyTargetEffect.fromEnteringPermanent(new SourcePower());
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
@@ -50,7 +52,7 @@ public class OmerKingOfRohan extends Card {
                         new PermanentIsBattlePredicate())),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a creature, planeswalker, battle, or player"))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        DealDamageToAnyTargetEffect.fromEnteringPermanent(new SourcePower()));
+                .bindEffect(dealDamageToAnyTarget);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), targetPlayerBecomesMonarch, dealDamageToAnyTarget);
     }
 }

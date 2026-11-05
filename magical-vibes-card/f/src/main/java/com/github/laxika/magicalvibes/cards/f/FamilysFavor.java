@@ -21,8 +21,7 @@ public class FamilysFavor extends Card {
     public FamilysFavor() {
         target(TargetFilters.attackingCreature())
                 .addTrigger(Triggers.youAttack(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.SHIELD))
-                .addTrigger(Triggers.youAttack(),
+                        new PutCounterOnTargetPermanentEffect(CounterType.SHIELD),
                         new GrantEffectToTargetUntilEndOfTurnEffect(
                                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                                 new ConditionalEffect(new SourceCounterThreshold(1, CounterType.SHIELD),

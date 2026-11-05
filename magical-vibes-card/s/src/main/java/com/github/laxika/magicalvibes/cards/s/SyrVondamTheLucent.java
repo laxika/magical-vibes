@@ -16,11 +16,11 @@ public class SyrVondamTheLucent extends Card {
 
     public SyrVondamTheLucent() {
         var otherCreatures = new PermanentNotPredicate(new PermanentIsSourceCardPredicate());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostAllOwnCreaturesEffect(1, 0, otherCreatures));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new BoostAllOwnCreaturesEffect(1, 0, otherCreatures),
                 new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.OWN_CREATURES, otherCreatures));
-        addTrigger(Triggers.attacks(), new BoostAllOwnCreaturesEffect(1, 0, otherCreatures));
         addTrigger(Triggers.attacks(),
+                new BoostAllOwnCreaturesEffect(1, 0, otherCreatures),
                 new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.OWN_CREATURES, otherCreatures));
     }
 }

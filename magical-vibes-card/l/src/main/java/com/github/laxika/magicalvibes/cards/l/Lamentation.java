@@ -21,8 +21,9 @@ public class Lamentation extends Card {
 
     public Lamentation() {
         target(TargetFilters.creatureAnOpponentControls())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new DestroyTargetPermanentEffect())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(3));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new DestroyTargetPermanentEffect(),
+                        new GainLifeEffect(3));
 
         addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,

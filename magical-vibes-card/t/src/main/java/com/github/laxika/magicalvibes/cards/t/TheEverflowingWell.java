@@ -20,8 +20,9 @@ public class TheEverflowingWell extends Card {
     public TheEverflowingWell() {
         setBackFaceCard(new TheMyriadPools());
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(2, MillRecipient.CONTROLLER));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new MillEffect(2, MillRecipient.CONTROLLER),
+                new DrawCardEffect(2));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new GraveyardCardThreshold(8, new CardIsPermanentPredicate())),
                 new TransformSelfEffect());

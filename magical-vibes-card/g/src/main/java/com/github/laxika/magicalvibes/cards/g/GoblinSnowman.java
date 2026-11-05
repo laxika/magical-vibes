@@ -22,8 +22,9 @@ import java.util.List;
 public class GoblinSnowman extends Card {
 
     public GoblinSnowman() {
-        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, PreventDamageEffect.allCombatToSelf());
-        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, PreventDamageEffect.allCombatBySelf());
+        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE,
+                PreventDamageEffect.allCombatToSelf(),
+                PreventDamageEffect.allCombatBySelf());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

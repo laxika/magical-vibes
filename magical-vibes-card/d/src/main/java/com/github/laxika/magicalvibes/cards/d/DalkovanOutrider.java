@@ -17,8 +17,8 @@ public class DalkovanOutrider extends Card {
 
     public DalkovanOutrider() {
         addTrigger(Triggers.attacks(),
-                new CreateTokenEffect(2, "Warrior", 1, 1, CardColor.RED, List.of(CardSubtype.WARRIOR), true));
-        addTrigger(Triggers.attacks(), new SacrificeCreatedPermanentsAtEndStepEffect());
+                new CreateTokenEffect(2, "Warrior", 1, 1, CardColor.RED, List.of(CardSubtype.WARRIOR), true),
+                new SacrificeCreatedPermanentsAtEndStepEffect());
         addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
                 new PerpetuallyBoostTopCreatureCardInLibraryEffect(1));
     }

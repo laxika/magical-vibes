@@ -22,19 +22,20 @@ import java.util.List;
 public class RakdosFirewheeler extends Card {
 
     public RakdosFirewheeler() {
+        var dealDamageToPlayers = new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER);
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER));
+        )).bindEffect(dealDamageToPlayers);
 
+        var dealDamageToTargetCreatureOrPlaneswalker = new DealDamageToTargetCreatureOrPlaneswalkerEffect(2);
         target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsPlaneswalkerPredicate()
                 )),
                 "Target must be a creature or planeswalker"
-        ), 0, 1).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToTargetCreatureOrPlaneswalkerEffect(2));
+        ), 0, 1).bindEffect(dealDamageToTargetCreatureOrPlaneswalker);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), dealDamageToPlayers, dealDamageToTargetCreatureOrPlaneswalker);
     }
 }

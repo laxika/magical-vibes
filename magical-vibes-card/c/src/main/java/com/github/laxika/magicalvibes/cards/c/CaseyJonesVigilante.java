@@ -14,7 +14,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class CaseyJonesVigilante extends Card {
 
     public CaseyJonesVigilante() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(3));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new RegisterRandomDiscardAtNextUpkeepEffect(3));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new DrawCardEffect(3),
+                new RegisterRandomDiscardAtNextUpkeepEffect(3));
     }
 }

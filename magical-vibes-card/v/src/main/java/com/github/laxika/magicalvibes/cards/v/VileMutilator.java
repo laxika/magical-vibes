@@ -31,8 +31,8 @@ public class VileMutilator extends Card {
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsEnchantmentPredicate(),
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
-                SacrificeRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificePermanentsEffect(
+                SacrificeRecipient.EACH_OPPONENT),
+                new SacrificePermanentsEffect(
                 1,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

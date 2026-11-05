@@ -37,12 +37,9 @@ public class LizardConnorssCurse extends Card {
 
         target(new PermanentPredicateTargetFilter(otherCreature, "Target must be another creature"), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.PERMANENT))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GrantColorEffect(CardColor.GREEN, GrantScope.TARGET, true))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GrantSubtypeEffect(CardSubtype.LIZARD, GrantScope.TARGET, true))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.PERMANENT),
+                        new GrantColorEffect(CardColor.GREEN, GrantScope.TARGET, true),
+                        new GrantSubtypeEffect(CardSubtype.LIZARD, GrantScope.TARGET, true),
                         new AnimatePermanentsEffect(
                                 new Fixed(4), new Fixed(4), List.of(), Set.of(), null,
                                 Set.of(CardType.CREATURE), GrantScope.TARGET, EffectDuration.PERMANENT,

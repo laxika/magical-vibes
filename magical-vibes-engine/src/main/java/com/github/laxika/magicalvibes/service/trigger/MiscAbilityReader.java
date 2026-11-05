@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.trigger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -136,7 +135,7 @@ public final class MiscAbilityReader {
     /**
      * The effects of {@code ability}, as its collector reads it for the condition watched as {@code watched}. These
      * collectors read of the limits only "triggers only once each turn" ("one or more" the ability rejects as it is
-     * built), not next to "for the first time each turn", which is a limit of its own, and no trigger mode.
+     * built), not next to "for the first time each turn", which is a limit of its own.
      */
     public static List<MiscEffect> read(TriggeredAbility ability, Trigger watched) {
         Trigger condition = watchedCondition(ability, watched);
@@ -153,10 +152,6 @@ public final class MiscAbilityReader {
         Condition interveningIf = options.interveningIf();
         List<MiscEffect> effects = new ArrayList<>(ability.effects().size());
         for (EffectRegistration registration : ability.effects()) {
-            if (registration.triggerMode() != TriggerMode.NORMAL) {
-                throw new IllegalStateException("The family 11 collectors read no trigger mode ("
-                        + registration.triggerMode() + "): " + ability);
-            }
             effects.add(new MiscEffect(wrapped(registration.effect(), eventCondition, interveningIf), ability, door,
                     firstTimeEachTurn, registration.simultaneousWithPrevious()));
         }
@@ -177,10 +172,6 @@ public final class MiscAbilityReader {
             Condition interveningIf = ability.options().interveningIf();
             List<CardEffect> effects = new ArrayList<>(ability.effects().size());
             for (EffectRegistration registration : ability.effects()) {
-                if (registration.triggerMode() != TriggerMode.NORMAL) {
-                    throw new IllegalStateException("The state-trigger reader reads no trigger mode ("
-                            + registration.triggerMode() + "): " + ability);
-                }
                 effects.add(wrapped(registration.effect(), null, interveningIf));
             }
             triggers.add(StateTriggerEffect.of(state, effects));

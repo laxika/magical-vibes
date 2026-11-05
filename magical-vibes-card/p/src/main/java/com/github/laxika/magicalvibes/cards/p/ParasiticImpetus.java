@@ -23,7 +23,6 @@ public class ParasiticImpetus extends Card {
                 .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
                 .addStaticEffect(new GoadEquippedCreatureEffect());
 
-        addTrigger(Triggers.attacks(), new EnchantedCreatureControllerLosesLifeEffect(2));
-        addTrigger(Triggers.attacks(), new GainLifeEffect(2));
+        addTrigger(Triggers.attacks(), new EnchantedCreatureControllerLosesLifeEffect(2), new GainLifeEffect(2));
     }
 }

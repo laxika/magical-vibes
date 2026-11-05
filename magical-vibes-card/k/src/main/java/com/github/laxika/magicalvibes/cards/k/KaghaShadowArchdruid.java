@@ -17,8 +17,8 @@ public class KaghaShadowArchdruid extends Card {
 
     public KaghaShadowArchdruid() {
         addTrigger(Triggers.attacks(),
-                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF));
-        addTrigger(Triggers.attacks(), new MillEffect(2, MillRecipient.CONTROLLER));
+                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF),
+                new MillEffect(2, MillRecipient.CONTROLLER));
         addStaticEffect(new PlayLandOrCastPermanentFromGraveyardOncePerTurnEffect(
                 new CardIsPermanentPredicate(), null, true, false));
     }

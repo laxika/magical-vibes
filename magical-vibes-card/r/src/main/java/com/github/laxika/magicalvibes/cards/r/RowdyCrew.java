@@ -14,7 +14,8 @@ public class RowdyCrew extends Card {
         // When Rowdy Crew enters the battlefield, draw three cards, then discard two cards at random.
         // If two cards that share a card type are discarded this way, put two +1/+1 counters on Rowdy Crew.
         // The draw is its own effect so the discard waits for any draw-replacement choices to finish.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(3));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawAndRandomDiscardWithSharedTypeCountersEffect(0, 2, 2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new DrawCardEffect(3),
+                new DrawAndRandomDiscardWithSharedTypeCountersEffect(0, 2, 2));
     }
 }

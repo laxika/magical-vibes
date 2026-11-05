@@ -18,8 +18,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class OathOfJace extends Card {
 
     public OathOfJace() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(3));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DiscardEffect(2, DiscardRecipient.CONTROLLER));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new DrawCardEffect(3),
+                new DiscardEffect(2, DiscardRecipient.CONTROLLER));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ScryEffect(new PermanentCount(
                 new PermanentIsPlaneswalkerPredicate(), CountScope.CONTROLLER)));
     }

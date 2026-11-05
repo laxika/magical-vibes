@@ -44,8 +44,8 @@ public class TyphoidMaryFractured extends Card {
         ));
 
         addTrigger(Triggers.attacks(), ConditionalEffect.atTriggerTime(
-                new ControllerDiscardedCardThisTurn(), controllerChoice));
-        addTrigger(Triggers.attacks(), ConditionalEffect.atTriggerTime(
+                new ControllerDiscardedCardThisTurn(), controllerChoice),
+                ConditionalEffect.atTriggerTime(
                 new NotCondition(new ControllerDiscardedCardThisTurn()), randomChoice));
     }
 }

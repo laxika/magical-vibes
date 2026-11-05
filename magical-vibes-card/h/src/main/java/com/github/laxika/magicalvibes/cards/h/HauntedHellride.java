@@ -21,10 +21,9 @@ public class HauntedHellride extends Card {
 
     public HauntedHellride() {
         target(TargetFilters.creatureYouControl())
-                .addTrigger(Triggers.youAttack(), new BoostTargetCreatureEffect(1, 0))
                 .addTrigger(Triggers.youAttack(),
-                        new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET))
-                .addTrigger(Triggers.youAttack(),
+                        new BoostTargetCreatureEffect(1, 0),
+                        new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET),
                         new UntapPermanentsEffect(TapUntapScope.TARGET));
 
         addActivatedAbility(new ActivatedAbility(

@@ -16,8 +16,7 @@ public class PuppetMasterStringPuller extends Card {
     public PuppetMasterStringPuller() {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.youAttack(),
-                        new GoadTargetCreatureUntilNextTurnEffect())
-                .addTrigger(Triggers.youAttack(),
+                        new GoadTargetCreatureUntilNextTurnEffect(),
                         new CantBlockThisTurnEffect(TapUntapScope.TARGET));
 
         addTrigger(Triggers.goadedCreaturesDealCombatDamageToOpponent(),

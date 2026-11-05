@@ -34,8 +34,8 @@ public class SmolderingStagecoach extends Card {
                 new CardTypePredicate(CardType.INSTANT),
                 List.of(new CascadeEffect()),
                 true,
-                false));
-        addTrigger(Triggers.attacks(), new RegisterDelayedControllerSpellCastTriggerEffect(
+                false),
+                new RegisterDelayedControllerSpellCastTriggerEffect(
                 new CardTypePredicate(CardType.SORCERY),
                 List.of(new CascadeEffect()),
                 true,

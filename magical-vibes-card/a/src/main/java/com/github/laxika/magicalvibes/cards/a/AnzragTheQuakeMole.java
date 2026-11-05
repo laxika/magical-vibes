@@ -21,8 +21,8 @@ public class AnzragTheQuakeMole extends Card {
 
     public AnzragTheQuakeMole() {
         addTrigger(Triggers.becomesBlocked(),
-                new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate()));
-        addTrigger(Triggers.becomesBlocked(), new AdditionalCombatPhaseEffect(1));
+                new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate()),
+                new AdditionalCombatPhaseEffect(1));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

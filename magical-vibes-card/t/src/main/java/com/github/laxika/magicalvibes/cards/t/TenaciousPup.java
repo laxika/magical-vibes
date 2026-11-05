@@ -18,8 +18,8 @@ import java.util.List;
 public class TenaciousPup extends Card {
 
     public TenaciousPup() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(1));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new GainLifeEffect(1),
                 RegisterDelayedControllerSpellCastTriggerEffect.oneShotUntilConsumed(
                         new CardTypePredicate(CardType.CREATURE),
                         List.of(

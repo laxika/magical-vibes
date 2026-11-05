@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
@@ -24,7 +23,7 @@ public class LassoedByTheLaw extends Card {
     public LassoedByTheLaw() {
         target(TargetFilters.nonlandPermanentAnOpponentControls())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new ExileTargetPermanentUntilSourceLeavesEffect());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT, new CreateTokenEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
                         CardType.CREATURE, 1, "Mercenary", 1, 1, CardColor.RED, null,
                         List.of(CardSubtype.MERCENARY), Set.of(), Set.of(), false, false, List.of(),
                         List.of(new ActivatedAbility(

@@ -25,10 +25,13 @@ import java.util.List;
 public class Cocoon extends Card {
 
     public Cocoon() {
+        var tapPermanents = new TapPermanentsEffect(TapUntapScope.TARGET);
         target(TargetFilters.creatureYouControl())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.TARGET));
+                .bindEffect(tapPermanents);
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new PutCountersOnSelfEffect(CounterType.PUPA, 3));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                tapPermanents,
+                new PutCountersOnSelfEffect(CounterType.PUPA, 3));
         addStaticEffect(DoesntUntapWithCounterEffect.enchanted(CounterType.PUPA));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new RemoveCounterOrSacrificeSelfEffect(CounterType.PUPA, List.of(
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),

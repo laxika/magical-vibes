@@ -27,8 +27,8 @@ public class GlamorousOutlaw extends Card {
 
     public GlamorousOutlaw() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(2));
+                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT),
+                new ScryEffect(2));
 
         ActivatedAbility landManaAbility = new ActivatedAbility(
                 true,

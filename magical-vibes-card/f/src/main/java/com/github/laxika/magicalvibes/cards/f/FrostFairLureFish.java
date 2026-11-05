@@ -24,9 +24,10 @@ import java.util.List;
 public class FrostFairLureFish extends Card {
 
     public FrostFairLureFish() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
-                2, "Fish", 1, 1, CardColor.BLUE, List.of(CardSubtype.FISH), false));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.ofTreasureToken(2, true));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new CreateTokenEffect(
+                2, "Fish", 1, 1, CardColor.BLUE, List.of(CardSubtype.FISH), false),
+                CreateTokenEffect.ofTreasureToken(2, true));
 
         PermanentHasSubtypePredicate fish = new PermanentHasSubtypePredicate(CardSubtype.FISH);
         addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES, fish));

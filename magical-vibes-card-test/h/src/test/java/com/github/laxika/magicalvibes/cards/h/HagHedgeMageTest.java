@@ -127,8 +127,9 @@ class HagHedgeMageTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
         castHag();
         harness.passBothPriorities();
-        chooseForestTarget();
+        // The abilities go on the stack in printed order, each choosing its target as it does (CR 603.3d).
         harness.handlePermanentChosen(player1, player2.getId());
+        chooseForestTarget();
 
         assertThat(gd.stack).hasSize(2);
     }

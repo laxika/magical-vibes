@@ -12,8 +12,7 @@ public class AuthorOfShadows extends Card {
 
     public AuthorOfShadows() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                ExileGraveyardCardsEffect.allOpponentsWithSource());
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                ExileGraveyardCardsEffect.allOpponentsWithSource(),
                 new ChooseNonlandCardExiledWithSourceMayCastEffect());
     }
 }

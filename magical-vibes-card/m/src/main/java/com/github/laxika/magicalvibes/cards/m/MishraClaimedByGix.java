@@ -32,12 +32,10 @@ public class MishraClaimedByGix extends Card {
 
         PermanentCount attackingCreatures = new PermanentCount(
                 new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER);
-        addTrigger(Triggers.youAttack(),
-                new LoseLifeEffect(attackingCreatures, LoseLifeRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.youAttack(),
-                new GainLifeEffect(attackingCreatures, GainLifeRecipient.CONTROLLER));
 
-        addTrigger(Triggers.youAttack(), new ConditionalEffect(
+        addTrigger(Triggers.youAttack(), new LoseLifeEffect(attackingCreatures, LoseLifeRecipient.EACH_OPPONENT),
+                new GainLifeEffect(attackingCreatures, GainLifeRecipient.CONTROLLER),
+                new ConditionalEffect(
                 new AllOf(List.of(
                         new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
                                 new PermanentIsSourceCardPredicate(),

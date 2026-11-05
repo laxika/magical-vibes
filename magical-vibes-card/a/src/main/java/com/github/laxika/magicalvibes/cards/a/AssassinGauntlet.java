@@ -26,16 +26,17 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class AssassinGauntlet extends Card {
 
     public AssassinGauntlet() {
+        var attachSourceEquipmentToTargetCreature = new AttachSourceEquipmentToTargetCreatureEffect();
         target(TargetFilters.creatureYouControl(), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new AttachSourceEquipmentToTargetCreatureEffect());
+                .bindEffect(attachSourceEquipmentToTargetCreature);
+        var tapPermanents = new TapPermanentsEffect(
+                                TapUntapScope.TARGET_PLAYERS_PERMANENTS,
+                                new PermanentIsCreaturePredicate());
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new TapPermanentsEffect(
-                                TapUntapScope.TARGET_PLAYERS_PERMANENTS,
-                                new PermanentIsCreaturePredicate()));
+                .bindEffect(tapPermanents);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), attachSourceEquipmentToTargetCreature, tapPermanents);
 
         addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantTriggeredAbilityEffect(

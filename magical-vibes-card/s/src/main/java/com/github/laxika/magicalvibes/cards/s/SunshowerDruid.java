@@ -15,7 +15,7 @@ public class SunshowerDruid extends Card {
     public SunshowerDruid() {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(1));
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
+                        new GainLifeEffect(1));
     }
 }

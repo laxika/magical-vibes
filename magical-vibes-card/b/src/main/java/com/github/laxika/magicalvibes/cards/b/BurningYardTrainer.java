@@ -33,10 +33,9 @@ public class BurningYardTrainer extends Card {
                 ANOTHER_KNIGHT,
                 "Target must be another Knight you control"
         ))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(2, 2, ANOTHER_KNIGHT))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET, ANOTHER_KNIGHT))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new BoostTargetCreatureEffect(2, 2, ANOTHER_KNIGHT),
+                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET, ANOTHER_KNIGHT),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET, ANOTHER_KNIGHT));
     }
 }

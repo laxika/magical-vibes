@@ -32,7 +32,8 @@ public class TidebinderMage extends Card {
                         new PermanentColorInPredicate(Set.of(CardColor.RED, CardColor.GREEN)),
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
                 "Target must be a red or green creature an opponent controls"))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), DoesntUntapEffect.targetWhileSourceControlled());
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new TapPermanentsEffect(TapUntapScope.TARGET),
+                        DoesntUntapEffect.targetWhileSourceControlled());
     }
 }

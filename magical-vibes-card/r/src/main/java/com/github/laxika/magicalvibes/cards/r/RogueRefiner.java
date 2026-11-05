@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class RogueRefiner extends Card {
 
     public RogueRefiner() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new EnergyCountersEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1), new EnergyCountersEffect(2));
     }
 }

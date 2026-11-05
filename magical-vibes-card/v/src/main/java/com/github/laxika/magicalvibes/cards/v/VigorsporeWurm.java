@@ -23,8 +23,7 @@ public class VigorsporeWurm extends Card {
                 new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER);
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new BoostTargetCreatureEffect(creatureCardsInGraveyard, creatureCardsInGraveyard))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new BoostTargetCreatureEffect(creatureCardsInGraveyard, creatureCardsInGraveyard),
                         new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET));
 
         addStaticEffect(new CanBeBlockedByAtMostNCreaturesEffect(1));

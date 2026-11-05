@@ -15,8 +15,8 @@ public class ColossusOfTheBloodAge extends Card {
     public ColossusOfTheBloodAge() {
         // When this creature enters, it deals 3 damage to each opponent and you gain 3 life.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToPlayersEffect(3, DamageRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(3));
+                new DealDamageToPlayersEffect(3, DamageRecipient.EACH_OPPONENT),
+                new GainLifeEffect(3));
 
         // When this creature dies, discard any number of cards, then draw that many cards plus one.
         addTrigger(Triggers.dies(ObjectRelation.THIS), new DiscardUpToThenDrawThatManyEffect(

@@ -19,8 +19,7 @@ public class TheMasterOfKeys extends Card {
 
     public TheMasterOfKeys() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()),
                 new MillEffect(new Scaled(new XValue(), 2), MillRecipient.CONTROLLER));
         addStaticEffect(new GrantEscapeToGraveyardCardsEffect(new CardTypePredicate(CardType.ENCHANTMENT)));
     }

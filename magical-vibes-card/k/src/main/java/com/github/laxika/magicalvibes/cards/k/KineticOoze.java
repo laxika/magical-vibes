@@ -38,21 +38,24 @@ public class KineticOoze extends Card {
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsEnchantmentPredicate())),
                 new PermanentMaxManaValueXPredicate()));
+        var destroyTargetPermanent = new DestroyTargetPermanentEffect();
         target(new PermanentPredicateTargetFilter(
                         artifactOrEnchantmentWithManaValueAtMostX,
                         "Target must be an artifact or enchantment with mana value X or less"), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new DestroyTargetPermanentEffect());
+                .bindEffect(destroyTargetPermanent);
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new SpellXAtLeast(5), new DrawCardEffect()));
 
         PermanentPredicate otherCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
+        var conditional = new ConditionalEffect(new SpellXAtLeast(10),
+                                new DoublePlusOneCountersOnTargetCreatureEffect());
         targetUpTo(new FixedIfCondition(new SpellXAtLeast(10), Integer.MAX_VALUE, 0),
                 new PermanentPredicateTargetFilter(otherCreature, "Targets must be other creatures"), Integer.MAX_VALUE)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new ConditionalEffect(new SpellXAtLeast(10),
-                                new DoublePlusOneCountersOnTargetCreatureEffect()));
+                .bindEffect(conditional);
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                destroyTargetPermanent,
+                new ConditionalEffect(new SpellXAtLeast(5), new DrawCardEffect()),
+                conditional);
     }
 }

@@ -17,12 +17,13 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class HellholeRats extends Card {
 
     public HellholeRats() {
+        var discard = new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER);
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
+        )).bindEffect(discard);
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                discard,
                 new DealDamageToPlayersEffect(new LastDiscardedCardManaValue(), DamageRecipient.TARGET_PLAYER));
     }
 }

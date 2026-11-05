@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -27,7 +26,6 @@ public class SelkieHedgeMage extends Card {
         // Intervening-if gate (CR 603.4): checked as the trigger goes on the stack and again at
         // resolution; non-targeting, the "you may" is decided at resolution.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                TriggerMode.INDEPENDENT,
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.FOREST))),
                 new MayEffect(new GainLifeEffect(3), "Gain 3 life?"));
@@ -40,7 +38,6 @@ public class SelkieHedgeMage extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsTappedPredicate())),
                 "Target must be a tapped creature")).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        TriggerMode.INDEPENDENT,
                         TriggerOptions.DEFAULT.withInterveningIf(
                                 new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.ISLAND))),
                         new MayEffect(ReturnToHandEffect.target(),

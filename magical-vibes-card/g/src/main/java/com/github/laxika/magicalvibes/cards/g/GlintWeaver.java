@@ -15,8 +15,7 @@ public class GlintWeaver extends Card {
     public GlintWeaver() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 DistributeCountersAmongTargetsEffect.chosenAmongTargetCreaturesEtb(
-                        CounterType.PLUS_ONE_PLUS_ONE, 3));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        CounterType.PLUS_ONE_PLUS_ONE, 3),
                 new GainLifeEffect(new GreatestToughnessAmongControlled()));
     }
 }

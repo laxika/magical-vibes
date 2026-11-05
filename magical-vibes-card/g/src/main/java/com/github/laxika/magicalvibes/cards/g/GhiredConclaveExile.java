@@ -20,7 +20,6 @@ public class GhiredConclaveExile extends Card {
     public GhiredConclaveExile() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect("Rhino", 4, 4,
                 CardColor.GREEN, List.of(CardSubtype.RHINO), Set.of(Keyword.TRAMPLE), Set.of()));
-        addTrigger(Triggers.attacks(), new PopulateEffect());
-        addTrigger(Triggers.attacks(), new MakeCreatedPermanentsAttackingEffect(true));
+        addTrigger(Triggers.attacks(), new PopulateEffect(), new MakeCreatedPermanentsAttackingEffect(true));
     }
 }

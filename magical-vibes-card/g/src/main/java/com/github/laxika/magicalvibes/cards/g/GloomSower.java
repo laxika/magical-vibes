@@ -12,9 +12,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class GloomSower extends Card {
 
     public GloomSower() {
-        addTrigger(Triggers.becomesBlocked(),
-                TriggerOptions.EACH_BLOCKER,
-                new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER));
-        addTrigger(Triggers.becomesBlocked(), TriggerOptions.EACH_BLOCKER, new GainLifeEffect(2));
+        addTrigger(Triggers.becomesBlocked(), TriggerOptions.EACH_BLOCKER,
+                new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER),
+                new GainLifeEffect(2));
     }
 }

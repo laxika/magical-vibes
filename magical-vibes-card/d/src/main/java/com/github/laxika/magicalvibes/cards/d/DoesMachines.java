@@ -40,9 +40,10 @@ import java.util.Set;
 public class DoesMachines extends Card {
 
     public DoesMachines() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(2, MillRecipient.CONTROLLER));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(2));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DiscardEffect(2, DiscardRecipient.CONTROLLER));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new MillEffect(2, MillRecipient.CONTROLLER),
+                new DrawCardEffect(2),
+                new DiscardEffect(2, DiscardRecipient.CONTROLLER));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

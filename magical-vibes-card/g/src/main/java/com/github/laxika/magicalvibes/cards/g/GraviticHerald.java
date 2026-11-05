@@ -24,9 +24,10 @@ public class GraviticHerald extends Card {
                 new CardIsPermanentPredicate(),
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
                 new CardMaxManaValuePredicate(3)));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SeekEffect(
-                nonlandPermanentManaValueThreeOrLess, true));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GrantWarpToChosenCardUntilEndOfTurnEffect());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new LoseLifeEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new SeekEffect(
+                nonlandPermanentManaValueThreeOrLess, true),
+                new GrantWarpToChosenCardUntilEndOfTurnEffect(),
+                new LoseLifeEffect(2));
     }
 }

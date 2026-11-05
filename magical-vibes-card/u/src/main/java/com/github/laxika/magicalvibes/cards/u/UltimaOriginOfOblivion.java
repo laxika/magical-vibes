@@ -25,8 +25,7 @@ public class UltimaOriginOfOblivion extends Card {
     public UltimaOriginOfOblivion() {
         var blightedLand = target(TargetFilters.land());
         blightedLand.addTrigger(Triggers.attacks(),
-                new PutCounterOnTargetPermanentEffect(CounterType.BLIGHT));
-        blightedLand.addTrigger(Triggers.attacks(),
+                new PutCounterOnTargetPermanentEffect(CounterType.BLIGHT),
                 new GrantEffectsToCounterBearersEffect(CounterType.BLIGHT, List.of(
                         new LoseAllLandTypesEffect(GrantScope.ALL_LANDS, null),
                         new LosesAllAbilitiesEffect(GrantScope.ALL_LANDS),

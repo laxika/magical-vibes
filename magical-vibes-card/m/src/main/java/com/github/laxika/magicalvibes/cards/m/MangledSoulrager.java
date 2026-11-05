@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class MangledSoulrager extends Card {
 
     public MangledSoulrager() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SwitchAllCreaturesPowerToughnessEffect(true));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new SwitchAllCreaturesPowerToughnessEffect(true),
                 new CreateBoonEffect(12, new SwitchPowerToughnessEffect(false, true)));
         addCycling("{1}{U}");
     }

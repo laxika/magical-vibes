@@ -11,7 +11,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class VertigoSpawn extends Card {
 
     public VertigoSpawn() {
-        addTrigger(Triggers.blocks(), new TapPermanentsEffect(TapUntapScope.TARGET));
-        addTrigger(Triggers.blocks(), new SkipNextUntapEffect(TapUntapScope.TARGET));
+        addTrigger(Triggers.blocks(),
+                new TapPermanentsEffect(TapUntapScope.TARGET),
+                new SkipNextUntapEffect(TapUntapScope.TARGET));
     }
 }

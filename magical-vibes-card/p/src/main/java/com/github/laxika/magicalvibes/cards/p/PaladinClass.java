@@ -55,9 +55,7 @@ public class PaladinClass extends Card {
         target(TargetFilters.attackingCreature())
                 .addTrigger(Triggers.youAttack(),
                         TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(2, CounterType.LEVEL)),
-                        new BoostTargetCreatureEffect(otherAttackingCreatures, otherAttackingCreatures))
-                .addTrigger(Triggers.youAttack(),
-                        TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(2, CounterType.LEVEL)),
+                        new BoostTargetCreatureEffect(otherAttackingCreatures, otherAttackingCreatures),
                         new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET));
 
         addActivatedAbility(new ActivatedAbility(

@@ -15,8 +15,8 @@ public class ArboreaPegasus extends Card {
 
     public ArboreaPegasus() {
         target(TargetFilters.creature())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(1, 1))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new BoostTargetCreatureEffect(1, 1),
                         new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
     }
 }

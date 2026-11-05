@@ -27,20 +27,20 @@ public class ToriDAvenantFuryRider extends Card {
                 new PermanentIsAttackingPredicate(),
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
         ));
-        addTrigger(Triggers.attacks(), new BoostAllOwnCreaturesEffect(1, 1, otherAttackingCreatures));
 
         var otherRedAttackingCreatures = new PermanentAllOfPredicate(List.of(
                 otherAttackingCreatures,
                 new PermanentColorInPredicate(Set.of(CardColor.RED))
         ));
-        addTrigger(Triggers.attacks(), new GrantKeywordEffect(
-                Keyword.TRAMPLE, GrantScope.OWN_CREATURES, otherRedAttackingCreatures));
 
         var otherWhiteAttackingCreatures = new PermanentAllOfPredicate(List.of(
                 new PermanentIsAttackingPredicate(),
                 new PermanentColorInPredicate(Set.of(CardColor.WHITE))
         ));
-        addTrigger(Triggers.attacks(), new UntapPermanentsEffect(
+        addTrigger(Triggers.attacks(), new BoostAllOwnCreaturesEffect(1, 1, otherAttackingCreatures),
+                new GrantKeywordEffect(
+                Keyword.TRAMPLE, GrantScope.OWN_CREATURES, otherRedAttackingCreatures),
+                new UntapPermanentsEffect(
                 TapUntapScope.OTHER_CONTROLLED_CREATURES, otherWhiteAttackingCreatures));
     }
 }

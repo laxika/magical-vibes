@@ -33,8 +33,7 @@ public class AshrootAnimist extends Card {
                 "Target must be another creature you control"
         ))
                 .addTrigger(Triggers.attacks(),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
-                .addTrigger(Triggers.attacks(),
+                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET),
                         new BoostTargetCreatureEffect(new SourcePower(), new SourcePower()));
     }
 }

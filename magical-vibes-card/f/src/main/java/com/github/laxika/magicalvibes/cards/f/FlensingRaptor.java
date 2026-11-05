@@ -32,8 +32,8 @@ public class FlensingRaptor extends Card {
                 )),
                 "Target must be another creature you control with toxic"
         ))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(1, 1))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new BoostTargetCreatureEffect(1, 1),
                         new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
     }
 }

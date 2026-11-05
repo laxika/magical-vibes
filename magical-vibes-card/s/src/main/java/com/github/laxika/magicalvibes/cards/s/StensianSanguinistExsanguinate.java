@@ -24,8 +24,7 @@ public class StensianSanguinistExsanguinate extends Card {
 
         target(TargetFilters.creature())
                 .addTrigger(Triggers.youAttack(),
-                        new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET))
-                .addTrigger(Triggers.youAttack(),
+                        new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET),
                         new GrantEffectToTargetUntilEndOfCombatEffect(
                                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                                 new BecomePreparedEffect())));

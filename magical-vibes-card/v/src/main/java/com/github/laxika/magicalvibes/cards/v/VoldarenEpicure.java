@@ -17,7 +17,7 @@ public class VoldarenEpicure extends Card {
     public VoldarenEpicure() {
         // When this creature enters, it deals 1 damage to each opponent. Create a Blood token.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.ofBloodToken(1));
+                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
+                CreateTokenEffect.ofBloodToken(1));
     }
 }

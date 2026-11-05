@@ -21,8 +21,7 @@ public class InvasionOfTarkir extends Card {
         setBackFaceCard(new DefiantThundermaw());
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new RevealAnyNumberOfCardsFromHandEffect(new CardSubtypePredicate(CardSubtype.DRAGON)));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new RevealAnyNumberOfCardsFromHandEffect(new CardSubtypePredicate(CardSubtype.DRAGON)),
                 new QueueReflexiveAbilityEffect(DealDamageToAnyTargetEffect.toAnyOtherTarget(
                         new Sum(new Fixed(2), new EventValue()))));
     }

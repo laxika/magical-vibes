@@ -19,7 +19,8 @@ import java.util.Set;
 public class GeminiEngine extends Card {
 
     public GeminiEngine() {
-        addTrigger(Triggers.attacks(), new CreateTokenEffect(
+        addTrigger(Triggers.attacks(),
+                new CreateTokenEffect(
                 CardType.CREATURE,
                 new Fixed(1),
                 "Twin",
@@ -38,8 +39,8 @@ public class GeminiEngine extends Card {
                 false,
                 false,
                 0,
-                Set.of()));
-        addTrigger(Triggers.attacks(), new MakeCreatedPermanentsAttackingEffect());
-        addTrigger(Triggers.attacks(), new SacrificeCreatedPermanentsAtEndOfCombatEffect());
+                Set.of()),
+                new MakeCreatedPermanentsAttackingEffect(),
+                new SacrificeCreatedPermanentsAtEndOfCombatEffect());
     }
 }

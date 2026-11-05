@@ -21,10 +21,8 @@ public class AirtightAlibi extends Card {
     public AirtightAlibi() {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new UntapPermanentsEffect(TapUntapScope.ENCHANTED))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.ENCHANTED_CREATURE))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new UntapPermanentsEffect(TapUntapScope.ENCHANTED),
+                        new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.ENCHANTED_CREATURE),
                         new UnsuspectEffect(GrantScope.ENCHANTED_CREATURE))
                 .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
                 .addStaticEffect(new AttachedPermanentRestrictionEffect(new CantBecomeSuspectedEffect()));

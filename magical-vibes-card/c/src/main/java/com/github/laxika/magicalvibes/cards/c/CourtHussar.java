@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -22,7 +21,7 @@ public class CourtHussar extends Card {
     public CourtHussar() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 LookAtTopCardsEffect.chooseOneToHandRestOnBottom(new Fixed(3)));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT, ConditionalEffect.unless(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), ConditionalEffect.unless(
                 new NotCondition(new ColorSpentToCast(ManaColor.WHITE)), new SacrificeSelfEffect()));
     }
 }

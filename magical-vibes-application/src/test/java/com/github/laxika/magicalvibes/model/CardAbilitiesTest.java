@@ -59,7 +59,7 @@ class CardAbilitiesTest {
         assertThat(card.getAbilities()).containsExactly(new SpellAbility(List.of(
                 new EffectRegistration(DRAW_ONE),
                 new EffectRegistration(GAIN_ONE),
-                new EffectRegistration(GAIN_TWO, TriggerMode.NORMAL, true))));
+                new EffectRegistration(GAIN_TWO, true))));
         assertThat(card.getSpellEffects()).containsExactly(DRAW_ONE, GAIN_ONE, GAIN_TWO);
     }
 
@@ -167,7 +167,7 @@ class CardAbilitiesTest {
         assertThat(card.getAbilities()).containsExactly(
                 triggered(new EffectRegistration(DRAW_ONE)),
                 triggered(new EffectRegistration(GAIN_ONE),
-                        new EffectRegistration(GAIN_TWO, TriggerMode.NORMAL, true)));
+                        new EffectRegistration(GAIN_TWO, true)));
         assertThat(card.isSimultaneousWithPrevious(GAIN_TWO)).isTrue();
         assertThat(card.isSimultaneousWithPrevious(GAIN_ONE)).isFalse();
     }
@@ -213,7 +213,7 @@ class CardAbilitiesTest {
         card.removeEffectsIf(DRAW_ONE::equals);
 
         assertThat(card.getSpellEffectRegistrations()).containsExactly(
-                new EffectRegistration(GAIN_ONE), new EffectRegistration(GAIN_TWO, TriggerMode.NORMAL, true));
+                new EffectRegistration(GAIN_ONE), new EffectRegistration(GAIN_TWO, true));
     }
 
     @Test
@@ -510,7 +510,7 @@ class CardAbilitiesTest {
     void addingATriggeredAbilityWithARealTriggerAddsItAsItIs() {
         TriggeredAbility ability = new TriggeredAbility(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT, List.of(new EffectRegistration(DRAW_ONE),
-                new EffectRegistration(GAIN_ONE, TriggerMode.NORMAL, true)));
+                new EffectRegistration(GAIN_ONE, true)));
 
         card.addAbility(ability);
 

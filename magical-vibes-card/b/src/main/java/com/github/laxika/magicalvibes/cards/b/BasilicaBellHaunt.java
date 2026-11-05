@@ -13,7 +13,7 @@ public class BasilicaBellHaunt extends Card {
 
     public BasilicaBellHaunt() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(3));
+                new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT),
+                new GainLifeEffect(3));
     }
 }

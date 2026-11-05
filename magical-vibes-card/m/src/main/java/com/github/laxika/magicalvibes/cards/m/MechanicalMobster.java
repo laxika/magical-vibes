@@ -13,8 +13,11 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class MechanicalMobster extends Card {
 
     public MechanicalMobster() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ExileUpToOneCardFromGraveyardEffect());
+        var drawDiscardAndConnive = new DrawDiscardAndConniveEffect(true);
         target(TargetFilters.creatureYouControl())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawDiscardAndConniveEffect(true));
+                .bindEffect(drawDiscardAndConnive);
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new ExileUpToOneCardFromGraveyardEffect(),
+                drawDiscardAndConnive);
     }
 }

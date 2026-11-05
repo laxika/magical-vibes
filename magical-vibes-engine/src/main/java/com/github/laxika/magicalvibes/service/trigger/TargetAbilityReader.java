@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -49,7 +48,6 @@ public final class TargetAbilityReader {
      * One effect of a becomes-the-target ability as its collector reads it.
      *
      * @param effect  the effect, wrapped in the ability's event condition and intervening "if" as the class says
-     * @param mode    the registration's trigger mode
      * @param ability the ability the effect belongs to
      * @param filter  what the permanent that becomes the target must also be for the watched condition (its
      *                {@link TargetTrigger#qualifier()}), or {@code null}
@@ -57,12 +55,11 @@ public final class TargetAbilityReader {
      *                ({@link TargetTrigger#watchedEvent()})
      * @param simultaneousWithPrevious the registration happens at the same time as the effect before it
      */
-    public record TargetEffect(CardEffect effect, TriggerMode mode, TriggeredAbility ability,
+    public record TargetEffect(CardEffect effect, TriggeredAbility ability,
                                PermanentPredicate filter, TargetEvent event, boolean simultaneousWithPrevious) {
 
         public TargetEffect {
             Objects.requireNonNull(effect, "effect");
-            Objects.requireNonNull(mode, "mode");
             Objects.requireNonNull(ability, "ability");
             Objects.requireNonNull(event, "event");
         }
@@ -165,7 +162,7 @@ public final class TargetAbilityReader {
             if (interveningIf != null) {
                 effect = new ConditionalEffect(interveningIf, effect, true);
             }
-            effects.add(new TargetEffect(effect, registration.triggerMode(), ability, condition.qualifier(),
+            effects.add(new TargetEffect(effect, ability, condition.qualifier(),
                     condition.event(), registration.simultaneousWithPrevious()));
         }
         return effects;

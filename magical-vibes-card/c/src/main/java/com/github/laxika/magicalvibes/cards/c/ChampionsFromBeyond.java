@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
@@ -28,12 +27,10 @@ public class ChampionsFromBeyond extends Card {
                 List.of(CardSubtype.HERO), Set.of(), Set.of()));
 
         addTrigger(Triggers.youAttack(),
-                TriggerMode.INDEPENDENT,
                 TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(4)),
                 SequenceEffect.of(new ScryEffect(2), new DrawCardEffect(1)));
 
         addTrigger(Triggers.youAttack(),
-                TriggerMode.INDEPENDENT,
                 TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(8)),
                 new BoostAllOwnCreaturesEffect(4, 4).forDeclaredAttackers());
     }

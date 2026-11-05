@@ -25,14 +25,13 @@ public class DominatingVampire extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                GainControlOfTargetEffect.withTargetPredicate(
+        ))
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        GainControlOfTargetEffect.withTargetPredicate(
                         ControlDuration.END_OF_TURN,
                         new PermanentManaValueAtMostControlledCountPredicate(
-                                new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE))))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                                new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE))),
+                        new UntapPermanentsEffect(TapUntapScope.TARGET),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
     }
 }

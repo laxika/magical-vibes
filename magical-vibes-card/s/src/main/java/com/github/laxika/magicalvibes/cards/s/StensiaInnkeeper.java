@@ -14,7 +14,8 @@ public class StensiaInnkeeper extends Card {
 
     public StensiaInnkeeper() {
         target(TargetFilters.landAnOpponentControls())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new SkipNextUntapEffect(TapUntapScope.TARGET));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new TapPermanentsEffect(TapUntapScope.TARGET),
+                        new SkipNextUntapEffect(TapUntapScope.TARGET));
     }
 }

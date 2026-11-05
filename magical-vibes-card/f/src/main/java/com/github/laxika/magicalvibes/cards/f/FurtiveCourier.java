@@ -19,7 +19,6 @@ public class FurtiveCourier extends Card {
         addStaticEffect(new ConditionalEffect(
                 new ControllerSacrificedArtifactThisTurn(),
                 new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
-        addTrigger(Triggers.attacks(), new DrawCardEffect());
-        addTrigger(Triggers.attacks(), new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+        addTrigger(Triggers.attacks(), new DrawCardEffect(), new DiscardEffect(1, DiscardRecipient.CONTROLLER));
     }
 }

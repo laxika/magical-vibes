@@ -17,8 +17,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class FblthpTheLost extends Card {
 
     public FblthpTheLost() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(),
+                new ConditionalEffect(
                 new EnteredFromZone(Zone.LIBRARY, true), new DrawCardEffect()));
         addTrigger(Triggers.becomesTargetOfSpell(), new ShuffleSelfIntoOwnerLibraryEffect());
     }

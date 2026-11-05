@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
@@ -19,12 +18,12 @@ public class BarbedFoliage extends Card {
         // Whenever a creature attacks you, it loses flanking until end of turn.
         // The trigger's non-targeting targetId is the attacking creature, so GrantScope.TARGET
         // strips flanking from it without any target selection.
-        addTrigger(Triggers.creatureAttacksYou(), TriggerMode.INDEPENDENT,
+        addTrigger(Triggers.creatureAttacksYou(),
                 new RemoveKeywordEffect(Keyword.FLANKING, GrantScope.TARGET));
 
         // Whenever a creature without flying attacks you, this enchantment deals 1 damage to it.
         PermanentPredicate withoutFlying = new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING));
-        addTrigger(Triggers.creatureAttacksYou(), TriggerMode.INDEPENDENT,
+        addTrigger(Triggers.creatureAttacksYou(),
                 new DealDamageToTriggeringAttackerEffect(1, withoutFlying));
     }
 }

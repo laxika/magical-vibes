@@ -12,9 +12,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class LiminalHold extends Card {
 
     public LiminalHold() {
+        var exileTargetPermanentUntilSourceLeaves = new ExileTargetPermanentUntilSourceLeavesEffect();
         target(TargetFilters.nonlandPermanentAnOpponentControls(), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new ExileTargetPermanentUntilSourceLeavesEffect());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2));
+                .bindEffect(exileTargetPermanentUntilSourceLeaves);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), exileTargetPermanentUntilSourceLeaves, new GainLifeEffect(2));
     }
 }

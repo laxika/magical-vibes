@@ -26,9 +26,7 @@ public class AureliaTheWarleader extends Card {
         // attacking again in the extra combat phase this grants doesn't re-trigger and loop.
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
-                new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate()));
-        addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate()),
                 new AdditionalCombatPhaseEffect(1));
     }
 }

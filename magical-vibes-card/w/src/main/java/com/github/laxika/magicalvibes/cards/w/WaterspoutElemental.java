@@ -30,9 +30,7 @@ public class WaterspoutElemental extends Card {
         addStaticEffect(new KickerEffect("{U}"));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
-                ReturnToHandEffect.allPermanentsMatching(otherCreature));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
-                TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
+                ReturnToHandEffect.allPermanentsMatching(otherCreature),
                 new SkipNextEffect(SkipKind.TURN));
     }
 }

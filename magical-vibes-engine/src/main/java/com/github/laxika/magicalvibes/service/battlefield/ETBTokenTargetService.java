@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TargetGroup;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -1031,8 +1030,7 @@ public class ETBTokenTargetService {
                 // An evoked permanent's independent ETB abilities and its evoke sacrifice trigger
                 // together, so its controller may order them (CR 603.3b).
                 if (pending.triggeringCardId() == null && sourcePermanent.isEvoked()
-                        && card.getOwnEntryEffectRegistrations().stream()
-                        .anyMatch(registration -> registration.triggerMode() == TriggerMode.INDEPENDENT)) {
+                        && card.hasSeveralOwnEntryAbilities()) {
                     etbEntry.setTriggeringCardId(card.getId());
                 }
             }

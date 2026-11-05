@@ -16,8 +16,8 @@ public class CelestialRegulator extends Card {
 
     public CelestialRegulator() {
         target(TargetFilters.creatureAnOpponentControls())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), ConditionalEffect.unless(
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.TARGET),
+                        ConditionalEffect.unless(
                         new ControlledCreatureCounterCountAtLeast(1),
                         new SkipNextUntapEffect(TapUntapScope.TARGET)));
     }

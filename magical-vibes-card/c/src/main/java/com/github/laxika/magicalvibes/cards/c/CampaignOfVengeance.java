@@ -13,7 +13,7 @@ public class CampaignOfVengeance extends Card {
 
     public CampaignOfVengeance() {
         addTrigger(Triggers.creatureYouControlAttacks(),
-                new LoseLifeEffect(1, LoseLifeRecipient.DEFENDING_PLAYER));
-        addTrigger(Triggers.creatureYouControlAttacks(), new GainLifeEffect(1));
+                new LoseLifeEffect(1, LoseLifeRecipient.DEFENDING_PLAYER),
+                new GainLifeEffect(1));
     }
 }

@@ -17,8 +17,9 @@ public class EnchantedRiversGrasp extends Card {
 
     public EnchantedRiversGrasp() {
         target(TargetFilters.creature())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.ENCHANTED))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new RemoveAllCountersFromEnchantedCreatureEffect())
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new TapPermanentsEffect(TapUntapScope.ENCHANTED),
+                        new RemoveAllCountersFromEnchantedCreatureEffect())
                 .addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE))
                 .addStaticEffect(DoesntUntapEffect.enchanted());
     }

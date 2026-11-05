@@ -16,12 +16,15 @@ import java.util.List;
 public class Petradon extends Card {
 
     public Petradon() {
+        var exileTargetPermanentAndTrackWithSource = new ExileTargetPermanentAndTrackWithSourceEffect();
         target(TargetFilters.land())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new ExileTargetPermanentAndTrackWithSourceEffect());
+                .bindEffect(exileTargetPermanentAndTrackWithSource);
+        var exileTargetPermanentAndTrackWithSource2 = new ExileTargetPermanentAndTrackWithSourceEffect();
         target(TargetFilters.land())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new ExileTargetPermanentAndTrackWithSourceEffect());
+                .bindEffect(exileTargetPermanentAndTrackWithSource2);
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                exileTargetPermanentAndTrackWithSource,
+                exileTargetPermanentAndTrackWithSource2);
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new ReturnAllCardsExiledWithSourceEffect());
         addActivatedAbility(new ActivatedAbility(

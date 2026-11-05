@@ -12,7 +12,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class WindgraceAcolyte extends Card {
 
     public WindgraceAcolyte() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(3, MillRecipient.CONTROLLER));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(3));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new MillEffect(3, MillRecipient.CONTROLLER),
+                new GainLifeEffect(3));
     }
 }

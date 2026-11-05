@@ -15,9 +15,9 @@ public class RootSpider extends Card {
     public RootSpider() {
         // Whenever this creature blocks, it gets +1/+0 and gains first strike until end of turn.
         // Triggers once per block declaration even when it blocks multiple attackers.
-        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, new BoostSelfEffect(1, 0));
         addTrigger(Triggers.blocks(),
                 TriggerOptions.ONE_OR_MORE,
+                new BoostSelfEffect(1, 0),
                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF));
     }
 }

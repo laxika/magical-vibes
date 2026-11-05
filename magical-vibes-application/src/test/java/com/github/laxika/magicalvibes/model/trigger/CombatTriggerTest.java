@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.Condition;
@@ -25,6 +24,7 @@ import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import com.github.laxika.magicalvibes.service.trigger.CombatWatch;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -293,20 +293,26 @@ class CombatTriggerTest {
     }
 
     @Test
-    void aRegistrationKeepsItsTriggerMode() {
+    void theEffectsAreReadByAbilityAndKeepTheirSimultaneity() {
         Card card = new Card();
+        card.addTrigger(Triggers.blocks(), DRAW, GAIN);
         card.addTrigger(Triggers.blocks(), DRAW);
-        card.addTrigger(Triggers.blocks(), TriggerMode.INDEPENDENT, GAIN);
         CardEffect draw = new DrawCardEffect(2);
         CardEffect life = new GainLifeEffect(2);
-        card.addSimultaneousTrigger(Triggers.becomesBlocked(), TriggerMode.INDEPENDENT, draw, life);
+        card.addSimultaneousTrigger(Triggers.becomesBlocked(), draw, life);
+        List<CombatAbilityReader.CombatEffect> blocks = CombatAbilityReader.read(
+                WatchedAbilities.printed(card, CombatWatch.ON_BLOCK), Triggers.blocks());
 
-        assertThat(card.getTriggerEffectRegistrations(Triggers.blocks(), Zone.BATTLEFIELD)).containsExactly(
-                new EffectRegistration(DRAW), new EffectRegistration(GAIN, TriggerMode.INDEPENDENT));
+        // Two equal abilities are still two (CR 603.3): the abilities are told apart by identity.
+        assertThat(CombatAbilityReader.byAbility(blocks)).extracting(CombatAbilityReader::effectsOf)
+                .containsExactly(List.of(DRAW, GAIN), List.of(DRAW));
+        List<CardEffect> bundled = new ArrayList<>(List.of(DRAW, GAIN, DRAW));
+        assertThat(CombatAbilityReader.splitLaterAbilities(blocks, bundled, effect -> effect))
+                .containsExactly(List.of(DRAW));
+        assertThat(bundled).containsExactly(GAIN, DRAW);
         assertThat(CombatAbilityReader.registrationsOf(CombatAbilityReader.read(
                 WatchedAbilities.printed(card, CombatWatch.ON_BECOMES_BLOCKED), Triggers.becomesBlocked())))
-                .containsExactly(new EffectRegistration(draw, TriggerMode.INDEPENDENT),
-                        new EffectRegistration(life, TriggerMode.INDEPENDENT, true));
+                .containsExactly(new EffectRegistration(draw), new EffectRegistration(life, true));
         assertThat(card.isSimultaneousWithPrevious(life)).isTrue();
     }
 }

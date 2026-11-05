@@ -34,13 +34,14 @@ public class ThaliaAndTheGitrogMonster extends Card {
                 )),
                 true
         ));
-        addTrigger(Triggers.attacks(), new SacrificePermanentsEffect(
+        addTrigger(Triggers.attacks(),
+                new SacrificePermanentsEffect(
                 1,
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsLandPredicate()
                 )),
-                SacrificeRecipient.CONTROLLER));
-        addTrigger(Triggers.attacks(), new DrawCardEffect(1));
+                SacrificeRecipient.CONTROLLER),
+                new DrawCardEffect(1));
     }
 }

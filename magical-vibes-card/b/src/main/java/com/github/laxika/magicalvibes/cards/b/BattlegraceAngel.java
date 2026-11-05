@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -26,7 +25,6 @@ public class BattlegraceAngel extends Card {
         // Whenever a creature you control attacks alone, it gains lifelink until end of turn.
         // GrantScope.TARGET grants to the recorded lone attacker, same trigger target as the boost.
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerMode.INDEPENDENT,
                 TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
                 new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET));
     }

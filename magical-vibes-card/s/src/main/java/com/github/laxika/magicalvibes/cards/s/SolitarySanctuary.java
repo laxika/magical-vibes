@@ -17,8 +17,7 @@ public class SolitarySanctuary extends Card {
     public SolitarySanctuary() {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new TapPermanentsEffect(TapUntapScope.TARGET),
                         new PutCounterOnTargetPermanentEffect(CounterType.STUN));
         target(TargetFilters.creatureYouControl())
                 .addTrigger(Triggers.youTapPermanentOpponentControls()

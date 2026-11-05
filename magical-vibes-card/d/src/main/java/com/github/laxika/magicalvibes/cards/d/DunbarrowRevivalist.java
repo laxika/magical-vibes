@@ -46,8 +46,7 @@ public class DunbarrowRevivalist extends Card {
         ));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new CreateBoonEffect(1, new CreateTokenAttachedToTargetEffect(
-                        wickedRoleToken(), PlayerRelation.ANY), BoonTrigger.ONE_OR_MORE_CREATURES_ENTER, null));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        wickedRoleToken(), PlayerRelation.ANY), BoonTrigger.ONE_OR_MORE_CREATURES_ENTER, null),
                 new ConditionalEffect(new Kicked(), ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
                         .filter(new CardTypePredicate(CardType.CREATURE))

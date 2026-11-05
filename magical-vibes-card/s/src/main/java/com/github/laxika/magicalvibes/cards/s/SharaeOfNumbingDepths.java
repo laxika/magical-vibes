@@ -20,8 +20,7 @@ public class SharaeOfNumbingDepths extends Card {
     public SharaeOfNumbingDepths() {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new TapPermanentsEffect(TapUntapScope.TARGET),
                         new PutCounterOnTargetPermanentEffect(CounterType.STUN));
 
         addTrigger(Triggers.youTapPermanentOpponentControls()

@@ -26,14 +26,13 @@ public class FinestHour extends Card {
         // Second ability: whenever a creature you control attacks alone, if it's the first combat phase
         // of the turn, untap that creature and, after this phase, add an additional combat phase. The
         // AttacksAlone wrapper is stripped at Triggers.creatureYouControlAttacks() collection (so the ability only
-        // fires when attacking alone), leaving the FirstCombatPhase intervening-"if" to be re-checked at
-        // resolution — that gate stops the extra combat phase it creates from looping. "That creature"
-        // is the sole attacker, so the attacked-creatures untap targets exactly it.
+        // fires when attacking alone); "if it's the first combat phase" is an intervening "if" (CR 603.4), checked
+        // as the ability triggers and again as it resolves, so the extra combat phase it creates doesn't loop.
+        // "That creature" is the sole attacker, so the attacked-creatures untap targets exactly it.
         addTrigger(Triggers.creatureYouControlAttacks(),
                 TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
-                new ConditionalEffect(new FirstCombatPhase(), new UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES)));
-        addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
-                new ConditionalEffect(new FirstCombatPhase(), new AdditionalCombatPhaseEffect(1)));
+                new ConditionalEffect(new FirstCombatPhase(),
+                        new UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES), true),
+                new ConditionalEffect(new FirstCombatPhase(), new AdditionalCombatPhaseEffect(1), true));
     }
 }

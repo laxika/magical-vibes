@@ -27,8 +27,7 @@ public class Subterfuge extends Card {
     public Subterfuge() {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET),
                         new GrantEffectToTargetUntilEndOfTurnEffect(
                                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                                 new DrawCardEffect(new EventValue()))));

@@ -41,8 +41,8 @@ public class CloudExSOLDIER extends Card {
         PermanentCount equippedAttackingCreatures = new PermanentCount(
                 equippedAttackingCreature, CountScope.CONTROLLER);
 
-        addTrigger(Triggers.attacks(), new DrawCardEffect(equippedAttackingCreatures));
-        addTrigger(Triggers.attacks(), ConditionalEffect.unless(
+        addTrigger(Triggers.attacks(), new DrawCardEffect(equippedAttackingCreatures),
+                ConditionalEffect.unless(
                 new SourcePowerAtLeast(7), CreateTokenEffect.ofTreasureToken(2)));
     }
 }

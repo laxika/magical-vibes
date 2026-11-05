@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ReservoirWalker extends Card {
 
     public ReservoirWalker() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(3));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new EnergyCountersEffect(3));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(3), new EnergyCountersEffect(3));
     }
 }

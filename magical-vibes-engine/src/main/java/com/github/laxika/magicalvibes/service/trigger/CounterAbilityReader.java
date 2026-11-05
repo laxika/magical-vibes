@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.trigger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -49,7 +48,6 @@ public final class CounterAbilityReader {
      * One effect of a counter ability as its collector reads it.
      *
      * @param effect  the effect, wrapped in the ability's event condition and intervening "if" as the class says
-     * @param mode    the registration's trigger mode
      * @param ability the ability the effect belongs to
      * @param filter  what the permanent the counters are put on or removed from must also be for the watched condition
      *                (its {@link CounterTrigger#qualifier()}), or {@code null}
@@ -57,12 +55,11 @@ public final class CounterAbilityReader {
      *                ({@link CounterTrigger#watchedEvent()})
      * @param simultaneousWithPrevious the registration happens at the same time as the effect before it
      */
-    public record CounterEffect(CardEffect effect, TriggerMode mode, TriggeredAbility ability,
+    public record CounterEffect(CardEffect effect, TriggeredAbility ability,
                                 PermanentPredicate filter, CounterEvent event, boolean simultaneousWithPrevious) {
 
         public CounterEffect {
             Objects.requireNonNull(effect, "effect");
-            Objects.requireNonNull(mode, "mode");
             Objects.requireNonNull(ability, "ability");
             Objects.requireNonNull(event, "event");
         }
@@ -104,7 +101,7 @@ public final class CounterAbilityReader {
 
         /** This effect read as {@code effect} instead, as a collector binds it. */
         public CounterEffect withEffect(CardEffect effect) {
-            return new CounterEffect(effect, mode, ability, filter, event, simultaneousWithPrevious);
+            return new CounterEffect(effect, ability, filter, event, simultaneousWithPrevious);
         }
 
         /**
@@ -187,7 +184,7 @@ public final class CounterAbilityReader {
             if (interveningIf != null) {
                 effect = new ConditionalEffect(interveningIf, effect, true);
             }
-            effects.add(new CounterEffect(effect, registration.triggerMode(), ability, condition.qualifier(),
+            effects.add(new CounterEffect(effect, ability, condition.qualifier(),
                     condition.event(), registration.simultaneousWithPrevious()));
         }
         return effects;
@@ -202,12 +199,12 @@ public final class CounterAbilityReader {
     }
 
     /**
-     * The registrations of {@code abilities} for the condition watched as {@code watched}, with their trigger modes,
+     * The registrations of {@code abilities} for the condition watched as {@code watched},
      * for a collector that reads no filter, narrower event or limit (this throws on one).
      */
     public static List<EffectRegistration> registrations(List<TriggeredAbility> abilities, Trigger watched) {
         return strict(abilities, watched).stream()
-                .map(effect -> new EffectRegistration(effect.effect(), effect.mode(), effect.simultaneousWithPrevious()))
+                .map(effect -> new EffectRegistration(effect.effect(), effect.simultaneousWithPrevious()))
                 .toList();
     }
 

@@ -16,12 +16,10 @@ public class BruseTarlBoorishHerder extends Card {
     public BruseTarlBoorishHerder() {
         target(TargetFilters.creatureYouControl())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET),
                         new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET))
                 .addTrigger(Triggers.attacks(),
-                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET))
-                .addTrigger(Triggers.attacks(),
+                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET),
                         new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET));
     }
 }

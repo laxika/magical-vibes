@@ -15,8 +15,7 @@ import java.util.List;
 public class OmenOfTheSea extends Card {
 
     public OmenOfTheSea() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(2));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(2), new DrawCardEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

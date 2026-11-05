@@ -16,8 +16,7 @@ import java.util.List;
 public class Bookwurm extends Card {
 
     public Bookwurm() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(3));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(3), new DrawCardEffect());
 
         addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,

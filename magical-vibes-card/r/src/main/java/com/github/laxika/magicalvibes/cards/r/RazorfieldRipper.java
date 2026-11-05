@@ -34,8 +34,8 @@ public class RazorfieldRipper extends Card {
     public RazorfieldRipper() {
         addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF,
                 EffectDuration.WHILE_ATTACHED));
-        addTrigger(Triggers.attacks(), new EnergyCountersEffect(1));
-        addTrigger(Triggers.attacks(), new BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect(
+        addTrigger(Triggers.attacks(), new EnergyCountersEffect(1),
+                new BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect(
                 new ControllerEnergyCounters(), new ControllerEnergyCounters()));
 
         var reconfigureTarget = TargetPredicates.permanents(new PermanentAllOfPredicate(List.of(

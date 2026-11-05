@@ -42,10 +42,10 @@ public class DepthshakerTitan extends Card {
                         noncreatureArtifact,
                         "Target must be a noncreature artifact you control");
         target(targetFilter, 0, 99)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new AnimatePermanentsEffect(
-                        new Fixed(3), new Fixed(3), List.of(), Set.of(), null, Set.of(CardType.ARTIFACT),
-                        GrantScope.TARGET, EffectDuration.PERMANENT, noncreatureArtifact))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new AnimatePermanentsEffect(
+                        new Fixed(3), new Fixed(3), List.of(), Set.of(), null, Set.of(CardType.ARTIFACT),
+                        GrantScope.TARGET, EffectDuration.PERMANENT, noncreatureArtifact),
                         new SacrificeTargetPermanentAtEndStepEffect());
     }
 }

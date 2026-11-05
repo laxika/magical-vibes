@@ -25,8 +25,8 @@ public class ObzedatGhostCouncil extends Card {
                 "Target must be an opponent"
         ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2));
+                        new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER),
+                        new GainLifeEffect(2));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new MayEffect(new ExileSelfReturnAtNextUpkeepWithHasteEffect(),

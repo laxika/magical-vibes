@@ -20,18 +20,23 @@ public class VolatileArsonist extends Card {
     public VolatileArsonist() {
         setBackFaceCard(new DireStrainAnarchist());
 
+        var dealDamageToTargetCreature = new DealDamageToTargetCreatureEffect(1);
         target(TargetFilters.creature(), 0, 1)
-                .addTrigger(Triggers.attacks(), new DealDamageToTargetCreatureEffect(1));
+                .bindEffect(dealDamageToTargetCreature);
+        var dealDamageToTargetPlayerOrPlaneswalker = new DealDamageToTargetPlayerOrPlaneswalkerEffect(1);
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        ), 0, 1).addTrigger(Triggers.attacks(),
-                new DealDamageToTargetPlayerOrPlaneswalkerEffect(1));
+        ), 0, 1).bindEffect(dealDamageToTargetPlayerOrPlaneswalker);
+        var dealDamageToTargetPlayerOrPlaneswalker2 = new DealDamageToTargetPlayerOrPlaneswalkerEffect(1);
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsPlaneswalkerPredicate(),
                 "Target must be a planeswalker"
-        ), 0, 1).addTrigger(Triggers.attacks(),
-                new DealDamageToTargetPlayerOrPlaneswalkerEffect(1));
+        ), 0, 1).bindEffect(dealDamageToTargetPlayerOrPlaneswalker2);
+        addTrigger(Triggers.attacks(),
+                dealDamageToTargetCreature,
+                dealDamageToTargetPlayerOrPlaneswalker,
+                dealDamageToTargetPlayerOrPlaneswalker2);
         setAllowSharedTargets(true);
     }
 

@@ -16,8 +16,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class FlameKinZealot extends Card {
 
     public FlameKinZealot() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostAllOwnCreaturesEffect(1, 1));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new BoostAllOwnCreaturesEffect(1, 1),
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES));
     }
 }

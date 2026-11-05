@@ -28,7 +28,7 @@ public interface TriggerWatch {
         return card.getTriggerEffects(trigger(), zone());
     }
 
-    /** The registrations of {@code card}'s abilities this watch reads, with their trigger modes. */
+    /** The registrations of {@code card}'s abilities this watch reads. */
     default List<EffectRegistration> registrationsOf(Card card) {
         return card.getTriggerEffectRegistrations(trigger(), zone());
     }

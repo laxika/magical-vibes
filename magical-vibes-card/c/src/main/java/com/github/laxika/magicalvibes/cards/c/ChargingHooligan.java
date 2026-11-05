@@ -22,8 +22,8 @@ public class ChargingHooligan extends Card {
     public ChargingHooligan() {
         addTrigger(Triggers.attacks(), new BoostSelfEffect(
                 new PermanentCount(new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER),
-                new Fixed(0)));
-        addTrigger(Triggers.attacks(), ConditionalEffect.unless(
+                new Fixed(0)),
+                ConditionalEffect.unless(
                 new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.RAT)),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
     }

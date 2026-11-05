@@ -89,7 +89,9 @@ class IntrepidRabbitTest extends BaseCardTest {
 
         harness.castKickedCreature(player1, 0, duo.getId());
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        // Offspring and the boost are separate abilities (CR 603.3): both resolve before the token copy's own
+        // "when this enters" target is chosen.
+        resolveAllTriggers();
         harness.handlePermanentChosen(player1, duo.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();

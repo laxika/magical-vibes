@@ -26,8 +26,7 @@ public class GollumTheAbandoned extends Card {
         addStaticEffect(new CantBlockEffect());
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                ExileGraveyardCardsEffect.upToOneTargetFromOpponentGraveyard());
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                ExileGraveyardCardsEffect.upToOneTargetFromOpponentGraveyard(),
                 new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT));
 
         addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(

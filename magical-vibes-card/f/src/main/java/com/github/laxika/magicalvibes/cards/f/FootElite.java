@@ -25,8 +25,9 @@ public class FootElite extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )),
                 "Target must be another creature you control"
-        )).addTrigger(Triggers.attacks(), new BoostTargetCreatureEffect(1, 0))
+        ))
                 .addTrigger(Triggers.attacks(),
+                        new BoostTargetCreatureEffect(1, 0),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
     }
 }

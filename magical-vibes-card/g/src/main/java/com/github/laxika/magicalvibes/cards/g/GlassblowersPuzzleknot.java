@@ -15,8 +15,7 @@ import java.util.List;
 public class GlassblowersPuzzleknot extends Card {
 
     public GlassblowersPuzzleknot() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(2));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new EnergyCountersEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(2), new EnergyCountersEffect(2));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -35,9 +35,10 @@ public class EnthrallingVictor extends Card {
                         new PermanentPowerAtMostPredicate(2)
                 )),
                 "Target must be a creature an opponent controls with power 2 or less"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS), new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new UntapPermanentsEffect(TapUntapScope.TARGET))
+        ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                        new UntapPermanentsEffect(TapUntapScope.TARGET),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
     }
 }

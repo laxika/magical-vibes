@@ -21,11 +21,12 @@ public class PyrewoodGearhulk extends Card {
         var otherCreatures = new PermanentNotPredicate(new PermanentIsSourceCardPredicate());
 
         // Other creatures you control get +2/+2 and gain vigilance and menace until end of turn.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostAllOwnCreaturesEffect(2, 2, otherCreatures));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GrantKeywordEffect(
-                Set.of(Keyword.VIGILANCE, Keyword.MENACE), GrantScope.OWN_CREATURES, otherCreatures));
 
         // Damage can't be prevented this turn.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DamageCantBePreventedThisTurnEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new BoostAllOwnCreaturesEffect(2, 2, otherCreatures),
+                new GrantKeywordEffect(
+                Set.of(Keyword.VIGILANCE, Keyword.MENACE), GrantScope.OWN_CREATURES, otherCreatures),
+                new DamageCantBePreventedThisTurnEffect());
     }
 }

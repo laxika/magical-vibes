@@ -99,9 +99,17 @@ class SawtoothLoonTest extends BaseCardTest {
                 .containsExactly(third, fourth, first, second);
     }
 
+    /**
+     * Sawtooth Loon's two abilities are separate objects whose order their controller chooses (CR 603.3b): the draw
+     * goes on the stack first, so the return resolves first.
+     */
     private void castAndResolveSpell() {
+        harness.setAutoOrderTriggers(player1, false);
         harness.castFromHand(player1, new SawtoothLoon(), "{2}{W}{U}");
         harness.passBothPriorities();
+        PendingInteraction.ColorChoice order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(order).isNotNull();
+        harness.handleListChoice(player1, order.options().get(1));
         harness.passBothPriorities();
     }
 }

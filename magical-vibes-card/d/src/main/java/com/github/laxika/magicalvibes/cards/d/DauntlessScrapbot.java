@@ -37,7 +37,7 @@ public class DauntlessScrapbot extends Card {
 
     public DauntlessScrapbot() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ExileGraveyardCardsEffect(GraveyardExileScope.ALL_OPPONENTS));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), LANDER);
+                new ExileGraveyardCardsEffect(GraveyardExileScope.ALL_OPPONENTS),
+                LANDER);
     }
 }

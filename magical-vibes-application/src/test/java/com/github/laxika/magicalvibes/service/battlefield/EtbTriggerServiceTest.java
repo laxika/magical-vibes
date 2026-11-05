@@ -214,8 +214,8 @@ class EtbTriggerServiceTest {
         creature.setType(CardType.CREATURE);
         ExileGraveyardCardsEffect exile = ExileGraveyardCardsEffect.upToOneTargetFromOpponentGraveyard();
         LoseLifeEffect lifeLoss = new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT);
-        creature.addTrigger(Triggers.enters(ObjectRelation.THIS), exile);
-        creature.addTrigger(Triggers.enters(ObjectRelation.THIS), lifeLoss);
+        // One ability of two effects (CR 603.3): two addTrigger calls would be two abilities.
+        creature.addTrigger(Triggers.enters(ObjectRelation.THIS), exile, lifeLoss);
         gameData.playerBattlefields.get(controllerId).add(new Permanent(creature));
 
         service.processCreatureETBEffects(gameData, controllerId, creature, null, false);

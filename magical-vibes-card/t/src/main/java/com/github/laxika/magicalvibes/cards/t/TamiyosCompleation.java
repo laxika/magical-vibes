@@ -31,8 +31,8 @@ public class TamiyosCompleation extends Card {
                 "Target must be an artifact, creature, or planeswalker"
         ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new TapPermanentsEffect(TapUntapScope.ENCHANTED))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new UnattachEnchantedEquipmentEffect())
+                        new TapPermanentsEffect(TapUntapScope.ENCHANTED),
+                        new UnattachEnchantedEquipmentEffect())
                 .addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_PERMANENT))
                 .addStaticEffect(DoesntUntapEffect.enchanted());
     }

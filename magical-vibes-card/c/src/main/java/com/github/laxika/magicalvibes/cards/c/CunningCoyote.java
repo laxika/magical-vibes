@@ -33,8 +33,8 @@ public class CunningCoyote extends Card {
                 )),
                 "Target must be another creature you control"
         ))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(1, 1))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new BoostTargetCreatureEffect(1, 1),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
     }
 }

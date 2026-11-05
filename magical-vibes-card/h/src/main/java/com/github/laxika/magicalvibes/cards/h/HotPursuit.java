@@ -32,8 +32,8 @@ public class HotPursuit extends Card {
 
     public HotPursuit() {
         target(TargetFilters.creatureAnOpponentControls())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new SuspectEffect(GrantScope.TARGET))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new SuspectEffect(GrantScope.TARGET),
                         new GoadTargetCreatureUntilSourceLeavesEffect());
 
         PermanentPredicate goadedOrSuspectedCreature = new PermanentAllOfPredicate(List.of(

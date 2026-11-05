@@ -15,7 +15,7 @@ public class PrayerOfBinding extends Card {
     public PrayerOfBinding() {
         target(TargetFilters.nonlandPermanentAnOpponentControls(), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new ExileTargetPermanentUntilSourceLeavesEffect())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2));
+                        new ExileTargetPermanentUntilSourceLeavesEffect(),
+                        new GainLifeEffect(2));
     }
 }

@@ -34,8 +34,9 @@ public class Oliphaunt extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 anotherCreature,
                 "Target must be another creature you control"
-        )).addTrigger(Triggers.attacks(), new BoostTargetCreatureEffect(2, 0, anotherCreature))
+        ))
                 .addTrigger(Triggers.attacks(),
+                        new BoostTargetCreatureEffect(2, 0, anotherCreature),
                         new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET, anotherCreature));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{1}",

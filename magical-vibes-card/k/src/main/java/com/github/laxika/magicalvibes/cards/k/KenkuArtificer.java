@@ -36,8 +36,7 @@ public class KenkuArtificer extends Card {
                 "Target must be a noncreature artifact"), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         PutCounterOnTargetPermanentEffect.withTargetRestriction(
-                                CounterType.PLUS_ONE_PLUS_ONE, 3, noncreatureArtifact))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                                CounterType.PLUS_ONE_PLUS_ONE, 3, noncreatureArtifact),
                         new AnimatePermanentsEffect(
                                 new Fixed(0), new Fixed(0), List.of(CardSubtype.HOMUNCULUS),
                                 Set.of(Keyword.FLYING), null,

@@ -25,8 +25,7 @@ public class AinokGuide extends Card {
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 ConditionalEffect.unless(new SourceHasChosenMode(COUNTER_MODE),
-                        new PutCountersOnSourceEffect(1, 1, 1)));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new PutCountersOnSourceEffect(1, 1, 1)),
                 ConditionalEffect.unless(new SourceHasChosenMode(LAND_MODE),
                         new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.TOP_OF_LIBRARY)));
     }

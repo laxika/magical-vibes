@@ -17,8 +17,9 @@ public class WarEffort extends Card {
 
     public WarEffort() {
         addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES));
-        addTrigger(Triggers.youAttack(), new CreateTokenEffect(
-                1, "Warrior", 1, 1, CardColor.RED, List.of(CardSubtype.WARRIOR), true));
-        addTrigger(Triggers.youAttack(), new SacrificeCreatedPermanentsAtEndStepEffect());
+        addTrigger(Triggers.youAttack(),
+                new CreateTokenEffect(
+                1, "Warrior", 1, 1, CardColor.RED, List.of(CardSubtype.WARRIOR), true),
+                new SacrificeCreatedPermanentsAtEndStepEffect());
     }
 }

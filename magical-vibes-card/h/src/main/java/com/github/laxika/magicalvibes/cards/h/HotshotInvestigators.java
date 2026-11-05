@@ -28,8 +28,8 @@ public class HotshotInvestigators extends Card {
         ));
 
         target(new PermanentPredicateTargetFilter(otherCreature, "Target must be another creature"), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), ReturnToHandEffect.target())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), ConditionalEffect.unless(
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), ReturnToHandEffect.target(),
+                        ConditionalEffect.unless(
                         new TargetPermanentMatches(new PermanentControlledBySourceControllerPredicate()),
                         CreateTokenEffect.ofClueToken(1)));
     }

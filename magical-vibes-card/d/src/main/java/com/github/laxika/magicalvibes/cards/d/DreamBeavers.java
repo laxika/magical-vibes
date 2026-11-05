@@ -13,8 +13,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class DreamBeavers extends Card {
 
     public DreamBeavers() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(1));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
+                new GainLifeEffect(1),
+                new ScryEffect(1));
     }
 }

@@ -19,7 +19,8 @@ public class KnightErrantOfEos extends Card {
 
     public KnightErrantOfEos() {
         ConvokeCreatureCount convokeCount = new ConvokeCreatureCount();
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new LookAtTopCardsEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new LookAtTopCardsEffect(
                 new Fixed(6),
                 new Fixed(2),
                 new CardTypePredicate(CardType.CREATURE),
@@ -28,7 +29,7 @@ public class KnightErrantOfEos extends Card {
                 LibrarySearchDestination.HAND,
                 true,
                 false,
-                convokeCount));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ShuffleLibraryEffect(false));
+                convokeCount),
+                new ShuffleLibraryEffect(false));
     }
 }

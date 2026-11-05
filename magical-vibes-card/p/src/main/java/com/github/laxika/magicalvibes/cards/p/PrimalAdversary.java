@@ -28,8 +28,9 @@ public class PrimalAdversary extends Card {
                 null, Set.of(), GrantScope.TARGET, EffectDuration.PERMANENT
         );
         targetUpTo(new XValue(), TargetFilters.landYouControl(), 100)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), animateLands);
+                .bindEffect(animateLands);
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                animateLands,
                 new PayManaAnyNumberOfTimesPutCountersOnSelfEffect("{1}{G}", CounterType.PLUS_ONE_PLUS_ONE,
                         animateLands));
     }

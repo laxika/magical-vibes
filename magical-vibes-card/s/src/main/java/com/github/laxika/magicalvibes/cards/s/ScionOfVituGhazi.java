@@ -25,9 +25,7 @@ public class ScionOfVituGhazi extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new CastFromZone(Zone.HAND)),
                 new CreateTokenEffect("Bird", 1, 1, CardColor.WHITE,
-                        List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of()));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
-                TriggerOptions.DEFAULT.withInterveningIf(new CastFromZone(Zone.HAND)),
+                        List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of()),
                 new PopulateEffect());
     }
 }

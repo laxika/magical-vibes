@@ -20,7 +20,8 @@ public class PsychicSymbiont extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         ));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER),
+                new DrawCardEffect(1));
     }
 }

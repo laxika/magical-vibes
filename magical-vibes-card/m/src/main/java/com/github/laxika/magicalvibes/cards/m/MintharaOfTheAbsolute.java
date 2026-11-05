@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourceIntensity;
@@ -29,6 +28,6 @@ public class MintharaOfTheAbsolute extends Card {
                 new TriggerCondition(Triggers.leavesBattlefield(ObjectRelation.THIS)),
                 new TriggerCondition(Triggers.leavesBattlefield(null, ObjectRelation.ANOTHER_YOU_CONTROL))),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
-                List.of(new EffectRegistration(new IntensifyNamedCardsEffect(CARD_NAME), TriggerMode.NORMAL))));
+                List.of(new EffectRegistration(new IntensifyNamedCardsEffect(CARD_NAME)))));
     }
 }

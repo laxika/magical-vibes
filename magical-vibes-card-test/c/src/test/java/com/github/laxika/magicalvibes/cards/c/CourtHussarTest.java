@@ -75,7 +75,8 @@ class CourtHussarTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(top, middle, third, untouched));
         harness.castFromHand(player1, new CourtHussar(), "{2}{U}");
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        // The look and the sacrifice are separate abilities (CR 603.3): both resolve before the choice is asked.
+        resolveAllTriggers();
 
         harness.handleMultipleCardsChosen(player1, List.of(middle.getId()));
         harness.getGameService().handleInteractionAnswer(gd, player1,
@@ -99,7 +100,8 @@ class CourtHussarTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        // The look and the sacrifice are separate abilities (CR 603.3): both resolve before the choice is asked.
+        resolveAllTriggers();
 
         harness.handleMultipleCardsChosen(player1, List.of(middle.getId()));
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1)));
@@ -122,7 +124,8 @@ class CourtHussarTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        // The look and the sacrifice are separate abilities (CR 603.3): both resolve before the choice is asked.
+        resolveAllTriggers();
 
         harness.handleMultipleCardsChosen(player1, List.of(bottom.getId()));
 

@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class FurnaceBlessedConqueror extends Card {
 
     public FurnaceBlessedConqueror() {
-        addTrigger(Triggers.attacks(), CreateTokenCopyOfSourceEffect.tappedAndAttackingWithSourceCounters());
-        addTrigger(Triggers.attacks(), new SacrificeCreatedPermanentsAtEndStepEffect());
+        addTrigger(Triggers.attacks(),
+                CreateTokenCopyOfSourceEffect.tappedAndAttackingWithSourceCounters(),
+                new SacrificeCreatedPermanentsAtEndStepEffect());
     }
 }

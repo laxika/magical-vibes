@@ -29,12 +29,9 @@ public class LokisScepter extends Card {
         // other types and gains haste.
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GrantSubtypeUntilEndOfTurnEffect(CardSubtype.VILLAIN, GrantScope.TARGET))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                        new UntapPermanentsEffect(TapUntapScope.TARGET),
+                        new GrantSubtypeUntilEndOfTurnEffect(CardSubtype.VILLAIN, GrantScope.TARGET),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
 
         addActivatedAbility(new ActivatedAbility(

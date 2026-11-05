@@ -20,9 +20,9 @@ import java.util.List;
 public class TrygonPrime extends Card {
 
     public TrygonPrime() {
-        addTrigger(Triggers.attacks(),
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
+        var putCounterOnTargetPermanent = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE);
+        var makeCreatureUnblockable = new MakeCreatureUnblockableEffect();
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
@@ -31,8 +31,11 @@ public class TrygonPrime extends Card {
                 )),
                 "Target must be another attacking creature"
         ), 0, 1)
-                .addTrigger(Triggers.attacks(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE))
-                .addTrigger(Triggers.attacks(), new MakeCreatureUnblockableEffect());
+                .bindEffect(putCounterOnTargetPermanent)
+                .bindEffect(makeCreatureUnblockable);
+        addTrigger(Triggers.attacks(),
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                putCounterOnTargetPermanent,
+                makeCreatureUnblockable);
     }
 }

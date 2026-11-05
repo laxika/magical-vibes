@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -25,11 +24,10 @@ import java.util.Set;
 public class GwyllionHedgeMage extends Card {
 
     public GwyllionHedgeMage() {
-        // Two separate "When this creature enters" abilities, so each is its own triggered ability
-        // (TriggerMode.INDEPENDENT). Each intervening-if gate (CR 603.4) is checked as the trigger
-        // goes on the stack and again at resolution.
+        // Two separate "When this creature enters" abilities, so each is its own triggered ability.
+        // Each intervening-if gate (CR 603.4) is checked as the trigger goes on the stack and again at
+        // resolution.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                TriggerMode.INDEPENDENT,
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.PLAINS))),
                 new MayEffect(new CreateTokenEffect("Kithkin Soldier", 1, 1, CardColor.WHITE,
@@ -37,7 +35,6 @@ public class GwyllionHedgeMage extends Card {
                         "Create a 1/1 white Kithkin Soldier creature token?"));
 
         target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                TriggerMode.INDEPENDENT,
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.SWAMP))),
                 new MayEffect(new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1),

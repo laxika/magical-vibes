@@ -23,8 +23,8 @@ public class NightshadeAssassin extends Card {
 
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new RevealAnyNumberOfCardsFromHandEffect(
-                        new CardColorPredicate(CardColor.BLACK)))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(
+                        new CardColorPredicate(CardColor.BLACK)),
+                        new BoostTargetCreatureEffect(
                         new Scaled(new EventValue(), -1),
                         new Scaled(new EventValue(), -1)));
     }

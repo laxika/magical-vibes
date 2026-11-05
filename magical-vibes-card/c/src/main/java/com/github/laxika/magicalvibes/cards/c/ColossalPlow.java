@@ -18,8 +18,9 @@ import java.util.List;
 public class ColossalPlow extends Card {
 
     public ColossalPlow() {
-        addTrigger(Triggers.attacks(), new AwardPersistentManaEffect(ManaColor.WHITE, new Fixed(3)));
-        addTrigger(Triggers.attacks(), new GainLifeEffect(3));
+        addTrigger(Triggers.attacks(),
+                new AwardPersistentManaEffect(ManaColor.WHITE, new Fixed(3)),
+                new GainLifeEffect(3));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

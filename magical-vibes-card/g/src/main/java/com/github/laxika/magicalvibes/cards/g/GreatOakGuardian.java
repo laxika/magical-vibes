@@ -24,9 +24,9 @@ public class GreatOakGuardian extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new BoostAllCreaturesEffect(2, 2, EachPermanentScope.TARGET_PLAYER))
+        ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new BoostAllCreaturesEffect(2, 2, EachPermanentScope.TARGET_PLAYER),
                         new UntapPermanentsEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS,
                                 new PermanentIsCreaturePredicate()));
     }

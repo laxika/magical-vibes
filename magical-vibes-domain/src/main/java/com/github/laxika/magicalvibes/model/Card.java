@@ -1528,7 +1528,7 @@ public class Card {
      * <p>{@link #addSpellEffect} and {@link #addSimultaneousSpellEffects} build the one
      * {@link SpellAbility}, and {@link #addStaticEffect} adds a {@link StaticAbility} for each effect.
      * Until each other family leaves {@link EffectSlot}, the rest are built from slot registrations by
-     * {@link #addEffect(EffectSlot, CardEffect, TriggerMode)} and {@link #addSimultaneousEffects}: a
+     * {@link #addEffect(EffectSlot, CardEffect)} and {@link #addSimultaneousEffects}: a
      * slot's effects form {@link TriggeredAbility}s with a {@link LegacySlotTrigger}, one for each
      * registration or group of simultaneous registrations. The collectors still read the slot views.
      */
@@ -1614,7 +1614,7 @@ public class Card {
      */
     public void addSimultaneousSpellEffects(CardEffect... effects) {
         assertMutable();
-        addSpellRegistrations(simultaneousGroup(effects, TriggerMode.NORMAL, null));
+        addSpellRegistrations(simultaneousGroup(effects, null));
     }
 
     /**
@@ -1738,12 +1738,8 @@ public class Card {
     }
 
     public void addEffect(EffectSlot slot, CardEffect effect) {
-        addEffect(slot, effect, TriggerMode.NORMAL);
-    }
-
-    public void addEffect(EffectSlot slot, CardEffect effect, TriggerMode triggerMode) {
         assertMutable();
-        addRegistrations(slot, List.of(new EffectRegistration(effect, triggerMode)));
+        addRegistrations(slot, List.of(new EffectRegistration(effect)));
     }
 
     /**
@@ -1755,21 +1751,17 @@ public class Card {
      * {@code SequenceEffect.simultaneous} instead. The effects are always one ability.
      */
     public void addSimultaneousEffects(EffectSlot slot, CardEffect... effects) {
-        addSimultaneousEffects(slot, TriggerMode.NORMAL, effects);
-    }
-
-    public void addSimultaneousEffects(EffectSlot slot, TriggerMode triggerMode, CardEffect... effects) {
         assertMutable();
-        addRegistrations(slot, simultaneousGroup(effects, triggerMode, slot));
+        addRegistrations(slot, simultaneousGroup(effects, slot));
     }
 
-    private List<EffectRegistration> simultaneousGroup(CardEffect[] effects, TriggerMode triggerMode, EffectSlot slot) {
+    private List<EffectRegistration> simultaneousGroup(CardEffect[] effects, EffectSlot slot) {
         if (effects.length < 2) {
             throw new IllegalArgumentException("Simultaneous effects need at least two effects, got " + effects.length);
         }
         List<EffectRegistration> group = new ArrayList<>(effects.length);
         for (int i = 0; i < effects.length; i++) {
-            group.add(new EffectRegistration(effects[i], triggerMode, i > 0));
+            group.add(new EffectRegistration(effects[i], i > 0));
         }
         return group;
     }
@@ -1827,7 +1819,7 @@ public class Card {
      */
     public void addTrigger(TriggerCondition condition, TriggerOptions options, CardEffect... effects) {
         addTriggeredAbility(new TriggeredAbility(List.of(condition), options,
-                Arrays.stream(effects).map(effect -> new EffectRegistration(effect, TriggerMode.NORMAL)).toList()));
+                Arrays.stream(effects).map(EffectRegistration::new).toList()));
     }
 
     /**
@@ -1840,27 +1832,6 @@ public class Card {
     }
 
     /**
-     * Adds a triggered ability like {@link #addTrigger(Trigger, CardEffect...)} whose registrations carry
-     * {@code triggerMode}. A "when this enters" ability marked {@link TriggerMode#INDEPENDENT} goes on the stack as an
-     * object of its own with its own targets; the card's other plain "when this enters" abilities share one, as the
-     * enters collector has always put them there, until the enters abilities are grouped by ability.
-     */
-    public void addTrigger(Trigger trigger, TriggerMode triggerMode, CardEffect... effects) {
-        addTriggeredAbility(new TriggeredAbility(trigger, TriggerOptions.DEFAULT,
-                Arrays.stream(effects).map(effect -> new EffectRegistration(effect, triggerMode)).toList()));
-    }
-
-    /**
-     * Adds a triggered ability like {@link #addTrigger(Trigger, TriggerMode, CardEffect...)} with {@code options}: a
-     * "when this enters, if {W}{W} was spent to cast it" ability of its own is {@link TriggerMode#INDEPENDENT} with
-     * {@code TriggerOptions.DEFAULT.withInterveningIf(…)} (CR 603.4).
-     */
-    public void addTrigger(Trigger trigger, TriggerMode triggerMode, TriggerOptions options, CardEffect... effects) {
-        addTriggeredAbility(new TriggeredAbility(trigger, options,
-                Arrays.stream(effects).map(effect -> new EffectRegistration(effect, triggerMode)).toList()));
-    }
-
-    /**
      * Adds one triggered ability with several trigger conditions, each functioning from its trigger's default zones,
      * and {@code options}: "whenever this creature attacks or blocks" is
      * {@code addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), TriggerOptions.DEFAULT, effect)}. It triggers
@@ -1868,7 +1839,7 @@ public class Card {
      */
     public void addTrigger(List<? extends Trigger> triggers, TriggerOptions options, CardEffect... effects) {
         addTriggeredAbility(new TriggeredAbility(triggers.stream().map(TriggerCondition::new).toList(), options,
-                Arrays.stream(effects).map(effect -> new EffectRegistration(effect, TriggerMode.NORMAL)).toList()));
+                Arrays.stream(effects).map(EffectRegistration::new).toList()));
     }
 
     /** Adds one triggered ability with several trigger conditions and no options, as the method above says. */
@@ -1882,16 +1853,7 @@ public class Card {
      */
     public void addSimultaneousTrigger(Trigger trigger, CardEffect... effects) {
         addTriggeredAbility(new TriggeredAbility(trigger, TriggerOptions.DEFAULT,
-                simultaneousGroup(effects, TriggerMode.NORMAL, null)));
-    }
-
-    /**
-     * Adds a triggered ability like {@link #addSimultaneousTrigger(Trigger, CardEffect...)} whose registrations carry
-     * {@code triggerMode}: {@link TriggerMode#INDEPENDENT} for a simultaneous group that is an ability of its own.
-     */
-    public void addSimultaneousTrigger(Trigger trigger, TriggerMode triggerMode, CardEffect... effects) {
-        addTriggeredAbility(new TriggeredAbility(trigger, TriggerOptions.DEFAULT,
-                simultaneousGroup(effects, triggerMode, null)));
+                simultaneousGroup(effects, null)));
     }
 
     /**
@@ -1900,7 +1862,7 @@ public class Card {
      * that creature" is {@link TriggerOptions#EACH_BLOCKER} (CR 509.3d).
      */
     public void addSimultaneousTrigger(Trigger trigger, TriggerOptions options, CardEffect... effects) {
-        addTriggeredAbility(new TriggeredAbility(trigger, options, simultaneousGroup(effects, TriggerMode.NORMAL, null)));
+        addTriggeredAbility(new TriggeredAbility(trigger, options, simultaneousGroup(effects, null)));
     }
 
     /**
@@ -2051,6 +2013,18 @@ public class Card {
     }
 
     /**
+     * Whether this card has more than one "when this enters" ability besides its evoke sacrifice: an evoked
+     * permanent's abilities then trigger with that sacrifice as separate objects, which its controller orders
+     * (CR 603.3b).
+     */
+    public boolean hasSeveralOwnEntryAbilities() {
+        return getOwnEntryAbilities().stream()
+                .filter(ability -> !ability.effects().stream().allMatch(
+                        com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect.class::isInstance))
+                .count() > 1;
+    }
+
+    /**
      * The registrations of {@code ability}, one of this card's "when this enters" abilities, in the form
      * {@link #getOwnEntryEffects()} says, with the identity those keep across calls: for the collector, which judges
      * each ability's limit before it reads its effects.
@@ -2144,15 +2118,9 @@ public class Card {
 
     /**
      * Adds {@code group}, one registration or a group of simultaneous ones, to the end of the spell
-     * ability, which is created where the first one is added. A spell ability doesn't trigger, so its
-     * effects keep no trigger mode.
+     * ability, which is created where the first one is added.
      */
-    private void addSpellRegistrations(List<EffectRegistration> group) {
-        List<EffectRegistration> spellGroup = group.stream()
-                .map(registration -> registration.triggerMode() == TriggerMode.NORMAL ? registration
-                        : new EffectRegistration(registration.effect(), TriggerMode.NORMAL,
-                        registration.simultaneousWithPrevious()))
-                .toList();
+    private void addSpellRegistrations(List<EffectRegistration> spellGroup) {
         int index = indexOfSpellAbility();
         if (index < 0) {
             abilities.add(new SpellAbility(spellGroup));
@@ -2259,7 +2227,7 @@ public class Card {
         }
         if (!kept.isEmpty() && kept.getFirst().simultaneousWithPrevious()) {
             EffectRegistration first = kept.getFirst();
-            kept.set(0, new EffectRegistration(first.effect(), first.triggerMode(), false));
+            kept.set(0, new EffectRegistration(first.effect(), false));
         }
         return kept;
     }

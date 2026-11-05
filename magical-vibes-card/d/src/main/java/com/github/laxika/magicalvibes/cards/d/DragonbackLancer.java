@@ -14,9 +14,10 @@ import java.util.List;
 public class DragonbackLancer extends Card {
 
     public DragonbackLancer() {
-        addTrigger(Triggers.attacks(), new CreateTokenEffect(
+        addTrigger(Triggers.attacks(),
+                new CreateTokenEffect(
                 1, "Warrior", 1, 1, CardColor.RED, List.of(CardSubtype.WARRIOR), true
-        ));
-        addTrigger(Triggers.attacks(), new SacrificeCreatedPermanentsAtEndStepEffect());
+        ),
+                new SacrificeCreatedPermanentsAtEndStepEffect());
     }
 }

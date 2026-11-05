@@ -17,8 +17,7 @@ public class FanaticOfXenagos extends Card {
     public FanaticOfXenagos() {
         addStaticEffect(new TributeEffect(1));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new TributeNotPaidEffect(new BoostSelfEffect(1, 1)));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new TributeNotPaidEffect(new BoostSelfEffect(1, 1)),
                 new TributeNotPaidEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
     }
 }

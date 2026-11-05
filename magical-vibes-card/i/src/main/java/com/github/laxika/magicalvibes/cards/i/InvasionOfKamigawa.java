@@ -34,8 +34,7 @@ public class InvasionOfKamigawa extends Card {
                 )),
                 "Target must be an artifact or creature an opponent controls"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new TapPermanentsEffect(TapUntapScope.TARGET),
                         new PutCounterOnTargetPermanentEffect(CounterType.STUN));
     }
 

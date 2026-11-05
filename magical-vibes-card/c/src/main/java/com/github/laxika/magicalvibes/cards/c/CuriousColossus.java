@@ -22,13 +22,12 @@ public class CuriousColossus extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS),
+        ))
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new LosesAllAbilitiesEffect(GrantScope.TARGET_PLAYERS_CREATURES,
-                                EffectDuration.PERMANENT))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                                EffectDuration.PERMANENT),
                         new GrantSubtypeUntilEndOfTurnEffect(CardSubtype.COWARD,
-                                GrantScope.TARGET_PLAYERS_CREATURES, null, EffectDuration.PERMANENT))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                                GrantScope.TARGET_PLAYERS_CREATURES, null, EffectDuration.PERMANENT),
                         new SetBasePowerToughnessEffect(1, 1, GrantScope.TARGET_PLAYERS_CREATURES,
                                 EffectDuration.PERMANENT));
     }

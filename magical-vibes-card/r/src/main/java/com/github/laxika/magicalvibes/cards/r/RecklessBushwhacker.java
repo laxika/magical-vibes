@@ -31,9 +31,7 @@ public class RecklessBushwhacker extends Card {
         var otherCreature = new PermanentNotPredicate(new PermanentIsSourceCardPredicate());
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()),
-                new BoostAllOwnCreaturesEffect(1, 0, otherCreature));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
-                TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()),
+                new BoostAllOwnCreaturesEffect(1, 0, otherCreature),
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));
     }
 }

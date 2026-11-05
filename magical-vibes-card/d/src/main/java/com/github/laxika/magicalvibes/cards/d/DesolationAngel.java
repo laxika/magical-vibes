@@ -24,8 +24,8 @@ public class DesolationAngel extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new NotKicked(),
                 new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
                         new PermanentIsLandPredicate(),
-                        new PermanentControlledBySourceControllerPredicate())))));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new Kicked(),
+                        new PermanentControlledBySourceControllerPredicate())))),
+                new ConditionalEffect(new Kicked(),
                 new DestroyAllPermanentsEffect(new PermanentIsLandPredicate())));
     }
 }

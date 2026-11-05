@@ -26,9 +26,7 @@ public class KnightsCharge extends Card {
     public KnightsCharge() {
         addTrigger(Triggers.creatureYouControlAttacks()
                         .withFilter(new PermanentHasSubtypePredicate(CardSubtype.KNIGHT)),
-                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.creatureYouControlAttacks()
-                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.KNIGHT)),
+                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
                 new GainLifeEffect(1));
 
         addActivatedAbility(new ActivatedAbility(

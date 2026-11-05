@@ -17,8 +17,7 @@ public class WittyDemon extends Card {
     public WittyDemon() {
         StartingDeckAtLeast startingDeckCondition = new StartingDeckAtLeast(13);
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                ConditionalEffect.unless(startingDeckCondition, new SearchLibraryEffect()));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                ConditionalEffect.unless(startingDeckCondition, new SearchLibraryEffect()),
                 ConditionalEffect.unless(new NotCondition(startingDeckCondition),
                         new DealDamageToPlayersEffect(4, DamageRecipient.CONTROLLER)));
     }

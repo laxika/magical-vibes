@@ -67,7 +67,6 @@ import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGr
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -9574,7 +9573,7 @@ public class TriggerCollectionService {
             // "Whenever a [filtered] permanent you control is dealt damage": the filter is on the damaged permanent.
             Predicate<PermanentPredicate> onDamaged = filter ->
                     damageFilterMatches(gameData, perm, playerId, filter, damagedPermanent);
-            dispatchRegistrations(gameData, perm, playerId, watch, ctx, null,
+            dispatchRegistrations(gameData, perm, playerId, watch, ctx,
                     DamageAbilityReader.registrations(DamageAbilityReader.printed(perm.getCard(), watch), watched,
                             onDamaged),
                     staticBonus -> DamageAbilityReader.effects(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(
@@ -16789,7 +16788,7 @@ public class TriggerCollectionService {
         }
         if (watch instanceof DamageWatch damageWatch) {
             Trigger watched = damageWatch.trigger();
-            return dispatchRegistrations(gameData, perm, controllerId, watch, ctx, null,
+            return dispatchRegistrations(gameData, perm, controllerId, watch, ctx,
                     DamageAbilityReader.registrations(DamageAbilityReader.printed(perm.getCard(), damageWatch),
                             watched),
                     staticBonus -> DamageAbilityReader.effects(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(
@@ -16805,7 +16804,7 @@ public class TriggerCollectionService {
             // The watches dispatched here ("a player taps a permanent for mana", the untap step) judge no filter,
             // first-time event, "one or more" or limit.
             Trigger watched = tapWatch.trigger();
-            return dispatchRegistrations(gameData, perm, controllerId, watch, ctx, null,
+            return dispatchRegistrations(gameData, perm, controllerId, watch, ctx,
                     TapAbilityReader.printedRegistrations(perm.getCard(), tapWatch),
                     staticBonus -> TapAbilityReader.effects(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(
                             gameData, perm, staticBonus, ability -> ability.hasWatchedTrigger(watched)), watched));
@@ -16813,7 +16812,7 @@ public class TriggerCollectionService {
         if (watch instanceof LifeWatch lifeWatch) {
             // The watch dispatched here ("an opponent gains life") judges no count or limit.
             Trigger watched = lifeWatch.trigger();
-            return dispatchRegistrations(gameData, perm, controllerId, watch, ctx, null,
+            return dispatchRegistrations(gameData, perm, controllerId, watch, ctx,
                     LifeAbilityReader.printedRegistrations(perm.getCard(), lifeWatch),
                     staticBonus -> LifeAbilityReader.effects(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(
                             gameData, perm, staticBonus, ability -> ability.hasWatchedTrigger(watched)), watched));
@@ -16829,7 +16828,7 @@ public class TriggerCollectionService {
         }
         if (watch instanceof CombatWatch combatWatch) {
             Trigger watched = combatWatch.trigger();
-            return dispatchRegistrations(gameData, perm, controllerId, watch, ctx, null,
+            return dispatchRegistrations(gameData, perm, controllerId, watch, ctx,
                     CombatAbilityReader.registrations(WatchedAbilities.printed(perm.getCard(), combatWatch),
                             watched),
                     staticBonus -> CombatAbilityReader.effects(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(
@@ -17688,7 +17687,7 @@ public class TriggerCollectionService {
      * bonus ({@code null} when that bonus may be stale), to {@code key}'s handlers.
      */
     private boolean dispatchRegistrations(GameData gameData, Permanent perm, UUID controllerId, Object key,
-                                          TriggerContext ctx, Boolean oncePerBatchOnly,
+                                          TriggerContext ctx,
                                           List<EffectRegistration> printedRegistrations,
                                           java.util.function.Function<GameQueryService.StaticBonus, List<CardEffect>> granted) {
         if (perm.isLosesAllAbilitiesUntilEndOfTurn()) return false;
@@ -17702,10 +17701,6 @@ public class TriggerCollectionService {
             staticBonusCurrent = false;
             List<TextReplacement> globalWordChange = TextChangeTransformer.globalColorWordReplacements(gameData);
             for (EffectRegistration registration : printedRegistrations) {
-                if (oncePerBatchOnly != null
-                        && (registration.triggerMode() == TriggerMode.ONCE_PER_BATCH) != oncePerBatchOnly) {
-                    continue;
-                }
                 // Layer 3 (CR 612.1): the trigger condition is read from the permanent's
                 // text-changed words (Glamerdye on Riverfall Mimic).
                 CardEffect effect = TextChangeTransformer.transform(
@@ -17717,8 +17712,7 @@ public class TriggerCollectionService {
         }
         // Triggered abilities granted continuously by another permanent (e.g. Pontiff of Blight
         // giving other creatures you control extort) fire off the permanent that has them.
-        for (CardEffect effect : Boolean.TRUE.equals(oncePerBatchOnly) ? List.<CardEffect>of()
-                : granted.apply(staticBonusCurrent ? staticBonus : null)) {
+        for (CardEffect effect : granted.apply(staticBonusCurrent ? staticBonus : null)) {
             if (dispatchSlotEffect(gameData, perm, controllerId, key, ctx, effect)) {
                 triggered = true;
             }

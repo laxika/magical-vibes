@@ -23,7 +23,6 @@ public class Nobody extends Card {
                         new PermanentIsArtifactPredicate(),
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))),
                 "Target must be another artifact you control"), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), ReturnToHandEffect.target())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(1));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), ReturnToHandEffect.target(), new ScryEffect(1));
     }
 }

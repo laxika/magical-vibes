@@ -16,8 +16,9 @@ public class AtomicMicrosizer extends Card {
     public AtomicMicrosizer() {
         addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
         target(TargetFilters.creature(), 0, 1)
-                .addTrigger(Triggers.attacks(), new MakeCreatureUnblockableEffect())
-                .addTrigger(Triggers.attacks(), new SetBasePowerToughnessEffect(1, 1));
+                .addTrigger(Triggers.attacks(),
+                        new MakeCreatureUnblockableEffect(),
+                        new SetBasePowerToughnessEffect(1, 1));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

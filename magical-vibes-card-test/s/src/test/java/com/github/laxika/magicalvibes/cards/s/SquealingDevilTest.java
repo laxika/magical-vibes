@@ -75,6 +75,8 @@ class SquealingDevilTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
+        // The sacrifice is a separate ability (CR 603.3), resolving after the boost.
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Squealing Devil");
         harness.assertInGraveyard(player1, "Squealing Devil");
@@ -94,6 +96,8 @@ class SquealingDevilTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleXValueChosen(player1, 0);
+        // The sacrifice is a separate ability (CR 603.3), resolving after the boost.
+        harness.passBothPriorities();
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         harness.assertNotOnBattlefield(player1, "Squealing Devil");

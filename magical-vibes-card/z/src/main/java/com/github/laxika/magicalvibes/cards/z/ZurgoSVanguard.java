@@ -23,7 +23,7 @@ public class ZurgoSVanguard extends Card {
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
         addStaticEffect(new SetPowerToughnessToAmountEffect(creaturesYouControl, new Fixed(3)));
         addTrigger(Triggers.attacks(),
-                new CreateTokenEffect(1, "Warrior", 1, 1, CardColor.RED, List.of(CardSubtype.WARRIOR), true));
-        addTrigger(Triggers.attacks(), new SacrificeCreatedPermanentsAtEndStepEffect());
+                new CreateTokenEffect(1, "Warrior", 1, 1, CardColor.RED, List.of(CardSubtype.WARRIOR), true),
+                new SacrificeCreatedPermanentsAtEndStepEffect());
     }
 }

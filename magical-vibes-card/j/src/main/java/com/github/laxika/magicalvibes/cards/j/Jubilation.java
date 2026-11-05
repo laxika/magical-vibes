@@ -21,8 +21,8 @@ import java.util.List;
 public class Jubilation extends Card {
 
     public Jubilation() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostAllOwnCreaturesEffect(2, 2));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new BoostAllOwnCreaturesEffect(2, 2),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES));
 
         addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(

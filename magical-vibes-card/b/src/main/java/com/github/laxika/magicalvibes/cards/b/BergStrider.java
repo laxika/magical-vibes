@@ -34,8 +34,8 @@ public class BergStrider extends Card {
         target(new PermanentPredicateTargetFilter(
                 targetFilter,
                 "Target must be an artifact or creature an opponent controls"))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.TARGET),
+                        new ConditionalEffect(
                         new SnowManaSpentToCast(),
                         new SkipNextUntapEffect(TapUntapScope.TARGET)));
     }

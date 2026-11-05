@@ -3,9 +3,7 @@ package com.github.laxika.magicalvibes.model.trigger;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
@@ -193,9 +191,6 @@ class ActionTriggerTest {
         assertThatThrownBy(() -> ActionAbilityReader.read(new TriggeredAbility(Triggers.youSetSchemeInMotion(),
                 TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()), DRAW), Triggers.youSetSchemeInMotion()))
                 .isInstanceOf(IllegalStateException.class).hasMessageContaining("scheme collector");
-        assertThatThrownBy(() -> ActionAbilityReader.read(new TriggeredAbility(Triggers.youClash(),
-                TriggerOptions.DEFAULT, List.of(new EffectRegistration(DRAW, TriggerMode.INDEPENDENT))),
-                Triggers.youClash())).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> ActionAbilityReader.read(new TriggeredAbility(Triggers.youClash(), DRAW),
                 Triggers.youCommitCrime())).isInstanceOf(IllegalArgumentException.class);
     }

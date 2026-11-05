@@ -121,7 +121,7 @@ public class ExampleCard extends Card {
 
 - Per-blocker trigger ("becomes blocked by a creature"):
   - `addTrigger(Triggers.becomesBlocked(), TriggerOptions.EACH_BLOCKER, effect)` — fires once per blocking creature
-  - TriggerMode is on the registration, not the effect — keeps effects pure and reusable
+  - The multiplicity is the ability's option, not the effect's — keeps effects pure and reusable
   - Example: `magical-vibes-card/i/src/main/java/com/github/laxika/magicalvibes/cards/i/InfiltrationLens.java`
 
 - One trigger for several permanents tapped as one event:
@@ -129,17 +129,17 @@ public class ExampleCard extends Card {
   - The tap-payment path brackets multi-permanent tap events so the registration fires once
 
 - "Whenever one or more creature cards are put into your graveyard from anywhere":
-  - `addTrigger(Triggers.putIntoGraveyardFromAnywhere(Triggers.NONTOKEN_CREATURE, ObjectRelation.ANOTHER_YOU_OWN), effect, TriggerMode.ONCE_PER_BATCH)` — creature cards that die in one simultaneous batch share one trigger
+  - `addTrigger(new TriggerCondition(Triggers.putIntoGraveyardFromAnywhere(Triggers.NONTOKEN_CREATURE, ObjectRelation.ANOTHER_YOU_OWN)), TriggerOptions.ONE_OR_MORE, effect)` — creature cards that die in one simultaneous batch share one trigger
   - Example: `magical-vibes-card/r/src/main/java/com/github/laxika/magicalvibes/cards/r/RobotDomination.java`
 
 - "Whenever one or more lands enter under your control":
-  - `addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), effect, TriggerMode.ONCE_PER_BATCH)` — lands entering in one simultaneous event share one trigger, listed in `StackEntry.triggeringPermanentIds`
+  - `addTrigger(new TriggerCondition(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL)), TriggerOptions.ONE_OR_MORE, effect)` — lands entering in one simultaneous event share one trigger, listed in `StackEntry.triggeringPermanentIds`
   - Example: `magical-vibes-card/m/src/main/java/com/github/laxika/magicalvibes/cards/m/MythweaverPoq.java`
 
 - "Create a X token, a Y token, and a Z token" is one creation event (Esix, token doublers): use `new CreateTokenEffect(X...).withSimultaneousTokens(List.of(Y, Z))`, never separate `CreateTokenEffect`s (Mascot Exhibition, Bestial Menace)
 
 - "Whenever you create one or more tokens" (a token-creation event, not an enter trigger):
-  - `addTrigger(new TriggerCondition(Triggers.enters(Triggers.TOKEN, ObjectRelation.YOU_CONTROL)), TriggerOptions.ONE_OR_MORE, effect, TriggerMode.TOKEN_CREATION)` fires once per creation event and is neither doubled nor suppressed by Elesh Norn, Mother of Machines
+  - `addTrigger(new TriggerCondition(Triggers.tokensCreated(filter, ObjectRelation.YOU_CONTROL)), TriggerOptions.ONE_OR_MORE, effect)` fires once per creation event and is neither doubled nor suppressed by Elesh Norn, Mother of Machines
   - Example: `magical-vibes-card/s/src/main/java/com/github/laxika/magicalvibes/cards/s/StaffOfTheStoryteller.java`
 
 - Predicate-based targeting:

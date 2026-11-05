@@ -30,7 +30,7 @@ public class SazhKatzroy extends Card {
 
         target(TargetFilters.creature())
                 .addTrigger(Triggers.attacks(),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE))
-                .addTrigger(Triggers.attacks(), new DoublePlusOneCountersOnTargetCreatureEffect());
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                        new DoublePlusOneCountersOnTargetCreatureEffect());
     }
 }

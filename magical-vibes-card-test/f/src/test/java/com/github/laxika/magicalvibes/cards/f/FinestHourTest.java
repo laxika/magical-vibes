@@ -25,7 +25,9 @@ class FinestHourTest extends BaseCardTest {
         declareAttackers(player1, List.of(0), 1);
         assertThat(bear.isTapped()).isTrue(); // attacking taps it
 
-        harness.passBothPriorities(); // resolve the trigger; play runs on into the granted phase
+        // Exalted and the untap ability are separate abilities (CR 603.3); once both resolve, play runs on into
+        // the granted phase.
+        resolveAllTriggers();
 
         // The extra combat phase materialised: play advanced straight into the turn's SECOND combat
         // phase (declare-attackers) on the same player's turn, never stopping at a postcombat main
@@ -95,7 +97,7 @@ class FinestHourTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FinestHour());
 
         declareAttackers(player1, List.of(0), 1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
 

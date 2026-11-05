@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
@@ -278,8 +277,6 @@ class TapTriggerTest {
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW);
         Card onceOnly = new Card();
         onceOnly.addTrigger(Triggers.becomesTapped(), TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE), DRAW);
-        Card authoredMode = new Card();
-        authoredMode.addTrigger(Triggers.permanentYouControlBecomesTapped(), TriggerMode.ONCE_PER_BATCH, DRAW);
         Card twoFilters = new Card();
         twoFilters.addTrigger(List.of(Triggers.becomesTapped(),
                 Triggers.permanentYouControlBecomesTapped().withFilter(MERFOLK)), DRAW);
@@ -294,8 +291,6 @@ class TapTriggerTest {
                 TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED)).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> TapAbilityReader.readPrinted(onceOnly, TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED))
                 .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> TapAbilityReader.readPrinted(authoredMode,
-                TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED)).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> TapAbilityReader.readPrinted(twoFilters, TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED))
                 .isInstanceOf(IllegalStateException.class);
     }

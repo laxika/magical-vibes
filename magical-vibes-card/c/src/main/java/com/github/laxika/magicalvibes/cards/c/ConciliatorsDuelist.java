@@ -23,8 +23,9 @@ public class ConciliatorsDuelist extends Card {
 
     public ConciliatorsDuelist() {
         // When this creature enters, draw a card. Each player loses 1 life.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new LoseLifeEffect(1, LoseLifeRecipient.EACH_PLAYER));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new DrawCardEffect(),
+                new LoseLifeEffect(1, LoseLifeRecipient.EACH_PLAYER));
 
         // Repartee — Whenever you cast an instant or sorcery spell that targets a creature,
         // exile up to one target creature. Return that card to the battlefield under its

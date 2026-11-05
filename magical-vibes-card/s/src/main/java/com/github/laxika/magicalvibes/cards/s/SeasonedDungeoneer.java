@@ -38,7 +38,7 @@ public class SeasonedDungeoneer extends Card {
                 "Target must be an attacking Cleric, Rogue, Warrior, or Wizard"))
                 .addTrigger(Triggers.youAttack(),
                         new GrantProtectionFromCardTypeUntilEndOfTurnEffect(
-                                CardType.CREATURE, eligibleTarget, TargetPredicates.creature()))
-                .addTrigger(Triggers.youAttack(), new ExploreEffect(true));
+                                CardType.CREATURE, eligibleTarget, TargetPredicates.creature()),
+                        new ExploreEffect(true));
     }
 }

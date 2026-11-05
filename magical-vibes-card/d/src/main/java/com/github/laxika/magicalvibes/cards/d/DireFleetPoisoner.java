@@ -29,8 +29,8 @@ public class DireFleetPoisoner extends Card {
                 )),
                 "Target must be an attacking Pirate you control"
         ))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(1, 1))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new BoostTargetCreatureEffect(1, 1),
                         new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET));
     }
 }

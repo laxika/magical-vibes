@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.trigger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -117,7 +116,7 @@ public final class ActionAbilityReader {
     /**
      * The effects of {@code ability}, as its collector reads it for the condition watched as {@code watched}. The
      * action collectors read of the limits only "triggers only once each turn" ("one or more" the ability rejects as it
-     * is built), and no trigger mode. A "you set a scheme in motion" ability takes no options: its collector puts all
+     * is built). A "you set a scheme in motion" ability takes no options: its collector puts all
      * its effects on the stack as one object and judges only the scheme.
      */
     public static List<ActionEffect> read(TriggeredAbility ability, Trigger watched) {
@@ -135,10 +134,6 @@ public final class ActionAbilityReader {
         Condition interveningIf = options.interveningIf();
         List<ActionEffect> effects = new ArrayList<>(ability.effects().size());
         for (EffectRegistration registration : ability.effects()) {
-            if (registration.triggerMode() != TriggerMode.NORMAL) {
-                throw new IllegalStateException("The player and keyword action collectors read no trigger mode ("
-                        + registration.triggerMode() + "): " + ability);
-            }
             CardEffect effect = registration.effect();
             if (eventCondition != null) {
                 effect = ConditionalEffect.atTriggerTime(eventCondition, effect);

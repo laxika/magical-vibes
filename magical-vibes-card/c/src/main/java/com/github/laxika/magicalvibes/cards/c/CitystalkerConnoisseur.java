@@ -14,11 +14,13 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class CitystalkerConnoisseur extends Card {
 
     public CitystalkerConnoisseur() {
+        var discardGreatestManaValueNonlandCard = new DiscardGreatestManaValueNonlandCardEffect();
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new DiscardGreatestManaValueNonlandCardEffect());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.ofBloodToken(1));
+        )).bindEffect(discardGreatestManaValueNonlandCard);
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                discardGreatestManaValueNonlandCard,
+                CreateTokenEffect.ofBloodToken(1));
     }
 }

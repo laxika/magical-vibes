@@ -17,9 +17,7 @@ public class BladeTribeBerserkers extends Card {
     public BladeTribeBerserkers() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new Metalcraft()),
-                new BoostSelfEffect(3, 3));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
-                TriggerOptions.DEFAULT.withInterveningIf(new Metalcraft()),
+                new BoostSelfEffect(3, 3),
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF));
     }
 }

@@ -11,7 +11,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SibsigHost extends Card {
 
     public SibsigHost() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(3, MillRecipient.CONTROLLER));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(3, MillRecipient.EACH_OPPONENT));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new MillEffect(3, MillRecipient.CONTROLLER),
+                new MillEffect(3, MillRecipient.EACH_OPPONENT));
     }
 }

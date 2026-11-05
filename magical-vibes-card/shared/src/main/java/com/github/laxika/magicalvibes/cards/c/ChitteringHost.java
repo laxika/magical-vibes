@@ -21,8 +21,8 @@ public class ChitteringHost extends Card {
     public ChitteringHost() {
         // When this creature enters, other creatures you control get +1/+0 and gain menace until end of turn.
         var otherOwnCreatures = new PermanentNotPredicate(new PermanentIsSourceCardPredicate());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostAllOwnCreaturesEffect(1, 0, otherOwnCreatures));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new BoostAllOwnCreaturesEffect(1, 0, otherOwnCreatures),
                 new GrantKeywordEffect(Keyword.MENACE, GrantScope.OWN_CREATURES, otherOwnCreatures));
     }
 }

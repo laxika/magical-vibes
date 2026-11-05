@@ -19,8 +19,9 @@ public class RousingRead extends Card {
 
     public RousingRead() {
         target(TargetFilters.creature())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(2))
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new DiscardEffect(1, DiscardRecipient.CONTROLLER))
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new DrawCardEffect(2),
+                        new DiscardEffect(1, DiscardRecipient.CONTROLLER))
                 .addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.FLYING), GrantScope.ENCHANTED_CREATURE));
     }
 }

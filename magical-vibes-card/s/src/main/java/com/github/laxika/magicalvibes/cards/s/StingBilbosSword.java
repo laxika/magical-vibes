@@ -23,13 +23,15 @@ public class StingBilbosSword extends Card {
         PermanentCount creaturesTargetOpponentControls = new PermanentCount(
                 new PermanentIsCreaturePredicate(), CountScope.TARGET_PLAYER);
 
+        var putCountersOnSelf = new PutCountersOnSelfEffect(CounterType.HONE, creaturesTargetOpponentControls, true);
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new PutCountersOnSelfEffect(CounterType.HONE, creaturesTargetOpponentControls, true));
+        )).bindEffect(putCountersOnSelf);
+        var attachSourceEquipmentToTargetCreature = new AttachSourceEquipmentToTargetCreatureEffect();
         target(TargetFilters.creatureYouControl(), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new AttachSourceEquipmentToTargetCreatureEffect());
+                .bindEffect(attachSourceEquipmentToTargetCreature);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), putCountersOnSelf, attachSourceEquipmentToTargetCreature);
 
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }

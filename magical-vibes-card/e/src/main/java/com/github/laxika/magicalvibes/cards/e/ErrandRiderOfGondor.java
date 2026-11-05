@@ -21,9 +21,9 @@ import java.util.List;
 public class ErrandRiderOfGondor extends Card {
 
     public ErrandRiderOfGondor() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
         // "Then if you don't control …" is checked on resolution, not an intervening-if (CR 603.4).
-        addTrigger(Triggers.enters(ObjectRelation.THIS), ConditionalEffect.unless(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(),
+                ConditionalEffect.unless(
                 new NotCondition(new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))))),
