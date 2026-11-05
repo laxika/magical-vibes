@@ -2,23 +2,40 @@ package com.github.laxika.magicalvibes.model.trigger;
 
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.TriggerMode;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
+import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.service.trigger.ActionAbilityReader;
+import com.github.laxika.magicalvibes.service.trigger.ActionWatch;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** The player-action and object-action triggers: {@link PlayerActionTrigger} and {@link ObjectActionTrigger}. */
+/**
+ * The player-action and object-action triggers: {@link PlayerActionTrigger} and {@link ObjectActionTrigger}, and how
+ * the {@link ActionWatch} collectors read their abilities ({@link ActionAbilityReader}, step 14, run 16n).
+ */
 class ActionTriggerTest {
 
     private static final CardEffect DRAW = new DrawCardEffect(1);
     private static final CardEffect GAIN = new GainLifeEffect(2);
+    private static final CardPredicate LAND = new CardTypePredicate(CardType.LAND);
 
     @Test
     void everyActionTriggerButPlottingFunctionsFromTheBattlefieldByDefault() {
@@ -72,6 +89,130 @@ class ActionTriggerTest {
         assertThat(card.getTriggerEffects(Triggers.becomesPlotted(), Zone.EXILE)).containsExactly(DRAW, GAIN);
         assertThat(card.getTriggerEffects(Triggers.becomesPlotted(), Zone.BATTLEFIELD)).isEmpty();
         assertThat(card.getTriggerEffects(Triggers.opponentCommitsCrime(), Zone.BATTLEFIELD)).isEmpty();
+    }
+
+    @Test
+    void anActionAbilityHasNoLegacyView() {
+        Card card = new Card();
+        card.addTrigger(Triggers.youCommitCrime(), TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW);
+        card.addTrigger(Triggers.creatureYouControlExplores().withFilter(LAND), GAIN);
+        card.addTrigger(Triggers.youSetSchemeInMotion(), DRAW);
+
+        assertThat(card.getTriggeredAbilities()).allSatisfy(ability -> {
+            assertThat(ability.collectedAsAbility()).isTrue();
+            assertThat(ability.hasLegacyView()).isFalse();
+            assertThatThrownBy(ability::legacyEffects).isInstanceOf(IllegalStateException.class);
+        });
+        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.youCommitCrime()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> ActionWatch.ON_CONTROLLER_COMMITS_CRIME.effectsOf(card))
+                .isInstanceOf(UnsupportedOperationException.class);
+        assertThatThrownBy(() -> ActionWatch.ON_ALLY_CREATURE_EXPLORES.registrationsOf(card))
+                .isInstanceOf(UnsupportedOperationException.class);
+        assertThat(card.getTriggerEffects(Triggers.youCommitCrime())).containsExactly(DRAW);
+    }
+
+    @Test
+    void everyActionWatchTriggerIsReadAsAnAbilityAndTheMiscActionsStillHaveALegacyView() {
+        assertThat(ActionWatch.values()).allSatisfy(watch ->
+                assertThat(watch.trigger().collectedAsAbility()).as(watch.name()).isTrue());
+        assertThat(List.of(Triggers.youFullyUnlockRoom(), Triggers.crewsVehicle(),
+                Triggers.creatureYouControlCrewsVehicle(), Triggers.saddlesOrCrewsDuringMainPhase(),
+                Triggers.becomesCrewed(), Triggers.becomesCrewedForFirstTimeEachTurn(), Triggers.becomesSaddled(),
+                Triggers.becomesSaddledForFirstTimeEachTurn(), Triggers.becomesStationed(), Triggers.doorUnlocked(),
+                Triggers.doorUnlocked(1))).allSatisfy(trigger ->
+                assertThat(trigger.collectedAsAbility()).as(trigger.toString()).isFalse());
+    }
+
+    @Test
+    void theReaderGivesTheLimitMarkedByTheAbility() {
+        Card card = new Card();
+        card.addTrigger(Triggers.youCommitCrime(), TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW);
+        ActionAbilityReader.ActionEffect read = ActionAbilityReader.read(
+                ActionAbilityReader.printed(card, ActionWatch.ON_CONTROLLER_COMMITS_CRIME).getFirst(),
+                ActionWatch.ON_CONTROLLER_COMMITS_CRIME.trigger()).getFirst();
+        GameData gameData = new GameData(UUID.randomUUID(), "test", UUID.randomUUID(), "owner");
+        UUID sourceId = UUID.randomUUID();
+
+        assertThat(read.effect()).isSameAs(DRAW);
+        assertThat(read.filter()).isNull();
+        assertThat(read.triggersOnlyOnceEachTurn()).isTrue();
+        assertThat(read.limitReached(gameData, sourceId)).isFalse();
+
+        read.markLimit(gameData, sourceId);
+
+        assertThat(read.limitReached(gameData, sourceId)).isTrue();
+        assertThat(gameData.keyedOncePerTurnTriggersFiredThisTurn.get(sourceId))
+                .containsExactly(read.ability().limitKey());
+        assertThat(gameData.oncePerTurnTriggersFiredThisTurn).doesNotContain(sourceId);
+    }
+
+    @Test
+    void theReaderGivesTheExploredExploitedOrSchemeFilterFromTheWatchedTrigger() {
+        Card card = new Card();
+        card.addTrigger(Triggers.creatureYouControlExplores().withFilter(LAND), DRAW, GAIN);
+        card.addTrigger(Triggers.creatureYouControlExploits().withFilter(LAND), DRAW);
+        card.addTrigger(Triggers.youSetSchemeInMotion().withFilter(LAND), GAIN);
+
+        List<ActionAbilityReader.ActionEffect> explored = ActionAbilityReader.read(
+                ActionAbilityReader.printed(card, ActionWatch.ON_ALLY_CREATURE_EXPLORES),
+                ActionWatch.ON_ALLY_CREATURE_EXPLORES.trigger());
+        assertThat(explored).extracting(ActionAbilityReader.ActionEffect::effect).containsExactly(DRAW, GAIN);
+        assertThat(explored).extracting(ActionAbilityReader.ActionEffect::filter).containsOnly(LAND);
+        assertThat(ActionAbilityReader.read(ActionAbilityReader.printed(card, ActionWatch.ON_ALLY_CREATURE_EXPLOITS),
+                ActionWatch.ON_ALLY_CREATURE_EXPLOITS.trigger()))
+                .singleElement().extracting(ActionAbilityReader.ActionEffect::filter).isEqualTo(LAND);
+        assertThat(ActionAbilityReader.read(
+                ActionAbilityReader.printed(card, ActionWatch.ON_CONTROLLER_SETS_SCHEME_IN_MOTION),
+                ActionWatch.ON_CONTROLLER_SETS_SCHEME_IN_MOTION.trigger()))
+                .singleElement().extracting(ActionAbilityReader.ActionEffect::filter).isEqualTo(LAND);
+    }
+
+    @Test
+    void theReaderWrapsTheEventConditionInsideTheInterveningIf() {
+        TriggeredAbility ability = new TriggeredAbility(Triggers.youRollDie(), TriggerOptions.DEFAULT
+                .withInterveningIf(new ControllerTurn()).withEventCondition(new EventValueAtLeast(4)), DRAW);
+
+        assertThat(ActionAbilityReader.read(ability, ActionWatch.ON_CONTROLLER_ROLLS_DIE.trigger()))
+                .extracting(ActionAbilityReader.ActionEffect::effect)
+                .containsExactly(new ConditionalEffect(new ControllerTurn(),
+                        ConditionalEffect.atTriggerTime(new EventValueAtLeast(4), DRAW), true));
+    }
+
+    @Test
+    void theStrictReaderRejectsAFilterOrALimitItsCollectorDoesNotJudge() {
+        Card card = new Card();
+        card.addTrigger(Triggers.youWinCoinFlip(), DRAW);
+        card.addTrigger(Triggers.youWinCoinFlip(), TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), GAIN);
+        Card explorer = new Card();
+        explorer.addTrigger(Triggers.creatureYouControlExplores().withFilter(LAND), DRAW);
+
+        assertThatThrownBy(() -> ActionAbilityReader.printedEffects(card, ActionWatch.ON_CONTROLLER_WINS_COIN_FLIP))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("judges no limit");
+        assertThatThrownBy(() -> ActionAbilityReader.printedEffects(explorer, ActionWatch.ON_ALLY_CREATURE_EXPLORES))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("judges no filter");
+        Card plain = new Card();
+        plain.addTrigger(Triggers.youWinCoinFlip(), DRAW, GAIN);
+        assertThat(ActionAbilityReader.printedEffects(plain, ActionWatch.ON_CONTROLLER_WINS_COIN_FLIP))
+                .containsExactly(DRAW, GAIN);
+    }
+
+    @Test
+    void whatTheActionCollectorsCannotReadIsRejected() {
+        assertThatThrownBy(() -> new TriggeredAbility(Triggers.youRollOneOrMoreDice(), TriggerOptions.ONE_OR_MORE,
+                DRAW)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("action collector");
+        assertThat(List.of(TriggerLimit.DO_ONLY_ONCE_EACH_TURN, TriggerLimit.ONCE)).allSatisfy(limit ->
+                assertThatThrownBy(() -> ActionAbilityReader.read(new TriggeredAbility(Triggers.youCommitCrime(),
+                        TriggerOptions.DEFAULT.withLimit(limit), DRAW), Triggers.youCommitCrime()))
+                        .as(limit.toString()).isInstanceOf(IllegalStateException.class));
+        assertThatThrownBy(() -> ActionAbilityReader.read(new TriggeredAbility(Triggers.youSetSchemeInMotion(),
+                TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()), DRAW), Triggers.youSetSchemeInMotion()))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("scheme collector");
+        assertThatThrownBy(() -> ActionAbilityReader.read(new TriggeredAbility(Triggers.youClash(),
+                TriggerOptions.DEFAULT, List.of(new EffectRegistration(DRAW, TriggerMode.INDEPENDENT))),
+                Triggers.youClash())).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> ActionAbilityReader.read(new TriggeredAbility(Triggers.youClash(), DRAW),
+                Triggers.youCommitCrime())).isInstanceOf(IllegalArgumentException.class);
     }
 
     private static List<Trigger> allFactories() {

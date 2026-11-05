@@ -53,10 +53,12 @@ class ActionWatchTest {
                 crimeFromGraveyard);
         card.addTrigger(Triggers.becomesPlotted(), plotted);
 
-        assertThat(ActionWatch.ON_CONTROLLER_COMMITS_CRIME.effectsOf(card)).containsExactly(crime);
-        assertThat(ActionWatch.GRAVEYARD_ON_CONTROLLER_COMMITS_CRIME.effectsOf(card))
+        assertThat(ActionAbilityReader.printedEffects(card, ActionWatch.ON_CONTROLLER_COMMITS_CRIME))
+                .containsExactly(crime);
+        assertThat(ActionAbilityReader.printedEffects(card, ActionWatch.GRAVEYARD_ON_CONTROLLER_COMMITS_CRIME))
                 .containsExactly(crimeFromGraveyard);
-        assertThat(ActionWatch.ON_SELF_BECOMES_PLOTTED.effectsOf(card)).containsExactly(plotted);
-        assertThat(ActionWatch.ON_OPPONENT_COMMITS_CRIME.effectsOf(card)).isEmpty();
+        assertThat(ActionAbilityReader.printedEffects(card, ActionWatch.ON_SELF_BECOMES_PLOTTED))
+                .containsExactly(plotted);
+        assertThat(ActionAbilityReader.printedEffects(card, ActionWatch.ON_OPPONENT_COMMITS_CRIME)).isEmpty();
     }
 }

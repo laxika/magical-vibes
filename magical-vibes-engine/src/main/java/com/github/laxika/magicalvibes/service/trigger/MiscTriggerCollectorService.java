@@ -486,23 +486,17 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    /** Queues a watcher for a creature controlled by the player exploiting another creature. */
+    /**
+     * Queues a watcher for a creature controlled by the player exploiting another creature. The collector has judged
+     * the exploited creature against the ability's filter ("a non-Human creature").
+     */
     @CollectsActionTrigger(value = CardEffect.class,
             watch = ActionWatch.ON_ALLY_CREATURE_EXPLOITS)
     @CollectsActionTrigger(value = CardEffect.class,
             watch = ActionWatch.ON_ALLY_CREATURE_EXPLOITS_NONTOKEN_CREATURE)
-    private boolean handleAllyCreatureExploit(TriggerMatchContext match, CardEffect effect,
+    private boolean handleAllyCreatureExploit(TriggerMatchContext match, CardEffect queuedEffect,
                                                TriggerContext ctx) {
         TriggerContext.CreatureExploit exploit = (TriggerContext.CreatureExploit) ctx;
-        CardEffect queuedEffect = effect;
-        if (effect instanceof TriggeringCardConditionalEffect conditional) {
-            if (!predicateEvaluationService.matchesCardPredicate(
-                    exploit.exploitedCard(), conditional.predicate(),
-                    match.permanent().getCard().getId(), match.gameData(), exploit.exploitingPlayerId())) {
-                return false;
-            }
-            queuedEffect = conditional.wrapped();
-        }
         if (queuedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                 || queuedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
             match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
@@ -2754,7 +2748,7 @@ public class MiscTriggerCollectorService {
         List<CardEffect> effects = new ArrayList<>(List.of(effect));
         int targetGroupIndex = sourceCard.getEffectTargetIndex(effect);
         if (targetGroupIndex >= 0) {
-            List<CardEffect> groupedEffects = ActionWatch.ON_SELF_MUTATES.effectsOf(sourceCard).stream()
+            List<CardEffect> groupedEffects = ActionAbilityReader.printedEffects(sourceCard, ActionWatch.ON_SELF_MUTATES).stream()
                     .filter(candidate -> sourceCard.getEffectTargetIndex(candidate) == targetGroupIndex)
                     .toList();
             if (!groupedEffects.isEmpty()) {
@@ -2991,33 +2985,6 @@ public class MiscTriggerCollectorService {
 
         gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
         log.info("Game {} - {} triggers on surveil", gameData.id, source.getCard().getName());
-        return true;
-    }
-
-    @CollectsActionTriggers({
-        @CollectsActionTrigger(value = OncePerTurnTriggerEffect.class, watch = ActionWatch.ON_CONTROLLER_COMMITS_CRIME),
-        @CollectsActionTrigger(value = OncePerTurnTriggerEffect.class, watch = ActionWatch.ON_OPPONENT_COMMITS_CRIME)
-    })
-    private boolean handleCrimeOncePerTurn(TriggerMatchContext match,
-            OncePerTurnTriggerEffect effect, TriggerContext ctx) {
-        var gameData = match.gameData();
-        Permanent source = match.permanent();
-        if (gameData.oncePerTurnTriggersFiredThisTurn.contains(source.getId())) {
-            return false;
-        }
-
-        gameData.enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                source.getCard(),
-                match.controllerId(),
-                source.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect.wrapped())),
-                null,
-                source.getId()));
-        gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
-        gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
-        log.info("Game {} - {} triggers on a crime (once per turn)",
-                gameData.id, source.getCard().getName());
         return true;
     }
 

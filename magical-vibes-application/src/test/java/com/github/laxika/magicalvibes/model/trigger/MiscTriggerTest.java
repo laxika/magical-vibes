@@ -13,9 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.SchemeSetInMotionTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -33,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * The triggers of the last slots to leave {@code EffectSlot}: {@link PlanarTrigger}, {@link ControlChangeTrigger},
  * {@link AttachTrigger}, {@link DayNightTrigger}, {@link StateTrigger}, and the crew, saddle, station, door and Room
  * actions of {@link ObjectActionTrigger} and {@link PlayerActionTrigger}; and the legacy view of their options and
- * filters (step 14, run 15).
+ * filters (step 14, run 15). The explore and scheme filters are read from the ability (run 16n, {@code ActionTriggerTest}).
  */
 class MiscTriggerTest {
 
@@ -136,20 +134,17 @@ class MiscTriggerTest {
     }
 
     @Test
-    void aDoorAndAnExploredCardAreDroppedFromTheWatchKeyAndReadAsTheirWrappers() {
+    void aDoorAndAnExploredCardAreDroppedFromTheWatchKeyAndADoorIsReadAsItsWrapper() {
         assertThat(Triggers.doorUnlocked(1).watchKey()).isEqualTo(Triggers.doorUnlocked());
         assertThat(new TriggeredAbility(Triggers.doorUnlocked(1), DRAW).legacyEffects())
                 .extracting(EffectRegistration::effect)
                 .containsExactly(new TriggeringRoomDoorConditionalEffect(1, DRAW));
+        assertThatThrownBy(() -> new TriggeredAbility(Triggers.doorUnlocked(1),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW).legacyEffects())
+                .isInstanceOf(IllegalStateException.class);
 
         ObjectActionTrigger landExplored = Triggers.creatureYouControlExplores().withFilter(LAND);
         assertThat(landExplored.watchKey()).isEqualTo(Triggers.creatureYouControlExplores());
-        assertThat(new TriggeredAbility(landExplored, DRAW).legacyEffects())
-                .extracting(EffectRegistration::effect)
-                .containsExactly(new TriggeringCardConditionalEffect(LAND, DRAW));
-        assertThatThrownBy(() -> new TriggeredAbility(landExplored,
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW).legacyEffects())
-                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -176,28 +171,9 @@ class MiscTriggerTest {
     }
 
     @Test
-    void aSchemeTriggerIsReadAsOneSchemeSetInMotionTriggerEffectWithItsFilter() {
-        PlayerActionTrigger scheme = Triggers.youSetSchemeInMotion().withFilter(LAND);
-
-        assertThat(scheme.watchKey()).isEqualTo(Triggers.youSetSchemeInMotion());
-        assertThat(new TriggeredAbility(scheme, DRAW, GAIN).legacyEffects())
-                .extracting(EffectRegistration::effect)
-                .containsExactly(new SchemeSetInMotionTriggerEffect(LAND, List.of(DRAW, GAIN)));
-        assertThat(new TriggeredAbility(Triggers.youSetSchemeInMotion(), DRAW).legacyEffects())
-                .extracting(EffectRegistration::effect)
-                .containsExactly(new SchemeSetInMotionTriggerEffect(null, List.of(DRAW)));
-        assertThatThrownBy(() -> new TriggeredAbility(scheme,
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW).legacyEffects())
-                .isInstanceOf(IllegalStateException.class);
-    }
-
-    @Test
-    void aLimitIsReadAsTheKeyedMark() {
-        TriggeredAbility crime = new TriggeredAbility(Triggers.youCommitCrime(),
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW);
-
-        assertThat(crime.legacyEffects()).extracting(EffectRegistration::effect)
-                .containsExactly(OncePerTurnTriggerEffect.keyed(DRAW, crime.limitKey()));
+    void aSchemeTriggerIsWatchedWithoutItsFilter() {
+        assertThat(Triggers.youSetSchemeInMotion().withFilter(LAND).watchKey())
+                .isEqualTo(Triggers.youSetSchemeInMotion());
     }
 
     private static List<Trigger> planarFactories() {

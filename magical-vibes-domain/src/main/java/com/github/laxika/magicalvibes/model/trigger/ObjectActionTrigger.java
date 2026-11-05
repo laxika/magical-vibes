@@ -20,9 +20,10 @@ import java.util.Objects;
  * @param door   which door of the Room the ability is on, 0 for the left one and 1 for the right one, for
  *               {@link ObjectAction#DOOR_UNLOCKED} ("when you unlock this door", CR 709.5h:
  *               {@code Triggers.doorUnlocked(1)}); {@code null} for every other action and for the trigger the
- *               collector watches. The collectors read the filter and the door from the legacy view
- *               ({@code TriggeredAbility.legacyEffects()}) as the {@code TriggeringCardConditionalEffect} and
- *               {@code TriggeringRoomDoorConditionalEffect} they judge, so {@link #watchKey()} drops them
+ *               collector watches. The explore and exploit collectors judge the filter from the ability
+ *               ({@code ActionAbilityReader}), and the door collector reads the door from the legacy view
+ *               ({@code TriggeredAbility.legacyEffects()}) as the {@code TriggeringRoomDoorConditionalEffect} it
+ *               judges, so {@link #watchKey()} drops them
  */
 public record ObjectActionTrigger(ObjectAction action, ObjectRelation object, CardPredicate filter, Integer door)
         implements Trigger {
@@ -69,6 +70,20 @@ public record ObjectActionTrigger(ObjectAction action, ObjectRelation object, Ca
             default -> action;
         };
         return watched == action && filter == null && door == null ? this : new ObjectActionTrigger(watched, object);
+    }
+
+    /**
+     * The player and keyword action collectors ({@code ActionWatch}: fights, explores, connives, exploits, champions,
+     * becomes plotted, mutates) read this trigger's abilities themselves ({@code ActionAbilityReader}), so it has no
+     * legacy view; the crew, saddle, station and door collectors ({@code MiscWatch}) still read the legacy view.
+     */
+    @Override
+    public boolean collectedAsAbility() {
+        return switch (action) {
+            case FIGHTS, EXPLORES, CONNIVES, EXPLOITS, EXPLOITS_NONTOKEN_CREATURE, CHAMPIONS, BECOMES_PLOTTED,
+                 MUTATES -> true;
+            default -> false;
+        };
     }
 
     /** A card becomes plotted in exile (CR 702.170a), so its "becomes plotted" ability functions from there. */

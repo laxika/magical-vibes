@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyServic
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
+import com.github.laxika.magicalvibes.service.trigger.ActionAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.ActionWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
@@ -1966,7 +1967,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         // "When a creature is championed with this permanent, ..." (e.g. Mistbind Clique).
         List<CardEffect> championedEffects = source != null
-                ? ActionWatch.ON_CHAMPIONED.effectsOf(source.getCard()) : List.of();
+                ? ActionAbilityReader.printedEffects(source.getCard(), ActionWatch.ON_CHAMPIONED) : List.of();
         if (championedEffects != null && !championedEffects.isEmpty()) {
             beginChampionedTrigger(gameData, source, context.controllerId(), new ArrayList<>(championedEffects));
             return;

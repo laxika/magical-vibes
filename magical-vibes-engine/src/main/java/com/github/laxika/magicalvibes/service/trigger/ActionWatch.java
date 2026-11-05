@@ -15,12 +15,13 @@ import java.util.List;
  * monarch, dungeons, voting, investigate, explore, connive, exploit, clash, mutate and the other keyword actions).
  * Each constant is named after the slot whose collector it stands for and names the trigger its cards were converted
  * to and the zone the collector reads them in. The collectors in {@code TriggerCollectionService} still decide when
- * the ability triggers, how its effects group into stack objects, which wrappers filter it and which event data it is
- * bound to, as the slot's did, until step 15 of the refactor replaces them with effects that read the event. They
- * read the abilities in the legacy form ({@code TriggeredAbility.legacyEffects()}, step 14, run 15): a limit as the
- * keyed {@code OncePerTurnTriggerEffect}, an intervening "if" as a {@code ConditionalEffect}, an explored or exploited
- * card's filter as a {@code TriggeringCardConditionalEffect}, and a "you set a scheme in motion" ability as one
- * {@code SchemeSetInMotionTriggerEffect}.
+ * the ability triggers, how its effects group into stack objects and which event data it is bound to, as the slot's
+ * did, until step 15 of the refactor replaces them with effects that read the event.
+ * <p>
+ * Every collector of these watches reads the abilities themselves ({@link Trigger#collectedAsAbility()}), through
+ * {@link ActionAbilityReader}: "triggers only once each turn" and the card filter of an explore, exploit or scheme
+ * ability come from the ability, and the legacy view gives none of them, so {@link #effectsOf} and
+ * {@link #registrationsOf} throw.
  */
 public enum ActionWatch implements TriggerWatch {
     /** "Whenever you set a scheme in motion". */
@@ -133,13 +134,15 @@ public enum ActionWatch implements TriggerWatch {
         return zone;
     }
 
+    /** Throws: the collectors of an action watch read its abilities themselves ({@link ActionAbilityReader}). */
     @Override
     public List<CardEffect> effectsOf(Card card) {
-        return card.getLegacyTriggerEffects(trigger, zone);
+        throw new UnsupportedOperationException(name() + " is read by abilities, not by effects");
     }
 
+    /** Throws: the collectors of an action watch read its abilities themselves ({@link ActionAbilityReader}). */
     @Override
     public List<EffectRegistration> registrationsOf(Card card) {
-        return card.getLegacyTriggerEffectRegistrations(trigger, zone);
+        throw new UnsupportedOperationException(name() + " is read by abilities, not by effects");
     }
 }

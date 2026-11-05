@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.service.outcome.LossReplacer;
+import com.github.laxika.magicalvibes.service.trigger.ActionAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.ActionWatch;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
@@ -223,7 +224,7 @@ public class GameOutcomeService {
         gameData.forEachPermanent((controllerId, perm) -> {
             // "Whenever a player loses the game, if ..." intervening-if (CR 603.4): the trigger does not
             // go on the stack unless its condition holds when the player loses.
-            List<CardEffect> effects = ActionWatch.ON_PLAYER_LOSES_GAME.effectsOf(perm.getCard()).stream()
+            List<CardEffect> effects = ActionAbilityReader.printedEffects(perm.getCard(), ActionWatch.ON_PLAYER_LOSES_GAME).stream()
                     .filter(effect -> !(effect instanceof WinGameIfPlayerAttackedByControlledSubtypeThisTurnEffect win)
                             || gameQueryService.wasPlayerAttackedByControlledSubtypeThisTurn(
                                     gameData, losingPlayerId, controllerId, win.subtype()))

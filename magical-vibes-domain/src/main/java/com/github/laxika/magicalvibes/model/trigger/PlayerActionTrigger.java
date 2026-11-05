@@ -12,9 +12,8 @@ import java.util.Objects;
  * @param player who, relative to the ability's controller
  * @param filter what the card the action is taken with must be, or {@code null} for any card: only the scheme set in
  *               motion ("whenever you set a non-ongoing scheme in motion" is
- *               {@code Triggers.youSetSchemeInMotion().withFilter(nonOngoingScheme)}). The scheme collector reads it
- *               from the legacy view ({@code TriggeredAbility.legacyEffects()}) as the
- *               {@code SchemeSetInMotionTriggerEffect} it judges, so {@link #watchKey()} drops it
+ *               {@code Triggers.youSetSchemeInMotion().withFilter(nonOngoingScheme)}). The scheme collector judges it
+ *               from the ability ({@code ActionAbilityReader}), so {@link #watchKey()} drops it
  */
 public record PlayerActionTrigger(PlayerAction action, PlayerRelation player, CardPredicate filter)
         implements Trigger {
@@ -45,6 +44,16 @@ public record PlayerActionTrigger(PlayerAction action, PlayerRelation player, Ca
     @Override
     public Trigger watchKey() {
         return filter == null ? this : new PlayerActionTrigger(action, player);
+    }
+
+    /**
+     * The player and keyword action collectors ({@code ActionWatch}) read this trigger's abilities themselves
+     * ({@code ActionAbilityReader}), so it has no legacy view, but "you fully unlock a Room", whose collector
+     * ({@code MiscWatch}) still reads the legacy view.
+     */
+    @Override
+    public boolean collectedAsAbility() {
+        return action != PlayerAction.FULLY_UNLOCKS_ROOM;
     }
 
     /** What a player does, or what happens to them. */

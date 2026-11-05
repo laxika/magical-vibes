@@ -6,11 +6,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.OnceOnlyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnPerCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.SchemeSetInMotionTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
 import com.github.laxika.magicalvibes.model.trigger.CombatTrigger;
 import com.github.laxika.magicalvibes.model.trigger.CounterTrigger;
@@ -108,9 +105,10 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * one or more cards" is an event of its own), of the tap and untap collectors only those of "a permanent you
      * control / an opponent controls becomes tapped" and "you tap a permanent an opponent controls" read it, as they
      * batch the permanents tapped together, and no life gain, loss or payment collector does (each life event triggers
-     * once). The legacy view checked these as a card's abilities were indexed; the combat, damage, counter,
-     * becomes-the-target, library, tap and life collectors read the ability itself, so the ability checks them as it is
-     * built.
+     * once), and no player or keyword action collector does ("whenever you roll one or more dice" and "whenever you
+     * investigate one or more times" are events of their own). The legacy view checked these as a card's abilities were
+     * indexed; the combat, damage, counter, becomes-the-target, library, tap, life and action collectors read the
+     * ability itself, so the ability checks them as it is built.
      */
     private static void requireReadableMultiplicity(List<TriggerCondition> conditions,
                                                     TriggerMultiplicity multiplicity) {
@@ -156,10 +154,23 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
                     throw new IllegalArgumentException("No life gain, loss or payment collector reads \"one or more\" "
                             + "for " + conditions);
                 }
+                if (conditions.stream().anyMatch(condition -> isActionTrigger(condition.trigger()))) {
+                    throw new IllegalArgumentException("No player or keyword action collector reads \"one or more\" "
+                            + "for " + conditions);
+                }
             }
             case EACH -> {
             }
         }
+    }
+
+    /**
+     * Whether {@code trigger} is a player or keyword action trigger whose collectors read the ability itself (the
+     * {@code ActionWatch} ones), as {@link #requireReadableMultiplicity} says.
+     */
+    private static boolean isActionTrigger(Trigger trigger) {
+        return (trigger instanceof PlayerActionTrigger || trigger instanceof ObjectActionTrigger)
+                && trigger.collectedAsAbility();
     }
 
     /** Whether the collectors of {@code trigger} read "one or more", as {@link #requireReadableMultiplicity} says. */
@@ -287,7 +298,8 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
     /**
      * Whether one of this ability's trigger conditions is a trigger whose collectors read the ability itself
      * ({@link Trigger#collectedAsAbility()}: a spell, land-play, activation, step, combat, damage, counter,
-     * becomes-the-target, library, draw and discard, tap and untap, life, or Saga chapter or final-chapter trigger).
+     * becomes-the-target, library, draw and discard, tap and untap, life, Saga chapter or final-chapter, or player or
+     * keyword action trigger).
      */
     public boolean collectedAsAbility() {
         return conditions.stream().anyMatch(condition -> condition.trigger().collectedAsAbility());
@@ -326,13 +338,13 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * is taken (CR 603.2h); "this ability triggers only once" ({@code ONCE}) an {@link OnceOnlyTriggerEffect} inside
      * the intervening "if", as the cards wrote it. An ability whose every trigger is a spell, land-play, activation, "at
      * the beginning of [step or phase]", combat, damage, counter, becomes-the-target, library, draw and discard, tap and
-     * untap, life, or Saga chapter or final-chapter trigger ({@link Trigger#collectedAsAbility()}) has no legacy view
-     * ({@link #hasLegacyView()}): its collectors read it itself, and this throws. "Once each turn for each creature"
+     * untap, life, Saga chapter or final-chapter, or player or keyword action trigger
+     * ({@link Trigger#collectedAsAbility()}) has no legacy view ({@link #hasLegacyView()}): its collectors read it
+     * itself, and this throws. "Once each turn for each creature"
      * ({@link TriggerLimit#ONCE_EACH_TURN_FOR_EACH_CREATURE}) is an {@link OncePerTurnPerCreatureTriggerEffect} where the
      * other limits go. A state trigger ({@link StateTrigger}) makes the ability one
-     * {@link StateTriggerEffect} of its game state and all its effects, as {@link #legacyStateEffects} says, and a
-     * "you set a scheme in motion" trigger one {@link SchemeSetInMotionTriggerEffect}, as {@link #legacySchemeEffects}
-     * says. An object-action trigger's card filter, Room door and "for the first time each turn" are the wrappers
+     * {@link StateTriggerEffect} of its game state and all its effects, as {@link #legacyStateEffects} says. The crew,
+     * saddle and door triggers' Room door and "for the first time each turn" are the wrappers
      * {@link #legacyObjectActionWrapper} gives, outside every other. An ability without options or such filters
      * returns its registrations as they are.
      */
@@ -343,10 +355,6 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         }
         if (conditions.getFirst().trigger() instanceof StateTrigger state) {
             return legacyStateEffects(state);
-        }
-        if (conditions.stream().anyMatch(condition -> condition.trigger() instanceof PlayerActionTrigger action
-                && action.action() == PlayerActionTrigger.PlayerAction.SETS_SCHEME_IN_MOTION)) {
-            return legacySchemeEffects();
         }
         Condition interveningIf = options.interveningIf();
         TriggerLimit limit = options.limit();
@@ -401,32 +409,18 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
     }
 
     /**
-     * The ability in the form the scheme collector judges a "whenever you set a [quality] scheme in motion" ability
-     * in: one {@link SchemeSetInMotionTriggerEffect} of all its effects, one stack object (CR 603.3), with the
-     * trigger's scheme filter.
-     */
-    private List<EffectRegistration> legacySchemeEffects() {
-        requireNoOptions("scheme");
-        CardPredicate filter = conditions.stream().map(TriggerCondition::trigger)
-                .filter(PlayerActionTrigger.class::isInstance).map(PlayerActionTrigger.class::cast)
-                .map(PlayerActionTrigger::filter).filter(Objects::nonNull).findFirst().orElse(null);
-        List<CardEffect> resolved = legacyBaseEffects().stream().map(EffectRegistration::effect).toList();
-        return List.of(new EffectRegistration(new SchemeSetInMotionTriggerEffect(filter, resolved),
-                effects.getFirst().triggerMode(), false));
-    }
-
-    /**
-     * This ability's object-action condition that its collector reads by another trigger
-     * ({@link ObjectActionTrigger#watchKey()}), or {@code null}: an explored or exploited card's filter, a Room's
-     * door, or "becomes crewed / saddled for the first time each turn". Their collectors read the wrappers outside
-     * every other, so a filtered or door ability takes no options, and a first-time one no limit.
+     * This ability's object-action condition that its collector reads by another trigger from the legacy view
+     * ({@link ObjectActionTrigger#watchKey()}), or {@code null}: a Room's door, or "becomes crewed / saddled for the
+     * first time each turn". Their collectors read the wrappers outside every other, so a door ability takes no
+     * options, and a first-time one no limit. The explore and exploit collectors judge their filter from the ability
+     * itself ({@link ObjectActionTrigger#collectedAsAbility()}).
      */
     private ObjectActionTrigger objectActionView() {
         ObjectActionTrigger object = filteredTrigger(ObjectActionTrigger.class);
         if (object == null) {
             return null;
         }
-        if ((object.filter() != null || object.door() != null) && !options.equals(TriggerOptions.DEFAULT)) {
+        if (object.door() != null && !options.equals(TriggerOptions.DEFAULT)) {
             throw new IllegalStateException("The legacy view has no filtered object-action record with options: "
                     + options);
         }
@@ -444,14 +438,11 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
     /**
      * {@code effect} wrapped in what {@code object}'s collector judges, as the cards wrote it: "for the first time each
      * turn" as the unkeyed {@link OncePerTurnTriggerEffect} the crewed and saddled collectors mark on the source, the
-     * card filter as a {@link TriggeringCardConditionalEffect}, the door as a {@link TriggeringRoomDoorConditionalEffect}.
+     * door as a {@link TriggeringRoomDoorConditionalEffect}.
      */
     private static CardEffect legacyObjectActionWrapper(ObjectActionTrigger object, CardEffect effect) {
         if (firstTimeEachTurn(object)) {
             effect = new OncePerTurnTriggerEffect(effect);
-        }
-        if (object.filter() != null) {
-            effect = new TriggeringCardConditionalEffect(object.filter(), effect);
         }
         if (object.door() != null) {
             effect = new TriggeringRoomDoorConditionalEffect(object.door(), effect);
@@ -480,13 +471,13 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
     }
 
     /**
-     * The first trigger of {@code type} with filters among this ability's conditions, or {@code null} for none. The
-     * legacy view wraps every effect in one set of filters, so every condition of that type must have the same
-     * filters.
+     * The first trigger of {@code type} with filters among this ability's conditions that the legacy view gives, or
+     * {@code null} for none. The legacy view wraps every effect in one set of filters, so every such condition of that
+     * type must have the same filters.
      */
     private <T extends Trigger> T filteredTrigger(Class<T> type) {
         List<T> ofType = conditions.stream().map(TriggerCondition::trigger).filter(type::isInstance)
-                .map(type::cast).toList();
+                .filter(trigger -> !trigger.collectedAsAbility()).map(type::cast).toList();
         T filtered = ofType.stream().filter(trigger -> !trigger.watchKey().equals(trigger)).findFirst().orElse(null);
         if (filtered != null && ofType.stream().anyMatch(t -> !filters(t).equals(filters(filtered)))) {
             throw new IllegalStateException("The " + type.getSimpleName()
@@ -497,15 +488,9 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
 
     private static List<Object> filters(Trigger trigger) {
         return switch (trigger) {
-            case ObjectActionTrigger object -> Arrays.asList(object.action(), object.filter(), object.door());
+            case ObjectActionTrigger object -> Arrays.asList(object.action(), object.door());
             default -> List.of();
         };
-    }
-
-    private void requireNoOptions(String what) {
-        if (!options.equals(TriggerOptions.DEFAULT)) {
-            throw new IllegalStateException("The legacy view has no " + what + " record with options: " + options);
-        }
     }
 
     /**

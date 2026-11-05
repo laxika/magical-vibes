@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; run 16l, family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader`; run 16m, family 10 (sagas): no chapter or final-chapter ability has a legacy view, and the final-chapter collectors read the abilities through `SagaAbilityReader`; runs 16n onward left: the rest of the legacy view's retirement, family by family, with the may-unwrapping, `TriggerMode`, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; run 16l, family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader`; run 16m, family 10 (sagas): no chapter or final-chapter ability has a legacy view, and the final-chapter collectors read the abilities through `SagaAbilityReader`; run 16n, family 11's player and keyword actions: every `ActionWatch` collector reads the abilities through `ActionAbilityReader`; runs 16o onward left: the rest of the legacy view's retirement, family by family, with the may-unwrapping, `TriggerMode`, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -615,7 +615,8 @@ no other family still uses. The order:
 | 16k | Step 13's family 8 (tap and untap): every tap, untap and tap-for-mana collector reads the abilities through `TapAbilityReader` (filter, "for the first time during your turn", "one or more" and limit from the ability); no tap ability has a legacy view, and `OncePerTurnPerCreatureTriggerEffect`'s `global` component is gone |
 | 16l | Step 13's family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader` (own event, "for the first time each turn" and limit from the ability); no life ability has a legacy view, an ability with a life and a legacy condition (MACH-1) keeps one for the other condition only, and `FirstOpponentLifeLossEachTurnTriggerEffect` and `OncePerTurnTriggerEffect`'s `firstLifeGain` / `firstLifeLoss` components are gone |
 | 16m | Step 13's family 10 (sagas): no chapter or final-chapter ability has a legacy view; the final-chapter collectors read the abilities through `SagaAbilityReader` ("triggers only once each turn" from the ability), and the ability rejects the options they don't read as it is built |
-| 16n onward | The rest of the legacy view's retirement, family by family: each family's collectors read the ability's options, filters and grouping (no `TriggerMode`), then the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
+| 16n | Step 13's family 11, its first half (step 13 run 11a's player and keyword actions): every `ActionWatch` collector reads the abilities through `ActionAbilityReader` (the explore, exploit and scheme filters and "triggers only once each turn" from the ability); no action ability has a legacy view, and `SchemeSetInMotionTriggerEffect` and `SchemeTriggerCollectorService` are gone |
+| 16o onward | The rest of the legacy view's retirement, family by family: each family's collectors read the ability's options, filters and grouping (no `TriggerMode`), then the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
 
 Mark the step `done` only after the last run of 16.
 
@@ -8472,6 +8473,134 @@ card.
   `DamageTriggerCollectorServiceTest` 5, `SpellCastTriggerCollectorServiceTest` 2, `LandTapTriggerCollectorServiceTest`
   2, and the known one each in `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and
   `CardEffectTargetingConsistencyTest`. No test with Saga, lore or chapter in its name failed (44 ran).
+- Engine: the whole module, with the one failure at HEAD, `GameMutationBoundaryRatchetTest`.
+- AI: the whole module (1,620 tests), with the same 10 failures as before.
+- The full suite was not run here.
+
+#### Run 16n: player and keyword actions read the ability
+
+Step 13's family 11, next in 16a's order after sagas, as 16m's findings listed the families left. Family 11 is split as
+step 13 split it: this run takes its first half (step 13 run 11a, the `ActionWatch` collectors), and the misc
+collectors (`MiscWatch`: control change, attaching, crew, saddle and station, Room doors and full unlocks, day and night,
+state triggers) are left for 16o. No player or keyword action ability (a `PlayerActionTrigger` or `ObjectActionTrigger`
+that an `ActionWatch` reads: dice, coin flips, crimes, the Ring, the monarch, dungeons, voting, investigate, explore,
+connive, exploit, clash, mutate, plot, champion, losing the game and the other keyword actions) has a legacy view any
+more, and every reader of one reads the ability.
+
+**What the scan found.** A grep of every card class for the 42 `ActionWatch` factories: 149 card classes, every ability
+printed (`addTrigger`, none granted, temporary or built by the engine), one condition each and `TriggerMode.NORMAL`
+throughout. 14 "triggers only once each turn" (the 13 crime cards and Curator of Sun's Creation, discover), 3 intervening
+"if"s (Knights of the Black Rose, Overzealous Muscle, Barbarian Class), 2
+event conditions (Pompeii, Mr. House), 4 filters (Nicanzil's two explore abilities, Henry Wu's exploit, My Laughter
+Echoes' scheme). No card changed.
+
+**The model.** `PlayerActionTrigger.collectedAsAbility()` is true for every action but `FULLY_UNLOCKS_ROOM`, and
+`ObjectActionTrigger.collectedAsAbility()` for `FIGHTS`, `EXPLORES`, `CONNIVES`, `EXPLOITS`,
+`EXPLOITS_NONTOKEN_CREATURE`, `CHAMPIONS`, `BECOMES_PLOTTED` and `MUTATES`: the crew, saddle, station, door and Room
+actions still have a legacy view, for the `MiscWatch` collectors. For an action ability `TriggeredAbility.legacyEffects()`,
+the `getLegacy…` getters and `ActionWatch.effectsOf` / `registrationsOf` throw, and the card's slot index leaves it out
+of its legacy maps. The legacy view's scheme branch (`legacySchemeEffects`) and its explored or exploited card's
+`TriggeringCardConditionalEffect` are gone (an object-action filter is only allowed on explore and exploit, which have no
+legacy view now), with `SchemeSetInMotionTriggerEffect` (only the legacy view built it). `TriggeredAbility` rejects "one
+or more" on an action condition as it is built ("roll one or more dice" and "investigate one or more times" are events of
+their own).
+
+**The engine.**
+
+- New `ActionAbilityReader` (`service/trigger`, static), `TapAbilityReader`'s shape on `WatchedAbilities`' finders:
+  each effect as an `ActionEffect` with the intervening "if" around it (a `ConditionalEffect`, **CR 603.4**, checked)
+  and the event condition inside that (**CR 603.2**, checked), plus the ability, the watched condition's card filter
+  (`filter()`: the explored card, the exploited creature, the scheme) and the limit (`limitReached` / `markLimit` by
+  `limitKey()`, `triggersOnlyOnceEachTurn()`). It throws on a trigger mode, on a limit other than "triggers only once
+  each turn", on options on a "you set a scheme in motion" ability, and on two conditions of one ability with different
+  filters. The strict `printedEffects` / `effects` serve the collectors that judge neither a filter nor a limit and throw
+  on one.
+- `TriggerCollectionService.dispatchWatch` has an action branch, `dispatchActionWatch` (`dispatchSagaWatch`'s shape): it
+  reads the printed abilities (text-changed, **CR 612.1**, checked) and those static abilities grant, judges the filter
+  against the card the action is taken with (`actionCard`: the exploited creature or the scheme set in motion; a filter
+  on any other watch throws), judges the limit before the effects are dispatched and marks it once one triggered, and
+  passes "triggers only once each turn" to the dispatch. Where the generic branch read the legacy view, the crime and
+  discover limits were the keyed `OncePerTurnTriggerEffect`, judged and marked by the same key in the same set, and the
+  exploit filter was the `TriggeringCardConditionalEffect` the handler judged.
+- "Whenever you set a scheme in motion": `SchemeTriggerCollectorService`'s handler moved into the collector
+  (`collectSchemeAbility`, through `dispatch`, so additional-trigger effects still apply): all of an ability's effects are
+  one stack object (**CR 603.3**, checked), as the `SchemeSetInMotionTriggerEffect` record made them, with the scheme
+  snapshot bound as before. The class is gone.
+- The explore collector judges each ability's filter against the explored card and queues each matching ability as
+  its own stack object (**CR 603.3**); the other direct readers (the planar die, the natural-20, dungeon, crime and
+  conjure graveyard readers, the monarch, Case, tax, exploit, clash, coin-flip, plot and mutate collectors,
+  `GameOutcomeService`'s losing-the-game reader, the champion reader and `MiscTriggerCollectorService`'s mutate handler,
+  which regroups a card's mutate effects by target group) read the strict effects. The exploit collector's last-known
+  path for an exploiting creature that sacrificed itself (Henry Wu) reads its abilities through
+  `dispatchActionAbility`, so its filter is judged there too. The crime and conjure graveyard readers read
+  `getEffectiveGraveyardTriggeredAbilities`, as `getEffectiveGraveyardLegacyTriggerEffects` did.
+- `MiscTriggerCollectorService`: the crime `OncePerTurnTriggerEffect` handler is gone (the dispatch always unwrapped the
+  wrapper first, so nothing reached it, as 16l found the you-lose one), and the exploit handler no longer unwraps a
+  `TriggeringCardConditionalEffect` (the collector judges the filter). The tax collector no longer unwraps a
+  once-per-turn wrapper (no tax ability has a limit; the strict reader rejects one), and the Case collector no longer
+  unwraps a `TriggeringCardConditionalEffect` (the legacy view never gave one and no card writes one).
+
+**Behaviour changes.**
+
+- The explore collector puts each of a card's explore abilities on the stack as its own object, where it merged every
+  matching effect of the card into one (run 15's note, CR 603.3). Nicanzil is the only card with two explore abilities,
+  and only one of them matches any explored card, so no card is known to change.
+- Nothing else is known to change: each collector judges the filter and limit at the point and in the context it judged
+  the wrappers, by the same key, and passes the same "triggers only once each turn".
+
+**Kept, with their reason.**
+
+- The intervening "if" and the event condition still reach the collectors as `ConditionalEffect`s (the monarch
+  collector and the crime handler check the intervening "if" as the ability triggers), as the earlier runs left them:
+  making the effects read the trigger event is step 15.
+- The direct readers still read the printed abilities only, as before (no granted ones; the dungeon and natural-20
+  graveyard readers no perpetual ones and no graveyard ability loss), and the exploit, clash and plot collectors still
+  put every effect of a card's ability on one stack object (one ability each since step 13's `ALL` merges).
+- Step 13 run 11a's items: the Ring's two triggers, the clash and champion target routing, the losing-the-game triggers;
+  step 15's event bindings (the dice results, the sought, conjured and discovered cards, the exploited, explored,
+  conniving, fighting and mutating creatures, the tax payer, the losing player).
+- `OncePerTurnTriggerEffect`, `OnceOnlyTriggerEffect` and `TriggeringCardConditionalEffect` stay: the other families'
+  legacy views (misc, zone changes, the own enters collector) and the cards' granted forms still build them.
+
+**For 16o onward.**
+
+- Family 11's second half (`MiscWatch`: control change, attaching, crew, saddle and station, Room doors and full
+  unlocks, day and night, state triggers), then the zone changes and the own enters abilities, as 16a planned; each can
+  reuse `WatchedAbilities` and a reader of `ActionAbilityReader`'s shape. `ObjectActionTrigger` and `PlayerActionTrigger`
+  decide `collectedAsAbility()` by action until then. When the own enters abilities leave the legacy view, MACH-1's limit
+  is read from the ability by both collectors and `hasLegacyView()` can go with the legacy view.
+- Combat's, counters', the self-untap handler's and the final-chapter handler's grouping by ability, and the "when you
+  cast this spell" merges (16d, 16f).
+
+**Tests changed.**
+
+- `ActionTriggerTest`: new reader tests: no legacy view for an action ability (the ability, the getters and the watch
+  throw; the plain effects still read), every `ActionWatch` trigger read as an ability and the misc actions with a
+  legacy view, the limit marked by the ability (not the unkeyed mark), the explore, exploit and scheme filters from the
+  watched trigger, the event condition inside the intervening "if", the strict reader rejecting a filter or a limit,
+  and what the collectors can't read rejected ("one or more" as the ability is built, "do this only once each turn" and
+  `ONCE`, options on a scheme ability, a trigger mode, an unwatched condition).
+- `MiscTriggerTest`: the explored card's wrapper and the scheme record tests are gone with the legacy view of them
+  (`aDoorAndAnExploredCardAreDroppedFromTheWatchKeyAndADoorIsReadAsItsWrapper` keeps the door and both watch keys and
+  checks a door with a limit throws; `aSchemeTriggerIsWatchedWithoutItsFilter` keeps the scheme's watch key);
+  `aLimitIsReadAsTheKeyedMark` (crime) is gone, read by `ActionTriggerTest` now.
+- `ActionWatchTest#aWatchReadsOnlyTheAbilitiesOfItsTriggerAndZone` reads through the reader.
+
+**Test runs.**
+
+- Card: the test class of every card with an action ability (146), every card test that constructs one of those cards,
+  and every card test that mentions explore, exploit, the monarch, a scheme, clash, mutate, plot, connive, coin flips,
+  investigate, a dungeon, a natural 20 or a crime (915 classes, 7,218 tests): the first run failed only the 49 mutate
+  tests of 8 classes (the mutate handler's own read of the watch), and after that fix every card test that mentions
+  mutation (2,408 classes) passes.
+- Application: the `service.trigger` and `model.trigger` packages and the freeze, triggered-ability, card-ability,
+  granted-ability, granted-ability view, simulation-copy, architecture, targeting-consistency, legacy-slot, pipeline,
+  stack-resolution, spell-casting, state-trigger and Planechase classes (1,002 tests): 30 failures, all failing at HEAD:
+  `SpellCastingServiceTest` 10, `DeathTriggerCollectorServiceTest` 6, `DamageTriggerCollectorServiceTest` 5,
+  `SpellCastTriggerCollectorServiceTest` 2, `LandTapTriggerCollectorServiceTest` 2, `PlanechaseServiceTest` 2, and the
+  known one each in `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and
+  `CardEffectTargetingConsistencyTest`. `ActionTriggerTest`, `ActionWatchTest`, `MiscTriggerTest` and `MiscWatchTest`
+  pass.
 - Engine: the whole module, with the one failure at HEAD, `GameMutationBoundaryRatchetTest`.
 - AI: the whole module (1,620 tests), with the same 10 failures as before.
 - The full suite was not run here.

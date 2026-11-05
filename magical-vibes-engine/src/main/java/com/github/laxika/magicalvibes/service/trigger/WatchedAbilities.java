@@ -16,7 +16,8 @@ import java.util.List;
  * and those of any list (a graveyard card's own and perpetual ones, the abilities a static ability grants). The
  * family readers ({@link CombatAbilityReader}, {@link DamageAbilityReader}, {@link CounterAbilityReader},
  * {@link TargetAbilityReader}, {@link LibraryAbilityReader}, {@link TapAbilityReader},
- * {@link LifeAbilityReader}, {@link SagaAbilityReader}) read the options and filters of what these find.
+ * {@link LifeAbilityReader}, {@link SagaAbilityReader}, {@link ActionAbilityReader}) read the options and filters of
+ * what these find.
  */
 public final class WatchedAbilities {
 
