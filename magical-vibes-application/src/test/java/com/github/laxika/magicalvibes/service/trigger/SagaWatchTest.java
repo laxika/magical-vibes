@@ -1,20 +1,14 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.FinalChapterTrigger;
-import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
-import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -48,22 +42,10 @@ class SagaWatchTest {
         card.addTrigger(Triggers.finalChapterAbilityResolves(), resolves);
         card.addTrigger(Triggers.chapter(3), chapter);
 
-        assertThat(SagaWatch.ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES.effectsOf(card)).containsExactly(resolves);
-        assertThat(SagaWatch.ON_SAGA_FINAL_CHAPTER_ABILITY_TRIGGERS.effectsOf(card)).isEmpty();
-    }
-
-    @Test
-    void aWatchHandsTheCollectorTheLimitAsTheKeyedWrapperWithAStableIdentity() {
-        Card card = new Card();
-        DrawCardEffect resolves = new DrawCardEffect(1);
-        card.addTrigger(Triggers.finalChapterAbilityResolves(),
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), resolves);
-        String key = card.getTriggeredAbilities().getFirst().limitKey();
-
-        List<CardEffect> legacy = SagaWatch.ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES.effectsOf(card);
-
-        assertThat(legacy).containsExactly(OncePerTurnTriggerEffect.keyed(resolves, key));
-        assertThat(SagaWatch.ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES.registrationsOf(card))
-                .extracting(EffectRegistration::effect).singleElement().isSameAs(legacy.getFirst());
+        assertThat(SagaAbilityReader.printed(card, SagaWatch.ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES))
+                .singleElement().satisfies(ability -> assertThat(SagaAbilityReader.read(ability,
+                                SagaWatch.ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES.trigger()))
+                        .extracting(SagaAbilityReader.SagaEffect::effect).containsExactly(resolves));
+        assertThat(SagaAbilityReader.printed(card, SagaWatch.ON_SAGA_FINAL_CHAPTER_ABILITY_TRIGGERS)).isEmpty();
     }
 }

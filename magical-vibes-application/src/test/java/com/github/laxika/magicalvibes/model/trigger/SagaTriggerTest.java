@@ -3,19 +3,23 @@ package com.github.laxika.magicalvibes.model.trigger;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.SagaChapterTargets;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.service.trigger.SagaAbilityReader;
+import com.github.laxika.magicalvibes.service.trigger.SagaWatch;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -135,29 +139,93 @@ class SagaTriggerTest {
     }
 
     @Test
-    void theLegacyViewOfAFinalChapterAbilityGivesItsLimitKeyedByTheAbility() {
+    void aSagaAbilityHasNoLegacyView() {
         Card card = new Card();
-        card.addTrigger(Triggers.finalChapterAbilityResolves(),
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW);
-        TriggeredAbility ability = card.getTriggeredAbilities().getFirst();
+        card.addTrigger(Triggers.chapter(1), DRAW);
+        card.addTrigger(Triggers.finalChapterAbilityResolves(), GAIN);
 
-        assertThat(ability.legacyEffects()).extracting(EffectRegistration::effect)
-                .containsExactly(OncePerTurnTriggerEffect.keyed(DRAW, ability.limitKey()));
-        assertThat(card.getTriggerEffects(Triggers.finalChapterAbilityResolves())).containsExactly(DRAW);
+        assertThat(card.getTriggeredAbilities()).allSatisfy(ability -> {
+            assertThat(ability.collectedAsAbility()).isTrue();
+            assertThat(ability.hasLegacyView()).isFalse();
+            assertThatThrownBy(ability::legacyEffects).isInstanceOf(IllegalStateException.class);
+        });
+        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.chapter(1)))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.finalChapterAbilityResolves()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> SagaWatch.ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES.effectsOf(card))
+                .isInstanceOf(UnsupportedOperationException.class);
+        assertThatThrownBy(() -> SagaWatch.ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES.registrationsOf(card))
+                .isInstanceOf(UnsupportedOperationException.class);
+        assertThat(card.getTriggerEffects(Triggers.chapter(1))).containsExactly(DRAW);
+        assertThat(card.getTriggerEffects(Triggers.finalChapterAbilityResolves())).containsExactly(GAIN);
     }
 
     @Test
-    void theLegacyViewRejectsTheFinalChapterOptionsNoCollectorReads() {
+    void theReaderGivesAFinalChapterAbilityItsLimitMarkedByTheAbility() {
+        Card card = new Card();
+        card.addTrigger(Triggers.finalChapterAbilityResolves(),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW);
+        SagaAbilityReader.SagaEffect read = SagaAbilityReader.read(
+                SagaAbilityReader.printed(card, SagaWatch.ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES).getFirst(),
+                SagaWatch.ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES.trigger()).getFirst();
+        GameData gameData = new GameData(UUID.randomUUID(), "test", UUID.randomUUID(), "owner");
+        UUID sourceId = UUID.randomUUID();
+
+        assertThat(read.effect()).isSameAs(DRAW);
+        assertThat(read.triggersOnlyOnceEachTurn()).isTrue();
+        assertThat(read.limitReached(gameData, sourceId)).isFalse();
+
+        read.markLimit(gameData, sourceId);
+
+        assertThat(read.limitReached(gameData, sourceId)).isTrue();
+        assertThat(gameData.keyedOncePerTurnTriggersFiredThisTurn.get(sourceId))
+                .containsExactly(read.ability().limitKey());
+        assertThat(gameData.oncePerTurnTriggersFiredThisTurn).doesNotContain(sourceId);
+    }
+
+    @Test
+    void aFinalChapterAbilityWithoutALimitHasNoneToJudge() {
+        Card card = new Card();
+        card.addTrigger(Triggers.finalChapterAbilityTriggers(), DRAW, GAIN);
+
+        List<SagaAbilityReader.SagaEffect> reads = SagaAbilityReader.read(card.getTriggeredAbilities().getFirst(),
+                SagaWatch.ON_SAGA_FINAL_CHAPTER_ABILITY_TRIGGERS.trigger());
+
+        assertThat(reads).extracting(SagaAbilityReader.SagaEffect::effect).containsExactly(DRAW, GAIN);
+        assertThat(reads).noneMatch(SagaAbilityReader.SagaEffect::triggersOnlyOnceEachTurn);
+        assertThatThrownBy(() -> SagaAbilityReader.read(card.getTriggeredAbilities().getFirst(),
+                SagaWatch.ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES.trigger()))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void aFinalChapterAbilityRejectsTheOptionsNoCollectorReadsAsItIsBuilt() {
+        Card card = new Card();
         assertThat(List.of(
                 TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()),
+                TriggerOptions.DEFAULT.withEventCondition(new ControllerTurn()),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.DO_ONLY_ONCE_EACH_TURN),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE),
                 TriggerOptions.ONE_OR_MORE)).allSatisfy(options -> {
-                    TriggeredAbility ability = new TriggeredAbility(Triggers.finalChapterAbilityTriggers(), options,
-                            DRAW);
-                    assertThatThrownBy(ability::legacyEffects).as(options.toString())
-                            .isInstanceOf(IllegalStateException.class)
+                    assertThatThrownBy(() -> new TriggeredAbility(Triggers.finalChapterAbilityTriggers(), options,
+                            DRAW)).as(options.toString())
+                            .isInstanceOf(IllegalArgumentException.class)
                             .hasMessageContaining("final-chapter collector");
+                    assertThatThrownBy(() -> card.addTrigger(Triggers.finalChapterAbilityResolves(), options, DRAW))
+                            .as(options.toString())
+                            .isInstanceOf(IllegalArgumentException.class);
                 });
+        assertThat(card.getTriggeredAbilities()).isEmpty();
+    }
+
+    @Test
+    void theReaderRejectsATriggerMode() {
+        TriggeredAbility ability = new TriggeredAbility(Triggers.finalChapterAbilityResolves(), TriggerOptions.DEFAULT,
+                List.of(new EffectRegistration(DRAW, TriggerMode.INDEPENDENT)));
+
+        assertThatThrownBy(() -> SagaAbilityReader.read(ability,
+                SagaWatch.ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES.trigger()))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

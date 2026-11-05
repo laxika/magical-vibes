@@ -16774,6 +16774,9 @@ public class TriggerCollectionService {
                     staticBonus -> LifeAbilityReader.effects(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(
                             gameData, perm, staticBonus, ability -> ability.hasWatchedTrigger(watched)), watched));
         }
+        if (watch instanceof SagaWatch sagaWatch) {
+            return dispatchSagaWatch(gameData, perm, controllerId, sagaWatch, ctx);
+        }
         if (watch instanceof CombatWatch combatWatch) {
             Trigger watched = combatWatch.trigger();
             return dispatchRegistrations(gameData, perm, controllerId, watch, ctx, null,
@@ -16840,6 +16843,63 @@ public class TriggerCollectionService {
         for (CounterAbilityReader.CounterEffect read : effects) {
             triggered |= dispatchSlotEffect(gameData, perm, controllerId, watch, ctx, read.effect(),
                     read.marksLimitOnAcceptance(), read.limit() == TriggerLimit.ONCE_EACH_TURN);
+        }
+        if (triggered) {
+            first.markLimit(gameData, perm.getId());
+        }
+        return triggered;
+    }
+
+    /**
+     * Dispatches the abilities the Saga watch {@code watch} reads on {@code perm}, its own and those other permanents
+     * grant it, to the watch's handlers, as {@link #dispatchRegistrations} does, judging each ability's "triggers only
+     * once each turn" from the ability: it doesn't trigger once the limit is reached, and it is marked on {@code perm}
+     * by the ability once one of its effects triggered (Tom Bombadil). These watches' collectors read no other option.
+     */
+    private boolean dispatchSagaWatch(GameData gameData, Permanent perm, UUID controllerId, SagaWatch watch,
+                                      TriggerContext ctx) {
+        if (perm.isLosesAllAbilitiesUntilEndOfTurn()) return false;
+        GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, perm);
+        if (staticBonus.losesAllAbilities() || staticBonus.losesAllNonManaAbilities()) return false;
+        Trigger watched = watch.trigger();
+        boolean triggered = false;
+        // Reused for the granted-ability lookup below unless a printed ability was dispatched in between and may have
+        // changed the game state.
+        boolean staticBonusCurrent = true;
+        List<TriggeredAbility> printed = SagaAbilityReader.printed(perm.getCard(), watch);
+        if (!printed.isEmpty() && !gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
+            staticBonusCurrent = false;
+            List<TextReplacement> globalWordChange = TextChangeTransformer.globalColorWordReplacements(gameData);
+            for (TriggeredAbility ability : printed) {
+                // Layer 3 (CR 612.1): the trigger condition is read from the permanent's text-changed words.
+                triggered |= dispatchSagaAbility(gameData, perm, controllerId, watch, ctx,
+                        SagaAbilityReader.read(ability, watched).stream().map(read -> read.withEffect(
+                                TextChangeTransformer.transform(read.effect(), perm.getTextReplacements(),
+                                        globalWordChange))).toList());
+            }
+        }
+        for (TriggeredAbility ability : grantedTriggeredAbilitySupport.grantedTriggeredAbilities(gameData, perm,
+                staticBonusCurrent ? staticBonus : null, ability -> ability.hasWatchedTrigger(watched))) {
+            triggered |= dispatchSagaAbility(gameData, perm, controllerId, watch, ctx,
+                    SagaAbilityReader.read(ability, watched));
+        }
+        return triggered;
+    }
+
+    /**
+     * Dispatches the effects of one final-chapter ability, {@code effects}, judging and marking its limit on
+     * {@code perm}.
+     */
+    private boolean dispatchSagaAbility(GameData gameData, Permanent perm, UUID controllerId, SagaWatch watch,
+                                        TriggerContext ctx, List<SagaAbilityReader.SagaEffect> effects) {
+        SagaAbilityReader.SagaEffect first = effects.getFirst();
+        if (first.limitReached(gameData, perm.getId())) {
+            return false;
+        }
+        boolean triggered = false;
+        for (SagaAbilityReader.SagaEffect read : effects) {
+            triggered |= dispatchSlotEffect(gameData, perm, controllerId, watch, ctx, read.effect(), false,
+                    read.triggersOnlyOnceEachTurn());
         }
         if (triggered) {
             first.markLimit(gameData, perm.getId());

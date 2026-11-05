@@ -93,6 +93,7 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             throw new IllegalArgumentException("A chapter ability takes no options: " + conditions + " with "
                     + options);
         }
+        requireFinalChapterOptions(conditions, options);
     }
 
     /**
@@ -286,7 +287,7 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
     /**
      * Whether one of this ability's trigger conditions is a trigger whose collectors read the ability itself
      * ({@link Trigger#collectedAsAbility()}: a spell, land-play, activation, step, combat, damage, counter,
-     * becomes-the-target, library, draw and discard, tap and untap, or life trigger).
+     * becomes-the-target, library, draw and discard, tap and untap, life, or Saga chapter or final-chapter trigger).
      */
     public boolean collectedAsAbility() {
         return conditions.stream().anyMatch(condition -> condition.trigger().collectedAsAbility());
@@ -325,11 +326,10 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * is taken (CR 603.2h); "this ability triggers only once" ({@code ONCE}) an {@link OnceOnlyTriggerEffect} inside
      * the intervening "if", as the cards wrote it. An ability whose every trigger is a spell, land-play, activation, "at
      * the beginning of [step or phase]", combat, damage, counter, becomes-the-target, library, draw and discard, tap and
-     * untap, or life trigger ({@link Trigger#collectedAsAbility()}) has no legacy view ({@link #hasLegacyView()}): its
-     * collectors read it itself, and this throws. "Once each turn for each creature"
+     * untap, life, or Saga chapter or final-chapter trigger ({@link Trigger#collectedAsAbility()}) has no legacy view
+     * ({@link #hasLegacyView()}): its collectors read it itself, and this throws. "Once each turn for each creature"
      * ({@link TriggerLimit#ONCE_EACH_TURN_FOR_EACH_CREATURE}) is an {@link OncePerTurnPerCreatureTriggerEffect} where the
-     * other limits go. A final-chapter trigger ({@link FinalChapterTrigger}) takes only "triggers only once each turn", as
-     * {@link #requireFinalChapterOptions()} says. A state trigger ({@link StateTrigger}) makes the ability one
+     * other limits go. A state trigger ({@link StateTrigger}) makes the ability one
      * {@link StateTriggerEffect} of its game state and all its effects, as {@link #legacyStateEffects} says, and a
      * "you set a scheme in motion" trigger one {@link SchemeSetInMotionTriggerEffect}, as {@link #legacySchemeEffects}
      * says. An object-action trigger's card filter, Room door and "for the first time each turn" are the wrappers
@@ -348,7 +348,6 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
                 && action.action() == PlayerActionTrigger.PlayerAction.SETS_SCHEME_IN_MOTION)) {
             return legacySchemeEffects();
         }
-        requireFinalChapterOptions();
         Condition interveningIf = options.interveningIf();
         TriggerLimit limit = options.limit();
         ObjectActionTrigger object = objectActionView();
@@ -462,18 +461,21 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
 
     /**
      * Rejects the options of an ability with a {@link FinalChapterTrigger} that the final-chapter collector doesn't
-     * read. It takes "triggers only once each turn" off the effect as the ability triggers, and puts every other effect
-     * on the stack as it is, once for each final chapter ability: an intervening "if" would be checked only as the
-     * ability resolves, and it marks no "do this only once each turn" and reads no "triggers only once" or "one or
-     * more".
+     * read. It judges "triggers only once each turn" from the ability as it triggers, and puts every effect on the stack
+     * as it is: an intervening "if" would be checked only as the ability resolves (CR 603.4 checks it as the ability
+     * triggers too), an event condition not at all, and it marks no "do this only once each turn" and reads no
+     * "triggers only once" or "one or more". The legacy view checked these as a card's abilities were indexed; the
+     * collector reads the ability itself, so the ability checks them as it is built.
      */
-    private void requireFinalChapterOptions() {
+    private static void requireFinalChapterOptions(List<TriggerCondition> conditions, TriggerOptions options) {
         if (conditions.stream().noneMatch(condition -> condition.trigger() instanceof FinalChapterTrigger)) {
             return;
         }
-        if (options.interveningIf() != null || options.multiplicity() != TriggerMultiplicity.EACH
+        if (options.interveningIf() != null || options.eventCondition() != null
+                || options.multiplicity() != TriggerMultiplicity.EACH
                 || (options.limit() != TriggerLimit.NONE && options.limit() != TriggerLimit.ONCE_EACH_TURN)) {
-            throw new IllegalStateException("The final-chapter collector doesn't read " + options + ": " + conditions);
+            throw new IllegalArgumentException("The final-chapter collector doesn't read " + options + ": "
+                    + conditions);
         }
     }
 

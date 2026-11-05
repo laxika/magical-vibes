@@ -39,8 +39,8 @@ public sealed interface Trigger permits AbilityTrigger, AttachTrigger, ChapterTr
      * moved off the legacy view in runs 16b to 16d, the "at the beginning of [step or phase]" triggers (family 1,
      * run 16e), the combat triggers (family 3, run 16f), the damage triggers (family 4, run 16g), the counter
      * triggers (family 5, run 16h), the becomes-the-target triggers (family 6, run 16i), the library, draw and
-     * discard triggers (family 7, run 16j), the tap and untap triggers (family 8, run 16k) and the life gain, loss and
-     * payment triggers (family 9, run 16l). An ability with such a trigger and another (MACH-1's "when this enters and
+     * discard triggers (family 7, run 16j), the tap and untap triggers (family 8, run 16k), the life gain, loss and
+     * payment triggers (family 9, run 16l) and the Saga chapter and final-chapter triggers (family 10, run 16m). An ability with such a trigger and another (MACH-1's "when this enters and
      * whenever you gain life") keeps a legacy view for the other's collectors
      * ({@code TriggeredAbility.hasLegacyView()}).
      */

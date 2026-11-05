@@ -14,11 +14,13 @@ import java.util.List;
  * (effect-slot-refactor.md step 13, family 10). Each constant is named after the slot whose collector it stands for
  * and names the trigger its cards were converted to and the zone the collector reads them in. The collectors in
  * {@code TriggerCollectionService} still decide when the ability triggers and which event data it is bound to, as the
- * slot's did, until step 15 of the refactor replaces them with effects that read the event. They read the abilities in
- * the legacy form ({@code TriggeredAbility.legacyEffects()}): "triggers only once each turn" as the keyed
- * {@code OncePerTurnTriggerEffect} the dispatcher judges (step 14, run 14). A Saga's own chapter abilities are not read
- * through a watch: {@code SagaChapterService} and {@code StepTriggerService} read them by their chapter trigger, and
- * they take no options (CR 714.2b).
+ * slot's did, until step 15 of the refactor replaces them with effects that read the event.
+ * <p>
+ * Every collector of these watches reads the abilities themselves ({@link Trigger#collectedAsAbility()}), through
+ * {@link SagaAbilityReader}: "triggers only once each turn" comes from the ability, and the legacy view gives none of
+ * them, so {@link #effectsOf} and {@link #registrationsOf} throw. A Saga's own chapter abilities are not read through a
+ * watch: {@code SagaChapterService} and {@code StepTriggerService} read them by their chapter trigger, and they take
+ * no options (CR 714.2b).
  */
 public enum SagaWatch implements TriggerWatch {
     /** "Whenever the final chapter ability of a Saga you control resolves". */
@@ -44,13 +46,15 @@ public enum SagaWatch implements TriggerWatch {
         return zone;
     }
 
+    /** Throws: the collectors of a Saga watch read its abilities themselves ({@link SagaAbilityReader}). */
     @Override
     public List<CardEffect> effectsOf(Card card) {
-        return card.getLegacyTriggerEffects(trigger, zone);
+        throw new UnsupportedOperationException(name() + " is read by abilities, not by effects");
     }
 
+    /** Throws: the collectors of a Saga watch read its abilities themselves ({@link SagaAbilityReader}). */
     @Override
     public List<EffectRegistration> registrationsOf(Card card) {
-        return card.getLegacyTriggerEffectRegistrations(trigger, zone);
+        throw new UnsupportedOperationException(name() + " is read by abilities, not by effects");
     }
 }

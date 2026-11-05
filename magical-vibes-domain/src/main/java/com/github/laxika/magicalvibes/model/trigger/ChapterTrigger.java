@@ -18,6 +18,16 @@ public record ChapterTrigger(int chapter) implements Trigger {
         }
     }
 
+    /**
+     * The chapter readers ({@code SagaChapterService}, {@code StepTriggerService}) read this trigger's abilities
+     * themselves, and they take no options (CR 714.2b: the lore threshold is the chapter's only intervening "if"), so
+     * it has no legacy view.
+     */
+    @Override
+    public boolean collectedAsAbility() {
+        return true;
+    }
+
     /** The chapter's Roman numeral, as printed (CR 714.2a): "III" for chapter 3. */
     public String numeral() {
         return chapter <= NUMERALS.length ? NUMERALS[chapter - 1] : String.valueOf(chapter);

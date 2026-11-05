@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; run 16l, family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader`; runs 16m onward left: the rest of the legacy view's retirement, family by family, with the may-unwrapping, `TriggerMode`, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; run 16l, family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader`; run 16m, family 10 (sagas): no chapter or final-chapter ability has a legacy view, and the final-chapter collectors read the abilities through `SagaAbilityReader`; runs 16n onward left: the rest of the legacy view's retirement, family by family, with the may-unwrapping, `TriggerMode`, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -614,7 +614,8 @@ no other family still uses. The order:
 | 16j | Step 13's family 7 (library, draw and discard): every draw, discard, cycle, scry, surveil, library search and shuffle collector reads the abilities through `LibraryAbilityReader` (filter, own event, count and limit from the ability); no library ability has a legacy view, and `CyclingTriggerEffect`, `OpponentCausedDiscardTriggerEffect`, `NthCardDrawTriggerEffect`, `FirstOrSecondCardDrawTriggerEffect`, `ExceptFirstDrawStepTriggerEffect`, `FirstDrawStepDrawOnlyTriggerEffect`, `DrawTriggerEffect` and the four counting `OncePerTurnTriggerEffect` factories are gone |
 | 16k | Step 13's family 8 (tap and untap): every tap, untap and tap-for-mana collector reads the abilities through `TapAbilityReader` (filter, "for the first time during your turn", "one or more" and limit from the ability); no tap ability has a legacy view, and `OncePerTurnPerCreatureTriggerEffect`'s `global` component is gone |
 | 16l | Step 13's family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader` (own event, "for the first time each turn" and limit from the ability); no life ability has a legacy view, an ability with a life and a legacy condition (MACH-1) keeps one for the other condition only, and `FirstOpponentLifeLossEachTurnTriggerEffect` and `OncePerTurnTriggerEffect`'s `firstLifeGain` / `firstLifeLoss` components are gone |
-| 16m onward | The rest of the legacy view's retirement, family by family: each family's collectors read the ability's options, filters and grouping (no `TriggerMode`), then the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
+| 16m | Step 13's family 10 (sagas): no chapter or final-chapter ability has a legacy view; the final-chapter collectors read the abilities through `SagaAbilityReader` ("triggers only once each turn" from the ability), and the ability rejects the options they don't read as it is built |
+| 16n onward | The rest of the legacy view's retirement, family by family: each family's collectors read the ability's options, filters and grouping (no `TriggerMode`), then the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
 
 Mark the step `done` only after the last run of 16.
 
@@ -8384,6 +8385,93 @@ ability; both mark `limitKey()` in `keyedOncePerTurnTriggersFiredThisTurn`, so t
   `DamageTriggerCollectorServiceTest` 5, `SpellCastTriggerCollectorServiceTest` 2, `LandTapTriggerCollectorServiceTest`
   2, and the known one each in `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and
   `CardEffectTargetingConsistencyTest`. `LifeTriggerTest`, `LifeWatchTest` and `EnterTriggerCollectorServiceTest` pass.
+- Engine: the whole module, with the one failure at HEAD, `GameMutationBoundaryRatchetTest`.
+- AI: the whole module (1,620 tests), with the same 10 failures as before.
+- The full suite was not run here.
+
+#### Run 16m: sagas read the ability
+
+Step 13's family 10, next in 16a's order after life, as 16l's findings listed the families left: no Saga ability (a
+chapter ability, a `ChapterTrigger`, or "whenever the final chapter ability of a Saga you control triggers / resolves",
+a `FinalChapterTrigger`) has a legacy view any more, and every reader of one reads the ability.
+
+**What the scan found.** A grep of every card class: 771 chapter registrations in 214 card classes, which take no
+options (run 14), and 3 final-chapter abilities (Tom Bombadil; Narci, Fable Singer; Historian's Boon), each of one
+effect and `TriggerMode.NORMAL`, with no granted or temporary one. Tom Bombadil's "this ability triggers only once each
+turn" is the family's only option. No card changed.
+
+**The model.** `ChapterTrigger.collectedAsAbility()` and `FinalChapterTrigger.collectedAsAbility()` are true:
+`TriggeredAbility.legacyEffects()`, the `getLegacy…` getters and `SagaWatch.effectsOf` / `registrationsOf` throw for a
+Saga ability, and the card's slot index leaves Saga abilities out of its legacy maps. The chapter readers
+(`SagaChapterService`, `StepTriggerService`, the `PermanentCounterSupport` fallback, `initializeReturnedSaga`,
+`TargetLegalityService`) already read the plain effects (`getTriggerEffects(Triggers.chapter(n))`), so nothing of theirs
+changed. The legacy view's final-chapter check (`requireFinalChapterOptions`) moved into the `TriggeredAbility`
+constructor, as runs 16k and 16l did for "one or more": an ability with a final-chapter condition is rejected as it is
+built with an intervening "if", "do this only once each turn", `ONCE` or "one or more", as before, and now also with an
+event condition (**CR 603.2**, checked), which no final-chapter collector checks (the legacy view handed the handler the
+`atTriggerTime` wrapper, which it put on the stack unjudged; no card wrote one).
+
+**The engine.**
+
+- New `SagaAbilityReader` (`service/trigger`, static), `CounterAbilityReader`'s shape on `WatchedAbilities`' finders:
+  each effect as a `SagaEffect` with its ability and the limit (`limitReached` / `markLimit` by `limitKey()`,
+  `triggersOnlyOnceEachTurn()`). It throws on a registration's trigger mode, which the collectors don't read.
+- `TriggerCollectionService.dispatchWatch` has a Saga branch, `dispatchSagaWatch` (`dispatchCounterWatch`'s shape): it
+  reads the printed abilities (text-changed, CR 612.1) and those static abilities grant, judges the limit before the
+  ability's effects are dispatched and marks it once one triggered, and passes "triggers only once each turn" to the
+  dispatch, so nothing makes the ability trigger additional times. Where the generic branch read the legacy view, the
+  keyed `OncePerTurnTriggerEffect` was judged and marked the same way, by `OncePerTurnTriggerSupport`, in the same
+  `keyedOncePerTurnTriggersFiredThisTurn` set, and the wrapper as the match's raw effect said "triggers only once each
+  turn".
+- `SagaTriggerCollectorService`'s handler is unchanged: it still gets each effect on its own.
+
+**Behaviour changes.** None known: the collectors judge the same limit, by the same key, at the same point, and pass the
+same "triggers only once each turn". The new rejection of an event condition on a final-chapter ability changes no
+card.
+
+**Kept, with their reason.**
+
+- The final-chapter handler still puts each effect of an ability on its own stack entry (every final-chapter ability
+  has one effect); grouping by ability is the later cleanup with combat's, counters' and the self-untap handler's.
+- Run 10's and 14's Saga items (the duplicated chapter logic, chapter I of a returned Saga without targeting, the final
+  chapter recognised by the stack entry's description, proliferate not triggering chapters, Copy Enchantment's Saga copy
+  without a lore counter) and step 15's (the Saga's mana value bound by the handler, the Saga-specific chapter target
+  records).
+- `OncePerTurnTriggerEffect` and `OnceOnlyTriggerEffect` stay: the other families' legacy views (misc, action, zone
+  changes, the own enters collector) still build them.
+
+**For 16n onward.**
+
+- The families left on the legacy view (misc, player and keyword actions, zone changes, the own enters abilities), as
+  16a planned; each can reuse `WatchedAbilities` and a reader of `SagaAbilityReader`'s or `LifeAbilityReader`'s shape.
+  When the own enters abilities leave the legacy view, MACH-1's limit is read from the ability by both collectors and
+  `hasLegacyView()` can go with the legacy view.
+- Combat's, counters', the self-untap handler's and the final-chapter handler's grouping by ability, and the "when you
+  cast this spell" merges (16d, 16f).
+
+**Tests changed.**
+
+- `SagaTriggerTest`: the two legacy-view tests became: no legacy view for a chapter or final-chapter ability (the
+  abilities, the getters and the watch throw; the plain effects still read), the reader's limit marked by the ability
+  (not the unkeyed mark), a final-chapter ability without a limit read with every effect and rejected by the other
+  watch, the options no collector reads rejected as the ability is built (the event condition added, through
+  `Card.addTrigger` too), and a trigger mode rejected by the reader.
+- `SagaWatchTest#aWatchReadsOnlyTheAbilitiesOfItsTrigger` reads through the reader;
+  `aWatchHandsTheCollectorTheLimitAsTheKeyedWrapperWithAStableIdentity` is gone with the wrapper.
+
+**Test runs.**
+
+- Card: the test class of every card with a chapter or final-chapter ability or the Saga subtype, every card test that
+  mentions lore counters, a Saga or a chapter, and every card test that constructs one of those cards (300 classes,
+  3,097 tests): all passing.
+- Application: the `service.trigger` and `model.trigger` packages and the freeze, triggered-ability, card-ability,
+  granted-ability, simulation-copy, architecture, targeting-consistency, step-trigger, stack-resolution, state-based
+  action, legacy-slot, pipeline, deep-copy, Saga chapter, trigger-options, counter-support and exile-and-return classes
+  (1,077 tests): 47 failures, all failing at HEAD: `StepTriggerServiceTest` 16 and `StateBasedActionServiceTest` 13
+  (mock wiring, as runs 10 and 16a found them), `DeathTriggerCollectorServiceTest` 6,
+  `DamageTriggerCollectorServiceTest` 5, `SpellCastTriggerCollectorServiceTest` 2, `LandTapTriggerCollectorServiceTest`
+  2, and the known one each in `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and
+  `CardEffectTargetingConsistencyTest`. No test with Saga, lore or chapter in its name failed (44 ran).
 - Engine: the whole module, with the one failure at HEAD, `GameMutationBoundaryRatchetTest`.
 - AI: the whole module (1,620 tests), with the same 10 failures as before.
 - The full suite was not run here.

@@ -15,6 +15,15 @@ public record FinalChapterTrigger(FinalChapterEvent event) implements Trigger {
         Objects.requireNonNull(event, "event");
     }
 
+    /**
+     * The final-chapter collectors read this trigger's abilities themselves ({@code SagaAbilityReader}): "triggers only
+     * once each turn" comes from the ability, so it has no legacy view.
+     */
+    @Override
+    public boolean collectedAsAbility() {
+        return true;
+    }
+
     /** What happens to the final chapter ability of a Saga you control. */
     public enum FinalChapterEvent {
         /** It triggers: it is put on the stack, before its targets are chosen. */
