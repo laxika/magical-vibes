@@ -144,10 +144,6 @@ class SpellAbilityTriggerTest {
         // The land-play collectors read every land-play ability itself, its options included.
         assertThat(card.getTriggerEffects(Triggers.youPlayLand(), Zone.BATTLEFIELD)).containsExactly(GAIN);
         assertThat(card.getTriggerEffects(Triggers.opponentPlaysLand(), Zone.BATTLEFIELD)).isEmpty();
-        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.youPlayLand(), Zone.BATTLEFIELD))
-                .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> card.getLegacyTriggerEffectRegistrations(card.getTriggeredAbilities().getLast()))
-                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -212,8 +208,6 @@ class SpellAbilityTriggerTest {
 
         // The unfiltered trigger finds only its own ability; no cast ability is in the legacy view.
         assertThat(card.getTriggerEffects(Triggers.youCastSpell(), Zone.BATTLEFIELD)).containsExactly(LOSE);
-        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.youCastSpell(), Zone.BATTLEFIELD))
-                .isInstanceOf(IllegalArgumentException.class);
         assertThat(granted.hasWatchedTrigger(Triggers.youCastSpell())).isFalse();
         assertThat(granted.hasTrigger(Triggers.youCastSpell())).isFalse();
     }
@@ -245,8 +239,6 @@ class SpellAbilityTriggerTest {
                 .isEqualTo(SpellFilter.ANY.withStackEntry(new StackEntryKickedPredicate()));
         // The spell-copy collector reads a filtered copy ability itself, not through the legacy view.
         assertThat(card.getTriggerEffects(Triggers.youCopySpell(), Zone.BATTLEFIELD)).isEmpty();
-        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.opponentCopiesSpell(), Zone.BATTLEFIELD))
-                .isInstanceOf(IllegalArgumentException.class);
         // A copy isn't cast: what the copied spell is is all a copy trigger can say.
         assertThatThrownBy(() -> Triggers.youCopySpell().nthThisTurn(1)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> Triggers.youCopySpell().castFrom(Zone.HAND))

@@ -32,8 +32,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.extern.slf4j.Slf4j;
@@ -949,7 +947,7 @@ public class TurnCleanupService {
             List<Permanent> bf = gameData.playerBattlefields.get(otherPlayerId);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                boolean hasChosenPlayer = perm.getCard().getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
+                boolean hasChosenPlayer = perm.getCard().getOwnEntryEffects().stream()
                         .anyMatch(RememberTargetPlayerEffect.class::isInstance);
                 boolean choosesOpponentAsEnters = perm.getCard().getStaticEffects().stream()
                         .anyMatch(com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect.class::isInstance);

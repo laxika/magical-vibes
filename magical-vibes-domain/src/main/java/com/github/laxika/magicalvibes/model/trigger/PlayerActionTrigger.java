@@ -46,16 +46,6 @@ public record PlayerActionTrigger(PlayerAction action, PlayerRelation player, Ca
         return filter == null ? this : new PlayerActionTrigger(action, player);
     }
 
-    /**
-     * The player and keyword action collectors ({@code ActionWatch}) read this trigger's abilities themselves
-     * ({@code ActionAbilityReader}), and so do those of "you fully unlock a Room" ({@code MiscWatch},
-     * {@code MiscAbilityReader}), so it has no legacy view.
-     */
-    @Override
-    public boolean collectedAsAbility() {
-        return true;
-    }
-
     /** What a player does, or what happens to them. */
     public enum PlayerAction {
         /** The player sets a scheme in motion (Archenemy). */

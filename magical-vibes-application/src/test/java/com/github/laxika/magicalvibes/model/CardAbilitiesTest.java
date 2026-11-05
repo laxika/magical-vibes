@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SerumPowderEffect;
@@ -520,33 +519,34 @@ class CardAbilitiesTest {
     }
 
     @Test
-    void theLegacyViewWrapsEachEffectInItsAbilitysInterveningIfOnce() {
+    void theOwnEntryEffectsWrapEachEffectInItsAbilitysInterveningIfOnce() {
         ControllerLifeAtMost lowLife = new ControllerLifeAtMost(10);
         card.addTrigger(Triggers.enters(ObjectRelation.THIS), DRAW_ONE);
         card.addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerOptions.DEFAULT.withInterveningIf(lowLife),
                 GAIN_ONE);
 
-        List<CardEffect> legacy = card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS));
+        List<CardEffect> ownEntry = card.getOwnEntryEffects();
 
-        assertThat(legacy).containsExactly(DRAW_ONE, new ConditionalEffect(lowLife, GAIN_ONE, true));
-        assertThat(legacy.getFirst()).isSameAs(DRAW_ONE);
-        // Built once with the index, so the wrapped effect keeps its identity across reads.
-        assertThat(card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)).get(1)).isSameAs(legacy.get(1));
+        assertThat(ownEntry).containsExactly(DRAW_ONE, new ConditionalEffect(lowLife, GAIN_ONE, true));
+        assertThat(ownEntry.getFirst()).isSameAs(DRAW_ONE);
+        // Built once with the index, so the wrapped effect keeps its identity across reads, by ability too.
+        assertThat(card.getOwnEntryEffects().get(1)).isSameAs(ownEntry.get(1));
+        assertThat(card.getOwnEntryEffectRegistrations(card.getOwnEntryAbilities().get(1)).getFirst().effect())
+                .isSameAs(ownEntry.get(1));
         assertThat(card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS))).containsExactly(DRAW_ONE, GAIN_ONE);
     }
 
     @Test
-    void theLegacyViewKeysALimitByItsAbility() {
+    void theOwnEntryEffectsLeaveALimitToTheCollector() {
         TriggeredAbility ability = new TriggeredAbility(List.of(
                 new TriggerCondition(Triggers.enters(ObjectRelation.THIS)),
                 new TriggerCondition(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL))),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), List.of(new EffectRegistration(DRAW_ONE)));
         card.addTriggeredAbility(ability);
 
-        assertThat(card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)))
-                .containsExactly(OncePerTurnTriggerEffect.keyed(DRAW_ONE, ability.limitKey()));
-        assertThat(card.getLegacyTriggerEffectRegistrations(Triggers.enters(ObjectRelation.THIS)))
-                .extracting(EffectRegistration::effect)
-                .containsExactlyElementsOf(card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)));
+        assertThat(card.getOwnEntryAbilities()).containsExactly(ability);
+        assertThat(card.getOwnEntryEffects()).containsExactly(DRAW_ONE);
+        assertThat(card.getOwnEntryEffectRegistrations()).extracting(EffectRegistration::effect)
+                .containsExactlyElementsOf(card.getOwnEntryEffects());
     }
 }

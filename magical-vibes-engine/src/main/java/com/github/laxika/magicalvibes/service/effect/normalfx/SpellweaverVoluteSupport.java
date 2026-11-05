@@ -7,8 +7,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingSpellweaverVoluteReattachment;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.SpellweaverVoluteEnterEffect;
-import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -46,7 +44,7 @@ public class SpellweaverVoluteSupport {
     public boolean isSpellweaverVolute(Card card) {
         return card.getSpellEffects().stream()
                 .anyMatch(SpellweaverVoluteEnterEffect.class::isInstance)
-                || card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
+                || card.getOwnEntryEffects().stream()
                 .anyMatch(SpellweaverVoluteEnterEffect.class::isInstance);
     }
 

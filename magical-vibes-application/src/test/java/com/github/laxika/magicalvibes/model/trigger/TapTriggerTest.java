@@ -127,12 +127,7 @@ class TapTriggerTest {
         Permanent permanent = new Permanent(new Card());
         permanent.addTemporaryAbility(ability);
 
-        assertThat(ability.collectedAsAbility()).isTrue();
-        assertThatThrownBy(ability::legacyEffects).isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.permanentYouControlBecomesTapped()))
-                .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> permanent.getLegacyTemporaryTriggerEffects(
-                Triggers.permanentYouControlBecomesTapped())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(ability::ownEntryEffects).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED.effectsOf(card))
                 .isInstanceOf(UnsupportedOperationException.class);
         assertThatThrownBy(() -> TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED.registrationsOf(card))

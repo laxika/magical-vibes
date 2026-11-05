@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.Ability;
-import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.ai.simulation.GameSimulator;
@@ -910,7 +908,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (isSingleEffectRemoval(effect)) return CombatRelevance.REMOVAL;
         }
-        for (CardEffect effect : card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
+        for (CardEffect effect : card.getOwnEntryEffects()) {
             if (isSingleEffectRemoval(effect)) return CombatRelevance.REMOVAL;
         }
 
@@ -961,7 +959,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         for (CardEffect effect : spell.getCastingCostsAndSpellEffects()) {
             if (canSingleEffectRemoveCreature(gameData, spell, effect, creature)) return true;
         }
-        for (CardEffect effect : spell.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
+        for (CardEffect effect : spell.getOwnEntryEffects()) {
             if (canSingleEffectRemoveCreature(gameData, spell, effect, creature)) return true;
         }
         return false;
@@ -2846,7 +2844,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      * enter-the-battlefield effects (useful for prioritizing draw-first casting).
      */
     private boolean hasCardDrawEtb(Card card) {
-        for (CardEffect effect : card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
+        for (CardEffect effect : card.getOwnEntryEffects()) {
             if (effect instanceof CardDrawingEffect) {
                 return true;
             }

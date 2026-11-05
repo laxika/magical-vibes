@@ -109,13 +109,7 @@ class TargetTriggerTest {
         Permanent permanent = new Permanent(new Card());
         permanent.addTemporaryAbility(ability);
 
-        assertThat(Triggers.becomesTargetOfSpellOrAbility().collectedAsAbility()).isTrue();
-        assertThat(ability.collectedAsAbility()).isTrue();
-        assertThatThrownBy(ability::legacyEffects).isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.becomesTargetOfSpellOrAbility(),
-                Zone.BATTLEFIELD)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> permanent.getLegacyTemporaryTriggerEffects(Triggers.becomesTargetOfSpellOrAbility()))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(ability::ownEntryEffects).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> TargetWatch.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY.effectsOf(card))
                 .isInstanceOf(UnsupportedOperationException.class);
         assertThatThrownBy(() -> TargetWatch.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY.registrationsOf(card))

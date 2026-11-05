@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfPermanentDefendi
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.OnceOnlyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -512,7 +511,6 @@ public class TriggerTargetCollector {
             case MayPayManaEffect mayPay -> effectiveTargetEffect(
                     mayPay.wrapped(), mayPay.elseEffect(), effect);
             case OncePerTurnTriggerEffect once -> once.wrapped();
-            case OnceOnlyTriggerEffect once -> once.wrapped();
             default -> effect;
         };
         return options.unwrapConditional() && unwrapped instanceof ConditionalEffect ce ? ce.wrapped() : unwrapped;

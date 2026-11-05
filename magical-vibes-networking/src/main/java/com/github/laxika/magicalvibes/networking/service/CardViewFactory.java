@@ -38,8 +38,6 @@ import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PayXEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.networking.model.ActivatedAbilityView;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.ModalOptionView;
@@ -405,7 +403,7 @@ public class CardViewFactory {
         for (CardEffect e : card.getCastingCostsAndSpellEffects()) {
             if (e instanceof ChooseOneEffect coe) return coe;
         }
-        for (CardEffect e : card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
+        for (CardEffect e : card.getOwnEntryEffects()) {
             if (e instanceof ChooseOneEffect coe) return coe;
         }
         return null;

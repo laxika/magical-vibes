@@ -17,7 +17,7 @@ import java.util.List;
  * the ability triggers and how its effects group into stack objects, and its {@link CollectsCounterTrigger} handlers
  * bind the event data, as the slot's did, until step 15 of the refactor replaces them with effects that read the event.
  * <p>
- * Every collector of these watches reads the abilities themselves ({@link Trigger#collectedAsAbility()}), through
+ * Every collector of these watches reads the abilities themselves, through
  * {@link CounterAbilityReader}: the trigger's filter on the permanent, "you put" or "you remove", "once for each
  * counter" and the limit come from the ability, and the legacy view gives none of them, so {@link #effectsOf} and
  * {@link #registrationsOf} throw.

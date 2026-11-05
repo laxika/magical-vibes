@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.service.target;
 
-import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -195,7 +193,7 @@ public class ValidTargetService {
         boolean isMultiTarget = card.getMaxTargets() > 1 || modalTargetFilters.size() > 1;
 
         List<CardEffect> spellEffects = card.getCastingCostsAndSpellEffects();
-        List<CardEffect> etbEffects = card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS));
+        List<CardEffect> etbEffects = card.getOwnEntryEffects();
         if (spellEffects.stream()
                 .filter(com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect.class::isInstance)
                 .map(com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect.class::cast)
@@ -695,7 +693,7 @@ public class ValidTargetService {
         for (CardEffect e : card.getCastingCostsAndSpellEffects()) {
             if (e instanceof ChooseOneEffect coe) return coe;
         }
-        for (CardEffect e : card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
+        for (CardEffect e : card.getOwnEntryEffects()) {
             if (e instanceof ChooseOneEffect coe) return coe;
         }
         return null;
@@ -1772,7 +1770,7 @@ public class ValidTargetService {
                     gameData, card, controllerId, xValue, Boolean.TRUE.equals(kicked)).isEmpty();
         }
         Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(
-                spellEffects, card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)),
+                spellEffects, card.getOwnEntryEffects(),
                 card.isAuraThatRequiresAttachment(), card.isEnchantPlayer());
         boolean isMultiTarget = card.getMaxTargets() > 1;
         boolean hasValidPermanentTargetSet = card.getMultiTargetConstraint()

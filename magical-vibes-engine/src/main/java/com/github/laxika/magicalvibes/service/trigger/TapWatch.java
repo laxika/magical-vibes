@@ -17,7 +17,7 @@ import java.util.List;
  * which event data it is bound to, as the slot's did, until step 15 of the refactor replaces them with effects that
  * read the event.
  * <p>
- * Every collector of these watches reads the abilities themselves ({@link Trigger#collectedAsAbility()}), through
+ * Every collector of these watches reads the abilities themselves, through
  * {@link TapAbilityReader}: the tapped or untapped permanent's filter, "this permanent", "for the first time during
  * your turn", "one or more" and the limit come from the ability, and the legacy view gives none of them, so
  * {@link #effectsOf} and {@link #registrationsOf} throw.

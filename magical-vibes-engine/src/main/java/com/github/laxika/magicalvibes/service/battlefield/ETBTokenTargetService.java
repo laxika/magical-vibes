@@ -31,7 +31,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
-import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -1032,7 +1031,7 @@ public class ETBTokenTargetService {
                 // An evoked permanent's independent ETB abilities and its evoke sacrifice trigger
                 // together, so its controller may order them (CR 603.3b).
                 if (pending.triggeringCardId() == null && sourcePermanent.isEvoked()
-                        && card.getLegacyTriggerEffectRegistrations(Triggers.enters(ObjectRelation.THIS)).stream()
+                        && card.getOwnEntryEffectRegistrations().stream()
                         .anyMatch(registration -> registration.triggerMode() == TriggerMode.INDEPENDENT)) {
                     etbEntry.setTriggeringCardId(card.getId());
                 }

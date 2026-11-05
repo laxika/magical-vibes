@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  * Reads the library, draw and discard abilities (a {@link LibraryTrigger}: a player draws a card, CR 121.1, discards
  * one, CR 701.9a, or cycles one, scries, CR 701.22a, surveils, CR 701.25a, searches their library, CR 701.23a, or
  * shuffles it, CR 701.24a), as {@link WatchedAbilities} finds them, for the {@link LibraryWatch} collectors, which have
- * no legacy view of them ({@link LibraryTrigger#collectedAsAbility()}). The collectors judge the ability's
+ * no legacy view of them. The collectors judge the ability's
  * trigger-level parts from the ability itself: the discarded card's filter ({@link LibraryEffect#filter()}, the
  * trigger's {@link LibraryTrigger#qualifier()}), the event a collector of another event reads
  * ({@link LibraryEffect#event()}: "you cycle a card", "an opponent causes you to discard a card", a draw in or out of a

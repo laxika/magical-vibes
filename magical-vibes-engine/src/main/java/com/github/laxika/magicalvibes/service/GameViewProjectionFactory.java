@@ -32,8 +32,6 @@ import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect
 import com.github.laxika.magicalvibes.model.effect.PubliclyRevealedHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
 import com.github.laxika.magicalvibes.model.effect.WebSlingingEffect;
-import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
 import com.github.laxika.magicalvibes.networking.message.JoinGame;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -300,11 +298,11 @@ public class GameViewProjectionFactory {
                             com.github.laxika.magicalvibes.model.effect.ExileTopCardFaceDownInsteadOfDrawReplacement.class::isInstance)) {
                         continue;
                     }
-                    if (p.getCard().getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream().anyMatch(
+                    if (p.getCard().getOwnEntryEffects().stream().anyMatch(
                             com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToExileFaceDownPileEffect.class::isInstance)) {
                         continue;
                     }
-                    boolean exiledFaceDownFromHandOnEnter = p.getCard().getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
+                    boolean exiledFaceDownFromHandOnEnter = p.getCard().getOwnEntryEffects().stream()
                             .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.MayEffect may
                                     && may.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect imprint
                                     && imprint.faceDown());

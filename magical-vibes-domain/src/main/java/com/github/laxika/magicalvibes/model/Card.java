@@ -40,7 +40,6 @@ import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.OnceOnlyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.RollD6Effect;
@@ -1074,7 +1073,6 @@ public class Card {
                 }
             }
             case OncePerTurnTriggerEffect e -> bindEffectToTargetGroup(e.wrapped(), targetIndex);
-            case OnceOnlyTriggerEffect e -> bindEffectToTargetGroup(e.wrapped(), targetIndex);
             // Ally combat-damage triggers resolve their wrapped effect when the trigger fires;
             // preserve its target-group binding for deferred trigger-time target selection.
             case AllyCombatDamageTriggerEffect e -> bindEffectToTargetGroup(e.effect(), targetIndex);
@@ -1429,8 +1427,8 @@ public class Card {
         if (effect instanceof ConditionalEffect conditional) {
             return targetIndicesForEffect(conditional.wrapped());
         }
-        // The legacy view of a triggered ability (TriggeredAbility.legacyEffects()) wraps the effects the card bound
-        // in the wrappers its collector judges; they target through the effect they wrap.
+        // A trigger-level wrapper a card still authors (a keyed "triggers only once each turn", a triggering-card
+        // filter) targets through the effect it wraps.
         if (effect instanceof OncePerTurnTriggerEffect once) {
             return targetIndicesForEffect(once.wrapped());
         }
@@ -2028,30 +2026,38 @@ public class Card {
     }
 
     /**
-     * The effects of this card's triggered abilities that have {@code trigger} as one of their trigger conditions, in
-     * the form the code that still reads effects instead of abilities takes them: each effect wrapped in its ability's
-     * options ({@link TriggeredAbility#legacyEffects()}), so an intervening "if" is a {@code ConditionalEffect}. The
-     * "when this enters" collector and the code that inspects "when this enters" abilities read these until they read
-     * abilities. The wrapped effects are built once, with the index, so they keep their identity across calls. An
-     * ability is found by its trigger's {@link Trigger#watchKey()}, so an ability whose collector judges a filter from
-     * a wrapper is found by the unfiltered trigger, with the filter as a wrapper. Only "when this enters" and a legacy
-     * slot trigger have a legacy view: any other ({@link Trigger#collectedAsAbility()}) throws.
+     * The effects of this card's "when this enters" abilities ({@link TriggeredAbility#hasOwnEntry()}, CR 603.6a), in
+     * the order the abilities were added, each in the form {@link TriggeredAbility#ownEntryEffects()} gives: the
+     * intervening "if" a {@code ConditionalEffect} around it. The "when this enters" collector and the code that
+     * inspects a card's enters abilities (targeting, kicker and modal checks, the AI, the card view) read these until
+     * step 15 of effect-slot-refactor.md. The wrapped effects are built once, with the index, so they keep their
+     * identity across calls.
      */
-    public List<CardEffect> getLegacyTriggerEffects(Trigger trigger) {
-        TriggeredAbility.requireLegacyView(trigger);
-        TriggerView view = slotIndex().legacyByTrigger().get(trigger);
-        return view == null ? List.of() : view.effects();
+    public List<CardEffect> getOwnEntryEffects() {
+        return slotIndex().ownEntry().effects();
     }
 
     /**
-     * The registrations of this card's triggered abilities that have {@code trigger} as one of their trigger
-     * conditions, with their trigger modes, each effect wrapped in its ability's options as
-     * {@link #getLegacyTriggerEffects(Trigger)} says.
+     * The registrations of this card's "when this enters" abilities, with their trigger modes, each effect in the form
+     * {@link #getOwnEntryEffects()} says.
      */
-    public List<EffectRegistration> getLegacyTriggerEffectRegistrations(Trigger trigger) {
-        TriggeredAbility.requireLegacyView(trigger);
-        TriggerView view = slotIndex().legacyByTrigger().get(trigger);
-        return view == null ? List.of() : view.registrations();
+    public List<EffectRegistration> getOwnEntryEffectRegistrations() {
+        return slotIndex().ownEntry().registrations();
+    }
+
+    /** This card's "when this enters" abilities ({@link TriggeredAbility#hasOwnEntry()}), in the order they were added. */
+    public List<TriggeredAbility> getOwnEntryAbilities() {
+        return getTriggeredAbilities().stream().filter(TriggeredAbility::hasOwnEntry).toList();
+    }
+
+    /**
+     * The registrations of {@code ability}, one of this card's "when this enters" abilities, in the form
+     * {@link #getOwnEntryEffects()} says, with the identity those keep across calls: for the collector, which judges
+     * each ability's limit before it reads its effects.
+     */
+    public List<EffectRegistration> getOwnEntryEffectRegistrations(TriggeredAbility ability) {
+        List<EffectRegistration> ownEntry = slotIndex().ownEntryByAbility().get(ability);
+        return ownEntry != null ? ownEntry : ability.ownEntryEffects();
     }
 
     /**
@@ -2080,47 +2086,6 @@ public class Card {
         return registrations;
     }
 
-    /**
-     * The effects of this card's triggered abilities that have {@code trigger} as a trigger condition functioning in
-     * {@code zone}, each wrapped in its ability's options as {@link #getLegacyTriggerEffects(Trigger)} says: the form
-     * the collectors that still read effects by zone take them in (by the trigger's {@link Trigger#watchKey()}, as
-     * {@link #getLegacyTriggerEffects(Trigger)} says). The wrapped effects are the ones
-     * {@link #getLegacyTriggerEffects(Trigger)} gives, so they keep their identity across calls.
-     */
-    public List<CardEffect> getLegacyTriggerEffects(Trigger trigger, Zone zone) {
-        return getLegacyTriggerEffectRegistrations(trigger, zone).stream().map(EffectRegistration::effect).toList();
-    }
-
-    /**
-     * The registrations of this card's triggered abilities that have {@code trigger} as a trigger condition
-     * functioning in {@code zone}, with their trigger modes, each effect wrapped in its ability's options as
-     * {@link #getLegacyTriggerEffects(Trigger, Zone)} says.
-     */
-    public List<EffectRegistration> getLegacyTriggerEffectRegistrations(Trigger trigger, Zone zone) {
-        TriggeredAbility.requireLegacyView(trigger);
-        SlotIndex index = slotIndex();
-        if (!index.legacyByTrigger().containsKey(trigger)) {
-            return List.of();
-        }
-        List<EffectRegistration> registrations = new ArrayList<>();
-        for (TriggeredAbility ability : getTriggeredAbilities()) {
-            if (ability.hasWatchedTrigger(trigger, zone)) {
-                registrations.addAll(getLegacyTriggerEffectRegistrations(ability));
-            }
-        }
-        return registrations;
-    }
-
-    /**
-     * The registrations of {@code ability}, one of this card's triggered abilities, each wrapped in its options as
-     * {@link #getLegacyTriggerEffects(Trigger)} says, with the identity those keep across calls: for a collector that
-     * reads a card's abilities one at a time, some itself and the others in this form.
-     */
-    public List<EffectRegistration> getLegacyTriggerEffectRegistrations(TriggeredAbility ability) {
-        List<EffectRegistration> legacy = slotIndex().legacyByAbility().get(ability);
-        return legacy != null ? legacy : ability.legacyEffects();
-    }
-
     /** Whether {@code effect} is registered as happening at the same time as the effect before it. */
     public boolean isSimultaneousWithPrevious(CardEffect effect) {
         for (EffectRegistration reg : getSpellEffectRegistrations()) {
@@ -2135,11 +2100,9 @@ public class Card {
                 }
             }
         }
-        for (TriggerView view : slotIndex().legacyByTrigger().values()) {
-            for (EffectRegistration reg : view.registrations()) {
-                if (reg.effect() == effect) {
-                    return reg.simultaneousWithPrevious();
-                }
+        for (EffectRegistration reg : slotIndex().ownEntry().registrations()) {
+            if (reg.effect() == effect) {
+                return reg.simultaneousWithPrevious();
             }
         }
         return false;
@@ -2333,16 +2296,16 @@ public class Card {
      */
     private record SlotIndex(List<SlotView> views, List<StaticAbility> staticAbilities,
                              List<CardEffect> staticEffects, Map<Trigger, TriggerView> byTrigger,
-                             Map<Trigger, TriggerView> legacyByTrigger,
-                             Map<TriggeredAbility, List<EffectRegistration>> legacyByAbility) {
+                             TriggerView ownEntry,
+                             Map<TriggeredAbility, List<EffectRegistration>> ownEntryByAbility) {
 
         static SlotIndex of(List<Ability> abilities) {
             Map<EffectSlot, List<TriggeredAbility>> bySlot = new TreeMap<>();
             List<StaticAbility> statics = new ArrayList<>();
             List<CardEffect> staticEffects = new ArrayList<>();
             Map<Trigger, List<EffectRegistration>> registrationsByTrigger = new LinkedHashMap<>();
-            Map<Trigger, List<EffectRegistration>> legacyRegistrationsByTrigger = new LinkedHashMap<>();
-            Map<TriggeredAbility, List<EffectRegistration>> legacyByAbility = new IdentityHashMap<>();
+            List<EffectRegistration> ownEntryRegistrations = new ArrayList<>();
+            Map<TriggeredAbility, List<EffectRegistration>> ownEntryByAbility = new IdentityHashMap<>();
             for (Ability ability : abilities) {
                 if (ability instanceof StaticAbility statik) {
                     statics.add(statik);
@@ -2353,21 +2316,16 @@ public class Card {
                     triggered.conditions().stream().map(TriggerCondition::trigger).distinct().forEach(trigger ->
                             registrationsByTrigger.computeIfAbsent(trigger, ignored -> new ArrayList<>())
                                     .addAll(triggered.effects()));
-                    // The collectors of a trigger collected as an ability read the ability themselves; an ability
-                    // with another trigger too is in the legacy view only for that one's collectors.
-                    if (!triggered.hasLegacyView()) {
-                        continue;
+                    if (triggered.hasOwnEntry()) {
+                        List<EffectRegistration> ownEntry = triggered.ownEntryEffects();
+                        ownEntryByAbility.put(triggered, ownEntry);
+                        ownEntryRegistrations.addAll(ownEntry);
                     }
-                    List<EffectRegistration> legacy = triggered.legacyEffects();
-                    legacyByAbility.put(triggered, legacy);
-                    triggered.conditions().stream().map(TriggerCondition::trigger)
-                            .filter(trigger -> !trigger.collectedAsAbility()).map(Trigger::watchKey).distinct()
-                            .forEach(trigger -> legacyRegistrationsByTrigger
-                                    .computeIfAbsent(trigger, ignored -> new ArrayList<>()).addAll(legacy));
                 }
             }
             Map<Trigger, TriggerView> byTrigger = viewsByTrigger(registrationsByTrigger);
-            Map<Trigger, TriggerView> legacyByTrigger = viewsByTrigger(legacyRegistrationsByTrigger);
+            TriggerView ownEntry = new TriggerView(List.copyOf(ownEntryRegistrations),
+                    ownEntryRegistrations.stream().map(EffectRegistration::effect).toList());
             List<SlotView> views = new ArrayList<>(bySlot.size());
             bySlot.forEach((slot, slotAbilities) -> {
                 List<EffectRegistration> registrations = new ArrayList<>();
@@ -2378,7 +2336,7 @@ public class Card {
                         registrations.stream().map(EffectRegistration::effect).toList(), slotAbilities.getFirst()));
             });
             return new SlotIndex(List.copyOf(views), List.copyOf(statics), List.copyOf(staticEffects),
-                    byTrigger, legacyByTrigger, Collections.unmodifiableMap(legacyByAbility));
+                    byTrigger, ownEntry, Collections.unmodifiableMap(ownEntryByAbility));
         }
 
         private static Map<Trigger, TriggerView> viewsByTrigger(

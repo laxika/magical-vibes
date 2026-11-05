@@ -99,29 +99,14 @@ class ActionTriggerTest {
         card.addTrigger(Triggers.youSetSchemeInMotion(), DRAW);
 
         assertThat(card.getTriggeredAbilities()).allSatisfy(ability -> {
-            assertThat(ability.collectedAsAbility()).isTrue();
-            assertThat(ability.hasLegacyView()).isFalse();
-            assertThatThrownBy(ability::legacyEffects).isInstanceOf(IllegalStateException.class);
+            assertThat(ability.hasOwnEntry()).isFalse();
+            assertThatThrownBy(ability::ownEntryEffects).isInstanceOf(IllegalStateException.class);
         });
-        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.youCommitCrime()))
-                .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> ActionWatch.ON_CONTROLLER_COMMITS_CRIME.effectsOf(card))
                 .isInstanceOf(UnsupportedOperationException.class);
         assertThatThrownBy(() -> ActionWatch.ON_ALLY_CREATURE_EXPLORES.registrationsOf(card))
                 .isInstanceOf(UnsupportedOperationException.class);
         assertThat(card.getTriggerEffects(Triggers.youCommitCrime())).containsExactly(DRAW);
-    }
-
-    @Test
-    void everyActionTriggerIsReadAsAnAbilityTheMiscActionsIncluded() {
-        assertThat(ActionWatch.values()).allSatisfy(watch ->
-                assertThat(watch.trigger().collectedAsAbility()).as(watch.name()).isTrue());
-        assertThat(List.of(Triggers.youFullyUnlockRoom(), Triggers.crewsVehicle(),
-                Triggers.creatureYouControlCrewsVehicle(), Triggers.saddlesOrCrewsDuringMainPhase(),
-                Triggers.becomesCrewed(), Triggers.becomesCrewedForFirstTimeEachTurn(), Triggers.becomesSaddled(),
-                Triggers.becomesSaddledForFirstTimeEachTurn(), Triggers.becomesStationed(), Triggers.doorUnlocked(),
-                Triggers.doorUnlocked(1))).allSatisfy(trigger ->
-                assertThat(trigger.collectedAsAbility()).as(trigger.toString()).isTrue());
     }
 
     @Test

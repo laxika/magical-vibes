@@ -95,16 +95,6 @@ public record LibraryTrigger(LibraryEvent event, PlayerRelation player, CardPred
     }
 
     /**
-     * The library, draw and discard collectors read this trigger's abilities themselves ({@code LibraryAbilityReader}):
-     * the discarded card's filter, the count of the player's events this turn, the event a collector of another event
-     * reads and the ability's options come from the ability, so it has no legacy view.
-     */
-    @Override
-    public boolean collectedAsAbility() {
-        return true;
-    }
-
-    /**
      * The trigger the {@code LibraryWatch} collectors read this one's abilities by: without its {@link #qualifier} and
      * {@link #nth}, and, for the events no collector of their own reads, with the event whose collector reads them.
      * "You cycle a card" and "an opponent's spell or ability causes you to discard a card" are read by the "you discard

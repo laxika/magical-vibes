@@ -25,7 +25,7 @@ import java.util.UUID;
 /**
  * Reads the life gain, loss and payment abilities (a {@link LifeTrigger}: a player gains, loses or pays life,
  * CR 119.3, 119.4), as {@link WatchedAbilities} finds them, for the {@link LifeWatch} collectors, which have no legacy
- * view of them ({@link LifeTrigger#collectedAsAbility()}). The collectors judge the ability's trigger-level parts from
+ * view of them. The collectors judge the ability's trigger-level parts from
  * the ability itself: its own event ({@link LifeEffect#event()}: "an opponent loses life for the first time during
  * each of their turns" is read by the "an opponent loses life" collector), "for the first time each turn"
  * ({@link LifeEffect#firstTimeEachTurn()}, a count of the player's events) and the limit ({@link LifeEffect#limit()},

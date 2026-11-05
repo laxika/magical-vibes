@@ -8,8 +8,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraToAnotherPermanentOfSameTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeAuraReanimateFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -123,7 +121,7 @@ public class AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler implement
     }
 
     private boolean canMoveAuraTo(Permanent aura, Permanent candidate) {
-        boolean enchantsOnlyReanimatedCreature = aura.getCard().getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
+        boolean enchantsOnlyReanimatedCreature = aura.getCard().getOwnEntryEffects().stream()
                 .anyMatch(BecomeAuraReanimateFromGraveyardEffect.class::isInstance);
         return !enchantsOnlyReanimatedCreature
                 || candidate.getId().equals(aura.getChosenPermanentId());

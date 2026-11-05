@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -2809,7 +2808,7 @@ public class TriggeredAbilityQueueService {
             ExileCardsFromGraveyardEffect enterExile = pending.effects().stream()
                     .filter(ExileCardsFromGraveyardEffect.class::isInstance)
                     .map(ExileCardsFromGraveyardEffect.class::cast)
-                    .filter(exile -> pending.sourceCard().getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)).contains(exile))
+                    .filter(exile -> pending.sourceCard().getOwnEntryEffects().contains(exile))
                     .findFirst()
                     .orElse(null);
             if (enterExile != null) {

@@ -6,12 +6,4 @@ package com.github.laxika.magicalvibes.model.trigger;
  */
 public record DayNightTrigger() implements Trigger {
 
-    /**
-     * The day and night collectors ({@code MiscWatch}) read this trigger's abilities themselves
-     * ({@code MiscAbilityReader}), so it has no legacy view.
-     */
-    @Override
-    public boolean collectedAsAbility() {
-        return true;
-    }
 }

@@ -65,36 +65,12 @@ public class GrantedTriggeredAbilitySupport {
     }
 
     /**
-     * The effects of the abilities with {@code trigger} that other permanents' static abilities grant
-     * {@code permanent}, as it is now: "creatures you control have 'when this creature enters, …'".
+     * The "when this enters" abilities ({@link TriggeredAbility#hasOwnEntry()}) that other permanents' static abilities
+     * grant {@code permanent}, as it is now: "creatures you control have 'when this creature enters, …'".
      */
-    public List<CardEffect> grantedTriggerEffects(GameData gameData, Permanent permanent, Trigger trigger) {
-        return grantedTriggerEffects(gameData, permanent,
-                gameQueryService.computeStaticBonus(gameData, permanent, (UUID) null), trigger);
-    }
-
-    /**
-     * Controller-aware form for collecting abilities from a permanent snapshot after it has left the battlefield.
-     */
-    public List<CardEffect> grantedTriggerEffects(GameData gameData, Permanent permanent, UUID controllerId,
-                                                  Trigger trigger) {
-        return grantedTriggerEffects(gameData, permanent,
-                gameQueryService.computeStaticBonus(gameData, permanent, controllerId), trigger);
-    }
-
-    /**
-     * Form for callers that already hold the permanent's static bonus for the current game state, sparing a second
-     * layered query. Each effect is wrapped in its ability's options ({@link TriggeredAbility#legacyEffects()}), the
-     * form the collectors that still read effects take, and an ability is found by its trigger's
-     * {@link com.github.laxika.magicalvibes.model.trigger.Trigger#watchKey()}.
-     */
-    public List<CardEffect> grantedTriggerEffects(GameData gameData, Permanent permanent,
-                                                  GameQueryService.StaticBonus staticBonus, Trigger trigger) {
-        TriggeredAbility.requireLegacyView(trigger);
-        return grantedTriggeredAbilities(gameData, permanent, staticBonus,
-                ability -> ability.hasWatchedTrigger(trigger)).stream()
-                .flatMap(ability -> ability.legacyEffects().stream().map(EffectRegistration::effect))
-                .toList();
+    public List<TriggeredAbility> grantedOwnEntryAbilities(GameData gameData, Permanent permanent) {
+        return grantedTriggeredAbilities(gameData, permanent,
+                gameQueryService.computeStaticBonus(gameData, permanent, (UUID) null), TriggeredAbility::hasOwnEntry);
     }
 
     /**

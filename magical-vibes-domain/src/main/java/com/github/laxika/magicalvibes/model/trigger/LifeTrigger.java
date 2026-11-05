@@ -42,16 +42,6 @@ public record LifeTrigger(LifeEvent event, PlayerRelation player, boolean firstE
     }
 
     /**
-     * The life gain, loss and payment collectors read this trigger's abilities themselves ({@code LifeAbilityReader}):
-     * "for the first time each turn", "for the first time during each of their turns" and the ability's options come
-     * from the ability, so it has no legacy view.
-     */
-    @Override
-    public boolean collectedAsAbility() {
-        return true;
-    }
-
-    /**
      * The trigger the {@code LifeWatch} collectors read this one's abilities by: without {@link #firstEachTurn}, and,
      * for {@link LifeEvent#LOSES_FOR_FIRST_TIME_DURING_THEIR_TURN}, the loss of life of the same player, whose
      * collector judges the rest from the ability ({@code LifeAbilityReader}).

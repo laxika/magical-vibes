@@ -26,7 +26,7 @@ import java.util.function.Predicate;
 /**
  * Reads the combat abilities (a {@link CombatTrigger}: attacks, blocks, becomes blocked, combat damage; CR 508.1,
  * 509.1, 510.2), as {@link WatchedAbilities} finds them, for the attack, block and combat damage collectors, which have no legacy view of them
- * ({@link CombatTrigger#collectedAsAbility()}). The collectors judge the ability's trigger-level parts from the
+ *. The collectors judge the ability's trigger-level parts from the
  * ability itself: the filter on the creature ({@link CombatEffect#filter()}), the limit
  * ({@link CombatEffect#limit()}, marked by {@link TriggeredAbility#limitKey()} on the source) and the multiplicity
  * ({@link CombatEffect#multiplicity()}: "blocks" once each combat and "one or more creatures deal combat damage" are

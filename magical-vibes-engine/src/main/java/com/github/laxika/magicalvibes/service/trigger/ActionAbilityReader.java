@@ -23,8 +23,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * Reads the player and keyword action abilities (a {@link PlayerActionTrigger} or {@link ObjectActionTrigger} that is
- * {@link Trigger#collectedAsAbility()}: dice, coin flips, crimes, the Ring, the monarch, dungeons, voting, investigate,
+ * Reads the player and keyword action abilities (a {@link PlayerActionTrigger} or {@link ObjectActionTrigger}: dice, coin flips, crimes, the Ring, the monarch, dungeons, voting, investigate,
  * explore, connive, exploit, clash, mutate and the other keyword actions), as {@link WatchedAbilities} finds them, for
  * the {@link ActionWatch} collectors, which have no legacy view of them. The collectors judge the ability's
  * trigger-level parts from the ability itself: what the card the action is taken with must be

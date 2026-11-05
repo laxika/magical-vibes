@@ -28,7 +28,7 @@ import java.util.UUID;
  * Reads the becomes-the-target abilities (a {@link TargetTrigger}: a player or permanent becomes the target of a spell
  * or ability, CR 601.2c, CR 602.2b, CR 603.3d, or a player chooses targets, CR 115.1), as {@link WatchedAbilities}
  * finds them, for the {@link TargetWatch} collectors, which have no legacy view of them
- * ({@link TargetTrigger#collectedAsAbility()}). The collectors judge the ability's trigger-level parts from the ability
+ *. The collectors judge the ability's trigger-level parts from the ability
  * itself: the further restriction on the permanent that becomes the target ({@link TargetEffect#filter()}, the
  * trigger's {@link TargetTrigger#qualifier()}), the event a collector of another event reads
  * ({@link TargetEffect#byController()}: "a spell [or ability] you control", "an ability you control") and the limit

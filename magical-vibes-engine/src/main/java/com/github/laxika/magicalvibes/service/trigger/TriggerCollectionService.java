@@ -386,9 +386,9 @@ public class TriggerCollectionService {
         return grantedTriggeredAbilitySupport.grantedTriggeredEffects(gameData, permanent, slot);
     }
 
-    /** {@link GrantedTriggeredAbilitySupport#grantedTriggerEffects}. */
-    public List<CardEffect> grantedTriggerEffects(GameData gameData, Permanent permanent, Trigger trigger) {
-        return grantedTriggeredAbilitySupport.grantedTriggerEffects(gameData, permanent, trigger);
+    /** {@link GrantedTriggeredAbilitySupport#grantedOwnEntryAbilities}. */
+    public List<TriggeredAbility> grantedOwnEntryAbilities(GameData gameData, Permanent permanent) {
+        return grantedTriggeredAbilitySupport.grantedOwnEntryAbilities(gameData, permanent);
     }
 
     /**

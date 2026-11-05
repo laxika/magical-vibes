@@ -3591,14 +3591,14 @@ public class PermanentRemovalService {
             }
             pendingReturns = null;
         }
-        boolean returnsOnSourceLeavesTrigger = removedPermanent.getCard().getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS))
+        boolean returnsOnSourceLeavesTrigger = removedPermanent.getCard().getOwnEntryEffects()
                 .stream()
                 .map(effect -> effect instanceof MayEffect may ? may.wrapped() : effect)
                 .anyMatch(effect -> effect instanceof ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect same
                         && same.returnsOnSourceLeavesTrigger());
         // A leaves-the-battlefield ability triggers even when the enter-the-battlefield exile never happened
         // (CR 603.6c); Fiend Hunter's return ability is such an ability.
-        boolean hasLeavesTriggerExile = removedPermanent.getCard().getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS))
+        boolean hasLeavesTriggerExile = removedPermanent.getCard().getOwnEntryEffects()
                 .stream()
                 .map(effect -> effect instanceof MayEffect may ? may.wrapped() : effect)
                 .anyMatch(effect -> effect instanceof ExileTargetPermanentUntilSourceLeavesEffect exile
@@ -3607,13 +3607,13 @@ public class PermanentRemovalService {
         // that goes on the stack even if the enters ability has not exiled anything yet (CR 603.6c).
         // Brain Maggot style "until" exiles return immediately with no ability on the stack, so they are not
         // included here.
-        boolean hasLeavesTriggerHandExile = removedPermanent.getCard().getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS))
+        boolean hasLeavesTriggerHandExile = removedPermanent.getCard().getOwnEntryEffects()
                 .stream()
                 .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect hand
                         && hand.returnOnSourceLeave()
                         && hand.returnsOnSourceLeavesTrigger()
                         && hand.destination() == com.github.laxika.magicalvibes.model.effect.HandChoiceDestination.EXILE);
-        boolean hasLeavesTriggerExileAll = removedPermanent.getCard().getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS))
+        boolean hasLeavesTriggerExileAll = removedPermanent.getCard().getOwnEntryEffects()
                 .stream()
                 .anyMatch(effect -> effect instanceof ExileAllPermanentsUntilSourceLeavesEffect exileAll
                         && exileAll.returnsOnSourceLeavesTrigger());
@@ -3629,7 +3629,7 @@ public class PermanentRemovalService {
         }
 
         boolean returnsThroughLeavesTrigger = java.util.stream.Stream.of(
-                        removedPermanent.getCard().getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)),
+                        removedPermanent.getCard().getOwnEntryEffects(),
                         WatchedAbilities.rawEffects(CounterAbilityReader.printed(removedPermanent.getCard(),
                                 CounterWatch.ON_SELF_TRAINS)),
                         removedPermanent.getCard().getTriggerEffects(Triggers.turnedFaceUp(null, ObjectRelation.THIS)))
@@ -3682,7 +3682,7 @@ public class PermanentRemovalService {
         }
         // CR 610.3d: several cards exiled by one source return at the same time when it leaves.
         boolean multipleExiledCards = pendingReturns.size() > 1;
-        boolean simultaneousReturn = removedPermanent.getCard().getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS))
+        boolean simultaneousReturn = removedPermanent.getCard().getOwnEntryEffects()
                 .stream().anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsUntilSourceLeavesEffect
                         || effect instanceof com.github.laxika.magicalvibes.model.effect.ExileOwnNontokenCreaturesUntilSourceLeavesEffect
                         || effect instanceof com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect

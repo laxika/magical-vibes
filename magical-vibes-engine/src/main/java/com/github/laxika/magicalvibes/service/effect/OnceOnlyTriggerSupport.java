@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.OnceOnlyTriggerEffect;
 
-/** Tracks triggered abilities that are limited to once for a permanent object. */
+/**
+ * Tracks the attack abilities that "trigger only once" for a permanent object (the unkeyed mark the attack collector
+ * judges); every other "triggers only once" is keyed by its ability ({@code TriggeredAbilityStackService}).
+ */
 public final class OnceOnlyTriggerSupport {
 
     private OnceOnlyTriggerSupport() {
@@ -18,29 +18,5 @@ public final class OnceOnlyTriggerSupport {
 
     public static void mark(GameData gameData, Permanent source) {
         gameData.onceOnlyTriggersFired.add(source.getId());
-    }
-
-    public static CardEffect unwrapIfAvailable(GameData gameData, Permanent source, CardEffect effect) {
-        if (effect instanceof ConditionalEffect conditional) {
-            CardEffect wrapped = unwrapIfAvailable(gameData, source, conditional.wrapped());
-            return wrapped == null ? null : new ConditionalEffect(
-                    conditional.condition(), wrapped, conditional.interveningIf(), conditional.triggerTimeOnly());
-        }
-        if (!(effect instanceof OnceOnlyTriggerEffect once)) {
-            return effect;
-        }
-        if (isFired(gameData, source)) {
-            return null;
-        }
-        return once.wrapped();
-    }
-
-    public static void markIfNeeded(GameData gameData, Permanent source, CardEffect effect) {
-        if (effect instanceof ConditionalEffect conditional) {
-            markIfNeeded(gameData, source, conditional.wrapped());
-        }
-        if (effect instanceof OnceOnlyTriggerEffect) {
-            mark(gameData, source);
-        }
     }
 }

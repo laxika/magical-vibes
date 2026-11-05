@@ -28,8 +28,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
-import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -2358,7 +2356,7 @@ public class PermanentChoiceTriggerHandlerService {
                 entry.setRepeatedAdditionalCosts(sourcePermanent.getRepeatedAdditionalCosts());
                 entry.setSpectacle(sourcePermanent.isSpectacle());
                 if (sourcePermanent.isEvoked()
-                        && etbTtt.sourceCard().getLegacyTriggerEffectRegistrations(Triggers.enters(ObjectRelation.THIS)).stream()
+                        && etbTtt.sourceCard().getOwnEntryEffectRegistrations().stream()
                         .anyMatch(registration -> registration.triggerMode()
                                 == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT)) {
                     entry.setTriggeringCardId(etbTtt.sourceCard().getId());

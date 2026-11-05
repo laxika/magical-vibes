@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetGroup;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -19,8 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookToExileEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftProteanWarEngineSpellbookEffect;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
-import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.service.effect.entryfx.FlipCoinOnEnterEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DraftCardFromSpellbookToExileEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DraftProteanWarEngineSpellbookEffectHandler;
@@ -57,7 +58,6 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControl
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -69,12 +69,12 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
-import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.RulesEventPipeline;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -390,13 +390,23 @@ public class EtbTriggerService {
                 .areOpponentPermanentETBTriggersSuppressed(gameData, controllerId);
         int extraEtbTriggers = gameQueryService.countETBExtraTriggers(gameData, controllerId, controllerId, card);
 
-        List<CardEffect> triggeredEffects = enteringPermanentTriggersSuppressed || printedAbilitiesRemoved
-                ? new ArrayList<>()
-                : new ArrayList<>(card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)));
+        // Each "when this enters" ability is judged as a whole: "triggers only once each turn" (MACH-1, Oasis of
+        // Renewal) is read from the ability and marked by its key, which the ability's other conditions share.
+        List<CardEffect> triggeredEffects = new ArrayList<>();
+        List<TriggeredAbility> limitedAbilities = new ArrayList<>();
+        if (!enteringPermanentTriggersSuppressed && !printedAbilitiesRemoved) {
+            for (TriggeredAbility ability : card.getOwnEntryAbilities()) {
+                if (ownEntryLimitAvailable(gameData, enteringPermanent, ability, limitedAbilities)) {
+                    for (EffectRegistration registration : card.getOwnEntryEffectRegistrations(ability)) {
+                        triggeredEffects.add(registration.effect());
+                    }
+                }
+            }
+        }
         List<CardEffect> independentlyGrantedEffects = new ArrayList<>();
         if (!enteringPermanentTriggersSuppressed && enteringPermanent != null) {
-            independentlyGrantedEffects.addAll(enteringPermanent.getGrantedTriggerEffects(
-                    Triggers.enters(ObjectRelation.THIS)));
+            addGrantedOwnEntryEffects(gameData, enteringPermanent, enteringPermanent.getGrantedOwnEntryAbilities(),
+                    limitedAbilities, independentlyGrantedEffects);
         }
         if (!enteringPermanentTriggersSuppressed && !printedAbilitiesRemoved) {
             independentlyGrantedEffects.addAll(gameData.perpetualEnterEffectsByCardId
@@ -409,29 +419,15 @@ public class EtbTriggerService {
         if (!enteringPermanentTriggersSuppressed && battlefield != null) {
             for (Permanent permanent : battlefield) {
                 if (permanent.getCard() == card) {
-                    independentlyGrantedEffects.addAll(triggerCollectionService.grantedTriggerEffects(
-                            gameData, permanent, Triggers.enters(ObjectRelation.THIS)));
+                    addGrantedOwnEntryEffects(gameData, enteringPermanent,
+                            triggerCollectionService.grantedOwnEntryAbilities(gameData, permanent),
+                            limitedAbilities, independentlyGrantedEffects);
                     break;
                 }
             }
         }
         triggeredEffects.addAll(independentlyGrantedEffects);
         if (!triggeredEffects.isEmpty()) {
-            List<OncePerTurnTriggerEffect> oncePerTurnEffects = new ArrayList<>();
-            triggeredEffects = triggeredEffects.stream()
-                    .filter(effect -> {
-                        if (!(effect instanceof OncePerTurnTriggerEffect once)) return true;
-                        if (enteringPermanent != null
-                                && OncePerTurnTriggerSupport.unwrapIfAvailable(
-                                gameData, enteringPermanent, once) == null) {
-                            return false;
-                        }
-                        oncePerTurnEffects.add(once);
-                        return true;
-                    })
-                    .map(effect -> effect instanceof OncePerTurnTriggerEffect once
-                            ? once.wrapped() : effect)
-                    .toList();
             if (triggeredEffects.isEmpty()) {
                 processCreatureEntersTriggers(gameData, controllerId, card, extraEtbTriggers, false);
                 return;
@@ -490,7 +486,7 @@ public class EtbTriggerService {
                     .toList();
 
             UUID triggerSourcePermanentId = enteringPermanent != null ? enteringPermanent.getId() : null;
-            List<CardEffect> independentEffects = new ArrayList<>(card.getLegacyTriggerEffectRegistrations(Triggers.enters(ObjectRelation.THIS)).stream()
+            List<CardEffect> independentEffects = new ArrayList<>(card.getOwnEntryEffectRegistrations().stream()
                     .filter(registration -> registration.triggerMode() == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT)
                     .filter(registration -> !(registration.effect() instanceof MayEffect))
                     .filter(registration -> !(registration.effect() instanceof ChooseOneAtTriggerTimeEffect))
@@ -688,15 +684,51 @@ public class EtbTriggerService {
                         mandatoryDeclaresNoTarget ? List.of() : targetIds,
                         mandatoryEffects, mandatoryDeclaresNoTarget ? null : modeTargetFilter,
                         extraTriggerCopies, etbMode, xValue, repeatedAdditionalCosts, convokeCreatureIds);
-                if (!oncePerTurnEffects.isEmpty() && enteringPermanent != null) {
-                    for (OncePerTurnTriggerEffect once : oncePerTurnEffects) {
-                        OncePerTurnTriggerSupport.markIfNeeded(gameData, enteringPermanent, once);
+                if (enteringPermanent != null) {
+                    for (TriggeredAbility limited : limitedAbilities) {
+                        TriggeredAbilityStackService.markLimit(gameData, limited.options().limit(),
+                                enteringPermanent.getId(), limited.limitKey());
                     }
                 }
             }
         }
 
         processCreatureEntersTriggers(gameData, controllerId, card, extraEtbTriggers, false);
+    }
+
+    /**
+     * Whether the "when this enters" ability {@code ability} of {@code enteringPermanent} can trigger as far as its
+     * limit goes ("triggers only once each turn", the only limit such an ability takes): its key isn't marked yet on
+     * the permanent. A limited ability that can trigger joins {@code limitedAbilities}, marked once the collector put
+     * the abilities on the stack. Without the entering permanent nothing is judged, as nothing could be marked.
+     */
+    private static boolean ownEntryLimitAvailable(GameData gameData, Permanent enteringPermanent,
+                                                  TriggeredAbility ability, List<TriggeredAbility> limitedAbilities) {
+        TriggerLimit limit = ability.options().limit();
+        if (limit == TriggerLimit.NONE || enteringPermanent == null) {
+            return true;
+        }
+        if (TriggeredAbilityStackService.limitReached(gameData, limit, enteringPermanent.getId(),
+                ability.limitKey())) {
+            return false;
+        }
+        limitedAbilities.add(ability);
+        return true;
+    }
+
+    /**
+     * Adds to {@code effects} the effects of {@code granted}, "when this enters" abilities a resolved effect or a
+     * static ability gave the entering permanent, in the form {@link TriggeredAbility#ownEntryEffects()} gives, each
+     * ability's limit judged as {@link #ownEntryLimitAvailable} says.
+     */
+    private static void addGrantedOwnEntryEffects(GameData gameData, Permanent enteringPermanent,
+                                                  List<TriggeredAbility> granted,
+                                                  List<TriggeredAbility> limitedAbilities, List<CardEffect> effects) {
+        for (TriggeredAbility ability : granted) {
+            if (ownEntryLimitAvailable(gameData, enteringPermanent, ability, limitedAbilities)) {
+                ability.ownEntryEffects().forEach(registration -> effects.add(registration.effect()));
+            }
+        }
     }
 
     private int countMultikickerPayments(Card card, List<String> repeatedAdditionalCosts) {
@@ -1097,7 +1129,7 @@ public class EtbTriggerService {
                     etbEntry.setKicked(true);
                 }
                 if (enteringPermanent != null && enteringPermanent.isEvoked()
-                        && card.getLegacyTriggerEffectRegistrations(Triggers.enters(ObjectRelation.THIS)).stream()
+                        && card.getOwnEntryEffectRegistrations().stream()
                         .anyMatch(registration -> registration.triggerMode()
                                 == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT)) {
                     etbEntry.setTriggeringCardId(card.getId());

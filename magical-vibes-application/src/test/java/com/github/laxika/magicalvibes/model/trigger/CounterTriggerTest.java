@@ -101,13 +101,7 @@ class CounterTriggerTest {
         Permanent permanent = new Permanent(new Card());
         permanent.addTemporaryAbility(ability);
 
-        assertThat(Triggers.countersPutOnThis().collectedAsAbility()).isTrue();
-        assertThat(ability.collectedAsAbility()).isTrue();
-        assertThatThrownBy(ability::legacyEffects).isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.countersPutOnThis(), Zone.BATTLEFIELD))
-                .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> permanent.getLegacyTemporaryTriggerEffects(Triggers.countersPutOnThis()))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(ability::ownEntryEffects).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> CounterWatch.ON_SELF_COUNTERS_PUT.effectsOf(card))
                 .isInstanceOf(UnsupportedOperationException.class);
         assertThatThrownBy(() -> CounterWatch.ON_SELF_COUNTERS_PUT.registrationsOf(card))

@@ -145,14 +145,9 @@ class SagaTriggerTest {
         card.addTrigger(Triggers.finalChapterAbilityResolves(), GAIN);
 
         assertThat(card.getTriggeredAbilities()).allSatisfy(ability -> {
-            assertThat(ability.collectedAsAbility()).isTrue();
-            assertThat(ability.hasLegacyView()).isFalse();
-            assertThatThrownBy(ability::legacyEffects).isInstanceOf(IllegalStateException.class);
+            assertThat(ability.hasOwnEntry()).isFalse();
+            assertThatThrownBy(ability::ownEntryEffects).isInstanceOf(IllegalStateException.class);
         });
-        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.chapter(1)))
-                .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.finalChapterAbilityResolves()))
-                .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> SagaWatch.ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES.effectsOf(card))
                 .isInstanceOf(UnsupportedOperationException.class);
         assertThatThrownBy(() -> SagaWatch.ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES.registrationsOf(card))

@@ -57,15 +57,6 @@ public record CounterTrigger(CounterEvent event, ObjectRelation relation, Perman
     }
 
     /**
-     * The counter collectors read the ability itself (its filter, event, limit and intervening "if"), through
-     * {@code CounterAbilityReader}: a counter ability has no legacy view (effect-slot-refactor.md step 14, run 16h).
-     */
-    @Override
-    public boolean collectedAsAbility() {
-        return true;
-    }
-
-    /**
      * The exile events ({@link CounterEvent#TIME_COUNTER_REMOVED_IN_EXILE},
      * {@link CounterEvent#YOU_REMOVE_TIME_COUNTER_IN_EXILE}) function from exile; every other event from the
      * battlefield.

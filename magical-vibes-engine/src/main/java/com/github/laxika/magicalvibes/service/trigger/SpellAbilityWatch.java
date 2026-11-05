@@ -17,7 +17,7 @@ import java.util.List;
  * the stack, as the slot's handlers did, until steps 14 and 15 of the refactor replace them with trigger options and
  * effects that read the event.
  * <p>
- * Every collector of these watches reads the abilities themselves ({@link Trigger#collectedAsAbility()}), so the legacy
+ * Every collector of these watches reads the abilities themselves, so the legacy
  * view gives none of them and {@link #effectsOf} and {@link #registrationsOf} throw. A cast or copy ability with a spell
  * filter and a land-play ability with a land filter or zone go to the spell-cast, spell-copy and land-play collectors,
  * which judge the filters, the options and the effects as one stack object; any other ability's options are judged by

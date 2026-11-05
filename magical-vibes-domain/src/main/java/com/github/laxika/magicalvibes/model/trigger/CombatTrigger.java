@@ -63,16 +63,6 @@ public record CombatTrigger(CombatEvent event, ObjectRelation relation, Permanen
     }
 
     /**
-     * The attack, block and combat damage collectors read the ability itself (its filter, limit and multiplicity),
-     * through {@code CombatAbilityReader}: a combat ability has no legacy view (effect-slot-refactor.md step 14, run
-     * 16f).
-     */
-    @Override
-    public boolean collectedAsAbility() {
-        return true;
-    }
-
-    /**
      * What happens in combat that a {@link CombatTrigger} triggers on. The values without "one or more" trigger once
      * for each creature; those with it once for each declaration or combat damage step, however many creatures it
      * involves.

@@ -189,7 +189,7 @@ public class CardChoiceHandlerService {
             modifiedCard.addStaticEffect(new KickerEffect(choice.offspringCost(), false));
             offspringPaid = new Kicked();
         } else {
-            int paymentOrdinal = 1 + (int) modifiedCard.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
+            int paymentOrdinal = 1 + (int) modifiedCard.getOwnEntryEffects().stream()
                     .filter(ConditionalEffect.class::isInstance).map(ConditionalEffect.class::cast)
                     .map(ConditionalEffect::condition)
                     .filter(com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid.class::isInstance)
@@ -2841,7 +2841,6 @@ public class CardChoiceHandlerService {
         for (UUID id : toDiscard) {
             applyRevealedDiscardChoice(gameData, player, choice, id);
         }
-
 
         if (remainingDiscards > 0 && !remainingRevealed.isEmpty()) {
             playerInteractionSupport.beginRevealCardsDiscardStageContinuation(gameData, targetPlayerId,

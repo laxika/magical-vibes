@@ -27,7 +27,7 @@ import java.util.function.Predicate;
 /**
  * Reads the damage abilities (a {@link DamageTrigger}: damage is dealt, CR 120.1, 120.2, or damage to you is prevented,
  * CR 615.1), as {@link WatchedAbilities} finds them, for the {@link DamageWatch} collectors, which have no legacy view
- * of them ({@link DamageTrigger#collectedAsAbility()}). The collectors judge the ability's trigger-level parts from the
+ * of them. The collectors judge the ability's trigger-level parts from the
  * ability itself: the filter on the permanent ({@link DamageEffect#filter()}: the damaged permanent for an "is dealt
  * damage" event and for "this deals damage", the dealer for the other "deals damage" events), the limit
  * ({@link DamageEffect#limit()}, marked by {@link TriggeredAbility#limitKey()} on the source, or for each creature) and

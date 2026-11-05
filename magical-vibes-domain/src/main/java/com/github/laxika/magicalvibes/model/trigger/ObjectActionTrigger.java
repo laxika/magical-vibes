@@ -71,17 +71,6 @@ public record ObjectActionTrigger(ObjectAction action, ObjectRelation object, Ca
         return watched == action && filter == null && door == null ? this : new ObjectActionTrigger(watched, object);
     }
 
-    /**
-     * Every collector of this trigger reads its abilities themselves, so it has no legacy view: the player and keyword
-     * action collectors ({@code ActionWatch}: fights, explores, connives, exploits, champions, becomes plotted,
-     * mutates) through {@code ActionAbilityReader}, the crew, saddle, station and door collectors ({@code MiscWatch})
-     * through {@code MiscAbilityReader}.
-     */
-    @Override
-    public boolean collectedAsAbility() {
-        return true;
-    }
-
     /** A card becomes plotted in exile (CR 702.170a), so its "becomes plotted" ability functions from there. */
     @Override
     public AbilityZones defaultZones() {

@@ -138,7 +138,6 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
-import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
@@ -375,8 +374,6 @@ public class StepTriggerService {
     private static final StepTrigger ENCHANTED_PLAYER_END_STEP = Triggers.endStep(ActivePlayer.ENCHANTED_PLAYER);
     private static final StepTrigger ENCHANTED_CONTROLLER_END_STEP =
             Triggers.endStep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER);
-
-
 
     private final DrawService drawService;
     private final GameQueryService gameQueryService;
@@ -1897,7 +1894,7 @@ public class StepTriggerService {
                         Zone.BATTLEFIELD, ConditionContext.forPermanent(perm, playerId));
                 if (opponentUpkeepEffects == null || opponentUpkeepEffects.isEmpty()) continue;
 
-                boolean hasChosenPlayer = perm.getCard().getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
+                boolean hasChosenPlayer = perm.getCard().getOwnEntryEffects().stream()
                         .anyMatch(RememberTargetPlayerEffect.class::isInstance)
                         || perm.getCard().getStaticEffects().stream().anyMatch(
                                 com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect.class::isInstance);
@@ -6535,7 +6532,6 @@ public class StepTriggerService {
                             perm.getId(), List.of(), 0, 0));
                     continue;
                 }
-
 
                 for (CardEffect effect : controllerEndStepEffects) {
                     // CR 603.4: an intervening-"if" ability does not trigger at all when its

@@ -96,12 +96,7 @@ class CombatTriggerTest {
         Permanent permanent = new Permanent(new Card());
         permanent.addTemporaryAbility(ability);
 
-        assertThat(Triggers.attacks().collectedAsAbility()).isTrue();
-        assertThatThrownBy(ability::legacyEffects).isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.creatureYouControlAttacks(), Zone.BATTLEFIELD))
-                .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> permanent.getLegacyTemporaryTriggerEffects(Triggers.creatureYouControlAttacks()))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(ability::ownEntryEffects).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> CombatWatch.ON_ALLY_CREATURE_ATTACKS.effectsOf(card))
                 .isInstanceOf(UnsupportedOperationException.class);
         assertThatThrownBy(() -> CombatWatch.ON_BLOCK.registrationsOf(card))
@@ -274,7 +269,7 @@ class CombatTriggerTest {
         assertThat(read.filter()).isEqualTo(new PermanentIsTokenPredicate());
         assertThat(read.effect()).isEqualTo(new ConditionalEffect(ALONE, DRAW));
         assertThat(permanent.getTemporaryTriggerEffects(Triggers.creatureAttacks())).isEmpty();
-        assertThatThrownBy(ability::legacyEffects).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(ability::ownEntryEffects).isInstanceOf(IllegalStateException.class);
     }
 
     @Test

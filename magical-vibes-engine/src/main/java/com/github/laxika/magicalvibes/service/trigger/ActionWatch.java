@@ -18,7 +18,7 @@ import java.util.List;
  * the ability triggers, how its effects group into stack objects and which event data it is bound to, as the slot's
  * did, until step 15 of the refactor replaces them with effects that read the event.
  * <p>
- * Every collector of these watches reads the abilities themselves ({@link Trigger#collectedAsAbility()}), through
+ * Every collector of these watches reads the abilities themselves, through
  * {@link ActionAbilityReader}: "triggers only once each turn" and the card filter of an explore, exploit or scheme
  * ability come from the ability, and the legacy view gives none of them, so {@link #effectsOf} and
  * {@link #registrationsOf} throw.

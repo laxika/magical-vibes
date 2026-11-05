@@ -950,7 +950,7 @@ public class SpellCastingService {
 
     private static boolean isModalSpell(Card card) {
         return card.getSpellEffects().stream().anyMatch(ChooseOneEffect.class::isInstance)
-                || card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream().anyMatch(ChooseOneEffect.class::isInstance);
+                || card.getOwnEntryEffects().stream().anyMatch(ChooseOneEffect.class::isInstance);
     }
 
     private ReturnTargetCardsFromGraveyardToHandEffect restrictBargainedReturnCandidates(
@@ -1641,7 +1641,7 @@ public class SpellCastingService {
     }
 
     private void applyModalEtbTargetFilter(Card card, int effectiveXValue) {
-        for (CardEffect effect : card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
+        for (CardEffect effect : card.getOwnEntryEffects()) {
             if (effect instanceof ChooseOneEffect coe) {
                 if (effectiveXValue >= 0 && effectiveXValue < coe.options().size()) {
                     TargetFilter filter = coe.options().get(effectiveXValue).targetFilter();
@@ -1658,7 +1658,7 @@ public class SpellCastingService {
         if (effectiveXValue >= 0) {
             return false;
         }
-        return card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
+        return card.getOwnEntryEffects().stream()
                 .anyMatch(e -> e instanceof ChooseOneEffect coe && coe.optional());
     }
 
@@ -4324,7 +4324,7 @@ public class SpellCastingService {
         int perTargetCost = card.getAdditionalCostPerExtraTarget() * extraTargetCount;
         boolean hasXCost = card.getManaCost() != null && new ManaCost(card.getManaCost()).hasX();
         String perTargetManaCost = repeatAdditionalTargetManaCost(card, extraTargetCount);
-        boolean hasModalEtb = card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
+        boolean hasModalEtb = card.getOwnEntryEffects().stream()
                 .anyMatch(ChooseOneEffect.class::isInstance);
         applyModalEtbTargetFilter(card, effectiveXValue);
         List<CardEffect> filteredSpellEffects = new ArrayList<>(card.getCastingCostsAndSpellEffects());
@@ -5563,7 +5563,7 @@ public class SpellCastingService {
         }
 
         if (hasModalEtb && targetId != null) {
-            for (CardEffect etbEffect : card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
+            for (CardEffect etbEffect : card.getOwnEntryEffects()) {
                 if (etbEffect instanceof ChooseOneEffect choice
                         && effectiveXValue >= 0 && effectiveXValue < choice.options().size()) {
                     Zone etbTargetZone = gameData.findExiledCard(targetId) != null ? Zone.EXILE

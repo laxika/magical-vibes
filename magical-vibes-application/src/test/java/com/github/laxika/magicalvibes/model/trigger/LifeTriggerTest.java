@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.service.trigger.LifeAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.LifeWatch;
 import org.junit.jupiter.api.Test;
@@ -105,11 +104,8 @@ class LifeTriggerTest {
         card.addTrigger(Triggers.youGainLife(), DRAW);
         TriggeredAbility ability = card.getTriggeredAbilities().getFirst();
 
-        assertThat(ability.collectedAsAbility()).isTrue();
-        assertThat(ability.hasLegacyView()).isFalse();
-        assertThatThrownBy(ability::legacyEffects).isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.youGainLife()))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(ability.hasOwnEntry()).isFalse();
+        assertThatThrownBy(ability::ownEntryEffects).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> LifeWatch.ON_CONTROLLER_GAINS_LIFE.effectsOf(card))
                 .isInstanceOf(UnsupportedOperationException.class);
         assertThatThrownBy(() -> LifeWatch.ON_CONTROLLER_GAINS_LIFE.registrationsOf(card))
@@ -218,7 +214,7 @@ class LifeTriggerTest {
     }
 
     @Test
-    void anEntersAndLifeGainAbilityKeepsItsLegacyViewForTheEntersCollectorAndSharesItsLimit() {
+    void anEntersAndLifeGainAbilityIsReadAsItsEffectsForTheOwnEntryAndSharesItsLimit() {
         Card card = new Card();
         card.addTrigger(List.of(Triggers.enters(ObjectRelation.THIS), Triggers.youGainLife()),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW);
@@ -226,12 +222,8 @@ class LifeTriggerTest {
         GameData gameData = new GameData(UUID.randomUUID(), "test", UUID.randomUUID(), "owner");
         UUID sourceId = UUID.randomUUID();
 
-        assertThat(ability.collectedAsAbility()).isTrue();
-        assertThat(ability.hasLegacyView()).isTrue();
-        assertThat(card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)))
-                .containsExactly(OncePerTurnTriggerEffect.keyed(DRAW, ability.limitKey()));
-        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.youGainLife()))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(ability.hasOwnEntry()).isTrue();
+        assertThat(card.getOwnEntryEffects()).containsExactly(DRAW);
         LifeAbilityReader.LifeEffect read =
                 LifeAbilityReader.readPrinted(card, LifeWatch.ON_CONTROLLER_GAINS_LIFE).getFirst();
         assertThat(read.effect()).isEqualTo(DRAW);

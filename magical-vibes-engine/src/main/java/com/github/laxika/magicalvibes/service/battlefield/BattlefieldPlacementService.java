@@ -82,8 +82,6 @@ import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEf
 import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersWithCountersEffect;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
-import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -491,7 +489,7 @@ public class BattlefieldPlacementService {
             creaturePositioningSupport.applyChosenPosition(gameData, controllerId, permanent);
         }
         applyEnterWithAttachedTokens(gameData, controllerId, permanent);
-        if (permanent.getCard().getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
+        if (permanent.getCard().getOwnEntryEffects().stream()
                 .anyMatch(effect -> effect instanceof ExileTopCardsToSourceEffect exile
                         && exile.toGraveyardOnControlLoss())) {
             gameData.exiledCardsToGraveyardOnControlLossWatch.put(permanent.getId(),

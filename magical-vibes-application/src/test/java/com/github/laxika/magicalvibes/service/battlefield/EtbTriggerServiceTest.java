@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
@@ -32,6 +31,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectResolver;
@@ -112,7 +113,7 @@ class EtbTriggerServiceTest {
         creature.setType(CardType.CREATURE);
         SurveilEffect surveil = new SurveilEffect(1);
         creature.addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new OncePerTurnTriggerEffect(surveil));
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), surveil);
         Permanent permanent = new Permanent(creature);
         gameData.playerBattlefields.get(controllerId).add(permanent);
 
@@ -121,9 +122,10 @@ class EtbTriggerServiceTest {
         assertThat(gameData.stack).singleElement()
                 .extracting(entry -> entry.getEffectsToResolve().getFirst())
                 .isEqualTo(surveil);
+        assertThat(gameData.keyedOncePerTurnTriggersFiredThisTurn.get(permanent.getId()))
+                .containsExactly(creature.getOwnEntryAbilities().getFirst().limitKey());
 
         gameData.stack.clear();
-        gameData.oncePerTurnTriggersFiredThisTurn.add(permanent.getId());
         service.processCreatureETBEffects(gameData, controllerId, creature, null, false);
 
         assertThat(gameData.stack).isEmpty();

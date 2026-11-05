@@ -30,7 +30,7 @@ import java.util.UUID;
 /**
  * Reads the tap and untap abilities (a {@link TapTrigger}: a permanent is tapped, CR 701.26a, or untapped,
  * CR 701.26b), as {@link WatchedAbilities} finds them, for the {@link TapWatch} collectors, which have no legacy view of
- * them ({@link TapTrigger#collectedAsAbility()}). The collectors judge the ability's trigger-level parts from the
+ * them. The collectors judge the ability's trigger-level parts from the
  * ability itself: what the tapped or untapped permanent must be ({@link TapEffect#filter()}: "this permanent" for a
  * {@link TapTrigger#narrowed()} trigger, its type, and the trigger's {@link TapTrigger#qualifier()}), "for the first
  * time during your turn" ({@link TapEffect#firstTime()}), "one or more" ({@link TapEffect#oneOrMore()}) and the limit

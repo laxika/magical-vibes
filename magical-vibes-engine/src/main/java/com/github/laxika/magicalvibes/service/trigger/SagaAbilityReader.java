@@ -19,7 +19,7 @@ import java.util.UUID;
 /**
  * Reads the final-chapter abilities (a {@link FinalChapterTrigger}: the final chapter ability of a Saga you control
  * triggers or resolves, CR 714.2e), as {@link WatchedAbilities} finds them, for the {@link SagaWatch} collectors, which
- * have no legacy view of them ({@link FinalChapterTrigger#collectedAsAbility()}). The collectors judge the ability's
+ * have no legacy view of them. The collectors judge the ability's
  * only trigger-level part from the ability itself: "triggers only once each turn" ({@link SagaEffect#limit()}, marked
  * by {@link TriggeredAbility#limitKey()} on the source). The ability rejects every other option as it is built, as the
  * collectors read none.

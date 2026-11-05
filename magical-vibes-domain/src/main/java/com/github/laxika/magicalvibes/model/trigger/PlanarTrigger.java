@@ -26,15 +26,6 @@ public record PlanarTrigger(PlanarEvent event) implements Trigger {
         return AbilityZones.COMMAND;
     }
 
-    /**
-     * The planar reader ({@code PlanechaseService}) reads this trigger's abilities itself
-     * ({@code MiscAbilityReader}), so it has no legacy view.
-     */
-    @Override
-    public boolean collectedAsAbility() {
-        return true;
-    }
-
     /** What happens to a planar card. */
     public enum PlanarEvent {
         /** The planar controller planeswalks to this plane: it is turned face up (CR 701.31b). */

@@ -16,15 +16,6 @@ public record ControlChangeTrigger(ControlEvent event, ObjectRelation object) im
         Objects.requireNonNull(object, "object");
     }
 
-    /**
-     * The control-change collectors ({@code MiscWatch}) read this trigger's abilities themselves
-     * ({@code MiscAbilityReader}), so it has no legacy view.
-     */
-    @Override
-    public boolean collectedAsAbility() {
-        return true;
-    }
-
     /** Who gains or loses control of the permanent. */
     public enum ControlEvent {
         /** The ability's controller gains control of it from another player. */

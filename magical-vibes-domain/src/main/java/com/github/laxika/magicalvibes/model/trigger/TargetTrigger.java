@@ -57,16 +57,6 @@ public record TargetTrigger(TargetEvent event, ObjectRelation relation, Permanen
     }
 
     /**
-     * The becomes-the-target collectors read the ability itself (its filter, event, limit and intervening "if"),
-     * through {@code TargetAbilityReader}: a becomes-the-target ability has no legacy view (effect-slot-refactor.md
-     * step 14, run 16i).
-     */
-    @Override
-    public boolean collectedAsAbility() {
-        return true;
-    }
-
-    /**
      * The trigger the {@code TargetWatch} collectors read this one's abilities by: without its {@link #qualifier},
      * and, for the events no collector of their own reads, with the event whose collector reads them. "This permanent
      * becomes the target of a spell you control" and "of a spell or ability you control" are read by the collectors of

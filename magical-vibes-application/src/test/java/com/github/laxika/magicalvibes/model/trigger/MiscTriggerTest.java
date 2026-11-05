@@ -126,16 +126,13 @@ class MiscTriggerTest {
         List<Trigger> triggers = Stream.concat(planarFactories().stream(), otherFactories().stream())
                 .map(trigger -> trigger.equals(Triggers.state()) ? Triggers.sourceState(FLYING) : trigger).toList();
         assertThat(triggers).allSatisfy(trigger -> {
-            assertThat(trigger.collectedAsAbility()).as(trigger.toString()).isTrue();
             TriggeredAbility ability = new TriggeredAbility(trigger, DRAW);
-            assertThat(ability.hasLegacyView()).as(trigger.toString()).isFalse();
-            assertThatThrownBy(ability::legacyEffects).isInstanceOf(IllegalStateException.class);
+            assertThat(ability.hasOwnEntry()).as(trigger.toString()).isFalse();
+            assertThatThrownBy(ability::ownEntryEffects).isInstanceOf(IllegalStateException.class);
         });
         Card card = new Card();
         card.addTrigger(Triggers.doorUnlocked(1), DRAW);
         card.addTrigger(Triggers.becomesCrewedForFirstTimeEachTurn(), GAIN);
-        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.doorUnlocked()))
-                .isInstanceOf(IllegalArgumentException.class);
         assertThat(MiscWatch.values()).allSatisfy(watch -> {
             assertThatThrownBy(() -> watch.effectsOf(card)).isInstanceOf(UnsupportedOperationException.class);
             assertThatThrownBy(() -> watch.registrationsOf(card)).isInstanceOf(UnsupportedOperationException.class);
@@ -150,8 +147,8 @@ class MiscTriggerTest {
                 new TriggerCondition(Triggers.youFullyUnlockRoom())), TriggerOptions.DEFAULT,
                 List.of(new EffectRegistration(DRAW)));
 
-        assertThat(eerie.hasLegacyView()).isFalse();
-        assertThatThrownBy(eerie::legacyEffects).isInstanceOf(IllegalStateException.class);
+        assertThat(eerie.hasOwnEntry()).isFalse();
+        assertThatThrownBy(eerie::ownEntryEffects).isInstanceOf(IllegalStateException.class);
         assertThat(MiscAbilityReader.effects(List.of(eerie), MiscWatch.ON_ALLY_ROOM_FULLY_UNLOCKED.trigger()))
                 .containsExactly(DRAW);
     }

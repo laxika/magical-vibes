@@ -171,7 +171,6 @@ import com.github.laxika.magicalvibes.model.effect.MustAttackIfAnotherCreatureAt
 import com.github.laxika.magicalvibes.model.effect.MustAttackPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.OnceOnlyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCreaturesAttackTogetherEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsMustAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherCreaturesMustAttackIfSourceAttacksEffect;
@@ -2027,13 +2026,6 @@ public class CombatAttackService {
                         }
                         oncePerTurn = true;
                         markOncePerTurnOnAcceptance |= onceEffect.markOnAcceptance();
-                        normalizedEffect = onceEffect.wrapped();
-                    }
-                    if (normalizedEffect instanceof OnceOnlyTriggerEffect onceEffect) {
-                        if (OnceOnlyTriggerSupport.isFired(gameData, perm)) {
-                            continue;
-                        }
-                        onceOnly = true;
                         normalizedEffect = onceEffect.wrapped();
                     }
                     if (normalizedEffect != effect) {

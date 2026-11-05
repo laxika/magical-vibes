@@ -61,8 +61,6 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturePerChosenTypeCountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
-import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 
@@ -102,7 +100,7 @@ public class TargetPolarityClassifier {
      */
     public TargetPolarity classifyCard(GameData gameData, Card card, UUID aiPlayerId) {
         TargetPolarity best = null;
-        for (CardEffect effect : card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
+        for (CardEffect effect : card.getOwnEntryEffects()) {
             best = higherPriority(best, classify(gameData, effect, aiPlayerId));
         }
         for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {

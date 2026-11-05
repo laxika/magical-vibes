@@ -92,7 +92,7 @@ class ZoneChangeTriggerTest {
     }
 
     @Test
-    void onlyWhenThisEntersHasALegacyView() {
+    void onlyWhenThisEntersIsReadAsItsEffects() {
         List<Trigger> readAsAbilities = List.of(Triggers.dies(ObjectRelation.THIS),
                 Triggers.creatureDies(ObjectRelation.YOU_CONTROL), Triggers.sacrificed(ObjectRelation.THIS),
                 Triggers.leavesBattlefield(ObjectRelation.THIS), Triggers.milled(ObjectRelation.THIS),
@@ -102,27 +102,22 @@ class ZoneChangeTriggerTest {
                 Triggers.phasesOut(null, ObjectRelation.THIS), Triggers.transformsToBackFace(ObjectRelation.THIS),
                 Triggers.turnedFaceUp(null, ObjectRelation.THIS));
         assertThat(readAsAbilities).allSatisfy(trigger -> {
-            assertThat(trigger.collectedAsAbility()).as(trigger.toString()).isTrue();
             TriggeredAbility ability = new TriggeredAbility(trigger, DRAW);
-            assertThat(ability.hasLegacyView()).as(trigger.toString()).isFalse();
-            assertThatThrownBy(ability::legacyEffects).isInstanceOf(IllegalStateException.class);
+            assertThat(ability.hasOwnEntry()).as(trigger.toString()).isFalse();
+            assertThatThrownBy(ability::ownEntryEffects).isInstanceOf(IllegalStateException.class);
         });
         assertThat(Triggers.enters(ObjectRelation.THIS).ownEntry()).isTrue();
-        assertThat(Triggers.enters(ObjectRelation.THIS).collectedAsAbility()).isFalse();
+        assertThat(new TriggeredAbility(Triggers.enters(ObjectRelation.THIS), DRAW).hasOwnEntry()).isTrue();
         assertThat(Triggers.entersFrom(Zone.GRAVEYARD, null, ObjectRelation.THIS).ownEntry()).isFalse();
 
         Card card = new Card();
         card.addTrigger(Triggers.dies(ObjectRelation.THIS), DRAW);
         card.addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS), GAIN);
-        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.dies(ObjectRelation.THIS)))
-                .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.turnedFaceUp(null, ObjectRelation.THIS)))
-                .isInstanceOf(IllegalArgumentException.class);
         assertThat(card.getTriggerEffects(Triggers.dies(ObjectRelation.THIS))).containsExactly(DRAW);
     }
 
     @Test
-    void anAbilityOfWhenThisEntersAndAnotherZoneChangeKeepsItsLegacyViewForTheOwnEntryOnly() {
+    void anAbilityOfWhenThisEntersAndAnotherZoneChangeIsReadAsItsEffectsForTheOwnEntry() {
         ControllerTurn yourTurn = new ControllerTurn();
         Card card = new Card();
         card.addTrigger(List.of(Triggers.enters(ObjectRelation.THIS),
@@ -130,12 +125,9 @@ class ZoneChangeTriggerTest {
                 TriggerOptions.DEFAULT.withInterveningIf(yourTurn), DRAW);
         TriggeredAbility ability = card.getTriggeredAbilities().getFirst();
 
-        assertThat(ability.hasLegacyView()).isTrue();
-        assertThat(card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS)))
-                .containsExactly(new ConditionalEffect(yourTurn, DRAW, true));
-        assertThatThrownBy(() -> card.getLegacyTriggerEffects(
-                Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL)))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(ability.hasOwnEntry()).isTrue();
+        assertThat(card.getOwnEntryAbilities()).containsExactly(ability);
+        assertThat(card.getOwnEntryEffects()).containsExactly(new ConditionalEffect(yourTurn, DRAW, true));
     }
 
     @Test
@@ -154,6 +146,28 @@ class ZoneChangeTriggerTest {
         TriggeredAbility ownEntry = new TriggeredAbility(Triggers.enters(ObjectRelation.THIS), TriggerOptions.DEFAULT,
                 independent);
         assertThat(ownEntry.effects()).containsExactlyElementsOf(independent);
+    }
+
+    @Test
+    void whatTheEntersCollectorCannotReadIsRejectedAsTheAbilityIsBuilt() {
+        Trigger enters = Triggers.enters(ObjectRelation.THIS);
+        for (TriggerLimit limit : List.of(TriggerLimit.ONCE, TriggerLimit.DO_ONLY_ONCE_EACH_TURN,
+                TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE)) {
+            assertThatThrownBy(() -> new TriggeredAbility(enters, TriggerOptions.DEFAULT.withLimit(limit), DRAW))
+                    .as(limit.name()).isInstanceOf(IllegalArgumentException.class).hasMessageContaining(limit.name());
+        }
+        TriggerOptions oneOrMore = TriggerOptions.DEFAULT.withMultiplicity(TriggerMultiplicity.ONE_OR_MORE);
+        assertThatThrownBy(() -> new TriggeredAbility(enters, oneOrMore, DRAW))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("one event");
+
+        TriggeredAbility limited = new TriggeredAbility(enters,
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW);
+        assertThat(limited.ownEntryEffects()).extracting(EffectRegistration::effect).containsExactly(DRAW);
+        // "One or more" is the other condition's (Oasis of Renewal's lands leaving your graveyard).
+        TriggeredAbility withAnother = new TriggeredAbility(List.of(new TriggerCondition(enters),
+                new TriggerCondition(Triggers.leavesGraveyard(null, ObjectRelation.YOU_OWN))), oneOrMore,
+                List.of(new EffectRegistration(DRAW)));
+        assertThat(withAnother.hasOwnEntry()).isTrue();
     }
 
     @Test

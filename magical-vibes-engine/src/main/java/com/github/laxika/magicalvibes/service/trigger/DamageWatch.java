@@ -18,7 +18,7 @@ import java.util.List;
  * {@link CollectsDamageTrigger} handlers bind the event data, as the slot's did, until step 15 of the refactor
  * replaces them with effects that read the event.
  * <p>
- * Every collector of these watches reads the abilities themselves ({@link Trigger#collectedAsAbility()}), through
+ * Every collector of these watches reads the abilities themselves, through
  * {@link DamageAbilityReader}: the trigger's filter on the permanent, the limit and "once for each source" come from the
  * ability, and the legacy view gives none of them, so {@link #effectsOf} and {@link #registrationsOf} throw.
  */

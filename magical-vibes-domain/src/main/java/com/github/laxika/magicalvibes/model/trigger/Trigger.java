@@ -31,24 +31,4 @@ public sealed interface Trigger permits AbilityTrigger, AttachTrigger, ChapterTr
         return this;
     }
 
-    /**
-     * Whether every collector of this trigger reads its abilities themselves (the trigger's filters, the ability's
-     * options and its effects), so the legacy view ({@code TriggeredAbility.legacyEffects()}) gives none of them: the
-     * spell, land-play and activation triggers (step 13's family 2), whose collectors effect-slot-refactor.md step 14
-     * moved off the legacy view in runs 16b to 16d, the "at the beginning of [step or phase]" triggers (family 1,
-     * run 16e), the combat triggers (family 3, run 16f), the damage triggers (family 4, run 16g), the counter
-     * triggers (family 5, run 16h), the becomes-the-target triggers (family 6, run 16i), the library, draw and
-     * discard triggers (family 7, run 16j), the tap and untap triggers (family 8, run 16k), the life gain, loss and
-     * payment triggers (family 9, run 16l), the Saga chapter and final-chapter triggers (family 10, run 16m), the
-     * player and keyword action triggers (family 11's first half, run 16n) and the control change, attach, crew,
-     * saddle and station, Room, day and night, state and planar triggers (family 11's rest, run 16o) and every zone
-     * change but "when this enters" and every permanent change (run 16p). Only "when this enters"
-     * ({@code ZoneChangeTrigger.ownEntry()}) and the legacy slot trigger still have a legacy view. An ability with
-     * such a trigger and another (MACH-1's "when this enters and whenever you gain life", constellation's "whenever
-     * this or another enchantment you control enters") keeps a legacy view for the first's collectors
-     * ({@code TriggeredAbility.hasLegacyView()}).
-     */
-    default boolean collectedAsAbility() {
-        return false;
-    }
 }

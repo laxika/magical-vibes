@@ -19,7 +19,7 @@ import java.util.List;
  * read the event. A "this card is cycled or discarded" ability
  * functions from the zone the card winds up in; its collectors read it as a graveyard ability wherever the card is.
  * <p>
- * Every collector of these watches reads the abilities themselves ({@link Trigger#collectedAsAbility()}), through
+ * Every collector of these watches reads the abilities themselves, through
  * {@link LibraryAbilityReader}: the discarded card's filter, a draw's count, "for the first time each turn", "you cycle
  * a card", "an opponent causes you to discard a card", the draw-step draws and the limit come from the ability, and the
  * legacy view gives none of them, so {@link #effectsOf} and {@link #registrationsOf} throw.

@@ -14,15 +14,6 @@ public record AttachTrigger(AttachEvent event) implements Trigger {
         Objects.requireNonNull(event, "event");
     }
 
-    /**
-     * The attach collectors ({@code MiscWatch}) read this trigger's abilities themselves
-     * ({@code MiscAbilityReader}), so it has no legacy view.
-     */
-    @Override
-    public boolean collectedAsAbility() {
-        return true;
-    }
-
     /** Which attachment becomes attached to what. */
     public enum AttachEvent {
         /** Any Aura becomes attached to the source, whoever controls the Aura. */

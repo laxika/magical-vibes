@@ -103,15 +103,10 @@ class TriggeredAbilityTest {
         TriggeredAbility activation = new TriggeredAbility(Triggers.youActivateAbility(), new DrawCardEffect(1));
         TriggeredAbility enters = new TriggeredAbility(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1));
 
-        assertThat(cast.collectedAsAbility()).isTrue();
-        assertThat(landPlay.collectedAsAbility()).isTrue();
-        assertThat(activation.collectedAsAbility()).isTrue();
-        assertThat(enters.collectedAsAbility()).isFalse();
-        assertThatThrownBy(cast::legacyEffects).isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> TriggeredAbility.requireLegacyView(Triggers.youPlayLand()))
-                .isInstanceOf(IllegalArgumentException.class);
-        TriggeredAbility.requireLegacyView(Triggers.enters(ObjectRelation.THIS));
-        assertThat(enters.legacyEffects()).isEqualTo(enters.effects());
+        assertThatThrownBy(cast::ownEntryEffects).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(landPlay::ownEntryEffects).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(activation::ownEntryEffects).isInstanceOf(IllegalStateException.class);
+        assertThat(enters.ownEntryEffects()).isEqualTo(enters.effects());
     }
 
     @Test
@@ -121,10 +116,7 @@ class TriggeredAbilityTest {
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped()), new DrawCardEffect(1));
         TriggeredAbility upkeep = card.getTriggeredAbilities().getFirst();
 
-        assertThat(upkeep.collectedAsAbility()).isTrue();
-        assertThatThrownBy(upkeep::legacyEffects).isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.upkeep(ActivePlayer.YOU), Zone.GRAVEYARD))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(upkeep::ownEntryEffects).isInstanceOf(IllegalStateException.class);
         assertThat(card.getTriggeredAbilities(Triggers.upkeep(ActivePlayer.YOU), Zone.GRAVEYARD))
                 .containsExactly(upkeep);
         assertThat(card.getTriggeredAbilities(Triggers.upkeep(ActivePlayer.YOU), Zone.BATTLEFIELD)).isEmpty();

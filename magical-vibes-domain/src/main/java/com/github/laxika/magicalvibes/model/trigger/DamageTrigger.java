@@ -48,15 +48,6 @@ public record DamageTrigger(DamageEvent event, ObjectRelation relation, Permanen
         return new DamageTrigger(event, relation, filter);
     }
 
-    /**
-     * The damage collectors read the ability itself (its filter, limit and "once for each source"), through
-     * {@code DamageAbilityReader}: a damage ability has no legacy view (effect-slot-refactor.md step 14, run 16g).
-     */
-    @Override
-    public boolean collectedAsAbility() {
-        return true;
-    }
-
     /** The trigger without its filter, so the {@code DamageWatch} of the unfiltered trigger finds the ability. */
     @Override
     public Trigger watchKey() {

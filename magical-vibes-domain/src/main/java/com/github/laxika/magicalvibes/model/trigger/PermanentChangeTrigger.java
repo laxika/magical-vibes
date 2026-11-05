@@ -32,15 +32,6 @@ public record PermanentChangeTrigger(ObjectRelation relation, PermanentPredicate
         return new PermanentChangeTrigger(relation, changed, changes);
     }
 
-    /**
-     * The trigger pipeline judges its filter and the ability's options (effect-slot-refactor.md step 12a), so no
-     * collector reads a legacy view of it (step 14 run 16p).
-     */
-    @Override
-    public boolean collectedAsAbility() {
-        return true;
-    }
-
     /** Whether the game looks back in time for it: phasing out (CR 603.10b). */
     public boolean looksBack() {
         return changes.equals(Set.of(PermanentChange.PHASED_OUT));

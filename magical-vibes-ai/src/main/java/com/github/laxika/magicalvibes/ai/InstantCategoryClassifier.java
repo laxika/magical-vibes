@@ -14,8 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
-import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * Classifies instant-speed cards by their primary role. For instants, scans the
@@ -101,7 +99,7 @@ public final class InstantCategoryClassifier {
             return InstantCategory.OTHER;
         }
 
-        for (CardEffect effect : card.getLegacyTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
+        for (CardEffect effect : card.getOwnEntryEffects()) {
             InstantCategory cat = classifySingleEffect(effect);
             if (cat != null) return cat;
         }

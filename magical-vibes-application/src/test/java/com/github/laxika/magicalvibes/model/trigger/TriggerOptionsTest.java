@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -65,7 +64,7 @@ class TriggerOptionsTest {
     }
 
     @Test
-    void theLegacyViewGivesTheEventConditionAsATriggerTimeOnlyConditionalInsideTheOtherWrappers() {
+    void theOwnEntryEffectsGiveTheEventConditionAsATriggerTimeOnlyConditionalInsideTheInterveningIf() {
         ControllerTurn yourTurn = new ControllerTurn();
         SourceCardInGraveyard inGraveyard = new SourceCardInGraveyard();
         DrawCardEffect draw = new DrawCardEffect();
@@ -77,10 +76,9 @@ class TriggerOptionsTest {
                 draw);
 
         assertThat(plain.effects()).extracting(EffectRegistration::effect).containsExactly(draw, gain);
-        assertThat(plain.legacyEffects()).extracting(EffectRegistration::effect).containsExactly(
+        assertThat(plain.ownEntryEffects()).extracting(EffectRegistration::effect).containsExactly(
                 ConditionalEffect.atTriggerTime(yourTurn, draw), ConditionalEffect.atTriggerTime(yourTurn, gain));
-        assertThat(wrapped.legacyEffects()).extracting(EffectRegistration::effect).containsExactly(
-                OncePerTurnTriggerEffect.keyed(new ConditionalEffect(inGraveyard,
-                        ConditionalEffect.atTriggerTime(yourTurn, draw), true), wrapped.limitKey()));
+        assertThat(wrapped.ownEntryEffects()).extracting(EffectRegistration::effect).containsExactly(
+                new ConditionalEffect(inGraveyard, ConditionalEffect.atTriggerTime(yourTurn, draw), true));
     }
 }

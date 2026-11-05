@@ -129,17 +129,6 @@ public record ZoneChangeTrigger(ObjectRelation relation, PermanentPredicate filt
                 && excludedTo.isEmpty() && causes.isEmpty() && causedBy == PlayerRelation.ANY && !duringYourTurn;
     }
 
-    /**
-     * Every zone change but the own enters ({@link #ownEntry()}) is read as an ability: the trigger pipeline
-     * (effect-slot-refactor.md steps 10 to 12) judges its filter and the ability's options, and the readers outside
-     * it (face-up planes, schemes, registered abilities) read it through {@code ZoneChangeAbilityReader} (step 14
-     * run 16p).
-     */
-    @Override
-    public boolean collectedAsAbility() {
-        return !ownEntry();
-    }
-
     /** Whether a move from {@code fromZone} to {@code toZone} for {@code cause} is this trigger's kind of move. */
     public boolean matchesMove(Zone fromZone, Zone toZone, ZoneChangeCause cause) {
         return (from.isEmpty() || from.contains(fromZone))

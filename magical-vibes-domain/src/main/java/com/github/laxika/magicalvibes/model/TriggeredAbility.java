@@ -3,9 +3,6 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.OnceOnlyTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnPerCreatureTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.AttachTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
 import com.github.laxika.magicalvibes.model.trigger.CombatTrigger;
@@ -97,6 +94,7 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         requireFinalChapterOptions(conditions, options);
         requireStateOptions(conditions, options);
         requireZoneChangeOptions(conditions, options, effects);
+        requireOwnEntryOptions(conditions, options);
     }
 
     /**
@@ -333,83 +331,72 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
     }
 
     /**
-     * Whether one of this ability's trigger conditions is a trigger whose collectors read the ability itself
-     * ({@link Trigger#collectedAsAbility()}: every trigger but "when this enters" and a legacy slot trigger).
+     * Whether one of this ability's trigger conditions is "when this enters" ({@link ZoneChangeTrigger#ownEntry()},
+     * CR 603.6a): the abilities {@code EtbTriggerService} puts on the stack as the permanent enters, and that the code
+     * inspecting a card's enters abilities reads ({@code Card.getOwnEntryEffects()}).
      */
-    public boolean collectedAsAbility() {
-        return conditions.stream().anyMatch(condition -> condition.trigger().collectedAsAbility());
+    public boolean hasOwnEntry() {
+        return conditions.stream().anyMatch(condition -> condition.trigger() instanceof ZoneChangeTrigger move
+                && move.ownEntry());
     }
 
     /**
-     * Whether one of this ability's trigger conditions is a trigger whose collectors still read the legacy view
-     * ({@link #legacyEffects()}): "when this enters" ({@link ZoneChangeTrigger#ownEntry()}) or a legacy slot trigger.
-     * An ability with such a condition and one read as an ability (MACH-1's "when this enters and whenever you gain
-     * life") has a legacy view for the first's collectors only: the second's read the ability itself, and the
-     * ability's limit, marked by {@link #limitKey()}, is shared by both.
+     * This ability's registrations in the form the "when this enters" collector ({@code EtbTriggerService}) and the
+     * code inspecting a card's enters abilities read them, until step 15 of effect-slot-refactor.md makes the effects
+     * read the event: the intervening "if" a {@link ConditionalEffect} of it around each effect, checked as the ability
+     * triggers and again as it resolves (CR 603.4), and the event condition the {@link ConditionalEffect#atTriggerTime}
+     * inside it, checked only as the ability triggers (CR 603.2). The limit isn't wrapped: the collector judges it from
+     * the ability ({@link #limitKey()}). An ability without an intervening "if" or event condition returns its
+     * registrations as they are. Throws for an ability without a "when this enters" condition ({@link #hasOwnEntry()}),
+     * whose collectors read the ability itself.
      */
-    public boolean hasLegacyView() {
-        return conditions.stream().anyMatch(condition -> !condition.trigger().collectedAsAbility());
-    }
-
-    /**
-     * Rejects a lookup of the legacy view by {@code trigger} when its collectors read abilities themselves
-     * ({@link Trigger#collectedAsAbility()}), so a reader left on the legacy view fails instead of reading the
-     * effects without their options.
-     */
-    public static void requireLegacyView(Trigger trigger) {
-        if (trigger.collectedAsAbility()) {
-            throw new IllegalArgumentException("The collectors of " + trigger + " read its abilities themselves; "
-                    + "the legacy view gives none");
-        }
-    }
-
-    /**
-     * This ability's registrations in the form the code that still reads effects instead of abilities takes them
-     * (the "when this enters" collector and the code that inspects "when this enters" abilities, until step 15 of
-     * effect-slot-refactor.md): each effect wrapped in this ability's options as the cards wrote them before step 14.
-     * An intervening "if" is a {@link ConditionalEffect} of it, checked as the ability triggers and again as it
-     * resolves (CR 603.4); the event condition the {@link ConditionalEffect#atTriggerTime} inside every other wrapper,
-     * checked only as the ability triggers (CR 603.2); "triggers only once each turn" is a {@link OncePerTurnTriggerEffect} keyed by
-     * {@link #limitKey()}, the key the trigger pipeline marks; "do this only once each turn" one marked as the action
-     * is taken (CR 603.2h); "this ability triggers only once" ({@code ONCE}) an {@link OnceOnlyTriggerEffect} inside
-     * the intervening "if", as the cards wrote it. Only an ability with a "when this enters" or legacy slot trigger
-     * has a legacy view ({@link #hasLegacyView()}); the collectors of every other trigger
-     * ({@link Trigger#collectedAsAbility()}) read the ability itself, and for an ability with only such triggers this
-     * throws. "Once each turn for each creature" ({@link TriggerLimit#ONCE_EACH_TURN_FOR_EACH_CREATURE}) is an
-     * {@link OncePerTurnPerCreatureTriggerEffect} where the other limits go. An ability without options returns its
-     * registrations as they are.
-     */
-    public List<EffectRegistration> legacyEffects() {
-        if (!hasLegacyView()) {
-            throw new IllegalStateException("The collectors of " + conditions + " read the ability itself; it has no "
-                    + "legacy view");
+    public List<EffectRegistration> ownEntryEffects() {
+        if (!hasOwnEntry()) {
+            throw new IllegalStateException("Only a \"when this enters\" ability is read as its effects: " + conditions);
         }
         Condition interveningIf = options.interveningIf();
-        TriggerLimit limit = options.limit();
-        if (interveningIf == null && limit == TriggerLimit.NONE) {
-            return legacyBaseEffects();
+        Condition eventCondition = options.eventCondition();
+        if (interveningIf == null && eventCondition == null) {
+            return effects;
         }
-        String key = limit == TriggerLimit.ONCE_EACH_TURN ? limitKey() : null;
         List<EffectRegistration> wrapped = new ArrayList<>(effects.size());
-        for (EffectRegistration registration : legacyBaseEffects()) {
+        for (EffectRegistration registration : effects) {
             CardEffect effect = registration.effect();
-            if (limit == TriggerLimit.ONCE) {
-                effect = new OnceOnlyTriggerEffect(effect);
+            if (eventCondition != null) {
+                effect = ConditionalEffect.atTriggerTime(eventCondition, effect);
             }
             if (interveningIf != null) {
                 effect = new ConditionalEffect(interveningIf, effect, true);
-            }
-            if (limit == TriggerLimit.ONCE_EACH_TURN) {
-                effect = OncePerTurnTriggerEffect.keyed(effect, key);
-            } else if (limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN) {
-                effect = OncePerTurnTriggerEffect.markOnAcceptance(effect);
-            } else if (limit == TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE) {
-                effect = new OncePerTurnPerCreatureTriggerEffect(effect);
             }
             wrapped.add(new EffectRegistration(effect, registration.triggerMode(),
                     registration.simultaneousWithPrevious()));
         }
         return List.copyOf(wrapped);
+    }
+
+    /**
+     * Rejects the options of an ability with a "when this enters" condition ({@link ZoneChangeTrigger#ownEntry()}) that
+     * its collector doesn't read. {@code EtbTriggerService} judges "triggers only once each turn" from the ability as it
+     * triggers ({@link #limitKey()}, shared with the ability's other conditions), and the intervening "if" and the event
+     * condition through {@link #ownEntryEffects()}; it marks no "do this only once each turn" (CR 603.2h) and reads no
+     * "triggers only once" or "once each turn for each creature", and the permanent's own entry is one event, so "one or
+     * more" is the multiplicity of another condition only. The legacy view checked these as a card's abilities were
+     * indexed; the collector reads the ability itself, so the ability checks them as it is built.
+     */
+    private static void requireOwnEntryOptions(List<TriggerCondition> conditions, TriggerOptions options) {
+        boolean ownEntry = conditions.stream().anyMatch(condition -> condition.trigger() instanceof ZoneChangeTrigger move
+                && move.ownEntry());
+        if (!ownEntry) {
+            return;
+        }
+        if (options.limit() != TriggerLimit.NONE && options.limit() != TriggerLimit.ONCE_EACH_TURN) {
+            throw new IllegalArgumentException("The \"when this enters\" collector doesn't read " + options.limit()
+                    + ": " + conditions);
+        }
+        if (options.multiplicity() != TriggerMultiplicity.EACH && conditions.size() == 1) {
+            throw new IllegalArgumentException("\"When this enters\" is one event; it has no multiplicity "
+                    + options.multiplicity() + ": " + conditions);
+        }
     }
 
     /**
@@ -448,23 +435,6 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             throw new IllegalArgumentException("The state-trigger reader reads only an intervening \"if\": "
                     + options + ": " + conditions);
         }
-    }
-
-    /**
-     * This ability's registrations with its event condition ({@link TriggerOptions#eventCondition()}) wrapped around
-     * each effect as the {@link ConditionalEffect#atTriggerTime} the cards wrote before step 14, innermost of the
-     * legacy view's wrappers: the collectors check it as the ability triggers and not as it resolves (CR 603.2).
-     */
-    private List<EffectRegistration> legacyBaseEffects() {
-        Condition eventCondition = options.eventCondition();
-        if (eventCondition == null) {
-            return effects;
-        }
-        return effects.stream()
-                .map(registration -> new EffectRegistration(
-                        ConditionalEffect.atTriggerTime(eventCondition, registration.effect()),
-                        registration.triggerMode(), registration.simultaneousWithPrevious()))
-                .toList();
     }
 
     /** This ability with {@code effects} in place of its effects. */

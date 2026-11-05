@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalPlusOnePlusOneCounterToSnowPaidCreatureSpellEffect;
-import com.github.laxika.magicalvibes.service.effect.OnceOnlyTriggerSupport;
 import com.github.laxika.magicalvibes.model.effect.CastSameNameCardFromGraveyardOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
@@ -3204,15 +3203,13 @@ public class SpellCastTriggerCollectorService {
         List<Integer> indexes = new ArrayList<>();
         List<com.github.laxika.magicalvibes.model.TargetGroup> groups = sourceCard.getTargetGroups();
         for (CardEffect effect : effects) {
-            CardEffect bound = effect instanceof com.github.laxika.magicalvibes.model.effect.OnceOnlyTriggerEffect once
-                    ? once.wrapped() : effect;
-            int index = sourceCard.getEffectTargetIndex(bound);
+            int index = sourceCard.getEffectTargetIndex(effect);
             for (int group = 0; index < 0 && group < groups.size(); group++) {
                 for (CardEffect candidate : sourceCard.getEffectsBoundToTargetGroup(group)) {
                     CardEffect wrapped = candidate instanceof MayEffect may ? may.wrapped()
                             : candidate instanceof MayPayManaEffect pay ? pay.wrapped() : null;
-                    if (wrapped == bound || wrapped instanceof SequenceEffect sequence
-                            && sequence.steps().stream().anyMatch(step -> step == bound)) {
+                    if (wrapped == effect || wrapped instanceof SequenceEffect sequence
+                            && sequence.steps().stream().anyMatch(step -> step == effect)) {
                         index = group;
                         break;
                     }

@@ -87,13 +87,7 @@ class DamageTriggerTest {
         Permanent permanent = new Permanent(new Card());
         permanent.addTemporaryAbility(ability);
 
-        assertThat(Triggers.dealtDamage().collectedAsAbility()).isTrue();
-        assertThat(ability.collectedAsAbility()).isTrue();
-        assertThatThrownBy(ability::legacyEffects).isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> card.getLegacyTriggerEffects(Triggers.dealtDamage(), Zone.BATTLEFIELD))
-                .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> permanent.getLegacyTemporaryTriggerEffects(Triggers.dealtDamage()))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(ability::ownEntryEffects).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> DamageWatch.ON_DEALT_DAMAGE.effectsOf(card))
                 .isInstanceOf(UnsupportedOperationException.class);
         assertThatThrownBy(() -> DamageWatch.ON_DEALT_DAMAGE.registrationsOf(card))

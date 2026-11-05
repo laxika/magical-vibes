@@ -26,7 +26,7 @@ import java.util.UUID;
 /**
  * Reads the counter abilities (a {@link CounterTrigger}: counters are put on or removed from a permanent, CR 122.1, or
  * a keyword action about counters happens), as {@link WatchedAbilities} finds them, for the {@link CounterWatch}
- * collectors, which have no legacy view of them ({@link CounterTrigger#collectedAsAbility()}). The collectors judge the
+ * collectors, which have no legacy view of them. The collectors judge the
  * ability's trigger-level parts from the ability itself: the further restriction on the permanent the counters are put
  * on ({@link CounterEffect#filter()}, the trigger's {@link CounterTrigger#qualifier()}), the event a collector of
  * another event reads ({@link CounterEffect#byController()}: "you put", "you remove"; {@link CounterEffect#eachCounter()}:

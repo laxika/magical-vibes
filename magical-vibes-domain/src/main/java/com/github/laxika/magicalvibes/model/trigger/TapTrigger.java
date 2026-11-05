@@ -67,16 +67,6 @@ public record TapTrigger(TapEvent event, ObjectRelation relation, PermanentPredi
     }
 
     /**
-     * The tap and untap collectors read this trigger's abilities themselves ({@code TapAbilityReader}): the tapped or
-     * untapped permanent's filter, "this permanent", "for the first time during your turn", "one or more" and the
-     * ability's options come from the ability, so it has no legacy view.
-     */
-    @Override
-    public boolean collectedAsAbility() {
-        return true;
-    }
-
-    /**
      * The trigger the {@code TapWatch} collectors read this one's abilities by: without its {@link #qualifier}, and,
      * for a {@link #narrowed()} trigger, "a permanent you control becomes tapped" (its {@link #filter} dropped too).
      * That collector judges "this permanent", the type and "for the first time during your turn" from the ability
