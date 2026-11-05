@@ -43,10 +43,11 @@ class TapWatchTest {
         card.addTrigger(Triggers.permanentYouControlBecomesUntapped(), allyUntapped);
         card.addTrigger(Triggers.playerTapsLandForMana(), landTapped);
 
-        assertThat(TapWatch.ON_SELF_BECOMES_UNTAPPED.effectsOf(card)).containsExactly(untapped);
-        assertThat(TapWatch.ON_ALLY_PERMANENT_BECOMES_UNTAPPED.effectsOf(card)).containsExactly(allyUntapped);
-        assertThat(TapWatch.ON_ANY_PLAYER_TAPS_LAND.effectsOf(card)).containsExactly(landTapped);
-        assertThat(TapWatch.ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA.effectsOf(card)).isEmpty();
-        assertThat(TapWatch.ON_ANY_PERMANENT_BECOMES_UNTAPPED.effectsOf(card)).isEmpty();
+        assertThat(TapAbilityReader.printedEffects(card, TapWatch.ON_SELF_BECOMES_UNTAPPED)).containsExactly(untapped);
+        assertThat(TapAbilityReader.printedEffects(card, TapWatch.ON_ALLY_PERMANENT_BECOMES_UNTAPPED))
+                .containsExactly(allyUntapped);
+        assertThat(TapAbilityReader.printedEffects(card, TapWatch.ON_ANY_PLAYER_TAPS_LAND)).containsExactly(landTapped);
+        assertThat(TapAbilityReader.printed(card, TapWatch.ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA)).isEmpty();
+        assertThat(TapAbilityReader.printed(card, TapWatch.ON_ANY_PERMANENT_BECOMES_UNTAPPED)).isEmpty();
     }
 }

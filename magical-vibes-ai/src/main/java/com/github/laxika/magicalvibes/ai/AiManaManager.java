@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 import com.github.laxika.magicalvibes.service.trigger.TapWatch;
+import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -983,7 +984,7 @@ public class AiManaManager {
         gameData.forEachPermanent((controllerId, attachment) -> {
             if (attachment.isAttached()
                     && permanent.getId().equals(attachment.getAttachedTo())
-                    && !TapWatch.ON_ENCHANTED_PERMANENT_TAPPED.effectsOf(attachment.getCard()).isEmpty()) {
+                    && !WatchedAbilities.printed(attachment.getCard(), TapWatch.ON_ENCHANTED_PERMANENT_TAPPED).isEmpty()) {
                 cost[0] = ATTACHED_TAP_TRIGGER_COST;
             }
         });

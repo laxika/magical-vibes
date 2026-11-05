@@ -13,15 +13,14 @@ import java.util.List;
  * Which of the old tap and untap slot collectors reads a triggered ability, now that the ability has a real trigger
  * (effect-slot-refactor.md step 13, family 8). Each constant is named after the slot whose collector it stands for and
  * names the trigger its cards were converted to and the zone the collector reads them in. The collectors in
- * {@code TriggerCollectionService} still decide when the ability triggers, how its effects group into stack objects,
- * which wrappers filter it and which event data it is bound to, as the slot's did, until steps 14 and 15 of the
- * refactor replace them with trigger options and effects that read the event.
+ * {@code TriggerCollectionService} still decide when the ability triggers, how its effects group into stack objects and
+ * which event data it is bound to, as the slot's did, until step 15 of the refactor replaces them with effects that
+ * read the event.
  * <p>
- * The collectors read the abilities in the form the cards wrote them before step 14
- * ({@link Card#getLegacyTriggerEffects(Trigger, Zone)}): a limit or intervening "if" wrapped around each effect, the
- * tapped or untapped permanent's filter as the {@code TriggeringPermanentConditionalEffect} they judge, "this
- * permanent becomes tapped" and "for the first time during your turn" as the wrappers the "a permanent you control
- * becomes tapped" collector judges, and "one or more" as {@code TriggerMode.ONCE_PER_BATCH}.
+ * Every collector of these watches reads the abilities themselves ({@link Trigger#collectedAsAbility()}), through
+ * {@link TapAbilityReader}: the tapped or untapped permanent's filter, "this permanent", "for the first time during
+ * your turn", "one or more" and the limit come from the ability, and the legacy view gives none of them, so
+ * {@link #effectsOf} and {@link #registrationsOf} throw.
  */
 public enum TapWatch implements TriggerWatch {
     /** "Whenever you tap this permanent for mana", from the mana-ability tap path only. */
@@ -75,13 +74,15 @@ public enum TapWatch implements TriggerWatch {
         return zone;
     }
 
+    /** Throws: the collectors of a tap watch read its abilities themselves ({@link TapAbilityReader}). */
     @Override
     public List<CardEffect> effectsOf(Card card) {
-        return card.getLegacyTriggerEffects(trigger, zone);
+        throw new UnsupportedOperationException(name() + " is read by abilities, not by effects");
     }
 
+    /** Throws: the collectors of a tap watch read its abilities themselves ({@link TapAbilityReader}). */
     @Override
     public List<EffectRegistration> registrationsOf(Card card) {
-        return card.getLegacyTriggerEffectRegistrations(trigger, zone);
+        throw new UnsupportedOperationException(name() + " is read by abilities, not by effects");
     }
 }

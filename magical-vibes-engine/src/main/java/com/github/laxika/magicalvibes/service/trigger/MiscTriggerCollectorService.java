@@ -204,8 +204,11 @@ public class MiscTriggerCollectorService {
     private boolean handleSelfBecomesUntapped(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.SelfBecomesUntapped su = (TriggerContext.SelfBecomesUntapped) ctx;
         Card card = match.permanent().getCard();
-        List<CardEffect> cardEffects = TapWatch.ON_SELF_BECOMES_UNTAPPED.effectsOf(card);
-        if (cardEffects.isEmpty() || cardEffects.getFirst() != effect) {
+        // One stack entry takes every effect of the card's "this becomes untapped" abilities, put there for the first
+        // of them. The reader wraps an effect in its ability's options afresh on every read, so it is found by
+        // equality.
+        List<CardEffect> cardEffects = TapAbilityReader.printedEffects(card, TapWatch.ON_SELF_BECOMES_UNTAPPED);
+        if (cardEffects.isEmpty() || !cardEffects.getFirst().equals(effect)) {
             return true;
         }
         List<CardEffect> triggeredEffects = cardEffects.stream()

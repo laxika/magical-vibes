@@ -186,7 +186,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffec
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnPerCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.ReselectTargetAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
@@ -4864,10 +4863,11 @@ public class TriggerCollectionService {
      * @param controllerId    the controller of that permanent (also the player who tapped it)
      */
     public void checkSelfTappedForManaTriggers(GameData gameData, Permanent tappedPermanent, UUID controllerId) {
+        Trigger watched = TapWatch.ON_SELF_TAPPED_FOR_MANA.trigger();
         List<CardEffect> effects = new ArrayList<>(
-                TapWatch.ON_SELF_TAPPED_FOR_MANA.effectsOf(tappedPermanent.getCard()));
-        effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
-                gameData, tappedPermanent, TapWatch.ON_SELF_TAPPED_FOR_MANA.trigger()));
+                TapAbilityReader.printedEffects(tappedPermanent.getCard(), TapWatch.ON_SELF_TAPPED_FOR_MANA));
+        effects.addAll(TapAbilityReader.effects(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
+                gameData, tappedPermanent, watched), watched));
         if (effects.isEmpty()) return;
 
         StackEntry entry = new StackEntry(
@@ -4924,7 +4924,8 @@ public class TriggerCollectionService {
         gameData.forEachBattlefield((playerId, battlefield) -> {
             for (Permanent perm : List.copyOf(battlefield)) {
                 if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-                for (CardEffect effect : TapWatch.ON_ANY_PLAYER_TAPS_LAND.effectsOf(perm.getCard())) {
+                for (CardEffect effect : TapAbilityReader.printedEffects(perm.getCard(),
+                        TapWatch.ON_ANY_PLAYER_TAPS_LAND)) {
                     var match = new TriggerMatchContext(gameData, perm, playerId, effect);
                     if (dispatch(match, TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx)) {
                         anyTriggered[0] = true;
@@ -4936,7 +4937,8 @@ public class TriggerCollectionService {
         if (gameData.planechase != null && gameData.planechase.controllerId != null) {
             UUID planarControllerId = gameData.planechase.controllerId;
             for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-                for (CardEffect effect : TapWatch.ON_ANY_PLAYER_TAPS_LAND.effectsOf(object.getCard())) {
+                for (CardEffect effect : TapAbilityReader.printedEffects(object.getCard(),
+                        TapWatch.ON_ANY_PLAYER_TAPS_LAND)) {
                     var match = new TriggerMatchContext(gameData, null, planarControllerId, effect,
                             object.getCard(), object.copy());
                     if (registry.dispatch(match, TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx)) {
@@ -8361,7 +8363,8 @@ public class TriggerCollectionService {
         var ctx = new TriggerContext.CreatureTapForMana(tappingPlayerId, tappedCreatureId);
         for (Permanent perm : List.copyOf(battlefield)) {
             if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-            for (CardEffect effect : TapWatch.ON_CONTROLLER_TAPS_CREATURE_FOR_MANA.effectsOf(perm.getCard())) {
+            for (CardEffect effect : TapAbilityReader.printedEffects(perm.getCard(),
+                    TapWatch.ON_CONTROLLER_TAPS_CREATURE_FOR_MANA)) {
                 var match = new TriggerMatchContext(gameData, perm, tappingPlayerId, effect);
                 registry.dispatch(match, TapWatch.ON_CONTROLLER_TAPS_CREATURE_FOR_MANA, effect, ctx);
             }
@@ -8397,7 +8400,7 @@ public class TriggerCollectionService {
         for (TapWatch watch : watches) {
             for (Permanent perm : List.copyOf(battlefield)) {
                 if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-                for (CardEffect effect : watch.effectsOf(perm.getCard())) {
+                for (CardEffect effect : TapAbilityReader.printedEffects(perm.getCard(), watch)) {
                     var match = new TriggerMatchContext(gameData, perm, tappingPlayerId, effect);
                     registry.dispatch(match, watch, effect, ctx);
                 }
@@ -8430,7 +8433,8 @@ public class TriggerCollectionService {
             return;
         }
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-            for (CardEffect effect : TapWatch.ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA.effectsOf(object.getCard())) {
+            for (CardEffect effect : TapAbilityReader.printedEffects(object.getCard(),
+                    TapWatch.ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA)) {
                 registry.dispatch(new TriggerMatchContext(gameData, null,
                                 gameData.planechase.controllerId, effect,
                                 object.getCard(), object.copy()),
@@ -9805,6 +9809,24 @@ public class TriggerCollectionService {
                     && (targetControllerId == null || watcher.controllerId().equals(targetControllerId))) {
                 continue;
             }
+            // A registered tap ability's filter is on the tapped permanent ("a creature an opponent controls").
+            TapAbilityReader.TapEffect tapRead = slot instanceof TapWatch tapWatch
+                    ? TapAbilityReader.read(watcher.ability(), tapWatch.trigger()).getFirst() : null;
+            if (tapRead != null) {
+                TapAbilityReader.requireNotFirstTime(tapRead, ((TapWatch) slot).trigger());
+                TapAbilityReader.requireNoOneOrMore(tapRead, ((TapWatch) slot).trigger());
+                TapAbilityReader.requireNoLimit(tapRead, ((TapWatch) slot).trigger());
+                if (tapRead.filter() != null) {
+                    Permanent triggeringPermanent = targetId == null ? null
+                            : gameQueryService.findPermanentById(gameData, targetId);
+                    if (triggeringPermanent == null || !predicateEvaluationService.matchesPermanentPredicate(
+                            triggeringPermanent, tapRead.filter(), FilterContext.of(gameData)
+                                    .withSourceCardId(watcher.sourceCard().getId())
+                                    .withSourceControllerId(watcher.controllerId()))) {
+                        continue;
+                    }
+                }
+            }
 
             // A registered "creature you control deals combat damage to a player" ability is collected here with its
             // plain effect. Any other combat ability's filter on the triggering creature is the trigger's
@@ -9843,10 +9865,9 @@ public class TriggerCollectionService {
             }
             CardEffect resolvedEffect = slot == CombatWatch.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER
                     ? watcher.effect() : combatRead != null ? combatRead.effect()
-                    : damageRead != null ? damageRead.effect() : watcher.legacyEffect();
-            if (targetId != null && (slot == CombatWatch.ON_ANY_CREATURE_BLOCKS
-                    || slot == TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED
-                    || slot == TapWatch.ON_OPPONENT_PERMANENT_BECOMES_TAPPED)
+                    : damageRead != null ? damageRead.effect() : tapRead != null ? tapRead.effect()
+                    : watcher.legacyEffect();
+            if (targetId != null && slot == CombatWatch.ON_ANY_CREATURE_BLOCKS
                     && resolvedEffect instanceof TriggeringPermanentConditionalEffect conditional) {
                 Permanent triggeringPermanent = gameQueryService.findPermanentById(gameData, targetId);
                 if (triggeringPermanent == null
@@ -9979,7 +10000,8 @@ public class TriggerCollectionService {
             if (!perm.isAttached() || !perm.getAttachedTo().equals(tappedPermanent.getId())) {
                 return;
             }
-            for (CardEffect effect : TapWatch.ON_ENCHANTED_PERMANENT_TAPPED.effectsOf(perm.getCard())) {
+            for (CardEffect effect : TapAbilityReader.printedEffects(perm.getCard(),
+                    TapWatch.ON_ENCHANTED_PERMANENT_TAPPED)) {
                 var match = new TriggerMatchContext(gameData, perm, auraOwnerId, effect);
                 dispatch(match, TapWatch.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
             }
@@ -9987,41 +10009,28 @@ public class TriggerCollectionService {
 
         // "Whenever a permanent you control becomes tapped" triggers (e.g. Judge of Currents).
         UUID controllerId = tappedPermanentControllerId;
+        Trigger allyWatched = TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED.trigger();
         gameData.forEachPermanent((ownerId, perm) -> {
             if (!ownerId.equals(controllerId)) return;
-            List<EffectRegistration> printed = TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED.registrationsOf(
-                    LayerSystemService.currentCard(gameData, perm));
-            List<EffectRegistration> registrations = printed.isEmpty()
+            List<TapAbilityReader.TapEffect> printed = TapAbilityReader.readPrinted(
+                    LayerSystemService.currentCard(gameData, perm), TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED);
+            List<TapAbilityReader.TapEffect> reads = printed.isEmpty()
                     || gameQueryService.hasLostPrintedAbilities(gameData, perm)
                     ? new ArrayList<>()
                     : new ArrayList<>(printed);
-            perm.getLegacyTemporaryTriggerEffects(TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED.trigger()).stream()
-                    .map(EffectRegistration::new).forEach(registrations::add);
-            perm.getLegacyPersistentTriggerEffects(TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED.trigger()).stream()
-                    .map(EffectRegistration::new).forEach(registrations::add);
-            grantedTriggeredAbilitySupport.grantedTriggerEffects(
-                            gameData, perm, TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED.trigger()).stream()
-                    .map(EffectRegistration::new).forEach(registrations::add);
-            for (EffectRegistration registration : registrations) {
-                CardEffect effect = registration.effect();
-                if (shouldSkipBatchedTapTrigger(gameData, perm, registration)) continue;
-                CardEffect resolved = effect;
-                if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
-                    FilterContext filterContext = FilterContext.of(gameData)
-                            .withSourceCardId(perm.getOriginalCard().getId())
-                            .withSourceControllerId(ownerId);
-                    if (!predicateEvaluationService.matchesPermanentPredicate(tappedPermanent, conditional.predicate(), filterContext)) {
-                        continue;
-                    }
-                    resolved = conditional.wrapped();
+            reads.addAll(TapAbilityReader.readGrantedToPermanent(perm, allyWatched));
+            reads.addAll(TapAbilityReader.read(
+                    grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, perm, allyWatched), allyWatched));
+            for (TapAbilityReader.TapEffect read : reads) {
+                if (shouldSkipBatchedTapTrigger(gameData, perm, read)) continue;
+                if (!tappedPermanentMatches(gameData, perm, ownerId, tappedPermanent, read)) continue;
+                // "For the first time during each of your turns": the creature's first tap this turn, during its
+                // controller's turn, counting its taps before the source was on the battlefield.
+                if (read.firstTime() && (!controllerId.equals(gameData.activePlayerId) || creatureTapCount != 1)) {
+                    continue;
                 }
-                if (resolved instanceof OncePerTurnPerCreatureTriggerEffect oncePerCreature
-                        && oncePerCreature.global()) {
-                    if (!controllerId.equals(gameData.activePlayerId) || creatureTapCount != 1) {
-                        continue;
-                    }
-                    resolved = oncePerCreature.wrapped();
-                }
+                if (read.limitReached(gameData, perm.getId())) continue;
+                CardEffect resolved = read.effect();
                 if (resolved instanceof ChooseOneAtTriggerTimeEffect atTriggerTime
                         && atTriggerTime.maximumChoices() == null) {
                     gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
@@ -10030,7 +10039,7 @@ public class TriggerCollectionService {
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                     log.info("Game {} - {} triggers on ally permanent tap (awaiting mode)",
                             gameData.id, perm.getCard().getName());
-                    markBatchedTapTrigger(gameData, perm, registration);
+                    markTapTriggered(gameData, perm, read);
                     continue;
                 }
                 if (resolved.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
@@ -10039,15 +10048,9 @@ public class TriggerCollectionService {
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                     log.info("Game {} - {} triggers on ally permanent tap (awaiting graveyard target)",
                             gameData.id, perm.getCard().getName());
-                    markBatchedTapTrigger(gameData, perm, registration);
+                    markTapTriggered(gameData, perm, read);
                     continue;
                 }
-                // Bake the tapped permanent's controller only when damage needs
-                // TRIGGERING_PERMANENT_CONTROLLER (Royal Decree). triggeringPermanentId always
-                // carries "it" (Freyalise's Winds).
-                CardEffect limited = resolved;
-                resolved = unwrapOncePerTurnTrigger(gameData, perm, resolved);
-                if (resolved == null) continue;
                 if (resolved instanceof ConditionalEffect conditional && conditional.interveningIf()
                         && !conditionEvaluationService.isMet(gameData, conditional.condition(),
                         ConditionContext.forPermanent(perm, ownerId))) {
@@ -10065,8 +10068,7 @@ public class TriggerCollectionService {
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                     log.info("Game {} - {} triggers on ally permanent tap ({}, awaiting target)",
                             gameData.id, perm.getCard().getName(), tappedPermanent.getCard().getName());
-                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, limited);
-                    markBatchedTapTrigger(gameData, perm, registration);
+                    markTapTriggered(gameData, perm, read);
                     continue;
                 }
                 UUID bakedTargetId = bakeTriggeringPermanentControllerTarget(resolved, controllerId);
@@ -10085,8 +10087,7 @@ public class TriggerCollectionService {
                     entry.setAttachedPermanentSnapshot(new Permanent(tappedPermanent));
                 }
                 gameData.enqueueTrigger(entry);
-                OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, limited);
-                markBatchedTapTrigger(gameData, perm, registration);
+                markTapTriggered(gameData, perm, read);
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                 log.info("Game {} - {} triggers on ally permanent tap ({})",
                         gameData.id, perm.getCard().getName(), tappedPermanent.getCard().getName());
@@ -10096,36 +10097,25 @@ public class TriggerCollectionService {
         // "Whenever a permanent an opponent controls becomes tapped" triggers (e.g. Thoughtleech).
         gameData.forEachPermanent((ownerId, perm) -> {
             if (ownerId.equals(controllerId)) return;
-            for (EffectRegistration registration
-                    : TapWatch.ON_OPPONENT_PERMANENT_BECOMES_TAPPED.registrationsOf(perm.getCard())) {
+            for (TapAbilityReader.TapEffect read
+                    : TapAbilityReader.readPrinted(perm.getCard(), TapWatch.ON_OPPONENT_PERMANENT_BECOMES_TAPPED)) {
                 if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) break;
-                CardEffect effect = registration.effect();
-                if (shouldSkipBatchedTapTrigger(gameData, perm, registration)) continue;
-                CardEffect resolved = effect;
-                if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
-                    FilterContext filterContext = FilterContext.of(gameData)
-                            .withSourceCardId(perm.getOriginalCard().getId())
-                            .withSourceControllerId(ownerId);
-                    if (!predicateEvaluationService.matchesPermanentPredicate(tappedPermanent, conditional.predicate(), filterContext)) {
-                        continue;
-                    }
-                    resolved = conditional.wrapped();
+                if (shouldSkipBatchedTapTrigger(gameData, perm, read)) continue;
+                if (!tappedPermanentMatches(gameData, perm, ownerId, tappedPermanent, read)) continue;
+                if (read.limitReached(gameData, perm.getId())) continue;
+                CardEffect resolved = read.effect();
+                if (resolved instanceof ConditionalEffect conditional && conditional.interveningIf()
+                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        ConditionContext.forPermanent(perm, ownerId))) {
+                    continue;
                 }
-                CardEffect limited = resolved;
-                resolved = unwrapOncePerTurnTrigger(gameData, perm, resolved);
-                if (resolved == null) continue;
-                  if (resolved instanceof ConditionalEffect conditional && conditional.interveningIf()
-                          && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                          ConditionContext.forPermanent(perm, ownerId))) {
-                      continue;
-                  }
                 if (resolved.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
                     gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                             perm.getCard(), ownerId, new ArrayList<>(List.of(resolved))));
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                     log.info("Game {} - {} triggers on opponent permanent tap (awaiting graveyard target)",
                             gameData.id, perm.getCard().getName());
-                    markBatchedTapTrigger(gameData, perm, registration);
+                    markTapTriggered(gameData, perm, read);
                     continue;
                 }
                 UUID bakedTargetId = bakeTriggeringPermanentControllerTarget(resolved, controllerId);
@@ -10140,8 +10130,7 @@ public class TriggerCollectionService {
                 );
                 entry.setTriggeringPermanentId(tappedPermanent.getId());
                 gameData.enqueueTrigger(entry);
-                OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, limited);
-                markBatchedTapTrigger(gameData, perm, registration);
+                markTapTriggered(gameData, perm, read);
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                 log.info("Game {} - {} triggers on opponent permanent tap ({})",
                         gameData.id, perm.getCard().getName(), tappedPermanent.getCard().getName());
@@ -10159,34 +10148,21 @@ public class TriggerCollectionService {
         if (tappingPlayerId == null || tappingPlayerId.equals(controllerId)) {
             return;
         }
+        Trigger youTapWatched = TapWatch.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT.trigger();
         gameData.forEachPermanent((ownerId, perm) -> {
             if (!ownerId.equals(tappingPlayerId)) return;
             if (gameQueryService.hasLostAllAbilities(gameData, perm)) return;
-            List<EffectRegistration> registrations = new ArrayList<>(
-                    TapWatch.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT.registrationsOf(perm.getCard()));
-            perm.getLegacyTemporaryTriggerEffects(TapWatch.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT.trigger()).stream()
-                    .map(EffectRegistration::new).forEach(registrations::add);
-            perm.getLegacyPersistentTriggerEffects(TapWatch.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT.trigger()).stream()
-                    .map(EffectRegistration::new).forEach(registrations::add);
-            grantedTriggeredAbilitySupport.grantedTriggerEffects(
-                            gameData, perm, TapWatch.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT.trigger()).stream()
-                    .map(EffectRegistration::new).forEach(registrations::add);
-            for (EffectRegistration registration : registrations) {
-                CardEffect effect = registration.effect();
-                if (shouldSkipBatchedTapTrigger(gameData, perm, registration)) continue;
-                CardEffect resolved = effect;
-                if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
-                    FilterContext filterContext = FilterContext.of(gameData)
-                            .withSourceCardId(perm.getOriginalCard().getId())
-                            .withSourceControllerId(ownerId);
-                    if (!predicateEvaluationService.matchesPermanentPredicate(tappedPermanent, conditional.predicate(), filterContext)) {
-                        continue;
-                    }
-                    resolved = conditional.wrapped();
-                }
-                CardEffect limited = resolved;
-                resolved = unwrapOncePerTurnTrigger(gameData, perm, resolved);
-                if (resolved == null) continue;
+            List<TapAbilityReader.TapEffect> reads = new ArrayList<>(
+                    TapAbilityReader.readPrinted(perm.getCard(), TapWatch.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT));
+            reads.addAll(TapAbilityReader.readGrantedToPermanent(perm, youTapWatched));
+            reads.addAll(TapAbilityReader.read(
+                    grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, perm, youTapWatched),
+                    youTapWatched));
+            for (TapAbilityReader.TapEffect read : reads) {
+                if (shouldSkipBatchedTapTrigger(gameData, perm, read)) continue;
+                if (!tappedPermanentMatches(gameData, perm, ownerId, tappedPermanent, read)) continue;
+                if (read.limitReached(gameData, perm.getId())) continue;
+                CardEffect resolved = read.effect();
                 if (resolved instanceof ConditionalEffect conditional && conditional.interveningIf()
                         && !conditionEvaluationService.isMet(gameData, conditional.condition(),
                         ConditionContext.forPermanent(perm, ownerId))) {
@@ -10196,7 +10172,7 @@ public class TriggerCollectionService {
                     gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                             perm.getCard(), ownerId, new ArrayList<>(List.of(resolved))));
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                    markBatchedTapTrigger(gameData, perm, registration);
+                    markTapTriggered(gameData, perm, read);
                     continue;
                 }
                 if (resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
@@ -10205,8 +10181,7 @@ public class TriggerCollectionService {
                             perm.getCard(), ownerId, new ArrayList<>(List.of(resolved)), perm.getId(),
                             tappedPermanent.getId()));
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, limited);
-                    markBatchedTapTrigger(gameData, perm, registration);
+                    markTapTriggered(gameData, perm, read);
                     continue;
                 }
                 UUID bakedTargetId = bakeTriggeringPermanentControllerTarget(resolved, controllerId);
@@ -10221,11 +10196,35 @@ public class TriggerCollectionService {
                 );
                 entry.setTriggeringPermanentId(tappedPermanent.getId());
                 gameData.enqueueTrigger(entry);
-                OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, limited);
-                markBatchedTapTrigger(gameData, perm, registration);
+                markTapTriggered(gameData, perm, read);
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
             }
         });
+    }
+
+    /**
+     * Whether the tapped or untapped permanent {@code tapped} matches {@code read}'s filter ("a Merfolk you control",
+     * "this permanent"), if it has one, judged with {@code source}, the ability's source controlled by
+     * {@code sourceControllerId}, as the filter's source.
+     */
+    private boolean tappedPermanentMatches(GameData gameData, Permanent source, UUID sourceControllerId,
+                                           Permanent tapped, TapAbilityReader.TapEffect read) {
+        if (read.filter() == null) {
+            return true;
+        }
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(source.getOriginalCard().getId())
+                .withSourceControllerId(sourceControllerId);
+        return predicateEvaluationService.matchesPermanentPredicate(tapped, read.filter(), filterContext);
+    }
+
+    /**
+     * Marks what the triggering of {@code read}'s ability on {@code source} uses up: its limit ("triggers only once
+     * each turn", by the ability), and its "one or more" for the permanents tapped together.
+     */
+    private static void markTapTriggered(GameData gameData, Permanent source, TapAbilityReader.TapEffect read) {
+        read.markLimit(gameData, source.getId());
+        markBatchedTapTrigger(gameData, source, read);
     }
 
     private void collectEmblemArtifactTapTriggers(GameData gameData, Permanent tappedPermanent,
@@ -10269,23 +10268,26 @@ public class TriggerCollectionService {
         return true;
     }
 
+    /**
+     * Whether {@code read}'s "one or more" ability already triggered on {@code source} for the permanents tapped
+     * together in the open tap batch ({@link #beginPermanentTapTriggerBatch}).
+     */
     private static boolean shouldSkipBatchedTapTrigger(GameData gameData, Permanent source,
-                                                        EffectRegistration registration) {
-        return registration.triggerMode() == TriggerMode.ONCE_PER_BATCH
+                                                        TapAbilityReader.TapEffect read) {
+        return read.oneOrMore()
                 && gameData.permanentTapTriggerBatchDepth > 0
                 && gameData.permanentTapTriggerBatchFiredEffects.getOrDefault(source.getId(), Set.of())
-                .contains(registration.effect());
+                .contains(read.effect());
     }
 
     private static void markBatchedTapTrigger(GameData gameData, Permanent source,
-                                               EffectRegistration registration) {
-        if (registration.triggerMode() != TriggerMode.ONCE_PER_BATCH
-                || gameData.permanentTapTriggerBatchDepth <= 0) {
+                                               TapAbilityReader.TapEffect read) {
+        if (!read.oneOrMore() || gameData.permanentTapTriggerBatchDepth <= 0) {
             return;
         }
         gameData.permanentTapTriggerBatchFiredEffects
                 .computeIfAbsent(source.getId(), ignored -> ConcurrentHashMap.newKeySet())
-                .add(registration.effect());
+                .add(read.effect());
     }
 
     /**
@@ -10359,10 +10361,11 @@ public class TriggerCollectionService {
         if (controllerId == null || tappedCreature.isLosesAllAbilitiesUntilEndOfTurn()) {
             return;
         }
+        Trigger watched = TapWatch.ON_SELF_TAPPED_TO_PAY_TEAMWORK_COST.trigger();
         List<CardEffect> effects = new ArrayList<>(
-                TapWatch.ON_SELF_TAPPED_TO_PAY_TEAMWORK_COST.effectsOf(tappedCreature.getCard()));
-        effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
-                gameData, tappedCreature, TapWatch.ON_SELF_TAPPED_TO_PAY_TEAMWORK_COST.trigger()));
+                TapAbilityReader.printedEffects(tappedCreature.getCard(), TapWatch.ON_SELF_TAPPED_TO_PAY_TEAMWORK_COST));
+        effects.addAll(TapAbilityReader.effects(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
+                gameData, tappedCreature, watched), watched));
         if (effects.isEmpty()) {
             return;
         }
@@ -10424,7 +10427,8 @@ public class TriggerCollectionService {
         processDelayedDestroyTargetWhenSourceUntaps(gameData, untappedPermanent);
 
         boolean lostPrintedAbilities = gameQueryService.hasLostPrintedAbilities(gameData, untappedPermanent);
-        for (CardEffect effect : TapWatch.ON_SELF_BECOMES_UNTAPPED.effectsOf(untappedPermanent.getCard())) {
+        for (CardEffect effect : TapAbilityReader.printedEffects(untappedPermanent.getCard(),
+                TapWatch.ON_SELF_BECOMES_UNTAPPED)) {
             if (lostPrintedAbilities) break;
             if (effect instanceof com.github.laxika.magicalvibes.model.effect.PhaseInLinkedPermanentEffect
                     && gameData.phasedOutWhileSourceTapped
@@ -10438,8 +10442,9 @@ public class TriggerCollectionService {
 
         // Granted "Whenever this creature becomes untapped" abilities (Well Rested) have the enchanted
         // creature as their source and are controlled by its controller.
-        for (CardEffect granted : grantedTriggeredAbilitySupport.grantedTriggerEffects(
-                gameData, untappedPermanent, controllerId, TapWatch.ON_SELF_BECOMES_UNTAPPED.trigger())) {
+        Trigger selfUntapWatched = TapWatch.ON_SELF_BECOMES_UNTAPPED.trigger();
+        for (CardEffect granted : TapAbilityReader.effects(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
+                gameData, untappedPermanent, controllerId, selfUntapWatched), selfUntapWatched)) {
             CardEffect resolved = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, untappedPermanent, granted);
             if (resolved == null) continue;
             StackEntry grantedEntry = new StackEntry(
@@ -10464,17 +10469,11 @@ public class TriggerCollectionService {
         UUID untappedControllerId = controllerId;
         gameData.forEachPermanent((ownerId, perm) -> {
             if (!ownerId.equals(untappedControllerId)) return;
-            for (CardEffect effect : TapWatch.ON_ALLY_PERMANENT_BECOMES_UNTAPPED.effectsOf(perm.getCard())) {
-                CardEffect resolved = effect;
-                if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
-                    FilterContext filterContext = FilterContext.of(gameData)
-                            .withSourceCardId(perm.getOriginalCard().getId())
-                            .withSourceControllerId(ownerId);
-                    if (!predicateEvaluationService.matchesPermanentPredicate(untappedPermanent, conditional.predicate(), filterContext)) {
-                        continue;
-                    }
-                    resolved = conditional.wrapped();
-                }
+            for (TapAbilityReader.TapEffect read : TapAbilityReader.readPrinted(perm.getCard(),
+                    TapWatch.ON_ALLY_PERMANENT_BECOMES_UNTAPPED)) {
+                TapAbilityReader.requireNoLimit(read, TapWatch.ON_ALLY_PERMANENT_BECOMES_UNTAPPED.trigger());
+                if (!tappedPermanentMatches(gameData, perm, ownerId, untappedPermanent, read)) continue;
+                CardEffect resolved = read.effect();
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
@@ -10492,21 +10491,11 @@ public class TriggerCollectionService {
 
         gameData.forEachPermanent((ownerId, perm) -> {
             if (perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, perm)) return;
-            for (CardEffect effect : TapWatch.ON_ANY_PERMANENT_BECOMES_UNTAPPED.effectsOf(perm.getCard())) {
-                CardEffect resolved = effect;
-                if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
-                    FilterContext filterContext = FilterContext.of(gameData)
-                            .withSourceCardId(perm.getOriginalCard().getId())
-                            .withSourceControllerId(ownerId);
-                    if (!predicateEvaluationService.matchesPermanentPredicate(
-                            untappedPermanent, conditional.predicate(), filterContext)) {
-                        continue;
-                    }
-                    resolved = conditional.wrapped();
-                }
-                CardEffect triggerEffect = resolved;
-                resolved = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, resolved);
-                if (resolved == null) continue;
+            for (TapAbilityReader.TapEffect read : TapAbilityReader.readPrinted(perm.getCard(),
+                    TapWatch.ON_ANY_PERMANENT_BECOMES_UNTAPPED)) {
+                if (!tappedPermanentMatches(gameData, perm, ownerId, untappedPermanent, read)) continue;
+                if (read.limitReached(gameData, perm.getId())) continue;
+                CardEffect resolved = read.effect();
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
@@ -10519,7 +10508,7 @@ public class TriggerCollectionService {
                 entry.setEventPlayerIds(List.of(untappedControllerId));
                 entry.setTriggeringPermanentId(untappedPermanent.getId());
                 gameData.enqueueTrigger(entry);
-                OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, triggerEffect);
+                read.markLimit(gameData, perm.getId());
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                 log.info("Game {} - {} triggers on any permanent untap ({})",
                         gameData.id, perm.getCard().getName(), untappedPermanent.getCard().getName());
@@ -16671,6 +16660,15 @@ public class TriggerCollectionService {
         }
         if (watch instanceof LibraryWatch libraryWatch) {
             return dispatchLibraryWatch(gameData, perm, controllerId, libraryWatch, ctx);
+        }
+        if (watch instanceof TapWatch tapWatch) {
+            // The watches dispatched here ("a player taps a permanent for mana", the untap step) judge no filter,
+            // first-time event, "one or more" or limit.
+            Trigger watched = tapWatch.trigger();
+            return dispatchRegistrations(gameData, perm, controllerId, watch, ctx, null,
+                    TapAbilityReader.printedRegistrations(perm.getCard(), tapWatch),
+                    staticBonus -> TapAbilityReader.effects(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(
+                            gameData, perm, staticBonus, ability -> ability.hasWatchedTrigger(watched)), watched));
         }
         if (watch instanceof CombatWatch combatWatch) {
             Trigger watched = combatWatch.trigger();

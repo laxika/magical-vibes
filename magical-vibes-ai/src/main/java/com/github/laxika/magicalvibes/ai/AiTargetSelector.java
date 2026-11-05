@@ -68,6 +68,7 @@ import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationSe
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 
 import com.github.laxika.magicalvibes.service.trigger.TapWatch;
+import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumSet;
@@ -309,7 +310,8 @@ class AiTargetSelector {
      * to one of the AI's own lands; enchanting the opponent's land would ramp the opponent.
      */
     private static boolean isControllerBeneficialLandAura(Card card) {
-        return card.isAura() && TapWatch.ON_ANY_PLAYER_TAPS_LAND.effectsOf(card).stream()
+        return card.isAura() && WatchedAbilities.rawEffects(
+                WatchedAbilities.printed(card, TapWatch.ON_ANY_PLAYER_TAPS_LAND)).stream()
                 .anyMatch(AddManaOnEnchantedLandTapEffect.class::isInstance);
     }
 

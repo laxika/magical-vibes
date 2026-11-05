@@ -10,12 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SchemeSetInMotionTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
 import com.github.laxika.magicalvibes.model.trigger.CombatTrigger;
 import com.github.laxika.magicalvibes.model.trigger.CounterTrigger;
@@ -110,8 +106,10 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * no counter collector does (a counter event is once for each permanent, or once for each counter, by its own
      * event), no becomes-the-target collector does ("one or more creatures you control become the target of an
      * activated ability" is an event of its own), and no library, draw or discard collector does ("whenever you discard
-     * one or more cards" is an event of its own). The legacy view checked these as a card's abilities were indexed;
-     * the combat, damage, counter, becomes-the-target and library collectors read the ability itself, so the ability
+     * one or more cards" is an event of its own), and of the tap and untap collectors only those of "a permanent you
+     * control / an opponent controls becomes tapped" and "you tap a permanent an opponent controls" read it, as they
+     * batch the permanents tapped together. The legacy view checked these as a card's abilities were indexed; the
+     * combat, damage, counter, becomes-the-target, library and tap collectors read the ability itself, so the ability
      * checks them as it is built.
      */
     private static void requireReadableMultiplicity(List<TriggerCondition> conditions,
@@ -149,6 +147,11 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
                     throw new IllegalArgumentException("No library, draw or discard collector reads \"one or more\" "
                             + "for " + conditions);
                 }
+                if (conditions.stream().anyMatch(condition -> condition.trigger() instanceof TapTrigger tap
+                        && !readsOneOrMore(tap))) {
+                    throw new IllegalArgumentException("No tap or untap collector reads \"one or more\" for "
+                            + conditions);
+                }
             }
             case EACH -> {
             }
@@ -162,6 +165,23 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             case COMBAT_DAMAGE_TO_PLAYER, COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE, COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER ->
                     trigger.relation() == ObjectRelation.YOU_CONTROL
                             || trigger.equals(Triggers.creatureWithSameNameDealsCombatDamageToPlayer());
+            default -> false;
+        };
+    }
+
+    /**
+     * Whether the collector of {@code trigger} reads "one or more", as {@link #requireReadableMultiplicity} says: it
+     * triggers once for the permanents tapped together, which "a permanent you control / an opponent controls becomes
+     * tapped" and "you tap a permanent an opponent controls" do, but not for "this permanent" or a typed trigger.
+     */
+    private static boolean readsOneOrMore(TapTrigger trigger) {
+        if (trigger.narrowed() || trigger.filter() != null) {
+            return false;
+        }
+        return switch (trigger.event()) {
+            case BECOMES_TAPPED -> trigger.relation() == ObjectRelation.YOU_CONTROL
+                    || trigger.relation() == ObjectRelation.OPPONENT_CONTROLS;
+            case YOU_TAP -> trigger.relation() == ObjectRelation.OPPONENT_CONTROLS;
             default -> false;
         };
     }
@@ -263,7 +283,7 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
     /**
      * Whether one of this ability's trigger conditions is a trigger whose collectors read the ability itself
      * ({@link Trigger#collectedAsAbility()}: a spell, land-play, activation, step, combat, damage, counter,
-     * becomes-the-target or library, draw and discard trigger): then it has no legacy view.
+     * becomes-the-target, library, draw and discard, or tap and untap trigger): then it has no legacy view.
      */
     public boolean collectedAsAbility() {
         return conditions.stream().anyMatch(condition -> condition.trigger().collectedAsAbility());
@@ -291,14 +311,10 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * {@link #limitKey()}, the key the trigger pipeline marks; "do this only once each turn" one marked as the action
      * is taken (CR 603.2h); "this ability triggers only once" ({@code ONCE}) an {@link OnceOnlyTriggerEffect} inside
      * the intervening "if", as the cards wrote it. An ability with a spell, land-play, activation, "at the beginning of
-     * [step or phase]", combat, damage, counter, becomes-the-target or library, draw and discard trigger
-     * ({@link #collectedAsAbility()}) has no legacy view: its collectors read it itself, and this throws. "Once each turn for each creature"
-     * ({@link TriggerLimit#ONCE_EACH_TURN_FOR_EACH_CREATURE}) is an {@link OncePerTurnPerCreatureTriggerEffect} where
-     * the other limits go. A tap or untap trigger's
-     * filter ("this permanent" for a {@link TapTrigger#narrowed()} trigger, and its {@link TapTrigger#qualifier()}) is
-     * a {@link TriggeringPermanentConditionalEffect} outside the limit, "for the first time during your turn" the
-     * global {@link OncePerTurnPerCreatureTriggerEffect} inside that filter, and "one or more" the registrations'
-     * {@link TriggerMode#ONCE_PER_BATCH}, as {@link #tapView()} says and the tap cards wrote them. A life trigger's "for the first time each turn"
+     * [step or phase]", combat, damage, counter, becomes-the-target, library, draw and discard, or tap and untap
+     * trigger ({@link #collectedAsAbility()}) has no legacy view: its collectors read it itself, and this throws. "Once
+     * each turn for each creature" ({@link TriggerLimit#ONCE_EACH_TURN_FOR_EACH_CREATURE}) is an
+     * {@link OncePerTurnPerCreatureTriggerEffect} where the other limits go. A life trigger's "for the first time each turn"
      * ({@link LifeTrigger#firstEachTurn()}) is the counting {@link OncePerTurnTriggerEffect} the life collectors judge,
      * where the limits go, as {@link #lifeView()} says, and "an opponent loses life for the first time during each of
      * their turns" makes the ability one {@link FirstOpponentLifeLossEachTurnTriggerEffect} of all its effects. A
@@ -329,11 +345,10 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         requireFinalChapterOptions();
         Condition interveningIf = options.interveningIf();
         TriggerLimit limit = options.limit();
-        TapView tap = tapView();
         LifeView life = lifeView();
         ObjectActionTrigger object = objectActionView();
         if (interveningIf == null && limit == TriggerLimit.NONE
-                && (tap == null || tap.plain()) && (life == null || life.plain()) && object == null) {
+                && (life == null || life.plain()) && object == null) {
             return legacyBaseEffects();
         }
         String key = limit == TriggerLimit.ONCE_EACH_TURN ? limitKey() : null;
@@ -356,17 +371,11 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             if (life != null) {
                 effect = life.wrap(effect, limitKey());
             }
-            if (tap != null) {
-                effect = tap.wrap(effect);
-            }
             if (object != null) {
                 effect = legacyObjectActionWrapper(object, effect);
             }
-            TriggerMode mode = registration.triggerMode();
-            if (tap != null) {
-                mode = tap.mode(mode);
-            }
-            wrapped.add(new EffectRegistration(effect, mode, registration.simultaneousWithPrevious()));
+            wrapped.add(new EffectRegistration(effect, registration.triggerMode(),
+                    registration.simultaneousWithPrevious()));
         }
         return List.copyOf(wrapped);
     }
@@ -464,139 +473,6 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         if (options.interveningIf() != null || options.multiplicity() != TriggerMultiplicity.EACH
                 || (options.limit() != TriggerLimit.NONE && options.limit() != TriggerLimit.ONCE_EACH_TURN)) {
             throw new IllegalStateException("The final-chapter collector doesn't read " + options + ": " + conditions);
-        }
-    }
-
-    /**
-     * What the legacy view adds for this ability's tap and untap conditions, or {@code null} when it has none: the
-     * filter the collector that reads them judges ("this permanent", a {@link TapTrigger#narrowed()} trigger's type
-     * and the {@link TapTrigger#qualifier()}, which {@link TapTrigger#watchKey()} drops), whether "for the first time
-     * during your turn" is the global {@link OncePerTurnPerCreatureTriggerEffect}, and whether "one or more"
-     * ({@link TriggerMultiplicity#ONE_OR_MORE}) is the registrations' {@link TriggerMode#ONCE_PER_BATCH}. The
-     * conditions must agree on all three. A filter or "one or more" on a trigger whose collector doesn't judge it, and
-     * a limit next to "for the first time during your turn", throw.
-     */
-    private TapView tapView() {
-        List<TapTrigger> tap = conditions.stream().map(TriggerCondition::trigger)
-                .filter(TapTrigger.class::isInstance).map(TapTrigger.class::cast).toList();
-        if (tap.isEmpty()) {
-            return null;
-        }
-        TriggerMultiplicity multiplicity = options.multiplicity();
-        if (multiplicity != TriggerMultiplicity.EACH && multiplicity != TriggerMultiplicity.ONE_OR_MORE) {
-            throw new IllegalStateException("The legacy view has no " + multiplicity + " form for " + conditions);
-        }
-        boolean oneOrMore = multiplicity == TriggerMultiplicity.ONE_OR_MORE;
-        List<TapView> views = tap.stream().map(trigger -> {
-            if (trigger.qualifier() != null && !judgesTapFilter(trigger)) {
-                throw new IllegalStateException("No tap collector judges a filter on " + trigger);
-            }
-            if (oneOrMore && !batchesTaps(trigger)) {
-                throw new IllegalStateException("No tap collector reads \"one or more\" on " + trigger);
-            }
-            return new TapView(legacyTapFilter(trigger),
-                    trigger.event() == TapTrigger.TapEvent.BECOMES_TAPPED_FOR_FIRST_TIME_DURING_YOUR_TURN, oneOrMore);
-        }).distinct().toList();
-        if (views.size() > 1) {
-            throw new IllegalStateException("The tap conditions of one ability must have the same filter and event: "
-                    + conditions);
-        }
-        TapView view = views.getFirst();
-        if (view.firstTime() && options.limit() != TriggerLimit.NONE) {
-            throw new IllegalStateException("The legacy view has no limit next to \"for the first time during your "
-                    + "turn\": " + conditions);
-        }
-        return view;
-    }
-
-    /**
-     * Whether the collector that reads {@code trigger}'s abilities judges a
-     * {@link TriggeringPermanentConditionalEffect} on the tapped or untapped permanent: "a permanent you control / an
-     * opponent controls becomes tapped" (and the {@link TapTrigger#narrowed()} triggers it reads), "you tap a
-     * permanent an opponent controls", and "a permanent [you control] becomes untapped".
-     */
-    private static boolean judgesTapFilter(TapTrigger trigger) {
-        if (trigger.narrowed()) {
-            return true;
-        }
-        return switch (trigger.event()) {
-            case BECOMES_TAPPED -> trigger.relation() == ObjectRelation.YOU_CONTROL
-                    || trigger.relation() == ObjectRelation.OPPONENT_CONTROLS;
-            case YOU_TAP -> trigger.relation() == ObjectRelation.OPPONENT_CONTROLS;
-            case BECOMES_UNTAPPED -> trigger.relation() == ObjectRelation.YOU_CONTROL
-                    || trigger.relation() == ObjectRelation.ANY;
-            default -> false;
-        };
-    }
-
-    /**
-     * Whether the collector that reads {@code trigger}'s abilities triggers a {@link TriggerMode#ONCE_PER_BATCH}
-     * registration once for the permanents tapped together: "a permanent you control / an opponent controls becomes
-     * tapped" and "you tap a permanent an opponent controls".
-     */
-    private static boolean batchesTaps(TapTrigger trigger) {
-        if (trigger.narrowed() || trigger.filter() != null) {
-            return false;
-        }
-        return switch (trigger.event()) {
-            case BECOMES_TAPPED -> trigger.relation() == ObjectRelation.YOU_CONTROL
-                    || trigger.relation() == ObjectRelation.OPPONENT_CONTROLS;
-            case YOU_TAP -> trigger.relation() == ObjectRelation.OPPONENT_CONTROLS;
-            default -> false;
-        };
-    }
-
-    /**
-     * The filter the tap collectors judge for {@code trigger}, or {@code null} for none: "this permanent" for
-     * {@link ObjectRelation#THIS}, the type a {@link TapTrigger#narrowed()} trigger's watch key drops, and the
-     * {@link TapTrigger#qualifier()}, all of them when there are several.
-     */
-    private static PermanentPredicate legacyTapFilter(TapTrigger trigger) {
-        List<PermanentPredicate> parts = new ArrayList<>();
-        if (trigger.narrowed() && trigger.relation() == ObjectRelation.THIS) {
-            parts.add(new PermanentIsSourceCardPredicate());
-        }
-        if (trigger.narrowed() && trigger.filter() != null) {
-            parts.add(trigger.filter());
-        }
-        if (trigger.qualifier() != null) {
-            parts.add(trigger.qualifier());
-        }
-        return switch (parts.size()) {
-            case 0 -> null;
-            case 1 -> parts.getFirst();
-            default -> new PermanentAllOfPredicate(List.copyOf(parts));
-        };
-    }
-
-    /**
-     * The legacy view of an ability's tap and untap conditions, as {@link #tapView()} builds it.
-     *
-     * @param filter    the filter the collector judges, or {@code null}
-     * @param firstTime whether the conditions are "for the first time during your turn"
-     * @param oneOrMore whether the ability triggers once for the permanents tapped together
-     */
-    private record TapView(PermanentPredicate filter, boolean firstTime, boolean oneOrMore) {
-
-        /** Whether the legacy view adds nothing to the effects and modes. */
-        boolean plain() {
-            return filter == null && !firstTime && !oneOrMore;
-        }
-
-        CardEffect wrap(CardEffect effect) {
-            CardEffect counted = firstTime ? new OncePerTurnPerCreatureTriggerEffect(effect, true) : effect;
-            return filter != null ? new TriggeringPermanentConditionalEffect(filter, counted) : counted;
-        }
-
-        TriggerMode mode(TriggerMode authored) {
-            if (!oneOrMore) {
-                return authored;
-            }
-            if (authored != TriggerMode.NORMAL) {
-                throw new IllegalStateException("A registration's trigger mode " + authored
-                        + " on a trigger that is once for one or more permanents");
-            }
-            return TriggerMode.ONCE_PER_BATCH;
         }
     }
 

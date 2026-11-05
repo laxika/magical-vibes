@@ -38,8 +38,8 @@ public sealed interface Trigger permits AbilityTrigger, AttachTrigger, ChapterTr
      * spell, land-play and activation triggers (step 13's family 2), whose collectors effect-slot-refactor.md step 14
      * moved off the legacy view in runs 16b to 16d, the "at the beginning of [step or phase]" triggers (family 1,
      * run 16e), the combat triggers (family 3, run 16f), the damage triggers (family 4, run 16g), the counter
-     * triggers (family 5, run 16h), the becomes-the-target triggers (family 6, run 16i) and the library, draw and
-     * discard triggers (family 7, run 16j).
+     * triggers (family 5, run 16h), the becomes-the-target triggers (family 6, run 16i), the library, draw and
+     * discard triggers (family 7, run 16j) and the tap and untap triggers (family 8, run 16k).
      */
     default boolean collectedAsAbility() {
         return false;

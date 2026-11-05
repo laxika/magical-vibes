@@ -22,9 +22,8 @@ import java.util.Objects;
  * @param qualifier what the permanent must also be, or {@code null}: "whenever a Merfolk you control becomes tapped"
  *                  is {@code Triggers.permanentYouControlBecomesTapped().withFilter(merfolk)}, "whenever this
  *                  creature becomes tapped while it has a -1/-1 counter on it" {@code
- *                  Triggers.becomesTapped().withFilter(hasMinusOneCounter)}. The collectors read it from the legacy
- *                  view ({@code TriggeredAbility.legacyEffects()}) as the {@code TriggeringPermanentConditionalEffect}
- *                  they judge, so {@link #watchKey()} drops it
+ *                  Triggers.becomesTapped().withFilter(hasMinusOneCounter)}. The collectors judge it from the ability
+ *                  ({@code TapAbilityReader}), so {@link #watchKey()} drops it
  */
 public record TapTrigger(TapEvent event, ObjectRelation relation, PermanentPredicate filter,
                          PermanentPredicate qualifier) implements Trigger {
@@ -58,8 +57,8 @@ public record TapTrigger(TapEvent event, ObjectRelation relation, PermanentPredi
 
     /**
      * Whether the {@code TapWatch} collectors read this trigger's abilities by another trigger, the one of
-     * "a permanent you control becomes tapped", whose collector judges the rest in a wrapper: "this permanent becomes
-     * tapped" ({@link ObjectRelation#THIS} with {@link TapEvent#BECOMES_TAPPED}) and every
+     * "a permanent you control becomes tapped", whose collector judges the rest from the ability: "this permanent
+     * becomes tapped" ({@link ObjectRelation#THIS} with {@link TapEvent#BECOMES_TAPPED}) and every
      * {@link TapEvent#BECOMES_TAPPED_FOR_FIRST_TIME_DURING_YOUR_TURN}.
      */
     public boolean narrowed() {
@@ -68,11 +67,20 @@ public record TapTrigger(TapEvent event, ObjectRelation relation, PermanentPredi
     }
 
     /**
+     * The tap and untap collectors read this trigger's abilities themselves ({@code TapAbilityReader}): the tapped or
+     * untapped permanent's filter, "this permanent", "for the first time during your turn", "one or more" and the
+     * ability's options come from the ability, so it has no legacy view.
+     */
+    @Override
+    public boolean collectedAsAbility() {
+        return true;
+    }
+
+    /**
      * The trigger the {@code TapWatch} collectors read this one's abilities by: without its {@link #qualifier}, and,
      * for a {@link #narrowed()} trigger, "a permanent you control becomes tapped" (its {@link #filter} dropped too).
-     * The legacy view ({@code TriggeredAbility.legacyEffects()}) gives those abilities the wrappers that collector
-     * judges: "this permanent" and the filter as a {@code TriggeringPermanentConditionalEffect}, "for the first time
-     * during your turn" as the global {@code OncePerTurnPerCreatureTriggerEffect}.
+     * That collector judges "this permanent", the type and "for the first time during your turn" from the ability
+     * ({@code TapAbilityReader}).
      */
     @Override
     public Trigger watchKey() {

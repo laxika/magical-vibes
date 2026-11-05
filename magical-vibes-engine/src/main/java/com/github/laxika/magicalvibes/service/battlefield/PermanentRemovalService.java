@@ -3573,7 +3573,8 @@ public class PermanentRemovalService {
                 pendingReturns = remaining.isEmpty() ? null : remaining;
             }
         }
-        boolean leaveReturnsAreTriggered = TapWatch.ON_SELF_BECOMES_UNTAPPED.effectsOf(removedPermanent.getCard())
+        boolean leaveReturnsAreTriggered = WatchedAbilities.rawEffects(WatchedAbilities.printed(
+                removedPermanent.getCard(), TapWatch.ON_SELF_BECOMES_UNTAPPED))
                 .stream().anyMatch(com.github.laxika.magicalvibes.model.effect.ReturnCardsExiledWithSourceOnUntapEffect.class::isInstance);
         if (pendingReturns != null && (leaveReturnsAreTriggered
                 || ZoneChangeWatch.ON_ANY_CREATURE_ENTERS_BATTLEFIELD.effectsOf(removedPermanent.getCard())

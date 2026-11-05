@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>
  * Don't author it on a tap or untap trigger: the trigger's filter says it ({@code
  * Triggers.permanentYouControlBecomesTapped().withFilter(p)}, and "this permanent becomes tapped" is {@code
- * Triggers.becomesTapped()}), and the legacy view ({@code TriggeredAbility.legacyEffects()}) gives it to the tap
- * collectors in this form.
+ * Triggers.becomesTapped()}), and the tap collectors judge it from the ability ({@code TapAbilityReader}).
  */
 public record TriggeringPermanentConditionalEffect(
         PermanentPredicate predicate,

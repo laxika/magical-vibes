@@ -335,8 +335,8 @@ an opponent of the graveyard owner whenever a black card enters that graveyard f
 `Triggers.youTapPermanentOpponentControls()` (non-targeting effects use the direct
 stack path; graveyard-card targets use the shared `SpellGraveyardTargetTrigger` flow). The tap collector
 also reads "for the first time during your turn" (`Triggers.becomesTappedForFirstTimeDuringYourTurn()`,
-`creatureYouControlBecomesTappedForFirstTimeDuringYourTurn()`, the global per-creature first-event wrapper of the
-legacy view): it checks the tapped creature's controller against
+`creatureYouControlBecomesTappedForFirstTimeDuringYourTurn()`, judged from the ability through
+`TapAbilityReader`): it checks the tapped creature's controller against
 the active player, records its turn-wide tap count, and preserves the event permanent in
 `StackEntry.triggeringPermanentId` for effects such as `UntapPermanentsEffect(TapUntapScope.TRIGGERING)`;
 the effect rechecks the first-event condition when it resolves.

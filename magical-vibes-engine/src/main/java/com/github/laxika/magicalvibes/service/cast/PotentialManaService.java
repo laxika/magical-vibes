@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHan
 import com.github.laxika.magicalvibes.service.effect.replacement.mana.LandManaReplacementService;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TapWatch;
+import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -362,7 +363,8 @@ public class PotentialManaService {
                     || !manaSource.getId().equals(attachment.getAttachedTo())) {
                 return;
             }
-            found[0] = TapWatch.ON_ANY_PLAYER_TAPS_LAND.effectsOf(attachment.getCard()).stream()
+            found[0] = WatchedAbilities.rawEffects(WatchedAbilities.printed(attachment.getCard(),
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND)).stream()
                     .filter(AddManaOnEnchantedLandTapEffect.class::isInstance)
                     .map(AddManaOnEnchantedLandTapEffect.class::cast)
                     .map(AddManaOnEnchantedLandTapEffect::mana)

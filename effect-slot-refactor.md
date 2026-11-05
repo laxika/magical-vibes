@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; runs 16k onward left: the rest of the legacy view's retirement, family by family, with the may-unwrapping, `TriggerMode`, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; runs 16l onward left: the rest of the legacy view's retirement, family by family, with the may-unwrapping, `TriggerMode`, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -612,7 +612,8 @@ no other family still uses. The order:
 | 16h | Step 13's family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader` (filter, "you put" / "each counter" event and limit from the ability); no counter ability has a legacy view, and `YouPutCounterOnControlledCreatureTriggerEffect`, `YouRemoveTimeCounterFromExiledCardTriggerEffect` and `TriggerMode.PER_COUNTER` are gone |
 | 16i | Step 13's family 6 (becomes the target): every becomes-the-target and target-choice collector reads the abilities through `TargetAbilityReader` (filter, "you control" event and limit from the ability); no target ability has a legacy view, and `TriggeringSpellControllerConditionalEffect`, `AbilityTargetChoiceTriggerEffect` and `TargetChoiceTriggerEffect` are gone |
 | 16j | Step 13's family 7 (library, draw and discard): every draw, discard, cycle, scry, surveil, library search and shuffle collector reads the abilities through `LibraryAbilityReader` (filter, own event, count and limit from the ability); no library ability has a legacy view, and `CyclingTriggerEffect`, `OpponentCausedDiscardTriggerEffect`, `NthCardDrawTriggerEffect`, `FirstOrSecondCardDrawTriggerEffect`, `ExceptFirstDrawStepTriggerEffect`, `FirstDrawStepDrawOnlyTriggerEffect`, `DrawTriggerEffect` and the four counting `OncePerTurnTriggerEffect` factories are gone |
-| 16k onward | The rest of the legacy view's retirement, family by family: each family's collectors read the ability's options, filters and grouping (no `TriggerMode`), then the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
+| 16k | Step 13's family 8 (tap and untap): every tap, untap and tap-for-mana collector reads the abilities through `TapAbilityReader` (filter, "for the first time during your turn", "one or more" and limit from the ability); no tap ability has a legacy view, and `OncePerTurnPerCreatureTriggerEffect`'s `global` component is gone |
+| 16l onward | The rest of the legacy view's retirement, family by family: each family's collectors read the ability's options, filters and grouping (no `TriggerMode`), then the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
 
 Mark the step `done` only after the last run of 16.
 
@@ -8148,6 +8149,119 @@ is an event of its own).
   `LandTapTriggerCollectorServiceTest` 2, `DrawServiceTest`'s additional-trigger copy, and the known one each in
   `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and `CardEffectTargetingConsistencyTest`. The first run had
   one more of this run's own, `DrawServiceTest`'s authored once-per-turn wrapper, rewritten above.
+- Engine: the whole module, with the one failure at HEAD, `GameMutationBoundaryRatchetTest`.
+- AI: the whole module (1,620 tests), with the same 10 failures as before.
+- The full suite was not run here.
+
+#### Run 16k: tap and untap read the ability
+
+Step 13's family 8, next in 16a's order after library, draw and discard, as 16j's findings listed the families left:
+every "whenever [this, a permanent you control, a permanent an opponent controls, a creature, enchanted permanent]
+becomes tapped [for the first time during your turn]", "whenever you tap [this, a land, a creature, a nonland
+permanent, an artifact token, a permanent] for mana", "whenever you tap a permanent an opponent controls", "tapped to
+pay a teamwork cost", "becomes untapped" and "you untap permanents during your untap step" ability (a `TapTrigger`,
+collected by the tap, untap and tap-for-mana collectors of `TriggerCollectionService` and their handlers) has no legacy
+view any more, and every reader of one reads the ability.
+
+**What the scan found.** A temporary reflection scan of every card class (31,682 with a `@CardRegistration`), its own
+abilities and every ability reachable from its fields (granted, temporary global and token abilities: 214 tap
+abilities in 207 card classes, 9 of them granted: Haunted One, Hangar Scrounger, Legolas's Quick Reflexes, Unctus,
+Wildfire Awakener, Tale of Katara and Toph, Well Rested, Sasaya and Don't Move's registered one): every ability has one
+effect, every registration is `TriggerMode.NORMAL`, and no ability mixes a tap trigger with another family's. 4
+intervening "if"s (Barbflare Gremlin, Encumbered Reejerey, Interface Ace, Warchanter Skald), 1 event condition (The
+Ninth Doctor), 3 "triggers only once each turn" (Interface Ace, Nanoform Sentinel, Sharae), 3 "one or more" (Deeproot
+Pilgrimage, Rewrite History, Sharae), 2 first-time events (Captain America, Living Legend; Tale of Katara and Toph's
+grant), 63 "this permanent becomes tapped" and 26 qualifiers. The only authored wrappers left are Well Rested's
+`OncePerTurnTriggerEffect.perGrant` (kept, as run 12 said) and Scaretiller's `ChooseOneAtTriggerTimeEffect` (an
+effect). The perpetual land grants (Ambassador of Evendo, Vigorous Farming) build their abilities in handlers.
+
+**The model.** `TapTrigger.collectedAsAbility()` is true: `TriggeredAbility.legacyEffects()`, the `getLegacy…` getters
+and `TapWatch.effectsOf` / `registrationsOf` throw for a tap ability, and the card's slot index leaves tap abilities out
+of its legacy maps. The legacy view's tap branch (`tapView()`, `TapView`, `judgesTapFilter`, `batchesTaps`,
+`legacyTapFilter`) is gone, with `OncePerTurnPerCreatureTriggerEffect`'s `global` component (only the tap view built
+it). `TriggeredAbility` rejects "one or more" on a tap condition as it is built unless its collector batches the
+permanents tapped together ("a permanent you control / an opponent controls becomes tapped", "you tap a permanent an
+opponent controls").
+
+**The engine.**
+
+- New `TapAbilityReader` (`service/trigger`, static), `LibraryAbilityReader`'s shape on `WatchedAbilities`' finders:
+  each effect as a `TapEffect` with the intervening "if" around it (a `ConditionalEffect`, **CR 603.4**, checked) and
+  the event condition inside that (**CR 603.2**, checked), plus the ability, the filter on the tapped or untapped
+  permanent ("this permanent" as `PermanentIsSourceCardPredicate` and the type of a narrowed trigger, and the
+  qualifier, joined in a `PermanentAllOfPredicate`, as the legacy view joined them), `firstTime()`, `oneOrMore()` and
+  the limit (`limitReached` / `markLimit` by `limitKey()` on the source). It throws on a trigger mode other than
+  `NORMAL`, on a limit other than "triggers only once each turn", on a limit next to the first-time event, on a
+  qualifier where no collector judges one, and on two conditions one watch reads with a different filter or event.
+  The strict `printedEffects` / `printedRegistrations` / `effects` / `registrations` serve the readers that judge none
+  of them and throw on one.
+- The "a permanent you control becomes tapped" collector judges the filter, the first-time event (the creature's tap
+  count this turn during its controller's turn, as before), "one or more" (the open tap batch, keyed by the read effect)
+  and the limit, for printed, temporary, persistent and statically granted abilities; the "an opponent controls" and
+  "you tap a permanent an opponent controls" collectors the filter, "one or more" and the limit; the "a permanent you
+  control becomes untapped" collector the filter (and throws on a limit, which it never read); the "a permanent becomes
+  untapped" collector the filter and the limit. The temporary global watchers (Don't Move) judge a tap ability's filter
+  from the ability. The mana, land-tap, enchanted, teamwork, self-untap and untap-step readers, `dispatchWatch`'s new
+  tap branch and the planar readers read the strict effects.
+- The self-untap handler (`MiscTriggerCollectorService.handleSelfBecomesUntapped`) finds the first of the card's
+  effects by equality: the reader wraps an effect in its options afresh on every read, where the legacy view's cached
+  wrappers kept their identity (The Ninth Doctor's event condition).
+- `PredicateEvaluationService`, `PotentialManaService`, `PermanentRemovalService`, `AiManaManager`, `AiTargetSelector`
+  and `GameSimulator` only inspect which effects a tap ability has: they read `WatchedAbilities.rawEffects`.
+
+**Behaviour changes.**
+
+- The "a permanent you control becomes tapped" collector judges the limit before the modal and graveyard-target prompts
+  and marks it when an ability goes to either prompt too, where the old one judged the wrapper only on the stack and
+  target paths. No card has a limit on an ability with a modal or graveyard-target effect, so no test can observe it.
+- Nothing else is known to change: each collector judges the filter, first-time event, "one or more" and limit in the
+  context and at the point it judged the wrappers, and the inspectors find the same effect classes (the only wrapped
+  ones were Barbflare Gremlin's and The Ninth Doctor's, around effects none of them looks for).
+
+**Kept, with their reason.**
+
+- The intervening "if" and the event condition still reach the collectors as `ConditionalEffect`s: step 15 retires that
+  routing.
+- The self-untap handler still puts every effect of a card's "this becomes untapped" abilities on one stack entry
+  (Siren of the Silent Song wrote "each opponent discards a card, then mills a card" as two abilities); grouping by
+  ability is a later cleanup, with combat's and counters'.
+- Well Rested's authored `OncePerTurnTriggerEffect.perGrant`, Freyalise's Winds' two unfiltered abilities and Champions
+  of the Shoal's enters-or-tapped pair, as run 12 left them. `TriggeringPermanentConditionalEffect` and
+  `OncePerTurnPerCreatureTriggerEffect` stay: other families still read them.
+- `TemporaryGlobalTriggeredAbility.legacyEffect()` stays for the life watchers.
+
+**For 16l onward.**
+
+- The other families (life, sagas, misc, zone changes), as 16a planned; each can reuse `WatchedAbilities` and a reader
+  of `TapAbilityReader`'s shape. `OncePerTurnTriggerEffect` and `OnceOnlyTriggerEffect` stay: other families' legacy
+  views still build them.
+- Combat's, counters' and the self-untap handler's grouping by ability, and the "when you cast this spell" merges (16d,
+  16f).
+
+**Tests changed.**
+
+- `TapTriggerTest`: the legacy-view tests became reader tests: no legacy view (the ability, the getters, a granted
+  ability and the watch throw), "this permanent", the limit and the intervening "if", the event condition inside the
+  intervening "if", "this permanent" joined with a filter, the first-time event with "this permanent" or the type, "one
+  or more", the limit marked by the ability (not the unkeyed mark), one ability read by the "you control" and "opponent
+  controls" watches, the strict reader, what the collectors can't read rejected (a filter where none is judged, "one or
+  more" off the batching triggers as the ability is built, a limit next to the first-time event, "triggers only once",
+  an authored trigger mode, two filters), granted abilities. `aRegistrationKeepsItsTriggerMode` is gone: the tap
+  collectors read no trigger mode, and the reader rejects one.
+- `TapWatchTest`: reads through the reader.
+
+**Test runs.**
+
+- Card: the test class of every card with a tap ability (by the scan, granting cards included), Ambassador of Evendo's
+  and Vigorous Farming's, and every card test that constructs one of them (338 classes, 3,043 tests): all passing.
+- Application: the `service.trigger` and `model.trigger` packages and the freeze, triggered-ability, card-ability,
+  granted-ability, simulation-copy, architecture, targeting-consistency, untap-step, legacy-slot, mana-ability trigger
+  deferral, permanent-removal, deep-copy, trigger-options and pipeline classes (912 tests): 76 failures, all failing at
+  HEAD: `PermanentRemovalServiceTest` 46, `ManaAbilityTriggerDeferralTest` 11 and `UntapStepServiceTest` 1 (the same
+  cases at `ff2bfc18a3`, run in a worktree with the main tree's `card-data-cache`), `DeathTriggerCollectorServiceTest`
+  6, `DamageTriggerCollectorServiceTest` 5, `SpellCastTriggerCollectorServiceTest` 2, `LandTapTriggerCollectorServiceTest`
+  2, and the known one each in `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest` and
+  `CardEffectTargetingConsistencyTest`. `TapTriggerTest` and `TapWatchTest` pass.
 - Engine: the whole module, with the one failure at HEAD, `GameMutationBoundaryRatchetTest`.
 - AI: the whole module (1,620 tests), with the same 10 failures as before.
 - The full suite was not run here.
