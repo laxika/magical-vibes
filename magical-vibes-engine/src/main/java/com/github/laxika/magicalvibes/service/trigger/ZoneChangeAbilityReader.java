@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.service.trigger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -31,6 +33,42 @@ public final class ZoneChangeAbilityReader {
      */
     public static List<TriggeredAbility> printed(Card card, Trigger trigger) {
         return card.getTriggeredAbilities(trigger);
+    }
+
+    /**
+     * An ability of a card whose trigger condition is a reader's trigger narrowed by a filter, and that filter.
+     *
+     * @param ability the ability
+     * @param filter  what the moving object must also be, or {@code null} when the condition is the reader's trigger
+     */
+    public record NarrowedAbility(TriggeredAbility ability, PermanentPredicate filter) {
+    }
+
+    /**
+     * The abilities of {@code card} whose trigger condition is {@code trigger} or {@code trigger} narrowed by a further
+     * filter on the moving object ({@code Triggers.creatureDies(white, ANY)} narrows {@code Triggers.creatureDies(ANY)},
+     * Agyrem), with that filter, in the order they were added. The reader judges the filter.
+     */
+    public static List<NarrowedAbility> printedNarrowing(Card card, ZoneChangeTrigger trigger) {
+        List<NarrowedAbility> abilities = new ArrayList<>();
+        for (TriggeredAbility ability : card.getTriggeredAbilities()) {
+            for (var condition : ability.conditions()) {
+                if (!(condition.trigger() instanceof ZoneChangeTrigger move)) {
+                    continue;
+                }
+                if (move.equals(trigger)) {
+                    abilities.add(new NarrowedAbility(ability, null));
+                    break;
+                }
+                if (move.filter() instanceof PermanentAllOfPredicate allOf && allOf.predicates().size() == 2
+                        && allOf.predicates().getFirst().equals(trigger.filter())
+                        && move.withFilter(trigger.filter()).equals(trigger)) {
+                    abilities.add(new NarrowedAbility(ability, allOf.predicates().getLast()));
+                    break;
+                }
+            }
+        }
+        return abilities;
     }
 
     /**

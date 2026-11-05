@@ -6,10 +6,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.TriggeringCardMatches;
 
 @CardRegistration(set = "SPE", collectorNumber = "12")
 public class VenomEddieBrock extends Card {
@@ -18,7 +19,7 @@ public class VenomEddieBrock extends Card {
         // One ability: the counter is always put on Venom, and the draw happens only if a Villain died.
         addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER), SequenceEffect.of(
                 new PutCountersOnSourceEffect(1, 1, 1),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.VILLAIN), new DrawCardEffect())));
+                new ConditionalEffect(new TriggeringCardMatches(
+                        new CardSubtypePredicate(CardSubtype.VILLAIN)), new DrawCardEffect())));
     }
 }

@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; run 16l, family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader`; run 16m, family 10 (sagas): no chapter or final-chapter ability has a legacy view, and the final-chapter collectors read the abilities through `SagaAbilityReader`; run 16n, family 11's player and keyword actions: every `ActionWatch` collector reads the abilities through `ActionAbilityReader`; run 16o, family 11's rest: every `MiscWatch` collector and the planar reader read the abilities through `MiscAbilityReader`; run 16p, the zone changes but "when this enters" and the permanent changes: no such ability has a legacy view, and the readers outside the trigger pipeline read them through `ZoneChangeAbilityReader`; run 16q, "when this enters": no ability has a legacy view; the own enters collector reads the abilities and judges their limit, the other readers read `Card.getOwnEntryEffects()`, and `OnceOnlyTriggerEffect` is gone; run 16r, every triggered ability is one object on the stack: the abilities of one Oracle ability are merged by script, the own enters and combat collectors group effects by ability, and `TriggerMode` is gone; run 16s, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags are gone: a `ConditionalEffect` is an effect's "if", and every collector judges the intervening "if" and event condition from the ability; runs 16t onward left: the wrapper classes, then the may-unwrapping with step 15) |
+| 14 | Trigger options replace trigger-only wrapper effects | done (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; run 16l, family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader`; run 16m, family 10 (sagas): no chapter or final-chapter ability has a legacy view, and the final-chapter collectors read the abilities through `SagaAbilityReader`; run 16n, family 11's player and keyword actions: every `ActionWatch` collector reads the abilities through `ActionAbilityReader`; run 16o, family 11's rest: every `MiscWatch` collector and the planar reader read the abilities through `MiscAbilityReader`; run 16p, the zone changes but "when this enters" and the permanent changes: no such ability has a legacy view, and the readers outside the trigger pipeline read them through `ZoneChangeAbilityReader`; run 16q, "when this enters": no ability has a legacy view; the own enters collector reads the abilities and judges their limit, the other readers read `Card.getOwnEntryEffects()`, and `OnceOnlyTriggerEffect` is gone; run 16r, every triggered ability is one object on the stack: the abilities of one Oracle ability are merged by script, the own enters and combat collectors group effects by ability, and `TriggerMode` is gone; run 16s, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags are gone: a `ConditionalEffect` is an effect's "if", and every collector judges the intervening "if" and event condition from the ability; run 16t, the trigger-only wrapper classes: the `Triggering…ConditionalEffect` filters, `SelfExiledFromBattlefieldEffect`, `OncePerTurnPerCreatureTriggerEffect` and `OncePerTurnTriggerEffect`'s keyed, per-grant, mark-on-acceptance and first-time forms are gone, their cards written with trigger filters, `TriggerLimit`s and `TriggeringCardMatches`; Bill Potts' `OncePerTurnTriggerEffect` and the may-unwrapping moved to step 15, with the user) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -621,9 +621,13 @@ no other family still uses. The order:
 | 16q | The own enters abilities (`EtbTriggerService` and its about 55 readers): no ability has a legacy view; the collector reads the abilities and judges their limit, the readers read the own-entry effects (`Card.getOwnEntryEffects()`); `legacyEffects()`, `hasLegacyView()`, the `getLegacy…` getters, `Trigger.collectedAsAbility()` and `OnceOnlyTriggerEffect` are gone |
 | 16r | The own enters collector and the combat collectors that split by `TriggerMode.INDEPENDENT` put each ability on the stack as one object, after a card script merges the abilities of one Oracle ability; `TriggerMode` is deleted |
 | 16s | `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags are deleted: the cards' intervening "if"s and event conditions are `TriggerOptions` and every collector judges them from the ability |
-| 16t onward | The wrapper classes left are deleted; the may-unwrapping goes with step 15's event bindings |
+| 16t | The trigger-only wrapper classes left are deleted (the `Triggering…ConditionalEffect` filters, `SelfExiledFromBattlefieldEffect`, `OncePerTurnTriggerEffect`'s forms but Bill Potts', `OncePerTurnPerCreatureTriggerEffect`); the event bindings and resolution effects some of them were mistaken for, Bill Potts' wrapper and the may-unwrapping go with step 15 |
 
 Mark the step `done` only after the last run of 16.
+
+Closed after run 16t, with the user: Bill Potts' `OncePerTurnTriggerEffect` and the pipeline's may-unwrapping,
+the two things the "Done when" above still names, moved to step 15, because both need an effect that reads the
+trigger event (step 15 lists them).
 
 ### Step 15: Effects read the trigger event (repeatable)
 
@@ -639,8 +643,23 @@ Start with the 25 `…AwareEffect` interfaces, because the pipeline calls them, 
 `…Triggering…` effect classes. Coordinate with `agent-docs/EFFECT_MERGE_PLAN.md` so the two plans
 don't merge the same classes twice.
 
+Moved here from step 14 after its run 16t, with the user (step 14's Findings, runs 16q to 16t, give the details):
+
+- Bill Potts' `OncePerTurnTriggerEffect`: its one ability has a cast and an activation trigger condition whose effects
+  are two event bindings, so it becomes one `TriggeredAbility` with `TriggerLimit.ONCE_EACH_TURN` once one effect copies
+  "that spell or ability" from the trigger event; then `OncePerTurnTriggerEffect`, `OncePerTurnTriggerSupport` and the
+  cast and activation collectors' handling of it go.
+- The pipeline's may-unwrapping (16s's 31 event bindings and Pontiff of Blight): remove it as their effects read the
+  event. Where the old path asked a may question before the ability was on the stack, the new path asks it on
+  resolution (CR 603.5); list those cards in Findings.
+- The event bindings and resolution effects step 14 found among the wrappers: `AllyCombatDamageTriggerEffect`,
+  `EvolveTriggerEffect`, `ChampionOfTheHareishTriggerEffect`, `SpellCastTriggerEffect` (emblems), Olivia's
+  `StateTriggerEffect`, `TriggeringPermanentEntryExclusionEffect`; Oran-Rief Hydra's and Emeria Shepherd's "instead"
+  as an effect "if" on the land's last-known subtypes; and the collectors 16s lists that judge an authored conditional
+  by its condition's type as the ability triggers.
+
 Each run records in Findings which group it moved and what is left. Mark the step `done` only when
-no `…AwareEffect` remains and the pipeline no longer rewrites effects.
+no `…AwareEffect` remains, the pipeline no longer rewrites or unwraps effects, and `OncePerTurnTriggerEffect` is gone.
 
 ### Step 16: Delete `EffectSlot` and the legacy paths
 
@@ -9264,6 +9283,138 @@ Javadocs were rewritten.
   passing.
 - Application: the whole module (5,016 tests) against a HEAD baseline in a worktree (with main's card-data cache): the
   same 621 failures at HEAD less 3 that now pass (`DeathTriggerCollectorServiceTest$AnyCreatureDeathHandlers`), none new.
+- Engine: the whole module, with the one failure at HEAD, `GameMutationBoundaryRatchetTest`.
+- AI: the whole module (1,620 tests), with the same 10 failures as before.
+- The full suite was not run here.
+
+#### Run 16t: the trigger-only wrapper classes are gone
+
+The fifth of the "16p onward" runs, its scope chosen with the user: every trigger-only wrapper class left. Deleted:
+`TriggeringCardConditionalEffect` (and its handler), `TriggeringPermanentConditionalEffect`,
+`TriggeringPermanentControllerConditionalEffect`, `TriggeringArtifactControllerConditionalEffect`,
+`TriggeringAbilityFromNamedLandConditionalEffect` (and `CardEffect.resolveForBecomesTargetOfSpellOrAbility`),
+`SelfExiledFromBattlefieldEffect`, `OncePerTurnPerCreatureTriggerEffect` (no card wrote it) and
+`BlockedCreatureTriggerEffect` (only `TriggeringCardConditionalEffect` implemented it). `OncePerTurnTriggerEffect` is
+narrowed to `(CardEffect wrapped)`, Bill Potts' (below); its keyed, `perGrant`, `markOnAcceptance`, `firstTokenCreation`
+and `firstLandGraveyardEvent` forms are gone.
+
+**What the scan found.** 53 card classes named a wrapper: 49 authored one, 4 only imported or named it in a comment.
+`AllyCombatDamageTriggerEffect`, `EvolveTriggerEffect`, `ChampionOfTheHareishTriggerEffect`, `SpellCastTriggerEffect`
+(emblems) and Olivia's `StateTriggerEffect`, which 16s listed with the wrappers, are event bindings or resolution effects,
+not trigger-only wrappers: step 15. So is `TriggeringPermanentEntryExclusionEffect`, a capability of
+`PutCardToBattlefieldEffect` that the enter collector reads (it isn't dead, as the run's scoping question said). The
+engine itself built wrappers in four places: Clone's extra dethrone (`CloneService`), Zombie Boa's chosen-colour grant,
+the land-play reader's re-check of the Cemetery cards' type (`PlayedCardNameTriggerCollectorService`) and the damaged-
+creature collector's "do this only once each turn" target choice (`DamageTriggerCollectorService`).
+
+**The cards** (`scripts/step14-wrapper-classes.py`, rerunnable; 48 card classes, and 4 stale imports or comments).
+
+- A filter on what triggers the ability is the trigger's: `withFilter(…)` on combat, damage and target triggers, the
+  zone change's filter, `PermanentControlledBySourceControllerPredicate` in the filter for "a … you control" on the
+  any-creature attack and combat-damage triggers (Swordsman, Nahiri, Kestia, Etrata, Edward Kenway; the saga chapters of
+  The Revelations of Ezio, Harald Unites the Elves and The Last Ronin, whose "attacks alone" is its event condition).
+  Tattered Ratter, Spined Sliver, Berserk Murlodont, Senu, The Master, Kami of Mourning (new
+  `PermanentManaValueGreaterThanSourceCardManaValuePredicate`), Disa (`putIntoGraveyardFromAnywhereButBattlefield`, in
+  place of its `CardPutIntoGraveyardFromNonBattlefieldThisTurnPredicate` re-check), Agyrem, Mirror Shield ("blocks or
+  becomes blocked by a creature with deathtouch" is the filter on the creature on the other side, CR 509.3f, checked).
+- "When this is put into exile from the battlefield" is `Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD), null, THIS)` (the
+  four God-Eternals, Ilharg, Urza's Sylex, Slagstone Refinery, Psychomancer, Kaya's and Ashnod's Intervention's grants,
+  Elemental Expressionist's); Syr Vondam's "while its power is 4 or greater" is the filter on the source, as its dies half.
+- "If it wasn't sacrificed" (Urza's Miter) is `Triggers.diesWithoutBeingSacrificed(ARTIFACT, YOU_CONTROL)`, every
+  cause but a sacrifice (CR 701.21a, checked): whether it was sacrificed can't change once it died.
+- Zagras' "deals combat damage to a planeswalker" is `Triggers.creatureYouControlDealsCombatDamageToPlaneswalker()`
+  (new `DamageEvent.DEALS_COMBAT_DAMAGE_TO_PLANESWALKER` and `DamageWatch`, read by the planeswalker damage collector
+  for combat damage only), where the wrapper's `combatDamageOnly` flag said it.
+- Skophos Maze-Warden's "an ability of a land you control named Labyrinth of Skophos" is the target trigger's new
+  `source` filter (`TargetTrigger.withSource`), which only the any-creature becomes-the-target collector reads (the
+  reader rejects it elsewhere); "another creature" its filter.
+- Merfolk Tunnel-Guide's boon filter is the boon's (`CreateBoonEffect` / `Boon` gain a `CardPredicate filter`).
+- An "if" of an effect on the triggering card is `ConditionalEffect(new TriggeringCardMatches(p), effect)` (new
+  condition), checked as it resolves against the stack entry's triggering card: Venom, Overgrowth Elemental, Jenson,
+  Eshki, Oathkeeper ("if it's a Samurai card"), the Cemetery cards' re-check of the exiled card's type.
+- Oran-Rief Hydra's and Emeria Shepherd's "if that land is a Forest (Plains) … instead" were judged as the land entered;
+  each branch is an ability whose trigger is filtered by the land (`AllOf(LAND, forest)` / `AllOf(LAND, not forest)`),
+  so the land is still judged as it entered and one of the two triggers. Making the "instead" an effect "if" read on
+  resolution needs the landfall entry to keep the land's last-known subtypes (step 15).
+- "Triggers only once each turn": Well Rested's granted ability `TriggerLimit.ONCE_EACH_TURN` (one instance per
+  granting Aura, `TriggeredAbility.instance()`), Dennick's two conditions one ability with the limit.
+- "For the first time each turn" (new `TriggerLimit.FIRST_TIME_EACH_TURN`, counted whether or not the source was there
+  for the earlier events): Akim, Crawling Sensation, Desert Were-Worm (its total power the event condition, CR 603.2,
+  checked). Only the token-creation, land-to-graveyard and "whenever you attack" collectors read it; the pipeline leaves
+  it to them, `TriggeredAbility` rejects it on a trigger other than a zone change or combat event, and
+  `triggerZoneChange` throws on any other zone-change watch.
+- Beifong's Bounty Hunters' unused `SELF_DEATH_TRIGGER` constant is gone.
+
+**The engine.**
+
+- `EffectResolutionService` gives a `TriggeringCardMatches` "if" the entry's triggering card (`findCardById`), as the old
+  handler read it.
+- The collectors that unwrapped a wrapper judge the trigger's filter instead, or lost a branch no card reached any more:
+  the any-creature attack collector, the ally attack collector, the turn-scoped "whenever a creature attacks this turn"
+  reader (now with the watcher's point of view for the filter and the ability's options), the combat-damage-to-opponent
+  and to-owner collectors, the planar attack and creature-death readers (Agyrem's colour judged on the creature as it
+  last existed: `ZoneChangeAbilityReader.printedNarrowing`, `TriggeredAbilityStackService.departedFilterMatches`), the
+  unblocked collectors (the exile one reads Senu's filter), the any-creature becomes-blocked collector (Spined Sliver),
+  the becomes-blocked collectors' granted abilities (Mirror Shield's continuous grant, Zombie Boa's temporary one: a
+  filtered one is an ability of its own for each blocker it admits, CR 509.3d, checked), the equipped-creature death
+  collector (Oathkeeper's return bound to the dying card and its "if" read on resolution), the boon collector, the
+  granted becomes-untapped collector (Well Rested's limit judged by the ability), the token-creation and
+  land-to-graveyard collectors (`FIRST_TIME_EACH_TURN`), the "you attack" collector (Desert Were-Worm), and the
+  pipeline's leaves-the-battlefield path, which marks the exile entry version on an exile-only own trigger (CR 400.7,
+  checked) where the wrapper's handler did. The dead helpers went with them (`unwrapTriggeringCardConditional`,
+  `unwrapCreatureDeathConditional`, `resolveTriggeringPermanentConditional`, `branchOnEnteringLand`,
+  `OncePerTurnTriggerSupport`'s keyed marks, `GrantTriggeredAbilityEffectHandler`'s per-grant key).
+- `PermanentChoiceContext.SpellTargetTriggerAnyTarget` carries `markSourceOncePerTurnOnAcceptance`, where the damaged-
+  creature collector wrapped its effect in a mark-on-acceptance `OncePerTurnTriggerEffect`.
+- Clone's extra dethrone is `Triggers.attacks()` with the event condition "attacks the player with the most life, while
+  it has dethrone" (CR 702.105b, checked); Zombie Boa's grant filters its becomes-blocked trigger by the chosen colour.
+
+**Behaviour changes.** None intended. Two of the Triggering… collectors judged a subtype by the permanent's effective
+subtypes and the filters do too (`PermanentHasSubtypePredicate`); Oathkeeper's "Samurai card" is read on the card in the
+graveyard as it resolves, which the old collector read from the printed card as it triggered (the same card).
+
+**Kept, with their reason.**
+
+- Bill Potts' `OncePerTurnTriggerEffect`: its one ability has two trigger conditions (a cast and an activation) whose
+  effects are two different event bindings, so it can't be one `TriggeredAbility` with one limit until an effect copies
+  "that spell or ability" from the event (step 15). The cast and activation collectors still read the narrowed wrapper.
+- The event bindings and resolution effects above, the may-unwrapping (16s's 31 bindings and Pontiff of Blight), and
+  the conditionals some collectors judge by type as the ability triggers (16s's list): step 15.
+
+**For step 15.** Bill Potts' wrapper; Oran-Rief Hydra's and Emeria Shepherd's "instead" as an effect "if" on the land's
+last-known subtypes; `TriggeringPermanentEntryExclusionEffect`; then 16s's list. Step 14 is closed, with the user: Bill Potts'
+wrapper and the may-unwrapping moved to step 15's section.
+
+**Docs.** `scripts/step14-wrapper-classes-docs.py` replaced the deleted classes' entries in `EFFECTS_INDEX.md` and
+`EFFECTS_QUICK_REFERENCE.md` with the trigger filters, limits and `TriggeringCardMatches`, rewrote the rows and patterns
+that named them to the cards' current forms (`ORACLE_TEXT_EFFECT_MAP.md`, the `CARD_PATTERN*` files,
+`ACTIVATED_ABILITY_GUIDE.md`, `TRIGGER_SLOT_TARGETING.md`, `PREDICATES_REFERENCE.md`, `ARCHITECTURE.md`; many already
+described cards earlier runs converted) and dropped the deleted classes from the implement-card and review-card skills'
+"never wrap" lists.
+
+**Tests changed.**
+
+- `DamageTriggerCollectorServiceTest`: `doesNotQueueCombatOnlyPlaneswalkerTriggerForNoncombatDamage` removed (the
+  collector, not the handler, leaves noncombat damage out now; `ZagrasThiefOfHeartbeatsTest` covers it);
+  `queuesCombatOnlyPlaneswalkerTriggerForCombatDamage` dispatches the plain effect on the combat watch; the
+  "do this only once each turn" target-choice test asserts the choice's mark in place of the wrapper.
+- `DeathTriggerCollectorServiceTest`: the four `TriggeringArtifactControllerConditionalEffect` cases test the artifact
+  default handler with the plain effects; the "opponent's artifact" case is removed (the trigger's relation says it).
+- `MiscTriggerCollectorServiceTest`: the Oasis of Renewal card-conditional case is removed with its dead handler; the
+  Nykthos Paragon case passes the plain effect.
+- New `DennickPiousApparitionTest` (the card had none): its one ability triggers for your and an opponent's creature
+  cards, only once each turn across both.
+
+**Test runs.**
+
+- Card: the converted cards and every card read by a collector or reader the run changed (attack, block, becomes-
+  blocked, combat damage, damage to a planeswalker, becomes-the-target, token creation, land and creature cards to a
+  graveyard, "you attack", untap, boons, exile-from-the-battlefield, dethrone, sagas' registered abilities, planes,
+  equipped-creature deaths, artifact deaths, `ConditionalEffect`s and limits; 4,073 classes, 34,239 tests): all passing,
+  after a first run of the 57 converted cards' classes whose 27 failures (Spined Sliver, Berserk Murlodont, Mirror
+  Shield, Zombie Boa) led to the becomes-blocked collectors reading filters.
+- Application: the whole module (5,013 tests) against a HEAD baseline in a worktree (with main's card-data cache): the
+  same 618 failures at HEAD and here, none new.
 - Engine: the whole module, with the one failure at HEAD, `GameMutationBoundaryRatchetTest`.
 - AI: the whole module (1,620 tests), with the same 10 failures as before.
 - The full suite was not run here.

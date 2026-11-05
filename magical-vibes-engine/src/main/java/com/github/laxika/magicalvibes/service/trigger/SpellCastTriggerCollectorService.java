@@ -124,7 +124,6 @@ import com.github.laxika.magicalvibes.model.effect.EyeOfTheStormExileAndCopyEffe
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByCastSpellManaValueEffect;
@@ -1567,8 +1566,7 @@ public class SpellCastTriggerCollectorService {
 
         StackEntry snapshot = new StackEntry(spellEntry);
         // "Do this only once each turn" (CR 603.2h): copying is the action, so accepting the copy uses it up.
-        boolean markOnAcceptance = match.markSourceOncePerTurnOnAcceptance()
-                || match.rawEffect() instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance();
+        boolean markOnAcceptance = match.markSourceOncePerTurnOnAcceptance();
         CardEffect copyEffect =
                 new CopyControllerCastSpellEffect(snapshot, sc.castingPlayerId(), trigger.grantedKeywords(),
                         trigger.additionalTypes(), trigger.removedSupertypes(), trigger.tokenCopy(),
@@ -1685,10 +1683,6 @@ public class SpellCastTriggerCollectorService {
 
     private MayEffect optionalMayEffect(CardEffect rawEffect) {
         if (rawEffect instanceof MayEffect may) {
-            return may;
-        }
-        if (rawEffect instanceof OncePerTurnTriggerEffect once
-                && once.wrapped() instanceof MayEffect may) {
             return may;
         }
         return null;

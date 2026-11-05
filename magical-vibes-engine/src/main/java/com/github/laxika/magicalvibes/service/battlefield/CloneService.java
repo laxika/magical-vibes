@@ -59,6 +59,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttacksPlayerWithMostLifePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @Slf4j
 @Component
@@ -974,12 +980,14 @@ public class CloneService {
         }
         if (additionalKeywords != null && !additionalKeywords.isEmpty()) {
             if (additionalKeywords.contains(Keyword.DETHRONE) && copy.getKeywords().contains(Keyword.DETHRONE)) {
+                // A second dethrone (CR 702.105b): "whenever this creature attacks the player with the most life or
+                // tied for most life" is the trigger event, while the copy still has dethrone.
                 copy.addTrigger(Triggers.attacks(),
-                        new com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect(
-                                new com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate(List.of(
-                                        new com.github.laxika.magicalvibes.model.filter.PermanentAttacksPlayerWithMostLifePredicate(),
-                                        new com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate(Keyword.DETHRONE))),
-                                new com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect(1, 1, 1)));
+                        TriggerOptions.DEFAULT.withEventCondition(new SourceMatchesPermanentPredicate(
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentAttacksPlayerWithMostLifePredicate(),
+                                        new PermanentHasKeywordPredicate(Keyword.DETHRONE))))),
+                        new PutCountersOnSourceEffect(1, 1, 1));
             }
             EnumSet<Keyword> keywords = EnumSet.noneOf(Keyword.class);
             keywords.addAll(copy.getKeywords());

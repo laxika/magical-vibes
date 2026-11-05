@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -16,8 +15,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 /**
- * Three separate opponent-discard triggers, each gated on the discarded card's type by a
- * {@link TriggeringCardConditionalEffect}. A discarded card matches exactly one of the three, so
+ * Three separate opponent-discard triggers, each gated on the discarded card's type by the
+ * trigger's filter. A discarded card matches exactly one of the three, so
  * exactly one ability triggers per discarded card.
  */
 @CardRegistration(set = "M15", collectorNumber = "122")

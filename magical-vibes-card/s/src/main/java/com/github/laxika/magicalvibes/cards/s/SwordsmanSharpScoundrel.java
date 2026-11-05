@@ -5,8 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -16,6 +14,7 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 
 @CardRegistration(set = "MSH", collectorNumber = "116")
 public class SwordsmanSharpScoundrel extends Card {
@@ -32,10 +31,8 @@ public class SwordsmanSharpScoundrel extends Card {
                         ObjectRelation.ANOTHER_YOU_CONTROL),
                 new AttachTargetEquipmentToTargetCreatureEffect());
 
-        addTrigger(Triggers.creatureAttacks(),
-                new TriggeringPermanentControllerConditionalEffect(
-                        new TriggeringPermanentConditionalEffect(
-                                new PermanentIsEquippedPredicate(),
-                                DrawDiscardAndConniveEffect.forEnteringPermanent())));
+        addTrigger(Triggers.creatureAttacks().withFilter(new PermanentAllOfPredicate(List.of(
+                        new PermanentControlledBySourceControllerPredicate(), new PermanentIsEquippedPredicate()))),
+                DrawDiscardAndConniveEffect.forEnteringPermanent());
     }
 }

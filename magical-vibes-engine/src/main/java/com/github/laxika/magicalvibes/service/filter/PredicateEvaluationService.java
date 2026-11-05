@@ -301,6 +301,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostXPred
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsTriggeringPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueGreaterThanSourceCardManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueLessThanSourceManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueLessThanXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueParityPredicate;
@@ -2279,6 +2280,13 @@ public class PredicateEvaluationService {
                 yield triggeringPermanent != null
                         && permanent.getCard().getManaValue()
                         == triggeringPermanent.getCard().getManaValue();
+            }
+            case PermanentManaValueGreaterThanSourceCardManaValuePredicate ignored -> {
+                if (gameData == null || sourceCardId == null) {
+                    yield false;
+                }
+                Integer sourceManaValue = baseManaValueOfCardInAnyZone(gameData, sourceCardId);
+                yield sourceManaValue != null && permanent.getCard().getManaValue() > sourceManaValue;
             }
             case PermanentManaValueLessThanSourceManaValuePredicate lesser -> {
                 if (gameData == null || sourceCardId == null) {

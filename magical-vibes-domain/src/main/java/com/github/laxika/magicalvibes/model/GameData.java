@@ -71,7 +71,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -3996,9 +3995,10 @@ public class GameData {
     /** Tracks which permanents' shared once-each-turn library-top play permissions have been used. */
     public final Set<UUID> oncePerTurnLibraryPlayPermissionsUsedThisTurn = ConcurrentHashMap.newKeySet();
 
-    /** Tracks which source permanents or graveyard cards (by UUID) have already fired a
-     *  {@code OncePerTurnTriggerEffect} this turn (e.g. Ghoulish Process). Cleared at start of
-     *  new turn; graveyard-card entries are removed when those cards leave the graveyard. */
+    /** Tracks which source permanents or graveyard cards (by UUID) have used a once-each-turn mark kept for the whole
+     *  source this turn: "do this only once each turn" (CR 603.2h) as the action is taken, and Bill Potts'
+     *  {@code OncePerTurnTriggerEffect}. Cleared at start of new turn; graveyard-card entries are removed when those
+     *  cards leave the graveyard. */
     public final Set<UUID> oncePerTurnTriggersFiredThisTurn = ConcurrentHashMap.newKeySet();
 
     /** Tracks every permanent that has had counters put on it this turn, regardless of which

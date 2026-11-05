@@ -8,10 +8,11 @@ import com.github.laxika.magicalvibes.model.effect.ExileEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.TriggeringCardMatches;
 
 @CardRegistration(set = "CHK", collectorNumber = "265")
 public class OathkeeperTakenosDaisho extends Card {
@@ -22,10 +23,9 @@ public class OathkeeperTakenosDaisho extends Card {
 
         // Whenever equipped creature dies, return that card to the battlefield under your control
         // if it's a Samurai card.
-        addTrigger(Triggers.creatureDies(ObjectRelation.EQUIPPED), new TriggeringCardConditionalEffect(
-                new CardSubtypePredicate(CardSubtype.SAMURAI),
-                new ReturnDyingCreatureToBattlefieldEffect(false)
-        ));
+        addTrigger(Triggers.creatureDies(ObjectRelation.EQUIPPED), new ConditionalEffect(
+                new TriggeringCardMatches(new CardSubtypePredicate(CardSubtype.SAMURAI)),
+                new ReturnDyingCreatureToBattlefieldEffect(false)));
 
         // When Oathkeeper is put into a graveyard from the battlefield, exile equipped creature.
         addTrigger(Triggers.dies(ObjectRelation.THIS), new ExileEquippedCreatureEffect());

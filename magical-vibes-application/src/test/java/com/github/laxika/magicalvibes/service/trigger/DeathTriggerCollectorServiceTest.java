@@ -51,10 +51,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -701,15 +697,14 @@ class DeathTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("Controller conditional queues a player-targeted trigger with source snapshot")
-        void controllerConditionalQueuesTargetedTrigger() {
+        @DisplayName("Default effect queues a player-targeted trigger with source snapshot")
+        void artifactDefaultQueuesTargetedTrigger() {
             Card watcher = createCreature("Marionette Master", 1, 3);
             Permanent perm = new Permanent(watcher);
-            var effect = new TriggeringArtifactControllerConditionalEffect(
-                    new LoseLifeEffect(new SourcePower(), LoseLifeRecipient.TARGET_PLAYER));
+            var effect = new LoseLifeEffect(new SourcePower(), LoseLifeRecipient.TARGET_PLAYER);
             var ctx = new TriggerContext.ArtifactGraveyard(PLAYER1_ID, PLAYER1_ID);
 
-            assertThat(svc.handleArtifactGraveyardControllerConditional(
+            assertThat(svc.handleArtifactGraveyardDefault(
                     match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
 
             var pending = (PermanentChoiceContext.SpellTargetTriggerAnyTarget)
@@ -717,55 +712,40 @@ class DeathTriggerCollectorServiceTest {
             assertThat(pending.playerTargetOnly()).isTrue();
             assertThat(pending.sourcePermanentId()).isEqualTo(perm.getId());
             assertThat(pending.sourcePermanentSnapshot()).isNotNull();
-            assertThat(pending.effects()).containsExactly(effect.wrapped());
+            assertThat(pending.effects()).containsExactly(effect);
         }
 
         @Test
-        @DisplayName("Controller conditional queues a non-targeted trigger without target choice")
-        void controllerConditionalQueuesNonTargetedTrigger() {
+        @DisplayName("Default effect queues a non-targeted trigger without target choice")
+        void artifactDefaultQueuesNonTargetedTrigger() {
             Card watcher = createCreature("Syr Ginger, the Meal Ender", 3, 1);
             Permanent perm = new Permanent(watcher);
-            var effect = new TriggeringArtifactControllerConditionalEffect(SequenceEffect.of(
-                    new PutCountersOnSourceEffect(1, 1, 1), new ScryEffect(1)));
+            var effect = SequenceEffect.of(
+                    new PutCountersOnSourceEffect(1, 1, 1), new ScryEffect(1));
             var ctx = new TriggerContext.ArtifactGraveyard(PLAYER1_ID, PLAYER1_ID);
 
-            assertThat(svc.handleArtifactGraveyardControllerConditional(
+            assertThat(svc.handleArtifactGraveyardDefault(
                     match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
 
             assertThat(gd.pendingInteractions).isEmpty();
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getTargetId()).isNull();
             assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(perm.getId());
-            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect.wrapped());
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
         }
 
         @Test
-        @DisplayName("Controller conditional does not fire for an opponent's artifact")
-        void controllerConditionalDoesNotFireForOpponentArtifact() {
-            Card watcher = createCreature("Marionette Master", 1, 3);
-            Permanent perm = new Permanent(watcher);
-            var effect = new TriggeringArtifactControllerConditionalEffect(
-                    new LoseLifeEffect(new SourcePower(), LoseLifeRecipient.TARGET_PLAYER));
-            var ctx = new TriggerContext.ArtifactGraveyard(PLAYER1_ID, PLAYER2_ID);
-
-            assertThat(svc.handleArtifactGraveyardControllerConditional(
-                    match(perm, PLAYER1_ID, effect), effect, ctx)).isFalse();
-            assertThat(gd.pendingInteractions).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Controller conditional binds the artifact's counter snapshot")
-        void controllerConditionalBindsArtifactCounters() {
+        @DisplayName("Default effect binds the artifact's counter snapshot")
+        void artifactDefaultBindsArtifactCounters() {
             Card watcher = createCreature("Donatello, Mutant Mechanic", 3, 5);
             Permanent perm = new Permanent(watcher);
-            var effect = new TriggeringArtifactControllerConditionalEffect(
-                    new PutCountersOnTargetForEachLeavingSourceCountersEffect(
-                            new PermanentIsCreaturePredicate()));
+            var effect = new PutCountersOnTargetForEachLeavingSourceCountersEffect(
+                            new PermanentIsCreaturePredicate());
             var ctx = new TriggerContext.ArtifactGraveyard(
                     PLAYER1_ID, PLAYER1_ID, null, 0,
                     Map.of(CounterType.PLUS_ONE_PLUS_ONE, 2, CounterType.CHARGE, 3));
 
-            assertThat(svc.handleArtifactGraveyardControllerConditional(
+            assertThat(svc.handleArtifactGraveyardDefault(
                     match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
 
             var pending = (PermanentChoiceContext.SpellTargetTriggerAnyTarget)
@@ -776,16 +756,15 @@ class DeathTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("Controller conditional does not fire when the artifact had no counters")
-        void controllerConditionalDoesNotFireWithoutArtifactCounters() {
+        @DisplayName("Default effect does not fire when the artifact had no counters")
+        void artifactDefaultDoesNotFireWithoutArtifactCounters() {
             Card watcher = createCreature("Donatello, Mutant Mechanic", 3, 5);
             Permanent perm = new Permanent(watcher);
-            var effect = new TriggeringArtifactControllerConditionalEffect(
-                    new PutCountersOnTargetForEachLeavingSourceCountersEffect(
-                            new PermanentIsCreaturePredicate()));
+            var effect = new PutCountersOnTargetForEachLeavingSourceCountersEffect(
+                            new PermanentIsCreaturePredicate());
             var ctx = new TriggerContext.ArtifactGraveyard(PLAYER1_ID, PLAYER1_ID);
 
-            assertThat(svc.handleArtifactGraveyardControllerConditional(
+            assertThat(svc.handleArtifactGraveyardDefault(
                     match(perm, PLAYER1_ID, effect), effect, ctx)).isFalse();
             assertThat(gd.pendingInteractions).isEmpty();
         }

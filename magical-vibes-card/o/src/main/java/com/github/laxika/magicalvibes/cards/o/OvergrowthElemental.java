@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -19,6 +18,8 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.TriggeringCardMatches;
 
 @CardRegistration(set = "M20", collectorNumber = "187")
 public class OvergrowthElemental extends Card {
@@ -37,8 +38,8 @@ public class OvergrowthElemental extends Card {
         // effect, not a separate trigger, so both parts share one stack entry.
         addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), SequenceEffect.of(
                 new GainLifeEffect(1),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.ELEMENTAL),
+                new ConditionalEffect(new TriggeringCardMatches(
+                        new CardSubtypePredicate(CardSubtype.ELEMENTAL)),
                         new PutCountersOnSourceEffect(1, 1, 1))));
     }
 }

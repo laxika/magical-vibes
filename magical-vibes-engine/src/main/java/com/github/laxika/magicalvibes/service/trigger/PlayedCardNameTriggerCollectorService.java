@@ -33,7 +33,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SourcePermanentSnapshotRequiredEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -46,6 +45,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import com.github.laxika.magicalvibes.model.condition.TriggeringCardMatches;
 
 /**
  * Trigger collector for the land-play abilities ("whenever [a player] plays a land"): a filtered one
@@ -218,7 +218,7 @@ public class PlayedCardNameTriggerCollectorService {
                 effect = new ConditionalEffect(interveningIf, effect);
             }
             if (recheckFilter) {
-                effect = new TriggeringCardConditionalEffect(filter, effect);
+                effect = new ConditionalEffect(new TriggeringCardMatches(filter), effect);
             }
             effects.add(effect);
         }

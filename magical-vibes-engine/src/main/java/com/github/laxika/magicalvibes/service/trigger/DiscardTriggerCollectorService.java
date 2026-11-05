@@ -820,7 +820,7 @@ public class DiscardTriggerCollectorService {
 
     /**
      * "Whenever an opponent discards a creature card, create a 2/2 black Zombie creature token."
-     * The card-type gate is applied upstream by {@code TriggeringCardConditionalEffect}; here the
+     * The card-type gate is the trigger's filter, judged upstream; here the
      * trigger simply goes on the stack under the watching permanent's controller. (Waste Not)
      */
     @CollectsLibraryTrigger(value = CreateTokenEffect.class, watch = LibraryWatch.ON_OPPONENT_DISCARDS)

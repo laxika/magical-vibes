@@ -7,14 +7,14 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CloakTopCardOfDamagedPlayerLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TurnSourceFaceUpOrExileAndMayCastEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 
 @CardRegistration(set = "MKM", collectorNumber = "200")
 @CardRegistration(set = "MKM", collectorNumber = "359")
@@ -33,12 +33,9 @@ public class EtrataDeadlyFugitive extends Card {
                 new PermanentIsFaceDownPredicate()
         ));
 
-        addTrigger(Triggers.creatureDealsCombatDamageToOpponent(),
-                new TriggeringPermanentControllerConditionalEffect(
-                        new TriggeringPermanentConditionalEffect(
-                                new PermanentHasSubtypePredicate(CardSubtype.ASSASSIN),
-                                new CloakTopCardOfDamagedPlayerLibraryEffect()
-                        )
-                ));
+        addTrigger(Triggers.creatureDealsCombatDamageToOpponent().withFilter(new PermanentAllOfPredicate(List.of(
+                        new PermanentControlledBySourceControllerPredicate(),
+                        new PermanentHasSubtypePredicate(CardSubtype.ASSASSIN)))),
+                new CloakTopCardOfDamagedPlayerLibraryEffect());
     }
 }

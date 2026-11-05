@@ -25,13 +25,25 @@ import java.util.Objects;
  *                  Triggers.creatureYouControlBecomesTargetOfOpponentSpellOrAbility().withFilter(dragon)}. The
  *                  collectors read it from the ability, through {@code TargetAbilityReader}, so {@link #watchKey()}
  *                  drops it
+ * @param source    what the permanent whose ability does the targeting must be, or {@code null} for any spell or
+ *                  ability: "whenever another creature becomes the target of an ability of a land you control named
+ *                  Labyrinth of Skophos" is {@code Triggers.creatureBecomesTargetOfSpellOrAbility().withSource(…)}. A
+ *                  spell has no such permanent, so a source makes the trigger an ability's. The collector of
+ *                  {@link TargetEvent#BECOMES_TARGET_OF_SPELL_OR_ABILITY} about any creature reads it from the ability
+ *                  ({@code TargetAbilityReader}), so {@link #watchKey()} drops it
  */
 public record TargetTrigger(TargetEvent event, ObjectRelation relation, PermanentPredicate filter,
-                            PermanentPredicate qualifier) implements Trigger {
+                            PermanentPredicate qualifier, PermanentPredicate source) implements Trigger {
 
     public TargetTrigger {
         Objects.requireNonNull(event, "event");
         Objects.requireNonNull(relation, "relation");
+    }
+
+    /** A trigger on any spell or ability, narrowed to a permanent that also matches {@code qualifier}. */
+    public TargetTrigger(TargetEvent event, ObjectRelation relation, PermanentPredicate filter,
+                         PermanentPredicate qualifier) {
+        this(event, relation, filter, qualifier, null);
     }
 
     /** A trigger on any permanent of {@code filter}'s type that relates to the source as {@code relation} says. */
@@ -53,11 +65,21 @@ public record TargetTrigger(TargetEvent event, ObjectRelation relation, Permanen
         if (qualifier != null) {
             throw new IllegalStateException("This target trigger already has a filter: " + this);
         }
-        return new TargetTrigger(event, relation, this.filter, filter);
+        return new TargetTrigger(event, relation, this.filter, filter, source);
+    }
+
+    /** This trigger narrowed to an ability of a permanent that matches {@code source}, as {@link #source} says. */
+    public TargetTrigger withSource(PermanentPredicate source) {
+        Objects.requireNonNull(source, "source");
+        if (this.source != null) {
+            throw new IllegalStateException("This target trigger already has a source: " + this);
+        }
+        return new TargetTrigger(event, relation, filter, qualifier, source);
     }
 
     /**
-     * The trigger the {@code TargetWatch} collectors read this one's abilities by: without its {@link #qualifier},
+     * The trigger the {@code TargetWatch} collectors read this one's abilities by: without its {@link #qualifier} and
+     * {@link #source},
      * and, for the events no collector of their own reads, with the event whose collector reads them. "This permanent
      * becomes the target of a spell you control" and "of a spell or ability you control" are read by the collectors of
      * the event about any controller ({@link TargetEvent#BECOMES_TARGET_OF_SPELL},
@@ -68,7 +90,7 @@ public record TargetTrigger(TargetEvent event, ObjectRelation relation, Permanen
     @Override
     public Trigger watchKey() {
         TargetEvent watched = watchedEvent();
-        if (watched == event && qualifier == null) {
+        if (watched == event && qualifier == null && source == null) {
             return this;
         }
         return new TargetTrigger(watched, relation, filter);

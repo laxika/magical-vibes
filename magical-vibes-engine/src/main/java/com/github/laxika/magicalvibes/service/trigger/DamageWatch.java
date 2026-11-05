@@ -91,6 +91,9 @@ public enum DamageWatch implements TriggerWatch {
     /** "Whenever a creature you control deals damage to a planeswalker". */
     ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER(
             Triggers.creatureYouControlDealsDamageToPlaneswalker(), Zone.BATTLEFIELD),
+    /** "Whenever a creature you control deals combat damage to a planeswalker". */
+    ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLANESWALKER(
+            Triggers.creatureYouControlDealsCombatDamageToPlaneswalker(), Zone.BATTLEFIELD),
     /** "Whenever a creature deals damage to enchanted planeswalker". */
     ON_CREATURE_DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER(
             Triggers.creatureDealsDamageToEnchantedPlaneswalker(), Zone.BATTLEFIELD),

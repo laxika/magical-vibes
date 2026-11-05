@@ -40,7 +40,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardO
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -89,7 +88,6 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -409,13 +407,9 @@ public class TriggeredAbilityQueueService {
         if (!(effect instanceof com.github.laxika.magicalvibes.model.effect.DyingCreatureCountersAwareEffect aware)) {
             return false;
         }
-        // The rebuilt record is a new instance, so compare it by value with the declared effects
-        // (unwrapping a "whenever a creature with counters dies" condition).
+        // The rebuilt record is a new instance, so compare it by value with the declared effects.
         CardEffect unbound = aware.boundToDyingCreatureCounters(Map.of());
-        return card.getEffectsBoundToTargetGroup(targetIndex).stream()
-                .map(declared -> declared instanceof TriggeringPermanentConditionalEffect conditional
-                        ? conditional.wrapped() : declared)
-                .anyMatch(unbound::equals);
+        return card.getEffectsBoundToTargetGroup(targetIndex).stream().anyMatch(unbound::equals);
     }
 
     /**

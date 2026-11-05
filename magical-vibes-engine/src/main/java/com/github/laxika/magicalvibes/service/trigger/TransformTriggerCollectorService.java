@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,8 +36,7 @@ public class TransformTriggerCollectorService {
                 null,
                 match.permanent().getId());
         trigger.setTriggeringPermanentId(transforms.transformedPermanent().getId());
-        trigger.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance()
-                || match.rawEffect() instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance());
+        trigger.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
         match.gameData().enqueueTrigger(trigger);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers when an ally permanent transforms",

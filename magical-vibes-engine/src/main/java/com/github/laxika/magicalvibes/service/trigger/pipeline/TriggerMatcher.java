@@ -296,6 +296,16 @@ final class TriggerMatcher {
     }
 
     /**
+     * Whether {@code departed}, a permanent's last-known copy, passes {@code filter} as it last existed on the
+     * battlefield (CR 603.10a), for a reader outside the pipeline (a face-up plane's "whenever a white creature dies").
+     */
+    static boolean departedFilterMatches(PredicateEvaluationService predicates, PermanentPredicate filter,
+                                                Permanent departed, DepartedAttachments attachments,
+                                                FilterContext context) {
+        return departedMatches(predicates, filter, departed, attachments, context);
+    }
+
+    /**
      * Whether a permanent that left the battlefield, seen by another object's ability, matches {@code predicate} as
      * it last existed (CR 603.10a): "whenever another Zombie you control dies", "a creature with power 5 or greater",
      * "a creature with a -1/-1 counter on it", "a creature blocking this creature". Its subtypes and colors are the

@@ -12,17 +12,14 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardPutIntoGraveyardFromNonBattlefieldThisTurnPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "M3C", collectorNumber = "1")
 @CardRegistration(set = "M3C", collectorNumber = "12")
@@ -34,13 +31,10 @@ import java.util.Set;
 public class DisaTheRestless extends Card {
 
     public DisaTheRestless() {
-        addTrigger(Triggers.putIntoGraveyardFromAnywhere(Triggers.PERMANENT_CARD, ObjectRelation.ANOTHER_YOU_OWN),
-                new TriggeringCardConditionalEffect(
-                        new CardAllOfPredicate(List.of(
-                                new CardIsPermanentPredicate(),
-                                new CardPutIntoGraveyardFromNonBattlefieldThisTurnPredicate(),
-                                new CardSubtypePredicate(CardSubtype.LHURGOYF))),
-                        new ReturnTriggeringCardFromGraveyardToBattlefieldEffect()));
+        addTrigger(Triggers.putIntoGraveyardFromAnywhereButBattlefield(new PermanentAllOfPredicate(List.of(
+                        Triggers.PERMANENT_CARD, new PermanentHasSubtypePredicate(CardSubtype.LHURGOYF))),
+                        ObjectRelation.ANOTHER_YOU_OWN),
+                new ReturnTriggeringCardFromGraveyardToBattlefieldEffect());
 
         CardTypesAmongCardsInGraveyard cardTypes =
                 new CardTypesAmongCardsInGraveyard(CountScope.ANY_PLAYER);

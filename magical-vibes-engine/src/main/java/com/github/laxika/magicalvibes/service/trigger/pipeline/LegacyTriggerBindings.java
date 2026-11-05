@@ -9,123 +9,69 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
-import com.github.laxika.magicalvibes.model.MayChoicePlayer;
-import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.ArtifactGraveyardCountersAwareEffect;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForEmergeSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForImprintedCardOwnerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenIfDyingSourceHadCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourceCounterPTEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourcePowerCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourcePowerEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenWithTotalDyingCreaturesPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensForExiledCardsWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPermanentControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyMerfolkTappedForSourceAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTokensCreatedWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongControlledCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreaturesOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForEachAuraAttachedToDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForEachDyingSourceCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.DyingCreatureAttachmentsAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
-import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerDiscardsCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerMayDrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerMaySearchLibraryForSameNameEffect;
-import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerSacrificesPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.DyingCreatureCounterAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCountersAwareEffect;
-import com.github.laxika.magicalvibes.model.effect.DyingCreatureManaValueAwareEffect;
-import com.github.laxika.magicalvibes.model.effect.DyingCreatureNameAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreaturePermanentAwareEffect;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentOfDyingCreatureControllerDrawsAndGainsLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemArtifactGraveyardReturnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemCreatureDeathTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedControllerSacrificesCreatureOnLeaveEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerMaySearchLibraryForCreatureToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDiesGainLifeAndDrawEqualToToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDiesLoseLifeEqualPowerGainLifeEqualToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileDyingCreatureAndCreateSpiritTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileIfHadCounterElseReturnWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTokensCreatedWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsForEachDyingCreatureCounterMayPlayUntilNextEndStepEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsFromEnchantedCreatureOwnerAndAllowCastEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTriggeringAuraFromGraveyardMayCastUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndReturnSourceToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDyingCreatureToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDyingSourcePowerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToLifeLostWhenEnteredEffect;
-import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LeavingPermanentCountersAwareEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.ManifestTopCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManifestTopCardsForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayLifeAndDrawEqualToDyingPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveDyingSourceCountersToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityToSourceCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachLeavingSourceCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToDyingPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetForEachDyingSourcePowerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetForEachLeavingSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutImprintedCardIntoOwnersHandEffect;
-import com.github.laxika.magicalvibes.model.effect.PutLesserManaValueCreatureFromHandOrCommandZoneAndReturnAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryAndReturnExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCreateTokenCopyOfDyingSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCurseAttachedToPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSelfReturnFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSelfReturnFromGraveyardWithOneFewerCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
@@ -133,69 +79,32 @@ import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnDyingOpponentCreatureAsTreasureEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnDyingOpponentCreatureUnderYourControlEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureAndReattachAuraOnDeathEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureAndSourceTransformedOnDeathEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToBattlefieldOnDeathEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedPermanentToBattlefieldOnDeathOrExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnLinkedCardToOwnerGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToChosenCreatureOnLeaveEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToCreatureOrNonAuraOnDeathEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToSharedTypeCreatureOnDeathEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGraveyardAttachedToTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringLandFromGraveyardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardAndShuffleTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsSharingDyingPermanentTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificedPermanentCardAwareEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.SelfExiledFromBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfExiledWhileActivatingCraftAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessOfCreaturesThatDamagedSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TapOrUntapCreaturesSharingDyingCreatureTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIdSetPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
@@ -205,26 +114,22 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
-import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
-import com.github.laxika.magicalvibes.service.trigger.DyingCreatureAttachmentSnapshot;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -420,9 +325,32 @@ public class LegacyTriggerBindings {
         return dispatch(deathHandlers, c, effect, this::handleDeathDefault);
     }
 
-    /** "When this leaves the battlefield". */
+    /**
+     * "When this leaves the battlefield". An ability of "when this is put into exile from the battlefield" refers to the
+     * card as the exile object it just became (CR 400.7), so a later exile of it is another object.
+     */
     private boolean leaves(Ctx c, CardEffect effect) {
-        return dispatch(leaveHandlers, c, effect, this::handleSelfLeavesDefault);
+        int stackSize = c.gameData().stack.size();
+        if (!dispatch(leaveHandlers, c, effect, this::handleSelfLeavesDefault)) {
+            return false;
+        }
+        List<StackEntry> stack = c.gameData().stack;
+        if (c.destination() == Zone.EXILE && exileOnly(c.candidate().ability()) && stack.size() > stackSize) {
+            StackEntry queued = stack.getLast();
+            if (c.permanent().getId().equals(queued.getSourcePermanentId())) {
+                queued.setTriggeringCardExileEntryVersion(c.gameData().exileEntryVersions
+                        .getOrDefault(c.dyingCard().getId(), 0L));
+            }
+        }
+        return true;
+    }
+
+    /** Whether every leaves-the-battlefield condition of {@code ability} is a move to exile. */
+    private static boolean exileOnly(TriggeredAbility ability) {
+        return ability.conditions().stream().map(TriggerCondition::trigger)
+                .filter(ZoneChangeTrigger.class::isInstance).map(ZoneChangeTrigger.class::cast)
+                .filter(ZoneChangeTrigger::leavesBattlefield)
+                .allMatch(trigger -> trigger.to() == Zone.EXILE);
     }
 
     /**
@@ -520,7 +448,6 @@ public class LegacyTriggerBindings {
         register(h, DestroyMerfolkTappedForSourceAbilitiesEffect.class,
                 this::handleDestroyMerfolkTappedForSourceAbilities);
         register(h, ChooseOneEffect.class, this::handleModalDeathTrigger);
-        register(h, TriggeringPermanentConditionalEffect.class, this::handleSelfDeathPermanentConditional);
         register(h, PutCountersOnTargetForEachDyingSourcePowerEffect.class,
                 this::handlePutCountersOnTargetForEachDyingSourcePower);
     }
@@ -533,7 +460,6 @@ public class LegacyTriggerBindings {
                 this::handleReturnAllCardsExiledWithSourceToOwnerGraveyard);
         register(h, ReturnTargetCardsFromGraveyardToBattlefieldEffect.class,
                 this::handleReturnTargetCardsFromGraveyardSelfLeaves);
-        register(h, SelfExiledFromBattlefieldEffect.class, this::handleSelfExiledFromBattlefield);
         register(h, SelfExiledWhileActivatingCraftAbilityEffect.class,
                 this::handleSelfExiledWhileActivatingCraftAbility);
         register(h, ControllerLosesGameOnLeavesEffect.class, this::handleControllerLosesGameOnLeaves);
@@ -1122,75 +1048,6 @@ public class LegacyTriggerBindings {
                 c.dyingCard(), c.controllerId(), effect, c.permanent().getId()));
         return true;
     }
-    private boolean handleSelfDeathPermanentConditional(Ctx c, TriggeringPermanentConditionalEffect effect) {
-        Permanent dyingPermanent = c.dyingPermanent();
-        DyingCreatureAttachmentSnapshot attachmentSnapshot = dyingPermanent == null
-                ? null
-                : DyingCreatureAttachmentSnapshot.of(c.event().attachments());
-        if (dyingPermanent == null
-                || !DyingCreatureAttachmentSnapshot.satisfiedAtDeath(attachmentSnapshot, effect.predicate(),
-                        p -> {
-                            // CR 603.10a: stat conditions look back at the toughness the creature had
-                            // on the battlefield, including static bonuses that stopped applying at death.
-                            Boolean lastKnownMatch = dyingPermanent.getLastKnownToughness() == null
-                                    ? null
-                                    : TriggerCollectionService.matchesDyingStats(p, c.dyingPower(),
-                                            dyingPermanent.getLastKnownToughness());
-                            return lastKnownMatch != null ? lastKnownMatch
-                                    : predicateEvaluationService.matchesPermanentPredicate(
-                                    dyingPermanent, p, FilterContext.of(c.gameData())
-                                            .withSourceControllerId(c.controllerId())
-                                            .withSourcePermanentId(c.permanent().getId()));
-                        })) {
-            return false;
-        }
-
-        CardEffect triggerEffect = effect.wrapped();
-        if (triggerEffect instanceof DyingCreatureAttachmentsAwareEffect aware
-                && attachmentSnapshot != null) {
-            triggerEffect = aware.boundToDyingCreatureAttachments(
-                    attachmentSnapshot.auraCardIds(), attachmentSnapshot.equipmentPermanentIds());
-        }
-        if (triggerEffect instanceof DyingCreatureCountersAwareEffect aware) {
-            triggerEffect = aware.boundToDyingCreatureCounters(snapshotConcreteCounters(dyingPermanent));
-        }
-        if (triggerEffect instanceof DyingCreatureCardAwareEffect aware) {
-            UUID dyingCardId = dyingPermanent.getOriginalCard().getId();
-            CardEffect bound = aware.boundToDyingCard(dyingCardId);
-            triggerEffect = bound instanceof DyingCreatureCardAwareEffect versioned
-                    ? versioned.boundToDyingCardEntryVersion(c.gameData().graveyardEntryVersion(dyingCardId))
-                    : bound;
-        }
-
-        if (triggerEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || triggerEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                || triggerEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
-                || graveyardTargetingSupport.findTarget(List.of(triggerEffect)) != null) {
-            c.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
-                    c.dyingCard(), c.controllerId(), new ArrayList<>(List.of(triggerEffect)), c.dyingPower(),
-                    new Permanent(c.permanent())
-            ));
-            return true;
-        }
-
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                c.dyingCard(),
-                c.controllerId(),
-                c.dyingCard().getName() + "'s ability",
-                new ArrayList<>(List.of(triggerEffect)),
-                null,
-                c.permanent().getId()
-        );
-        entry.setSourcePermanentSnapshot(new Permanent(c.permanent()));
-        entry.setTriggeringCardId(c.dyingCard().getId());
-        entry.setTriggeringCardGraveyardEntryVersion(
-                c.gameData().graveyardEntryVersion(graveyardCardIdOf(c)));
-        entry.setTriggeringPermanentPowerAtTrigger(Math.max(0, c.dyingPower()));
-        entry.setEventValue(c.dyingPower());
-        c.gameData().stack.add(entry);
-        return true;
-    }
     private boolean handleDeathDefault(Ctx c, CardEffect effect) {
         if (effect instanceof com.github.laxika.magicalvibes.model.effect.RegisterDelayedLoseLifeAndReturnFromGraveyardToHandEffect
                 && !c.controllerId().equals(gameQueryService.findGraveyardOwnerById(c.gameData(), c.dyingCard().getId()))) {
@@ -1326,31 +1183,6 @@ public class LegacyTriggerBindings {
         graveyardTargetingService.handleReturnToBattlefieldETBTargeting(c.gameData(), c.controllerId(),
                 c.dyingCard(), List.of(effect), effect, effect.maxTargets());
         logSelfLeaves(c);
-        return true;
-    }
-    private boolean handleSelfExiledFromBattlefield(Ctx c, SelfExiledFromBattlefieldEffect effect) {
-        if (c.destination() != com.github.laxika.magicalvibes.model.Zone.EXILE) {
-            return false;
-        }
-        // "When this dies or is put into exile from the battlefield, if its power was 4 or greater" (Syr Vondam): the
-        // exile half is this wrapper, and the condition around its effect is that half's intervening "if".
-        if (effect.wrapped() instanceof ConditionalEffect conditional
-                && !conditionEvaluationService.isMet(c.gameData(), conditional.condition(),
-                ConditionContext.forPermanent(c.permanent(), c.controllerId()))) {
-            return false;
-        }
-        if (!handleSelfLeavesDefault(c, effect.wrapped())) {
-            return false;
-        }
-        List<StackEntry> stack = c.gameData().stack;
-        if (!stack.isEmpty()) {
-            StackEntry queued = stack.get(stack.size() - 1);
-            if (c.permanent().getId().equals(queued.getSourcePermanentId())) {
-                // The ability refers to the card as the exile object it just became (CR 400.7).
-                queued.setTriggeringCardExileEntryVersion(c.gameData().exileEntryVersions
-                        .getOrDefault(c.dyingCard().getId(), 0L));
-            }
-        }
         return true;
     }
     private boolean handleSelfExiledWhileActivatingCraftAbility(Ctx c, SelfExiledWhileActivatingCraftAbilityEffect effect) {

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ZNR", collectorNumber = "241")
@@ -17,7 +16,6 @@ public class ZagrasThiefOfHeartbeats extends Card {
     public ZagrasThiefOfHeartbeats() {
         addStaticEffect(new ReduceOwnCastCostEffect(new PartySize()));
         addStaticEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.OWN_CREATURES));
-        addTrigger(Triggers.creatureYouControlDealsDamageToPlaneswalker(),
-                TriggeringPermanentConditionalEffect.combatDamageOnly(new DestroyTargetPermanentEffect()));
+        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlaneswalker(), new DestroyTargetPermanentEffect());
     }
 }

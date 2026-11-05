@@ -4,13 +4,13 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.condition.TriggeringCardMatches;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
@@ -203,6 +203,12 @@ public class EffectResolutionService {
                 if (!conditionTargets.isEmpty()) {
                     conditionContext = conditionContext.withTargetId(conditionTargets.getFirst());
                 }
+            }
+            // "If that creature was a Villain" reads the card that triggered the ability.
+            if (conditionContext.triggeringCard() == null && entry.getTriggeringCardId() != null
+                    && readsTriggeringCard(effect)) {
+                conditionContext = conditionContext.withTriggeringCard(
+                        gameQueryService.findCardById(gameData, entry.getTriggeringCardId()));
             }
 
             // Conditional wrapper: its condition is judged as the effect resolves (an intervening "if" again, CR 603.4)
@@ -641,6 +647,16 @@ public class EffectResolutionService {
     }
 
     /** Uses departure controller information for a creature referenced by a nontargeting trigger. */
+    /** Whether {@code effect} is an "if" on the triggering card ({@link TriggeringCardMatches}), or a "you may" around one. */
+    private static boolean readsTriggeringCard(CardEffect effect) {
+        return switch (effect) {
+            case ConditionalEffect conditional -> conditional.condition() instanceof TriggeringCardMatches
+                    || readsTriggeringCard(conditional.wrapped());
+            case MayEffect may -> readsTriggeringCard(may.wrapped());
+            default -> false;
+        };
+    }
+
     private boolean isConditionMet(GameData gameData, StackEntry entry, Condition condition,
                                    ConditionContext context) {
         if (condition instanceof com.github.laxika.magicalvibes.model.condition.AttackedOpponentHasMoreLifeThanAnotherOpponent) {

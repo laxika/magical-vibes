@@ -433,6 +433,7 @@ public sealed interface Condition permits
         TriggeringPermanentPowerGreaterThanEachOtherCreature,
         TriggeringPermanentPowerAtLeast,
         TriggeringPermanentHasSubtype,
+        TriggeringCardMatches,
         TriggeringPermanentSharesCreatureTypeWithSource,
         TargetToughnessAtMostControllerGraveyardCount,
         TargetPlayerLifeTotalEquals,

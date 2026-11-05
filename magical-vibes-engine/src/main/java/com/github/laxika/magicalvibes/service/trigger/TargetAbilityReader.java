@@ -41,6 +41,10 @@ import java.util.UUID;
  */
 public final class TargetAbilityReader {
 
+    /** The watched trigger of the one collector that reads a {@link TargetTrigger#source()}. */
+    private static final Trigger SOURCE_READER =
+            TargetWatch.ON_ANY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY.trigger();
+
     private TargetAbilityReader() {
     }
 
@@ -54,9 +58,12 @@ public final class TargetAbilityReader {
      * @param event   the watched condition's own event, which may be narrower than the watch's
      *                ({@link TargetTrigger#watchedEvent()})
      * @param simultaneousWithPrevious the registration happens at the same time as the effect before it
+     * @param source  what the permanent whose ability does the targeting must be (its {@link TargetTrigger#source()}),
+     *                or {@code null}; only the "a creature becomes the target of a spell or ability" collector reads it
      */
     public record TargetEffect(CardEffect effect, TriggeredAbility ability,
-                               PermanentPredicate filter, TargetEvent event, boolean simultaneousWithPrevious) {
+                               PermanentPredicate filter, TargetEvent event, boolean simultaneousWithPrevious,
+                               PermanentPredicate source) {
 
         public TargetEffect {
             Objects.requireNonNull(effect, "effect");
@@ -156,6 +163,9 @@ public final class TargetAbilityReader {
             throw new IllegalStateException("No becomes-the-target collector reads " + options.limit() + ": "
                     + ability);
         }
+        if (condition.source() != null && !watched.equals(SOURCE_READER)) {
+            throw new IllegalStateException("Only the collector of " + SOURCE_READER + " reads a source: " + ability);
+        }
         Condition interveningIf = options.interveningIf();
         List<TargetEffect> effects = new ArrayList<>(ability.effects().size());
         for (EffectRegistration registration : ability.effects()) {
@@ -164,7 +174,7 @@ public final class TargetAbilityReader {
                 effect = new ConditionalEffect(interveningIf, effect);
             }
             effects.add(new TargetEffect(effect, ability, condition.qualifier(),
-                    condition.event(), registration.simultaneousWithPrevious()));
+                    condition.event(), registration.simultaneousWithPrevious(), condition.source()));
         }
         return effects;
     }

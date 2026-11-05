@@ -8,8 +8,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * enter collector resolves the entering permanent and, when {@code optional}, queues a
  * {@code MayEffect(TransformTargetPermanentEffect)} with {@code targetId} set to that creature and
  * {@code sourcePermanentId} set to this permanent; when not {@code optional} it queues the
- * transform directly. Gate the subtype with {@link TriggeringCardConditionalEffect} (Vildin-Pack
- * Alpha: Werewolf).
+ * transform directly. The subtype is the trigger's filter (Vildin-Pack Alpha: Werewolf).
  */
 public record TransformEnteringCreatureEffect(boolean optional) implements CardEffect {
 

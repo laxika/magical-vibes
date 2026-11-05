@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -18,16 +17,17 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 
 @CardRegistration(set = "C20", collectorNumber = "6")
 public class AkimTheSoaringWind extends Card {
 
     public AkimTheSoaringWind() {
         addTrigger(new TriggerCondition(Triggers.tokensCreated(null, ObjectRelation.YOU_CONTROL)),
-                TriggerOptions.ONE_OR_MORE,
-                OncePerTurnTriggerEffect.firstTokenCreation(new CreateTokenEffect(
+                TriggerOptions.ONE_OR_MORE.withLimit(TriggerLimit.FIRST_TIME_EACH_TURN),
+                new CreateTokenEffect(
                         1, "Bird", 1, 1, CardColor.WHITE,
-                        List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of())));
+                        List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

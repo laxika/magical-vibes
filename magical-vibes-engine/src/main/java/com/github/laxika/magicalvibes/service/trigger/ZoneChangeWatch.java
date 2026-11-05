@@ -66,11 +66,15 @@ public enum ZoneChangeWatch {
     /** "Whenever a creature is put into an opponent's graveyard from the battlefield", from the graveyard. */
     GRAVEYARD_ON_CREATURE_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD(
             in(Zone.GRAVEYARD, Triggers.creatureDies(ObjectRelation.OPPONENT_OWNS))),
-    /** "Whenever an artifact [you control, another artifact you control] is put into a graveyard from the battlefield". */
+    /**
+     * "Whenever an artifact [you control, another artifact you control] is put into a graveyard from the battlefield",
+     * and "an artifact you control …, if it wasn't sacrificed".
+     */
     ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD(
             battlefield(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY)),
             battlefield(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.YOU_CONTROL)),
-            battlefield(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL))),
+            battlefield(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL)),
+            battlefield(Triggers.diesWithoutBeingSacrificed(Triggers.ARTIFACT, ObjectRelation.YOU_CONTROL))),
     /** "Whenever an enchantment is put into a graveyard from the battlefield". */
     ON_ANY_ENCHANTMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD(
             battlefield(Triggers.dies(Triggers.ENCHANTMENT, ObjectRelation.ANY))),
@@ -251,9 +255,14 @@ public enum ZoneChangeWatch {
     /** "Whenever a creature card is put into a graveyard from anywhere other than the battlefield". */
     ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD(battlefield(
             Triggers.putIntoGraveyardFromAnywhereButBattlefield(Triggers.NONTOKEN_CREATURE, ObjectRelation.ANY))),
-    /** "Whenever another permanent card is put into your graveyard from anywhere"; "one or more". */
+    /**
+     * "Whenever another permanent card is put into your graveyard from anywhere"; "one or more"; "from anywhere other
+     * than the battlefield".
+     */
     ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE(
             battlefield(Triggers.putIntoGraveyardFromAnywhere(Triggers.PERMANENT_CARD, ObjectRelation.ANOTHER_YOU_OWN)),
+            battlefield(Triggers.putIntoGraveyardFromAnywhereButBattlefield(Triggers.PERMANENT_CARD,
+                    ObjectRelation.ANOTHER_YOU_OWN)),
             battlefield(Triggers.putIntoGraveyardFromAnywhere(Triggers.PERMANENT_CARD, ObjectRelation.ANOTHER_YOU_OWN),
                     TriggerMultiplicity.ONE_OR_MORE)),
     /** "Whenever a creature card is put into an opponent's graveyard from anywhere". */

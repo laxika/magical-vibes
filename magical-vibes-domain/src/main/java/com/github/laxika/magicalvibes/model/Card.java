@@ -50,10 +50,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
@@ -1107,14 +1103,6 @@ public class Card {
                     }
                 }
             }
-            // Triggering conditionals (e.g. Diregraf Captain's "whenever another Zombie you control
-            // dies") are unwrapped to their inner effect when the trigger is serviced, so the inner
-            // effect must resolve to the same declared target group — otherwise the card-level target
-            // filter (e.g. opponent-only) is lost after unwrapping.
-            case TriggeringCardConditionalEffect e -> bindEffectToTargetGroup(e.wrapped(), targetIndex);
-            case TriggeringPermanentConditionalEffect e -> bindEffectToTargetGroup(e.wrapped(), targetIndex);
-            case TriggeringArtifactControllerConditionalEffect e -> bindEffectToTargetGroup(e.wrapped(), targetIndex);
-            case TriggeringPermanentControllerConditionalEffect e -> bindEffectToTargetGroup(e.wrapped(), targetIndex);
             default -> { }
         }
     }
@@ -1427,13 +1415,9 @@ public class Card {
         if (effect instanceof ConditionalEffect conditional) {
             return targetIndicesForEffect(conditional.wrapped());
         }
-        // A trigger-level wrapper a card still authors (a keyed "triggers only once each turn", a triggering-card
-        // filter) targets through the effect it wraps.
+        // Bill Potts' "triggers only once each turn" wrapper targets through the effect it wraps.
         if (effect instanceof OncePerTurnTriggerEffect once) {
             return targetIndicesForEffect(once.wrapped());
-        }
-        if (effect instanceof TriggeringCardConditionalEffect cardConditional) {
-            return targetIndicesForEffect(cardConditional.wrapped());
         }
         if (effect instanceof SequenceEffect sequence) {
             // A sequence assembled at resolution (a reflexive trigger's counters-then-phase-out) targets
@@ -1443,15 +1427,6 @@ public class Card {
                 if (stepIndices != null) {
                     return stepIndices;
                 }
-            }
-        }
-        for (Map.Entry<CardEffect, List<Integer>> registered : effectTargetIndexMap.entrySet()) {
-            CardEffect wrapped = registered.getKey() instanceof TriggeringPermanentConditionalEffect permanentConditional
-                    ? permanentConditional.wrapped()
-                    : registered.getKey() instanceof TriggeringCardConditionalEffect cardConditional
-                    ? cardConditional.wrapped() : null;
-            if (wrapped == effect) {
-                return registered.getValue();
             }
         }
         return null;

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateBoonEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -35,9 +34,7 @@ public class MerfolkTunnelGuide extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.MERFOLK))),
                 "Target must be a Merfolk creature you control");
         addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateBoonEffect(3,
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.MERFOLK),
-                        new ExploreEffect(true, merfolkCreature)),
-                BoonTrigger.PERMANENT_ENTERS, targetFilter));
+                new ExploreEffect(true, merfolkCreature),
+                BoonTrigger.PERMANENT_ENTERS, targetFilter, new CardSubtypePredicate(CardSubtype.MERFOLK)));
     }
 }

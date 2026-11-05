@@ -10,13 +10,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardHasExactlyNColorsPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.TriggeringCardMatches;
 
 @CardRegistration(set = "DMC", collectorNumber = "3")
 @CardRegistration(set = "DMC", collectorNumber = "78")
@@ -25,8 +26,8 @@ public class JensonCarthalionDruidExile extends Card {
     public JensonCarthalionDruidExile() {
         addTrigger(Triggers.youCastSpell().withFilter(new CardIsMulticoloredPredicate()),
                 new ScryEffect(1),
-                new TriggeringCardConditionalEffect(
-                        new CardHasExactlyNColorsPredicate(5),
+                new ConditionalEffect(new TriggeringCardMatches(
+                        new CardHasExactlyNColorsPredicate(5)),
                         new CreateTokenEffect(
                                 1, "Angel", 4, 4, CardColor.WHITE,
                                 List.of(CardSubtype.ANGEL),

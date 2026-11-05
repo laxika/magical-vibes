@@ -26,7 +26,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPla
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -41,7 +40,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsOrLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -85,7 +83,6 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -189,34 +186,12 @@ class DamageTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("does not queue a combat-only planeswalker trigger for noncombat damage")
-    void doesNotQueueCombatOnlyPlaneswalkerTriggerForNoncombatDamage() {
-        Permanent watcher = createPermanent("Zagras, Thief of Heartbeats");
-        Permanent source = createPermanent("Prodigal Pyromancer");
-        Permanent planeswalker = createPermanent("Test Planeswalker");
-        var effect = TriggeringPermanentConditionalEffect.combatDamageOnly(
-                new DestroyTargetPermanentEffect());
-        var ctx = new TriggerContext.CreatureDealsDamageToPlaneswalker(
-                source, planeswalker.getId(), 1, false);
-
-        when(gameQueryService.isCreature(gd, source)).thenReturn(true);
-
-        boolean result = registry.dispatch(
-                match(watcher, player1Id, effect),
-                DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER, effect, ctx);
-
-        assertThat(result).isFalse();
-        assertThat(gd.stack).isEmpty();
-    }
-
-    @Test
     @DisplayName("queues a combat-only planeswalker trigger for combat damage")
     void queuesCombatOnlyPlaneswalkerTriggerForCombatDamage() {
         Permanent watcher = createPermanent("Zagras, Thief of Heartbeats");
         Permanent source = createPermanent("Grizzly Bears");
         Permanent planeswalker = createPermanent("Test Planeswalker");
-        var effect = TriggeringPermanentConditionalEffect.combatDamageOnly(
-                new DestroyTargetPermanentEffect());
+        var effect = new DestroyTargetPermanentEffect();
         var ctx = new TriggerContext.CreatureDealsDamageToPlaneswalker(
                 source, planeswalker.getId(), 2, true);
 
@@ -224,7 +199,7 @@ class DamageTriggerCollectorServiceTest {
 
         boolean result = registry.dispatch(
                 match(watcher, player1Id, effect),
-                DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER, effect, ctx);
+                DamageWatch.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLANESWALKER, effect, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -465,8 +440,10 @@ class DamageTriggerCollectorServiceTest {
 
             assertThat(gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class))
                     .isNotNull()
-                    .satisfies(pending -> assertThat(pending.effects())
-                            .containsExactly(OncePerTurnTriggerEffect.markOnAcceptance(may)));
+                    .satisfies(pending -> {
+                        assertThat(pending.effects()).containsExactly(may);
+                        assertThat(pending.markSourceOncePerTurnOnAcceptance()).isTrue();
+                    });
             assertThat(gd.oncePerTurnTriggersFiredThisTurn).doesNotContain(watcher.getId());
         }
     }

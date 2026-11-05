@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.trigger;
 
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -13,7 +12,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -51,7 +49,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaDrawXCardsEffect;
@@ -59,18 +56,11 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -1214,11 +1204,10 @@ class MiscTriggerCollectorServiceTest {
     void nykthosParagonLifeGainTriggerIsOptionalAndOncePerTurn() {
         Permanent perm = createPermanent("Nykthos Paragon");
         var effect = new NykthosParagonLifeGainEffect();
-        var authoredEffect = OncePerTurnTriggerEffect.markOnAcceptance(effect);
         var ctx = new TriggerContext.LifeGain(player1Id, 3);
 
         boolean result = registry.dispatch(
-                new TriggerMatchContext(gd, perm, player1Id, authoredEffect, perm.getCard(), true),
+                new TriggerMatchContext(gd, perm, player1Id, effect, perm.getCard(), true),
                 LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
         assertThat(result).isTrue();
@@ -1229,7 +1218,7 @@ class MiscTriggerCollectorServiceTest {
         assertThat(gd.oncePerTurnTriggersFiredThisTurn).doesNotContain(perm.getId());
 
         assertThat(registry.dispatch(
-                new TriggerMatchContext(gd, perm, player1Id, authoredEffect, perm.getCard(), true),
+                new TriggerMatchContext(gd, perm, player1Id, effect, perm.getCard(), true),
                 LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect,
                 new TriggerContext.LifeGain(player1Id, 4))).isTrue();
         assertThat(gd.stack).hasSize(2);
@@ -1556,24 +1545,5 @@ class MiscTriggerCollectorServiceTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
         assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
-    }
-
-    @Test
-    @DisplayName("skips a card-conditional trigger when no matching card leaves the graveyard")
-    void skipsCardConditionalTriggerWithoutMatchingCard() {
-        Permanent perm = createPermanent("Oasis of Renewal");
-        var effect = new TriggeringCardConditionalEffect(
-                new CardTypePredicate(CardType.LAND), new DrawCardEffect(1));
-        Card nonland = createCard("Grizzly Bears");
-        when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
-                .thenReturn(false);
-
-        boolean result = registry.dispatch(
-                match(perm, player1Id, effect),
-                ZoneChangeWatch.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD,
-                effect, new TriggerContext.ControllerCardsLeaveGraveyard(player1Id, List.of(nonland)));
-
-        assertThat(result).isFalse();
-        assertThat(gd.stack).isEmpty();
     }
 }

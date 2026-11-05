@@ -5,9 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CreaturesBlockingSource;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "LGN", collectorNumber = "117")
 public class BerserkMurlodont extends Card {
@@ -15,8 +14,7 @@ public class BerserkMurlodont extends Card {
     public BerserkMurlodont() {
         // Whenever a Beast becomes blocked, that Beast gets +1/+1 until end of turn for each
         // creature blocking it.
-        addTrigger(Triggers.creatureBecomesBlocked(),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.BEAST),
-                        new BoostSelfEffect(new CreaturesBlockingSource(), new CreaturesBlockingSource())));
+        addTrigger(Triggers.creatureBecomesBlocked().withFilter(new PermanentHasSubtypePredicate(CardSubtype.BEAST)),
+                new BoostSelfEffect(new CreaturesBlockingSource(), new CreaturesBlockingSource()));
     }
 }

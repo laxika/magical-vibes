@@ -7,10 +7,11 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromExileToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SelfExiledFromBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import java.util.Set;
+import com.github.laxika.magicalvibes.model.Zone;
 
 @CardRegistration(set = "BRO", collectorNumber = "85")
 public class AshnodsIntervention extends Card {
@@ -21,7 +22,6 @@ public class AshnodsIntervention extends Card {
                 .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new ReturnSourceCardFromGraveyardToOwnerHandEffect())))
                 .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
-                        new TriggeredAbility(Triggers.leavesBattlefield(ObjectRelation.THIS),
-                        new SelfExiledFromBattlefieldEffect(new ReturnSourceCardFromExileToOwnerHandEffect()))));
+                        new TriggeredAbility(Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD), null, ObjectRelation.THIS), new ReturnSourceCardFromExileToOwnerHandEffect())));
     }
 }

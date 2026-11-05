@@ -63,7 +63,6 @@ import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostVehicleWhenMa
 import com.github.laxika.magicalvibes.model.effect.RelicBindTapEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
@@ -75,7 +74,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnSpellLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -88,8 +86,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
-import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
@@ -3223,22 +3219,6 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    /**
-     * Oasis of Renewal's "the first time one or more land cards leave your graveyard each turn", which keeps its
-     * wrappers until its enters abilities move (effect-slot-refactor.md step 14, run 4).
-     */
-    @CollectsWatchTrigger(value = TriggeringCardConditionalEffect.class,
-            watch = ZoneChangeWatch.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD)
-    boolean handleConditionalControllerCardsLeaveGraveyard(TriggerMatchContext match,
-            TriggeringCardConditionalEffect conditional, TriggerContext ctx) {
-        if (!(ctx instanceof TriggerContext.ControllerCardsLeaveGraveyard cardsLeft)
-                || cardsLeft.cards().stream().noneMatch(card -> predicateEvaluationService.matchesCardPredicate(
-                card, conditional.predicate(), null, match.gameData(), match.controllerId()))) {
-            return false;
-        }
-        return handleControllerCardsLeaveGraveyard(match, conditional.wrapped(), ctx);
-    }
-
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD)
     boolean handleControllerCardsLeaveGraveyard(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
@@ -3249,17 +3229,6 @@ public class MiscTriggerCollectorService {
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (cards left graveyard)",
                 match.gameData().id, match.permanent().getCard().getName());
-        return true;
-    }
-
-    @CollectsWatchTrigger(value = OncePerTurnTriggerEffect.class, watch = ZoneChangeWatch.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD)
-    boolean handleOncePerTurnControllerCardsLeaveGraveyard(TriggerMatchContext match,
-            OncePerTurnTriggerEffect effect, TriggerContext ctx) {
-        CardEffect resolved = OncePerTurnTriggerSupport.unwrapIfAvailable(match.gameData(), match.permanent(), effect);
-        if (resolved == null || !handleControllerCardsLeaveGraveyard(match, resolved, ctx)) {
-            return false;
-        }
-        OncePerTurnTriggerSupport.markIfNeeded(match.gameData(), match.permanent(), effect);
         return true;
     }
 
@@ -3675,7 +3644,6 @@ public class MiscTriggerCollectorService {
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
     }
-
 
     @CollectsLifeTrigger(value = BecomePreparedEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainBecomePrepared(TriggerMatchContext match,

@@ -7,12 +7,13 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import java.util.List;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 
 @CardRegistration(set = "MAT", collectorNumber = "36")
 @CardRegistration(set = "MAT", collectorNumber = "86")
@@ -25,10 +26,8 @@ public class NahiriForgedInFury extends Card {
         addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT), CountScope.CONTROLLER)));
 
-        addTrigger(Triggers.creatureAttacks(), new TriggeringPermanentControllerConditionalEffect(
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsEquippedPredicate(),
-                        new ExileTopCardMayPlayThisTurnEffect(
-                                1, false, new CardSubtypePredicate(CardSubtype.EQUIPMENT)))));
+        addTrigger(Triggers.creatureAttacks().withFilter(new PermanentAllOfPredicate(List.of(
+                        new PermanentControlledBySourceControllerPredicate(), new PermanentIsEquippedPredicate()))),
+                new ExileTopCardMayPlayThisTurnEffect(1, false, new CardSubtypePredicate(CardSubtype.EQUIPMENT)));
     }
 }

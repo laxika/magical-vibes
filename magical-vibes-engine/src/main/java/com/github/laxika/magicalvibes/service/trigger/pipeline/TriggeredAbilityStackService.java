@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.rules.DepartedAttachments;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -314,6 +318,17 @@ public class TriggeredAbilityStackService {
     }
 
     /**
+     * Whether {@code departed}, a permanent's last-known copy, passes {@code filter} as it last existed on the
+     * battlefield (CR 603.10a), as the pipeline judges a departure: for the readers outside it (a face-up plane's
+     * "whenever a white creature dies", Agyrem).
+     */
+    public static boolean departedFilterMatches(PredicateEvaluationService predicates, PermanentPredicate filter,
+                                                Permanent departed, DepartedAttachments attachments,
+                                                FilterContext context) {
+        return TriggerMatcher.departedFilterMatches(predicates, filter, departed, attachments, context);
+    }
+
+    /**
      * Whether {@code limit} stops the ability keyed {@code key} of the source {@code sourceId} from triggering again:
      * it triggered already this turn ("triggers only once each turn") or ever ("triggers only once"), or the source's
      * "do this only once each turn" action was taken this turn (CR 603.2h).
@@ -328,6 +343,8 @@ public class TriggeredAbilityStackService {
             case ONCE -> gameData.keyedOnceOnlyTriggersFired.getOrDefault(sourceId, Set.of()).contains(key);
             case ONCE_EACH_TURN_FOR_EACH_CREATURE -> throw new IllegalStateException(
                     "Once each turn for each creature is read only by the damage and counter collectors");
+            // "For the first time each turn" counts the turn's events, which the collectors of those events judge.
+            case FIRST_TIME_EACH_TURN -> false;
         };
     }
 
@@ -341,7 +358,7 @@ public class TriggeredAbilityStackService {
                     .computeIfAbsent(sourceId, ignored -> ConcurrentHashMap.newKeySet()).add(key);
             case ONCE -> gameData.keyedOnceOnlyTriggersFired
                     .computeIfAbsent(sourceId, ignored -> ConcurrentHashMap.newKeySet()).add(key);
-            case NONE, DO_ONLY_ONCE_EACH_TURN -> {
+            case NONE, DO_ONLY_ONCE_EACH_TURN, FIRST_TIME_EACH_TURN -> {
             }
         }
     }

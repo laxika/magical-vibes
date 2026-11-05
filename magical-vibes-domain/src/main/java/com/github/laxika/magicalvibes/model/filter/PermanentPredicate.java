@@ -150,6 +150,7 @@ public sealed interface PermanentPredicate permits
         PermanentIsEnchantmentPredicate,
         PermanentIsEquippedPredicate,
         PermanentManaValueLessThanSourceManaValuePredicate,
+        PermanentManaValueGreaterThanSourceCardManaValuePredicate,
         PermanentIsFaceDownPredicate,
         PermanentIsHistoricPredicate,
         PermanentIsHostOfSourceAuraPredicate,

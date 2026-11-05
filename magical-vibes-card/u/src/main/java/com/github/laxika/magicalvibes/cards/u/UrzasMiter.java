@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -13,8 +12,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class UrzasMiter extends Card {
 
     public UrzasMiter() {
-        addTrigger(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY),
-                new TriggeringArtifactControllerConditionalEffect(
-                        new MayPayManaEffect("{3}", new DrawCardEffect(), "Pay {3} to draw a card?"), true));
+        addTrigger(Triggers.diesWithoutBeingSacrificed(Triggers.ARTIFACT, ObjectRelation.YOU_CONTROL),
+                new MayPayManaEffect("{3}", new DrawCardEffect(), "Pay {3} to draw a card?"));
     }
 }

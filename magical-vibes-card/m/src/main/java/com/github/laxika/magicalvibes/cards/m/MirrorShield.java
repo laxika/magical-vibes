@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,14 +21,16 @@ public class MirrorShield extends Card {
     public MirrorShield() {
         addStaticEffect(new StaticBoostEffect(0, 2, Set.of(Keyword.HEXPROOF), GrantScope.EQUIPPED_CREATURE));
 
-        CardEffect destroyDeathtouchCreature = new TriggeringPermanentConditionalEffect(
-                new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH),
-                new DestroyCombatOpponentEffect(false), false, true);
+        // "Whenever a creature with deathtouch blocks or becomes blocked by this creature": the filter is on the
+        // creature on the other side of the block.
+        PermanentHasKeywordPredicate deathtouch = new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH);
+        CardEffect destroyDeathtouchCreature = new DestroyCombatOpponentEffect(false);
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                new TriggeredAbility(Triggers.blocks(), destroyDeathtouchCreature), GrantScope.EQUIPPED_CREATURE));
+                new TriggeredAbility(Triggers.blocks().withFilter(deathtouch), destroyDeathtouchCreature),
+                GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                new TriggeredAbility(Triggers.becomesBlocked(),
-                        destroyDeathtouchCreature), GrantScope.EQUIPPED_CREATURE));
+                new TriggeredAbility(Triggers.becomesBlocked().withFilter(deathtouch), destroyDeathtouchCreature),
+                GrantScope.EQUIPPED_CREATURE));
 
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

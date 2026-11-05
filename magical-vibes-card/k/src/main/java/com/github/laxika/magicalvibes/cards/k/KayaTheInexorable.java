@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.model.effect.MayCastLegendarySpellFromAnyZ
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromExileToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SelfExiledFromBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -38,6 +37,7 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.Zone;
 
 @CardRegistration(set = "KHM", collectorNumber = "218")
 @CardRegistration(set = "KHM", collectorNumber = "288")
@@ -71,8 +71,7 @@ public class KayaTheInexorable extends Card {
                         new GrantEffectToTargetEffect(
                                 new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), returnFromGraveyard), EffectDuration.PERMANENT, false),
                         new GrantEffectToTargetEffect(
-                                new TriggeredAbility(Triggers.leavesBattlefield(ObjectRelation.THIS),
-                                new SelfExiledFromBattlefieldEffect(returnFromExile)),
+                                new TriggeredAbility(Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD), null, ObjectRelation.THIS), returnFromExile),
                                 EffectDuration.PERMANENT,
                                 false)),
                 "+1: Put a ghostform counter on up to one target nontoken creature. It gains \"When this creature dies "

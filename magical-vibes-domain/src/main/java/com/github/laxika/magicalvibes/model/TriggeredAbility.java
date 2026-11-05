@@ -94,6 +94,7 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         requireFinalChapterOptions(conditions, options);
         requireStateOptions(conditions, options);
         requireZoneChangeOptions(conditions, options);
+        requireFirstTimeReader(conditions, options);
         requireOwnEntryOptions(conditions, options);
     }
 
@@ -113,6 +114,18 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         if (options.limit() == TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE) {
             throw new IllegalArgumentException("No zone-change or permanent-change collector reads "
                     + options.limit() + ": " + conditions);
+        }
+    }
+
+    /**
+     * Rejects "for the first time each turn" ({@link TriggerLimit#FIRST_TIME_EACH_TURN}) on an ability with a trigger
+     * other than a zone change or a combat event: only the token-creation and land-to-graveyard collectors of the
+     * trigger pipeline and the "whenever you attack" collector read it.
+     */
+    private static void requireFirstTimeReader(List<TriggerCondition> conditions, TriggerOptions options) {
+        if (options.limit() == TriggerLimit.FIRST_TIME_EACH_TURN && conditions.stream().map(TriggerCondition::trigger)
+                .anyMatch(trigger -> !(trigger instanceof ZoneChangeTrigger) && !(trigger instanceof CombatTrigger))) {
+            throw new IllegalArgumentException("No collector of " + conditions + " reads " + options.limit());
         }
     }
 

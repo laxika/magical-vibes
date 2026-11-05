@@ -16,21 +16,20 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
 @CardRegistration(set = "OHOP", collectorNumber = "3")
 @CardRegistration(set = "OPCA", collectorNumber = "11")
 public class Agyrem extends Card {
 
     public Agyrem() {
-        addTrigger(new TriggerCondition(Triggers.creatureDies(ObjectRelation.ANY), AbilityZones.COMMAND),
-                TriggerOptions.DEFAULT, new com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect(
-                new com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate(java.util.Set.of(CardColor.WHITE)),
-                new RegisterDelayedReturnDyingCreatureUnderControlEffect(
-                        false, null, 0, null, null, false, true, false)));
-        addTrigger(new TriggerCondition(Triggers.creatureDies(ObjectRelation.ANY), AbilityZones.COMMAND),
-                TriggerOptions.DEFAULT, new com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect(
-                new com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate(new com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate(java.util.Set.of(CardColor.WHITE))),
-                new RegisterDelayedReturnCardFromGraveyardToHandEffect(null)));
+        PermanentColorInPredicate white = new PermanentColorInPredicate(Set.of(CardColor.WHITE));
+        addTrigger(new TriggerCondition(Triggers.creatureDies(white, ObjectRelation.ANY), AbilityZones.COMMAND),
+                TriggerOptions.DEFAULT, new RegisterDelayedReturnDyingCreatureUnderControlEffect(
+                        false, null, 0, null, null, false, true, false));
+        addTrigger(new TriggerCondition(Triggers.creatureDies(new PermanentNotPredicate(white), ObjectRelation.ANY),
+                        AbilityZones.COMMAND),
+                TriggerOptions.DEFAULT, new RegisterDelayedReturnCardFromGraveyardToHandEffect(null));
         addTrigger(Triggers.chaosEnsues(), new GrantStaticEffectToPlayerUntilPlaneswalkEffect(
                 new CreaturesCantAttackControllerUnlessPredicateEffect(
                         new PermanentNotPredicate(new PermanentTruePredicate()))));

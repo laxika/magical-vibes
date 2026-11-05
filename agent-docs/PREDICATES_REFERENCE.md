@@ -470,7 +470,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardInStartingDeckPredicate` | `()` | a card that was in a player's starting deck (`GameData.startingDeckCardIds`); `new CardNotPredicate(new CardInStartingDeckPredicate())` is "a spell that isn't from your starting deck" (Ursine Guide) |
 | `CardHasMorphAbilityPredicate` | `()` | a card with a morph ability; use with `CardTypePredicate(CREATURE)` for Dermoplasm's hand-to-battlefield ability |
 | `CardTruePredicate` | `()` | always matches (no restriction). Card counterpart of `PermanentTruePredicate`; use for unrestricted "spells" wordings (Helm of Awakening) |
-| `CardIsTokenPredicate` | `()` | token cards. Wrap in `CardNotPredicate` for "nontoken" (e.g. Militia's Pride: nontoken attacker filter on `Triggers.creatureYouControlAttacks()` via `TriggeringCardConditionalEffect`) |
+| `CardIsTokenPredicate` | `()` | token cards. Wrap in `CardNotPredicate` for "nontoken" (e.g. Militia's Pride: nontoken attacker filter on `Triggers.creatureYouControlAttacks().withFilter(...)`, as `PermanentNotPredicate(PermanentIsTokenPredicate)`) |
 | `CardIsMulticoloredPredicate` | `()` | a card with two or more colours (`Card.getColors().size() >= 2`); monocoloured and colourless cards never match. Card-in-any-zone counterpart of `PermanentIsMonocoloredPredicate`; used as a graveyard filter for "target multicolored card from your graveyard" (Reborn Hope) |
 | `CardHasExactlyTwoColorsPredicate` | `()` | a card with exactly two colors; used for Invasion of Ravnica's cast trigger and library selection |
 | `CardHasExactlyNColorsPredicate` | `(int colorCount)` | a card with exactly `colorCount` colors; used for dynamic-color-count library searches such as Evolving Door |

@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEf
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -141,12 +140,8 @@ public class PermanentChoiceTriggerHandlerService {
     }
 
     public void handleSpellTargetTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellTargetTriggerAnyTarget stt) {
-        boolean markOnAcceptance = stt.effects().size() == 1
-                && stt.effects().getFirst() instanceof OncePerTurnTriggerEffect once
-                && once.markOnAcceptance();
-        List<CardEffect> effects = markOnAcceptance
-                ? List.of(((OncePerTurnTriggerEffect) stt.effects().getFirst()).wrapped())
-                : stt.effects();
+        boolean markOnAcceptance = stt.markSourceOncePerTurnOnAcceptance();
+        List<CardEffect> effects = stt.effects();
         boolean declined = stt.optionalTarget()
                 && stt.targetFilter() != null
                 && permanentId.equals(stt.controllerId())

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -21,6 +20,7 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 
 @CardRegistration(set = "BFZ", collectorNumber = "22")
 @CardRegistration(set = "FDC", collectorNumber = "27")
@@ -47,14 +47,16 @@ public class EmeriaShepherd extends Card {
 
         // Landfall - Whenever a land you control enters, you may return target nonland permanent card
         // from your graveyard to your hand. If that land is a Plains, you may return that nonland
-        // permanent card to the battlefield instead. The land is checked as it entered.
+        // permanent card to the battlefield instead. The land is checked as it entered: each branch is the
+        // trigger's filter on it.
         target(new GraveyardCardPredicateTargetFilter(
                 nonlandPermanent, GraveyardSearchScope.CONTROLLERS_GRAVEYARD))
-                .addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
-                        new TriggeringPermanentConditionalEffect(plains,
-                                new MayEffect(returnToBattlefield,
-                                        "Return that card to the battlefield instead?", mayReturnToHand)),
-                        new TriggeringPermanentConditionalEffect(new PermanentNotPredicate(plains),
-                                mayReturnToHand));
+                .addTrigger(Triggers.enters(new PermanentAllOfPredicate(List.of(Triggers.LAND, plains)),
+                                ObjectRelation.YOU_CONTROL),
+                        new MayEffect(returnToBattlefield,
+                                "Return that card to the battlefield instead?", mayReturnToHand))
+                .addTrigger(Triggers.enters(new PermanentAllOfPredicate(List.of(Triggers.LAND,
+                                new PermanentNotPredicate(plains))), ObjectRelation.YOU_CONTROL),
+                        mayReturnToHand);
     }
 }

@@ -1728,7 +1728,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                        com.github.laxika.magicalvibes.model.planar.PlanarObject planarSource,
                                        boolean nonTargeting, UUID triggeringCardId,
                                        Permanent triggeringPermanentSnapshot,
-                                       Integer triggeringPermanentPowerAtTrigger)
+                                       Integer triggeringPermanentPowerAtTrigger,
+                                       boolean markSourceOncePerTurnOnAcceptance)
             implements PermanentChoiceContext {
         public SpellTargetTriggerAnyTarget copyPlanarSnapshot() {
             return planarSource == null ? this : new SpellTargetTriggerAnyTarget(sourceCard, controllerId,
@@ -1736,7 +1737,36 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
                     permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue, planarSource.copy(),
                     nonTargeting, triggeringCardId, triggeringPermanentSnapshot,
-                    triggeringPermanentPowerAtTrigger);
+                    triggeringPermanentPowerAtTrigger, markSourceOncePerTurnOnAcceptance);
+        }
+
+        /**
+         * This choice for an ability whose "do this only once each turn" (CR 603.2h) is used up as the action is taken:
+         * the stack entry it makes marks its source as the action resolves.
+         */
+        public SpellTargetTriggerAnyTarget withMarkSourceOncePerTurnOnAcceptance() {
+            return new SpellTargetTriggerAnyTarget(sourceCard, controllerId, effects, playerTargetOnly, targetFilter,
+                    spellManaSpentX, sourcePermanentId, sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
+                    permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue, planarSource,
+                    nonTargeting, triggeringCardId, triggeringPermanentSnapshot, triggeringPermanentPowerAtTrigger,
+                    true);
+        }
+
+        public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                           boolean playerTargetOnly, TargetFilter targetFilter,
+                                           int spellManaSpentX, UUID sourcePermanentId,
+                                           Permanent sourcePermanentSnapshot, boolean optionalTarget,
+                                           UUID triggeringPermanentId, UUID permanentTargetControllerId,
+                                           UUID choosingPlayerId, Integer triggeringSpellManaValue,
+                                           com.github.laxika.magicalvibes.model.planar.PlanarObject planarSource,
+                                           boolean nonTargeting, UUID triggeringCardId,
+                                           Permanent triggeringPermanentSnapshot,
+                                           Integer triggeringPermanentPowerAtTrigger) {
+            this(sourceCard, controllerId, effects, playerTargetOnly, targetFilter, spellManaSpentX,
+                    sourcePermanentId, sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
+                    permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue, planarSource,
+                    nonTargeting, triggeringCardId, triggeringPermanentSnapshot, triggeringPermanentPowerAtTrigger,
+                    false);
         }
 
         public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,

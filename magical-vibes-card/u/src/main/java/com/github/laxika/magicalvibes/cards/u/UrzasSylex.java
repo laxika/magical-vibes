@@ -9,12 +9,13 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesLandsThenDes
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.SelfExiledFromBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import java.util.Set;
+import com.github.laxika.magicalvibes.model.Zone;
 
 @CardRegistration(set = "BRO", collectorNumber = "40")
 public class UrzasSylex extends Card {
@@ -29,10 +30,9 @@ public class UrzasSylex extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
-        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
-                new SelfExiledFromBattlefieldEffect(new MayPayManaEffect(
+        addTrigger(Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD), null, ObjectRelation.THIS), new MayPayManaEffect(
                         "{2}",
                         new SearchLibraryEffect(new CardTypePredicate(CardType.PLANESWALKER)),
-                        "Pay {2} to search your library for a planeswalker card?")));
+                        "Pay {2} to search your library for a planeswalker card?"));
     }
 }

@@ -36,7 +36,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedCreatureDealsDamageToDefendingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
@@ -171,14 +170,6 @@ public class CombatTriggerService {
                             if (matchesCombatOpponent(gameData, creature, combatOpponent,
                                     conditional.opponentFilter())) {
                                 effectsForStack.add(conditional.wrapped());
-                            }
-                        } else if (effect instanceof TriggeringPermanentConditionalEffect conditional
-                                && conditional.combatOpponent()) {
-                            if (combatOpponent != null
-                                    && predicateEvaluationService.matchesPermanentPredicate(
-                                    gameData, combatOpponent, conditional.predicate())) {
-                                effectsForStack.add(conditional.wrapped());
-                                autoTargetOpponent = true;
                             }
                         } else if (slot != CombatWatch.ON_ATTACK
                                 && effect instanceof CombatOpponentReferencingEffect c
@@ -447,13 +438,6 @@ public class CombatTriggerService {
                                 if (predicateEvaluationService.matchesPermanentPredicate(
                                         gameData, blocker, conditional.opponentFilter())) {
                                     transformedEffects.add(conditional.wrapped());
-                                }
-                            } else if (effect instanceof TriggeringPermanentConditionalEffect conditional
-                                    && conditional.combatOpponent()) {
-                                if (predicateEvaluationService.matchesPermanentPredicate(
-                                        gameData, blocker, conditional.predicate())) {
-                                    transformedEffects.add(conditional.wrapped());
-                                    autoTargetBlocker = true;
                                 }
                             } else if (effect instanceof CombatOpponentReferencingEffect c && c.referencesCombatOpponent()) {
                                 if (!(effect instanceof DestroyCombatOpponentAtEndOfCombatEffect destroyEffect)

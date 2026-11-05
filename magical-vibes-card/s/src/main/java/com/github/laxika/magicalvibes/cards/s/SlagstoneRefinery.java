@@ -7,13 +7,13 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SelfExiledFromBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "BRO", collectorNumber = "243")
 public class SlagstoneRefinery extends Card {
@@ -25,6 +25,6 @@ public class SlagstoneRefinery extends Card {
                                 ObjectRelation.ANOTHER_YOU_CONTROL)),
                 new TriggerCondition(Triggers.putIntoGraveyardFrom(Zone.BATTLEFIELD, ObjectRelation.THIS))),
                 TriggerOptions.DEFAULT, List.of(new EffectRegistration(powerstone))));
-        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new SelfExiledFromBattlefieldEffect(powerstone));
+        addTrigger(Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD), null, ObjectRelation.THIS), powerstone);
     }
 }

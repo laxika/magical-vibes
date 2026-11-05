@@ -20,5 +20,15 @@ public enum TriggerLimit {
      * from the ability ({@code DamageAbilityReader}, {@code CounterAbilityReader}). The trigger pipeline doesn't know
      * it.
      */
-    ONCE_EACH_TURN_FOR_EACH_CREATURE
+    ONCE_EACH_TURN_FOR_EACH_CREATURE,
+    /**
+     * "For the first time each turn" in the trigger condition: the ability triggers only for the first event of its
+     * kind that turn, counted whether or not the source was there for the earlier ones, so a source that arrives later
+     * doesn't trigger that turn: Akim, the Soaring Wind's "whenever you create one or more tokens for the first time
+     * each turn", Crawling Sensation's "whenever one or more land cards are put into your graveyard from anywhere for
+     * the first time each turn", Desert Were-Worm's "whenever you attack with creatures with total power 12 or greater
+     * for the first time each turn" (its total power the event condition). Only the token-creation, land-to-graveyard
+     * and "whenever you attack" collectors know it; the trigger pipeline leaves it to them.
+     */
+    FIRST_TIME_EACH_TURN
 }

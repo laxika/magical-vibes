@@ -198,6 +198,16 @@ public final class Triggers {
                 Set.of(ZoneChangeCause.SACRIFICE));
     }
 
+    /**
+     * "Whenever [a filter permanent] is put into a graveyard from the battlefield, if it wasn't sacrificed" (Urza's
+     * Miter): a death caused by anything but a sacrifice (CR 701.21a). Whether it was sacrificed can't change once it
+     * died, so the "if" is part of the trigger event.
+     */
+    public static ZoneChangeTrigger diesWithoutBeingSacrificed(PermanentPredicate filter, ObjectRelation relation) {
+        return new ZoneChangeTrigger(relation, filter, Set.of(Zone.BATTLEFIELD), Zone.GRAVEYARD,
+                EnumSet.complementOf(EnumSet.of(ZoneChangeCause.SACRIFICE)));
+    }
+
     /** "Whenever [a filter permanent] is sacrificed or destroyed": either way it leaves the battlefield. */
     public static ZoneChangeTrigger sacrificedOrDestroyed(PermanentPredicate filter, ObjectRelation relation) {
         return new ZoneChangeTrigger(relation, filter, Set.of(Zone.BATTLEFIELD), null,
@@ -884,6 +894,12 @@ public final class Triggers {
     /** "Whenever a creature you control deals damage to a planeswalker". */
     public static DamageTrigger creatureYouControlDealsDamageToPlaneswalker() {
         return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_DAMAGE_TO_PLANESWALKER, ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever a creature you control deals combat damage to a planeswalker". */
+    public static DamageTrigger creatureYouControlDealsCombatDamageToPlaneswalker() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_COMBAT_DAMAGE_TO_PLANESWALKER,
+                ObjectRelation.YOU_CONTROL);
     }
 
     /** "Whenever a creature deals damage to enchanted planeswalker". */

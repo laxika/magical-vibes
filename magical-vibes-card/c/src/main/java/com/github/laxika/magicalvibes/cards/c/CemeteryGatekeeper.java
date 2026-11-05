@@ -6,10 +6,11 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAnyGraveyardCardAndImprintOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.TriggeringCardMatches;
 
 @CardRegistration(set = "VOW", collectorNumber = "148")
 @CardRegistration(set = "DBL", collectorNumber = "415")
@@ -22,7 +23,7 @@ public class CemeteryGatekeeper extends Card {
         CardSharesCardTypeWithImprintedCardPredicate sharedType =
                 new CardSharesCardTypeWithImprintedCardPredicate(true);
         CardEffect damage = new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PLAYER);
-        CardEffect conditionalDamage = new TriggeringCardConditionalEffect(sharedType, damage);
+        CardEffect conditionalDamage = new ConditionalEffect(new TriggeringCardMatches(sharedType), damage);
 
         addTrigger(Triggers.playerCastsSpell().withFilter(sharedType), conditionalDamage);
         addTrigger(Triggers.youPlayLand().withFilter(sharedType), damage);

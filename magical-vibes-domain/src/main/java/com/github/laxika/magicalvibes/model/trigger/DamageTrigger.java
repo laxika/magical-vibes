@@ -6,7 +6,8 @@ import java.util.Objects;
 
 /**
  * Damage is dealt, combat or noncombat (CR 120.1, 120.2), or damage that would be dealt is prevented (CR 615.1).
- * Build it through {@link Triggers}. The combat-only forms are {@link CombatTrigger}s.
+ * Build it through {@link Triggers}. The combat-only forms are {@link CombatTrigger}s, but
+ * {@link DamageEvent#DEALS_COMBAT_DAMAGE_TO_PLANESWALKER}, which the planeswalker damage collector reads.
  *
  * @param event    what happens: who deals the damage, to what, and whether it must be noncombat or excess damage
  * @param relation how the object the event names relates to the ability's source. For a "deals damage" event it is
@@ -77,6 +78,11 @@ public record DamageTrigger(DamageEvent event, ObjectRelation relation, Permanen
         DEALS_DAMAGE_TO_CREATURE,
         /** A creature deals damage to a planeswalker. */
         DEALS_DAMAGE_TO_PLANESWALKER,
+        /**
+         * A creature deals combat damage to a planeswalker; the planeswalker damage collector reads it with
+         * {@link #DEALS_DAMAGE_TO_PLANESWALKER}.
+         */
+        DEALS_COMBAT_DAMAGE_TO_PLANESWALKER,
         /** A creature deals damage to the planeswalker the source enchants. */
         DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER,
         /** A creature deals damage to its controller. */

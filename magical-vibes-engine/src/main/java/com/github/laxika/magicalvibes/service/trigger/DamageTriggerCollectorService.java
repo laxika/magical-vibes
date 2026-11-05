@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -57,7 +56,6 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherChosenPlayerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -78,7 +76,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsOrLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -89,7 +86,6 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -183,28 +179,13 @@ public class DamageTriggerCollectorService {
                 (TriggerContext.CreatureDealsDamageToPlaneswalker) ctx);
     }
 
-    /**
-     * Zagras, Thief of Heartbeats' authored "deals combat damage to a planeswalker" wrapper
-     * ({@link TriggeringPermanentConditionalEffect#combatDamageOnly}), which no damage trigger says yet.
-     */
-    @CollectsDamageTrigger(value = TriggeringPermanentConditionalEffect.class,
-            watch = DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER)
-    private boolean handleAllyCreatureDealsCombatDamageToPlaneswalker(TriggerMatchContext match,
-            TriggeringPermanentConditionalEffect trigger, TriggerContext ctx) {
-        TriggerContext.CreatureDealsDamageToPlaneswalker damageContext =
-                (TriggerContext.CreatureDealsDamageToPlaneswalker) ctx;
-        Permanent watcher = match.permanent();
-        if (watcher == null || damageContext.damageSource() == null || damageContext.damage() <= 0
-                || !gameQueryService.isCreature(match.gameData(), damageContext.damageSource())
-                || (trigger.combatDamageOnly() && !damageContext.combatDamage())) return false;
-        if (trigger.predicate() != null
-                && !predicateEvaluationService.matchesPermanentPredicate(
-                damageContext.damageSource(), trigger.predicate(), FilterContext.of(match.gameData())
-                        .withSourceCardId(watcher.getCard().getId())
-                        .withSourceControllerId(match.controllerId())
-                        .withSourcePermanentId(watcher.getId())
-                        .withSourcePermanentSnapshot(watcher))) return false;
-        return enqueueAllyCreatureDealsDamageToPlaneswalker(match, trigger.wrapped(), damageContext);
+    /** "Whenever a creature you control deals combat damage to a planeswalker, destroy that planeswalker" (Zagras). */
+    @CollectsDamageTrigger(value = CardEffect.class,
+            watch = DamageWatch.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLANESWALKER)
+    private boolean handleAllyCreatureDealsCombatDamageToPlaneswalker(TriggerMatchContext match, CardEffect effect,
+            TriggerContext ctx) {
+        return enqueueAllyCreatureDealsDamageToPlaneswalker(match, effect,
+                (TriggerContext.CreatureDealsDamageToPlaneswalker) ctx);
     }
 
     private boolean enqueueAllyCreatureDealsDamageToPlaneswalker(TriggerMatchContext match, CardEffect effect,
@@ -1055,14 +1036,14 @@ public class DamageTriggerCollectorService {
                 || may.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
             // The target of an optional targeted trigger is chosen as the ability goes on the stack (CR 603.3d);
             // only the choice to use the option waits until resolution (CR 603.5). The target choice carries the
-            // "do this only once each turn" mark as the wrapper its handler reads.
+            // "do this only once each turn" mark to the stack entry it makes.
             Permanent sourcePermanent = match.permanent();
             Card sourceCard = sourcePermanent.getCard();
-            CardEffect chosen = markOnAcceptance ? OncePerTurnTriggerEffect.markOnAcceptance(effect) : effect;
-            gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                    sourceCard, match.controllerId(), new ArrayList<>(List.of(chosen)), false,
+            var choice = new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)), false,
                     targetFilterForTriggeredEffect(sourceCard, may), dc.damageDealt(),
-                    sourcePermanent.getId(), new Permanent(sourcePermanent)));
+                    sourcePermanent.getId(), new Permanent(sourcePermanent));
+            gameData.queueInteraction(markOnAcceptance ? choice.withMarkSourceOncePerTurnOnAcceptance() : choice);
             gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
             log.info("Game {} - {} targeted optional trigger for damage dealt to a creature",
                     gameData.id, sourceCard.getName());
