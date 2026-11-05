@@ -42,7 +42,7 @@ public class CloudExSOLDIER extends Card {
                 equippedAttackingCreature, CountScope.CONTROLLER);
 
         addTrigger(Triggers.attacks(), new DrawCardEffect(equippedAttackingCreatures),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                 new SourcePowerAtLeast(7), CreateTokenEffect.ofTreasureToken(2)));
     }
 }

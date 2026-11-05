@@ -13,7 +13,7 @@ public class BlackPantherClawsOfBast extends Card {
 
     public BlackPantherClawsOfBast() {
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
     }
 }

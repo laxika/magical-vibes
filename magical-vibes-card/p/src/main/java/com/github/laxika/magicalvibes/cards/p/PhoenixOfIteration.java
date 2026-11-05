@@ -32,8 +32,8 @@ public class PhoenixOfIteration extends Card {
     public PhoenixOfIteration() {
         addTrigger(Triggers.youCastSpell().withFilter(INSTANT_OR_SORCERY), opusEffects().toArray(CardEffect[]::new));
         addTrigger(new TriggerCondition(Triggers.youCastSpell().withFilter(INSTANT_OR_SORCERY), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT,
-                new ConditionalEffect(new SourceCardInGraveyard(), new SequenceEffect(opusEffects())));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCardInGraveyard()),
+                new SequenceEffect(opusEffects()));
     }
 
     private static List<CardEffect> opusEffects() {

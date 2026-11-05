@@ -20,7 +20,7 @@ public class ImperialSubduer extends Card {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.creatureYouControlAttacks()
                                 .withFilter(new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SAMURAI, CardSubtype.WARRIOR))),
-                        TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                        TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                         new TapPermanentsEffect(TapUntapScope.TARGET));
     }
 }

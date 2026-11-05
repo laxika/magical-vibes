@@ -27,7 +27,7 @@ public class MisterNegative extends Card {
         )).addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 SequenceEffect.of(
                         new ExchangeControllerAndTargetPlayerLifeTotalsEffect(),
-                        ConditionalEffect.unless(new EventValueAtLeast(1), new DrawCardEffect(new EventValue()))),
+                        new ConditionalEffect(new EventValueAtLeast(1), new DrawCardEffect(new EventValue()))),
                 "Exchange life totals with target opponent?"
         ));
     }

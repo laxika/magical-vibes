@@ -19,7 +19,7 @@ public class DutyBoundDead extends Card {
         // end of turn. Triggers.creatureYouControlAttacks() records the attacker as the trigger's
         // (non-targeting) target; AttacksAlone restricts it to lone attackers at resolution.
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostTargetCreatureEffect(1, 1));
 
         addActivatedAbility(new ActivatedAbility(false, "{3}{B}", List.of(new RegenerateEffect()), "{3}{B}: Regenerate Duty-Bound Dead."));

@@ -21,7 +21,7 @@ public class SilumgarScavenger extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MayEffect(new ExploitEffect(), "Sacrifice a creature?"));
         addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new PutCountersOnSourceEffect(1, 1, 1),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                 new SourceExploitedTriggeringPermanent(),
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
     }

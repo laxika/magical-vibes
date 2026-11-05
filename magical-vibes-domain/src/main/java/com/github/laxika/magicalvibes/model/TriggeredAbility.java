@@ -335,41 +335,33 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
     /**
      * This ability's registrations in the form the "when this enters" collector ({@code EtbTriggerService}) and the
      * code inspecting a card's enters abilities read them, until step 15 of effect-slot-refactor.md makes the effects
-     * read the event: the intervening "if" a {@link ConditionalEffect} of it around each effect, checked as the ability
-     * triggers and again as it resolves (CR 603.4), and the event condition the {@link ConditionalEffect#atTriggerTime}
-     * inside it, checked only as the ability triggers (CR 603.2). The limit isn't wrapped: the collector judges it from
-     * the ability ({@link #limitKey()}). An ability without an intervening "if" or event condition returns its
-     * registrations as they are. Throws for an ability without a "when this enters" condition ({@link #hasOwnEntry()}),
-     * whose collectors read the ability itself.
+     * read the event: the intervening "if" a {@link ConditionalEffect} of it around each effect, so it is checked again
+     * as the ability resolves (CR 603.4). The collector judges the intervening "if" and the event condition as the
+     * ability triggers (CR 603.2), and the limit ({@link #limitKey()}), from the ability's options. An ability without
+     * an intervening "if" returns its registrations as they are. Throws for an ability without a "when this enters"
+     * condition ({@link #hasOwnEntry()}), whose collectors read the ability itself.
      */
     public List<EffectRegistration> ownEntryEffects() {
         if (!hasOwnEntry()) {
             throw new IllegalStateException("Only a \"when this enters\" ability is read as its effects: " + conditions);
         }
         Condition interveningIf = options.interveningIf();
-        Condition eventCondition = options.eventCondition();
-        if (interveningIf == null && eventCondition == null) {
+        if (interveningIf == null) {
             return effects;
         }
         List<EffectRegistration> wrapped = new ArrayList<>(effects.size());
         for (EffectRegistration registration : effects) {
-            CardEffect effect = registration.effect();
-            if (eventCondition != null) {
-                effect = ConditionalEffect.atTriggerTime(eventCondition, effect);
-            }
-            if (interveningIf != null) {
-                effect = new ConditionalEffect(interveningIf, effect, true);
-            }
-            wrapped.add(new EffectRegistration(effect, registration.simultaneousWithPrevious()));
+            wrapped.add(new EffectRegistration(new ConditionalEffect(interveningIf, registration.effect()),
+                    registration.simultaneousWithPrevious()));
         }
         return List.copyOf(wrapped);
     }
 
     /**
      * Rejects the options of an ability with a "when this enters" condition ({@link ZoneChangeTrigger#ownEntry()}) that
-     * its collector doesn't read. {@code EtbTriggerService} judges "triggers only once each turn" from the ability as it
-     * triggers ({@link #limitKey()}, shared with the ability's other conditions), and the intervening "if" and the event
-     * condition through {@link #ownEntryEffects()}; it marks no "do this only once each turn" (CR 603.2h) and reads no
+     * its collector doesn't read. {@code EtbTriggerService} judges "triggers only once each turn", the intervening "if" and
+     * the event condition from the ability as it triggers ({@link #limitKey()}, shared with the ability's other
+     * conditions); it marks no "do this only once each turn" (CR 603.2h) and reads no
      * "triggers only once" or "once each turn for each creature", and the permanent's own entry is one event, so "one or
      * more" is the multiplicity of another condition only. The legacy view checked these as a card's abilities were
      * indexed; the collector reads the ability itself, so the ability checks them as it is built.

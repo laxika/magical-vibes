@@ -30,7 +30,7 @@ public class StrategicIntervention extends Card {
                         new PermanentControlledByDefendingPlayerPredicate())),
                 "Target must be a creature defending player controls"), 0, 1)
                 .bindEffect(tapPermanents);
-        addTrigger(Triggers.creatureYouControlAttacks(), TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+        addTrigger(Triggers.creatureYouControlAttacks(), TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostAllOwnCreaturesEffect(1, 1, new PermanentIsTriggeringPermanentPredicate()),
                 tapPermanents);
     }

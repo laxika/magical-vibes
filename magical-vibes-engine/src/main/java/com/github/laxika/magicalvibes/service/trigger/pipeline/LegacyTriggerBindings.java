@@ -214,6 +214,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
@@ -1331,10 +1332,11 @@ public class LegacyTriggerBindings {
         if (c.destination() != com.github.laxika.magicalvibes.model.Zone.EXILE) {
             return false;
         }
+        // "When this dies or is put into exile from the battlefield, if its power was 4 or greater" (Syr Vondam): the
+        // exile half is this wrapper, and the condition around its effect is that half's intervening "if".
         if (effect.wrapped() instanceof ConditionalEffect conditional
-                && conditional.interveningIf()
-                && !conditionEvaluationService.isInterveningIfMet(
-                        c.gameData(), conditional, c.permanent(), c.controllerId())) {
+                && !conditionEvaluationService.isMet(c.gameData(), conditional.condition(),
+                ConditionContext.forPermanent(c.permanent(), c.controllerId()))) {
             return false;
         }
         if (!handleSelfLeavesDefault(c, effect.wrapped())) {
@@ -1598,18 +1600,7 @@ public class LegacyTriggerBindings {
 
     private boolean handleConditionalSelfLeavesTrigger(Ctx c, ConditionalEffect effect) {
         if (!(effect.wrapped() instanceof LeavingPermanentCountersAwareEffect aware)) {
-            if (effect.triggerTimeOnly()
-                    && !conditionEvaluationService.isInterveningIfMet(
-                    c.gameData(), effect, c.permanent(), c.controllerId())) {
-                return false;
-            }
             return handleSelfLeavesDefault(c, effect);
-        }
-
-        if (effect.interveningIf()
-                && !conditionEvaluationService.isInterveningIfMet(
-                c.gameData(), effect, c.permanent(), c.controllerId())) {
-            return false;
         }
 
         CardEffect bound = aware.boundToLeavingPermanentCounters(snapshotConcreteCounters(c.permanent()));
@@ -1617,7 +1608,7 @@ public class LegacyTriggerBindings {
             return false;
         }
         return handleSelfLeavesDefault(c,
-                new ConditionalEffect(effect.condition(), bound, effect.interveningIf()));
+                new ConditionalEffect(effect.condition(), bound));
     }
 
     private boolean handlePutCounterOnTargetForEachLeavingSourceCounter(Ctx c, PutCounterOnTargetForEachLeavingSourceCounterEffect effect) {

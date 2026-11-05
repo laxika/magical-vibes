@@ -23,7 +23,7 @@ public class ChaosLord extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                new TotalPermanentCountEven(), new TargetPlayerGainsControlOfSourceCreatureEffect(), false));
+                new TotalPermanentCountEven(), new TargetPlayerGainsControlOfSourceCreatureEffect()));
         addStaticEffect(new CanAttackAsThoughHasteUnlessEnteredThisTurnEffect());
     }
 }

@@ -18,7 +18,7 @@ public class SublimeArchangel extends Card {
     public SublimeArchangel() {
         // Exalted: each instance triggers separately for a lone attacker (CR 702.83a).
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostTargetCreatureEffect(1, 1));
         // Other creatures you control have exalted; each granted instance is keyword-driven.
         addStaticEffect(new GrantKeywordEffect(Keyword.EXALTED, GrantScope.OWN_CREATURES));

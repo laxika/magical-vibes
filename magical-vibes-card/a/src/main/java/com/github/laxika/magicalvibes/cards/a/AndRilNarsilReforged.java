@@ -27,9 +27,9 @@ public class AndRilNarsilReforged extends Card {
         PutCounterOnEachControlledPermanentEffect twoCounters =
                 new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, 2, new PermanentIsCreaturePredicate());
-        addTrigger(Triggers.attacks(), ConditionalEffect.unless(new ControllerHasCityBlessing(),
+        addTrigger(Triggers.attacks(), new ConditionalEffect(new ControllerHasCityBlessing(),
                 twoCounters),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                 new NotCondition(new ControllerHasCityBlessing()), oneCounter));
 
         addActivatedAbility(new EquipActivatedAbility("{3}"));

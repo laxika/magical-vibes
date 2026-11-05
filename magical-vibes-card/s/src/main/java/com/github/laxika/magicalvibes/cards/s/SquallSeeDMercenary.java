@@ -23,7 +23,7 @@ public class SquallSeeDMercenary extends Card {
 
     public SquallSeeDMercenary() {
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET));
 
         addTrigger(Triggers.dealsCombatDamageToPlayer(), ReturnCardFromGraveyardEffect.builder()

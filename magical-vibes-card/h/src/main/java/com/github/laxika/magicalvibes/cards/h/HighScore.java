@@ -15,6 +15,6 @@ public class HighScore extends Card {
     public HighScore() {
         addStaticEffect(new AddOnePlusOneCountersEffect());
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                new ConditionalEffect(new ControlsCreatureWithGreatestPower(), new DrawCardEffect(), false));
+                new ConditionalEffect(new ControlsCreatureWithGreatestPower(), new DrawCardEffect()));
     }
 }

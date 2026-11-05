@@ -34,7 +34,7 @@ public class EddytrailHawk extends Card {
                 )),
                 "Target must be another attacking creature"
         )).addTrigger(Triggers.attacks(), new MayEffect(
-                ConditionalEffect.unless(new ControllerEnergyAtLeast(1),
+                new ConditionalEffect(new ControllerEnergyAtLeast(1),
                         SequenceEffect.of(
                                 new EnergyCountersEffect(-1),
                                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET)

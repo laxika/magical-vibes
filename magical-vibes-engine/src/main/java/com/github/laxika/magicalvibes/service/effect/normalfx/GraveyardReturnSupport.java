@@ -484,7 +484,7 @@ public class GraveyardReturnSupport {
                     // Its enter-as-a-copy choice is still open, so the subtype is checked once it is answered.
                     entry.setTriggeringPermanentId(returnedPermanent.getId());
                     entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(
-                            ConditionalEffect.unless(new TriggeringPermanentHasSubtype(effect.createTokensIfSubtype()),
+                            new ConditionalEffect(new TriggeringPermanentHasSubtype(effect.createTokensIfSubtype()),
                                     effect.createTokensEffect())));
                 } else if (gameQueryService.hasEffectiveSubtype(
                         gameData, returnedPermanent, effect.createTokensIfSubtype())) {

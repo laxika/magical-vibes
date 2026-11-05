@@ -22,12 +22,12 @@ public class LoyalInventor extends Card {
     public LoyalInventor() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 SequenceEffect.of(
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.ASSASSIN)),
                                 new SearchLibraryEffect(
                                         new CardTypePredicate(CardType.ARTIFACT),
                                         LibrarySearchDestination.HAND)),
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new NotCondition(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.ASSASSIN))),
                                 new SearchLibraryEffect(
                                         new CardTypePredicate(CardType.ARTIFACT),

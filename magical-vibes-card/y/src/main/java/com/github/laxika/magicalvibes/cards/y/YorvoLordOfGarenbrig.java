@@ -28,7 +28,7 @@ public class YorvoLordOfGarenbrig extends Card {
 
         CardEffect counterSequence = SequenceEffect.of(
                 new PutCountersOnSourceEffect(1, 1, 1),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new TriggeringPermanentPowerGreaterThanSourcePower(),
                         new PutCountersOnSourceEffect(1, 1, 1)));
         addTrigger(Triggers.enters(

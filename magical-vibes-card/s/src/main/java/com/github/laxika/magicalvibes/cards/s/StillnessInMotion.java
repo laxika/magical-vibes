@@ -19,7 +19,7 @@ public class StillnessInMotion extends Card {
     public StillnessInMotion() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 new MillEffect(3, MillRecipient.CONTROLLER),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new NotCondition(new CardsInLibraryAtLeast(1)),
                         SequenceEffect.of(
                                 new ExileSelfEffect(),

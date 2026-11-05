@@ -28,7 +28,7 @@ public class BilbosRing extends Card {
         addStaticEffect(new ConditionalEffect(new ControllerTurn(), new CantBeBlockedEffect()));
 
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1)));
 
         PermanentHasSubtypePredicate halfling = new PermanentHasSubtypePredicate(CardSubtype.HALFLING);

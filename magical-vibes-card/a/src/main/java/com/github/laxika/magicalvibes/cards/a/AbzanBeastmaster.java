@@ -14,6 +14,6 @@ public class AbzanBeastmaster extends Card {
     public AbzanBeastmaster() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new ControlsCreatureWithGreatestToughness(),
-                new DrawCardEffect(1), false));
+                new DrawCardEffect(1)));
     }
 }

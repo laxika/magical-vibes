@@ -28,7 +28,7 @@ public class PyreZombie extends Card {
         // {1}{B}{B}. If you do, return it to your hand.
         addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT,
-                ConditionalEffect.unless(new SourceCardInGraveyard(), new MayPayManaEffect("{1}{B}{B}",
+                new ConditionalEffect(new SourceCardInGraveyard(), new MayPayManaEffect("{1}{B}{B}",
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.HAND)
                                 .filter(new CardIsSelfPredicate())

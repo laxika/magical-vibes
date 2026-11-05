@@ -28,7 +28,7 @@ public class NyssaOfTraken extends Card {
         targetUpTo(new EventValue(), TargetFilters.creature(), 1000)
                 .addTrigger(Triggers.attacks(), SequenceEffect.of(
                         new SacrificeAnyNumberOfPermanentsEffect(new PermanentIsArtifactPredicate()),
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new EventValueAtLeast(1),
                                 new QueueReflexiveAbilityEffect(
                                         SequenceEffect.of(

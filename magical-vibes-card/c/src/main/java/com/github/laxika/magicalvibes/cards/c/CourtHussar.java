@@ -21,7 +21,7 @@ public class CourtHussar extends Card {
     public CourtHussar() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 LookAtTopCardsEffect.chooseOneToHandRestOnBottom(new Fixed(3)));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), ConditionalEffect.unless(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new NotCondition(new ColorSpentToCast(ManaColor.WHITE)), new SacrificeSelfEffect()));
     }
 }

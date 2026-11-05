@@ -33,7 +33,7 @@ public class CourtOfLocthwain extends Card {
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                         new ExileTopCardsToSourceEffect(
                                 1, false, false, LibraryScope.TARGET_OPPONENT, true),
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new ControllerIsMonarch(),
                                 new AllowCastCardsExiledWithSourceUntilEndOfTurnEffect(
                                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)), true))));

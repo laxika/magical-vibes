@@ -16,7 +16,7 @@ public class ArdentPlea extends Card {
         // of turn. Same wiring as Akrasan Squire — Triggers.creatureYouControlAttacks() records the lone attacker
         // as the (non-targeting) trigger target and AttacksAlone restricts it to solo attackers.
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostTargetCreatureEffect(1, 1));
 
         // Cascade: when you cast this spell, dig the library until a nonland card with lesser mana

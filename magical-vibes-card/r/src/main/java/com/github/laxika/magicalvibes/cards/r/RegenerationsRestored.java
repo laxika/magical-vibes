@@ -44,7 +44,7 @@ public class RegenerationsRestored extends Card {
         addTrigger(Triggers.timeCountersRemovedFromThis(), SequenceEffect.of(
                 new ScryEffect(1),
                 new GainLifeEffect(1),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new NotCondition(new SourceCounterThreshold(1, CounterType.TIME)),
                         new ExileSelfThenEffect(new ControllerExtraTurnEffect(1)))));
     }

@@ -28,7 +28,7 @@ public class TakenumaBleeder extends Card {
     }
 
     private ConditionalEffect bleedUnlessDemon() {
-        return ConditionalEffect.unless(
+        return new ConditionalEffect(
                 new NotCondition(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DEMON))),
                 new LoseLifeEffect(1));
     }

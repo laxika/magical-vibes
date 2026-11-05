@@ -24,7 +24,7 @@ public class AetherSwooper extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new EnergyCountersEffect(2));
 
         addTrigger(Triggers.attacks(), new MayEffect(
-                ConditionalEffect.unless(new ControllerEnergyAtLeast(2),
+                new ConditionalEffect(new ControllerEnergyAtLeast(2),
                         SequenceEffect.of(
                                 new EnergyCountersEffect(-2),
                                 new CreateTokenEffect(1, "Servo", 1, 1, null,

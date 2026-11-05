@@ -26,7 +26,7 @@ public class SelvalaHeartOfTheWilds extends Card {
     public SelvalaHeartOfTheWilds() {
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER),
                 new MayEffect(
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new TriggeringPermanentHasUniqueGreatestPowerAmongAllCreatures(),
                                 new DrawCardForTriggeringPlayerEffect()),
                         "Draw a card?",

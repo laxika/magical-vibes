@@ -162,6 +162,7 @@ import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
+import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.EachPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
@@ -173,7 +174,6 @@ import com.github.laxika.magicalvibes.model.condition.CreatureCardLeftGraveyardT
 import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderOpponentControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
-import com.github.laxika.magicalvibes.model.condition.AnotherPermanentEnteredLastTurn;
 import com.github.laxika.magicalvibes.model.condition.DidntActivateLoyaltyAbilityThisTurn;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
@@ -1123,12 +1123,6 @@ public class StepTriggerService {
                     grantedUpkeepEffectSupport.grantedUpkeepAbilities(gameData, perm), upkeepContext));
             if (upkeepEffects.isEmpty()) continue;
 
-            // An intervening-if condition is checked at trigger time, so a failed check must not
-            // put the ability on the stack or ask for any targets.
-            upkeepEffects.removeIf(e -> e instanceof ConditionalEffect ce
-                    && ce.interveningIf()
-                    && !conditionEvaluationService.isMet(gameData, ce.condition(),
-                            ConditionContext.forPermanent(perm, activePlayerId)));
             upkeepEffects.removeIf(e -> e instanceof RemoveCounterAndSacrificeSelfOnLastEffect vanishing
                     && perm.getCounterCount(vanishing.counterType()) <= 0);
             upkeepEffects.removeIf(e -> e instanceof PlayerWithMostLifeGainsControlOfSourceCreatureEffect
@@ -1195,13 +1189,6 @@ public class StepTriggerService {
                 if (upkeepEffects.isEmpty()) continue;
             }
 
-            // Intervening-if on a targeted upkeep ability must be checked before its target is
-            // chosen as the trigger is put on the stack.
-            upkeepEffects.removeIf(e -> e instanceof ConditionalEffect conditional
-                    && conditional.interveningIf()
-                    && conditional.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
-                    && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                            ConditionContext.forPermanent(perm, activePlayerId)));
             if (upkeepEffects.isEmpty()) continue;
 
             // Puca's Mischief: two interdependent nonland-permanent targets chosen at trigger time
@@ -1241,13 +1228,7 @@ public class StepTriggerService {
             }
 
             for (CardEffect effect : upkeepEffects) {
-                if (effect instanceof ConditionalEffect conditional
-                        && conditional.interveningIf()
-                        && conditional.condition() instanceof AnotherPermanentEnteredLastTurn
-                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                        ConditionContext.forPermanent(perm, activePlayerId))) {
-                    continue;
-                } else if (effect instanceof MayEffect may
+                if (effect instanceof MayEffect may
                         && may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                     // A targeted "you may" trigger still chooses its target as the trigger is put
                     // on the stack; only the may decision waits for resolution.
@@ -1372,25 +1353,6 @@ public class StepTriggerService {
                                 gameData.id, perm.getCard().getName(), lifeTotal, lifeCheck.threshold());
                     }
                 } else if (effect instanceof ConditionalEffect conditional
-                        && conditional.interveningIf()
-                        && conditional.condition() instanceof AllOf) {
-                    if (conditionEvaluationService.isMet(gameData, conditional.condition(),
-                            ConditionContext.forPermanent(perm, activePlayerId))) {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                activePlayerId,
-                                perm.getCard().getName() + "'s upkeep ability",
-                                new ArrayList<>(List.of(effect)),
-                                (UUID) null,
-                                perm.getId()
-                        ));
-
-                        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
-                        log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: composed condition)",
-                                gameData.id, perm.getCard().getName());
-                    }
-                } else if (effect instanceof ConditionalEffect conditional
                         && conditional.condition() instanceof ControllerLifeAtLeast lifeCheck) {
                     if (conditionEvaluationService.isMet(gameData, lifeCheck,
                             ConditionContext.forPermanent(perm, activePlayerId))) {
@@ -1490,27 +1452,6 @@ public class StepTriggerService {
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
                         log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: {} or more differently named matching permanents)",
                                 gameData.id, perm.getCard().getName(), namesCheck.minCount());
-                    }
-                } else if (effect instanceof ConditionalEffect conditional
-                        && conditional.interveningIf()
-                        && conditional.condition() instanceof ControlsPermanentCountAtMost atMostCheck) {
-                    // Intervening-if: only trigger if controller has few enough matching permanents
-                    // (Sheltered Valley "three or fewer lands"; Kookus "don't control a Keeper of Kookus")
-                    if (conditionEvaluationService.isMet(gameData, atMostCheck,
-                            ConditionContext.forPermanent(perm, activePlayerId))) {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                activePlayerId,
-                                perm.getCard().getName() + "'s upkeep ability",
-                                new ArrayList<>(List.of(effect)),
-                                (UUID) null,
-                                perm.getId()
-                        ));
-
-                        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
-                        log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: {} or fewer matching permanents)",
-                                gameData.id, perm.getCard().getName(), atMostCheck.maxCount());
                     }
                 } else if (effect instanceof ConditionalEffect conditional
                         && conditional.condition() instanceof AnyPlayerControlsPermanentCountAtMost anyAtMostCheck) {
@@ -1707,12 +1648,6 @@ public class StepTriggerService {
                 if (commandZoneUpkeepEffects.isEmpty()) continue;
 
                 for (CardEffect effect : commandZoneUpkeepEffects) {
-                    if (effect instanceof ConditionalEffect conditional
-                            && conditional.interveningIf()
-                            && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                            ConditionContext.forCard(card, activePlayerId))) {
-                        continue;
-                    }
 
                     if (effect instanceof MayPayManaEffect mayPay) {
                         gameData.queueMayAbility(card, activePlayerId, mayPay, null);
@@ -1750,17 +1685,6 @@ public class StepTriggerService {
                 if (upkeepEffects == null || upkeepEffects.isEmpty()) continue;
 
                 for (CardEffect effect : upkeepEffects) {
-                    // Check the intervening-if gate at trigger time while keeping the wrapper on
-                    // the stack so the same condition is checked again during resolution.
-                    if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()) {
-                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
-                                ConditionContext.forCard(card, activePlayerId))) {
-                            log.info("Game {} - {} graveyard upkeep ability skipped ({})",
-                                    gameData.id, card.getName(), conditional.condition().conditionNotMetReason());
-                            continue;
-                        }
-                    }
-
                     if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
                         gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                                 card, activePlayerId, new ArrayList<>(List.of(effect))));
@@ -1782,7 +1706,7 @@ public class StepTriggerService {
                         if (effect instanceof ConditionalEffect conditional
                                 && conditional.condition() instanceof SourceCardInGraveyard) {
                             boundEffect = new ConditionalEffect(new SourceCardInGraveyard(sourceEntryVersion),
-                                    conditional.wrapped(), conditional.interveningIf(), conditional.triggerTimeOnly());
+                                    conditional.wrapped());
                         }
                         StackEntry upkeepEntry = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
@@ -1815,12 +1739,6 @@ public class StepTriggerService {
             for (CardEffect effect : eachUpkeepEffects) {
                 if (effect instanceof UpkeepPlayerDependentEffect playerDependent
                         && !playerDependent.triggersFor(activePlayerId)) {
-                    continue;
-                }
-                if (effect instanceof ConditionalEffect conditional
-                        && conditional.interveningIf()
-                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                        ConditionContext.forPermanent(perm, playerId))) {
                     continue;
                 }
 
@@ -1917,12 +1835,6 @@ public class StepTriggerService {
                         if (handSize > fewCardsEffect.maxCards()) {
                             continue; // Condition not met, don't trigger
                         }
-                    }
-                    if (effect instanceof ConditionalEffect conditional
-                            && conditional.interveningIf()
-                            && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                            ConditionContext.forPermanent(perm, playerId))) {
-                        continue;
                     }
                     // Intervening-if on the active opponent's hand size — Hollowborn Barghest's
                     // "if that player has no cards in hand" and Misers' Cage's "if that player has
@@ -2206,12 +2118,6 @@ public class StepTriggerService {
             upkeepEffects.removeIf(RemoveScreamCounterFromExiledCardEffect.class::isInstance);
 
             for (CardEffect effect : upkeepEffects) {
-                if (effect instanceof ConditionalEffect conditional
-                        && conditional.interveningIf()
-                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                        ConditionContext.forCard(card, exiledEntry.ownerId()))) {
-                    continue;
-                }
                 if (effect instanceof MayEffect may) {
                     gameData.queueMayAbility(card, exiledEntry.ownerId(), may, null);
                 } else {
@@ -3355,11 +3261,6 @@ public class StepTriggerService {
                         // A delayed trigger of the lock's activator, collected below.
                         continue;
                     }
-                    if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
-                            && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                                    ConditionContext.forPermanent(perm, activePlayerId))) {
-                        continue;
-                    }
                     if (effect instanceof MayEffect may && may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                         // A targeted "you may" draw-step trigger chooses its target as it goes on the
                         // stack (CR 603.3d); only the may decision waits for resolution.
@@ -3714,8 +3615,6 @@ public class StepTriggerService {
             // it" — Ventifact Bottle) is checked at trigger time as well as on resolution, so the
             // ability does not even go on the stack when the source has no counters.
             List<CardEffect> triggering = effects.stream()
-                    .filter(effect -> conditionEvaluationService.isInterveningIfMet(
-                            gameData, effect, perm, activePlayerId))
                     .toList();
             if (triggering.isEmpty()) {
                 continue;
@@ -3823,11 +3722,6 @@ public class StepTriggerService {
             }
 
             for (CardEffect effect : effects) {
-                if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
-                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                        ConditionContext.forCard(card, activePlayerId))) {
-                    continue;
-                }
 
                 if (effect instanceof MayEffect may) {
                     gameData.queueMayAbility(card, activePlayerId, may);
@@ -3865,8 +3759,6 @@ public class StepTriggerService {
             }
 
             List<CardEffect> triggering = effects.stream()
-                    .filter(effect -> conditionEvaluationService.isInterveningIfMet(
-                            gameData, effect, perm, playerId))
                     .toList();
             if (triggering.isEmpty()) {
                 return;
@@ -3921,8 +3813,6 @@ public class StepTriggerService {
             }
             List<CardEffect> triggering = printedEffects(gameData, perm.getCard(), trigger, Zone.BATTLEFIELD,
                     ConditionContext.forPermanent(perm, activePlayerId)).stream()
-                    .filter(effect -> conditionEvaluationService.isInterveningIfMet(
-                            gameData, effect, perm, activePlayerId))
                     .toList();
             if (triggering.isEmpty()) {
                 continue;
@@ -4091,10 +3981,6 @@ public class StepTriggerService {
                 return;
             }
             List<CardEffect> triggeredEffects = effects.stream()
-                    .filter(effect -> !(effect instanceof ConditionalEffect conditional)
-                            || !conditional.interveningIf()
-                            || conditionEvaluationService.isMet(gameData, conditional.condition(),
-                                    ConditionContext.forPermanent(perm, playerId)))
                     .toList();
             if (triggeredEffects.isEmpty()) {
                 return;
@@ -5937,12 +5823,6 @@ public class StepTriggerService {
                 }
                 for (CardEffect effect : printedEffects(gameData, card, YOUR_END_STEP, Zone.COMMAND,
                         ConditionContext.forCard(card, activePlayerId))) {
-                    if (effect instanceof ConditionalEffect conditional
-                            && conditional.interveningIf()
-                            && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                            ConditionContext.forCard(card, activePlayerId))) {
-                        continue;
-                    }
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             card,
@@ -5982,14 +5862,6 @@ public class StepTriggerService {
                 for (CardEffect effect : endStepEffects) {
                     if (effect instanceof MonarchEndStepTriggeredEffect
                             && !activePlayerId.equals(gameData.monarchPlayerId)) {
-                        continue;
-                    }
-                    if (effect instanceof ConditionalEffect conditional
-                            && conditional.interveningIf()
-                            && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                            ConditionContext.forPermanent(perm, playerId))) {
-                        log.info("Game {} - {} end-step trigger skipped ({})",
-                                gameData.id, perm.getCard().getName(), conditional.conditionNotMetReason());
                         continue;
                     }
                     // A "you may ... target X" trigger chooses its target as it is put on the stack
@@ -6405,12 +6277,6 @@ public class StepTriggerService {
                 }
                 for (CardEffect effect : printedEffects(gameData, card, EACH_END_STEP, Zone.COMMAND,
                         ConditionContext.forCard(card, playerId))) {
-                    if (effect instanceof ConditionalEffect conditional
-                            && conditional.interveningIf()
-                            && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                            ConditionContext.forCard(card, playerId))) {
-                        continue;
-                    }
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             card,
@@ -6488,7 +6354,6 @@ public class StepTriggerService {
                 continue;
             }
             if (boon.effect() instanceof ConditionalEffect conditional
-                    && conditional.interveningIf()
                     && !conditionEvaluationService.isMet(gameData, conditional.condition(),
                     ConditionContext.forCard(boon.sourceCard(), activePlayerId))) {
                 continue;
@@ -6538,14 +6403,6 @@ public class StepTriggerService {
                     // condition is false as the trigger event occurs. Checked once here for every
                     // condition, so the branches below only have to decide how to put the trigger
                     // on the stack. "Unless" clauses opt out and always trigger.
-                    if (effect instanceof ConditionalEffect conditional
-                            && conditional.interveningIf()
-                            && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                            ConditionContext.forPermanent(perm, activePlayerId))) {
-                        log.info("Game {} - {} controller end-step trigger skipped ({})",
-                                gameData.id, perm.getCard().getName(), conditional.conditionNotMetReason());
-                        continue;
-                    }
                     if (effect instanceof ChooseOneAtTriggerTimeEffect modal) {
                         gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
                                 perm.getCard(), activePlayerId, modal.choice(), perm.getId()));
@@ -6806,7 +6663,7 @@ public class StepTriggerService {
                                     perm.getCard(),
                                     activePlayerId,
                                     perm.getCard().getName() + "'s end step ability",
-                                    new ArrayList<>(List.of(conditional.interveningIf() ? wrapped : effect)),
+                                    new ArrayList<>(List.of(effect)),
                                     null,
                                     perm.getId()
                             ));
@@ -7006,11 +6863,6 @@ public class StepTriggerService {
             }
 
             for (CardEffect effect : enchantedPlayerEndStepEffects) {
-                if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
-                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                        ConditionContext.forPermanent(perm, auraOwnerId).withTargetId(enchantedPlayerId))) {
-                    continue;
-                }
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
@@ -7377,14 +7229,8 @@ public class StepTriggerService {
         }
 
         for (CardEffect effect : combatEffects) {
-            if (effect instanceof ConditionalEffect conditional
-                    && conditional.interveningIf()) {
-                if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
-                        ConditionContext.forCard(card, controllerId))) {
-                    log.info("Game {} - {} graveyard beginning-of-combat ability skipped ({})",
-                            gameData.id, card.getName(), conditional.conditionNotMetReason());
-                    continue;
-                }
+            // The reader judged the ability's intervening "if"; a conditional is checked again as it resolves.
+            if (effect instanceof ConditionalEffect) {
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         card,
@@ -7479,9 +7325,10 @@ public class StepTriggerService {
             if (effect instanceof MayEffect && effect.targetSpec() == TargetSpec.NONE) {
                 continue;
             }
-            // Intervening-if conditions gate at trigger time. Max speed is an ability-granting
-            // condition, so the wrapped ability does not exist unless the controller is at speed 4.
-            if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()) {
+            // Max speed is an ability-granting condition, so the wrapped ability does not exist unless the controller
+            // is at speed 4. Any other condition is the effect's, checked as it resolves; the reader judged the
+            // ability's intervening "if" as it triggered.
+            if (effect instanceof ConditionalEffect conditional && conditional.condition() instanceof MaxSpeed) {
                 if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
                         sourcePermanentId == null
                                 ? ConditionContext.forCard(perm.getCard(), controllerId)

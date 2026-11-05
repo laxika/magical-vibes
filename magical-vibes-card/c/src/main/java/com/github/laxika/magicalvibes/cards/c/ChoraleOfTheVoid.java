@@ -29,6 +29,6 @@ public class ChoraleOfTheVoid extends Card {
                         .enterAttacking(true)
                         .build());
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                ConditionalEffect.unless(new NotCondition(new VoidCondition()), new SacrificeSelfEffect()));
+                new ConditionalEffect(new NotCondition(new VoidCondition()), new SacrificeSelfEffect()));
     }
 }

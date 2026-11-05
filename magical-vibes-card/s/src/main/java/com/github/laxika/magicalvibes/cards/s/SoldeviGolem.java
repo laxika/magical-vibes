@@ -40,7 +40,7 @@ public class SoldeviGolem extends Card {
         target(tappedOpponentCreature).addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
                 SequenceEffect.of(
                         new UntapPermanentsEffect(TapUntapScope.TARGET),
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new TargetPermanentMatches(new PermanentNotPredicate(new PermanentIsTappedPredicate())),
                                 new UntapPermanentsEffect(TapUntapScope.SOURCE_PERMANENT))
                 ),

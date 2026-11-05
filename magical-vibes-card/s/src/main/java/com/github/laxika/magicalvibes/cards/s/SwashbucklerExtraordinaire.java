@@ -32,7 +32,7 @@ public class SwashbucklerExtraordinaire extends Card {
                 SequenceEffect.of(
                         new SacrificeAnyNumberOfPermanentsEffect(
                                 new PermanentHasSubtypePredicate(CardSubtype.TREASURE)),
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new EventValueAtLeast(1),
                                 new QueueReflexiveAbilityEffect(grantDoubleStrike, false, true))),
                 "Sacrifice one or more Treasures?"));

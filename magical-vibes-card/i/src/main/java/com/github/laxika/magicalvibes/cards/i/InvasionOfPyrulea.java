@@ -25,7 +25,7 @@ public class InvasionOfPyrulea extends Card {
         setBackFaceCard(new GargantuanSlabhorn());
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(3),
                 new RevealTopCardOfLibraryEffect(LibraryOwner.CONTROLLER),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                 new TopCardOfLibraryMatchesPredicate(new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.LAND),
                         new CardIsDoubleFacedPredicate()))),

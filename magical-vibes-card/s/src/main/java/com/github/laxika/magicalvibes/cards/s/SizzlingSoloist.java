@@ -20,7 +20,7 @@ public class SizzlingSoloist extends Card {
                 .addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                         SequenceEffect.of(
                                 new CantBlockThisTurnEffect(TapUntapScope.TARGET),
-                                ConditionalEffect.unless(
+                                new ConditionalEffect(
                                         new NthAbilityResolutionThisTurn(2),
                                         new TargetCreatureMustAttackNextCombatEffect())));
     }

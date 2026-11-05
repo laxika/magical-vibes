@@ -29,15 +29,15 @@ public class OmnathLocusOfCreation extends Card {
     public OmnathLocusOfCreation() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
 
-        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), ConditionalEffect.unless(
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), new ConditionalEffect(
                 new NthAbilityResolutionThisTurn(1), new GainLifeEffect(4)),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                 new NthAbilityResolutionThisTurn(2), SequenceEffect.of(
                         new AwardManaEffect(ManaColor.RED),
                         new AwardManaEffect(ManaColor.GREEN),
                         new AwardManaEffect(ManaColor.WHITE),
                         new AwardManaEffect(ManaColor.BLUE))),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                 new NthAbilityResolutionThisTurn(3), SequenceEffect.of(
                         new DealDamageToPlayersEffect(4, DamageRecipient.EACH_OPPONENT),
                         new DealDamageToEachMatchingPermanentEffect(4,

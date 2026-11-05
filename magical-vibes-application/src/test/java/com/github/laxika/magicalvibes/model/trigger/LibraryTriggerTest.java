@@ -146,7 +146,7 @@ class LibraryTriggerTest {
                 });
         assertThat(LibraryAbilityReader.readPrinted(zurzoth, LibraryWatch.ON_OPPONENT_DRAWS))
                 .singleElement().satisfies(read -> {
-                    assertThat(read.effect()).isEqualTo(new ConditionalEffect(new ControllerIsMonarch(), GAIN, true));
+                    assertThat(read.effect()).isEqualTo(new ConditionalEffect(new ControllerIsMonarch(), GAIN));
                     assertThat(read.filter()).isNull();
                     assertThat(read.counts()).containsExactly(1);
                     assertThat(read.firstTimeEachTurn()).isTrue();
@@ -158,14 +158,14 @@ class LibraryTriggerTest {
     }
 
     @Test
-    void theEventConditionIsInsideTheInterveningIf() {
+    void theReaderWrapsOnlyTheInterveningIfAndLeavesTheEventConditionToTheCollector() {
         Card card = new Card();
         card.addTrigger(Triggers.opponentDrawsCard(), TriggerOptions.DEFAULT
                 .withInterveningIf(new ControllerIsMonarch()).withEventCondition(new ControllerTurn()), DRAW);
 
         assertThat(LibraryAbilityReader.printedEffects(card, LibraryWatch.ON_OPPONENT_DRAWS))
                 .containsExactly(new ConditionalEffect(new ControllerIsMonarch(),
-                        ConditionalEffect.atTriggerTime(new ControllerTurn(), DRAW), true));
+                        DRAW));
     }
 
     @Test
@@ -298,7 +298,7 @@ class LibraryTriggerTest {
         assertThatThrownBy(() -> LibraryAbilityReader.printedEffects(limited, LibraryWatch.ON_CONTROLLER_SCRIES))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(LibraryAbilityReader.printedEffects(plain, LibraryWatch.ON_SELF_CYCLED))
-                .containsExactly(new ConditionalEffect(new ControllerIsMonarch(), DRAW, true));
+                .containsExactly(new ConditionalEffect(new ControllerIsMonarch(), DRAW));
     }
 
     @Test

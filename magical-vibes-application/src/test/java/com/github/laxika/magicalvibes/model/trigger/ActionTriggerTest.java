@@ -152,14 +152,14 @@ class ActionTriggerTest {
     }
 
     @Test
-    void theReaderWrapsTheEventConditionInsideTheInterveningIf() {
+    void theReaderWrapsOnlyTheInterveningIfAndLeavesTheEventConditionToTheCollector() {
         TriggeredAbility ability = new TriggeredAbility(Triggers.youRollDie(), TriggerOptions.DEFAULT
                 .withInterveningIf(new ControllerTurn()).withEventCondition(new EventValueAtLeast(4)), DRAW);
 
         assertThat(ActionAbilityReader.read(ability, ActionWatch.ON_CONTROLLER_ROLLS_DIE.trigger()))
                 .extracting(ActionAbilityReader.ActionEffect::effect)
                 .containsExactly(new ConditionalEffect(new ControllerTurn(),
-                        ConditionalEffect.atTriggerTime(new EventValueAtLeast(4), DRAW), true));
+                        DRAW));
     }
 
     @Test

@@ -36,7 +36,7 @@ public class GisasFavoriteShovel extends Card {
                 SacrificeRecipient.DEFENDING_PLAYER).withRecordedSacrificeCount();
         addTrigger(Triggers.attacks(), SequenceEffect.of(
                 sacrificeCreature,
-                ConditionalEffect.unless(new EventValueAtLeast(1), walker)));
+                new ConditionalEffect(new EventValueAtLeast(1), walker)));
 
         addActivatedAbility(new EquipActivatedAbility("{4}"));
     }

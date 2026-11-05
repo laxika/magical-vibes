@@ -21,7 +21,7 @@ public class CelestialConvergence extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.OMEN, new Fixed(7)));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 new RemoveCounterFromSourceEffect(CounterType.OMEN, 1),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new NotCondition(new SourceCounterThreshold(1, CounterType.OMEN)),
                         new PlayerWithHighestLifeWinsOrDrawEffect())));
     }

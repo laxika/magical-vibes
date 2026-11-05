@@ -6,48 +6,22 @@ import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTu
 
 /**
  * A generic conditional wrapper around a {@link CardEffect} that only applies when the
- * given {@link Condition} is met (e.g. metalcraft, equipped, morbid).
+ * given {@link Condition} is met as the effect resolves (e.g. metalcraft, equipped, morbid, "if you do").
  * <p>
  * Targeting delegates to the wrapped effect so target selection works at cast time.
  * Condition evaluation is handled externally by the engine's
  * {@code ConditionEvaluationService} since domain records cannot depend on game services.
  * <p>
- * {@code interveningIf} distinguishes the two card templates that both read as "conditional"
- * but trigger differently. The default, {@code true}, is the intervening-"if" of CR 603.4
- * ("At the beginning of your end step, <b>if</b> …, …"): the condition is checked when the
- * trigger event occurs and the ability does not trigger at all when it is false. An "unless"
- * clause ("… sacrifice a permanent <b>unless</b> you gained life this turn") is not an
- * intervening-if — that ability always triggers and the condition is only a resolution-time
- * check — so those cards must use {@link #unless}. Both forms re-check the condition on
- * resolution, so only trigger-time behaviour differs.
+ * It is the "if" of an effect only. A triggered ability's intervening "if" ("When/Whenever/At [trigger event], if
+ * [condition], [effect]", CR 603.4), checked as the ability triggers and again as it resolves, and a condition of
+ * its trigger event (CR 603.2), checked only as it triggers, are the ability's
+ * {@link com.github.laxika.magicalvibes.model.trigger.TriggerOptions}, not this wrapper: an "if" anywhere else in a
+ * card's text has its normal meaning, so an ability with one triggers and its condition is judged as it resolves.
+ * The engine wraps the effects of an ability with an intervening "if" in it as the ability goes on the stack, so
+ * the condition is checked again as the ability resolves.
  */
-public record ConditionalEffect(Condition condition, CardEffect wrapped, boolean interveningIf,
-                                boolean triggerTimeOnly)
+public record ConditionalEffect(Condition condition, CardEffect wrapped)
         implements CombatDamageTriggerContextEffect {
-
-    /** Preserves the usual condition checks when callers choose only the trigger-time gate. */
-    public ConditionalEffect(Condition condition, CardEffect wrapped, boolean interveningIf) {
-        this(condition, wrapped, interveningIf, false);
-    }
-
-    /** Matches an event qualified by a condition, without checking it again on resolution. */
-    public static ConditionalEffect atTriggerTime(Condition condition, CardEffect wrapped) {
-        return new ConditionalEffect(condition, wrapped, true, true);
-    }
-
-    /** The common intervening-"if" form (CR 603.4); see {@link #unless} for the other template. */
-    public ConditionalEffect(Condition condition, CardEffect wrapped) {
-        this(condition, wrapped, true);
-    }
-
-    /**
-     * The "unless" form: the ability always triggers and {@code condition} gates the effect only
-     * as it resolves. {@code condition} still reads "true means apply the wrapped effect", so an
-     * "unless you gained life" card passes a {@code DidntGainLifeThisTurn} condition.
-     */
-    public static ConditionalEffect unless(Condition condition, CardEffect wrapped) {
-        return new ConditionalEffect(condition, wrapped, false);
-    }
 
     /** Human-readable condition name for log messages (e.g. "metalcraft", "equipped"). */
     public String conditionName() {

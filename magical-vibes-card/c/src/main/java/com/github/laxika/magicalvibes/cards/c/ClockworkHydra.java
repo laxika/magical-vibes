@@ -30,7 +30,7 @@ public class ClockworkHydra extends Card {
     public ClockworkHydra() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4)));
 
-        var attackOrBlockEffect = ConditionalEffect.unless(
+        var attackOrBlockEffect = new ConditionalEffect(
                 new AllOf(List.of(new SourceIsOnBattlefield(),
                         new SourceCounterThreshold(1, CounterType.PLUS_ONE_PLUS_ONE))),
                 SequenceEffect.of(new RemoveCounterFromSourceEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),

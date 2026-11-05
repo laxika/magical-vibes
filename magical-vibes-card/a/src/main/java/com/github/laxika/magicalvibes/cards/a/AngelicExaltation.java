@@ -16,7 +16,7 @@ public class AngelicExaltation extends Card {
 
     public AngelicExaltation() {
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostTargetCreatureEffect(
                         new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),
                         new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)));

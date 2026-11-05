@@ -1272,7 +1272,7 @@ public class SpellCastTriggerCollectorService {
         UUID targetId = soleCreatureTargetId(match.gameData(), spellEntry);
         if (targetId == null) return false;
 
-        CardEffect untapAndHaste = ConditionalEffect.unless(new ControllerTurn(),
+        CardEffect untapAndHaste = new ConditionalEffect(new ControllerTurn(),
                 SequenceEffect.of(
                         new UntapPermanentsEffect(TapUntapScope.TARGET),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)));
@@ -1610,10 +1610,16 @@ public class SpellCastTriggerCollectorService {
             // CR 603.5: a plain "you may" trigger goes on the stack and asks on resolution.
             if (trigger.requiredCastWithAdventure() || trigger.permanentSpellToken()
                     || trigger.beforeCopyEffect() == null) {
+                // The intervening "if" (Pyromancer Ascension's "if it has two or more quest counters") goes around the
+                // "you may", so the choice isn't asked once it is false as the ability resolves (CR 603.4).
+                CardEffect mayCopy = copyEffect instanceof ConditionalEffect intervening
+                        ? new ConditionalEffect(intervening.condition(),
+                        new MayEffect(intervening.wrapped(), optionalMay.prompt()))
+                        : new MayEffect(copyEffect, optionalMay.prompt());
                 match.gameData().stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(),
                         match.controllerId(), match.permanent().getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(new MayEffect(copyEffect, optionalMay.prompt()))),
+                        new ArrayList<>(List.of(mayCopy)),
                         null, match.permanent().getId()));
                 return true;
             }
@@ -2309,7 +2315,6 @@ public class SpellCastTriggerCollectorService {
             ConditionalEffect conditional, TriggerContext ctx) {
         if (match.permanent() != null
                 || match.sourceCard() == null
-                || !conditional.interveningIf()
                 || !(conditional.condition() instanceof SourceCardSuspended)
                 || !(conditional.wrapped() instanceof MayEffect may)
                 || may.choicePlayer() != MayChoicePlayer.TRIGGERING_SPELL_CONTROLLER
@@ -3393,8 +3398,7 @@ public class SpellCastTriggerCollectorService {
         if (effect instanceof ConditionalEffect conditional) {
             return new ConditionalEffect(conditional.condition(),
                     snapshotTriggeringSpell(conditional.wrapped(), spellSnapshot, castingPlayerId,
-                            gameData, sourceControllerId),
-                    conditional.interveningIf());
+                            gameData, sourceControllerId));
         }
         if (effect instanceof RollD20Effect roll) {
             return new RollD20Effect(

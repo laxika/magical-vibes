@@ -44,7 +44,7 @@ public class SolitaryDefiance extends Card {
                         new CounterUnlessPaysEffect(2)), GrantScope.OWN_CREATURES)));
 
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 SequenceEffect.of(
                         new SeekCardsToHandEffect(new Fixed(2),
                                 new CardNotPredicate(new CardTypePredicate(CardType.LAND))),

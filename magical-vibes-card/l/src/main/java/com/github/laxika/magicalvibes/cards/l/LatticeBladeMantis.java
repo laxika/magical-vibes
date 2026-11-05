@@ -22,7 +22,7 @@ public class LatticeBladeMantis extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.OIL, new Fixed(2)));
 
         addTrigger(Triggers.attacks(), new MayEffect(
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new SourceCounterThreshold(1, CounterType.OIL),
                         SequenceEffect.of(
                                 new RemoveCounterFromSourceEffect(CounterType.OIL, 1),

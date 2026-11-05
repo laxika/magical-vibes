@@ -22,7 +22,7 @@ public class DreamdewEntrancer extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new TapPermanentsEffect(TapUntapScope.TARGET),
                         new PutCounterOnTargetPermanentEffect(CounterType.STUN, 3),
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new TargetPermanentMatches(new PermanentControlledBySourceControllerPredicate()),
                                 new DrawCardEffect(2)));
     }

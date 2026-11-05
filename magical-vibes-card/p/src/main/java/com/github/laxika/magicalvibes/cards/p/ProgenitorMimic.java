@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsToken;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 
 @CardRegistration(set = "DGM", collectorNumber = "92")
 @CardRegistration(set = "2XM", collectorNumber = "212")
@@ -31,9 +31,9 @@ public class ProgenitorMimic extends Card {
                 new PermanentIsCreaturePredicate(), "creature",
                 Set.of(),
                 List.of(
-                        new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), 
-                        new ConditionalEffect(new NotCondition(new SourceIsToken()),
-                                new CreateTokenCopyOfSourceEffect())))
+                        new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
+                                TriggerOptions.DEFAULT.withInterveningIf(new NotCondition(new SourceIsToken())),
+                                new CreateTokenCopyOfSourceEffect()))
         ));
     }
 }

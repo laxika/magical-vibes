@@ -60,7 +60,7 @@ public class ProcessingPlant extends Card {
                 new PutOpponentOwnedExiledCardIntoGraveyardEffect(),
                 new ConditionalEffect(new EventValueAtLeast(1),
                         new UntapPermanentsEffect(TapUntapScope.SELF)),
-                ConditionalEffect.unless(new NotCondition(new EventValueAtLeast(1)),
+                new ConditionalEffect(new NotCondition(new EventValueAtLeast(1)),
                         new ExileTopCardsOfEachOpponentEffect(1))));
 
         addActivatedAbility(new ActivatedAbility(

@@ -16,7 +16,7 @@ public class TheIncredibleHulk extends Card {
     public TheIncredibleHulk() {
         addTrigger(Triggers.dealtDamage(), SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new SourceIsAttacking(),
                         SequenceEffect.of(
                                 new UntapPermanentsEffect(TapUntapScope.SELF),

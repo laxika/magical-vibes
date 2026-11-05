@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -31,9 +30,10 @@ public class PersistentMarshstalker extends Card {
                 otherRats, new Fixed(0), GrantScope.SELF));
 
         addTrigger(new TriggerCondition(Triggers.youAttack(), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT.withInterveningIf(
-                        new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.RAT))),
-                new ConditionalEffect(new GraveyardCardThreshold(7, null), new MayPayManaEffect("{2}{B}",
+                TriggerOptions.DEFAULT
+                        .withEventCondition(new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.RAT)))
+                        .withInterveningIf(new GraveyardCardThreshold(7, null)),
+                new MayPayManaEffect("{2}{B}",
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                                 .filter(new CardIsSelfPredicate())
@@ -41,6 +41,6 @@ public class PersistentMarshstalker extends Card {
                                 .enterTapped(true)
                                 .enterAttacking(true)
                                 .build(),
-                        "Pay {2}{B} to return Persistent Marshstalker from your graveyard to the battlefield tapped and attacking?")));
+                        "Pay {2}{B} to return Persistent Marshstalker from your graveyard to the battlefield tapped and attacking?"));
     }
 }

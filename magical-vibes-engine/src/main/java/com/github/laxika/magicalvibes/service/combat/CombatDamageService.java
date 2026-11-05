@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.service.trigger.CombatAbilityReader;
+import com.github.laxika.magicalvibes.service.trigger.TriggerJudge;
 import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import com.github.laxika.magicalvibes.model.event.VisualCueType;
 import com.github.laxika.magicalvibes.service.event.VisualCueService;
@@ -43,7 +44,6 @@ import com.github.laxika.magicalvibes.model.action.DelayedNamedCreatureCombatDam
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
-import com.github.laxika.magicalvibes.model.condition.NoMonarch;
 import com.github.laxika.magicalvibes.model.condition.SourceClassLevelAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
@@ -187,6 +187,11 @@ public class CombatDamageService {
      */
     private static List<CardEffect> printedCombatEffects(Card card, CombatWatch watch) {
         return CombatAbilityReader.effects(WatchedAbilities.printed(card, watch), watch.trigger());
+    }
+
+    /** {@link #printedCombatEffects(Card, CombatWatch)} of the abilities {@code judge} lets trigger. */
+    private static List<CardEffect> printedCombatEffects(Card card, CombatWatch watch, TriggerJudge judge) {
+        return CombatAbilityReader.effects(judge.filter(WatchedAbilities.printed(card, watch)), watch.trigger());
     }
 
     /**
@@ -2125,6 +2130,10 @@ public class CombatDamageService {
             }
 
             List<CardEffect> allDamageEffects = new ArrayList<>();
+            // CR 603.4 — only an ability's intervening "if" (and its event condition, CR 603.2) gates whether it
+            // triggers; an "if" of an effect is judged as it resolves.
+            TriggerJudge damageJudge = conditionEvaluationService.judge(gameData,
+                    ConditionContext.forPermanent(creature, attackerId).withTargetId(defenderId));
             // A creature that has lost all abilities also loses the abilities it was permanently granted
             // earlier (e.g. an encoded cipher spell's trigger).
             boolean lostAllAbilities = creature.isLosesAllAbilitiesUntilEndOfTurn()
@@ -2137,36 +2146,45 @@ public class CombatDamageService {
                     && !creature.getCard().hasType(CardType.CREATURE);
             boolean hasPrintedAbilities = !creature.isFaceDown() && !lostAllAbilities && !unattachedEquipment;
             if (hasPrintedAbilities) {
-                allDamageEffects.addAll(printedCombatEffects(creature.getCard(), CombatWatch.ON_COMBAT_DAMAGE_TO_PLAYER));
-                allDamageEffects.addAll(DamageAbilityReader.printedEffects(creature.getCard(), DamageWatch.ON_DAMAGE_TO_PLAYER));
+                allDamageEffects.addAll(printedCombatEffects(creature.getCard(), CombatWatch.ON_COMBAT_DAMAGE_TO_PLAYER,
+                        damageJudge));
+                allDamageEffects.addAll(DamageAbilityReader.printedEffects(creature.getCard(), DamageWatch.ON_DAMAGE_TO_PLAYER,
+                        damageJudge));
             }
             if (!attackerId.equals(defenderId)) {
                 if (hasPrintedAbilities) {
-                    allDamageEffects.addAll(DamageAbilityReader.printedEffects(creature.getCard(), DamageWatch.ON_DAMAGE_TO_OPPONENT));
+                    allDamageEffects.addAll(DamageAbilityReader.printedEffects(creature.getCard(),
+                            DamageWatch.ON_DAMAGE_TO_OPPONENT, damageJudge));
                 }
-                allDamageEffects.addAll(DamageAbilityReader.temporaryEffects(creature, DamageWatch.ON_DAMAGE_TO_OPPONENT));
+                allDamageEffects.addAll(DamageAbilityReader.temporaryEffects(creature, DamageWatch.ON_DAMAGE_TO_OPPONENT,
+                        damageJudge));
                 if (!lostAllAbilities) {
-                    allDamageEffects.addAll(DamageAbilityReader.persistentEffects(creature, DamageWatch.ON_DAMAGE_TO_OPPONENT));
+                    allDamageEffects.addAll(DamageAbilityReader.persistentEffects(creature,
+                            DamageWatch.ON_DAMAGE_TO_OPPONENT, damageJudge));
                 }
-                allDamageEffects.addAll(DamageAbilityReader.effects(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
-                    gameData, creature, attackerId, DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger()), DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger()));
+                allDamageEffects.addAll(DamageAbilityReader.effects(damageJudge.filter(
+                        grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, creature, attackerId,
+                                DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger())), DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger()));
             }
             // Combat-damage-to-player triggers granted until end of turn by one-shot effects
             // (e.g. Open into Wonder grants "deals combat damage to a player, draw a card").
             Trigger damageToPlayer = CombatWatch.ON_COMBAT_DAMAGE_TO_PLAYER.trigger();
             allDamageEffects.addAll(CombatAbilityReader.effects(
-                    WatchedAbilities.temporary(creature, damageToPlayer), damageToPlayer));
+                    damageJudge.filter(WatchedAbilities.temporary(creature, damageToPlayer)), damageToPlayer));
             if (!lostAllAbilities) {
                 allDamageEffects.addAll(CombatAbilityReader.effects(
-                        WatchedAbilities.persistent(creature, damageToPlayer), damageToPlayer));
-                allDamageEffects.addAll(DamageAbilityReader.persistentEffects(creature, DamageWatch.ON_DAMAGE_TO_PLAYER));
+                        damageJudge.filter(WatchedAbilities.persistent(creature, damageToPlayer)), damageToPlayer));
+                allDamageEffects.addAll(DamageAbilityReader.persistentEffects(creature, DamageWatch.ON_DAMAGE_TO_PLAYER,
+                        damageJudge));
             }
             // Combat-damage-to-player triggers granted continuously by a static ability
             // (e.g. Tandem Lookout's soulbond grant), recomputed by the layer system.
-            allDamageEffects.addAll(CombatAbilityReader.effects(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
-                    gameData, creature, attackerId, damageToPlayer), damageToPlayer));
-            allDamageEffects.addAll(DamageAbilityReader.effects(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
-                    gameData, creature, attackerId, DamageWatch.ON_DAMAGE_TO_PLAYER.trigger()), DamageWatch.ON_DAMAGE_TO_PLAYER.trigger()));
+            allDamageEffects.addAll(CombatAbilityReader.effects(damageJudge.filter(
+                    grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, creature, attackerId,
+                            damageToPlayer)), damageToPlayer));
+            allDamageEffects.addAll(DamageAbilityReader.effects(damageJudge.filter(
+                    grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, creature, attackerId,
+                            DamageWatch.ON_DAMAGE_TO_PLAYER.trigger())), DamageWatch.ON_DAMAGE_TO_PLAYER.trigger()));
             TriggerContext.SourceDealsCombatDamage combatDamageContext = new TriggerContext.SourceDealsCombatDamage(
                     creature.getCard(), attackerId, creature.getId(), damageDealt, damageDealt);
             int creatureTriggerCopies = 1
@@ -2191,18 +2209,6 @@ public class CombatDamageService {
                 CardEffect effect = rawEffect instanceof CombatDamageAmountAwareEffect amountAware
                         ? amountAware.snapshotCombatDamage(damageDealt)
                         : rawEffect;
-                // CR 603.4 — only an intervening "if" clause gates trigger creation. Resolution-
-                // time conditions remain on the stack and are checked by EffectResolutionService.
-                if (effect instanceof ConditionalEffect conditional
-                        && conditional.interveningIf()
-                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                                ConditionContext.forPermanent(creature, attackerId)
-                                        .withTargetId(defenderId))) {
-                    log.info("Game {} - {}'s {} combat damage trigger does not fire", gameData.id,
-                            creature.getCard().getName(), conditional.conditionName());
-                    continue;
-                }
-
                 // One ability whose steps include a target chosen from the damaged player's permanents ("destroy
                 // up to one target artifact that player controls and put a +1/+1 counter on this creature"):
                 // the damaged player is bound into those steps before the target is chosen, and the whole
@@ -2415,7 +2421,7 @@ public class CombatDamageService {
                         && tap.chooseFromDamagedPlayer()) {
                     CardEffect targeted = tap.forDamagedPlayer(defenderId);
                     if (effect instanceof ConditionalEffect conditional) {
-                        targeted = new ConditionalEffect(conditional.condition(), targeted, conditional.interveningIf());
+                        targeted = new ConditionalEffect(conditional.condition(), targeted);
                     }
                     gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                             creature.getCard(), attackerId, List.of(targeted),
@@ -2426,7 +2432,7 @@ public class CombatDamageService {
                     if (damageDealt >= damageEffect.minimumDamage()) {
                         CardEffect targeted = damageEffect.forDamagedPlayer(defenderId, damageDealt);
                         if (effect instanceof ConditionalEffect conditional) {
-                            targeted = new ConditionalEffect(conditional.condition(), targeted, conditional.interveningIf());
+                            targeted = new ConditionalEffect(conditional.condition(), targeted);
                         }
                         gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                                 creature.getCard(), attackerId, List.of(targeted), creature.getId(),
@@ -3042,6 +3048,12 @@ public class CombatDamageService {
                     if (trigger.oneOrMore() && !firedBatchedAllyTriggerSources.add(perm.getId())) {
                         continue;
                     }
+                    // The ability's intervening "if" ("if there is no monarch") and event condition (a Class level, a
+                    // chosen mode) as it triggers (CR 603.4, CR 603.2).
+                    if (!conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
+                            ConditionContext.forPermanent(perm, attackerId))) {
+                        continue;
+                    }
                     CardEffect firedEffect = trigger.effect();
                     if (firedEffect instanceof ConditionalEffect conditional
                             && (conditional.condition() instanceof SourceCounterThreshold
@@ -3052,12 +3064,6 @@ public class CombatDamageService {
                             continue;
                         }
                         firedEffect = conditional.wrapped();
-                    } else if (firedEffect instanceof ConditionalEffect conditional
-                            && conditional.interveningIf()
-                            && conditional.condition() instanceof NoMonarch
-                            && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                            ConditionContext.forPermanent(perm, attackerId))) {
-                        continue;
                     }
                     if (trigger.oneOrMore() && firedEffect instanceof CombatDamageDealerAwareEffect aware) {
                         List<UUID> dealerIds = combatDamageDealtToPlayer.entrySet().stream()
@@ -4128,6 +4134,13 @@ public class CombatDamageService {
                     throw new IllegalStateException("The dealt-damage collector judges no filter: " + read.ability());
                 }
                 if (read.limitReached(gameData, data.sourceSnapshot().getId())) continue;
+                // The ability's intervening "if" and event condition, read from the damaged permanent with the
+                // damage dealt (CR 603.4).
+                if (!conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
+                        ConditionContext.forPermanent(data.sourceSnapshot(), data.controllerId()),
+                        data.damageDealt())) {
+                    continue;
+                }
                 read.markLimit(gameData, data.sourceSnapshot().getId());
                 CardEffect effect = read.effect();
                 CardEffect effectToAdd = effect;

@@ -21,12 +21,12 @@ public class YidaroWanderingMonster extends Card {
         ControllerCycledCardNamedAtLeastThisGame threshold =
                 new ControllerCycledCardNamedAtLeastThisGame(4, NAME);
         addTrigger(Triggers.youCycleThisCard(),
-                ConditionalEffect.unless(threshold, ReturnCardFromGraveyardEffect.builder()
+                new ConditionalEffect(threshold, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardIsSelfPredicate())
                 .returnAll(true)
                 .build()));
-        addTrigger(Triggers.youCycleThisCard(), ConditionalEffect.unless(new NotCondition(threshold),
+        addTrigger(Triggers.youCycleThisCard(), new ConditionalEffect(new NotCondition(threshold),
                 new ShuffleSelfFromGraveyardIntoLibraryEffect()));
         addCycling("{1}{R}");
     }

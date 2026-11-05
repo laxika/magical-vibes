@@ -18,12 +18,12 @@ public class OrderOfSacredDusk extends Card {
 
     public OrderOfSacredDusk() {
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostTargetCreatureEffect(1, 1));
 
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.creatureYouControlAttacks(),
-                        TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                        TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                         new BoostTargetCreatureEffect(1, 1)),
                 GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE)));

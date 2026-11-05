@@ -117,7 +117,7 @@ class CounterTriggerTest {
                 CounterAbilityReader.readPrinted(card, CounterWatch.ON_ALLY_COUNTER_PUT_ON_CREATURE);
 
         assertThat(reads).singleElement().satisfies(read -> {
-            assertThat(read.effect()).isEqualTo(new ConditionalEffect(new ControllerTurn(), DRAW, true));
+            assertThat(read.effect()).isEqualTo(new ConditionalEffect(new ControllerTurn(), DRAW));
             assertThat(read.ability()).isSameAs(ability);
             assertThat(read.filter()).isEqualTo(COLORLESS);
             assertThat(read.byController()).isTrue();
@@ -128,7 +128,7 @@ class CounterTriggerTest {
     }
 
     @Test
-    void theEventConditionIsInsideTheInterveningIf() {
+    void theReaderWrapsOnlyTheInterveningIfAndLeavesTheEventConditionToTheCollector() {
         Card card = new Card();
         card.addTrigger(Triggers.countersPutOnThis(), TriggerOptions.DEFAULT
                 .withInterveningIf(new ControllerTurn()).withEventCondition(new SourceCounterThreshold(4,
@@ -136,8 +136,7 @@ class CounterTriggerTest {
 
         assertThat(CounterAbilityReader.readPrinted(card, CounterWatch.ON_SELF_COUNTERS_PUT))
                 .extracting(CounterAbilityReader.CounterEffect::effect)
-                .containsExactly(new ConditionalEffect(new ControllerTurn(), ConditionalEffect.atTriggerTime(
-                        new SourceCounterThreshold(4, CounterType.PLAN), DRAW), true));
+                .containsExactly(new ConditionalEffect(new ControllerTurn(), DRAW));
     }
 
     @Test
@@ -219,7 +218,7 @@ class CounterTriggerTest {
         assertThatThrownBy(() -> CounterAbilityReader.printedEffects(limited, CounterWatch.ON_CONTROLLER_GETS_ENERGY))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(CounterAbilityReader.printedEffects(plain, CounterWatch.ON_CONTROLLER_GETS_ENERGY))
-                .containsExactly(new ConditionalEffect(new ControllerTurn(), DRAW, true));
+                .containsExactly(new ConditionalEffect(new ControllerTurn(), DRAW));
     }
 
     @Test

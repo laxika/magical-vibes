@@ -23,7 +23,7 @@ public class HedronAlignment extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
                 SequenceEffect.of(
                         new RevealOwnHandEffect(),
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new OwnsCardInAllZones(new CardNamedPredicate("Hedron Alignment")),
                                 new WinGameEffect())),
                 "Reveal your hand?"));

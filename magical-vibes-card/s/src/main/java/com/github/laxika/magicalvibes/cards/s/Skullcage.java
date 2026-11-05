@@ -20,7 +20,7 @@ public class Skullcage extends Card {
     public Skullcage() {
         // The "unless" clause is checked only as the triggered ability resolves, so the trigger
         // must still be put on the stack when the opponent has exactly three or four cards.
-        addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT), ConditionalEffect.unless(
+        addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT), new ConditionalEffect(
                 new AnyOf(List.of(new ActivePlayerHandAtMost(2), new ActivePlayerHandAtLeast(5))),
                 new DealDamageToPlayersEffect(2, DamageRecipient.ACTIVE_PLAYER)));
     }

@@ -22,7 +22,7 @@ public class LightningRunner extends Card {
         addTrigger(Triggers.attacks(), SequenceEffect.of(
                 new EnergyCountersEffect(2),
                 new MayEffect(
-                        ConditionalEffect.unless(new ControllerEnergyAtLeast(8),
+                        new ConditionalEffect(new ControllerEnergyAtLeast(8),
                                 SequenceEffect.of(
                                         new EnergyCountersEffect(-8),
                                         new UntapPermanentsEffect(TapUntapScope.CONTROLLED,

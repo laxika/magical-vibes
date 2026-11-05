@@ -153,7 +153,7 @@ class TriggerPipelineTest extends BaseCardTest {
 
         assertThat(triggersOf(unmet.getCard())).isEmpty();
         assertThat(onlyTriggerOf(met.getCard()).getEffectsToResolve())
-                .containsExactly(new ConditionalEffect(new ControllerLifeAtLeast(1, false), DRAW, true));
+                .containsExactly(new ConditionalEffect(new ControllerLifeAtLeast(1, false), DRAW));
     }
 
     @Test
@@ -404,7 +404,7 @@ class TriggerPipelineTest extends BaseCardTest {
         // "If that creature's power is greater than this creature's" (CR 603.4): checked as it triggers, with the
         // creature's last-known power, and again as it resolves.
         assertThat(onlyTriggerOf(watcher.getCard()).getEffectsToResolve()).containsExactly(
-                new ConditionalEffect(new TriggeringPermanentPowerGreaterThanSourcePower(), GAIN, true));
+                new ConditionalEffect(new TriggeringPermanentPowerGreaterThanSourcePower(), GAIN));
         harness.passBothPriorities();
         harness.assertLife(player1, lifeBefore + 3);
     }

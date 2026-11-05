@@ -26,7 +26,7 @@ public class ObliviousBookworm extends Card {
                 new MayEffect(
                         SequenceEffect.of(
                                 new DrawCardEffect(),
-                                ConditionalEffect.unless(
+                                new ConditionalEffect(
                                         new NotCondition(new AnyOf(List.of(
                                                 new FaceDownPermanentEnteredThisTurn(),
                                                 new PermanentTurnedFaceUpThisTurn()))),

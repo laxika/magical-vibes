@@ -20,10 +20,10 @@ public class ScythecatCub extends Card {
     public ScythecatCub() {
         target(TargetFilters.creatureYouControl())
                 .addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new NotCondition(new NthAbilityResolutionThisTurn(2)),
                                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)),
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new NthAbilityResolutionThisTurn(2),
                                 new DoublePlusOneCountersOnTargetCreatureEffect()));
     }

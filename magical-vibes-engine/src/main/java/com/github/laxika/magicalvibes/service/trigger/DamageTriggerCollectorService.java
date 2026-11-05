@@ -357,9 +357,7 @@ public class DamageTriggerCollectorService {
             watch = DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE)
     private boolean handleAllySourceDealsNoncombatDamageToCreatureConditional(TriggerMatchContext match,
             ConditionalEffect conditional, TriggerContext ctx) {
-        if (match.permanent() == null || (conditional.interveningIf()
-                && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
-                ConditionContext.forPermanent(match.permanent(), match.controllerId())))) {
+        if (match.permanent() == null) {
             return false;
         }
         return enqueueAllySourceDealsNoncombatDamageToCreature(match, conditional, ctx);
@@ -1662,12 +1660,6 @@ public class DamageTriggerCollectorService {
     @CollectsDamageTrigger(value = ConditionalEffect.class, watch = DamageWatch.ON_OPPONENT_DEALT_DAMAGE)
     private boolean handleOpponentDealtDamageConditional(TriggerMatchContext match,
             ConditionalEffect conditional, TriggerContext ctx) {
-        TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
-        if (conditional.interveningIf()
-                && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
-                ConditionContext.forPermanent(match.permanent(), match.controllerId()), dc.amount())) {
-            return false;
-        }
         return handleOpponentDealtDamageDefault(match, conditional, ctx);
     }
 
@@ -1757,11 +1749,6 @@ public class DamageTriggerCollectorService {
     @CollectsDamageTrigger(value = ConditionalEffect.class, watch = DamageWatch.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT)
     private boolean handleControllerDealtDamageByOpponentConditional(TriggerMatchContext match,
             ConditionalEffect conditional, TriggerContext ctx) {
-        if (conditional.interveningIf()
-                && !conditionEvaluationService.isInterveningIfMet(match.gameData(), conditional,
-                        match.permanent(), match.controllerId())) {
-            return false;
-        }
         return queueControllerDealtDamageByOpponentTrigger(match, conditional, ctx);
     }
 
@@ -2144,16 +2131,6 @@ public class DamageTriggerCollectorService {
         Card sourceCard = sd.sourceCard();
         // The source may have died dealing the damage; keep its last-known permanent id when present.
         UUID sourcePermanentId = sd.sourcePermanentId();
-        if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()) {
-            ConditionContext conditionContext = match.permanent() != null
-                    ? ConditionContext.forPermanent(match.permanent(), match.controllerId())
-                    : ConditionContext.forCard(sourceCard, match.controllerId());
-            if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
-                    conditionContext.withEventValue(sd.totalDamage()))) {
-                return false;
-            }
-        }
-
         if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                 || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                 || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
@@ -2378,11 +2355,6 @@ public class DamageTriggerCollectorService {
     private boolean handleAllyCreatureDealsCombatDamage(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.SourceDealsCombatDamage sd = (TriggerContext.SourceDealsCombatDamage) ctx;
         if (sd.totalDamage() <= 0 || match.permanent() == null) return false;
-        if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
-                && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
-                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
-            return false;
-        }
 
         Card watcherCard = match.permanent().getCard();
         // The watcher, not the damage dealer, is the trigger's source permanent so a self-referencing
@@ -2547,16 +2519,6 @@ public class DamageTriggerCollectorService {
     private boolean handleDealtDamageConditional(TriggerMatchContext match,
                                                   ConditionalEffect conditional,
                                                   TriggerContext ctx) {
-        TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
-        if (conditional.interveningIf()) {
-            Permanent damagedCreature = dc.damagedCreature();
-            UUID controllerId = gameQueryService.findPermanentController(match.gameData(), damagedCreature.getId());
-            if (controllerId == null
-                    || !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
-                    ConditionContext.forPermanent(damagedCreature, controllerId), dc.damageDealt())) {
-                return false;
-            }
-        }
         return handleDealtDamageDefault(match, conditional, ctx);
     }
 
@@ -2681,10 +2643,7 @@ public class DamageTriggerCollectorService {
             ConditionalEffect conditional, TriggerContext ctx) {
         TriggerContext.NoncombatDamageToOpponent damage = (TriggerContext.NoncombatDamageToOpponent) ctx;
         Permanent watcher = match.permanent();
-        if (watcher == null || !match.controllerId().equals(damage.sourceControllerId())
-                || (conditional.interveningIf()
-                && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
-                ConditionContext.forPermanent(watcher, match.controllerId()), damage.damageAmount()))) {
+        if (watcher == null || !match.controllerId().equals(damage.sourceControllerId())) {
             return false;
         }
         if (conditional.wrapped() instanceof DealDamageToTargetCreatureDamagedPlayerControlsEffect) {
@@ -2730,7 +2689,7 @@ public class DamageTriggerCollectorService {
                         bound.unpreventable(), bound.targetPredicate())
                 : bound;
         if (effect instanceof ConditionalEffect conditional) {
-            targeted = new ConditionalEffect(conditional.condition(), targeted, conditional.interveningIf());
+            targeted = new ConditionalEffect(conditional.condition(), targeted);
         }
 
         gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(

@@ -39,7 +39,7 @@ public class RobobrainWarMind extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new EnergyCountersEffect(artifactCreaturesYouControl));
 
         addTrigger(Triggers.attacks(), new MayEffect(
-                ConditionalEffect.unless(new ControllerEnergyAtLeast(3),
+                new ConditionalEffect(new ControllerEnergyAtLeast(3),
                         SequenceEffect.of(
                                 new EnergyCountersEffect(-3),
                                 new DrawCardEffect(1)

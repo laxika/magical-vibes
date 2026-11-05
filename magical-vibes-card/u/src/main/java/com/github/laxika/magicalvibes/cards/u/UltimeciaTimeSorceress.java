@@ -24,7 +24,7 @@ public class UltimeciaTimeSorceress extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new SurveilEffect(2));
         addTrigger(Triggers.attacks(), new SurveilEffect(2));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new GraveyardCardThreshold(8, null),
                         new MayPayManaEffect(
                                 "{4}{U}{U}{B}{B}",

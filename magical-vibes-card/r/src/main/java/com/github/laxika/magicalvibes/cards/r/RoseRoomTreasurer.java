@@ -31,7 +31,7 @@ public class RoseRoomTreasurer extends Card {
                         new ConditionalEffect(
                                 new NthAbilityResolutionThisTurn(2),
                                 CreateTokenEffect.ofTreasureToken(1)),
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new NotCondition(new AnyOf(List.of(
                                         new NthAbilityResolutionThisTurn(1),
                                         new NthAbilityResolutionThisTurn(2)))),

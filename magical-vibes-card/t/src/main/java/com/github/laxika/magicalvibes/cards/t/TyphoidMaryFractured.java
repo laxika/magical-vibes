@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.condition.ControllerDiscardedCardThi
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.RandomChoiceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 
 @CardRegistration(set = "MSC", collectorNumber = "99")
 @CardRegistration(set = "MSC", collectorNumber = "421")
@@ -43,9 +43,14 @@ public class TyphoidMaryFractured extends Card {
                         new GainLifeEffect(2))
         ));
 
-        addTrigger(Triggers.attacks(), ConditionalEffect.atTriggerTime(
-                new ControllerDiscardedCardThisTurn(), controllerChoice),
-                ConditionalEffect.atTriggerTime(
-                new NotCondition(new ControllerDiscardedCardThisTurn()), randomChoice));
+        // "Choose one at random. If you discarded a card this turn, you choose one instead": the mode is chosen as the
+        // ability is put on the stack (CR 700.2b), so which choice is made is part of the trigger event, an ability of
+        // its own for each.
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withEventCondition(new ControllerDiscardedCardThisTurn()),
+                controllerChoice);
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withEventCondition(new NotCondition(new ControllerDiscardedCardThisTurn())),
+                randomChoice);
     }
 }

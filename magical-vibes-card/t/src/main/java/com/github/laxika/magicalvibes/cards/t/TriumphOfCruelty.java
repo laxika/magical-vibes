@@ -25,6 +25,6 @@ public class TriumphOfCruelty extends Card {
                 "Target must be an opponent"
         )).addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new ControlsCreatureWithGreatestPower(),
-                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER), false));
+                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER)));
     }
 }

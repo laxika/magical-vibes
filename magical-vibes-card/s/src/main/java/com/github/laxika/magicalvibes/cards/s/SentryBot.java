@@ -37,7 +37,7 @@ public class SentryBot extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new EnergyCountersEffect(new PermanentCount(attackingCreatures, CountScope.ANY_PLAYER)));
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new MayEffect(
-                ConditionalEffect.unless(new ControllerEnergyAtLeast(3),
+                new ConditionalEffect(new ControllerEnergyAtLeast(3),
                         SequenceEffect.of(
                                 new EnergyCountersEffect(-3),
                                 new PutCounterOnEachControlledPermanentEffect(

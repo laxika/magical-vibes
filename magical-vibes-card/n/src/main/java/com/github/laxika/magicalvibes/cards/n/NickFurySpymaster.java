@@ -27,7 +27,7 @@ public class NickFurySpymaster extends Card {
 
     public NickFurySpymaster() {
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 SequenceEffect.of(
                         new DrawCardEffect(1),
                         new MayEffect(

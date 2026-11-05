@@ -16,7 +16,7 @@ public class GutwrencherOni extends Card {
 
     public GutwrencherOni() {
         // At the beginning of your upkeep, discard a card if you don't control an Ogre.
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), ConditionalEffect.unless(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new ControlsPermanentCountAtMost(0, new PermanentHasSubtypePredicate(CardSubtype.OGRE)),
                 new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
     }

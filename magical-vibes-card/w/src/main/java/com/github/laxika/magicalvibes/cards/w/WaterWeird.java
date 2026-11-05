@@ -24,10 +24,10 @@ public class WaterWeird extends Card {
 
     public WaterWeird() {
         addTrigger(Triggers.dealsCombatDamageToPlayer(), SequenceEffect.of(
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new TopCardOfLibraryMatchesPredicate(new CardNotPredicate(new CardTypePredicate(CardType.LAND))),
                         new PutCountersOnSourceEffect(1, 1, 1)),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new NotCondition(new TopCardOfLibraryMatchesPredicate(
                                 new CardNotPredicate(new CardTypePredicate(CardType.LAND)))),
                         new MayEffect(new MillEffect(1, MillRecipient.CONTROLLER), "Mill a card?"))));

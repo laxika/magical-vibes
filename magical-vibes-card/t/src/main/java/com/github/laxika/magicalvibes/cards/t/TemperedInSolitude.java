@@ -12,7 +12,7 @@ public class TemperedInSolitude extends Card {
 
     public TemperedInSolitude() {
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new ExileTopCardMayPlayThisTurnEffect(false));
     }
 }

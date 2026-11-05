@@ -26,7 +26,7 @@ public class ErgRaiders extends Card {
         // 2 damage to you unless it came under your control this turn.
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new DidntAttack()),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new NotCondition(new CameUnderControlThisTurn()),
                         new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER)));
     }

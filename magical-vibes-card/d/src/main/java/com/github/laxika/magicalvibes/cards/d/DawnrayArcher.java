@@ -23,7 +23,7 @@ public class DawnrayArcher extends Card {
         // end of turn. Triggers.creatureYouControlAttacks() records the attacker as the trigger's target;
         // AttacksAlone (checked at resolution) restricts it to lone attackers.
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostTargetCreatureEffect(1, 1));
 
         // {W}, {T}: This creature deals 1 damage to target attacking or blocking creature.

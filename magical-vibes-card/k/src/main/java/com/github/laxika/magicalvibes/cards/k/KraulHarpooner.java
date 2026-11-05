@@ -44,7 +44,7 @@ public class KraulHarpooner extends Card {
         ), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new BoostSelfEffect(creatureCardsInGraveyard, new Fixed(0)),
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new TargetPermanentMatches(flyingCreatureAnOpponentControls),
                                 new MayEffect(
                                         new EnteringCreatureFightsTargetCreatureEffect(),

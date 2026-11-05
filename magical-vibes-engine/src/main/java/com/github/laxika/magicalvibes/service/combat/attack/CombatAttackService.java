@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.service.trigger.CombatAbilityReader;
+import com.github.laxika.magicalvibes.service.trigger.TriggerJudge;
 import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.model.Card;
@@ -75,13 +76,10 @@ import com.github.laxika.magicalvibes.model.condition.AttacksEnchantedPlayer;
 import com.github.laxika.magicalvibes.model.condition.AttackedOpponentHasMoreLifeThanAnotherOpponent;
 import com.github.laxika.magicalvibes.model.condition.AttacksPlayerAlone;
 import com.github.laxika.magicalvibes.model.condition.Condition;
-import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerAndEnchantedPlayerAttackEachOther;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
-import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsMoreLandsThanController;
@@ -290,6 +288,11 @@ public class CombatAttackService {
      */
     private static List<CardEffect> printedCombatEffects(Card card, CombatWatch watch) {
         return CombatAbilityReader.effects(WatchedAbilities.printed(card, watch), watch.trigger());
+    }
+
+    /** {@link #printedCombatEffects(Card, CombatWatch)} of the abilities {@code judge} lets trigger. */
+    private static List<CardEffect> printedCombatEffects(Card card, CombatWatch watch, TriggerJudge judge) {
+        return CombatAbilityReader.effects(judge.filter(WatchedAbilities.printed(card, watch)), watch.trigger());
     }
 
     private record AttackTriggerSource(Permanent permanent, CombatWatch watch,
@@ -1209,6 +1212,28 @@ public class CombatAttackService {
             nativeAttack = nativeAttack.stream().filter(failsFilter.negate()).toList();
             grantedAttack.removeIf(failsFilter);
             temporaryAttack.removeIf(failsFilter);
+            // Each ability's event condition (CR 603.2: "attacks while you control a Dinosaur", "attacks alone") and
+            // intervening "if" (CR 603.4), read from the attacker with the number of attackers and its attack target.
+            ConditionContext attackTriggerContext = ConditionContext.forPermanent(attacker, playerId)
+                    .withXValue(attackerIndices.size()).withTargetId(attacker.getAttackTarget());
+            Predicate<CombatAbilityReader.CombatEffect> failsConditions = read -> !conditionEvaluationService
+                    .triggerConditionsMet(gameData, read.options(), attackTriggerContext);
+            nativeAttack = nativeAttack.stream().filter(failsConditions.negate()).toList();
+            grantedAttack.removeIf(failsConditions);
+            temporaryAttack.removeIf(failsConditions);
+            // Pack tactics' "if you attacked with creatures with total power 6 or greater this combat" is about the
+            // attackers as they were declared: once judged, its wrapper comes off, so the attackers that leave combat
+            // before the ability resolves don't undo it.
+            Set<CardEffect> declaredAttackWrappers = Collections.newSetFromMap(new IdentityHashMap<>());
+            for (List<CombatAbilityReader.CombatEffect> reads : List.of(nativeAttack, grantedAttack, temporaryAttack)) {
+                for (CombatAbilityReader.CombatEffect read : reads) {
+                    if (read.options().interveningIf() instanceof AttackingCreaturesTotalPowerAtLeast
+                            && read.effect() instanceof ConditionalEffect ce
+                            && ce.condition() == read.options().interveningIf()) {
+                        declaredAttackWrappers.add(ce);
+                    }
+                }
+            }
             List<CardEffect> nativeAttackEffects = CombatAbilityReader.effectsOf(nativeAttack);
             List<CardEffect> temporaryAttackEffects = new ArrayList<>(CombatAbilityReader.effectsOf(temporaryAttack));
             List<CardEffect> grantedAttackEffects = CombatAbilityReader.effectsOf(grantedAttack);
@@ -1245,13 +1270,6 @@ public class CombatAttackService {
                         && !conditionEvaluationService.isMet(gameData, ce.condition(),
                                 ConditionContext.forPermanent(attacker, playerId)));
 
-                // Filter out controls-permanent conditionals when condition not met (intervening-if, CR 603.4)
-                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
-                        && ce.interveningIf()
-                        && ce.condition() instanceof ControlsPermanent
-                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
-                                ConditionContext.forPermanent(attacker, playerId)));
-
                 allEffects.removeIf(e -> e instanceof ConditionalEffect ce
                         && ce.condition() instanceof ControlsPermanentCountAtMost
                         && !conditionEvaluationService.isMet(gameData, ce.condition(),
@@ -1259,18 +1277,6 @@ public class CombatAttackService {
 
                 allEffects.removeIf(e -> e instanceof ConditionalEffect ce
                         && ce.condition() instanceof Equipped
-                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
-                                ConditionContext.forPermanent(attacker, playerId)));
-
-                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
-                        && ce.interveningIf()
-                        && ce.condition() instanceof ControlsPermanentCount
-                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
-                                ConditionContext.forPermanent(attacker, playerId)));
-
-                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
-                        && ce.interveningIf()
-                        && ce.condition() instanceof ControlledCreaturesTotalPowerAtLeast
                         && !conditionEvaluationService.isMet(gameData, ce.condition(),
                                 ConditionContext.forPermanent(attacker, playerId)));
 
@@ -1347,16 +1353,8 @@ public class CombatAttackService {
                 allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
                         && ce.condition() instanceof ExactlyAttackers
                         ? ce.wrapped() : e);
+                allEffects.replaceAll(e -> declaredAttackWrappers.contains(e) ? ((ConditionalEffect) e).wrapped() : e);
 
-                // Pack-tactics-style intervening-if conditions qualify the attack event itself, so the
-                // condition is measured now and the surviving effect is not re-evaluated during resolution.
-                // A non-intervening "if" in the effect text (Formidable) is checked only on resolution.
-                allEffects.removeIf(e -> e instanceof ConditionalEffect ce && ce.interveningIf()
-                        && ce.condition() instanceof AttackingCreaturesTotalPowerAtLeast
-                        && !conditionEvaluationService.isMet(gameData, ce.condition(), attackCountCtx));
-                allEffects.replaceAll(e -> e instanceof ConditionalEffect ce && ce.interveningIf()
-                        && ce.condition() instanceof AttackingCreaturesTotalPowerAtLeast
-                        ? ce.wrapped() : e);
                 ConditionContext attackedTargetContext = ConditionContext.forPermanent(attacker, playerId)
                         .withTargetId(attacker.getAttackTarget());
                 allEffects.removeIf(e -> e instanceof ConditionalEffect ce
@@ -1383,14 +1381,6 @@ public class CombatAttackService {
                         gameData, attacker, playerId, effect));
                 allEffects.removeIf(Objects::isNull);
 
-                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
-                        && ce.interveningIf()
-                        && !conditionEvaluationService.isMet(
-                                gameData, ce.condition(), ConditionContext.forPermanent(attacker, playerId)));
-                // A trigger-time-only condition has been checked; unwrap it so a wrapped "you may"
-                // (Combat Celebrant's exert choice) is offered as declared rather than re-checked.
-                allEffects.replaceAll(e -> e instanceof ConditionalEffect ce && ce.triggerTimeOnly()
-                        ? ce.wrapped() : e);
 
                 if (!allEffects.isEmpty()) {
                     // Separate non-targeting "you may" effects (e.g. Primeval Titan's may-search) from
@@ -1966,6 +1956,12 @@ public class CombatAttackService {
                     throw new IllegalStateException("The \"whenever you attack\" collector reads no "
                             + read.options() + " or filter: " + read.ability());
                 }
+                // The ability's event condition (CR 603.2) and intervening "if" (CR 603.4), with the number of
+                // attackers.
+                if (!conditionEvaluationService.triggerConditionsMet(gameData, read.options(),
+                        ConditionContext.forPermanent(perm, playerId).withXValue(attackerIndices.size()))) {
+                    continue;
+                }
                 if (firstOfTurn) {
                     if (gameData.oncePerTurnTriggersFiredThisTurn.contains(perm.getId())) {
                         continue;
@@ -2127,11 +2123,6 @@ public class CombatAttackService {
                             continue;
                         }
                         filteredEffects.add(ce.wrapped());
-                    } else if (effect instanceof ConditionalEffect ce && ce.interveningIf()
-                            && !conditionEvaluationService.isMet(gameData, ce.condition(),
-                            ConditionContext.forPermanent(perm, playerId)
-                                    .withXValue(attackerIndices.size()))) {
-                        continue;
                     } else {
                         filteredEffects.add(effect);
                     }
@@ -2436,6 +2427,12 @@ public class CombatAttackService {
                             attacker, read.filter(), filterContext)) {
                         continue;
                     }
+                    // The ability's event condition ("attacks alone", exalted, CR 702.83a) and intervening "if"
+                    // (CR 603.4: a Class's level, "if it's the first combat phase"), with the attacking creature.
+                    if (!conditionEvaluationService.triggerConditionsMet(gameData, read.options(),
+                            ConditionContext.forPermanent(perm, playerId).withTriggeringPermanentId(attacker.getId()))) {
+                        continue;
+                    }
                     CardEffect effect = read.effect();
                     if (effect instanceof TriggeringCardConditionalEffect conditional) {
                         if (!predicateEvaluationService.matchesCardPredicate(attacker.getCard(), conditional.predicate(), null,
@@ -2478,16 +2475,6 @@ public class CombatAttackService {
                         && !conditionEvaluationService.isMet(gameData, ce.condition(),
                                 ConditionContext.forPermanent(perm, playerId)));
 
-                // An intervening-if (CR 603.4) on the ability stops it from triggering at all, so its
-                // targets are not chosen for a trigger that would never go on the stack (e.g. a Class's
-                // higher-level ability while the Class is a lower level). "Attacks a player alone" was
-                // already checked against the attacking creature above, not the ability's source.
-                matchingEffects.removeIf(e -> e instanceof ConditionalEffect ce
-                        && ce.interveningIf()
-                        && !(ce.condition() instanceof AttacksPlayerAlone)
-                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
-                                ConditionContext.forPermanent(perm, playerId)));
-
                 // The surviving attacks-alone conditionals are already satisfied, so unwrap them to
                 // their inner effect. This lets a wrapped "you may" (e.g. Angelic Benediction's
                 // "you may tap target creature") route through the may/mandatory split below.
@@ -2495,13 +2482,6 @@ public class CombatAttackService {
                         && ce.condition() instanceof AttacksAlone ? ce.wrapped() : e);
                 matchingEffects.replaceAll(e -> e instanceof ConditionalEffect ce
                         && ce.condition() instanceof AttacksPlayerAlone ? ce.wrapped() : e);
-                // An intervening "if" inside the attacks-alone one ("attacks alone, if it's the first combat
-                // phase", Finest Hour) is judged once that one is taken off.
-                matchingEffects.removeIf(e -> e instanceof ConditionalEffect ce
-                        && ce.interveningIf()
-                        && !(ce.condition() instanceof AttacksPlayerAlone)
-                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
-                                ConditionContext.forPermanent(perm, playerId)));
 
                 if (matchingEffects.isEmpty()) continue;
 
@@ -2704,9 +2684,19 @@ public class CombatAttackService {
             if (graveyard == null) continue;
             boolean attackingPlayersGraveyard = graveyardOwnerId.equals(playerId);
             for (Card card : new ArrayList<>(graveyard)) {
-                List<CardEffect> gyAttackEffects = CombatAbilityReader.effects(WatchedAbilities.withWatchedTrigger(
-                        gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData, card),
-                        CombatWatch.GRAVEYARD_ON_ALLY_CREATURES_ATTACK.trigger(), Zone.GRAVEYARD),
+                // Each ability's event condition ("with one or more Rats") and intervening "if" ("if there are
+                // seven or more cards in your graveyard"), read from the card and its owner, with the number of
+                // attackers.
+                // In another player's graveyard only "whenever your commander attacks" is read, and it counts the
+                // attacking commanders itself.
+                TriggerJudge graveyardJudge = !attackingPlayersGraveyard ? TriggerJudge.NONE
+                        : conditionEvaluationService.judge(gameData,
+                        new ConditionContext(graveyardOwnerId, null, null, card, false, false, false, false, null,
+                                attackerIndices.size(), null, null, false));
+                List<CardEffect> gyAttackEffects = CombatAbilityReader.effects(graveyardJudge.filter(
+                        WatchedAbilities.withWatchedTrigger(
+                                gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData, card),
+                                CombatWatch.GRAVEYARD_ON_ALLY_CREATURES_ATTACK.trigger(), Zone.GRAVEYARD)),
                         CombatWatch.GRAVEYARD_ON_ALLY_CREATURES_ATTACK.trigger());
                 if (gyAttackEffects.isEmpty()) continue;
 
@@ -2946,14 +2936,9 @@ public class CombatAttackService {
             if (defenderBattlefield == null) continue;
             for (Permanent perm : new ArrayList<>(defenderBattlefield)) {
                 List<CardEffect> effects = new ArrayList<>();
-                for (CardEffect effect : printedCombatEffects(perm.getCard(), CombatWatch.ON_CREATURES_ATTACK_YOU)) {
-                    if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
-                            && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                            ConditionContext.forPermanent(perm, attackedPlayerId))) {
-                        continue;
-                    }
-                    effects.add(effect);
-                }
+                effects.addAll(printedCombatEffects(perm.getCard(), CombatWatch.ON_CREATURES_ATTACK_YOU,
+                        conditionEvaluationService.judge(gameData,
+                                ConditionContext.forPermanent(perm, attackedPlayerId))));
                 if (effects.isEmpty()) continue;
 
                 int previousCopies = beginAttackTriggerCopies(gameData, attackedPlayerId, perm);
@@ -3230,7 +3215,16 @@ public class CombatAttackService {
             for (Permanent perm : new ArrayList<>(bf.getValue())) {
                 List<CardEffect> playerAttackEffects = new ArrayList<>();
                 Map<UUID, List<CardEffect>> effectsByAttackedOpponent = new LinkedHashMap<>();
-                for (CardEffect effect : printedCombatEffects(perm.getCard(), CombatWatch.ON_ANY_PLAYER_ATTACKS)) {
+                // An ability's event condition (CR 603.2: a chosen mode and "an opponent attacks", Struggle for
+                // Project Purity) is judged against the attacking player and the number of attackers; its
+                // intervening "if" is judged below by the kind of condition, as some fan out by attacked opponent.
+                ConditionContext playerAttackContext = ConditionContext.forPermanent(perm, permController)
+                        .withTargetId(playerId).withXValue(attackerIndices.size());
+                TriggerJudge eventJudge = ability -> ability.options().eventCondition() == null
+                        || conditionEvaluationService.isMet(gameData, ability.options().eventCondition(),
+                        playerAttackContext);
+                for (CardEffect effect : printedCombatEffects(perm.getCard(), CombatWatch.ON_ANY_PLAYER_ATTACKS,
+                        eventJudge)) {
                     if (effect instanceof ConditionalEffect conditional) {
                         if (conditional.condition()
                                 instanceof PlayerAttacksOneOfYourOpponentsWithPowerOrToughnessEqualToSourceChosenNumber) {
@@ -3449,7 +3443,9 @@ public class CombatAttackService {
                 continue;
             }
             List<CardEffect> effects = new ArrayList<>();
-            for (CardEffect effect : printedCombatEffects(card, CombatWatch.COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK)) {
+            for (CardEffect effect : printedCombatEffects(card, CombatWatch.COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK,
+                    conditionEvaluationService.judge(gameData,
+                            ConditionContext.forCard(card, playerId).withXValue(attackerCount)))) {
                 if (effect instanceof ConditionalEffect conditional
                         && containsHasAttackerCondition(conditional.condition())) {
                     if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
@@ -4504,7 +4500,7 @@ public class CombatAttackService {
                 .toList();
         if (remaining.isEmpty()) return ce.wrapped();
         Condition residual = remaining.size() == 1 ? remaining.getFirst() : new AllConditions(remaining);
-        return new ConditionalEffect(residual, ce.wrapped(), ce.interveningIf(), ce.triggerTimeOnly());
+        return new ConditionalEffect(residual, ce.wrapped());
     }
 
     private boolean containsHasAttackerCondition(Condition condition) {

@@ -22,7 +22,7 @@ public class SigilOfValor extends Card {
         PermanentCount otherCreatures = new PermanentCount(
                 new PermanentIsCreaturePredicate(), CountScope.CONTROLLER, true);
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostEquippedCreatureUntilEndOfTurnEffect(otherCreatures, otherCreatures));
 
         // Equip {1}

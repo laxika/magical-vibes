@@ -17,7 +17,7 @@ public class GenemorphImago extends Card {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                         new SetBasePowerToughnessEffect(3, 3),
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new ControlsPermanentCount(6, new PermanentIsLandPredicate()),
                                 new SetBasePowerToughnessEffect(6, 6)));
     }

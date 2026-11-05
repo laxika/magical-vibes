@@ -22,7 +22,7 @@ public class FrontlineSage extends Card {
         // trigger's (non-targeting) target, so BoostTargetCreatureEffect boosts "that creature";
         // AttacksAlone (checked at resolution) restricts it to lone attackers.
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostTargetCreatureEffect(1, 1));
 
         // {U}, {T}: Draw a card, then discard a card. (Loot: draw resolves before the discard.)

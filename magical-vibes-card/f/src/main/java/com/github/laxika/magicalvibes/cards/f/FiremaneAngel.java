@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -28,14 +27,11 @@ public class FiremaneAngel extends Card {
 
     public FiremaneAngel() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new MayEffect(
-                        new ConditionalEffect(new SourceIsOnBattlefield(), new GainLifeEffect(1)),
-                        "Gain 1 life?"));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsOnBattlefield()),
+                new MayEffect(new GainLifeEffect(1), "Gain 1 life?"));
         addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT,
-                new MayEffect(
-                        new ConditionalEffect(new SourceCardInGraveyard(), new GainLifeEffect(1)),
-                        "Gain 1 life?"));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCardInGraveyard()),
+                new MayEffect(new GainLifeEffect(1), "Gain 1 life?"));
 
         addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,

@@ -39,12 +39,12 @@ public class InvadeTheCity extends Card {
                 new CardTypePredicate(CardType.SORCERY)
         )), CountScope.CONTROLLER);
 
-        addSpellEffect(ConditionalEffect.unless(controlsArmy,
+        addSpellEffect(new ConditionalEffect(controlsArmy,
                         SequenceEffect.of(
                                 new PutCounterOnChosenOwnPermanentEffect(
                                         CounterType.PLUS_ONE_PLUS_ONE, instantSorceryCount, army, false, true),
                                 new GrantSubtypeToChosenPermanentEffect(CardSubtype.ZOMBIE))));
-        addSpellEffect(ConditionalEffect.unless(new NotCondition(controlsArmy),
+        addSpellEffect(new ConditionalEffect(new NotCondition(controlsArmy),
                         SequenceEffect.of(
                                 new CreateTokenEffect(
                                         CardType.CREATURE, 1, "Zombie Army", 0, 0, CardColor.BLACK, null,

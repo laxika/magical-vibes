@@ -39,7 +39,7 @@ public class DerelictAtticWidowsWalk extends Card {
                 new SourceRoomDoorUnlocked(1),
                 new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.creatureYouControlAttacks(),
-                                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                                 SequenceEffect.of(
                                         new BoostTargetCreatureEffect(1, 0),
                                         new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET))),

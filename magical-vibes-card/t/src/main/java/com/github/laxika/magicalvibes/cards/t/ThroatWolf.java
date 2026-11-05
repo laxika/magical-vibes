@@ -7,12 +7,12 @@ import com.github.laxika.magicalvibes.model.condition.DuringCombat;
 import com.github.laxika.magicalvibes.model.condition.FirstCombatPhase;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstestStrikeEffect;
 import com.github.laxika.magicalvibes.model.effect.OnlySourceCreatureCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 
 @CardRegistration(set = "MB1", collectorNumber = "65")
 public class ThroatWolf extends Card {
@@ -23,8 +23,7 @@ public class ThroatWolf extends Card {
         setFlashCastCondition(new AllConditions(List.of(new DuringCombat(), new NotControllerTurn())));
         addStaticEffect(new FirstestStrikeEffect());
         addTrigger(Triggers.endOfCombat(),
-                new ConditionalEffect(
-                        new AllConditions(List.of(new FirstCombatPhase(), new NotControllerTurn())),
-                        new AdditionalCombatPhaseEffect(1, new OnlySourceCreatureCanAttackThisCombatEffect())));
+                TriggerOptions.DEFAULT.withEventCondition(new AllConditions(List.of(new FirstCombatPhase(), new NotControllerTurn()))),
+                new AdditionalCombatPhaseEffect(1, new OnlySourceCreatureCanAttackThisCombatEffect()));
     }
 }

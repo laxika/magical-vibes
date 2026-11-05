@@ -20,6 +20,6 @@ public class GuardianOfTazeem extends Card {
                 .addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                         new TapPermanentsEffect(TapUntapScope.TARGET),
                         new ConditionalEffect(new TriggeringPermanentHasSubtype(CardSubtype.ISLAND),
-                                new SkipNextUntapEffect(TapUntapScope.TARGET), false));
+                                new SkipNextUntapEffect(TapUntapScope.TARGET)));
     }
 }

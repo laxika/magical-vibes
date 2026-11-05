@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 
 @CardRegistration(set = "BLC", collectorNumber = "16")
 @CardRegistration(set = "BLC", collectorNumber = "51")
@@ -24,9 +25,10 @@ public class TwentyToedToad extends Card {
     public TwentyToedToad() {
         addStaticEffect(new SetControllerMaximumHandSizeEffect(20));
         addTrigger(Triggers.youAttack(),
-                new ConditionalEffect(new MinimumAttackers(2), SequenceEffect.of(
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(2)),
+                SequenceEffect.of(
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                        new DrawCardEffect(1))));
+                        new DrawCardEffect(1)));
         addTrigger(Triggers.attacks(),
                 new ConditionalEffect(
                         new AnyOf(List.of(

@@ -52,7 +52,6 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreate
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByFewerThanNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfCombatEffect;
@@ -96,6 +95,7 @@ import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.service.combat.CombatTriggerService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
 import com.github.laxika.magicalvibes.service.effect.CombatTapCostService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
@@ -753,9 +753,10 @@ public class CombatBlockService {
                         continue;
                     }
                     CardEffect e = read.effect();
-                    if (e instanceof ConditionalEffect conditional
-                            && !conditionEvaluationService.isInterveningIfMet(
-                            gameData, conditional, blocker, defenderId, attacker.getId())) {
+                    // The ability's intervening "if" and event condition, with the blocked attacker (CR 603.4).
+                    if (!conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
+                            ConditionContext.forPermanent(blocker, defenderId)
+                                    .withTriggeringPermanentId(attacker.getId()))) {
                         continue;
                     } else if (e instanceof BoostSelfWhenBlockingKeywordEffect kwEffect) {
                         if (gameQueryService.hasKeyword(gameData, attacker, kwEffect.requiredKeyword())) {
@@ -1131,9 +1132,8 @@ public class CombatBlockService {
                 continue;
             }
             CardEffect effect = read.effect();
-            if (effect instanceof ConditionalEffect conditional
-                    && !conditionEvaluationService.isInterveningIfMet(
-                    gameData, conditional, blocker, defenderId, attacker.getId())) {
+            if (!conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
+                    ConditionContext.forPermanent(blocker, defenderId).withTriggeringPermanentId(attacker.getId()))) {
                 continue;
             } else if (effect instanceof BoostSelfWhenBlockingKeywordEffect keywordEffect) {
                 if (gameQueryService.hasKeyword(gameData, attacker, keywordEffect.requiredKeyword())) {
@@ -2507,6 +2507,14 @@ public class CombatBlockService {
                 // "Whenever a [filter] creature you control becomes blocked": the trigger's filter on it.
                 if (read.filter() != null && !predicateEvaluationService.matchesPermanentPredicate(
                         blockedAttacker, read.filter(), watcherContext)) {
+                    continue;
+                }
+                // The ability's event condition ("becomes blocked by two or more creatures") and intervening "if"
+                // ("if it's attacking one of your opponents", CR 603.4), read from the blocked creature, which the
+                // ability's effects read as it resolves.
+                if (!conditionEvaluationService.triggerConditionsMet(gameData, read.options(),
+                        ConditionContext.forPermanent(blockedAttacker, activeId)
+                                .withTriggeringPermanentId(blockedAttacker.getId()))) {
                     continue;
                 }
                 CardEffect effect = read.effect();

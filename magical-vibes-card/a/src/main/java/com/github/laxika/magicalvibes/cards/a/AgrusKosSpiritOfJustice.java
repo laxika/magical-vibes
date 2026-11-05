@@ -25,13 +25,13 @@ public class AgrusKosSpiritOfJustice extends Card {
     }
 
     private ConditionalEffect exileIfSuspected() {
-        return ConditionalEffect.unless(
+        return new ConditionalEffect(
                 new TargetPermanentMatches(new PermanentIsSuspectedPredicate()),
                 new ExileTargetPermanentEffect());
     }
 
     private ConditionalEffect suspectIfNotSuspected() {
-        return ConditionalEffect.unless(
+        return new ConditionalEffect(
                 new NotCondition(new TargetPermanentMatches(new PermanentIsSuspectedPredicate())),
                 new SuspectEffect(GrantScope.TARGET));
     }

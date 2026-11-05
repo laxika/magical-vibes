@@ -21,7 +21,7 @@ public class SightedCasteSorcerer extends Card {
         // end of turn. Triggers.creatureYouControlAttacks() records the attacker as the trigger's target;
         // AttacksAlone (checked at resolution) restricts it to lone attackers.
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostTargetCreatureEffect(1, 1));
 
         // {U}: This creature gains shroud until end of turn.

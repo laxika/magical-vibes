@@ -23,7 +23,7 @@ public class AegisSculptor extends Card {
     public AegisSculptor() {
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                 new com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect(2));
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), ConditionalEffect.unless(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new AllOf(List.of(new GraveyardCardThreshold(2, new CardTruePredicate()))),
                 new MayEffect(
                         SequenceEffect.of(

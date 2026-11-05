@@ -48,7 +48,7 @@ public class OmnathLocusOfTheRoil extends Card {
                 "Target must be an Elemental you control"
         )).addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), SequenceEffect.of(
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new ControlsPermanentCount(8, new PermanentIsLandPredicate()),
                         new DrawCardEffect()
                 )

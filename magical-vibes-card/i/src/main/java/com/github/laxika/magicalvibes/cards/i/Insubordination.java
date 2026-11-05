@@ -17,7 +17,7 @@ public class Insubordination extends Card {
         // At the beginning of the end step of enchanted creature's controller, this Aura deals
         // 2 damage to that player unless that creature attacked this turn.
         target(TargetFilters.creature()).addTrigger(Triggers.endStep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER),
-                ConditionalEffect.unless(new EnchantedCreatureDidntAttack(),
+                new ConditionalEffect(new EnchantedCreatureDidntAttack(),
                         new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PERMANENT_CONTROLLER)));
     }
 }

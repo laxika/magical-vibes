@@ -20,7 +20,7 @@ public class AzoriusHerald extends Card {
     public AzoriusHerald() {
         addStaticEffect(new CantBeBlockedEffect());
         addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(4));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), ConditionalEffect.unless(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new NotCondition(new ColorSpentToCast(ManaColor.BLUE)), new SacrificeSelfEffect()));
     }
 }

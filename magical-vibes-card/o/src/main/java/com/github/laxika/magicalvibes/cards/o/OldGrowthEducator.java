@@ -16,6 +16,6 @@ public class OldGrowthEducator extends Card {
         // Infusion — When this creature enters, put two +1/+1 counters on it if you gained life this turn.
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new GainedLifeThisTurn(),
-                new PutCountersOnSourceEffect(1, 1, 2), false));
+                new PutCountersOnSourceEffect(1, 1, 2)));
     }
 }

@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 
 @CardRegistration(set = "RIX", collectorNumber = "142")
 @CardRegistration(set = "FIC", collectorNumber = "312")
@@ -19,6 +19,7 @@ public class PathOfDiscovery extends Card {
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL), new ExploreEffect());
         // "Whenever a creature you control enters" includes Path itself when it enters as an animated creature.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new SourceIsCreature(), new ExploreEffect()));
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsCreature()),
+                new ExploreEffect());
     }
 }

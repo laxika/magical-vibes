@@ -20,7 +20,7 @@ public class FirstSliversChosen extends Card {
         // matches the filter. Each Sliver gets the exalted attack trigger.
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.creatureYouControlAttacks(),
-                        TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                        TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                         new BoostTargetCreatureEffect(1, 1)),
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));

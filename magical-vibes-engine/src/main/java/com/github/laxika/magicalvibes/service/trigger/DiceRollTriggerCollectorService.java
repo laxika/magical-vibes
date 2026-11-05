@@ -7,11 +7,9 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
-import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
@@ -40,15 +38,6 @@ public class DiceRollTriggerCollectorService {
     @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_ROLLS_DIE)
     private boolean handleControllerRollsDice(TriggerMatchContext match, CardEffect effect,
                                                TriggerContext context) {
-        if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
-                && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
-                match.permanent() == null
-                        ? ConditionContext.forCard(match.sourceCard(), match.controllerId())
-                        : ConditionContext.forPermanent(match.permanent(), match.controllerId()),
-                context instanceof TriggerContext.DiceRoll diceRoll ? diceRoll.result() : 0)) {
-            return false;
-        }
-
         Card sourceCard = match.sourceCard() != null ? match.sourceCard() : match.permanent().getCard();
         UUID sourcePermanentId = match.permanent() == null ? null : match.permanent().getId();
         TargetSpec targetSpec = effect.targetSpec();

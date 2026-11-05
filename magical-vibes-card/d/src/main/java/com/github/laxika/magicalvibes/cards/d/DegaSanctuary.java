@@ -29,7 +29,7 @@ public class DegaSanctuary extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new AnyOf(List.of(controlsBlack, controlsRed))),
                 new SequenceEffect(List.of(
-                        ConditionalEffect.unless(controlsBlackAndRed, new GainLifeEffect(4)),
-                        ConditionalEffect.unless(new NotCondition(controlsBlackAndRed), new GainLifeEffect(2)))));
+                        new ConditionalEffect(controlsBlackAndRed, new GainLifeEffect(4)),
+                        new ConditionalEffect(new NotCondition(controlsBlackAndRed), new GainLifeEffect(2)))));
     }
 }

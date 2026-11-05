@@ -47,7 +47,7 @@ public class SanctuaryWarden extends Card {
         CardEffect removeCounterAndReward = new MayEffect(
                 SequenceEffect.of(
                         new RemoveCounterFromChosenOwnPermanentEffect(COUNTERED_CREATURE_OR_PLANESWALKER),
-                        ConditionalEffect.unless(new EventValueAtLeast(1), drawAndCreateCitizen)),
+                        new ConditionalEffect(new EventValueAtLeast(1), drawAndCreateCitizen)),
                 "Remove a counter from a creature or planeswalker you control?");
         addTrigger(Triggers.enters(ObjectRelation.THIS), removeCounterAndReward);
         addTrigger(Triggers.attacks(), removeCounterAndReward);

@@ -19,7 +19,7 @@ public class ThoughtweftImbuer extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.KITHKIN), CountScope.CONTROLLER);
 
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostTargetCreatureEffect(kithkinYouControl, kithkinYouControl));
     }
 }

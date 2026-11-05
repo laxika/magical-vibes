@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class AshenReaper extends Card {
 
     public AshenReaper() {
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), ConditionalEffect.unless(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
                 new PermanentPutIntoGraveyardFromBattlefieldThisTurn(),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
     }

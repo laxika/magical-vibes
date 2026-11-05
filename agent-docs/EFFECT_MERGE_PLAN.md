@@ -1918,7 +1918,7 @@ Do these individually; each is self-contained. Reassess before starting — seve
 | `MillEffect` + `Halved` amount | `MillHalfLibraryEffect` (2) | Blocked on adding a `Halved(DynamicAmount, boolean roundUp)` wrapper (which would also subsume `HalfControllerLifeRoundedUp`) |
 | `MustAttackEffect(scope, matcher)` | `MatchingCreaturesMustAttackEffect` (2) | Consolidates the class but not the four scanning branches in `AttackLegalityService:373-439` |
 | `CreateTokenWithCountersEffect` | 2 classes | Needs a new `CardsDrawnThisTurn` `DynamicAmount` |
-| `CounterSpellIf*` trio → `ConditionalEffect.unless(...)` | 3 classes | Needs 2 new `StackEntryPredicate`s. **Do Hisoka last** — `PredicateEvaluationService:1359` hardcodes `StackEntryManaValueEqualsXPredicate -> false` in the resolution path |
+| `CounterSpellIf*` trio → `ConditionalEffect(...)` | 3 classes | Needs 2 new `StackEntryPredicate`s. **Do Hisoka last** — `PredicateEvaluationService:1359` hardcodes `StackEntryManaValueEqualsXPredicate -> false` in the resolution path |
 | `CounterMatchingSpellsEffect` | `CounterSpellsNamedLikeCardsExiledWithSourceEffect` (1) | The new predicate needs the resolving entry's `sourcePermanentId`, which the current call site doesn't pass |
 | `CantAttackOrBlockUnlessCountAlsoDoesEffect(1)` | `CantAttackOrBlockAloneEffect` (5) | Also **fixes a gap**: only the "alone" form has the `CombatAttackService:125-129` pre-filter. Read by `magical-vibes-ai` |
 | `CantHaveCountersEffect(Set<CounterType>)` | `CantHaveMinusOneMinusOneCountersEffect` | Readers are asymmetric (own+granted vs granted-only) — preserve or deliberately unify |

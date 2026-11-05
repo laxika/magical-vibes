@@ -39,12 +39,12 @@ public class AngrathCaptainOfChaos extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -2,
                 List.of(
-                        ConditionalEffect.unless(controlsArmy,
+                        new ConditionalEffect(controlsArmy,
                                 SequenceEffect.of(
                                         new PutCounterOnChosenOwnPermanentEffect(
                                                 CounterType.PLUS_ONE_PLUS_ONE, 2, army),
                                         new GrantSubtypeToChosenPermanentEffect(CardSubtype.ZOMBIE))),
-                        ConditionalEffect.unless(new NotCondition(controlsArmy),
+                        new ConditionalEffect(new NotCondition(controlsArmy),
                                 SequenceEffect.of(
                                         new CreateTokenEffect("Zombie Army", 0, 0, CardColor.BLACK,
                                                 List.of(CardSubtype.ZOMBIE, CardSubtype.ARMY), Set.of(), Set.of()),

@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsMonarch;
-import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.Card;
@@ -206,16 +205,12 @@ public class EffectResolutionService {
                 }
             }
 
-            // Conditional wrapper: re-check condition at resolution time (intervening-if)
+            // Conditional wrapper: its condition is judged as the effect resolves (an intervening "if" again, CR 603.4)
             if (effect instanceof ConditionalEffect conditional) {
                 boolean evaluatedWhenEtbTriggered = entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                         && (conditional.condition() instanceof ColorSpentToCast
                         || conditional.condition() instanceof SnowManaSpentToCast);
-                // "Whenever this attacks alone" describes the event that created the trigger.
-                // Another creature entering attacking later cannot undo that event.
-                boolean attackEventAlreadyMatched = entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                        && conditional.condition() instanceof AttacksAlone;
-                if (!conditional.triggerTimeOnly() && !evaluatedWhenEtbTriggered && !attackEventAlreadyMatched
+                if (!evaluatedWhenEtbTriggered
                         && !isConditionMet(gameData, entry, conditional.condition(), conditionContext)) {
                     gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                             "'s " + conditional.conditionName() + " ability does nothing ("
@@ -236,11 +231,11 @@ public class EffectResolutionService {
                 }
             }
 
-            // CR 603.5 — resolution-time "you may" re-entry after player responded
+            // CR 603.4 — a "you may" around its ability's intervening "if" isn't asked once the "if" is false: the
+            // ability does nothing. An "if" of the effect inside a "you may" is judged after the choice.
             if (effectToResolve instanceof MayEffect may
                     && may.wrapped() instanceof ConditionalEffect conditional
-                    && conditional.interveningIf()
-                    && !conditional.triggerTimeOnly()
+                    && isInterveningIfOf(entry, conditional.condition())
                     && !conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext,
                     entry.getEventValue())) {
                 continue;
@@ -412,8 +407,7 @@ public class EffectResolutionService {
             // after the re-entry branches above have unwrapped it. Apply the same condition logic
             // here before dispatching the now-unwrapped effect.
             if (effectToResolve != effect && effectToResolve instanceof ConditionalEffect conditional) {
-                if (!conditional.triggerTimeOnly()
-                        && !conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext,
+                if (!conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext,
                         entry.getEventValue())) {
                     gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                             "'s " + conditional.conditionName() + " ability does nothing ("
@@ -743,5 +737,16 @@ public class EffectResolutionService {
         return entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
                 && !entry.getTargetCardIds().isEmpty();
+    }
+
+    /**
+     * Whether {@code condition} is the intervening "if" of one of the triggered abilities of {@code entry}'s source
+     * card: the readers wrap an ability's effects in its {@code TriggerOptions.interveningIf()} itself, so the same
+     * object marks it, where an "if" a card writes around an effect is an object of its own.
+     */
+    private static boolean isInterveningIfOf(StackEntry entry, Condition condition) {
+        return entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY && entry.getCard() != null
+                && entry.getCard().getTriggeredAbilities().stream()
+                .anyMatch(ability -> ability.options().interveningIf() == condition);
     }
 }

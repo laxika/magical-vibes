@@ -26,7 +26,7 @@ public class MercurialSpelldancer extends Card {
                 new PutCountersOnSelfEffect(CounterType.OIL));
 
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new MayEffect(
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new SourceCounterThreshold(2, CounterType.OIL),
                         SequenceEffect.of(
                                 new RemoveCounterFromSourceEffect(CounterType.OIL, 2),

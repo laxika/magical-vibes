@@ -20,6 +20,6 @@ public class PoisonersApprentice extends Card {
         target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ConditionalEffect(
                 new GainedLifeThisTurn(),
-                new BoostTargetCreatureEffect(-4, -4), false));
+                new BoostTargetCreatureEffect(-4, -4)));
     }
 }

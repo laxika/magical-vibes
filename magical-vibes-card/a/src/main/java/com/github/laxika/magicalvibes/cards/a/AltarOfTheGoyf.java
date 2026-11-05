@@ -22,7 +22,7 @@ public class AltarOfTheGoyf extends Card {
         CardTypesAmongCardsInGraveyard cardTypes =
                 new CardTypesAmongCardsInGraveyard(CountScope.ANY_PLAYER);
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostTargetCreatureEffect(cardTypes, cardTypes));
 
         addStaticEffect(new GrantKeywordEffect(

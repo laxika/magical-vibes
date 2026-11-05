@@ -35,6 +35,6 @@ public class BreathOfFury extends Card {
                                 SequenceEffect.of(
                                         new UntapPermanentsEffect(TapUntapScope.CONTROLLED,
                                                 new PermanentIsCreaturePredicate()),
-                                        new AdditionalCombatPhaseEffect(1)), false)));
+                                        new AdditionalCombatPhaseEffect(1)))));
     }
 }

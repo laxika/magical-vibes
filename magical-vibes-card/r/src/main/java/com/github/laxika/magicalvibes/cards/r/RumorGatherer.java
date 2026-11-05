@@ -17,9 +17,9 @@ public class RumorGatherer extends Card {
     public RumorGatherer() {
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 SequenceEffect.of(
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new NotCondition(new NthAbilityResolutionThisTurn(2)), new ScryEffect(1)),
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new NthAbilityResolutionThisTurn(2), new DrawCardEffect(1))));
     }
 }

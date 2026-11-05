@@ -47,7 +47,7 @@ public class MirrodinBesieged extends Card {
                 SequenceEffect.of(
                         new DrawCardEffect(1),
                         new DiscardEffect(1, DiscardRecipient.CONTROLLER),
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new GraveyardCardThreshold(15, new CardTypePredicate(CardType.ARTIFACT)),
                                 new TargetPlayerLosesGameEffect(null))));
     }

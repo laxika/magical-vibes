@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class WarElemental extends Card {
 
     public WarElemental() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), ConditionalEffect.unless(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new NotCondition(new OpponentDealtDamageThisTurn(1)), new SacrificeSelfEffect()));
         addTrigger(Triggers.opponentDealtDamage(),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue()));

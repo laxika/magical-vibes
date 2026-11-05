@@ -23,7 +23,7 @@ public class GlintSleeveSiphoner extends Card {
         addTrigger(Triggers.attacks(), gainEnergy);
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
-                ConditionalEffect.unless(new ControllerEnergyAtLeast(2),
+                new ConditionalEffect(new ControllerEnergyAtLeast(2),
                         SequenceEffect.of(
                                 new EnergyCountersEffect(-2),
                                 new DrawCardEffect(1),

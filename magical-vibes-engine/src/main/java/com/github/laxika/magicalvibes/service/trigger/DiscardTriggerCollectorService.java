@@ -48,7 +48,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -70,11 +69,6 @@ public class DiscardTriggerCollectorService {
     @CollectsLibraryTrigger(value = ConditionalEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
     private boolean handleConditionalDiscard(TriggerMatchContext match,
             ConditionalEffect trigger, TriggerContext ctx) {
-        if (trigger.interveningIf()
-                && !conditionEvaluationService.isMet(match.gameData(), trigger.condition(),
-                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
-            return false;
-        }
         UUID triggeringPlayerId = ctx instanceof TriggerContext.Discard discard
                 ? discard.discardingPlayerId() : null;
         return enqueueDiscardTrigger(match, trigger, "conditional effect", triggeringPlayerId);

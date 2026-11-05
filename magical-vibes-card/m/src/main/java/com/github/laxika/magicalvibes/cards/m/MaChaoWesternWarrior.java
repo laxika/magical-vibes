@@ -16,7 +16,7 @@ public class MaChaoWesternWarrior extends Card {
         // Horsemanship is auto-loaded from Scryfall keywords.
         // Whenever Ma Chao attacks alone, it can't be blocked this combat.
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new MakeCreatureUnblockableEffect(true, false, EffectDuration.UNTIL_END_OF_COMBAT));
     }
 }

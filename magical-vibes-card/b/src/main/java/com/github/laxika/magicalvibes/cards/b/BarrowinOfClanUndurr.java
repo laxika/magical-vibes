@@ -20,7 +20,7 @@ public class BarrowinOfClanUndurr extends Card {
 
     public BarrowinOfClanUndurr() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new VentureIntoDungeonEffect());
-        addTrigger(Triggers.attacks(), ConditionalEffect.unless(new ControllerHasCompletedDungeon(),
+        addTrigger(Triggers.attacks(), new ConditionalEffect(new ControllerHasCompletedDungeon(),
                 new ReturnCardsFromControllerGraveyardToBattlefieldEffect(
                         new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),

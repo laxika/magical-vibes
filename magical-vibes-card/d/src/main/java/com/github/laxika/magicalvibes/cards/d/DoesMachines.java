@@ -75,11 +75,9 @@ public class DoesMachines extends Card {
                 "Target must be an artifact you control"))
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         TriggerOptions.DEFAULT.withInterveningIf(new SourceClassLevelAtLeast(3)),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3),
                         new ConditionalEffect(
-                                new AllOf(List.of(new SourceClassLevelAtLeast(3),
-                                        new NotCondition(new TargetPermanentMatches(new PermanentIsCreaturePredicate())))),
+                                new NotCondition(new TargetPermanentMatches(new PermanentIsCreaturePredicate())),
                                 new AnimatePermanentsEffect(
                                         0,
                                         0,

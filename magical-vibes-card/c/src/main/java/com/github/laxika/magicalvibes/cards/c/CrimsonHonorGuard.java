@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class CrimsonHonorGuard extends Card {
 
     public CrimsonHonorGuard() {
-        addTrigger(Triggers.endStep(ActivePlayer.ANY), ConditionalEffect.unless(
+        addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(
                 new NotCondition(new TargetPlayerControlsPermanent(new PermanentIsCommanderPredicate())),
                 new DealDamageToEndStepPlayerEffect(new Fixed(4))));
     }

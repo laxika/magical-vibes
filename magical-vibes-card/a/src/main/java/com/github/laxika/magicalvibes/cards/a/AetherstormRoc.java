@@ -37,7 +37,7 @@ public class AetherstormRoc extends Card {
                 DEFENDING_PLAYER_CREATURE,
                 "Target must be a creature defending player controls"), 0, 1)
                 .addTrigger(Triggers.attacks(), new MayEffect(
-                        ConditionalEffect.unless(new ControllerEnergyAtLeast(2),
+                        new ConditionalEffect(new ControllerEnergyAtLeast(2),
                                 SequenceEffect.of(
                                         new EnergyCountersEffect(-2),
                                         new PutCountersOnSourceEffect(1, 1, 1),

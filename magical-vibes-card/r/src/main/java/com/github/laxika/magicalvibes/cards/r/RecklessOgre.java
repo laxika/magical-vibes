@@ -12,7 +12,7 @@ public class RecklessOgre extends Card {
 
     public RecklessOgre() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostSelfEffect(3, 0));
     }
 }

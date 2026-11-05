@@ -25,7 +25,7 @@ public class AsariCaptain extends Card {
                 new PermanentCount(samuraiOrWarriorPredicate, CountScope.CONTROLLER);
 
         addTrigger(Triggers.creatureYouControlAttacks().withFilter(samuraiOrWarriorPredicate),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostTargetCreatureEffect(samuraiOrWarriorsYouControl, new Fixed(0)));
     }
 }

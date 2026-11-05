@@ -21,7 +21,7 @@ public class ReapersTalisman extends Card {
         addTrigger(Triggers.attacks(),
                 new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TRIGGERING_PERMANENT));
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 SequenceEffect.of(new LoseLifeEffect(2, LoseLifeRecipient.DEFENDING_PLAYER), new GainLifeEffect(2)));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

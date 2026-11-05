@@ -20,7 +20,7 @@ public class Plaxmanta extends Card {
     public Plaxmanta() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new GrantKeywordEffect(Keyword.SHROUD, GrantScope.ALL_OWN_CREATURES));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), ConditionalEffect.unless(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new NotCondition(new ColorSpentToCast(ManaColor.GREEN)), new SacrificeSelfEffect()));
     }
 }

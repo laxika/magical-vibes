@@ -22,7 +22,7 @@ public class VoltaicBrawler extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new EnergyCountersEffect(2));
 
         addTrigger(Triggers.attacks(), new MayEffect(
-                ConditionalEffect.unless(new ControllerEnergyAtLeast(1),
+                new ConditionalEffect(new ControllerEnergyAtLeast(1),
                         SequenceEffect.of(
                                 new EnergyCountersEffect(-1),
                                 new BoostSelfEffect(1, 1),

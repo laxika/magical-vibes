@@ -33,7 +33,7 @@ public class PlaneMergeElf extends Card {
                 "Elf Warrior", 1, 1, CardColor.GREEN,
                 List.of(CardSubtype.ELF, CardSubtype.WARRIOR), Set.of(), Set.of());
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new LookAtTopCardOfControllersLibraryEffect());
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), ConditionalEffect.unless(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new TopCardOfLibraryType(CardType.LAND),
                 new MayEffect(
                         SequenceEffect.of(

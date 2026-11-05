@@ -45,9 +45,7 @@ public class FishingPole extends Card {
                                 new RemoveCounterFromSourceEffect(CounterType.BAIT, 1),
                                 new CreateTokenEffect("Fish", 1, 1, CardColor.BLUE,
                                         List.of(CardSubtype.FISH), Set.of(), Set.of())
-                        ),
-                        false
-                ));
+                        )));
 
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

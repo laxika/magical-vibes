@@ -18,6 +18,6 @@ public class AGoodThing extends Card {
         addStaticEffect(new OwnEffectsCantAffectSourceEffect());
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 new DoubleControllerLifeEffect(),
-                ConditionalEffect.unless(new ControllerLifeAtLeast(1_000), new ControllerLosesGameEffect())));
+                new ConditionalEffect(new ControllerLifeAtLeast(1_000), new ControllerLosesGameEffect())));
     }
 }

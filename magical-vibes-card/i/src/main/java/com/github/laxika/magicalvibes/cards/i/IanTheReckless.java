@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -12,19 +11,20 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 
 @CardRegistration(set = "PIP", collectorNumber = "59")
 @CardRegistration(set = "PIP", collectorNumber = "587")
 public class IanTheReckless extends Card {
 
     public IanTheReckless() {
-        addTrigger(Triggers.attacks().withFilter(new PermanentIsModifiedPredicate()),
+        addTrigger(Triggers.attacks(),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new SourceMatchesPermanentPredicate(new PermanentIsModifiedPredicate())),
                 new MayEffect(
-                        new ConditionalEffect(
-                                new SourceMatchesPermanentPredicate(new PermanentIsModifiedPredicate()),
-                                SequenceEffect.of(
-                                        new DealDamageToPlayersEffect(new SourcePower(), DamageRecipient.CONTROLLER),
-                                        new DealDamageToAnyTargetEffect(new SourcePower()))),
+                        SequenceEffect.of(
+                                new DealDamageToPlayersEffect(new SourcePower(), DamageRecipient.CONTROLLER),
+                                new DealDamageToAnyTargetEffect(new SourcePower())),
                         "Have Ian the Reckless deal damage equal to its power to you and any target?"));
     }
 }

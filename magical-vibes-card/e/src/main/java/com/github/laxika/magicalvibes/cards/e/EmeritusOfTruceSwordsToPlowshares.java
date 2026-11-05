@@ -45,7 +45,7 @@ public class EmeritusOfTruceSwordsToPlowshares extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 createTokenForTargetPlayer,
                 new ConditionalEffect(
-                new OpponentControlsMoreCreatures(1), BecomePreparedEffect.triggerOnly(), false));
+                new OpponentControlsMoreCreatures(1), BecomePreparedEffect.triggerOnly()));
     }
 
     @Override

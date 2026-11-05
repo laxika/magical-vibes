@@ -26,7 +26,7 @@ public class Dreamcatcher extends Card {
                                 new CardSubtypePredicate(CardSubtype.SPIRIT),
                                 new CardSubtypePredicate(CardSubtype.ARCANE)))),
                 new MayEffect(SequenceEffect.of(new SacrificeSelfEffect(),
-                        ConditionalEffect.unless(PermanentLeftThisWay.sacrificed(), new DrawCardEffect(1))),
+                        new ConditionalEffect(PermanentLeftThisWay.sacrificed(), new DrawCardEffect(1))),
                         "Sacrifice Dreamcatcher to draw a card?"));
     }
 }

@@ -4,12 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 
 @CardRegistration(set = "KLD", collectorNumber = "69")
 @CardRegistration(set = "KLR", collectorNumber = "72")
@@ -21,8 +21,8 @@ public class WeldfastWingsmith extends Card {
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF));
         // This creature is itself an artifact you control as it enters if an effect made it one (CR 603.6b),
         // so the same ability triggers for its own entry.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
-                new SourceMatchesPermanentPredicate(new PermanentIsArtifactPredicate()),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceMatchesPermanentPredicate(new PermanentIsArtifactPredicate())),
+                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF));
     }
 }

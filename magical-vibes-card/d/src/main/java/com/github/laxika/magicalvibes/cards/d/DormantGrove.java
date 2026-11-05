@@ -24,7 +24,7 @@ public class DormantGrove extends Card {
         target(TargetFilters.creatureYouControl())
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), SequenceEffect.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new TargetPermanentMatches(new PermanentToughnessAtLeastPredicate(6)),
                                 new TransformSelfEffect())));
     }

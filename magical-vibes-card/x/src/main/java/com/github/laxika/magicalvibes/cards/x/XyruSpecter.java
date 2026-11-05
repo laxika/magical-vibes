@@ -28,7 +28,7 @@ public class XyruSpecter extends Card {
                         new ChooseOneEffect.ChooseOneOption("Challenge", SequenceEffect.of(
                                 new RevealAnyNumberOfCardsFromHandEffect(
                                         new CardTruePredicate(), new CardColorPredicate(CardColor.BLACK)),
-                                ConditionalEffect.unless(new EventValueAtLeast(2),
+                                new ConditionalEffect(new EventValueAtLeast(2),
                                         new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER)))))));
     }
 }

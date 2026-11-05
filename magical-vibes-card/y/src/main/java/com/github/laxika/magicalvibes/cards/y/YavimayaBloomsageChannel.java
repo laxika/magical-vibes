@@ -27,7 +27,7 @@ public class YavimayaBloomsageChannel extends Card {
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
                         new ConditionalEffect(
                                 new TargetPermanentMatches(new PermanentPowerAtLeastPredicate(7)),
-                                new BecomePreparedEffect(), false)));
+                                new BecomePreparedEffect())));
     }
 
     @Override

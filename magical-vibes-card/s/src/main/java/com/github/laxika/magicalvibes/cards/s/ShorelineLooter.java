@@ -19,7 +19,7 @@ public class ShorelineLooter extends Card {
         addStaticEffect(new CantBeBlockedEffect());
         addTrigger(Triggers.dealsCombatDamageToPlayer(), SequenceEffect.of(
                 new DrawCardEffect(1),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new NotCondition(new GraveyardCardThreshold(7, null)),
                         new DiscardEffect(1, DiscardRecipient.CONTROLLER))));
     }

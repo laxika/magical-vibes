@@ -24,7 +24,7 @@ public class CecilyHauntedMage extends Card {
         addTrigger(Triggers.attacks(), SequenceEffect.of(
                 new DrawCardEffect(1),
                 new LoseLifeEffect(1),
-                ConditionalEffect.unless(new CardsInHandAtLeast(11),
+                new ConditionalEffect(new CardsInHandAtLeast(11),
                         new MayCastAnySpellFromHandWithoutPayingManaCostEffect(new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),
                                 new CardTypePredicate(CardType.SORCERY)))))));

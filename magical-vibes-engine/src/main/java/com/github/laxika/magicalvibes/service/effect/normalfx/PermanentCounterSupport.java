@@ -14,12 +14,13 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSameCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
@@ -1557,16 +1558,14 @@ public class PermanentCounterSupport {
                     } else if (read.limitReached(gameData, source.getId())) {
                         continue;
                     }
-                    CardEffect resolved = read.effect();
-                    if (resolved instanceof ConditionalEffect conditional && conditional.interveningIf()) {
-                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
-                                ConditionContext.forPermanent(source, controllerId))) {
-                            continue;
-                        }
-                        resolved = conditional.wrapped();
+                    // The ability's intervening "if" and event condition, as it triggers (CR 603.4, CR 603.2); the
+                    // intervening "if" wraps the effect, so it is checked again as it resolves.
+                    if (!conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
+                            ConditionContext.forPermanent(source, controllerId))) {
+                        continue;
                     }
                     queued.add(read);
-                    effectsToResolve.add(resolved);
+                    effectsToResolve.add(read.effect());
                 }
                 if (effectsToResolve.isEmpty()) {
                     continue;
@@ -1796,19 +1795,12 @@ public class PermanentCounterSupport {
                 continue;
             }
             CardEffect effect = read.effect();
-            if (effect instanceof ConditionalEffect conditional) {
-                if (conditional.condition() instanceof SourceCounterThreshold threshold) {
-                    if (conditional.interveningIf()
-                            && (threshold.counterType() != counterType
-                            || previousCount >= threshold.threshold()
-                            || currentCount < threshold.threshold())) {
-                        continue;
-                    }
-                } else if (conditional.interveningIf()
-                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                        ConditionContext.forPermanent(target, controllerId))) {
-                    continue;
-                }
+            TriggerOptions options = read.ability().options();
+            if (!counterTriggerConditionMet(gameData, options.eventCondition(), target, controllerId, counterType,
+                    previousCount, currentCount)
+                    || !counterTriggerConditionMet(gameData, options.interveningIf(), target, controllerId,
+                    counterType, previousCount, currentCount)) {
+                continue;
             }
             queued.add(read);
             effectsToResolve.add(effect);
@@ -2199,5 +2191,23 @@ public class PermanentCounterSupport {
             return gameData.currentlyResolvingControllerId;
         }
         return gameQueryService.findPermanentController(gameData, target.getId());
+    }
+
+    /**
+     * Whether {@code condition}, an ability's event condition or intervening "if" ({@code null} for none), holds as
+     * counters are put on {@code target}: a lore- or other counter threshold ("when the [Nth] counter is put on this")
+     * holds only for the counters that cross it, any other condition as it is now.
+     */
+    private boolean counterTriggerConditionMet(GameData gameData, Condition condition, Permanent target,
+                                               UUID controllerId, CounterType counterType, int previousCount,
+                                               int currentCount) {
+        if (condition == null) {
+            return true;
+        }
+        if (condition instanceof SourceCounterThreshold threshold) {
+            return threshold.counterType() == counterType && previousCount < threshold.threshold()
+                    && currentCount >= threshold.threshold();
+        }
+        return conditionEvaluationService.isMet(gameData, condition, ConditionContext.forPermanent(target, controllerId));
     }
 }

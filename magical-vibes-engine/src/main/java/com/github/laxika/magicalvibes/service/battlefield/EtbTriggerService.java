@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookToExile
 import com.github.laxika.magicalvibes.model.effect.DraftProteanWarEngineSpellbookEffect;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.service.effect.entryfx.FlipCoinOnEnterEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DraftCardFromSpellbookToExileEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DraftProteanWarEngineSpellbookEffectHandler;
@@ -444,6 +445,24 @@ public class EtbTriggerService {
                 grantedAbilities.replaceAll(ability -> ability.map(toTriggerTime));
             }
 
+            // Evoke sacrifice gate (CR 603.4): read the just-entered permanent's evoked flag, which
+            // was stamped from the spell's cast context at resolution time.
+            boolean evoked = enteringPermanent != null && enteringPermanent.isEvoked();
+            // Prowl gate (CR 603.4): read the just-entered permanent's prowl flag, stamped from the
+            // spell's cast context at resolution time.
+            boolean prowl = enteringPermanent != null && enteringPermanent.isProwl();
+            boolean madness = enteringPermanent != null && enteringPermanent.isMadness();
+            boolean alternateCost = enteringPermanent != null && enteringPermanent.isAlternateCost();
+            // The context the abilities trigger in. Each one's event condition (CR 603.2) and intervening "if"
+            // (CR 603.4) are judged first: an ability that doesn't trigger is left out. Then each mandatory effect is
+            // resolved into its trigger-time form (modal unwrap, value materialisation, the facts fixed as the
+            // permanent entered) — a null result drops the effect, and an ability with no effect left doesn't trigger.
+            EtbEffectContext etbCtx = new EtbEffectContext(gameData, card, controllerId, wasCastFromHand, etbMode,
+                    kicked, evoked, prowl, madness, alternateCost, enteringPermanent, repeatedAdditionalCosts,
+                    targetId, xValue);
+            printedAbilities.removeIf(ability -> !ownEntryOptionsMet(etbCtx, ability));
+            grantedAbilities.removeIf(ability -> !ownEntryOptionsMet(etbCtx, ability));
+
             // The per-mode targetFilter of a cast-time ChooseOneEffect, for the ability that has it.
             TargetFilter modeTargetFilter = null;
             OwnEntryAbility modalAbility = null;
@@ -469,22 +488,8 @@ public class EtbTriggerService {
                     .filter(ChooseOneAtTriggerTimeEffect.class::isInstance)
                     .map(ChooseOneAtTriggerTimeEffect.class::cast)
                     .toList();
-            // Evoke sacrifice gate (CR 603.4): read the just-entered permanent's evoked flag, which
-            // was stamped from the spell's cast context at resolution time.
-            boolean evoked = enteringPermanent != null && enteringPermanent.isEvoked();
             boolean hasEvokeSacrifice = printedAbilities.stream().flatMap(ability -> ability.effects().stream())
                     .anyMatch(com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect.class::isInstance);
-            // Prowl gate (CR 603.4): read the just-entered permanent's prowl flag, stamped from the
-            // spell's cast context at resolution time.
-            boolean prowl = enteringPermanent != null && enteringPermanent.isProwl();
-            boolean madness = enteringPermanent != null && enteringPermanent.isMadness();
-            boolean alternateCost = enteringPermanent != null && enteringPermanent.isAlternateCost();
-            // Resolve each mandatory effect into its trigger-time form: modal unwrap, value
-            // materialisation, and intervening-if gating (CR 603.4) — a null result drops the effect, and an
-            // ability with no effect left doesn't trigger.
-            EtbEffectContext etbCtx = new EtbEffectContext(gameData, card, controllerId, wasCastFromHand, etbMode,
-                    kicked, evoked, prowl, madness, alternateCost, enteringPermanent, repeatedAdditionalCosts,
-                    targetId, xValue);
             UUID triggerSourcePermanentId = enteringPermanent != null ? enteringPermanent.getId() : null;
             List<OwnEntryAbility> triggered = new ArrayList<>();
             List<CardEffect> grantedMandatoryEffects = new ArrayList<>();
@@ -691,6 +696,21 @@ public class EtbTriggerService {
                     || effects.stream().anyMatch(effect -> effect instanceof ChooseOneAtTriggerTimeEffect
                     || effect instanceof com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect);
         }
+    }
+
+    /**
+     * Whether {@code ability}'s event condition (CR 603.2) and intervening "if" (CR 603.4) let it trigger as the
+     * permanent enters ({@link EtbEffectResolver#ownEntryConditionMet}). A perpetual grant has neither.
+     */
+    private boolean ownEntryOptionsMet(EtbEffectContext etbCtx, OwnEntryAbility ability) {
+        if (ability.ability() == null) {
+            return true;
+        }
+        TriggerOptions options = ability.ability().options();
+        return (options.eventCondition() == null
+                || etbEffectResolver.ownEntryConditionMet(etbCtx, options.eventCondition()))
+                && (options.interveningIf() == null
+                || etbEffectResolver.ownEntryConditionMet(etbCtx, options.interveningIf()));
     }
 
     private static <T> List<T> concat(List<T> first, List<T> second) {

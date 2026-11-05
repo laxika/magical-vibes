@@ -38,7 +38,7 @@ public class BaralChiefOfCompliance extends Card {
                 INSTANT_OR_SORCERY, 1, CostModificationScope.SELF));
 
         addTrigger(Triggers.youCounterSpell(), new MayEffect(
-                SequenceEffect.of(new DrawCardEffect(1), ConditionalEffect.unless(new CardDrawnThisWay(),
+                SequenceEffect.of(new DrawCardEffect(1), new ConditionalEffect(new CardDrawnThisWay(),
                         new DiscardEffect(1, DiscardRecipient.CONTROLLER))),
                 "Draw a card? If you do, discard a card."));
     }

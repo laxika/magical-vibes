@@ -24,7 +24,7 @@ public class GraveResearcherReanimate extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new SurveilEffect(1));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new GraveyardCardThreshold(3, new CardTypePredicate(CardType.CREATURE)),
-                new BecomePreparedEffect(), false));
+                new BecomePreparedEffect()));
     }
 
     @Override

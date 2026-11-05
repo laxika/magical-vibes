@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ParkHeightsPegasus extends Card {
 
     public ParkHeightsPegasus() {
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), ConditionalEffect.unless(
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new ConditionalEffect(
                 new PermanentEnteredThisTurn(new CardTypePredicate(CardType.CREATURE), 2),
                 new DrawCardEffect(1)));
     }

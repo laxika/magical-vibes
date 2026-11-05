@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessFormChoiceEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TurnFaceUpCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.TurnFaceUpAttachAuraEffect;
@@ -28,7 +27,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingServ
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -204,17 +202,15 @@ public class TurnFaceUpCopyService {
     /**
      * Puts {@code permanent}'s "when this is turned face up" ability, of {@code effects}, on the stack as the trigger
      * pipeline matched it, once more for each effect that makes it trigger an additional time: a modal ability
-     * chooses its mode, a targeted one waits for its targets (CR 603.3d), and an intervening "if" that is false now
-     * keeps an effect from triggering (CR 603.4).
+     * chooses its mode and a targeted one waits for its targets (CR 603.3d). The pipeline judged the ability's
+     * intervening "if" as it triggered (CR 603.4); its effects are wrapped in it, so it is checked again as they
+     * resolve.
      *
      * @param xValue the X paid to turn it face up, or 0
      * @return whether it triggered
      */
     public boolean putTurnedFaceUpAbilityOnStack(GameData gameData, Permanent permanent, UUID controllerId,
                                                  List<CardEffect> effects, int xValue) {
-        effects = effects.stream()
-                .filter(effect -> turnFaceUpTriggerConditionIsMet(gameData, permanent, controllerId, effect))
-                .toList();
         if (effects.isEmpty()) {
             return false;
         }
@@ -354,14 +350,5 @@ public class TurnFaceUpCopyService {
         playerInputService.beginPowerToughnessFormChoice(gameData, controllerId, source.getId(),
                 effect.forms(), true);
         return true;
-    }
-
-    private boolean turnFaceUpTriggerConditionIsMet(GameData gameData, Permanent source,
-                                                    UUID controllerId, CardEffect effect) {
-        if (!(effect instanceof ConditionalEffect conditional) || !conditional.interveningIf()) {
-            return true;
-        }
-        return conditionEvaluationService.isMet(gameData, conditional.condition(),
-                ConditionContext.forPermanent(source, controllerId));
     }
 }

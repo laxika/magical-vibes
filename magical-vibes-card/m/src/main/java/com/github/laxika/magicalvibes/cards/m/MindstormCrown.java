@@ -18,8 +18,8 @@ public class MindstormCrown extends Card {
     public MindstormCrown() {
         ControllerHadNoCardsInHandAtTurnStart condition = new ControllerHadNoCardsInHandAtTurnStart();
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
-                ConditionalEffect.unless(condition, new DrawCardEffect()),
-                ConditionalEffect.unless(new NotCondition(condition),
+                new ConditionalEffect(condition, new DrawCardEffect()),
+                new ConditionalEffect(new NotCondition(condition),
                         new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER))));
     }
 }

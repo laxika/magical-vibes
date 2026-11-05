@@ -25,7 +25,6 @@ public class ScalestormSummoner extends Card {
                         new PermanentPowerAtLeastPredicate(4)))),
                 new CreateTokenEffect(
                         "Dinosaur", 3, 1, CardColor.RED,
-                        List.of(CardSubtype.DINOSAUR), Set.of(), Set.of()),
-                false));
+                        List.of(CardSubtype.DINOSAUR), Set.of(), Set.of())));
     }
 }

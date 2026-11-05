@@ -527,7 +527,7 @@ class CardAbilitiesTest {
 
         List<CardEffect> ownEntry = card.getOwnEntryEffects();
 
-        assertThat(ownEntry).containsExactly(DRAW_ONE, new ConditionalEffect(lowLife, GAIN_ONE, true));
+        assertThat(ownEntry).containsExactly(DRAW_ONE, new ConditionalEffect(lowLife, GAIN_ONE));
         assertThat(ownEntry.getFirst()).isSameAs(DRAW_ONE);
         // Built once with the index, so the wrapped effect keeps its identity across reads, by ability too.
         assertThat(card.getOwnEntryEffects().get(1)).isSameAs(ownEntry.get(1));

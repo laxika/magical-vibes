@@ -119,7 +119,8 @@ public class StateTriggerService {
     /**
      * Whether the intervening "if" of a state trigger holds as its game state triggers it (CR 603.4): the reader
      * ({@link MiscAbilityReader#stateTriggers}) wraps each of the ability's effects in it, as a
-     * {@link ConditionalEffect} that is checked again as the ability resolves. Without a condition evaluator (the
+     * {@link ConditionalEffect} that is checked again as the ability resolves, and a state trigger's effects have no
+     * conditions of their own, so every conditional among them is that "if". Without a condition evaluator (the
      * unit-test constructors) nothing is checked here.
      */
     private boolean interveningIfMet(GameData gameData, StateTriggerEffect trigger, Permanent perm,
@@ -128,7 +129,7 @@ public class StateTriggerService {
             return true;
         }
         for (CardEffect effect : trigger.effects()) {
-            if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
+            if (effect instanceof ConditionalEffect conditional
                     && !conditionEvaluationService.isMet(gameData, conditional.condition(),
                     ConditionContext.forPermanent(perm, controllerId))) {
                 return false;

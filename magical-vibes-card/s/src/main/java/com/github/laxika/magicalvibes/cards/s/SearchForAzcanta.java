@@ -25,8 +25,7 @@ public class SearchForAzcanta extends Card {
                 new SurveilEffect(1),
                 new ConditionalEffect(
                         new GraveyardCardThreshold(7, null),
-                        new MayEffect(new TransformSelfEffect(), "Transform Search for Azcanta?"),
-                        false))));
+                        new MayEffect(new TransformSelfEffect(), "Transform Search for Azcanta?")))));
     }
 
     @Override

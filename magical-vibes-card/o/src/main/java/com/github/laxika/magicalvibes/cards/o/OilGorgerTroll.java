@@ -18,7 +18,7 @@ public class OilGorgerTroll extends Card {
     public OilGorgerTroll() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new GainLifeEffect(3),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new ControlsPermanent(new PermanentHasCountersPredicate(CounterType.OIL)),
                         new DrawCardEffect())));
     }

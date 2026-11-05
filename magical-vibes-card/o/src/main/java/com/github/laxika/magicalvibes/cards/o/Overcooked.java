@@ -24,8 +24,8 @@ public class Overcooked extends Card {
         PermanentEnteredThisTurn celebration = new PermanentEnteredThisTurn(
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND)), 2);
         addTrigger(Triggers.endStep(ActivePlayer.YOU), SequenceEffect.of(
-                ConditionalEffect.unless(celebration,
+                new ConditionalEffect(celebration,
                         new ConjureCardNamedOntoBattlefieldEffect("WOE", "129")),
-                ConditionalEffect.unless(new NotCondition(celebration), CreateTokenEffect.ofFoodToken(1))));
+                new ConditionalEffect(new NotCondition(celebration), CreateTokenEffect.ofFoodToken(1))));
     }
 }

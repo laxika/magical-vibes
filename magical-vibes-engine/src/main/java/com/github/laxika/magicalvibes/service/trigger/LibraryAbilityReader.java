@@ -37,10 +37,11 @@ import java.util.stream.Collectors;
  * each turn", "for the first time each turn") and the limit ({@link LibraryEffect#limit()}, marked by
  * {@link TriggeredAbility#limitKey()} on the source).
  * <p>
- * The intervening "if" (CR 603.4) and the event condition (CR 603.2) reach the collectors as the
- * {@link ConditionalEffect}s they judge, until step 15 of effect-slot-refactor.md makes the effects read the event: the
- * intervening "if" is a {@link ConditionalEffect} around each effect, checked as the ability triggers and again as it
- * resolves, and the event condition the {@link ConditionalEffect#atTriggerTime} inside it, checked only as it triggers.
+ * The intervening "if" (CR 603.4) and the event condition (CR 603.2) are the ability's options: its collector judges
+ * them as the ability triggers, in the context of its event, from the records' {@code ability()} or through a
+ * {@link TriggerJudge} on the abilities an effect list is read from. The reader wraps the intervening "if" around each
+ * effect as the {@link ConditionalEffect} that checks it again as the ability resolves; the event condition is never
+ * checked again.
  */
 public final class LibraryAbilityReader {
 
@@ -134,6 +135,11 @@ public final class LibraryAbilityReader {
         return effects(printed(card, watch), watch.trigger());
     }
 
+    /** {@link #printedEffects(Card, LibraryWatch)} of the abilities {@code judge} lets trigger. */
+    public static List<CardEffect> printedEffects(Card card, LibraryWatch watch, TriggerJudge judge) {
+        return effects(judge.filter(printed(card, watch)), watch.trigger());
+    }
+
     /**
      * The registrations of the abilities of {@code card} that {@code watch} reads, for a collector
      * that reads no filter, narrower event, count or limit (this throws on one).
@@ -188,16 +194,12 @@ public final class LibraryAbilityReader {
             throw new IllegalStateException("No library, draw or discard collector reads " + options.limit() + ": "
                     + ability);
         }
-        Condition eventCondition = options.eventCondition();
         Condition interveningIf = options.interveningIf();
         List<LibraryEffect> effects = new ArrayList<>(ability.effects().size());
         for (EffectRegistration registration : ability.effects()) {
             CardEffect effect = registration.effect();
-            if (eventCondition != null) {
-                effect = ConditionalEffect.atTriggerTime(eventCondition, effect);
-            }
             if (interveningIf != null) {
-                effect = new ConditionalEffect(interveningIf, effect, true);
+                effect = new ConditionalEffect(interveningIf, effect);
             }
             effects.add(new LibraryEffect(effect, ability, condition.qualifier(),
                     condition.event(), counts, registration.simultaneousWithPrevious()));

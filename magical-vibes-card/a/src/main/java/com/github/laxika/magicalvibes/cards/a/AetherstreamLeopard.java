@@ -18,7 +18,7 @@ public class AetherstreamLeopard extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new EnergyCountersEffect(1));
 
         addTrigger(Triggers.attacks(), new MayEffect(
-                ConditionalEffect.unless(new ControllerEnergyAtLeast(1),
+                new ConditionalEffect(new ControllerEnergyAtLeast(1),
                         SequenceEffect.of(
                                 new EnergyCountersEffect(-1),
                                 new BoostSelfEffect(2, 0)

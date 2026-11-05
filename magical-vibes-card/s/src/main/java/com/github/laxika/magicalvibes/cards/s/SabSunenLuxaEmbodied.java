@@ -24,7 +24,7 @@ public class SabSunenLuxaEmbodied extends Card {
 
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU), SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new SourceCounterCountParity(ManaValueParity.ODD),
                         new DrawCardEffect(2))));
     }

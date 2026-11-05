@@ -483,7 +483,7 @@ class StepTriggerServiceTest {
             sut.handleUpkeepTriggers(gd);
 
             assertThat(gd.stack).singleElement().satisfies(entry -> assertThat(entry.getEffectsToResolve())
-                    .containsExactly(new ConditionalEffect(new SourceIsTapped(), effect, true)));
+                    .containsExactly(new ConditionalEffect(new SourceIsTapped(), effect)));
         }
 
         @Test
@@ -865,8 +865,7 @@ class StepTriggerServiceTest {
         void playerTargetingInterveningIfSkipsWhenConditionFails() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Brink of Madness");
-            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                    new ActivePlayerHandEmpty(), new DrawCardForTargetPlayerEffect(1, false, true)));
+            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), TriggerOptions.DEFAULT.withInterveningIf(new ActivePlayerHandEmpty()), new DrawCardForTargetPlayerEffect(1, false, true));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             gd.playerHands.get(player1Id).add(createCardWithName("Card in hand"));
 
@@ -1163,9 +1162,7 @@ class StepTriggerServiceTest {
         void graveyardMetalcraftSkipsWhenNotMet() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Metalcraft Card");
-            card.addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
-                    TriggerOptions.DEFAULT,
-                    new ConditionalEffect(new Metalcraft(), new MayPayManaEffect("{2}", new GainLifeEffect(1), "Pay?")));
+            card.addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT.withInterveningIf(new Metalcraft()), new MayPayManaEffect("{2}", new GainLifeEffect(1), "Pay?"));
             gd.playerGraveyards.get(player1Id).add(card);
 
             when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
@@ -1184,7 +1181,7 @@ class StepTriggerServiceTest {
             ConditionalEffect effect = new ConditionalEffect(
                     new Metalcraft(), new MayPayManaEffect("{2}", new GainLifeEffect(1), "Pay?"));
             card.addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
-                    TriggerOptions.DEFAULT, effect);
+                    TriggerOptions.DEFAULT.withInterveningIf(effect.condition()), effect.wrapped());
             gd.playerGraveyards.get(player1Id).add(card);
 
             when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(true);
@@ -1252,8 +1249,7 @@ class StepTriggerServiceTest {
         void noSpellsCastSkipsWhenSpellsWereCast() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Werewolf");
-            card.addTrigger(Triggers.upkeep(ActivePlayer.ANY),
-                    new ConditionalEffect(new NoSpellsCastLastTurn(), new GainLifeEffect(1)));
+            card.addTrigger(Triggers.upkeep(ActivePlayer.ANY), TriggerOptions.DEFAULT.withInterveningIf(new NoSpellsCastLastTurn()), new GainLifeEffect(1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             gd.spellsCastLastTurn.put(player1Id, 1);
@@ -1284,8 +1280,7 @@ class StepTriggerServiceTest {
         void twoOrMoreSpellsSkipsWhenNotMet() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Werewolf Reverse");
-            card.addTrigger(Triggers.upkeep(ActivePlayer.ANY),
-                    new ConditionalEffect(new TwoOrMoreSpellsCastLastTurn(), new GainLifeEffect(1)));
+            card.addTrigger(Triggers.upkeep(ActivePlayer.ANY), TriggerOptions.DEFAULT.withInterveningIf(new TwoOrMoreSpellsCastLastTurn()), new GainLifeEffect(1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             gd.spellsCastLastTurn.put(player1Id, 1);
@@ -1301,8 +1296,7 @@ class StepTriggerServiceTest {
         void opponentLostLifeLastTurnOnlyCountsOpponents() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Feast on the Fallen");
-            card.addTrigger(Triggers.upkeep(ActivePlayer.ANY),
-                    new ConditionalEffect(new OpponentLostLifeLastTurn(), new GainLifeEffect(1)));
+            card.addTrigger(Triggers.upkeep(ActivePlayer.ANY), TriggerOptions.DEFAULT.withInterveningIf(new OpponentLostLifeLastTurn()), new GainLifeEffect(1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             gd.lifeLostLastTurn.put(player1Id, 2);
@@ -1737,11 +1731,9 @@ class StepTriggerServiceTest {
         @DisplayName("AllOf intervening-if skips beginning-of-combat trigger when unmet")
         void allOfInterveningIfSkipsWhenUnmet() {
             Card card = createCardWithName("Graf Rats");
-            card.addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
-                    new com.github.laxika.magicalvibes.model.condition.AllOf(List.of(
-                            new com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount(
-                                    1, new PermanentHasSubtypePredicate(CardSubtype.RAT)))),
-                    new GainLifeEffect(1)));
+            card.addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                    TriggerOptions.DEFAULT.withInterveningIf(new com.github.laxika.magicalvibes.model.condition.AllOf(List.of( new com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount( 1, new PermanentHasSubtypePredicate(CardSubtype.RAT))))),
+                    new GainLifeEffect(1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             sut.handleBeginningOfCombatTriggers(gd);
@@ -1753,8 +1745,9 @@ class StepTriggerServiceTest {
         @DisplayName("Total-power intervening-if skips beginning-of-combat trigger when unmet")
         void controlledCreaturesTotalPowerInterveningIfSkipsWhenUnmet() {
             Card card = createCardWithName("Surrak, the Hunt Caller");
-            card.addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
-                    new ControlledCreaturesTotalPowerAtLeast(8), new GainLifeEffect(1)));
+            card.addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                    TriggerOptions.DEFAULT.withInterveningIf(new ControlledCreaturesTotalPowerAtLeast(8)),
+                    new GainLifeEffect(1));
             Permanent source = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(source);
             when(gameQueryService.isCreature(gd, source)).thenReturn(true);
@@ -1769,8 +1762,7 @@ class StepTriggerServiceTest {
         @DisplayName("Source-counter intervening-if checks the beginning-of-combat threshold")
         void sourceCounterThresholdInterveningIfChecksThreshold() {
             Card card = createCardWithName("Counter Combat Card");
-            card.addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
-                    new SourceCounterThreshold(2, CounterType.CHARGE), new GainLifeEffect(1)));
+            card.addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(2, CounterType.CHARGE)), new GainLifeEffect(1));
             Permanent permanent = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(permanent);
 
@@ -1788,8 +1780,9 @@ class StepTriggerServiceTest {
         @DisplayName("Total-power intervening-if allows beginning-of-combat trigger at threshold")
         void controlledCreaturesTotalPowerInterveningIfAllowsAtThreshold() {
             Card card = createCardWithName("Surrak, the Hunt Caller");
-            card.addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
-                    new ControlledCreaturesTotalPowerAtLeast(8), new GainLifeEffect(1)));
+            card.addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                    TriggerOptions.DEFAULT.withInterveningIf(new ControlledCreaturesTotalPowerAtLeast(8)),
+                    new GainLifeEffect(1));
             Permanent source = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(source);
             when(gameQueryService.isCreature(gd, source)).thenReturn(true);
@@ -1805,10 +1798,8 @@ class StepTriggerServiceTest {
         void graveyardBeginningOfCombatFiresWhenConditionIsMet() {
             Card card = createCardWithName("Graveyard Combat Card");
             card.addTrigger(new TriggerCondition(Triggers.beginningOfCombat(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
-                    TriggerOptions.DEFAULT,
-                    new ConditionalEffect(
-                            new ControlsPermanentCount(1, new PermanentPowerAtLeastPredicate(4)),
-                            new GainLifeEffect(1)));
+                    TriggerOptions.DEFAULT.withInterveningIf(new ControlsPermanentCount(1, new PermanentPowerAtLeastPredicate(4))),
+                    new GainLifeEffect(1));
             gd.playerGraveyards.get(player1Id).add(card);
             gd.playerBattlefields.get(player1Id).add(new Permanent(createCardWithName("Large Creature")));
             when(predicateEvaluationService.matchesPermanentPredicate(
@@ -1826,10 +1817,8 @@ class StepTriggerServiceTest {
         void graveyardBeginningOfCombatSkipsWhenConditionIsUnmet() {
             Card card = createCardWithName("Graveyard Combat Card");
             card.addTrigger(new TriggerCondition(Triggers.beginningOfCombat(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
-                    TriggerOptions.DEFAULT,
-                    new ConditionalEffect(
-                            new ControlsPermanentCount(1, new PermanentPowerAtLeastPredicate(4)),
-                            new GainLifeEffect(1)));
+                    TriggerOptions.DEFAULT.withInterveningIf(new ControlsPermanentCount(1, new PermanentPowerAtLeastPredicate(4))),
+                    new GainLifeEffect(1));
             gd.playerGraveyards.get(player1Id).add(card);
 
             sut.handleBeginningOfCombatTriggers(gd);
@@ -2198,8 +2187,7 @@ class StepTriggerServiceTest {
         @DisplayName("ConditionalEffect skips when creature attacked this turn")
         void didntAttackSkipsWhenAttacked() {
             Card card = createCardWithName("Vigilant Creature");
-            card.addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                    new ConditionalEffect(new DidntAttack(), new GainLifeEffect(1)));
+            card.addTrigger(Triggers.endStep(ActivePlayer.YOU), TriggerOptions.DEFAULT.withInterveningIf(new DidntAttack()), new GainLifeEffect(1));
             Permanent perm = new Permanent(card);
             perm.setAttackedThisTurn(true);
             gd.playerBattlefields.get(player1Id).add(perm);
@@ -2227,8 +2215,7 @@ class StepTriggerServiceTest {
         @DisplayName("Triggers.endStep(ActivePlayer.YOU) with ConditionalEffect skips when raid not met")
         void raidConditionalEndStepSkipsWhenRaidNotMet() {
             Card card = createCardWithName("Raiding Looter");
-            card.addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                    new ConditionalEffect(new Raid(), new MayEffect(new GainLifeEffect(1), "Gain life?")));
+            card.addTrigger(Triggers.endStep(ActivePlayer.YOU), TriggerOptions.DEFAULT.withInterveningIf(new Raid()), new MayEffect(new GainLifeEffect(1), "Gain life?"));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             // Do NOT add player1Id to playersDeclaredAttackersThisTurn
 
@@ -2836,7 +2823,7 @@ class StepTriggerServiceTest {
             Card card = createCardWithName("Scheming Silvertongue");
             ConditionalEffect effect = new ConditionalEffect(
                     new GainedLifeThisTurn(2), new BecomePreparedEffect());
-            card.addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU), effect);
+            card.addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU), TriggerOptions.DEFAULT.withInterveningIf(effect.condition()), effect.wrapped());
             Permanent perm = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(perm);
             gd.lifeGainedThisTurn.put(player1Id, 1);

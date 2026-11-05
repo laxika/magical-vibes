@@ -25,7 +25,7 @@ public class HedgeShredder extends Card {
     public HedgeShredder() {
         addTrigger(Triggers.attacks(),
                 new ConditionalEffect(new CardsInLibraryAtLeast(2),
-                        new MayEffect(new MillEffect(2, MillRecipient.CONTROLLER), "Mill two cards?"), false));
+                        new MayEffect(new MillEffect(2, MillRecipient.CONTROLLER), "Mill two cards?")));
         addTrigger(new TriggerCondition(Triggers.putIntoGraveyardFrom(Zone.LIBRARY, Triggers.NONTOKEN,
                 ObjectRelation.YOU_OWN)),
                 TriggerOptions.ONE_OR_MORE,

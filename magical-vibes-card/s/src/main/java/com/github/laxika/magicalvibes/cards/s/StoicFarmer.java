@@ -24,10 +24,10 @@ public class StoicFarmer extends Card {
     public StoicFarmer() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 SequenceEffect.of(
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new OpponentControlsMoreLands(),
                                 new SearchLibraryEffect(plainsFilter(), LibrarySearchDestination.BATTLEFIELD_TAPPED)),
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new NotCondition(new OpponentControlsMoreLands()),
                                 new SearchLibraryEffect(plainsFilter(), LibrarySearchDestination.HAND))));
     }

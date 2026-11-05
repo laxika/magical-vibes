@@ -31,7 +31,7 @@ public class SunpearlKirin extends Card {
                 "Target must be another nonland permanent you control"
         ), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), ReturnToHandEffect.target(),
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentIsTokenPredicate()),
                         new TargetPermanentControllerDrawsCardEffect()));
     }

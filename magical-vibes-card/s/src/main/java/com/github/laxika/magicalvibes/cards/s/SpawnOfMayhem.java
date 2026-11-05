@@ -31,7 +31,7 @@ public class SpawnOfMayhem extends Card {
         // you have 10 or less life, put a +1/+1 counter on this creature.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 new DealDamageToPlayersEffect(1, DamageRecipient.EACH_PLAYER),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new ControllerLifeAtMost(10),
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))));
     }

@@ -24,6 +24,6 @@ public class Sokenzan extends Card {
         addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_CREATURES));
         addTrigger(Triggers.chaosEnsues(), SequenceEffect.of(
                 new UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES),
-                ConditionalEffect.unless(new ControllerMainPhase(), new AdditionalCombatMainPhaseEffect(1))));
+                new ConditionalEffect(new ControllerMainPhase(), new AdditionalCombatMainPhaseEffect(1))));
     }
 }

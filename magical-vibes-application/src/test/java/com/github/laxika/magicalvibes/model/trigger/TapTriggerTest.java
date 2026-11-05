@@ -143,7 +143,7 @@ class TapTriggerTest {
 
         assertThat(TapAbilityReader.readPrinted(card, TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED))
                 .singleElement().satisfies(read -> {
-                    assertThat(read.effect()).isEqualTo(new ConditionalEffect(new ControllerTurn(), DRAW, true));
+                    assertThat(read.effect()).isEqualTo(new ConditionalEffect(new ControllerTurn(), DRAW));
                     assertThat(read.filter()).isEqualTo(SOURCE);
                     assertThat(read.firstTime()).isFalse();
                     assertThat(read.oneOrMore()).isFalse();
@@ -153,14 +153,14 @@ class TapTriggerTest {
     }
 
     @Test
-    void theEventConditionIsInsideTheInterveningIf() {
+    void theReaderWrapsOnlyTheInterveningIfAndLeavesTheEventConditionToTheCollector() {
         Card card = new Card();
         card.addTrigger(Triggers.becomesUntapped(), TriggerOptions.DEFAULT
                 .withInterveningIf(new ControllerTurn()).withEventCondition(new DuringYourUntapStep()), DRAW);
 
         assertThat(TapAbilityReader.printedEffects(card, TapWatch.ON_SELF_BECOMES_UNTAPPED))
                 .containsExactly(new ConditionalEffect(new ControllerTurn(),
-                        ConditionalEffect.atTriggerTime(new DuringYourUntapStep(), DRAW), true));
+                        DRAW));
     }
 
     @Test

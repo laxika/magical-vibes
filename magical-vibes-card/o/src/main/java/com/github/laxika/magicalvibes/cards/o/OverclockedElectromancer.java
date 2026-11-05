@@ -22,7 +22,7 @@ public class OverclockedElectromancer extends Card {
 
     public OverclockedElectromancer() {
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new MayEffect(
-                ConditionalEffect.unless(new ControllerEnergyAtLeast(3),
+                new ConditionalEffect(new ControllerEnergyAtLeast(3),
                         SequenceEffect.of(
                                 new EnergyCountersEffect(-3),
                                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)

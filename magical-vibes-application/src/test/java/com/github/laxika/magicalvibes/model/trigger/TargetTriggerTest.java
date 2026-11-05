@@ -137,7 +137,7 @@ class TargetTriggerTest {
         assertThat(TargetAbilityReader.readPrinted(dragon,
                 TargetWatch.ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY))
                 .singleElement().satisfies(read -> {
-                    assertThat(read.effect()).isEqualTo(new ConditionalEffect(new ControllerTurn(), WARD, true));
+                    assertThat(read.effect()).isEqualTo(new ConditionalEffect(new ControllerTurn(), WARD));
                     assertThat(read.filter()).isEqualTo(DRAGON);
                     assertThat(read.byController()).isFalse();
                     assertThat(read.limit()).isEqualTo(TriggerLimit.NONE);
@@ -167,14 +167,14 @@ class TargetTriggerTest {
     }
 
     @Test
-    void theEventConditionIsInsideTheInterveningIf() {
+    void theReaderWrapsOnlyTheInterveningIfAndLeavesTheEventConditionToTheCollector() {
         Card card = new Card();
         card.addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), TriggerOptions.DEFAULT
                 .withInterveningIf(new ControllerTurn()).withEventCondition(new SourceIsFaceDown()), WARD);
 
         assertThat(TargetAbilityReader.printedEffects(card, TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL))
                 .containsExactly(new ConditionalEffect(new ControllerTurn(),
-                        ConditionalEffect.atTriggerTime(new SourceIsFaceDown(), WARD), true));
+                        WARD));
     }
 
     @Test
@@ -217,7 +217,7 @@ class TargetTriggerTest {
         assertThatThrownBy(() -> TargetAbilityReader.printedEffects(limited,
                 TargetWatch.ON_BECOMES_TARGET_OF_AURA_SPELL)).isInstanceOf(IllegalStateException.class);
         assertThat(TargetAbilityReader.printedEffects(plain, TargetWatch.ON_BECOMES_TARGET_OF_AURA_SPELL))
-                .containsExactly(new ConditionalEffect(new ControllerTurn(), DRAW, true));
+                .containsExactly(new ConditionalEffect(new ControllerTurn(), DRAW));
     }
 
     @Test

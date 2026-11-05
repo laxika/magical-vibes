@@ -26,7 +26,7 @@ public class JorKadeenFirstGoldwarden extends Card {
         PermanentCount equippedCreatures = new PermanentCount(equippedCreature, CountScope.CONTROLLER);
 
         addTrigger(Triggers.attacks(), new BoostSelfEffect(equippedCreatures, equippedCreatures),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                 new SourcePowerAtLeast(4),
                 new DrawCardEffect(1)));
     }

@@ -34,7 +34,6 @@ public class DavrosDalekCreator extends Card {
                 SequenceEffect.of(
                         new CreateTokenEffect("Dalek", 3, 3, CardColor.BLACK,
                                 List.of(CardSubtype.DALEK), Set.of(Keyword.MENACE), Set.of(CardType.ARTIFACT)),
-                        new EachOpponentWhoLostLifeFacesVillainousChoiceEffect(3)),
-                false));
+                        new EachOpponentWhoLostLifeFacesVillainousChoiceEffect(3))));
     }
 }

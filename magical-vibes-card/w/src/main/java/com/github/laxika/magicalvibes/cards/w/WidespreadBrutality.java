@@ -32,11 +32,11 @@ public class WidespreadBrutality extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.ARMY)));
         ControlsPermanent controlsArmy = new ControlsPermanent(army);
 
-        addSpellEffect(ConditionalEffect.unless(controlsArmy,
+        addSpellEffect(new ConditionalEffect(controlsArmy,
                         SequenceEffect.of(
                                 new PutCounterOnChosenOwnPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2, army),
                                 new GrantSubtypeToChosenPermanentEffect(CardSubtype.ZOMBIE))));
-        addSpellEffect(ConditionalEffect.unless(new NotCondition(controlsArmy),
+        addSpellEffect(new ConditionalEffect(new NotCondition(controlsArmy),
                         SequenceEffect.of(
                                 new CreateTokenEffect(
                                         CardType.CREATURE, 1, "Zombie Army", 0, 0, CardColor.BLACK, null,

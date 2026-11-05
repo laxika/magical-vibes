@@ -12,7 +12,7 @@ public class Agent13SharonCarter extends Card {
 
     public Agent13SharonCarter() {
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 CreateTokenEffect.ofClueToken(1));
     }
 }

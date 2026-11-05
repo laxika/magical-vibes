@@ -20,6 +20,6 @@ public class WitchMawNephilim extends Card {
                 new MayEffect(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2), "Put two +1/+1 counters on this creature?"));
         addTrigger(Triggers.attacks(), new ConditionalEffect(
                 new SourcePowerAtLeast(10),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF), false));
+                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
     }
 }

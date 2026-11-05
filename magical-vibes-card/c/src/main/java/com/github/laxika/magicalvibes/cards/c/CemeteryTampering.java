@@ -22,7 +22,7 @@ public class CemeteryTampering extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ImprintFromTopCardsEffect(5, true));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 new MayEffect(new MillEffect(3, MillRecipient.CONTROLLER), "Mill three cards?"),
-                ConditionalEffect.unless(new GraveyardCardThreshold(20, null),
+                new ConditionalEffect(new GraveyardCardThreshold(20, null),
                         new PlayImprintedCardWithoutPayingManaCostEffect())));
     }
 }

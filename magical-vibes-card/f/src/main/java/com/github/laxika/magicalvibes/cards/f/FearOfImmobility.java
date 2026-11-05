@@ -21,7 +21,7 @@ public class FearOfImmobility extends Card {
         target(TargetFilters.creature(), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new TapPermanentsEffect(TapUntapScope.TARGET),
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new TargetPermanentMatches(new PermanentNotPredicate(
                                         new PermanentControlledBySourceControllerPredicate())),
                                 new PutCounterOnTargetPermanentEffect(CounterType.STUN)));

@@ -61,7 +61,9 @@ class TheHippodromeTest extends BaseCardTest {
         triggerChaosAndChooseTarget(target);
         target.setPowerModifier(4);
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        // "You may destroy target creature if its power is 0 or less": the choice is asked as the ability resolves,
+        // and the "if" is checked as the destruction would happen.
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();

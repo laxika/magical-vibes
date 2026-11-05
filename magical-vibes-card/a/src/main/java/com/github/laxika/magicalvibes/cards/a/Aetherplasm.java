@@ -19,7 +19,7 @@ public class Aetherplasm extends Card {
                 new com.github.laxika.magicalvibes.model.effect.ConditionalEffect(
                         new com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield(), SequenceEffect.of(
                         ReturnToHandEffect.self(),
-                        PutCardToBattlefieldEffect.blocking(new CardTypePredicate(CardType.CREATURE), "creature")), false),
+                        PutCardToBattlefieldEffect.blocking(new CardTypePredicate(CardType.CREATURE), "creature"))),
                 "Return Aetherplasm to its owner's hand?"));
     }
 }

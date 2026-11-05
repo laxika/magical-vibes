@@ -27,6 +27,6 @@ public class GuulDrazOverseer extends Card {
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                 new BoostAllOwnCreaturesEffect(1, 0, OTHER_CREATURES),
                 new ConditionalEffect(new TriggeringPermanentHasSubtype(CardSubtype.SWAMP),
-                        new BoostAllOwnCreaturesEffect(1, 0, OTHER_CREATURES), false));
+                        new BoostAllOwnCreaturesEffect(1, 0, OTHER_CREATURES)));
     }
 }

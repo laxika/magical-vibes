@@ -32,7 +32,7 @@ public class ForgehammerCenturion extends Card {
                 new PutCountersOnSelfEffect(CounterType.OIL));
 
         target(TargetFilters.creature()).addTrigger(Triggers.attacks(), new MayEffect(
-                ConditionalEffect.unless(new SourceCounterThreshold(2, CounterType.OIL),
+                new ConditionalEffect(new SourceCounterThreshold(2, CounterType.OIL),
                         SequenceEffect.of(
                                 new RemoveCounterFromSourceEffect(CounterType.OIL, 2),
                                 new CantBlockThisTurnEffect(TapUntapScope.TARGET))),

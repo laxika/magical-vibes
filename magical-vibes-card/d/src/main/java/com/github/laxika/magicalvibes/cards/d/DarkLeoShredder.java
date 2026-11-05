@@ -40,7 +40,7 @@ public class DarkLeoShredder extends Card {
         addTrigger(Triggers.dealsCombatDamageToPlayer(), SequenceEffect.of(
                 new CreateTokenEffect("Ninja", 1, 1, CardColor.BLACK,
                         List.of(CardSubtype.NINJA), Set.of(), Set.of()),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new ControlsPermanentCount(5, new PermanentHasSubtypePredicate(CardSubtype.NINJA)),
                         new LoseLifeEffect(new HalvedRoundedUp(new TargetPlayerLifeTotal()),
                                 LoseLifeRecipient.TARGET_PLAYER))));

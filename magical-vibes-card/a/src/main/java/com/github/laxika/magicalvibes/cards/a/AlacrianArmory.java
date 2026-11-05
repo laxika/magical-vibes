@@ -36,11 +36,10 @@ public class AlacrianArmory extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.VEHICLE))))),
                 "Target must be a Mount or Vehicle you control"), 0, 1)
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.MOUNT)),
-                                new BecomeSaddledUntilEndOfTurnEffect(GrantScope.TARGET)))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                        ConditionalEffect.unless(
+                                new BecomeSaddledUntilEndOfTurnEffect(GrantScope.TARGET)),
+                        new ConditionalEffect(
                                 new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)),
                                 new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null, Set.of(),
                                         GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN, null)));

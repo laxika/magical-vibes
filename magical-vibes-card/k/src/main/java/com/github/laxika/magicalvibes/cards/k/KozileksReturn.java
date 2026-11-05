@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -35,13 +34,11 @@ public class KozileksReturn extends Card {
                                 new CardSubtypePredicate(CardSubtype.ELDRAZI),
                                 new CardMinManaValuePredicate(7)
                         ))), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT,
-                new ConditionalEffect(
-                        new SourceCardInGraveyard(),
-                        new MayEffect(
-                                SequenceEffect.of(
-                                        new ExileSourceCardFromGraveyardEffect(),
-                                        new MassDamageEffect(5)),
-                                "Exile Kozilek's Return from your graveyard?")));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCardInGraveyard()),
+                new MayEffect(
+                        SequenceEffect.of(
+                                new ExileSourceCardFromGraveyardEffect(),
+                                new MassDamageEffect(5)),
+                        "Exile Kozilek's Return from your graveyard?"));
     }
 }

@@ -350,13 +350,6 @@ public class EnterTriggerCollectorService {
         if (effect instanceof MayPayManaEffect mayPay) {
             return handleEnterMayPay(match, mayPay, pe);
         }
-        if (effect instanceof ConditionalEffect conditional
-                && conditional.interveningIf()
-                && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
-                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
-            return false;
-        }
-
         if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
             UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
             if (enteringPermanentId == null) {
@@ -977,9 +970,6 @@ public class EnterTriggerCollectorService {
             return true;
         }
         Card sourceCard = match.sourceCard();
-        if (!mayInterveningIfIsMet(match, may, pe.defaultTargetPlayerId())) {
-            return false;
-        }
         boolean gainLifeEqualToEnteringPower = may.wrapped() instanceof GainLifeEqualToPowerEffect;
         int eventValue = may.usesTriggeringPermanentManaValue()
                 ? pe.enteringCard().getManaValue() : 0;
@@ -1071,9 +1061,6 @@ public class EnterTriggerCollectorService {
 
     @CollectsWatchTrigger(value = MayEffect.class, watch = ZoneChangeWatch.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD)
     private boolean handleTokenEnterMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
-        if (!mayInterveningIfIsMet(match, may, null)) {
-            return false;
-        }
 
         TriggerContext.TokensEnter tokensEnter = (TriggerContext.TokensEnter) ctx;
         Card sourceCard = match.permanent().getCard();
@@ -1085,15 +1072,6 @@ public class EnterTriggerCollectorService {
         log.info("Game {} - {} triggers for tokens entering (may effect)",
                 match.gameData().id, sourceCard.getName());
         return true;
-    }
-
-    private boolean mayInterveningIfIsMet(TriggerMatchContext match, MayEffect may, UUID targetPlayerId) {
-        if (!(may.wrapped() instanceof ConditionalEffect conditional) || !conditional.interveningIf()) {
-            return true;
-        }
-        ConditionContext context = ConditionContext.forPermanent(match.permanent(), match.controllerId())
-                .withTargetId(targetPlayerId);
-        return conditionEvaluationService.isMet(match.gameData(), conditional.condition(), context);
     }
 
     @CollectsWatchTrigger(value = MayEffect.class,

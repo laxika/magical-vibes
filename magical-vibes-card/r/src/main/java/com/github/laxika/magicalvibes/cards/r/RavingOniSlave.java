@@ -17,7 +17,7 @@ public class RavingOniSlave extends Card {
     public RavingOniSlave() {
         // "you lose 3 life if you don't control a Demon" is checked only on resolution, not an
         // intervening-if (CR 603.4), so the ability triggers even while you control a Demon.
-        ConditionalEffect lifeLoss = ConditionalEffect.unless(
+        ConditionalEffect lifeLoss = new ConditionalEffect(
                 new NotCondition(new ControlsPermanentCount(1,
                         new PermanentHasSubtypePredicate(CardSubtype.DEMON))),
                 new LoseLifeEffect(3)

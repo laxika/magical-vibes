@@ -59,7 +59,7 @@ public class ExileSourceCardFromGraveyardAndCollectEvidenceEffectHandler
         gameLogService.append(gameData, GameLog.cardThen(sourceCard, " is exiled."));
         entry.setEventValue(0);
 
-        ConditionalEffect returnIfCollected = ConditionalEffect.unless(
+        ConditionalEffect returnIfCollected = new ConditionalEffect(
                 new EventValueAtLeast(exileAndCollect.minimumManaValue()),
                 new ReturnSourceCardFromExileToBattlefieldEffect(exileAndCollect.returnTapped()));
         List<CardEffect> followUp = List.of(

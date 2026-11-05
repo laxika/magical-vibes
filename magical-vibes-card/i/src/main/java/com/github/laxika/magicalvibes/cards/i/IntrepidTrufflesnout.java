@@ -16,7 +16,7 @@ public class IntrepidTrufflesnout extends Card {
         setBackFaceCard(new GoHogWild());
         addCastingOption(new AdventureCast("{1}{G}"));
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 CreateTokenEffect.ofFoodToken(1));
     }
 

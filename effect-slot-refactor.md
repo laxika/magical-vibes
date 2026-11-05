@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; run 16l, family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader`; run 16m, family 10 (sagas): no chapter or final-chapter ability has a legacy view, and the final-chapter collectors read the abilities through `SagaAbilityReader`; run 16n, family 11's player and keyword actions: every `ActionWatch` collector reads the abilities through `ActionAbilityReader`; run 16o, family 11's rest: every `MiscWatch` collector and the planar reader read the abilities through `MiscAbilityReader`; run 16p, the zone changes but "when this enters" and the permanent changes: no such ability has a legacy view, and the readers outside the trigger pipeline read them through `ZoneChangeAbilityReader`; run 16q, "when this enters": no ability has a legacy view; the own enters collector reads the abilities and judges their limit, the other readers read `Card.getOwnEntryEffects()`, and `OnceOnlyTriggerEffect` is gone; run 16r, every triggered ability is one object on the stack: the abilities of one Oracle ability are merged by script, the own enters and combat collectors group effects by ability, and `TriggerMode` is gone; runs 16s onward left: the may-unwrapping, the `interveningIf` / `triggerTimeOnly` flags and the wrapper classes) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; run 16l, family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader`; run 16m, family 10 (sagas): no chapter or final-chapter ability has a legacy view, and the final-chapter collectors read the abilities through `SagaAbilityReader`; run 16n, family 11's player and keyword actions: every `ActionWatch` collector reads the abilities through `ActionAbilityReader`; run 16o, family 11's rest: every `MiscWatch` collector and the planar reader read the abilities through `MiscAbilityReader`; run 16p, the zone changes but "when this enters" and the permanent changes: no such ability has a legacy view, and the readers outside the trigger pipeline read them through `ZoneChangeAbilityReader`; run 16q, "when this enters": no ability has a legacy view; the own enters collector reads the abilities and judges their limit, the other readers read `Card.getOwnEntryEffects()`, and `OnceOnlyTriggerEffect` is gone; run 16r, every triggered ability is one object on the stack: the abilities of one Oracle ability are merged by script, the own enters and combat collectors group effects by ability, and `TriggerMode` is gone; run 16s, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags are gone: a `ConditionalEffect` is an effect's "if", and every collector judges the intervening "if" and event condition from the ability; runs 16t onward left: the wrapper classes, then the may-unwrapping with step 15) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -620,7 +620,8 @@ no other family still uses. The order:
 | 16p | The zone changes but "when this enters" and the permanent changes (steps 10 to 12a's pipeline families): no such ability has a legacy view; the readers outside the pipeline (face-up planes, schemes, registered abilities) read them through `ZoneChangeAbilityReader`, and the ability rejects what the pipeline can't read as it is built |
 | 16q | The own enters abilities (`EtbTriggerService` and its about 55 readers): no ability has a legacy view; the collector reads the abilities and judges their limit, the readers read the own-entry effects (`Card.getOwnEntryEffects()`); `legacyEffects()`, `hasLegacyView()`, the `getLegacy…` getters, `Trigger.collectedAsAbility()` and `OnceOnlyTriggerEffect` are gone |
 | 16r | The own enters collector and the combat collectors that split by `TriggerMode.INDEPENDENT` put each ability on the stack as one object, after a card script merges the abilities of one Oracle ability; `TriggerMode` is deleted |
-| 16s onward | The may-unwrapping, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags and the wrapper classes left are deleted |
+| 16s | `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags are deleted: the cards' intervening "if"s and event conditions are `TriggerOptions` and every collector judges them from the ability |
+| 16t onward | The wrapper classes left are deleted; the may-unwrapping goes with step 15's event bindings |
 
 Mark the step `done` only after the last run of 16.
 
@@ -9108,6 +9109,161 @@ binds them with `bindEffect`), `EFFECTS_QUICK_REFERENCE.md`, `TRIGGER_SLOT_TARGE
   same 621 failures at HEAD and here, none new. Most were outside the classes earlier runs took in (for example
   `CastingCostServiceTest` 44, `EffectResolutionServiceTest` 43, `ActivatedAbilityExecutionServiceTest` 35,
   `MayCastHandlerServiceTest` 30 and many effect-handler tests, Mockito wiring).
+- Engine: the whole module, with the one failure at HEAD, `GameMutationBoundaryRatchetTest`.
+- AI: the whole module (1,620 tests), with the same 10 failures as before.
+- The full suite was not run here.
+
+#### Run 16s: `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags are gone
+
+The fourth of the "16p onward" runs, chosen with the user from the three leftovers: the flags. A `ConditionalEffect` is
+now `(condition, wrapped)`, the "if" of an effect, checked as the effect resolves. A triggered ability's intervening "if"
+(**CR 603.4**, checked: "this rule only applies to an 'if' that immediately follows a trigger condition") and its event
+condition (**CR 603.2**, checked) are only its `TriggerOptions`, judged from the ability as it triggers. The may-unwrapping
+stays (its 31 event bindings and Pontiff of Blight need step 15), and so do the authored wrapper classes 16p listed.
+
+**What the scans found.** `scripts/step14-intervening-if-scan.py` (regex, every trigger statement of a card class with
+a `ConditionalEffect`) found 440 statements: 87 with a flagged `ConditionalEffect` (the two-argument constructor, whose
+flag defaulted to intervening) at the top of the ability, 170 nested, 213 `ConditionalEffect.unless`, 2
+`atTriggerTime`. A temporary reflection scan (every registered card and back face, printed and nested abilities) found
+the abilities with an intervening "if" or event condition by trigger family, which names the collectors that must judge
+them from the ability: steps 634, zone changes 450 (mostly "when this enters"), combat 424, spells 52, counters 22,
+library 14, life 12, damage 11, tap 5, player actions 5, state 4, land plays 4, permanent changes 1, activations 1.
+
+**The cards** (`scripts/step14-intervening-if-flags.py`, rerunnable).
+
+- `ConditionalEffect.unless(c, e)` became `new ConditionalEffect(c, e)` (242 calls in 196 card classes), and the
+  three-argument constructor lost its flag.
+- Exalted's "attacks alone" is the trigger event (**CR 702.83a**, **702.83b**, checked): `withInterveningIf(new
+  AttacksAlone())` became `withEventCondition(new AttacksAlone())` in 82 card classes.
+- By the Oracle text, 21 abilities whose flagged `ConditionalEffect` wrapped every effect took its condition as an
+  option. As the intervening "if": Trail of Mystery, Persistent Marshstalker (its "with one or more Rats" became the
+  event condition), Progenitor Mimic, Clockwork Dragon and Vorrac, Bridge from Below (both), Ashiok's token, Finest Hour
+  ("attacks alone" became the event condition), Kozilek's Return and Phoenix of Iteration (the graveyard cast reader
+  takes only an intervening "if"). As the event condition, the pseudo-filters of the trigger event: Weldfast Wingsmith,
+  Path of Discovery, Carnival of Souls, Aether Flash ("this or another" enters), Throat Wolf, Twenty-Toed Toad's "with
+  two or more creatures", Seifer's "by two or more creatures", Snarlfang Vermin, Kjeldoran Frostbeast.
+- Its `MANUAL` table converted 19 abilities by hand: the intervening "if"s written inside a "you may" (Firemane Angel,
+  Gatewatch Beacon, Ian the Reckless) or through a local variable (Bloodhall Priest, Naomi, Omnivorous Flytrap, Carpet of
+  Flowers); the Oracle abilities written as several whose "Then if" / "if you control …" the old collectors judged as
+  they triggered, now one ability (Hadana's Climb, Majestic Myriarch, Alacrian Armory, Does Machines); Stormbeacon Blade's "draw a card
+  if you control three or more attacking creatures", an effect's "if" written as an option; Karai's "instead" and Typhoid
+  Mary's "if you discarded a card this turn, you choose one instead" (its mode is chosen as the ability is put on the
+  stack, **CR 700.2b**, checked), each an ability per branch with the branch as its event condition (one Karai ability
+  with a shared graveyard target is a later fix).
+- Every other `ConditionalEffect` in a triggered ability is an "if" of its effect by the Oracle text ("draw a card if
+  …", "Then if …", "If …, instead …", "you may …. If you do"), checked as it resolves.
+- Left as they are, their reasons in the script: Tunnel Ignus, Confounding Conundrum, Archaeomancer's Map and Invader
+  Parasite (the "a land an opponent controls enters" collector judges their conditions by type against the entering
+  land and its controller, which the pipeline's context lacks), Edgar Markov (the command-zone cast reader takes no
+  options; the zone already says where it is) and Desert Were-Worm (the "you attack" collector counts its "for the first
+  time each turn" through the condition around its `OncePerTurnTriggerEffect`). Sidar Jabari's eminence `ConditionalEffect`
+  stays (16a), now checked as it resolves only, which its zones make equivalent.
+
+**The model.** `ConditionalEffect(condition, wrapped)`; `unless`, `atTriggerTime` and the three- and four-argument
+constructors are gone. `TriggeredAbility.ownEntryEffects()` wraps only the intervening "if" (a plain `ConditionalEffect`
+around each effect); the event condition is the collector's to judge.
+
+**The engine.**
+
+- `ConditionEvaluationService.triggerConditionsMet(gameData, options, context[, eventValue])` judges an ability's
+  intervening "if" and event condition; `judge(gameData, context[, eventValue])` gives a `TriggerJudge` (new,
+  `service/trigger`) whose `filter` keeps the abilities that trigger, for the collectors that read flattened effect lists.
+  `isInterveningIfMet` is gone. The readers gained judged overloads (`printedEffects(card, watch, judge)` on every family
+  reader, `temporaryEffects` / `persistentEffects` for damage, `printedRegistrations` for tap and life).
+- The family readers (step, damage, combat, counter, library, target, misc, action, life, tap, played-card-name, the
+  pipeline) no longer wrap the event condition, and wrap the intervening "if" in a plain `ConditionalEffect` for the
+  check on resolution. Every collector that judged a reader's wrapper by its flag judges the ability instead, with the
+  context it used: `TriggerCollectionService.watchJudge` for the watches it dispatches (with the dice result, the damage to
+  the controller and the life-gaining player as the event's value or "that player"), the counter, library, action and
+  misc per-ability dispatches, the combat damage, block, becomes-blocked, attached Aura and Equipment, self-attack, "you
+  attack", "a creature you control attacks", "a player attacks" (its event condition), graveyard and command-zone attack
+  collectors, the damage collectors (dealt damage, deals damage, noncombat damage, excess damage, opponent dealt damage),
+  draw, discard, cycle, monarch, land tap, dice, planar, exiled-card time counters. The `ConditionalEffect` handlers that
+  judged a flag (discard, dice, land tap, energy, proliferate, crime, leave the graveyard, combat damage, damage) only
+  route now.
+- The pipeline-fed zone-change collectors (creature deaths, entering, leaving, landfall, the `LegacyTriggerBindings`)
+  lost their re-checks: the pipeline judged the options. The pipeline reads a card source's own card for its options
+  (graveyard abilities) and gives a permanent change the changed permanent ("if it's a creature", Trail of Mystery).
+  On an ability triggered by an object entering, the intervening "if" goes inside a "you may" that targets nothing,
+  whose collectors bind it to the entering object (Gatewatch Beacon).
+- `EtbTriggerService` judges each "when this enters" ability's event condition and intervening "if" as it triggers,
+  through `EtbEffectResolver.ownEntryConditionMet`, which reads a fact fixed as the permanent entered (kicked, the mana
+  spent, a cost paid) the way the effects' own conditions are read; the resolver's per-effect handler (now a `Verdict`
+  switch) judges only those facts and keeps any other condition for resolution. An effect "if" on the colour of mana spent
+  leaves a no-op effect, so the ability still triggers (Plaxmanta, Court Hussar).
+- `StepTriggerService` dropped the re-checks of what `StepAbilityReader` judged, and two upkeep branches (`AllOf`,
+  `ControlsPermanentCountAtMost`) that judged flagged conditionals; beginning of combat judges only "Max speed —" as the
+  ability triggers.
+- The self-attack collector judges each ability with the attacker, the number of attackers and the attack target, and
+  takes the pack tactics wrapper off after judging it (the attackers as declared); `CombatAttackService`'s flagged
+  filters and the trigger-time-only unwrap are gone, and so is `EffectResolutionService`'s "attacks alone" exception.
+- `EffectResolutionService` checks every `ConditionalEffect` as it resolves (no trigger-time-only skip). It skips a "you
+  may" around its ability's intervening "if" once the "if" is false (CR 603.4), and recognises one by identity: the
+  readers wrap the ability's own `TriggerOptions.interveningIf()` object, which is one of the source card's
+  (`isInterveningIfOf`); a "you may" around an effect's "if" is asked (**CR 603.5**, checked) and the "if" then decides.
+  `EnterTriggerCollectorService`'s pre-check of the latter kind is gone.
+- State triggers judge every conditional of a `StateTriggerEffect` (the reader's intervening "if"); Syr Vondam's exile
+  half (`SelfExiledFromBattlefieldEffect` around a power condition) is judged as it triggers, as before.
+- "Whenever an opponent gains life" has a default handler (Wedding Ring's ability reached it only as a wrapper).
+- The spell-copy event binding with an intervening "if" (`CopyControllerCastSpellOnSpellCastEffect.withIntervening`,
+  Pyromancer Ascension) puts it around its "you may", so the choice isn't asked once it is false.
+
+**Behaviour changes** (rules fixes, **CR 603.4**).
+
+- An "if" of an effect that cards wrote with the flagged constructor is checked as the ability resolves, where some
+  collectors checked it as the ability triggered: the ability goes on the stack and does nothing if it is false then
+  (Laboratory Drudge, Aggression, Ludevic, Firemane Commando, Leaves from the Vine, Summon Fenrir, The First Iroan Games,
+  Twenty-Toed Toad's win, Rayne, Gamekeeper, Academy Rector, Creeping Chill, Canoptek Wraith, Family's Favor's grant,
+  Tellah, …).
+- A "you may" around an effect's "if" is asked, then the "if" decides (Deathbringer Liege, The Hippodrome, Leviathan,
+  Old One-Eye, Undead Butler, Gogo, Gitaxian Anatomist; the energy and oil "you may pay" cards already asked).
+- Seifer's intervening "if" ("attacking one of your opponents") is checked as it triggers too; the event conditions of
+  the pseudo-filters above are no longer checked again as they resolve.
+
+**Kept, with their reason.** The may-unwrapping (step 15). The authored wrapper classes 16p listed
+(`OncePerTurnTriggerEffect`'s keyed and per-grant forms, the `Triggering…ConditionalEffect` filters,
+`AllyCombatDamageTriggerEffect`, `SpellCastTriggerEffect`, `EvolveTriggerEffect`, `ChampionOfTheHareishTriggerEffect`,
+Olivia's `StateTriggerEffect`, `SelfExiledFromBattlefieldEffect`). The collectors that judge an authored conditional by
+its condition's type as the ability triggers (the upkeep life, counter and library branches, the self-attack cascade,
+the "a player attacks" fan-out, the opponent-land collector's land conditions, `EtbEffectResolver`'s cast-time facts):
+they read facts of the event the effects can't read yet (step 15).
+
+**For 16t onward.** The wrapper classes left (above), then step 15. A collector that judges an authored conditional by
+type keeps the card's condition out of `TriggerOptions` until its event is readable.
+
+**Docs.** `scripts/step14-intervening-if-flags-docs.py` wrote the rule (a `ConditionalEffect` is an effect's "if"; an
+intervening "if" is `withInterveningIf`, an event condition `withEventCondition`) into the implement-card skill,
+`EFFECTS_QUICK_REFERENCE.md` and `CARD_IMPLEMENTATION_PLAYBOOK.md`'s conditions table, renamed every `unless` form and
+the "Intervening-if wrapper" rows of `EFFECTS_INDEX.md`; `ARCHITECTURE.md` was edited by hand; the readers' class
+Javadocs were rewritten.
+
+**Tests changed.**
+
+- Reader tests (`ActionTriggerTest`, `CombatTriggerTest`, `CounterTriggerTest`, `LibraryTriggerTest`, `LifeTriggerTest`,
+  `MiscTriggerTest`, `TapTriggerTest`, `TargetTriggerTest`): `…EventConditionIsInsideTheInterveningIf` became
+  `theReaderWrapsOnlyTheInterveningIfAndLeavesTheEventConditionToTheCollector`; `TriggerOptionsTest`'s own-entry test
+  likewise (`theOwnEntryEffectsWrapOnlyTheInterveningIfAndLeaveTheEventConditionToTheCollector`). The other model and
+  service tests build `ConditionalEffect`s without a flag.
+- `EtbEffectResolverTest`: the Metalcraft, Morbid, Raid, ControlsAnotherPermanent and sacrificed-card gates assert
+  `ownEntryConditionMet` as the ability triggers and that `resolve` keeps the conditional.
+- Handler tests whose handler no longer judges (the dispatch does): `DamageTriggerCollectorServiceTest` (three "does not
+  queue" cases removed, stubs dropped), `DiscardTriggerCollectorServiceTest`, `MiscTriggerCollectorServiceTest` (two
+  "skips" cases removed), `EnterTriggerCollectorServiceTest` (`allyCreatureSourceCounterConditionalGatesAtTriggerTime`
+  removed), `LandTapTriggerCollectorServiceTest` (`skipsConditionalSequenceWhenConditionFails` removed).
+  `StepTriggerServiceTest`: fifteen abilities author their intervening "if" as `TriggerOptions`. `DrawServiceTest` stubs
+  `triggerConditionsMet` on its mocked service.
+- Card tests: `TheHippodromeTest#chaosDoesNotDestroyCreatureWhosePowerIsAboveZeroAtResolution` answers the "you may"
+  that is now asked.
+
+**Test runs.**
+
+- Card: the test class of every card with a `ConditionalEffect`, an intervening "if", an event condition, "attacks
+  alone" or a "you may", every card in the reflection scan and every card the run changed (5,506 classes, 47,360 tests),
+  after a first run of 3,722 classes whose 101 failures led to the fixes above: 6 failures, all fixed and rerun with the
+  173 classes of the cards with an intervening "if" and a "you may" or an intervening event binding (1,720 tests): all
+  passing.
+- Application: the whole module (5,016 tests) against a HEAD baseline in a worktree (with main's card-data cache): the
+  same 621 failures at HEAD less 3 that now pass (`DeathTriggerCollectorServiceTest$AnyCreatureDeathHandlers`), none new.
 - Engine: the whole module, with the one failure at HEAD, `GameMutationBoundaryRatchetTest`.
 - AI: the whole module (1,620 tests), with the same 10 failures as before.
 - The full suite was not run here.

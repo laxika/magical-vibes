@@ -29,9 +29,9 @@ public class ScouringSwarm extends Card {
         PermanentIsLandPredicate sacrificedLand = new PermanentIsLandPredicate();
 
         addTrigger(Triggers.sacrificed(sacrificedLand, ObjectRelation.YOU_CONTROL),
-                ConditionalEffect.unless(sevenLandCards, CreateTokenCopyOfSourceEffect.tapped(1)));
+                new ConditionalEffect(sevenLandCards, CreateTokenCopyOfSourceEffect.tapped(1)));
         addTrigger(Triggers.sacrificed(sacrificedLand, ObjectRelation.YOU_CONTROL),
-                ConditionalEffect.unless(new NotCondition(sevenLandCards),
+                new ConditionalEffect(new NotCondition(sevenLandCards),
                         new CreateTokenEffect(1, "Insect", 1, 1, CardColor.BLACK,
                                 List.of(CardSubtype.INSECT), Set.of(Keyword.FLYING), Set.of(), true)));
     }

@@ -28,9 +28,9 @@ public class PropellerPioneer extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a +1/+1 counter on Propeller Pioneer",
                         List.of(
-                                ConditionalEffect.unless(new SourceIsOnBattlefield(),
+                                new ConditionalEffect(new SourceIsOnBattlefield(),
                                         new PutCountersOnSourceEffect(1, 1, 1)),
-                                ConditionalEffect.unless(new NotCondition(new SourceIsOnBattlefield()),
+                                new ConditionalEffect(new NotCondition(new SourceIsOnBattlefield()),
                                         SERVO)
                         )
                 ),

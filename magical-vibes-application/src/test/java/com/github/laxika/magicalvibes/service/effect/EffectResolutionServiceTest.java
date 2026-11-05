@@ -1229,7 +1229,7 @@ class EffectResolutionServiceTest {
 
         private StackEntry sacrificeThenIfYouDoDraw() {
             return createEntry(createCard("Sacrifice then draw"), player1Id,
-                    List.of(sacrifice, ConditionalEffect.unless(PermanentLeftThisWay.sacrificed(), draw)));
+                    List.of(sacrifice, new ConditionalEffect(PermanentLeftThisWay.sacrificed(), draw)));
         }
 
         @Test
@@ -1261,7 +1261,7 @@ class EffectResolutionServiceTest {
         void laterRemovalStepReplacesEarlierResults() {
             CardEffect secondSacrifice = new SacrificeSelfEffect(true);
             StackEntry entry = createEntry(createCard("Two sacrifices"), player1Id, List.of(sacrifice,
-                    secondSacrifice, ConditionalEffect.unless(PermanentLeftThisWay.sacrificed(), draw)));
+                    secondSacrifice, new ConditionalEffect(PermanentLeftThisWay.sacrificed(), draw)));
             recording(sacrifice, entry, List.of(left(Zone.GRAVEYARD, false, true)));
             recording(secondSacrifice, entry, List.of());
             EffectHandler drawHandler = stubHandler(draw);
@@ -1275,7 +1275,7 @@ class EffectResolutionServiceTest {
         @DisplayName("\"If it was destroyed this way\" ignores a permanent that regenerated")
         void destroyedThisWayIgnoresARegeneratedPermanent() {
             StackEntry entry = createEntry(createCard("Destroy then draw"), player1Id,
-                    List.of(destroy, ConditionalEffect.unless(PermanentLeftThisWay.destroyed(), draw)));
+                    List.of(destroy, new ConditionalEffect(PermanentLeftThisWay.destroyed(), draw)));
             recording(destroy, entry, List.of(left(Zone.BATTLEFIELD, false, false)));
             EffectHandler drawHandler = stubHandler(draw);
 
@@ -1288,7 +1288,7 @@ class EffectResolutionServiceTest {
         @DisplayName("\"If it was destroyed this way\" resolves after a destruction")
         void destroyedThisWayResolvesAfterADestruction() {
             StackEntry entry = createEntry(createCard("Destroy then draw"), player1Id,
-                    List.of(destroy, ConditionalEffect.unless(PermanentLeftThisWay.destroyed(), draw)));
+                    List.of(destroy, new ConditionalEffect(PermanentLeftThisWay.destroyed(), draw)));
             recording(destroy, entry, List.of(left(Zone.GRAVEYARD, true, false)));
             EffectHandler drawHandler = stubHandler(draw);
 

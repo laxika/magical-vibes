@@ -18,10 +18,10 @@ public class ShuriTheBlackPanther extends Card {
         // Draw a card if you control three or more artifacts. Then, if you control six or more
         // artifacts, creatures you control get +2/+2 until end of turn.
         addTrigger(Triggers.attacks(), SequenceEffect.of(
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new ControlsPermanentCount(3, new PermanentIsArtifactPredicate()),
                         new DrawCardEffect()),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new ControlsPermanentCount(6, new PermanentIsArtifactPredicate()),
                         new BoostAllOwnCreaturesEffect(2, 2))));
     }

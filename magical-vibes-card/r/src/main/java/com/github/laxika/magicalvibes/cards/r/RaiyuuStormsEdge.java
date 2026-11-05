@@ -26,7 +26,7 @@ public class RaiyuuStormsEdge extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.WARRIOR)));
 
         addTrigger(Triggers.creatureYouControlAttacks().withFilter(samuraiOrWarrior),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new UntapPermanentsEffect(TapUntapScope.TRIGGERING),
                 new ConditionalEffect(new FirstCombatPhase(), new AdditionalCombatPhaseEffect(1)));
     }

@@ -21,7 +21,7 @@ public class RashelFistOfTorm extends Card {
         // control; the trigger's recorded attacker is boosted when it attacks alone.
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.creatureYouControlAttacks(),
-                        TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                        TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                         new BoostTargetCreatureEffect(1, 1)),
                 GrantScope.OWN_PERMANENTS,
                 new PermanentHasSubtypePredicate(CardSubtype.AURA)));

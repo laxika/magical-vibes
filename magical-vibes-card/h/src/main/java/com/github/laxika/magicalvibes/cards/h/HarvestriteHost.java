@@ -27,7 +27,7 @@ public class HarvestriteHost extends Card {
                         ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
                 SequenceEffect.of(
                         new BoostTargetCreatureEffect(1, 0),
-                        ConditionalEffect.unless(new NthAbilityResolutionThisTurn(2),
+                        new ConditionalEffect(new NthAbilityResolutionThisTurn(2),
                                 new DrawCardEffect(1))));
     }
 }

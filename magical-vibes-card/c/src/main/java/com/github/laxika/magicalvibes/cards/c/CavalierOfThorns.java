@@ -26,7 +26,7 @@ public class CavalierOfThorns extends Card {
                 LookAtTopCardsEffect.putOneMatchingOntoBattlefieldRestToGraveyard(
                         5, new CardTypePredicate(CardType.LAND)));
         addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(
-                ConditionalEffect.unless(new SourceCardInGraveyard(), SequenceEffect.of(
+                new ConditionalEffect(new SourceCardInGraveyard(), SequenceEffect.of(
                         new ExileSourceCardFromGraveyardEffect(),
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY)

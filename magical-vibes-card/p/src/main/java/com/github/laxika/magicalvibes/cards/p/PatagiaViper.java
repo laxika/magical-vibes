@@ -24,7 +24,7 @@ public class PatagiaViper extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new CreateTokenEffect(2, "Snake", 1, 1, null,
                         Set.of(CardColor.GREEN, CardColor.BLUE), List.of(CardSubtype.SNAKE)));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), ConditionalEffect.unless(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new NotCondition(new ColorSpentToCast(ManaColor.BLUE)), new SacrificeSelfEffect()));
     }
 }

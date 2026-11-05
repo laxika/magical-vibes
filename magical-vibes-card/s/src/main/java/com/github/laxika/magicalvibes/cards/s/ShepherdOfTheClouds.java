@@ -34,7 +34,7 @@ public class ShepherdOfTheClouds extends Card {
         target(new GraveyardCardPredicateTargetFilter(
                 permanentWithManaValueThreeOrLess, GraveyardSearchScope.CONTROLLERS_GRAVEYARD))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 controlsMount,
                                 ReturnCardFromGraveyardEffect.builder()
                                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
@@ -42,7 +42,7 @@ public class ShepherdOfTheClouds extends Card {
                                         .targetGraveyard(true)
                                         .chooseAuraAttachment(true)
                                         .build()),
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new NotCondition(controlsMount),
                                 ReturnCardFromGraveyardEffect.builder()
                                         .destination(GraveyardChoiceDestination.HAND)

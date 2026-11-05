@@ -16,7 +16,7 @@ public class BlackWidowDoubleAgent extends Card {
 
     public BlackWidowDoubleAgent() {
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.MENACE), GrantScope.TARGET));
     }
 }

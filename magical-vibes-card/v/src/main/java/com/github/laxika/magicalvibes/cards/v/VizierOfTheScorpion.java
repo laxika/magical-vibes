@@ -39,12 +39,12 @@ public class VizierOfTheScorpion extends Card {
         ControlsPermanent controlsArmy = new ControlsPermanent(army);
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                ConditionalEffect.unless(controlsArmy,
+                new ConditionalEffect(controlsArmy,
                         SequenceEffect.of(
                                 new PutCounterOnChosenOwnPermanentEffect(
                                         CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1), army, false, true),
                                 new GrantSubtypeToChosenPermanentEffect(CardSubtype.ZOMBIE))),
-                ConditionalEffect.unless(new NotCondition(controlsArmy),
+                new ConditionalEffect(new NotCondition(controlsArmy),
                         new CreateTokenEffect(
                                 CardType.CREATURE, 1, "Zombie Army", 0, 0, CardColor.BLACK, null,
                                 List.of(CardSubtype.ZOMBIE, CardSubtype.ARMY), Set.of(), Set.of(),

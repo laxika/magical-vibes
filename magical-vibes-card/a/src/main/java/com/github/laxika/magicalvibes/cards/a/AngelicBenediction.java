@@ -22,13 +22,13 @@ public class AngelicBenediction extends Card {
         // of turn. Same wiring as Akrasan Squire — Triggers.creatureYouControlAttacks() records the lone attacker
         // as the non-targeting trigger target and AttacksAlone restricts it to solo attackers.
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostTargetCreatureEffect(1, 1));
 
         // Whenever a creature you control attacks alone, you may tap target creature. The optional tap
         // resolves through the may-ability flow, which chooses the target using this card's filter.
         target(TargetFilters.creature()).addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new MayEffect(new TapPermanentsEffect(TapUntapScope.TARGET), "Tap target creature?"));
     }
 }

@@ -19,7 +19,7 @@ public class InstillFuror extends Card {
         target(TargetFilters.creature())
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.endStep(ActivePlayer.YOU),
-                        ConditionalEffect.unless(new DidntAttack(), new SacrificeSelfEffect())),
+                        new ConditionalEffect(new DidntAttack(), new SacrificeSelfEffect())),
                         GrantScope.ENCHANTED_CREATURE));
     }
 }

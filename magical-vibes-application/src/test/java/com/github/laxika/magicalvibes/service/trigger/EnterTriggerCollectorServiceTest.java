@@ -37,7 +37,6 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnteringCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -49,7 +48,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
@@ -457,28 +455,6 @@ class EnterTriggerCollectorServiceTest {
         assertThat(pending.triggeringCardId()).isEqualTo(entering.getId());
         assertThat(pending.triggeringPermanentId()).isEqualTo(enteringPermanent.getId());
         assertThat(pending.modesResetEachTurn()).isFalse();
-    }
-
-    @Test
-    @DisplayName("Ally-creature source-counter conditional gates at trigger time")
-    void allyCreatureSourceCounterConditionalGatesAtTriggerTime() {
-        Card source = new Card();
-        source.setName("Counter Source");
-        addWatched(source, ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new ConditionalEffect(
-                        new SourceCounterThreshold(1, CounterType.MINUS_ONE_MINUS_ONE),
-                        new RemoveCounterFromSourceEffect(CounterType.MINUS_ONE_MINUS_ONE, 1)));
-        Permanent sourcePermanent = new Permanent(source);
-        gd.playerBattlefields.get(player1Id).add(sourcePermanent);
-
-        enter(player1Id, enteringCreature(2, 2));
-        service.checkAllyCreatureEntersTriggers(gd, player1Id, enteringCreature(2, 2), 0);
-        assertThat(gd.stack).isEmpty();
-
-        sourcePermanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        enter(player1Id, enteringCreature(2, 2));
-        service.checkAllyCreatureEntersTriggers(gd, player1Id, enteringCreature(2, 2), 0);
-
-        assertThat(gd.stack).hasSize(1);
     }
 
     @Test

@@ -94,7 +94,7 @@ class EtbEffectResolverTest {
 
     @Test
     void resolutionOnlyConditionIsNotEvaluatedDuringEntry() {
-        CardEffect effect = ConditionalEffect.unless(new Metalcraft(), new DrawCardEffect(1));
+        CardEffect effect = new ConditionalEffect(new Metalcraft(), new DrawCardEffect(1));
 
         assertThat(resolver.resolve(ctx(true, 0, false), effect)).isSameAs(effect);
     }
@@ -245,31 +245,33 @@ class EtbEffectResolverTest {
     }
 
     @Test
-    @DisplayName("Metalcraft gate: keeps the conditional effect when met, drops it otherwise")
+    @DisplayName("Metalcraft intervening if: judged as the ability triggers, kept on the effect to be checked again as it resolves")
     void metalcraftGate() {
         ConditionalEffect effect = new ConditionalEffect(new Metalcraft(), new DrawCardEffect(1));
 
         when(gameQueryService.isMetalcraftMet(gameData, controllerId)).thenReturn(true);
-        assertThat(resolver.resolve(ctx(true, 0, false), effect)).isSameAs(effect);
+        assertThat(resolver.ownEntryConditionMet(ctx(true, 0, false), effect.condition())).isTrue();
 
         when(gameQueryService.isMetalcraftMet(gameData, controllerId)).thenReturn(false);
-        assertThat(resolver.resolve(ctx(true, 0, false), effect)).isNull();
+        assertThat(resolver.ownEntryConditionMet(ctx(true, 0, false), effect.condition())).isFalse();
+        assertThat(resolver.resolve(ctx(true, 0, false), effect)).isSameAs(effect);
     }
 
     @Test
-    @DisplayName("Morbid gate: keeps the conditional effect when met, drops it otherwise")
+    @DisplayName("Morbid intervening if: judged as the ability triggers, kept on the effect to be checked again as it resolves")
     void morbidGate() {
         ConditionalEffect effect = new ConditionalEffect(new Morbid(), new DrawCardEffect(1));
 
         when(gameQueryService.isMorbidMet(gameData)).thenReturn(true);
-        assertThat(resolver.resolve(ctx(true, 0, false), effect)).isSameAs(effect);
+        assertThat(resolver.ownEntryConditionMet(ctx(true, 0, false), effect.condition())).isTrue();
 
         when(gameQueryService.isMorbidMet(gameData)).thenReturn(false);
-        assertThat(resolver.resolve(ctx(true, 0, false), effect)).isNull();
+        assertThat(resolver.ownEntryConditionMet(ctx(true, 0, false), effect.condition())).isFalse();
+        assertThat(resolver.resolve(ctx(true, 0, false), effect)).isSameAs(effect);
     }
 
     @Test
-    @DisplayName("ControlsAnotherPermanent gate: keeps when met, drops otherwise")
+    @DisplayName("ControlsAnotherPermanent intervening if: judged as the ability triggers, kept on the effect")
     void controlsAnotherGate() {
         PermanentPredicate filter = new PermanentIsCreaturePredicate();
         ConditionalEffect effect =
@@ -280,20 +282,22 @@ class EtbEffectResolverTest {
         // ConditionEvaluationService now evaluates the predicate through the FilterContext-aware
         // overload (permanent, filter, filterContext), building the context internally — match with any().
         when(predicateEvaluationService.matchesPermanentPredicate(eq(other), eq(filter), any())).thenReturn(true);
-        assertThat(resolver.resolve(ctx(true, 0, false), effect)).isSameAs(effect);
+        assertThat(resolver.ownEntryConditionMet(ctx(true, 0, false), effect.condition())).isTrue();
 
         when(predicateEvaluationService.matchesPermanentPredicate(eq(other), eq(filter), any())).thenReturn(false);
-        assertThat(resolver.resolve(ctx(true, 0, false), effect)).isNull();
+        assertThat(resolver.ownEntryConditionMet(ctx(true, 0, false), effect.condition())).isFalse();
+        assertThat(resolver.resolve(ctx(true, 0, false), effect)).isSameAs(effect);
     }
 
     @Test
-    @DisplayName("Raid gate: keeps the conditional effect when controller attacked, drops otherwise")
+    @DisplayName("Raid intervening if: judged as the ability triggers, kept on the effect to be checked again as it resolves")
     void raidGate() {
         ConditionalEffect effect = new ConditionalEffect(new Raid(), new DrawCardEffect(1));
 
-        assertThat(resolver.resolve(ctx(true, 0, false), effect)).isNull();
+        assertThat(resolver.ownEntryConditionMet(ctx(true, 0, false), effect.condition())).isFalse();
 
         gameData.playersDeclaredAttackersThisTurn.add(controllerId);
+        assertThat(resolver.ownEntryConditionMet(ctx(true, 0, false), effect.condition())).isTrue();
         assertThat(resolver.resolve(ctx(true, 0, false), effect)).isSameAs(effect);
     }
 
@@ -314,7 +318,7 @@ class EtbEffectResolverTest {
     }
 
     @Test
-    @DisplayName("Sacrificed-card intervening if is checked as the ability triggers, with the card sacrificed to cast it")
+    @DisplayName("Sacrificed-card intervening if is judged as the ability triggers, with the card sacrificed to cast it")
     void sacrificedCardInterveningIf() {
         CardPredicate filter = new CardTypePredicate(CardType.CREATURE);
         ConditionalEffect effect = new ConditionalEffect(
@@ -323,17 +327,18 @@ class EtbEffectResolverTest {
         EtbEffectContext sourceContext = new EtbEffectContext(gameData, card, controllerId,
                 true, 0, false, false, false, source);
 
-        assertThat(resolver.resolve(sourceContext, effect)).isNull();
+        assertThat(resolver.ownEntryConditionMet(sourceContext, effect.condition())).isFalse();
 
         Card sacrificed = new Card();
         source.setCastSacrificedCard(sacrificed);
         when(predicateEvaluationService.matchesCardPredicate(eq(sacrificed), eq(filter), any(), eq(gameData), any()))
                 .thenReturn(true);
-        assertThat(resolver.resolve(sourceContext, effect)).isSameAs(effect);
+        assertThat(resolver.ownEntryConditionMet(sourceContext, effect.condition())).isTrue();
 
         when(predicateEvaluationService.matchesCardPredicate(eq(sacrificed), eq(filter), any(), eq(gameData), any()))
                 .thenReturn(false);
-        assertThat(resolver.resolve(sourceContext, effect)).isNull();
+        assertThat(resolver.ownEntryConditionMet(sourceContext, effect.condition())).isFalse();
+        assertThat(resolver.resolve(sourceContext, effect)).isSameAs(effect);
     }
 
     @Test

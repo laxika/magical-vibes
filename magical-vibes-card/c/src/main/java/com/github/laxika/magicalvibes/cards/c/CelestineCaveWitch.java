@@ -31,7 +31,7 @@ public class CelestineCaveWitch extends Card {
                 CardType.CREATURE, 2, "Insect", 1, 1, CardColor.BLACK, null,
                 List.of(CardSubtype.INSECT), Set.of(), Set.of(), false, false,
                 List.of(), List.of(), false, false, false, 0, Set.of()));
-        addTrigger(Triggers.attacks(), ConditionalEffect.unless(
+        addTrigger(Triggers.attacks(), new ConditionalEffect(
                 new ControlsPermanentCount(1, new PermanentHasSubtypePredicate(CardSubtype.INSECT)),
                 new MayEffect(
                         new SacrificePermanentThenEffect(

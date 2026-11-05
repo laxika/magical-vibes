@@ -16,7 +16,7 @@ public class RhoxBodyguard extends Card {
         // Exalted is auto-loaded from Scryfall as a keyword. Printed exalted fires per attacking ally and
         // boosts the attacker only when it attacks alone (see AvenSquire).
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostTargetCreatureEffect(1, 1));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(3));
     }

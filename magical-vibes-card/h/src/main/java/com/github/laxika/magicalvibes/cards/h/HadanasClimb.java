@@ -21,13 +21,11 @@ public class HadanasClimb extends Card {
 
         target(TargetFilters.creatureYouControl())
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                         new ConditionalEffect(
                                 new TargetPermanentMatches(
                                         new PermanentHasAtLeastCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE, 3)),
-                                new TransformSelfEffect(),
-                                false));
+                                new TransformSelfEffect()));
     }
 
     @Override

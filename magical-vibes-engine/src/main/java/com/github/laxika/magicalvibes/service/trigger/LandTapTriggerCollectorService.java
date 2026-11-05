@@ -63,7 +63,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AnyColorManaChoiceSupport;
-import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler;
@@ -169,10 +168,7 @@ public class LandTapTriggerCollectorService {
     @CollectsTapTrigger(value = ConditionalEffect.class, watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleConditionalManaAbilitySequence(TriggerMatchContext match,
             ConditionalEffect conditional, TriggerContext ctx) {
-        if (match.permanent() == null
-                || (conditional.interveningIf()
-                && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
-                ConditionContext.forPermanent(match.permanent(), match.controllerId())))) {
+        if (match.permanent() == null) {
             return false;
         }
         if (!(conditional.wrapped() instanceof SequenceEffect sequence)) {

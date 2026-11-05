@@ -46,7 +46,7 @@ public class ResolveRiderForPlayerEffectHandler implements NormalEffectHandlerBe
      * by a marked handler, so it can be a step of its own with its own rerun window.
      */
     public boolean resolvesAsStep(CardEffect rider) {
-        CardEffect resolved = rider instanceof ConditionalEffect conditional && !conditional.triggerTimeOnly()
+        CardEffect resolved = rider instanceof ConditionalEffect conditional
                 ? conditional.wrapped() : rider;
         return !(resolved instanceof ConditionalEffect)
                 && effectHandlerRegistry.getHandler(resolved) instanceof AsksDeathReplacementsFirst marked

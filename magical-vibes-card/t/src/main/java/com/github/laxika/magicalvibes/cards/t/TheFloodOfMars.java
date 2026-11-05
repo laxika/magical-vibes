@@ -41,11 +41,9 @@ public class TheFloodOfMars extends Card {
                 .addTrigger(Triggers.attacks(), new PutCounterOnTargetPermanentEffect(CounterType.FLOOD),
                         new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentIsCreaturePredicate()),
-                        new BecomeTargetPermanentCopyOfSourceEffect(),
-                        false),
+                        new BecomeTargetPermanentCopyOfSourceEffect()),
                         new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentIsLandPredicate()),
-                        new GrantSubtypeEffect(CardSubtype.ISLAND, GrantScope.TARGET),
-                        false));
+                        new GrantSubtypeEffect(CardSubtype.ISLAND, GrantScope.TARGET)));
     }
 }

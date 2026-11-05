@@ -5,7 +5,7 @@ package com.github.laxika.magicalvibes.model.condition;
  * entry recorded a departure of that kind in its resolution scratchpad
  * ({@code StackEntry.getResolutionResults()}). A permanent counts wherever it ended up, so a creature
  * sacrificed into exile instead of the graveyard was still sacrificed; one that regenerated or is
- * indestructible was not destroyed. Use it with {@code ConditionalEffect.unless}, since it is only
+ * indestructible was not destroyed. Use it with a {@code ConditionalEffect}, since it is only
  * meaningful as the entry resolves.
  */
 public record PermanentLeftThisWay(How how) implements Condition {

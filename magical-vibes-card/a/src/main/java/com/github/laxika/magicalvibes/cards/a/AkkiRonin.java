@@ -22,7 +22,7 @@ public class AkkiRonin extends Card {
                         .withFilter(new PermanentAnyOfPredicate(List.of(
                                 new PermanentHasSubtypePredicate(CardSubtype.SAMURAI),
                                 new PermanentHasSubtypePredicate(CardSubtype.WARRIOR)))),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new MayEffect(new DiscardAndDrawCardEffect(), "Discard a card to draw a card?"));
     }
 }

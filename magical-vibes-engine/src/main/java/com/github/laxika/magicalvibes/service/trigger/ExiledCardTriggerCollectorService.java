@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,11 +35,6 @@ public class ExiledCardTriggerCollectorService {
         if (isLastCounterEventCondition(conditional)) {
             if (((TriggerContext.TimeCounterRemovedFromExile) ctx).remainingCounters() != 0) return false;
             return handleTimeCounterRemoved(match, conditional, ctx);
-        }
-        if (conditional.interveningIf()
-                && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
-                        ConditionContext.forCard(match.sourceCard(), match.controllerId()))) {
-            return false;
         }
         return handleTimeCounterRemoved(match, conditional, ctx);
     }

@@ -23,7 +23,7 @@ public class GlorifyingVerse extends Card {
         // end of turn. Each Verse contributes its own trigger, as the printed keyword is not
         // auto-triggered; AttacksAlone is checked at resolution.
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostTargetCreatureEffect(1, 1));
 
         // Repartee — Whenever you cast an instant or sorcery spell that targets a creature,

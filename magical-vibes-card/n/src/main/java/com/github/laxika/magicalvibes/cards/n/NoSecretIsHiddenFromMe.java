@@ -14,7 +14,7 @@ public class NoSecretIsHiddenFromMe extends Card {
     public NoSecretIsHiddenFromMe() {
         addSpellEffect(SequenceEffect.of(
                 new ExileTopUntilNonlandMayCastWithoutPayingManaEffect(),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new ControlsPermanentCount(6, new PermanentIsLandPredicate()),
                         new ExileTopUntilNonlandMayCastWithoutPayingManaEffect())));
     }

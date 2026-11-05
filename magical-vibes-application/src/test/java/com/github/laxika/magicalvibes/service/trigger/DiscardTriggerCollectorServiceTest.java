@@ -53,7 +53,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -102,15 +101,13 @@ class DiscardTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("Queues a conditional discard trigger only when its condition is met")
+    @DisplayName("Queues a conditional discard trigger, its condition checked as it resolves")
     void queuesConditionalDiscardTriggerWhenConditionIsMet() {
         Permanent source = createPermanent("Spacecraft");
         var condition = new SourceCounterThreshold(1, CounterType.CHARGE);
         var wrapped = new DrawCardEffect(1);
         var effect = new ConditionalEffect(condition, wrapped);
         var ctx = new TriggerContext.Discard(player2Id, createCard("Discarded card"));
-        when(conditionEvaluationService.isMet(eq(gd), eq(condition), any(ConditionContext.class)))
-                .thenReturn(true);
 
         boolean result = registry.dispatch(
                 match(source, player1Id, effect), LibraryWatch.ON_OPPONENT_DISCARDS, effect, ctx);
@@ -625,15 +622,13 @@ class DiscardTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("queues conditional damage when the condition is met")
+        @DisplayName("queues conditional damage, its condition checked as it resolves")
         void queuesConditionalDamageTrigger() {
             Permanent classPermanent = createPermanent("Cool but Rude");
             var effect = new ConditionalEffect(
                     new SourceCounterThreshold(1, CounterType.LEVEL),
                     new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
             var ctx = new TriggerContext.Discard(player1Id, createCard("Grizzly Bears"));
-            when(conditionEvaluationService.isMet(
-                    eq(gd), eq(effect.condition()), any(ConditionContext.class))).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(classPermanent, player1Id, effect),

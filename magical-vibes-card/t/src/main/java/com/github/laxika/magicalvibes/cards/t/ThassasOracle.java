@@ -29,7 +29,7 @@ public class ThassasOracle extends Card {
                         blueDevotion, new Fixed(1), null,
                         LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false,
                         LibrarySearchDestination.TOP_OF_LIBRARY, true),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new DevotionToColorAtLeastCardsInLibrary(ManaColor.BLUE),
                         new WinGameEffect())));
     }

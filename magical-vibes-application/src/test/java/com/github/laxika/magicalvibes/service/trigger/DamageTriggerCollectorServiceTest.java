@@ -74,7 +74,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -1199,15 +1198,12 @@ class DamageTriggerCollectorServiceTest {
     class ControllerDealtDamageByOpponentConditionalMay {
 
         @Test
-        @DisplayName("queues the conditional may trigger when its intervening-if is met")
+        @DisplayName("queues the conditional may trigger, its intervening-if wrapped to be checked as it resolves")
         void queuesWhenConditionIsMet() {
             Permanent mask = createPermanent("Farsight Mask");
             var condition = new SourceUntapped();
             var effect = new ConditionalEffect(condition, new MayEffect(new DrawCardEffect(), "Draw a card?"));
             var ctx = new TriggerContext.DamageToControllerAmount(player1Id, 3);
-
-            when(conditionEvaluationService.isInterveningIfMet(eq(gd), eq(effect), eq(mask), eq(player1Id)))
-                    .thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(mask, player1Id, effect),
@@ -1218,55 +1214,20 @@ class DamageTriggerCollectorServiceTest {
             assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
             assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(3);
         }
-
-        @Test
-        @DisplayName("does not queue the trigger when its intervening-if is not met")
-        void skipsWhenConditionIsNotMet() {
-            Permanent mask = createPermanent("Farsight Mask");
-            var condition = new SourceUntapped();
-            var effect = new ConditionalEffect(condition, new MayEffect(new DrawCardEffect(), "Draw a card?"));
-            var ctx = new TriggerContext.DamageToControllerAmount(player1Id, 3);
-
-            when(conditionEvaluationService.isInterveningIfMet(eq(gd), eq(effect), eq(mask), eq(player1Id)))
-                    .thenReturn(false);
-
-            boolean result = registry.dispatch(
-                    match(mask, player1Id, effect),
-                    DamageWatch.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT, effect, ctx);
-
-            assertThat(result).isFalse();
-            assertThat(gd.stack).isEmpty();
-        }
     }
 
     @Test
     @DisplayName("queues an intervening-if noncombat-damage token trigger, kept to be checked again as it resolves")
     void queuesInterveningIfNoncombatDamageTokenTrigger() {
         Permanent perm = createPermanent("Molten Lavamancer");
-        var effect = new ConditionalEffect(new ControllerTurn(), elementalToken(), true);
+        var effect = new ConditionalEffect(new ControllerTurn(), elementalToken());
         var ctx = new TriggerContext.NoncombatDamageToOpponent(player2Id, player1Id, 1);
-        when(conditionEvaluationService.isMet(eq(gd), eq(new ControllerTurn()), any(ConditionContext.class), eq(1)))
-                .thenReturn(true);
 
         assertThat(registry.dispatch(match(perm, player1Id, effect),
                 DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, effect, ctx)).isTrue();
 
         assertThat(gd.stack).singleElement()
                 .satisfies(entry -> assertThat(entry.getEffectsToResolve()).containsExactly(effect));
-    }
-
-    @Test
-    @DisplayName("does not queue an intervening-if noncombat-damage token trigger whose condition is false")
-    void skipsInterveningIfNoncombatDamageTokenTriggerOutsideItsCondition() {
-        Permanent perm = createPermanent("Molten Lavamancer");
-        var effect = new ConditionalEffect(new ControllerTurn(), elementalToken(), true);
-        var ctx = new TriggerContext.NoncombatDamageToOpponent(player2Id, player1Id, 1);
-        when(conditionEvaluationService.isMet(eq(gd), eq(new ControllerTurn()), any(ConditionContext.class), eq(1)))
-                .thenReturn(false);
-
-        assertThat(registry.dispatch(match(perm, player1Id, effect),
-                DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, effect, ctx)).isFalse();
-        assertThat(gd.stack).isEmpty();
     }
 
     private static CreateTokenEffect elementalToken() {
@@ -1292,35 +1253,13 @@ class DamageTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("does not queue a conditional self-damage trigger when its intervening-if is false")
-    void skipsConditionalSelfDamageTriggerWhenInterveningIfIsFalse() {
-        Permanent source = createPermanent("Kiyomaro, First to Stand");
-        var condition = new SourceUntapped();
-        var effect = new ConditionalEffect(condition, new DrawCardEffect());
-        var ctx = new TriggerContext.SourceDealsDamage(source.getCard(), player1Id, 2,
-                Map.of(player2Id, 2));
-
-        when(conditionEvaluationService.isMet(eq(gd), eq(condition), any(ConditionContext.class)))
-                .thenReturn(false);
-
-        boolean result = registry.dispatch(
-                match(source, player1Id, effect), DamageWatch.ON_SELF_DEALS_DAMAGE, effect, ctx);
-
-        assertThat(result).isFalse();
-        assertThat(gd.stack).isEmpty();
-    }
-
-    @Test
-    @DisplayName("evaluates a self-damage condition from the source card after the source dies")
+    @DisplayName("queues a conditional self-damage trigger from the source card after the source dies")
     void evaluatesSelfDamageConditionAfterSourceDies() {
         Permanent source = createPermanent("Kiyomaro, First to Stand");
         var condition = new SourceUntapped();
         var effect = new ConditionalEffect(condition, new DrawCardEffect());
         var ctx = new TriggerContext.SourceDealsDamage(source.getCard(), player1Id, 2,
                 Map.of(player2Id, 2));
-
-        when(conditionEvaluationService.isMet(eq(gd), eq(condition), any(ConditionContext.class)))
-                .thenReturn(true);
 
         boolean result = registry.dispatch(
                 match(null, player1Id, effect), DamageWatch.ON_SELF_DEALS_DAMAGE, effect, ctx);
@@ -1329,11 +1268,6 @@ class DamageTriggerCollectorServiceTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getSourcePermanentId()).isNull();
         assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
-
-        ArgumentCaptor<ConditionContext> contextCaptor = ArgumentCaptor.forClass(ConditionContext.class);
-        verify(conditionEvaluationService).isMet(eq(gd), eq(condition), contextCaptor.capture());
-        assertThat(contextCaptor.getValue().sourcePermanent()).isNull();
-        assertThat(contextCaptor.getValue().sourceCard()).isSameAs(source.getCard());
     }
 
     @Nested
@@ -1341,7 +1275,7 @@ class DamageTriggerCollectorServiceTest {
     class DealtDamageConditional {
 
         @Test
-        @DisplayName("queues the trigger when the damage event meets the threshold")
+        @DisplayName("queues the conditional trigger with the damage dealt, its condition checked as it resolves")
         void queuesWhenDamageMeetsThreshold() {
             Permanent damagedCreature = createPermanent("Innocent Bystander");
             var condition = new EventValueAtLeast(3);
@@ -1349,9 +1283,6 @@ class DamageTriggerCollectorServiceTest {
             var ctx = new TriggerContext.DamageToCreature(damagedCreature, 3, player2Id);
 
             when(gameQueryService.findPermanentController(gd, damagedCreature.getId())).thenReturn(player1Id);
-            when(conditionEvaluationService.isMet(eq(gd), eq(condition), any(ConditionContext.class), eq(3)))
-                    .thenReturn(true);
-
             boolean result = registry.dispatch(
                     match(damagedCreature, player1Id, effect), DamageWatch.ON_DEALT_DAMAGE, effect, ctx);
 
@@ -1361,24 +1292,6 @@ class DamageTriggerCollectorServiceTest {
             assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(3);
         }
 
-        @Test
-        @DisplayName("does not queue the trigger when the damage event is below the threshold")
-        void skipsWhenDamageIsBelowThreshold() {
-            Permanent damagedCreature = createPermanent("Innocent Bystander");
-            var condition = new EventValueAtLeast(3);
-            var effect = new ConditionalEffect(condition, new DrawCardEffect());
-            var ctx = new TriggerContext.DamageToCreature(damagedCreature, 2, player2Id);
-
-            when(gameQueryService.findPermanentController(gd, damagedCreature.getId())).thenReturn(player1Id);
-            when(conditionEvaluationService.isMet(eq(gd), eq(condition), any(ConditionContext.class), eq(2)))
-                    .thenReturn(false);
-
-            boolean result = registry.dispatch(
-                    match(damagedCreature, player1Id, effect), DamageWatch.ON_DEALT_DAMAGE, effect, ctx);
-
-            assertThat(result).isFalse();
-            assertThat(gd.stack).isEmpty();
-        }
     }
 
     @Nested
@@ -1386,7 +1299,7 @@ class DamageTriggerCollectorServiceTest {
     class OpponentDealtDamageConditional {
 
         @Test
-        @DisplayName("queues the trigger with the damaged player when the damage reaches the threshold")
+        @DisplayName("queues the conditional trigger with the damaged player and the damage dealt")
         void queuesWhenDamageMeetsThreshold() {
             gd.playerIds.add(player1Id);
             gd.playerIds.add(player2Id);
@@ -1395,9 +1308,6 @@ class DamageTriggerCollectorServiceTest {
             var effect = new ConditionalEffect(condition,
                     new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
             var ctx = new TriggerContext.DamageToControllerAmount(player2Id, 3, UUID.randomUUID());
-
-            when(conditionEvaluationService.isMet(eq(gd), eq(condition), any(ConditionContext.class), eq(3)))
-                    .thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(watcher, player1Id, effect), DamageWatch.ON_OPPONENT_DEALT_DAMAGE, effect, ctx);
@@ -1410,26 +1320,6 @@ class DamageTriggerCollectorServiceTest {
             assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
         }
 
-        @Test
-        @DisplayName("does not queue the trigger below the damage threshold")
-        void skipsWhenDamageIsBelowThreshold() {
-            gd.playerIds.add(player1Id);
-            gd.playerIds.add(player2Id);
-            Permanent watcher = createPermanent("Pain Magnification");
-            var condition = new EventValueAtLeast(3);
-            var effect = new ConditionalEffect(condition,
-                    new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
-            var ctx = new TriggerContext.DamageToControllerAmount(player2Id, 2, UUID.randomUUID());
-
-            when(conditionEvaluationService.isMet(eq(gd), eq(condition), any(ConditionContext.class), eq(2)))
-                    .thenReturn(false);
-
-            boolean result = registry.dispatch(
-                    match(watcher, player1Id, effect), DamageWatch.ON_OPPONENT_DEALT_DAMAGE, effect, ctx);
-
-            assertThat(result).isFalse();
-            assertThat(gd.stack).isEmpty();
-        }
     }
 
     // ===== ON_DEALT_DAMAGE — default handler =====

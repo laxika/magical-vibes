@@ -32,12 +32,11 @@ import java.util.UUID;
  * once for each +1/+1 counter) and the limit ({@link CounterEffect#limit()}, marked by
  * {@link TriggeredAbility#limitKey()} on the source, or for each creature).
  * <p>
- * The intervening "if" (CR 603.4) and the event condition (CR 603.2) reach the collectors as the
- * {@link ConditionalEffect}s they and their handlers judge in contexts of their own (the counter count before and after
- * the placement, the source's chosen mode), until step 15 of effect-slot-refactor.md makes the effects read the event:
- * the intervening "if" is a {@link ConditionalEffect} around each effect, checked as the ability triggers and again as
- * it resolves, and the event condition the {@link ConditionalEffect#atTriggerTime} inside it, checked only as it
- * triggers.
+ * The intervening "if" (CR 603.4) and the event condition (CR 603.2) are the ability's options: its collector judges
+ * them as the ability triggers, in the context of its event, from the records' {@code ability()} or through a
+ * {@link TriggerJudge} on the abilities an effect list is read from. The reader wraps the intervening "if" around each
+ * effect as the {@link ConditionalEffect} that checks it again as the ability resolves; the event condition is never
+ * checked again.
  */
 public final class CounterAbilityReader {
 
@@ -157,6 +156,11 @@ public final class CounterAbilityReader {
         return effects(printed(card, watch), watch.trigger());
     }
 
+    /** {@link #printedEffects(Card, CounterWatch)} of the abilities {@code judge} lets trigger. */
+    public static List<CardEffect> printedEffects(Card card, CounterWatch watch, TriggerJudge judge) {
+        return effects(judge.filter(printed(card, watch)), watch.trigger());
+    }
+
     /** Every effect of {@code abilities}, as their collector reads them for the condition watched as {@code watched}. */
     public static List<CounterEffect> read(List<TriggeredAbility> abilities, Trigger watched) {
         List<CounterEffect> effects = new ArrayList<>();
@@ -173,16 +177,12 @@ public final class CounterAbilityReader {
         if (options.multiplicity() != TriggerMultiplicity.EACH) {
             throw new IllegalStateException("No counter collector reads " + options.multiplicity() + ": " + ability);
         }
-        Condition eventCondition = options.eventCondition();
         Condition interveningIf = options.interveningIf();
         List<CounterEffect> effects = new ArrayList<>(ability.effects().size());
         for (EffectRegistration registration : ability.effects()) {
             CardEffect effect = registration.effect();
-            if (eventCondition != null) {
-                effect = ConditionalEffect.atTriggerTime(eventCondition, effect);
-            }
             if (interveningIf != null) {
-                effect = new ConditionalEffect(interveningIf, effect, true);
+                effect = new ConditionalEffect(interveningIf, effect);
             }
             effects.add(new CounterEffect(effect, ability, condition.qualifier(),
                     condition.event(), registration.simultaneousWithPrevious()));

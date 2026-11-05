@@ -2657,10 +2657,6 @@ public class DeathTriggerCollectorService {
     boolean handleAnyCreatureDeathDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         GameData gameData = match.gameData();
-        if (!conditionEvaluationService.isInterveningIfMet(gameData, effect, match.permanent(),
-                match.controllerId())) {
-            return false;
-        }
         if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                 || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                 || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
@@ -3083,11 +3079,6 @@ public class DeathTriggerCollectorService {
 
     boolean handleAllyNontokenInterveningIfConditional(TriggerMatchContext match,
             ConditionalEffect conditional, TriggerContext ctx) {
-        if (conditional.interveningIf()
-                && !conditionEvaluationService.isInterveningIfMet(match.gameData(), conditional,
-                match.permanent(), match.controllerId())) {
-            return false;
-        }
         return handleAllyNontokenDefault(match, conditional, ctx);
     }
 

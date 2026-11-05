@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 
 @CardRegistration(set = "UDS", collectorNumber = "55")
 public class CarnivalOfSouls extends Card {
@@ -19,7 +19,8 @@ public class CarnivalOfSouls extends Card {
         // enters as a creature (Opalescence).
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER),
                 SequenceEffect.of(new LoseLifeEffect(1), new AwardManaEffect(ManaColor.BLACK)));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new SourceIsCreature(),
-                SequenceEffect.of(new LoseLifeEffect(1), new AwardManaEffect(ManaColor.BLACK))));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsCreature()),
+                SequenceEffect.of(new LoseLifeEffect(1), new AwardManaEffect(ManaColor.BLACK)));
     }
 }

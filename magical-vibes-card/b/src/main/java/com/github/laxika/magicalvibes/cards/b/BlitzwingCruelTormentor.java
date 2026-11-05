@@ -32,7 +32,7 @@ public class BlitzwingCruelTormentor extends Card {
         )).addTrigger(Triggers.endStep(ActivePlayer.YOU), SequenceEffect.of(
                 new LoseLifeEffect(new LifeLostThisTurn(CountScope.TARGET_PLAYER),
                         LoseLifeRecipient.TARGET_PLAYER, false, null, null, true),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new NotCondition(new EventValueAtLeast(1)),
                         new TransformSelfEffect())));
     }

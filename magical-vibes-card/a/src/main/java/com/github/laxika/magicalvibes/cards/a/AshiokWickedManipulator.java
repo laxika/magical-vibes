@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsOwnedInExile;
 import com.github.laxika.magicalvibes.model.condition.CardPutIntoExileThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromLibraryInsteadOfLifePaymentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsOfTargetPlayerLibraryEffect;
@@ -27,6 +26,7 @@ import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 
 @CardRegistration(set = "WOE", collectorNumber = "78")
 @CardRegistration(set = "WOE", collectorNumber = "297")
@@ -60,9 +60,8 @@ public class AshiokWickedManipulator extends Card {
                         false,
                         List.of(
                                 new TriggeredAbility(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                                        new ConditionalEffect(
-                                        new CardPutIntoExileThisTurn(),
-                                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)))),
+                                        TriggerOptions.DEFAULT.withInterveningIf(new CardPutIntoExileThisTurn()),
+                                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))),
                         List.of(),
                         false,
                         false,

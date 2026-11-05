@@ -14,7 +14,7 @@ public class TaintedIndulgence extends Card {
 
     public TaintedIndulgence() {
         addSpellEffect(new DrawCardEffect(2));
-        addSpellEffect(ConditionalEffect.unless(
+        addSpellEffect(new ConditionalEffect(
                 new NotCondition(new DistinctManaValuesAmongCardsInGraveyardAtLeast(5)),
                 new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
     }

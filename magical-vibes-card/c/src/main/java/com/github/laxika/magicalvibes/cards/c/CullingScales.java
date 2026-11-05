@@ -21,6 +21,6 @@ public class CullingScales extends Card {
                 "Target must be a nonland permanent with the lowest mana value."
         )).addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new TargetPermanentMatches(lowestManaValue),
-                new DestroyTargetPermanentEffect(), false));
+                new DestroyTargetPermanentEffect()));
     }
 }

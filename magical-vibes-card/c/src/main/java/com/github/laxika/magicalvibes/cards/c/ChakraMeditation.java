@@ -42,7 +42,7 @@ public class ChakraMeditation extends Card {
 
         addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery),
                 new DrawCardEffect(),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new NotCondition(new GraveyardCardThreshold(
                                 3, new CardSubtypePredicate(CardSubtype.LESSON))),
                         new DiscardEffect(1, DiscardRecipient.CONTROLLER)));

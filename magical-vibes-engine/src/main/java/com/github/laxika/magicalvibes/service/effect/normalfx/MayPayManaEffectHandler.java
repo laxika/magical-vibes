@@ -103,7 +103,7 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        if (e.wrapped() instanceof ConditionalEffect conditional && !conditional.triggerTimeOnly()
+        if (e.wrapped() instanceof ConditionalEffect conditional
                 && !conditionEvaluationService.isMet(gameData, conditional.condition(),
                 ConditionContext.forStackEntry(entry), entry.getEventValue())) {
             return;

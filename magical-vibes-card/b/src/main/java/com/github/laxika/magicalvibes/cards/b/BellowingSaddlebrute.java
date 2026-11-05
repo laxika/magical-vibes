@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class BellowingSaddlebrute extends Card {
 
     public BellowingSaddlebrute() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), ConditionalEffect.unless(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new NotCondition(new Raid()),
                 new LoseLifeEffect(4)));
     }

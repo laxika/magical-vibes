@@ -28,7 +28,7 @@ public class AmaliaBenavidesAguirre extends Card {
 
         addTrigger(Triggers.youGainLife(), SequenceEffect.of(
                 new ExploreEffect(),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new AllOf(List.of(
                                 new SourcePowerAtLeast(20),
                                 new NotCondition(new SourcePowerAtLeast(21))

@@ -28,7 +28,7 @@ public class CryptChampion extends Card {
                         new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardMaxManaValuePredicate(3)))));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), ConditionalEffect.unless(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new NotCondition(new ColorSpentToCast(ManaColor.RED)), new SacrificeSelfEffect()));
     }
 }

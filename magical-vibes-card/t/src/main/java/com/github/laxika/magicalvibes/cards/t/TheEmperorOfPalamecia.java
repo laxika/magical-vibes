@@ -39,7 +39,7 @@ public class TheEmperorOfPalamecia extends Card {
         addTrigger(Triggers.youCastSpell().withFilter(noncreatureSpell),
                 TriggerOptions.DEFAULT.withInterveningIf(new SpellManaSpentAtLeast(4)),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new SourceCounterThreshold(3, CounterType.PLUS_ONE_PLUS_ONE),
                         new TransformSelfEffect()));
     }

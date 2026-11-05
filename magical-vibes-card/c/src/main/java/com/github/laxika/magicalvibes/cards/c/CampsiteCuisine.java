@@ -45,7 +45,7 @@ public class CampsiteCuisine extends Card {
                         SequenceEffect.of(
                                 new SacrificeAnyNumberOfPermanentsEffect(
                                         new PermanentHasSubtypePredicate(CardSubtype.FOOD)),
-                                ConditionalEffect.unless(
+                                new ConditionalEffect(
                                         new EventValueAtLeast(1),
                                         new QueueReflexiveAbilityEffect(
                                                 SequenceEffect.of(

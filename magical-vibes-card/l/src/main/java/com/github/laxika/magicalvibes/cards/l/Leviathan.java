@@ -41,7 +41,7 @@ public class Leviathan extends Card {
                         new SacrificePermanentsEffect(2, islands, SacrificeRecipient.CONTROLLER)
                                 .withRecordedSacrificeCount(),
                         new ConditionalEffect(new EventValueAtLeast(2),
-                                new UntapPermanentsEffect(TapUntapScope.SOURCE_PERMANENT), false))), false),
+                                new UntapPermanentsEffect(TapUntapScope.SOURCE_PERMANENT))))),
                 "You may sacrifice two Islands. If you do, untap this creature."
         ));
 

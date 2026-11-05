@@ -18,7 +18,7 @@ public class SpiderManNoir extends Card {
 
     public SpiderManNoir() {
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 SequenceEffect.of(
                                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                                 new SurveilEffect(new CountersOnTargetPermanent(null))

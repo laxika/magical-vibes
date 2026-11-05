@@ -18,6 +18,6 @@ public class VincentVengefulAtoner extends Card {
                 TriggerOptions.ONE_OR_MORE,
                 new PutCountersOnSourceEffect(1, 1, 1));
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                ConditionalEffect.unless(new SourcePowerAtLeast(7), new DealDamageToEachOtherOpponentEffect()));
+                new ConditionalEffect(new SourcePowerAtLeast(7), new DealDamageToEachOtherOpponentEffect()));
     }
 }

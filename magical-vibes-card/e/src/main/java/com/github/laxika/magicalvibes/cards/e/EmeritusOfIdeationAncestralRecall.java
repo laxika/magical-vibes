@@ -22,7 +22,7 @@ public class EmeritusOfIdeationAncestralRecall extends Card {
         setBackFaceCard(new AncestralRecall());
 
         addStaticEffect(new BecomePreparedEffect());
-        addTrigger(Triggers.attacks(), ConditionalEffect.unless(
+        addTrigger(Triggers.attacks(), new ConditionalEffect(
                 new GraveyardCardThreshold(8, null),
                 new MayEffect(
                         SequenceEffect.of(

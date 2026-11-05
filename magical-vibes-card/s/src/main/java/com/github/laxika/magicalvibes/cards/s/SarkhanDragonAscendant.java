@@ -28,7 +28,7 @@ public class SarkhanDragonAscendant extends Card {
 
     public SarkhanDragonAscendant() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new CanBeholdSubtype(CardSubtype.DRAGON),
                         new MayEffect(
                                 new BeholdEffect(CardSubtype.DRAGON, CreateTokenEffect.ofTreasureToken(1)),

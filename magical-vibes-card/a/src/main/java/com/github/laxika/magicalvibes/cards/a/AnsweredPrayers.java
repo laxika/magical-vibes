@@ -22,7 +22,7 @@ public class AnsweredPrayers extends Card {
     public AnsweredPrayers() {
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL), SequenceEffect.of(
                 new GainLifeEffect(1),
-                ConditionalEffect.unless(new NotCondition(new SourceIsCreature()),
+                new ConditionalEffect(new NotCondition(new SourceIsCreature()),
                         new AnimatePermanentsEffect(3, 3, List.of(CardSubtype.ANGEL), Set.of(Keyword.FLYING)))));
     }
 }

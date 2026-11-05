@@ -203,14 +203,15 @@ public class MiscTriggerCollectorService {
         // One stack entry takes every effect of the card's "this becomes untapped" abilities, put there for the first
         // of them. The reader wraps an effect in its ability's options afresh on every read, so it is found by
         // equality.
-        List<CardEffect> cardEffects = TapAbilityReader.printedEffects(card, TapWatch.ON_SELF_BECOMES_UNTAPPED);
+        ConditionContext context = ConditionContext.forPermanent(match.permanent(), match.controllerId());
+        List<CardEffect> cardEffects = TapAbilityReader.printedEffects(card, TapWatch.ON_SELF_BECOMES_UNTAPPED,
+                conditionEvaluationService.judge(match.gameData(), context));
         if (cardEffects.isEmpty() || !cardEffects.getFirst().equals(effect)) {
             return true;
         }
         List<CardEffect> triggeredEffects = cardEffects.stream()
-                .map(triggeredEffect -> triggeredEffect instanceof ConditionalEffect gate && gate.interveningIf()
-                        ? (conditionEvaluationService.isMet(match.gameData(), gate.condition(),
-                                ConditionContext.forPermanent(match.permanent(), match.controllerId()))
+                .map(triggeredEffect -> triggeredEffect instanceof ConditionalEffect gate
+                        ? (conditionEvaluationService.isMet(match.gameData(), gate.condition(), context)
                                 ? gate.wrapped() : null)
                         : triggeredEffect)
                 .filter(Objects::nonNull)
@@ -983,14 +984,24 @@ public class MiscTriggerCollectorService {
                         .withTargetId(lifeGain.gainingPlayerId()))) {
             return false;
         }
+        return handleOnOpponentLifeGain(match, conditional.wrapped(), ctx);
+    }
 
+    /**
+     * "Whenever an opponent gains life": the ability goes on the stack with the opponent as "that player" and the life
+     * gained as the event's value. Its event condition ("during their turn", Wedding Ring) was judged as the collector
+     * read the ability.
+     */
+    @CollectsLifeTrigger(value = CardEffect.class, watch = LifeWatch.ON_OPPONENT_GAINS_LIFE)
+    private boolean handleOnOpponentLifeGain(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+        TriggerContext.LifeGain lifeGain = (TriggerContext.LifeGain) ctx;
         Card sourceCard = match.permanent().getCard();
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(conditional.wrapped())),
+                new ArrayList<>(List.of(effect)),
                 lifeGain.gainingPlayerId(),
                 match.permanent().getId());
         entry.setEventValue(lifeGain.lifeGainedAmount());
@@ -1410,10 +1421,6 @@ public class MiscTriggerCollectorService {
     @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_CONTROLLER_GETS_ENERGY)
     private boolean handleEnergyGainDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
-        if (!conditionEvaluationService.isInterveningIfMet(match.gameData(), effect,
-                match.permanent(), match.controllerId())) {
-            return false;
-        }
         var gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
         List<CardEffect> effects = new ArrayList<>(List.of(effect));
@@ -1481,11 +1488,6 @@ public class MiscTriggerCollectorService {
     @CollectsCounterTrigger(value = ConditionalEffect.class, watch = CounterWatch.ON_CONTROLLER_PROLIFERATES)
     private boolean handleConditionalProliferate(TriggerMatchContext match,
             ConditionalEffect effect, TriggerContext ctx) {
-        if (effect.interveningIf()
-                && !conditionEvaluationService.isMet(match.gameData(), effect.condition(),
-                        ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
-            return false;
-        }
         return handleProliferateDefault(match, effect, ctx);
     }
 
@@ -2865,11 +2867,6 @@ public class MiscTriggerCollectorService {
     })
     private boolean handleCrimeConditional(TriggerMatchContext match, ConditionalEffect conditional,
                                            TriggerContext ctx) {
-        if (conditional.interveningIf()
-                && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
-                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
-            return false;
-        }
         return handleCrimeDefault(match, conditional, ctx);
     }
 
@@ -3613,12 +3610,6 @@ public class MiscTriggerCollectorService {
 
         CardEffect triggerEffect = effect instanceof TriggeringCardsAwareEffect aware
                 ? aware.withTriggeringCards(cardsLeft.cards()) : effect;
-        if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
-                && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
-                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
-            return false;
-        }
-
         if (triggerEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                 || triggerEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
             match.gameData().queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
@@ -3642,12 +3633,6 @@ public class MiscTriggerCollectorService {
             watch = ZoneChangeWatch.ON_CONTROLLER_ARTIFACT_CARDS_LEAVE_GRAVEYARD)
     boolean handleControllerArtifactCardsLeaveGraveyard(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
-        if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
-                && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
-                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
-            return false;
-        }
-
         if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                 || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
             match.gameData().queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(

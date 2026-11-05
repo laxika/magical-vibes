@@ -143,11 +143,10 @@ public class StackedModalTriggerService {
         }
         List<UUID> validTargets = modeTargets(gameData, entry, mode);
         List<CardEffect> modeEffects = mode.effects();
-        if (entry.getEffectsToResolve().getFirst() instanceof ConditionalEffect conditional
-                && conditional.interveningIf()) {
+        if (entry.getEffectsToResolve().getFirst() instanceof ConditionalEffect conditional) {
             // The intervening "if" is checked again as the chosen mode resolves (CR 603.4).
             modeEffects = modeEffects.stream()
-                    .<CardEffect>map(effect -> new ConditionalEffect(conditional.condition(), effect, true))
+                    .<CardEffect>map(effect -> new ConditionalEffect(conditional.condition(), effect))
                     .toList();
         }
         entry.replaceEffectsToResolve(modeEffects);
@@ -310,15 +309,14 @@ public class StackedModalTriggerService {
             return null;
         }
         CardEffect effect = entry.getEffectsToResolve().getFirst();
-        if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()) {
+        if (effect instanceof ConditionalEffect conditional) {
             effect = conditional.wrapped();
         }
         return effect instanceof ChooseOneEffect modal ? modal : null;
     }
 
     private boolean interveningConditionHolds(GameData gameData, StackEntry entry) {
-        if (!(entry.getEffectsToResolve().getFirst() instanceof ConditionalEffect conditional)
-                || !conditional.interveningIf()) {
+        if (!(entry.getEffectsToResolve().getFirst() instanceof ConditionalEffect conditional)) {
             return true;
         }
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());

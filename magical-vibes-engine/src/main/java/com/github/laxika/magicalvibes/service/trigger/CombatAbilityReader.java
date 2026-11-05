@@ -31,12 +31,12 @@ import java.util.function.Predicate;
  * ({@link CombatEffect#multiplicity()}: "blocks" once each combat and "one or more creatures deal combat damage" are
  * {@code ONE_OR_MORE}, "becomes blocked by a creature" {@code EACH_BLOCKER}; CR 509.3a, 509.3d).
  * <p>
- * The intervening "if" (CR 603.4) and the event condition (CR 603.2) reach the collectors as the
- * {@link ConditionalEffect}s their bodies judge in contexts of their own (the attacker count, the attacked player or
- * planeswalker, the damaged player), until step 15 of effect-slot-refactor.md makes the effects read the event: the
- * intervening "if" is a {@link ConditionalEffect} around each effect, checked as the ability triggers and again as it
- * resolves, and the event condition the {@link ConditionalEffect#atTriggerTime} inside it, checked only as it
- * triggers. On an authored {@link AllyCombatDamageTriggerEffect} (an event binding) the intervening "if" goes inside the
+ * The intervening "if" (CR 603.4) and the event condition (CR 603.2) are the ability's options: its collector judges
+ * them as the ability triggers, in the context of its event, from the records' {@code ability()} or through a
+ * {@link TriggerJudge} on the abilities an effect list is read from. The reader wraps the intervening "if" around each
+ * effect as the {@link ConditionalEffect} that checks it again as the ability resolves; the event condition is never
+ * checked again.
+ * On an authored {@link AllyCombatDamageTriggerEffect} (an event binding) the intervening "if" goes inside the
  * record, around its effect.
  */
 public final class CombatAbilityReader {
@@ -150,7 +150,6 @@ public final class CombatAbilityReader {
     public static List<CombatEffect> read(TriggeredAbility ability, Trigger watched) {
         PermanentPredicate filter = filter(ability, watched);
         TriggerOptions options = ability.options();
-        Condition eventCondition = options.eventCondition();
         Condition interveningIf = options.interveningIf();
         List<CombatEffect> effects = new ArrayList<>(ability.effects().size());
         for (EffectRegistration registration : ability.effects()) {
@@ -158,11 +157,8 @@ public final class CombatAbilityReader {
             AllyCombatDamageTriggerEffect authoredAlly = effect instanceof AllyCombatDamageTriggerEffect ally
                     ? ally : null;
             CardEffect inner = authoredAlly != null ? authoredAlly.effect() : effect;
-            if (eventCondition != null) {
-                inner = ConditionalEffect.atTriggerTime(eventCondition, inner);
-            }
             if (interveningIf != null) {
-                inner = new ConditionalEffect(interveningIf, inner, true);
+                inner = new ConditionalEffect(interveningIf, inner);
             }
             CardEffect read = authoredAlly == null ? inner
                     : inner == authoredAlly.effect() ? authoredAlly : authoredAlly.withEffect(inner);

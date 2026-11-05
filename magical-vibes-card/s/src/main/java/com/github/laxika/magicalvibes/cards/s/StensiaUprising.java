@@ -29,7 +29,7 @@ public class StensiaUprising extends Card {
         addTrigger(Triggers.endStep(ActivePlayer.YOU), SequenceEffect.of(
                 new CreateTokenEffect("Human", 1, 1, CardColor.RED,
                         List.of(CardSubtype.HUMAN), Set.of(), Set.of()),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new AllOf(List.of(
                                 new ControlsPermanentCount(13, new PermanentTruePredicate()),
                                 new ControlsPermanentCountAtMost(13, new PermanentTruePredicate()))),

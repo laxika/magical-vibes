@@ -16,7 +16,7 @@ public class BobReluctantHYDRAAgent extends Card {
 
     public BobReluctantHYDRAAgent() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new ReturnSelfToHandThenEffect(SequenceEffect.of(
                         new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
                         new GainLifeEffect(2))));

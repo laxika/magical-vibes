@@ -29,8 +29,8 @@ public class NornsFetchling extends Card {
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new ConditionalEffect(new OpponentPoisoned(3),
-                        new MayEffect(seekNonland, "Seek a nonland card instead?", conjurePlains), false),
-                new ConditionalEffect(new NotCondition(new OpponentPoisoned(3)), conjurePlains, false)
+                        new MayEffect(seekNonland, "Seek a nonland card instead?", conjurePlains)),
+                new ConditionalEffect(new NotCondition(new OpponentPoisoned(3)), conjurePlains)
         ));
     }
 }

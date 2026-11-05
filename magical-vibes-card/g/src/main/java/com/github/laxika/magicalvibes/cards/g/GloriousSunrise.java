@@ -50,7 +50,7 @@ public class GloriousSunrise extends Card {
                         TargetFilters.land()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Draw a card if you control a creature with power 3 or greater.",
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentPowerAtLeastPredicate(3)))),

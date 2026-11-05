@@ -105,7 +105,7 @@ class DamageTriggerTest {
                 Triggers.creatureDealtDamage());
 
         assertThat(reads).singleElement().satisfies(read -> {
-            assertThat(read.effect()).isEqualTo(new ConditionalEffect(new ControllerTurn(), DRAW, true));
+            assertThat(read.effect()).isEqualTo(new ConditionalEffect(new ControllerTurn(), DRAW));
             assertThat(read.filter()).isEqualTo(DRAGON);
             assertThat(read.limit()).isEqualTo(TriggerLimit.DO_ONLY_ONCE_EACH_TURN);
             assertThat(read.marksLimitOnAcceptance()).isTrue();

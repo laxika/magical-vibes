@@ -42,7 +42,7 @@ public class CentralElevatorPromisingStairs extends Card {
                 new SourceRoomDoorUnlocked(1)),
                 SequenceEffect.of(
                         new SurveilEffect(1),
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new ControlsDistinctUnlockedRoomNamesCount(8),
                                 new WinGameEffect())));
     }

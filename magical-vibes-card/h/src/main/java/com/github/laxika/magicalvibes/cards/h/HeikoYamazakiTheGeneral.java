@@ -24,7 +24,7 @@ public class HeikoYamazakiTheGeneral extends Card {
                         .withFilter(new PermanentAnyOfPredicate(List.of(
                                 new PermanentHasSubtypePredicate(CardSubtype.SAMURAI),
                                 new PermanentHasSubtypePredicate(CardSubtype.WARRIOR)))),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new MayEffect(
                         new AllowCastTargetCardFromGraveyardThisTurnEffect(
                                 new CardTypePredicate(CardType.ARTIFACT),

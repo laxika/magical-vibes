@@ -64,7 +64,7 @@ class TriggerOptionsTest {
     }
 
     @Test
-    void theOwnEntryEffectsGiveTheEventConditionAsATriggerTimeOnlyConditionalInsideTheInterveningIf() {
+    void theOwnEntryEffectsWrapOnlyTheInterveningIfAndLeaveTheEventConditionToTheCollector() {
         ControllerTurn yourTurn = new ControllerTurn();
         SourceCardInGraveyard inGraveyard = new SourceCardInGraveyard();
         DrawCardEffect draw = new DrawCardEffect();
@@ -77,8 +77,8 @@ class TriggerOptionsTest {
 
         assertThat(plain.effects()).extracting(EffectRegistration::effect).containsExactly(draw, gain);
         assertThat(plain.ownEntryEffects()).extracting(EffectRegistration::effect).containsExactly(
-                ConditionalEffect.atTriggerTime(yourTurn, draw), ConditionalEffect.atTriggerTime(yourTurn, gain));
+                draw, gain);
         assertThat(wrapped.ownEntryEffects()).extracting(EffectRegistration::effect).containsExactly(
-                new ConditionalEffect(inGraveyard, ConditionalEffect.atTriggerTime(yourTurn, draw), true));
+                new ConditionalEffect(inGraveyard, draw));
     }
 }

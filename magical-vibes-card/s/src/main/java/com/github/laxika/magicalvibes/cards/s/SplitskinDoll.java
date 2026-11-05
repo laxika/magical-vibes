@@ -23,7 +23,7 @@ public class SplitskinDoll extends Card {
     public SplitskinDoll() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new DrawCardEffect(),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new NotCondition(new ControlsAnotherPermanent(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentPowerAtMostPredicate(2)

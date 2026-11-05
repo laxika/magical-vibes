@@ -23,7 +23,7 @@ public class GiltspireAvenger extends Card {
         // of turn. Triggers.creatureYouControlAttacks() fires per attacking ally and records the attacker as the
         // trigger's (non-targeting) target; AttacksAlone restricts the boost to lone attackers.
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostTargetCreatureEffect(1, 1));
 
         // {T}: Destroy target creature that dealt damage to you this turn.

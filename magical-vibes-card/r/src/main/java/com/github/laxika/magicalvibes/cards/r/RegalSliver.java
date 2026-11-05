@@ -25,9 +25,9 @@ public class RegalSliver extends Card {
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
                 SequenceEffect.of(
-                        ConditionalEffect.unless(new ControllerIsMonarch(),
+                        new ConditionalEffect(new ControllerIsMonarch(),
                                 new BoostAllOwnCreaturesEffect(1, 1, sliver)),
-                        ConditionalEffect.unless(new NotCondition(new ControllerIsMonarch()),
+                        new ConditionalEffect(new NotCondition(new ControllerIsMonarch()),
                                 new BecomeMonarchEffect()))),
                 GrantScope.ALL_OWN_CREATURES,
                 sliver));

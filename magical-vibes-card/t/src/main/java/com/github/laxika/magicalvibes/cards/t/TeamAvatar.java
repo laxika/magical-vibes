@@ -23,7 +23,7 @@ public class TeamAvatar extends Card {
         PermanentCount creaturesYouControl =
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostTargetCreatureEffect(creaturesYouControl, creaturesYouControl));
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{2}{W}",
                 List.of(new DealDamageToTargetCreatureEffect(creaturesYouControl)),

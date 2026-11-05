@@ -28,7 +28,7 @@ public class FurnacePunisher extends Card {
         var activePlayerControlsTwoBasicLands = new AnyPlayerControlsPermanentCount(
                 2, basicLandControlledByActivePlayer);
 
-        addTrigger(Triggers.upkeep(ActivePlayer.ANY), ConditionalEffect.unless(
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY), new ConditionalEffect(
                 new NotCondition(activePlayerControlsTwoBasicLands),
                 new DealDamageToPlayersEffect(2, DamageRecipient.ACTIVE_PLAYER)));
     }

@@ -14,7 +14,7 @@ public class PeggyCarterSecretAgent extends Card {
 
     public PeggyCarterSecretAgent() {
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
     }
 }

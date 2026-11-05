@@ -28,11 +28,11 @@ public class SerratedBiskelion extends Card {
                 true,
                 null,
                 List.of(
-                        ConditionalEffect.unless(otherCreatureTarget,
+                        new ConditionalEffect(otherCreatureTarget,
                                 new PutCountersOnSourceEffect(-1, -1, 1)),
-                        ConditionalEffect.unless(otherCreatureTarget,
+                        new ConditionalEffect(otherCreatureTarget,
                                 new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1)),
-                        ConditionalEffect.unless(selfTarget,
+                        new ConditionalEffect(selfTarget,
                                 new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 2))
                 ),
                 "{T}: Put a -1/-1 counter on this creature and a -1/-1 counter on target creature.",

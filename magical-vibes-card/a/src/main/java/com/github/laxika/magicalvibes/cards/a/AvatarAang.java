@@ -19,7 +19,7 @@ public class AvatarAang extends Card {
         addTrigger(Triggers.attacks(), new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 2));
         addTrigger(Triggers.youBend(), SequenceEffect.of(
                 new DrawCardEffect(1),
-                ConditionalEffect.unless(new AllBendingTypesCompletedThisTurn(),
+                new ConditionalEffect(new AllBendingTypesCompletedThisTurn(),
                         new TransformToBackFaceEffect())));
     }
 

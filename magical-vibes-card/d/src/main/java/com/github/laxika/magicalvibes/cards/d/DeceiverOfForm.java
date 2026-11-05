@@ -21,12 +21,12 @@ public class DeceiverOfForm extends Card {
     public DeceiverOfForm() {
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), SequenceEffect.of(
                 new RevealTopCardOfLibraryEffect(LibraryOwner.CONTROLLER),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new TopCardOfLibraryType(CardType.CREATURE),
                         new MayEffect(
                                 new OtherControlledCreaturesBecomeCopiesOfTopCreatureCardUntilEndOfTurnEffect(),
                                 "Have other creatures you control become copies of that card until end of turn?")),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new CardsInLibraryAtLeast(1),
                         new MayEffect(
                                 new PutTopCardsOfLibraryOnBottomEffect(1),

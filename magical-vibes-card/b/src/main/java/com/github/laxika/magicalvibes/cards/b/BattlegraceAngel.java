@@ -19,13 +19,13 @@ public class BattlegraceAngel extends Card {
         // of turn. Same wiring as Akrasan Squire — Triggers.creatureYouControlAttacks() records the lone attacker
         // as the non-targeting trigger target and AttacksAlone restricts it to solo attackers.
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostTargetCreatureEffect(1, 1));
 
         // Whenever a creature you control attacks alone, it gains lifelink until end of turn.
         // GrantScope.TARGET grants to the recorded lone attacker, same trigger target as the boost.
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET));
     }
 }

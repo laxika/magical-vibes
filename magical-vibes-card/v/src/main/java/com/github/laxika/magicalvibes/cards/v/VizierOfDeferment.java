@@ -21,7 +21,7 @@ public class VizierOfDeferment extends Card {
         // Return that card to the battlefield under its owner's control at the beginning of the next end step.
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new MayEffect(ConditionalEffect.unless(
+                        new MayEffect(new ConditionalEffect(
                                 new TargetPermanentMatches(new PermanentAttackedOrBlockedThisTurnPredicate()),
                                 FlickerEffect.exileTargetReturnAtEndStep()),
                                 "Exile target creature that attacked or blocked this turn?"));

@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class VampireLacerator extends Card {
 
     public VampireLacerator() {
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), ConditionalEffect.unless(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new NotCondition(new AnOpponentLifeAtMost(10)), new LoseLifeEffect(1)));
     }
 }

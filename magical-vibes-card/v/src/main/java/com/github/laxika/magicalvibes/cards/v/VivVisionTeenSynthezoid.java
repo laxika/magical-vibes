@@ -16,7 +16,7 @@ import java.util.List;
 public class VivVisionTeenSynthezoid extends Card {
 
     public VivVisionTeenSynthezoid() {
-        addTrigger(Triggers.attacks(), ConditionalEffect.unless(
+        addTrigger(Triggers.attacks(), new ConditionalEffect(
                 new SourcePowerAtLeast(4),
                 new DrawCardEffect()));
 

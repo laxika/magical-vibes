@@ -487,6 +487,8 @@ import com.github.laxika.magicalvibes.model.condition.WayBehind;
 import com.github.laxika.magicalvibes.model.condition.WonClash;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.service.trigger.TriggerJudge;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyRecipient;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
@@ -2170,23 +2172,38 @@ public class ConditionEvaluationService {
         };
     }
 
-    /** Returns whether a trigger effect's intervening-if condition is met at trigger time. */
-    public boolean isInterveningIfMet(GameData gameData, CardEffect effect, Permanent source,
-                                     UUID controllerId) {
-        return isInterveningIfMet(gameData, effect, source, controllerId, null);
+    /**
+     * Whether a triggered ability with {@code options} triggers as its trigger event occurs: its intervening "if" holds
+     * (CR 603.4; it is checked again as the ability resolves) and its event condition holds (CR 603.2: an event that
+     * doesn't meet it isn't the ability's trigger event).
+     */
+    public boolean triggerConditionsMet(GameData gameData, TriggerOptions options, ConditionContext ctx) {
+        return triggerConditionsMet(gameData, options, ctx, null);
     }
 
-    /** Returns whether a block trigger condition is met, retaining the blocked attacker as context. */
-    public boolean isInterveningIfMet(GameData gameData, CardEffect effect, Permanent source,
-                                     UUID controllerId, UUID triggeringPermanentId) {
-        if (!(effect instanceof ConditionalEffect conditional)) {
-            return true;
-        }
-        if (!conditional.interveningIf()) {
-            return true;
-        }
-        return isMet(gameData, conditional.condition(), ConditionContext.forPermanent(source, controllerId)
-                .withTriggeringPermanentId(triggeringPermanentId));
+    /** {@link #triggerConditionsMet(GameData, TriggerOptions, ConditionContext)} with the event's value. */
+    public boolean triggerConditionsMet(GameData gameData, TriggerOptions options, ConditionContext ctx,
+                                        int eventValue) {
+        return triggerConditionsMet(gameData, options, ctx, Integer.valueOf(eventValue));
+    }
+
+    /**
+     * A {@link TriggerJudge} of the abilities a collector reads against {@code ctx}: whether each one's intervening "if"
+     * and event condition hold ({@link #triggerConditionsMet(GameData, TriggerOptions, ConditionContext)}).
+     */
+    public TriggerJudge judge(GameData gameData, ConditionContext ctx) {
+        return ability -> triggerConditionsMet(gameData, ability.options(), ctx, null);
+    }
+
+    /** {@link #judge(GameData, ConditionContext)} with the event's value. */
+    public TriggerJudge judge(GameData gameData, ConditionContext ctx, int eventValue) {
+        return ability -> triggerConditionsMet(gameData, ability.options(), ctx, eventValue);
+    }
+
+    private boolean triggerConditionsMet(GameData gameData, TriggerOptions options, ConditionContext ctx,
+                                         Integer eventValue) {
+        return (options.interveningIf() == null || isMet(gameData, options.interveningIf(), ctx, eventValue))
+                && (options.eventCondition() == null || isMet(gameData, options.eventCondition(), ctx, eventValue));
     }
 
     /**

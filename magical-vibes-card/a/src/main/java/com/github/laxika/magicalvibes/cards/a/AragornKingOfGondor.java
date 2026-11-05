@@ -24,7 +24,7 @@ public class AragornKingOfGondor extends Card {
                 .bindEffect(cantBlockThisTurn);
         addTrigger(Triggers.attacks(),
                 cantBlockThisTurn,
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                 new ControllerIsMonarch(),
                 new CantBlockThisTurnEffect(TapUntapScope.ALL_CREATURES)));
     }

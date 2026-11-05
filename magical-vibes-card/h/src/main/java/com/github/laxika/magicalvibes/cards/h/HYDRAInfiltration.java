@@ -27,7 +27,7 @@ public class HYDRAInfiltration extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER))
                 .addTrigger(Triggers.creatureYouControlAttacks(),
-                        TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                        TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                         SequenceEffect.of(
                                 new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),
                                 new GainLifeEffect(1)));

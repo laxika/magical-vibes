@@ -28,7 +28,7 @@ public class QasaliPridemage extends Card {
         // end of turn. Triggers.creatureYouControlAttacks() records the lone attacker as the (non-targeting)
         // target; AttacksAlone (checked at resolution) restricts the boost to solo attacks.
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostTargetCreatureEffect(1, 1));
 
         // {1}, Sacrifice this creature: Destroy target artifact or enchantment.

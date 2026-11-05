@@ -21,7 +21,7 @@ public class SinisterConcierge extends Card {
                 .addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.of(
                         new MayEffect(new ExileSourceCardWithSuspendCountersEffect(3),
                                 "Exile Sinister Concierge with three time counters?"),
-                        ConditionalEffect.unless(new SourceCardSuspended(),
+                        new ConditionalEffect(new SourceCardSuspended(),
                                 new ExileTargetCreatureWithSuspendEffect(3))));
     }
 }

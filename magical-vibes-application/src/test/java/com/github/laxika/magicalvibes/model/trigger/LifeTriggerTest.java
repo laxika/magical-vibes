@@ -120,7 +120,7 @@ class LifeTriggerTest {
 
         assertThat(LifeAbilityReader.readPrinted(card, LifeWatch.ON_CONTROLLER_GAINS_LIFE)).singleElement()
                 .satisfies(read -> {
-                    assertThat(read.effect()).isEqualTo(new ConditionalEffect(new ControllerTurn(), DRAW, true));
+                    assertThat(read.effect()).isEqualTo(new ConditionalEffect(new ControllerTurn(), DRAW));
                     assertThat(read.event()).isEqualTo(LifeTrigger.LifeEvent.GAINS);
                     assertThat(read.firstTimeEachTurn()).isTrue();
                     assertThat(read.limit()).isEqualTo(TriggerLimit.NONE);
@@ -130,14 +130,14 @@ class LifeTriggerTest {
     }
 
     @Test
-    void theEventConditionIsInsideTheInterveningIf() {
+    void theReaderWrapsOnlyTheInterveningIfAndLeavesTheEventConditionToTheCollector() {
         Card card = new Card();
         card.addTrigger(Triggers.opponentGainsLife(), TriggerOptions.DEFAULT
                 .withInterveningIf(new ControllerTurn()).withEventCondition(new TargetPlayerTurn()), DRAW);
 
         assertThat(LifeAbilityReader.printedEffects(card, LifeWatch.ON_OPPONENT_GAINS_LIFE))
                 .containsExactly(new ConditionalEffect(new ControllerTurn(),
-                        ConditionalEffect.atTriggerTime(new TargetPlayerTurn(), DRAW), true));
+                        DRAW));
     }
 
     @Test
@@ -170,7 +170,7 @@ class LifeTriggerTest {
         gain.markLimit(gameData, sourceId);
 
         assertThat(gain.ability()).isSameAs(loss.ability());
-        assertThat(loss.effect()).isEqualTo(new ConditionalEffect(new ControllerTurn(), DRAW, true));
+        assertThat(loss.effect()).isEqualTo(new ConditionalEffect(new ControllerTurn(), DRAW));
         assertThat(loss.limitReached(gameData, sourceId)).isTrue();
         assertThat(loss.triggersOnlyOnceEachTurn()).isTrue();
         assertThat(gameData.keyedOncePerTurnTriggersFiredThisTurn.get(sourceId))

@@ -163,8 +163,8 @@ class MiscTriggerTest {
         assertThat(state.watchKey()).isEqualTo(Triggers.state());
         assertThat(MiscAbilityReader.stateTriggers(card)).containsExactly(
                 new StateTriggerEffect(null, null, FLYING, 0, 0, FLYING,
-                        List.of(new ConditionalEffect(new ControllerTurn(), DRAW, true),
-                                new ConditionalEffect(new ControllerTurn(), GAIN, true)), null),
+                        List.of(new ConditionalEffect(new ControllerTurn(), DRAW),
+                                new ConditionalEffect(new ControllerTurn(), GAIN)), null),
                 new StateTriggerEffect(null, FLYING, null, 0, 0, null, List.of(DRAW), null));
     }
 
@@ -264,13 +264,13 @@ class MiscTriggerTest {
     }
 
     @Test
-    void theReaderWrapsTheEventConditionInsideTheInterveningIf() {
+    void theReaderWrapsOnlyTheInterveningIfAndLeavesTheEventConditionToTheCollector() {
         TriggeredAbility ability = new TriggeredAbility(Triggers.chaosEnsues(), TriggerOptions.DEFAULT
                 .withInterveningIf(new ControllerTurn()).withEventCondition(new EventValueAtLeast(4)), DRAW);
 
         assertThat(MiscAbilityReader.effects(List.of(ability), Triggers.chaosEnsues()))
                 .containsExactly(new ConditionalEffect(new ControllerTurn(),
-                        ConditionalEffect.atTriggerTime(new EventValueAtLeast(4), DRAW), true));
+                        DRAW));
     }
 
     @Test

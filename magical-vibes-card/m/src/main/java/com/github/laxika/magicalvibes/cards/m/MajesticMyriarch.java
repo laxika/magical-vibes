@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 
 @CardRegistration(set = "HOU", collectorNumber = "122")
 @CardRegistration(set = "AKR", collectorNumber = "200")
@@ -48,14 +49,12 @@ public class MajesticMyriarch extends Card {
 
         // At the beginning of each combat, gain each listed keyword UEOT if you control a
         // creature with that keyword. One ability; each keyword checked at resolution.
-        for (Keyword keyword : COMBAT_KEYWORDS) {
-            addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY),
-                    new ConditionalEffect(
-                            new ControlsPermanent(new PermanentAllOfPredicate(List.of(
-                                    new PermanentIsCreaturePredicate(),
-                                    new PermanentHasKeywordPredicate(keyword)))),
-                            new GrantKeywordEffect(keyword, GrantScope.SELF),
-                            false));
-        }
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY), COMBAT_KEYWORDS.stream()
+                .map(keyword -> (CardEffect) new ConditionalEffect(
+                        new ControlsPermanent(new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentHasKeywordPredicate(keyword)))),
+                        new GrantKeywordEffect(keyword, GrantScope.SELF)))
+                .toArray(CardEffect[]::new));
     }
 }

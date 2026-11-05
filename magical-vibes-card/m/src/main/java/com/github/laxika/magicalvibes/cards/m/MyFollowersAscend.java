@@ -26,7 +26,7 @@ public class MyFollowersAscend extends Card {
         PermanentPredicate creature = new PermanentIsCreaturePredicate();
         ControlsPermanent controlsCreature = new ControlsPermanent(creature);
 
-        addSpellEffect(ConditionalEffect.unless(controlsCreature,
+        addSpellEffect(new ConditionalEffect(controlsCreature,
                         SequenceEffect.of(
                                 new PutCounterOnChosenOwnPermanentEffect(
                                         CounterType.PLUS_ONE_PLUS_ONE, 5, creature),
@@ -34,7 +34,7 @@ public class MyFollowersAscend extends Card {
                                         Keyword.FLYING, null),
                                 new GrantKeywordToChosenCreatureUntilEndOfTurnEffect(
                                         Keyword.VIGILANCE, null))));
-        addSpellEffect(ConditionalEffect.unless(new NotCondition(controlsCreature),
+        addSpellEffect(new ConditionalEffect(new NotCondition(controlsCreature),
                         new CreateTokenEffect(
                                 "Scarecrow", 4, 4, null,
                                 List.of(CardSubtype.SCARECROW), Set.of(Keyword.VIGILANCE),

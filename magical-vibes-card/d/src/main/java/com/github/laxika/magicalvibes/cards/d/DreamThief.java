@@ -16,7 +16,7 @@ public class DreamThief extends Card {
     public DreamThief() {
         // When this creature enters, draw a card if you've cast another blue spell this turn.
         // The resolving-spell exclusion drops Dream Thief's own creature spell, so "another".
-        addTrigger(Triggers.enters(ObjectRelation.THIS), ConditionalEffect.unless(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new ControllerCastAnotherSpellThisTurn(new CardColorPredicate(CardColor.BLUE)),
                 new DrawCardEffect(1)));
     }

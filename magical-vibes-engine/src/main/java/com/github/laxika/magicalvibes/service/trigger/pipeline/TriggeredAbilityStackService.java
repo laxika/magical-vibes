@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
@@ -153,8 +155,8 @@ public class TriggeredAbilityStackService {
         }
         List<CardEffect> effects = new ArrayList<>();
         for (EffectRegistration registration : candidate.ability().effects()) {
-            effects.add(interveningIf == null ? registration.effect()
-                    : new ConditionalEffect(interveningIf, registration.effect(), true));
+            effects.add(withInterveningIf(interveningIf, registration.effect(),
+                    trigger.to() == Zone.BATTLEFIELD));
         }
         if (zoneChangeWatch != null) {
             if (triggerCollectionService.triggerZoneChange(gameData, zoneChangeWatch, candidate, effects, events)) {
@@ -188,8 +190,11 @@ public class TriggeredAbilityStackService {
         }
         TriggerOptions options = candidate.ability().options();
         Condition interveningIf = options.interveningIf();
+        // "If it's a creature" (Trail of Mystery) reads the permanent that changed, as the event's object.
+        UUID changedId = events.getFirst().permanent().getId();
         if (!conditionsMet(gameData, options,
-                ConditionContext.forPermanent(candidate.sourceAsPermanent(), candidate.controllerId()))) {
+                ConditionContext.forPermanent(candidate.sourceAsPermanent(), candidate.controllerId())
+                        .withTargetId(changedId).withTriggeringPermanentId(changedId))) {
             return;
         }
         UUID sourceId = candidate.sourceObjectId();
@@ -199,8 +204,7 @@ public class TriggeredAbilityStackService {
         }
         List<CardEffect> effects = new ArrayList<>();
         for (EffectRegistration registration : candidate.ability().effects()) {
-            effects.add(interveningIf == null ? registration.effect()
-                    : new ConditionalEffect(interveningIf, registration.effect(), true));
+            effects.add(withInterveningIf(interveningIf, registration.effect(), false));
         }
         if (triggerCollectionService.triggerPermanentChange(gameData, watch, candidate, effects, events)) {
             markLimit(gameData, options.limit(), sourceId, limitKey);
@@ -225,7 +229,7 @@ public class TriggeredAbilityStackService {
     private boolean triggerBound(GameData gameData, TriggerCandidate candidate, ZoneChangeEvent event,
                                  LegacyTriggerBindings.Kind kind, CardEffect authored, Condition interveningIf,
                                  TriggerLimit limit) {
-        CardEffect effect = interveningIf == null ? authored : new ConditionalEffect(interveningIf, authored, true);
+        CardEffect effect = withInterveningIf(interveningIf, authored, false);
         // "This ability triggers only once each turn" can't be made to trigger an additional time (Clara Oswald).
         int copies = limit == TriggerLimit.ONCE_EACH_TURN ? 1
                 : 1 + additionalTriggers(gameData, candidate, event, kind);
@@ -249,7 +253,7 @@ public class TriggeredAbilityStackService {
                     ? triggerCollectionService.bindSelfDeathEffect(gameData, candidate.sourceCard(),
                     event.permanent(), event.attachments(), registration.effect())
                     : registration.effect();
-            effects.add(interveningIf == null ? effect : new ConditionalEffect(interveningIf, effect, true));
+            effects.add(withInterveningIf(interveningIf, effect, false));
         }
         boolean markOnAcceptance = options.limit() == TriggerLimit.DO_ONLY_ONCE_EACH_TURN;
         int lastKnownPower = event.permanent() != null && event.permanent().getLastKnownPower() != null
@@ -401,5 +405,22 @@ public class TriggeredAbilityStackService {
                     gameData, candidate.controllerId(), source);
         }
         return additional;
+    }
+
+    /**
+     * {@code effect} with the ability's intervening "if" {@code interveningIf} ({@code null} for none) around it, so it
+     * is checked again as the ability resolves (CR 603.4). On an ability triggered by an object entering the
+     * battlefield ({@code entering}) it goes inside a "you may" that targets nothing, whose collectors bind the choice to
+     * the entering object; the "you may" isn't asked once the "if" is false ({@code EffectResolutionService}).
+     */
+    static CardEffect withInterveningIf(Condition interveningIf, CardEffect effect, boolean entering) {
+        if (interveningIf == null) {
+            return effect;
+        }
+        if (entering && effect instanceof MayEffect may && TargetSpec.NONE.equals(may.targetSpec())) {
+            return new MayEffect(new ConditionalEffect(interveningIf, may.wrapped()), may.prompt(), may.elseEffect(),
+                    may.choicePlayer(), may.choicePlayerId());
+        }
+        return new ConditionalEffect(interveningIf, effect);
     }
 }

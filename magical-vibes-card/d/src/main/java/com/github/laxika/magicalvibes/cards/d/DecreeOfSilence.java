@@ -20,7 +20,7 @@ public class DecreeOfSilence extends Card {
         addTrigger(Triggers.opponentCastsSpell().anySpell(),
                 new CounterSpellEffect(),
                 new PutCountersOnSelfEffect(CounterType.DEPLETION),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new SourceCounterThreshold(3, CounterType.DEPLETION),
                         new SacrificeSelfEffect()));
         addTrigger(Triggers.youCycleThisCard(), new MayEffect(new CounterSpellEffect(), "Counter target spell?"));

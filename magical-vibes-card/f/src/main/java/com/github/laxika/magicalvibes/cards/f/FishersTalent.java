@@ -37,7 +37,7 @@ public class FishersTalent extends Card {
                 false, false, List.of(), List.of(), false, false, false, 0, Set.of());
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new TopCardOfLibraryType(CardType.LAND, LibraryOwner.CONTROLLER),
                         new MayEffect(
                                 SequenceEffect.of(

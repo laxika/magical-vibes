@@ -21,6 +21,6 @@ public class ChainAssassination extends Card {
         addCastingOption(new AlternateHandCast(
                 List.of(new ManaCastingCost("{1}{B}")), new Freerunning(), false));
         target(TargetFilters.creature()).addSpellEffect(new DestroyTargetPermanentEffect());
-        addSpellEffect(new ConditionalEffect(new AnotherCreatureDiedThisTurn(), new DrawCardEffect(), false));
+        addSpellEffect(new ConditionalEffect(new AnotherCreatureDiedThisTurn(), new DrawCardEffect()));
     }
 }

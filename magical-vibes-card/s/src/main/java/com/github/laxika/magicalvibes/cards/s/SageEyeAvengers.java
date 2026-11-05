@@ -20,8 +20,6 @@ public class SageEyeAvengers extends Card {
                 new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentPowerLessThanSourcePowerPredicate()),
                         new MayEffect(ReturnToHandEffect.target(),
-                                "Return target creature to its owner's hand?"),
-                        false
-                ));
+                                "Return target creature to its owner's hand?")));
     }
 }

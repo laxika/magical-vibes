@@ -22,7 +22,7 @@ public class DriftgloomCoyote extends Card {
         target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 SequenceEffect.of(
                         new ExileTargetPermanentUntilSourceLeavesEffect(),
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new TargetPermanentMatches(new PermanentPowerAtMostPredicate(2)),
                                 new PutCountersOnSourceEffect(1, 1, 1))));
     }

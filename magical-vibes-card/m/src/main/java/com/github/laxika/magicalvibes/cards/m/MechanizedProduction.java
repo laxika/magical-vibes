@@ -36,7 +36,7 @@ public class MechanizedProduction extends Card {
                 "Target must be an artifact you control"
         )).addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 new CreateTokenCopyOfEnchantedPermanentEffect(),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new ControlsPermanentsWithSameName(8, new PermanentIsArtifactPredicate()),
                         new WinGameEffect())
         ));

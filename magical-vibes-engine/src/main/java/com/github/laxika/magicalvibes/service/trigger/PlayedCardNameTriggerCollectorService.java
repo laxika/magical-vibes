@@ -215,7 +215,7 @@ public class PlayedCardNameTriggerCollectorService {
         for (EffectRegistration registration : ability.effects()) {
             CardEffect effect = registration.effect();
             if (interveningIf != null) {
-                effect = new ConditionalEffect(interveningIf, effect, true);
+                effect = new ConditionalEffect(interveningIf, effect);
             }
             if (recheckFilter) {
                 effect = new TriggeringCardConditionalEffect(filter, effect);
@@ -274,9 +274,6 @@ public class PlayedCardNameTriggerCollectorService {
     @CollectsSpellAbilityTrigger(value = CardEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_PLAYS_ANOTHER_LAND)
     private boolean handleControllerPlaysLandDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
-        if (!interveningIfMet(match, effect)) {
-            return false;
-        }
         return enqueueLandPlayTrigger(match, effect, ((TriggerContext.LandPlayed) ctx).playingPlayerId());
     }
 
@@ -287,20 +284,7 @@ public class PlayedCardNameTriggerCollectorService {
     @CollectsSpellAbilityTrigger(value = CardEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_PLAYS_LAND)
     private boolean handleOpponentPlaysLandDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
-        if (!interveningIfMet(match, effect)) {
-            return false;
-        }
         return enqueueLandPlayTrigger(match, effect, ((TriggerContext.LandPlayed) ctx).playingPlayerId());
-    }
-
-    /**
-     * An intervening "if" is checked as the ability triggers (CR 603.4): the ability doesn't trigger while it is
-     * false, and the {@link ConditionalEffect} checks it again as the ability resolves.
-     */
-    private boolean interveningIfMet(TriggerMatchContext match, CardEffect effect) {
-        return !(effect instanceof ConditionalEffect gate) || !gate.interveningIf()
-                || conditionEvaluationService.isMet(match.gameData(), gate.condition(),
-                ConditionContext.forPermanent(match.permanent(), match.controllerId()));
     }
 
     private boolean enqueueLandPlayTrigger(TriggerMatchContext match, CardEffect effect,

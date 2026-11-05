@@ -18,9 +18,9 @@ public class BrackishBlunder extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentNotPredicate(new PermanentIsTappedPredicate())),
-                        ReturnToHandEffect.target(), false))
+                        ReturnToHandEffect.target()))
                 .addSpellEffect(new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentIsTappedPredicate()),
-                        SequenceEffect.of(ReturnToHandEffect.target(), CreateTokenEffect.ofMapToken(1)), false));
+                        SequenceEffect.of(ReturnToHandEffect.target(), CreateTokenEffect.ofMapToken(1))));
     }
 }

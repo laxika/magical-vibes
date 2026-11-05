@@ -18,7 +18,7 @@ import java.util.List;
 public class ReaverDrone extends Card {
 
     public ReaverDrone() {
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), ConditionalEffect.unless(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new NotCondition(new ControlsAnotherPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsColorlessPredicate()

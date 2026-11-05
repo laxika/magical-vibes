@@ -357,26 +357,22 @@ public class PlanechaseService {
 
     /**
      * Puts the planar object's abilities with {@code trigger} on the stack, under {@code controller}. A step or phase
-     * ability's options are judged as it triggers ({@link StepAbilityReader}); a planar ability's
-     * ({@link MiscAbilityReader}) intervening "if" is checked as it triggers, below, and it takes no other option.
+     * ability's options are judged as it triggers ({@link StepAbilityReader}), and so are a planar ability's
+     * ({@link MiscAbilityReader}) intervening "if" and event condition (CR 603.4, CR 603.2).
      */
     public void trigger(GameData game, PlanarObject object, Trigger trigger, UUID controller) {
         Card card = object.getCard();
+        ConditionContext context = ConditionContext.forCard(card, controller);
         List<CardEffect> effects = trigger instanceof StepTrigger
                 ? new StepAbilityReader(conditionEvaluationService).effects(game, card.getTriggeredAbilities(trigger),
-                        ConditionContext.forCard(card, controller))
-                : MiscAbilityReader.effects(card.getTriggeredAbilities(trigger), trigger);
+                        context)
+                : MiscAbilityReader.effects(conditionEvaluationService.judge(game, context)
+                        .filter(card.getTriggeredAbilities(trigger)), trigger);
         trigger(game, object, effects, controller);
     }
 
-    private void trigger(GameData game, PlanarObject object, List<CardEffect> abilityEffects, UUID controller) {
+    private void trigger(GameData game, PlanarObject object, List<CardEffect> effects, UUID controller) {
         Card card = object.getCard();
-        List<CardEffect> effects = abilityEffects.stream()
-                .filter(effect -> !(effect instanceof ConditionalEffect conditional)
-                        || !conditional.interveningIf()
-                        || conditionEvaluationService.isMet(game, conditional.condition(),
-                        ConditionContext.forCard(card, controller)))
-                .toList();
         boolean needsSlotBySlotTargetSelection = card.getTargetGroups().size() > 1
                 || card.getTargetGroups().stream().anyMatch(target -> target.getMaxTargets() > 1
                 || target.getMinTargets() == 0 || target.getDynamicMinTargets() != null);

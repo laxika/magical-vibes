@@ -13,7 +13,7 @@ public class RogueKavu extends Card {
 
     public RogueKavu() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostSelfEffect(2, 0));
     }
 }

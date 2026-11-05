@@ -554,7 +554,7 @@ public class BackFace extends Card {
 
 ## ConditionalEffect context reference
 
-Which engine layers support each ConditionalEffect. Check this before using a conditional in a new context.
+Which engine layers support each condition. Check this before using a conditional in a new context. "Trigger Time" means the condition works as a triggered ability's intervening "if" or event condition, written as `TriggerOptions.DEFAULT.withInterveningIf(condition)` / `withEventCondition(condition)`, never as a `ConditionalEffect` around the effects. `ConditionalEffect(condition, effect)` is the "if" of an effect, checked only as the effect resolves. A triggered ability's intervening "if" ("When/Whenever/At [trigger event], if [condition], [effect]", CR 603.4) is never a `ConditionalEffect`: write it as `TriggerOptions.DEFAULT.withInterveningIf(condition)`, which the collector checks as the ability triggers and wraps around its effects to check again as it resolves; a condition of the trigger event is `withEventCondition(condition)` (CR 603.2). An "if" anywhere else in the text ("draw a card if …", "Then if …", "If …, instead …") is a `ConditionalEffect`.
 
 | ConditionalEffect | Static | Effect Resolution | Trigger Time |
 |---|---|---|---|
@@ -615,7 +615,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new SourceStartedTurnUntapped(), wrapped)` | - | yes | - | intervening-if "if this permanent started the turn untapped" — reads the source's status before its controller's untap step; use for Rasputin Dreamweaver's upkeep trigger |
 | `ConditionalEffect(new SourceIsCreature(), wrapped)` | - | yes | - | intervening-if "if this permanent is a creature" — reads the source's effective creature type |
 | `ConditionalEffect(new SourceIsToken(), wrapped)` | - | yes | - | intervening-if "if this permanent is a token" — reads `source.getCard().isToken()`. Wrap in `NotCondition` for Progenitor Mimic's "if this creature isn't a token" |
-| `ConditionalEffect(new NotCondition(inner), wrapped)` | as `inner` | yes | as `inner` | negated intervening-if ("When this enters, if you control no face-down permanents" — Glitch Interpreter); it is an ETB trigger-time gate exactly when `inner` is. A negated condition that is not right after the trigger event ("…, you lose 3 life if you don't control a Demon" — Raving Oni-Slave) must use `ConditionalEffect.unless` |
+| `ConditionalEffect(new NotCondition(inner), wrapped)` | as `inner` | yes | as `inner` | negated intervening-if ("When this enters, if you control no face-down permanents" — Glitch Interpreter); it is an ETB trigger-time gate exactly when `inner` is. A negated condition that is not right after the trigger event ("…, you lose 3 life if you don't control a Demon" — Raving Oni-Slave) must use `ConditionalEffect` |
 | `ConditionalEffect(new SourceAttackingPlayer(), wrapped)` | - | yes | - | "whenever this creature attacks a player" (not a planeswalker or battle); Master of Cruelties |
 | `ConditionalEffect(new SourceIsAttacking(), wrapped)` | yes | - | - | "as long as this creature is attacking" — reads `source.isAttacking()`. Thorned Moloch STATIC first strike |
 | `ConditionalEffect(new SourceIsAttackingOrBlocking(), wrapped)` | yes | - | - | "unless it's attacking or blocking" — reads the source's current combat flags. Tromokratis's conditional hexproof |

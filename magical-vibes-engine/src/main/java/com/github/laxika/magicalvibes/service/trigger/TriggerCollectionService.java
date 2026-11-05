@@ -432,6 +432,11 @@ public class TriggerCollectionService {
         return CombatAbilityReader.effects(WatchedAbilities.printed(card, watch), watch.trigger());
     }
 
+    /** {@link #printedCombatEffects(Card, CombatWatch)} of the abilities {@code judge} lets trigger. */
+    private static List<CardEffect> printedCombatEffects(Card card, CombatWatch watch, TriggerJudge judge) {
+        return CombatAbilityReader.effects(judge.filter(WatchedAbilities.printed(card, watch)), watch.trigger());
+    }
+
     /** {@link GrantedTriggeredAbilitySupport#grantedWatchedAbilities(GameData, Permanent, Trigger)}. */
     public List<TriggeredAbility> grantedWatchedAbilities(GameData gameData, Permanent permanent, Trigger watched) {
         return grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, permanent, watched);
@@ -622,6 +627,11 @@ public class TriggerCollectionService {
             CounterAbilityReader.requireNoLimit(read, watch.trigger());
             // "Whenever you remove a time counter from this card while it's exiled" (Watcher of Hours).
             if (read.byController() && removerId != null && !removerId.equals(ownerId)) {
+                continue;
+            }
+            // Its intervening "if" (CR 603.4) and event condition (CR 603.2), read from the exiled card.
+            if (!conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
+                    ConditionContext.forCard(card, ownerId))) {
                 continue;
             }
             effects.add(read.effect());
@@ -1433,9 +1443,9 @@ public class TriggerCollectionService {
                     // Bind "source card in graveyard" to this graveyard incarnation (CR 400.7) so the
                     // ability does nothing if the card has left and returned to the graveyard.
                     List<CardEffect> boundEffects = trigger.effects().stream()
-                            .map(e -> bindSourceCardInGraveyardVersion(gameData, e, card.getId()))
                             .map(e -> trigger.interveningIf() == null ? e
-                                    : (CardEffect) new ConditionalEffect(trigger.interveningIf(), e, true))
+                                    : (CardEffect) new ConditionalEffect(trigger.interveningIf(), e))
+                            .map(e -> bindSourceCardInGraveyardVersion(gameData, e, card.getId()))
                             .toList();
                     if (trigger.manaCost() != null) {
                         // "you may pay {X}" pattern — queue MayPayManaEffect on the stack
@@ -2298,13 +2308,6 @@ public class TriggerCollectionService {
                 continue;
             }
             if (effect instanceof ConditionalEffect conditional
-                    && conditional.interveningIf()
-                    && selfCastSpellEntry != null
-                    && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                    ConditionContext.forStackEntry(selfCastSpellEntry))) {
-                continue;
-            }
-            if (effect instanceof ConditionalEffect conditional
                     && conditional.wrapped() instanceof CopyThisSpellIfConditionEffect) {
                 effect = conditional.wrapped();
             }
@@ -2896,11 +2899,9 @@ public class TriggerCollectionService {
             // Skip EnterBattlefieldOnDiscardEffect — it's a replacement effect handled earlier in the discard flow
             if (gameData.discardCausedByOpponent) {
                 List<CardEffect> selfTriggers = LibraryAbilityReader.printedEffects(discardedCard,
-                                LibraryWatch.ON_SELF_DISCARDED_BY_OPPONENT).stream()
+                                LibraryWatch.ON_SELF_DISCARDED_BY_OPPONENT, conditionEvaluationService.judge(gameData,
+                                        ConditionContext.forCard(discardedCard, discardingPlayerId))).stream()
                         .filter(e -> !(e instanceof EnterBattlefieldOnDiscardEffect))
-                        .filter(e -> !(e instanceof ConditionalEffect conditional) || !conditional.interveningIf()
-                                || conditionEvaluationService.isMet(gameData, conditional.condition(),
-                                        ConditionContext.forCard(discardedCard, discardingPlayerId)))
                         .toList();
                 if (!selfTriggers.isEmpty()) {
                     boolean needsAnyTarget = selfTriggers.stream()
@@ -2954,12 +2955,8 @@ public class TriggerCollectionService {
     public void checkCycleTriggers(GameData gameData, UUID cyclingPlayerId, Card cycledCard, int cyclingXValue,
                                    com.github.laxika.magicalvibes.model.ActivatedAbility targetingCyclingAbility,
                                    List<UUID> announcedTargetIds) {
-        List<CardEffect> selfEffects = LibraryAbilityReader.printedEffects(cycledCard, LibraryWatch.ON_SELF_CYCLED)
-                .stream()
-                .filter(e -> !(e instanceof ConditionalEffect conditional) || !conditional.interveningIf()
-                        || conditionEvaluationService.isMet(gameData, conditional.condition(),
-                                ConditionContext.forCard(cycledCard, cyclingPlayerId)))
-                .toList();
+        List<CardEffect> selfEffects = LibraryAbilityReader.printedEffects(cycledCard, LibraryWatch.ON_SELF_CYCLED,
+                conditionEvaluationService.judge(gameData, ConditionContext.forCard(cycledCard, cyclingPlayerId)));
         if (!selfEffects.isEmpty()) {
             List<UUID> announcedTargets = announcedTargetIds != null ? announcedTargetIds : List.of();
             boolean chooseOnTrigger = targetingCyclingAbility != null && announcedTargets.isEmpty()
@@ -3163,8 +3160,10 @@ public class TriggerCollectionService {
         UUID planarControllerId = gameData.planechase.controllerId;
         TriggerContext context = new TriggerContext.DiceRoll(rollingPlayerId, 1, result, true);
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
+            TriggerJudge judge = conditionEvaluationService.judge(gameData,
+                    ConditionContext.forCard(object.getCard(), planarControllerId), result);
             for (CardEffect effect : ActionAbilityReader.printedEffects(object.getCard(),
-                    ActionWatch.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE)) {
+                    ActionWatch.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE, judge)) {
                 registry.dispatch(new TriggerMatchContext(gameData, null, planarControllerId, effect,
                                 object.getCard(), object.copy()),
                         ActionWatch.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE, effect, context);
@@ -3536,8 +3535,7 @@ public class TriggerCollectionService {
                 if (!matches) {
                     continue;
                 }
-                if (resolvedEffect instanceof ConditionalEffect conditional && conditional.interveningIf()
-                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                if (!conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
                         ConditionContext.forPermanent(source, controllerId).withTargetId(damagedPlayerId))) {
                     continue;
                 }
@@ -3679,8 +3677,7 @@ public class TriggerCollectionService {
                 if (!matches) {
                     continue;
                 }
-                if (resolvedEffect instanceof ConditionalEffect conditional && conditional.interveningIf()
-                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                if (!conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
                         ConditionContext.forPermanent(source, controllerId))) {
                     continue;
                 }
@@ -4122,8 +4119,7 @@ public class TriggerCollectionService {
                 String triggerKey = perm.getId() + ":" + effectIndex;
                 CardEffect resolved = resolveTriggeringPermanentConditional(
                         gameData, perm, damagedPlayerId, sourceCreature, read.effect());
-                if (resolved instanceof ConditionalEffect conditional && conditional.interveningIf()
-                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                if (!conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
                         ConditionContext.forPermanent(perm, damagedPlayerId))) {
                     continue;
                 }
@@ -4273,7 +4269,9 @@ public class TriggerCollectionService {
                 }
             }
             if (fromOpponent) {
-                for (CardEffect effect : DamageAbilityReader.printedEffects(perm.getCard(), DamageWatch.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT)) {
+                for (CardEffect effect : DamageAbilityReader.printedEffects(perm.getCard(),
+                        DamageWatch.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT, conditionEvaluationService.judge(gameData,
+                                ConditionContext.forPermanent(perm, damagedPlayerId)))) {
                     var match = new TriggerMatchContext(gameData, perm, damagedPlayerId, effect);
                     dispatch(match, DamageWatch.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT, effect, ctx);
                 }
@@ -4301,8 +4299,11 @@ public class TriggerCollectionService {
         var ctx = new TriggerContext.NoncombatDamageToOpponent(damagedPlayerId, sourceControllerId, amount);
         DamageWatch noncombatToOpponent = DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT;
         for (Permanent permanent : List.copyOf(battlefield)) {
+            TriggerJudge judge = conditionEvaluationService.judge(gameData,
+                    ConditionContext.forPermanent(permanent, sourceControllerId), amount);
             for (DamageAbilityReader.DamageEffect read : DamageAbilityReader.read(
-                    DamageAbilityReader.printed(permanent.getCard(), noncombatToOpponent), noncombatToOpponent.trigger())) {
+                    judge.filter(DamageAbilityReader.printed(permanent.getCard(), noncombatToOpponent)),
+                    noncombatToOpponent.trigger())) {
                 if (read.limitReached(gameData, permanent.getId())) continue;
                 if (dispatch(damageMatch(gameData, permanent, sourceControllerId, read), noncombatToOpponent,
                         read.effect(), ctx)) {
@@ -4367,7 +4368,9 @@ public class TriggerCollectionService {
             if (watcherPlayerId.equals(damagedPlayerId)) return;
 
             for (Permanent perm : List.copyOf(battlefield)) {
-                for (CardEffect effect : DamageAbilityReader.printedEffects(perm.getCard(), DamageWatch.ON_OPPONENT_DEALT_DAMAGE)) {
+                for (CardEffect effect : DamageAbilityReader.printedEffects(perm.getCard(),
+                        DamageWatch.ON_OPPONENT_DEALT_DAMAGE, conditionEvaluationService.judge(gameData,
+                                ConditionContext.forPermanent(perm, watcherPlayerId), amount))) {
                     var match = new TriggerMatchContext(gameData, perm, watcherPlayerId, effect);
                     registry.dispatch(match, DamageWatch.ON_OPPONENT_DEALT_DAMAGE, effect, ctx);
                 }
@@ -4568,6 +4571,14 @@ public class TriggerCollectionService {
             DamageAbilityReader.requireNoLimitOrMultiplicity(read, selfDealsDamage);
             // "Whenever this deals damage to one or more creatures": the filter is on the damaged permanents.
             if (read.filter() != null && !damagedPermanentMatches(gameData, ctx, read.filter(), sourcePermanent)) {
+                continue;
+            }
+            // The ability's intervening "if" and event condition, with the damage dealt (CR 603.4).
+            ConditionContext selfContext = sourcePermanent != null
+                    ? ConditionContext.forPermanent(sourcePermanent, sourceControllerId)
+                    : ConditionContext.forCard(sourceCard, sourceControllerId);
+            if (!conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
+                    selfContext.withEventValue(ctx.totalDamage()))) {
                 continue;
             }
             var match = new TriggerMatchContext(gameData, sourcePermanent, sourceControllerId, read.effect());
@@ -4805,7 +4816,9 @@ public class TriggerCollectionService {
         List<Permanent> allyWatchers = snapshottedAllyWatchers != null
                 ? snapshottedAllyWatchers : List.copyOf(battlefield);
         for (Permanent watcher : allyWatchers) {
-            for (CardEffect effect : printedCombatEffects(watcher.getCard(), CombatWatch.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE)) {
+            for (CardEffect effect : printedCombatEffects(watcher.getCard(), CombatWatch.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE,
+                    conditionEvaluationService.judge(gameData,
+                            ConditionContext.forPermanent(watcher, sourceControllerId)))) {
                 var match = new TriggerMatchContext(gameData, watcher, sourceControllerId, effect);
                 dispatch(match, CombatWatch.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE, effect, ctx);
             }
@@ -4925,7 +4938,8 @@ public class TriggerCollectionService {
             for (Permanent perm : List.copyOf(battlefield)) {
                 if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
                 for (CardEffect effect : TapAbilityReader.printedEffects(perm.getCard(),
-                        TapWatch.ON_ANY_PLAYER_TAPS_LAND)) {
+                        TapWatch.ON_ANY_PLAYER_TAPS_LAND, conditionEvaluationService.judge(gameData,
+                                ConditionContext.forPermanent(perm, playerId)))) {
                     var match = new TriggerMatchContext(gameData, perm, playerId, effect);
                     if (dispatch(match, TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx)) {
                         anyTriggered[0] = true;
@@ -4938,7 +4952,8 @@ public class TriggerCollectionService {
             UUID planarControllerId = gameData.planechase.controllerId;
             for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
                 for (CardEffect effect : TapAbilityReader.printedEffects(object.getCard(),
-                        TapWatch.ON_ANY_PLAYER_TAPS_LAND)) {
+                        TapWatch.ON_ANY_PLAYER_TAPS_LAND, conditionEvaluationService.judge(gameData,
+                                ConditionContext.forCard(object.getCard(), planarControllerId)))) {
                     var match = new TriggerMatchContext(gameData, null, planarControllerId, effect,
                             object.getCard(), object.copy());
                     if (registry.dispatch(match, TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx)) {
@@ -6139,7 +6154,6 @@ public class TriggerCollectionService {
         for (CardEffect effect : effects) {
             CardEffect resolved = unwrapEnterCreatureConditional(gameData, enteringCreature, perm, effect);
             if (resolved == null) continue;
-            if (!passesEnterInterveningIf(gameData, perm, controllerId, enteringPermanent, resolved)) continue;
             triggered |= dispatchEntering(gameData, perm, controllerId, watch, effect, resolved, limit, ctx);
         }
         return triggered;
@@ -6154,7 +6168,6 @@ public class TriggerCollectionService {
                 entering.permanentId());
         boolean triggered = false;
         for (CardEffect effect : effects) {
-            if (!passesEnterInterveningIf(gameData, perm, controllerId, entering.permanent(), effect)) continue;
             triggered |= dispatchEntering(gameData, perm, controllerId, watch, effect, limit, ctx);
         }
         return triggered;
@@ -6195,15 +6208,7 @@ public class TriggerCollectionService {
         boolean triggered = false;
         for (CardEffect effect : effects) {
             CardEffect resolved = effect;
-            if (resolved instanceof ConditionalEffect conditional && conditional.interveningIf()
-                    && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                    ConditionContext.forPermanent(perm, controllerId)
-                            .withTriggeringCard(enteringCard)
-                            .withTriggeringPermanentId(entering.permanentId()))) {
-                continue;
-            }
-            if (resolved instanceof ConditionalEffect conditional && conditional.interveningIf()
-                    && conditional.condition() instanceof WasCast) {
+            if (resolved instanceof ConditionalEffect conditional && conditional.condition() instanceof WasCast) {
                 resolved = conditional.wrapped();
             }
             CardEffect dispatchEffect = resolved;
@@ -6276,7 +6281,6 @@ public class TriggerCollectionService {
             // Archaeomancer's Map uses an intervening "if": check the land counts both when the ability would
             // trigger and again when it resolves.
             if (effect instanceof ConditionalEffect conditional
-                    && conditional.interveningIf()
                     && conditional.condition() instanceof com.github.laxika.magicalvibes.model.condition.TargetPlayerControlsMoreLandsThanController
                     && !gameQueryService.controlsMoreLandsThan(gameData, landControllerId, controllerId)) {
                 continue;
@@ -6313,14 +6317,6 @@ public class TriggerCollectionService {
         for (CardEffect effect : effects) {
             CardEffect resolved = branchOnEnteringLand(gameData, effect, enteringPermanentId, perm);
             if (resolved == null) continue;
-            if (resolved instanceof ConditionalEffect conditional
-                    && conditional.interveningIf()
-                    && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                    ConditionContext.forPermanent(perm, landControllerId)
-                            .withTriggeringCard(enteringLand)
-                            .withTriggeringPermanentId(enteringPermanentId))) {
-                continue;
-            }
             if (resolved instanceof ChooseOneAtTriggerTimeEffect atTriggerTime
                     && atTriggerTime.maximumChoices() == null) {
                 resolved = atTriggerTime.choice();
@@ -6426,12 +6422,6 @@ public class TriggerCollectionService {
                                                List<CardEffect> effects, Entering entering) {
         boolean triggered = false;
         for (CardEffect resolved : effects) {
-            if (resolved instanceof ConditionalEffect conditional
-                    && conditional.interveningIf()
-                    && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                    ConditionContext.forCard(card, landControllerId).withTriggeringCard(entering.card()))) {
-                continue;
-            }
             if (resolved instanceof MayEffect may) {
                 gameData.queueMayAbility(card, landControllerId, may);
                 StackEntry landfallEntry = gameData.stack.getLast();
@@ -7869,7 +7859,10 @@ public class TriggerCollectionService {
         for (CardEffect effect : effects) {
             CardEffect resolvedEffect = effect;
             if (effect instanceof ConditionalEffect conditional) {
-                if (!conditionEvaluationService.isInterveningIfMet(gameData, conditional, source, controllerId)) {
+                // The collector puts the counter-unless effect on the stack itself, so a condition around it, the
+                // ability's intervening "if" among them, is checked as the ability triggers.
+                if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        ConditionContext.forPermanent(source, controllerId))) {
                     continue;
                 }
                 resolvedEffect = conditional.wrapped();
@@ -8736,6 +8729,11 @@ public class TriggerCollectionService {
                         + read.ability());
             }
             if (read.limitReached(gameData, damagedCreature.getId())) continue;
+            // The ability's intervening "if" and event condition, with the damage dealt (CR 603.4).
+            if (!conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
+                    ConditionContext.forPermanent(damagedCreature, controllerId), damageDealt)) {
+                continue;
+            }
 
             var match = new TriggerMatchContext(gameData, damagedCreature, controllerId, read.effect());
             if (dispatch(match, watch, read.effect(), ctx)) {
@@ -8854,17 +8852,14 @@ public class TriggerCollectionService {
             if (playerId.equals(damagedPermanentControllerId)) return;
 
             List<CardEffect> effects = new ArrayList<>();
+            TriggerJudge judge = conditionEvaluationService.judge(gameData,
+                    ConditionContext.forPermanent(perm, playerId).withTargetId(damagedPermanent.getId()));
             for (DamageWatch watch : watches) {
-                effects.addAll(DamageAbilityReader.printedEffects(perm.getCard(), watch));
-                effects.addAll(DamageAbilityReader.temporaryEffects(perm, watch));
-                effects.addAll(DamageAbilityReader.persistentEffects(perm, watch));
+                effects.addAll(DamageAbilityReader.printedEffects(perm.getCard(), watch, judge));
+                effects.addAll(DamageAbilityReader.temporaryEffects(perm, watch, judge));
+                effects.addAll(DamageAbilityReader.persistentEffects(perm, watch, judge));
             }
             for (CardEffect effect : effects) {
-                if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
-                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                        ConditionContext.forPermanent(perm, playerId).withTargetId(damagedPermanent.getId()))) {
-                    continue;
-                }
                 if (effect instanceof DealDamageToAnyTargetEffect) {
                     gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                             perm.getCard(), playerId, new ArrayList<>(List.of(effect)), false,
@@ -10057,8 +10052,7 @@ public class TriggerCollectionService {
                     markTapTriggered(gameData, perm, read);
                     continue;
                 }
-                if (resolved instanceof ConditionalEffect conditional && conditional.interveningIf()
-                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                if (!conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
                         ConditionContext.forPermanent(perm, ownerId))) {
                     continue;
                 }
@@ -10110,8 +10104,7 @@ public class TriggerCollectionService {
                 if (!tappedPermanentMatches(gameData, perm, ownerId, tappedPermanent, read)) continue;
                 if (read.limitReached(gameData, perm.getId())) continue;
                 CardEffect resolved = read.effect();
-                if (resolved instanceof ConditionalEffect conditional && conditional.interveningIf()
-                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                if (!conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
                         ConditionContext.forPermanent(perm, ownerId))) {
                     continue;
                 }
@@ -10169,8 +10162,7 @@ public class TriggerCollectionService {
                 if (!tappedPermanentMatches(gameData, perm, ownerId, tappedPermanent, read)) continue;
                 if (read.limitReached(gameData, perm.getId())) continue;
                 CardEffect resolved = read.effect();
-                if (resolved instanceof ConditionalEffect conditional && conditional.interveningIf()
-                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                if (!conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
                         ConditionContext.forPermanent(perm, ownerId))) {
                     continue;
                 }
@@ -10605,13 +10597,8 @@ public class TriggerCollectionService {
             ActionWatch watch = controllerBecameMonarch
                     ? ActionWatch.ON_CONTROLLER_BECOMES_MONARCH
                     : ActionWatch.ON_OPPONENT_BECOMES_MONARCH;
-            for (CardEffect effect : ActionAbilityReader.printedEffects(permanent.getCard(), watch)) {
-                if (effect instanceof ConditionalEffect conditional
-                        && conditional.interveningIf()
-                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                        ConditionContext.forPermanent(permanent, ownerId))) {
-                    continue;
-                }
+            for (CardEffect effect : ActionAbilityReader.printedEffects(permanent.getCard(), watch,
+                    conditionEvaluationService.judge(gameData, ConditionContext.forPermanent(permanent, ownerId)))) {
 
                 List<CardEffect> effects = new ArrayList<>(List.of(effect));
                 if (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
@@ -11417,7 +11404,7 @@ public class TriggerCollectionService {
             return effects;
         }
         Condition recheck = interveningIf;
-        return effects.stream().map(effect -> (CardEffect) new ConditionalEffect(recheck, effect, true)).toList();
+        return effects.stream().map(effect -> (CardEffect) new ConditionalEffect(recheck, effect)).toList();
     }
 
     /** Marks {@code activation}'s limit (CR 603.2h) as used on {@code watcher}, its source, once it has triggered. */
@@ -13026,8 +13013,6 @@ public class TriggerCollectionService {
 
         for (CardEffect effect : effects) {
             CardEffect resolvedEffect = effect;
-            if (!passesInterveningIf(gameData, perm, controllerId, resolvedEffect,
-                    dyingPermanent.getId(), dyingPower)) continue;
             resolvedEffect = snapshotDyingPermanentManaValue(gameData, controllerId, resolvedEffect, dyingPermanent);
             if (resolvedEffect instanceof DyingCreatureCountersAwareEffect aware) {
                 resolvedEffect = aware.boundToDyingCreatureCounters(dyingCounters);
@@ -13510,8 +13495,6 @@ public class TriggerCollectionService {
         List<CardEffect> stackEffects = new ArrayList<>();
         for (CardEffect effect : effects) {
             CardEffect resolved = effect;
-            if (!passesInterveningIf(gameData, watcher, watcherControllerId, resolved,
-                    dyingPermanent.getId(), dyingPower)) continue;
 
             if (resolved.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                     || resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
@@ -13563,8 +13546,6 @@ public class TriggerCollectionService {
         boolean markOnAcceptance = limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN;
         for (CardEffect effect : effects) {
             CardEffect resolved = effect;
-            if (!passesInterveningIf(gameData, watcher, watcherControllerId, resolved,
-                    dyingPermanent.getId(), dyingPower)) continue;
             if (resolved.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                     || resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                 gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
@@ -13970,7 +13951,7 @@ public class TriggerCollectionService {
         if (resolved instanceof ConditionalEffect conditional
                 && conditional.condition() instanceof SourceCardInGraveyard) {
             resolved = new ConditionalEffect(new SourceCardInGraveyard(sourceEntryVersion),
-                    conditional.wrapped(), conditional.interveningIf(), conditional.triggerTimeOnly());
+                    conditional.wrapped());
         }
         if (resolved instanceof MayPayManaEffect mayPay) {
             gameData.queueMayAbility(sourceCard, controllerId, mayPay, null);
@@ -14801,7 +14782,9 @@ public class TriggerCollectionService {
             if (effect instanceof DyingCreatureCountersAwareEffect countersAware) {
                 effect = countersAware.boundToDyingCreatureCounters(dyingPermanentCounters);
             }
-            if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
+            // A delayed trigger's "if" (CR 603.7c: it is written as one effect) is checked as it triggers and again
+            // as it resolves.
+            if (effect instanceof ConditionalEffect conditional
                     && !conditionEvaluationService.isMet(gameData, conditional.condition(),
                     ConditionContext.forCard(registration.sourceCard(), registration.controllerId()))) {
                 continue;
@@ -16040,14 +16023,14 @@ public class TriggerCollectionService {
         UUID planarControllerId = gameData.planechase.controllerId;
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
             List<CardEffect> matchingEffects = new ArrayList<>();
-            for (CardEffect effect : printedCombatEffects(object.getCard(), CombatWatch.ON_ALLY_CREATURES_ATTACK)) {
+            ConditionContext planarContext = ConditionContext.forCard(object.getCard(), planarControllerId)
+                    .withXValue(attackerCount);
+            for (CardEffect effect : printedCombatEffects(object.getCard(), CombatWatch.ON_ALLY_CREATURES_ATTACK,
+                    conditionEvaluationService.judge(gameData, planarContext))) {
                 if (effect instanceof ConditionalEffect conditional) {
-                    boolean conditionMet = conditionEvaluationService.isMet(
-                            gameData,
-                            conditional.condition(),
-                            ConditionContext.forCard(object.getCard(), planarControllerId)
-                                    .withXValue(attackerCount));
-                    if (conditional.interveningIf() && !conditionMet) {
+                    // "Whenever you attack with exactly N creatures" (the plane's ExactlyAttackers) is judged against
+                    // the number of attackers as the ability triggers.
+                    if (!conditionEvaluationService.isMet(gameData, conditional.condition(), planarContext)) {
                         continue;
                     }
                     if (conditional.condition() instanceof ExactlyAttackers) {
@@ -16187,8 +16170,7 @@ public class TriggerCollectionService {
                     continue;
                 }
 
-                if (trigger.effect() instanceof ConditionalEffect conditional && conditional.interveningIf()
-                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                if (!conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
                         ConditionContext.forCard(object.getCard(), planarControllerId))) {
                     continue;
                 }
@@ -16677,22 +16659,6 @@ public class TriggerCollectionService {
         return OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, source, effect);
     }
 
-    private boolean passesEnterInterveningIf(GameData gameData, Permanent source,
-                                             UUID controllerId, Permanent enteringPermanent,
-                                             CardEffect effect) {
-        if (!(effect instanceof ConditionalEffect conditional) || !conditional.interveningIf()) {
-            return true;
-        }
-        ConditionContext context = ConditionContext.forPermanent(source, controllerId);
-        if (enteringPermanent != null) {
-            context = context.withTriggeringPermanentId(enteringPermanent.getId())
-                    .withTriggeringPermanentPowerAtTrigger(
-                            gameQueryService.getEffectivePower(gameData, enteringPermanent));
-        }
-        return conditionEvaluationService.isMet(gameData, conditional.condition(),
-                context);
-    }
-
     private CardEffect unwrapLifeChangeConditional(GameData gameData, Permanent source,
                                                     UUID controllerId, CardEffect effect) {
         if (!(effect instanceof ConditionalEffect conditional)) {
@@ -16788,11 +16754,13 @@ public class TriggerCollectionService {
         }
         if (watch instanceof DamageWatch damageWatch) {
             Trigger watched = damageWatch.trigger();
+            TriggerJudge judge = watchJudge(gameData, perm, controllerId, ctx);
             return dispatchRegistrations(gameData, perm, controllerId, watch, ctx,
-                    DamageAbilityReader.registrations(DamageAbilityReader.printed(perm.getCard(), damageWatch),
-                            watched),
-                    staticBonus -> DamageAbilityReader.effects(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(
-                            gameData, perm, staticBonus, ability -> ability.hasWatchedTrigger(watched)), watched));
+                    DamageAbilityReader.registrations(judge.filter(DamageAbilityReader.printed(perm.getCard(),
+                            damageWatch)), watched),
+                    staticBonus -> DamageAbilityReader.effects(judge.filter(grantedTriggeredAbilitySupport
+                            .grantedTriggeredAbilities(gameData, perm, staticBonus,
+                                    ability -> ability.hasWatchedTrigger(watched))), watched));
         }
         if (watch instanceof CounterWatch counterWatch) {
             return dispatchCounterWatch(gameData, perm, controllerId, counterWatch, ctx);
@@ -16804,18 +16772,22 @@ public class TriggerCollectionService {
             // The watches dispatched here ("a player taps a permanent for mana", the untap step) judge no filter,
             // first-time event, "one or more" or limit.
             Trigger watched = tapWatch.trigger();
+            TriggerJudge judge = watchJudge(gameData, perm, controllerId, ctx);
             return dispatchRegistrations(gameData, perm, controllerId, watch, ctx,
-                    TapAbilityReader.printedRegistrations(perm.getCard(), tapWatch),
-                    staticBonus -> TapAbilityReader.effects(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(
-                            gameData, perm, staticBonus, ability -> ability.hasWatchedTrigger(watched)), watched));
+                    TapAbilityReader.printedRegistrations(perm.getCard(), tapWatch, judge),
+                    staticBonus -> TapAbilityReader.effects(judge.filter(grantedTriggeredAbilitySupport
+                            .grantedTriggeredAbilities(gameData, perm, staticBonus,
+                                    ability -> ability.hasWatchedTrigger(watched))), watched));
         }
         if (watch instanceof LifeWatch lifeWatch) {
             // The watch dispatched here ("an opponent gains life") judges no count or limit.
             Trigger watched = lifeWatch.trigger();
+            TriggerJudge judge = watchJudge(gameData, perm, controllerId, ctx);
             return dispatchRegistrations(gameData, perm, controllerId, watch, ctx,
-                    LifeAbilityReader.printedRegistrations(perm.getCard(), lifeWatch),
-                    staticBonus -> LifeAbilityReader.effects(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(
-                            gameData, perm, staticBonus, ability -> ability.hasWatchedTrigger(watched)), watched));
+                    LifeAbilityReader.printedRegistrations(perm.getCard(), lifeWatch, judge),
+                    staticBonus -> LifeAbilityReader.effects(judge.filter(grantedTriggeredAbilitySupport
+                            .grantedTriggeredAbilities(gameData, perm, staticBonus,
+                                    ability -> ability.hasWatchedTrigger(watched))), watched));
         }
         if (watch instanceof SagaWatch sagaWatch) {
             return dispatchSagaWatch(gameData, perm, controllerId, sagaWatch, ctx);
@@ -16828,13 +16800,34 @@ public class TriggerCollectionService {
         }
         if (watch instanceof CombatWatch combatWatch) {
             Trigger watched = combatWatch.trigger();
+            TriggerJudge judge = watchJudge(gameData, perm, controllerId, ctx);
             return dispatchRegistrations(gameData, perm, controllerId, watch, ctx,
-                    CombatAbilityReader.registrations(WatchedAbilities.printed(perm.getCard(), combatWatch),
-                            watched),
-                    staticBonus -> CombatAbilityReader.effects(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(
-                            gameData, perm, staticBonus, ability -> ability.hasWatchedTrigger(watched)), watched));
+                    CombatAbilityReader.registrations(judge.filter(WatchedAbilities.printed(perm.getCard(),
+                            combatWatch)), watched),
+                    staticBonus -> CombatAbilityReader.effects(judge.filter(grantedTriggeredAbilitySupport
+                            .grantedTriggeredAbilities(gameData, perm, staticBonus,
+                                    ability -> ability.hasWatchedTrigger(watched))), watched));
         }
         throw new IllegalArgumentException("No collector dispatches " + watch + " here");
+    }
+
+    /**
+     * The {@link TriggerJudge} of the abilities a watch dispatched for {@code perm} reads: each one's intervening "if"
+     * (CR 603.4) and event condition (CR 603.2), read from {@code perm} and its controller, with the event's value
+     * where the event has one (the result of the die roll, the damage dealt to the controller) and the player gaining
+     * life as "that player" ("an opponent gains life during their turn").
+     */
+    private TriggerJudge watchJudge(GameData gameData, Permanent perm, UUID controllerId, TriggerContext ctx) {
+        ConditionContext context = ConditionContext.forPermanent(perm, controllerId);
+        return switch (ctx) {
+            case TriggerContext.DiceRoll diceRoll -> conditionEvaluationService.judge(gameData, context,
+                    diceRoll.result());
+            case TriggerContext.DamageToControllerAmount damage -> conditionEvaluationService.judge(gameData, context,
+                    damage.amount());
+            case TriggerContext.LifeGain lifeGain -> conditionEvaluationService.judge(gameData,
+                    context.withTargetId(lifeGain.gainingPlayerId()));
+            case null, default -> conditionEvaluationService.judge(gameData, context);
+        };
     }
 
     /**
@@ -16878,6 +16871,9 @@ public class TriggerCollectionService {
     private boolean dispatchCounterAbility(GameData gameData, Permanent perm, UUID controllerId, CounterWatch watch,
                                            TriggerContext ctx, List<CounterAbilityReader.CounterEffect> effects) {
         CounterAbilityReader.CounterEffect first = effects.getFirst();
+        if (!watchJudge(gameData, perm, controllerId, ctx).triggers(first.ability())) {
+            return false;
+        }
         CounterAbilityReader.requireNoFilter(first, watch.trigger());
         CounterAbilityReader.requireWatchedEvent(first, watch.trigger());
         if (first.limitReached(gameData, perm.getId())) {
@@ -16997,6 +16993,9 @@ public class TriggerCollectionService {
     private boolean dispatchActionAbility(GameData gameData, Permanent perm, UUID controllerId, ActionWatch watch,
                                           TriggerContext ctx, List<ActionAbilityReader.ActionEffect> effects) {
         ActionAbilityReader.ActionEffect first = effects.getFirst();
+        if (!watchJudge(gameData, perm, controllerId, ctx).triggers(first.ability())) {
+            return false;
+        }
         if (first.filter() != null) {
             Card actionCard = actionCard(ctx);
             if (actionCard == null) {
@@ -17075,6 +17074,9 @@ public class TriggerCollectionService {
     private boolean dispatchMiscAbility(GameData gameData, Permanent perm, UUID controllerId, MiscWatch watch,
                                         TriggerContext ctx, List<MiscAbilityReader.MiscEffect> effects) {
         MiscAbilityReader.MiscEffect first = effects.getFirst();
+        if (!watchJudge(gameData, perm, controllerId, ctx).triggers(first.ability())) {
+            return false;
+        }
         if (watch == MiscWatch.ON_SELF_ROOM_DOOR_UNLOCKED) {
             if (first.door() == null) {
                 throw new IllegalStateException("A \"when you unlock this door\" ability names its door: "
@@ -17291,6 +17293,9 @@ public class TriggerCollectionService {
     private boolean dispatchLibraryAbility(GameData gameData, Permanent perm, UUID controllerId, LibraryWatch watch,
                                            TriggerContext ctx, List<LibraryAbilityReader.LibraryEffect> effects) {
         LibraryAbilityReader.LibraryEffect first = effects.getFirst();
+        if (!watchJudge(gameData, perm, controllerId, ctx).triggers(first.ability())) {
+            return false;
+        }
         if (first.limitReached(gameData, perm.getId())) {
             return false;
         }
@@ -17598,7 +17603,7 @@ public class TriggerCollectionService {
         List<CardEffect> effects = new ArrayList<>(ability.effects().size());
         for (EffectRegistration registration : ability.effects()) {
             CardEffect effect = transform.apply(registration.effect());
-            effects.add(interveningIf == null ? effect : new ConditionalEffect(interveningIf, effect, true));
+            effects.add(interveningIf == null ? effect : new ConditionalEffect(interveningIf, effect));
         }
         return effects;
     }
@@ -17836,7 +17841,7 @@ public class TriggerCollectionService {
         if (effect instanceof ConditionalEffect conditional
                 && conditional.condition() instanceof SourceCardInGraveyard) {
             return new ConditionalEffect(new SourceCardInGraveyard(gameData.graveyardEntryVersion(dyingCardId)),
-                    conditional.wrapped(), conditional.interveningIf(), conditional.triggerTimeOnly());
+                    conditional.wrapped());
         }
         if (effect instanceof MayPayManaEffect mayPay
                 && mayPay.wrapped() instanceof ConditionalEffect inner
@@ -18099,23 +18104,6 @@ public class TriggerCollectionService {
                 snapshot.auraCardIds(), snapshot.equipmentPermanentIds());
     }
 
-    private boolean passesInterveningIf(GameData gameData, Permanent source, UUID controllerId,
-                                        CardEffect effect) {
-        return passesInterveningIf(gameData, source, controllerId, effect, null, null);
-    }
-
-    private boolean passesInterveningIf(GameData gameData, Permanent source, UUID controllerId,
-                                        CardEffect effect, UUID triggeringPermanentId,
-                                        Integer triggeringPermanentPowerAtTrigger) {
-        if (!(effect instanceof ConditionalEffect conditional) || !conditional.interveningIf()) {
-            return true;
-        }
-        return conditionEvaluationService.isMet(gameData, conditional.condition(),
-                ConditionContext.forPermanent(source, controllerId)
-                        .withTriggeringPermanentId(triggeringPermanentId)
-                        .withTriggeringPermanentPowerAtTrigger(triggeringPermanentPowerAtTrigger));
-    }
-
     public void checkPlotTriggers(GameData gameData, UUID plottingPlayerId, Card plottedCard) {
         List<CardEffect> effects = ActionAbilityReader.printedEffects(plottedCard, ActionWatch.ON_SELF_BECOMES_PLOTTED);
         if (effects.isEmpty()) return;
@@ -18228,7 +18216,9 @@ public class TriggerCollectionService {
         TriggerContext context = new TriggerContext.SourceDealsNoncombatDamageToCreature(
                 damagedCreature, damageDealt, sourceControllerId);
         for (Permanent watcher : List.copyOf(battlefield)) {
-            for (CardEffect effect : DamageAbilityReader.printedEffects(watcher.getCard(), DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE)) {
+            for (CardEffect effect : DamageAbilityReader.printedEffects(watcher.getCard(),
+                    DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE, conditionEvaluationService.judge(
+                            gameData, ConditionContext.forPermanent(watcher, sourceControllerId)))) {
                 dispatch(new TriggerMatchContext(gameData, watcher, sourceControllerId, effect),
                         DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE, effect, context);
             }

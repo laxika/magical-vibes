@@ -23,6 +23,6 @@ public class ThickestInTheThicket extends Card {
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new TargetPower()));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
-                new ControlsCreatureWithGreatestPower(), new DrawCardEffect(2), false));
+                new ControlsCreatureWithGreatestPower(), new DrawCardEffect(2)));
     }
 }

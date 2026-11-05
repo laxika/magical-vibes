@@ -38,7 +38,7 @@ public class DestroyTargetPermanentAtEndStepIfAttackedEffectHandler implements N
             return;
         }
 
-        CardEffect destruction = ConditionalEffect.unless(
+        CardEffect destruction = new ConditionalEffect(
                 new TargetPermanentMatches(new PermanentAttackedThisTurnPredicate()),
                 new DestroyTargetPermanentEffect());
         gameData.queueDelayedAction(new DelayedEndStepTrigger(entry.getControllerId(), entry.getCard(),

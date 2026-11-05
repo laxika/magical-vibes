@@ -30,7 +30,7 @@ public class ElvenPassage extends Card {
                         new SearchLibraryEffect(
                                 CardPredicateUtils.basicLand(),
                                 LibrarySearchDestination.BATTLEFIELD_TAPPED),
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new CanBeholdSubtype(CardSubtype.ELF),
                                 new MayEffect(
                                         new BeholdEffect(CardSubtype.ELF, new UntapSearchedPermanentEffect()),

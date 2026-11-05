@@ -19,7 +19,7 @@ public class IngaRuneEyes extends Card {
 
     public IngaRuneEyes() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(3));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), ConditionalEffect.unless(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalEffect(
                 new CreaturesDiedThisTurnAtLeast(3), new DrawCardEffect(3)));
     }
 }

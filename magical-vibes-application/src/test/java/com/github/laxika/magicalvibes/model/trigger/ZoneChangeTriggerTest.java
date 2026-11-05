@@ -126,7 +126,7 @@ class ZoneChangeTriggerTest {
 
         assertThat(ability.hasOwnEntry()).isTrue();
         assertThat(card.getOwnEntryAbilities()).containsExactly(ability);
-        assertThat(card.getOwnEntryEffects()).containsExactly(new ConditionalEffect(yourTurn, DRAW, true));
+        assertThat(card.getOwnEntryEffects()).containsExactly(new ConditionalEffect(yourTurn, DRAW));
     }
 
     @Test

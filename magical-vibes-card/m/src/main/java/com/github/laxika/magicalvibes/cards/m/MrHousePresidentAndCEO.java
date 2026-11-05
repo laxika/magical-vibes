@@ -34,10 +34,10 @@ public class MrHousePresidentAndCEO extends Card {
         addTrigger(Triggers.youRollDie(),
                 TriggerOptions.DEFAULT.withEventCondition(new EventValueAtLeast(4)),
                 SequenceEffect.of(
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new NotCondition(new EventValueAtLeast(6)),
                                 robot),
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new EventValueAtLeast(6),
                                 robot.withSimultaneousTokens(
                                         List.of(CreateTokenEffect.ofTreasureToken(1))))));

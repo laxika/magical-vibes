@@ -19,8 +19,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
-import com.github.laxika.magicalvibes.model.condition.FirstCombatPhase;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -146,11 +144,17 @@ public class CombatTriggerService {
                         .filter(r -> !r.oneOrMore() || includeOncePerBlockRegistration)
                         .toList();
                 // Each ability is one object on the stack (CR 603.3): Reaper's Talisman's two.
-                List<List<CardEffect>> effectGroups = CombatAbilityReader.byAbility(queuedRegistrations).stream()
-                        .map(CombatAbilityReader::effectsOf)
-                        .toList();
-                for (List<CardEffect> nonPerBlockerEffects : effectGroups) {
-                    if (nonPerBlockerEffects.isEmpty()) continue;
+                // The intervening "if" (CR 603.4) and event condition (CR 603.2: "attacks alone", Sigil of Valor) are read
+                // from the creature, against its attack target ("if it's the first combat phase", Genji Glove;
+                // "if the defending player is the monarch").
+                ConditionContext triggerContext = ConditionContext.forPermanent(creature, finalCreatureControllerId)
+                        .withTargetId(slot == CombatWatch.ON_ATTACK ? creature.getAttackTarget() : null);
+                for (List<CombatAbilityReader.CombatEffect> ability : CombatAbilityReader.byAbility(queuedRegistrations)) {
+                    if (ability.isEmpty() || !conditionEvaluationService.triggerConditionsMet(gameData,
+                            ability.getFirst().ability().options(), triggerContext)) {
+                        continue;
+                    }
+                    List<CardEffect> nonPerBlockerEffects = CombatAbilityReader.effectsOf(ability);
                     // Bake the creature's controller into effects that need it,
                     // and transform subtype-filtered combat effects
                     List<CardEffect> effectsForStack = new ArrayList<>();
@@ -203,22 +207,7 @@ public class CombatTriggerService {
                                         may.prompt(), may.elseEffect(), may.choicePlayer(), may.choicePlayerId())
                                 : e);
                     }
-                    // "Whenever equipped creature attacks alone" (Sigil of Valor): the granted
-                    // ability doesn't trigger at all unless it's the only attacking creature its
-                    // controller controls (CR 506.5), so drop it here instead of putting a
-                    // do-nothing entry on the stack. Surviving conditionals are already satisfied
-                    // and get unwrapped.
-                    effectsForStack.removeIf(e -> e instanceof ConditionalEffect ce
-                            && ce.condition() instanceof AttacksAlone
-                            && !conditionEvaluationService.isMet(gameData, ce.condition(),
-                                    ConditionContext.forPermanent(creature, finalCreatureControllerId)));
-                    effectsForStack.replaceAll(e -> e instanceof ConditionalEffect ce
-                            && ce.condition() instanceof AttacksAlone ? ce.wrapped() : e);
-
                     if (slot == CombatWatch.ON_ATTACK) {
-                        ConditionContext attackTargetContext = ConditionContext
-                                .forPermanent(creature, finalCreatureControllerId)
-                                .withTargetId(creature.getAttackTarget());
                         // "if it's attacking one of your opponents" is read from the Aura's controller, who
                         // controls the Aura's own trigger (Scriv's Contract), against the declared attack target.
                         ConditionContext auraOwnerAttackContext = ConditionContext
@@ -236,17 +225,10 @@ public class CombatTriggerService {
                                 ? new EnchantedCreatureControllerLosesLifeEffect(
                                         loss.amount(), finalCreatureControllerId)
                                 : e);
-                        effectsForStack.removeIf(e -> e instanceof ConditionalEffect ce
-                                && ce.condition() instanceof AttackedTargetIsMonarch
-                                && !conditionEvaluationService.isMet(gameData, ce.condition(), attackTargetContext));
+                        // "If the defending player is the monarch" was judged against the attack target as the
+                        // ability triggered; the resolving ability has no attack target to read it against.
                         effectsForStack.replaceAll(e -> e instanceof ConditionalEffect ce
                                 && ce.condition() instanceof AttackedTargetIsMonarch ? ce.wrapped() : e);
-                        // "if it's the first combat phase of the turn" (Genji Glove) is an intervening-if
-                        // (CR 603.4): in a later combat phase the ability doesn't trigger at all.
-                        effectsForStack.removeIf(e -> e instanceof ConditionalEffect ce
-                                && ce.interveningIf()
-                                && ce.condition() instanceof FirstCombatPhase
-                                && !conditionEvaluationService.isMet(gameData, ce.condition(), attackTargetContext));
                     }
 
                     if (effectsForStack.isEmpty()) continue;

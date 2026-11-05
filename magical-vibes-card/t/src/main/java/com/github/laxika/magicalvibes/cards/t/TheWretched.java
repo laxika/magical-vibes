@@ -19,6 +19,6 @@ public class TheWretched extends Card {
         addTrigger(Triggers.endOfCombat(),
                 new ConditionalEffect(new SourceIsAttacking(),
                         new GainControlOfAllPermanentsMatchingEffect(new PermanentBlockingSourcePredicate(),
-                                ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD), false));
+                                ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD)));
     }
 }

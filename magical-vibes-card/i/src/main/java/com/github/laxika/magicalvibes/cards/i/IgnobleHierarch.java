@@ -24,7 +24,7 @@ public class IgnobleHierarch extends Card {
         // trigger's (non-targeting) target, so BoostTargetCreatureEffect boosts "that creature";
         // AttacksAlone restricts it to lone attackers.
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostTargetCreatureEffect(1, 1));
 
         // {T}: Add {B}, {R}, or {G}.

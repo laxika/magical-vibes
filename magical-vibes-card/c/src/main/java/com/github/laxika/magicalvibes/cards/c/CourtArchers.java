@@ -17,7 +17,7 @@ public class CourtArchers extends Card {
         // as the trigger's (non-targeting) target, so BoostTargetCreatureEffect boosts "that
         // creature"; AttacksAlone (checked at resolution) restricts it to lone attackers.
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostTargetCreatureEffect(1, 1));
     }
 }

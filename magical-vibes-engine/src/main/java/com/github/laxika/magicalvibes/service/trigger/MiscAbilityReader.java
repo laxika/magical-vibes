@@ -35,10 +35,12 @@ import java.util.UUID;
  * each turn" ({@link MiscEffect#firstTimeEachTurn()}) and "triggers only once each turn" ({@link MiscEffect#limit()},
  * marked by {@link TriggeredAbility#limitKey()} on the source).
  * <p>
- * The intervening "if" (CR 603.4) and the event condition (CR 603.2) reach the collectors as the
- * {@link ConditionalEffect}s they judge, as the legacy view gave them, until step 15 of effect-slot-refactor.md makes
- * the effects read the event: the intervening "if" is a {@link ConditionalEffect} around each effect, and the event
- * condition the {@link ConditionalEffect#atTriggerTime} inside it. A state trigger (CR 603.8) is read as one
+ * The intervening "if" (CR 603.4) and the event condition (CR 603.2) are the ability's options: its collector judges
+ * them as the ability triggers, in the context of its event, from the records' {@code ability()} or through a
+ * {@link TriggerJudge} on the abilities an effect list is read from. The reader wraps the intervening "if" around each
+ * effect as the {@link ConditionalEffect} that checks it again as the ability resolves; the event condition is never
+ * checked again.
+ * A state trigger (CR 603.8) is read as one
  * {@link StateTriggerEffect} of its game state and its effects ({@link #stateTriggers}).
  */
 public final class MiscAbilityReader {
@@ -113,6 +115,11 @@ public final class MiscAbilityReader {
         return effects(printed(card, watch), watch.trigger());
     }
 
+    /** {@link #printedEffects(Card, MiscWatch)} of the abilities {@code judge} lets trigger. */
+    public static List<CardEffect> printedEffects(Card card, MiscWatch watch, TriggerJudge judge) {
+        return effects(judge.filter(printed(card, watch)), watch.trigger());
+    }
+
     /**
      * The effects of {@code abilities} for the condition watched as {@code watched}, for a collector that judges no
      * door, first time or limit: none of its abilities is written with one, and this throws on one.
@@ -148,11 +155,10 @@ public final class MiscAbilityReader {
             throw new IllegalStateException("A first-time-each-turn trigger takes no limit: " + ability);
         }
         Integer door = condition instanceof ObjectActionTrigger object ? object.door() : null;
-        Condition eventCondition = options.eventCondition();
         Condition interveningIf = options.interveningIf();
         List<MiscEffect> effects = new ArrayList<>(ability.effects().size());
         for (EffectRegistration registration : ability.effects()) {
-            effects.add(new MiscEffect(wrapped(registration.effect(), eventCondition, interveningIf), ability, door,
+            effects.add(new MiscEffect(wrapped(registration.effect(), interveningIf), ability, door,
                     firstTimeEachTurn, registration.simultaneousWithPrevious()));
         }
         return effects;
@@ -172,7 +178,7 @@ public final class MiscAbilityReader {
             Condition interveningIf = ability.options().interveningIf();
             List<CardEffect> effects = new ArrayList<>(ability.effects().size());
             for (EffectRegistration registration : ability.effects()) {
-                effects.add(wrapped(registration.effect(), null, interveningIf));
+                effects.add(wrapped(registration.effect(), interveningIf));
             }
             triggers.add(StateTriggerEffect.of(state, effects));
         }
@@ -190,14 +196,9 @@ public final class MiscAbilityReader {
         }
     }
 
-    private static CardEffect wrapped(CardEffect effect, Condition eventCondition, Condition interveningIf) {
-        if (eventCondition != null) {
-            effect = ConditionalEffect.atTriggerTime(eventCondition, effect);
-        }
-        if (interveningIf != null) {
-            effect = new ConditionalEffect(interveningIf, effect, true);
-        }
-        return effect;
+    /** {@code effect}, in a {@link ConditionalEffect} of the ability's intervening "if", checked again as it resolves. */
+    private static CardEffect wrapped(CardEffect effect, Condition interveningIf) {
+        return interveningIf == null ? effect : new ConditionalEffect(interveningIf, effect);
     }
 
     /**

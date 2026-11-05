@@ -16,7 +16,7 @@ public class SquealingDevil extends Card {
 
     public SquealingDevil() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new PayXManaBoostTargetCreatureEffect());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), ConditionalEffect.unless(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new NotCondition(new ColorSpentToCast(ManaColor.BLACK)), new SacrificeSelfEffect()));
     }
 }

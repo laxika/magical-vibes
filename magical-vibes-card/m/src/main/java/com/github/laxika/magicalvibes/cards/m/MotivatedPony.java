@@ -22,7 +22,7 @@ public class MotivatedPony extends Card {
         PermanentIsAttackingPredicate attacking = new PermanentIsAttackingPredicate();
         addTrigger(Triggers.attacks(), SequenceEffect.of(
                 new BoostAllOwnCreaturesEffect(1, 1, attacking),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new AnotherPermanentEnteredThisTurn(new CardSubtypePredicate(CardSubtype.FOOD)),
                         SequenceEffect.of(
                                 new UntapPermanentsEffect(TapUntapScope.CONTROLLED, attacking),

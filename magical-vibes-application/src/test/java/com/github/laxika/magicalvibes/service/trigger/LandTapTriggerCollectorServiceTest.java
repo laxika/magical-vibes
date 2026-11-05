@@ -641,7 +641,6 @@ class LandTapTriggerCollectorServiceTest {
             var effect = new ConditionalEffect(new SourceIsTapped(), sequence);
             var ctx = new TriggerContext.LandTap(player2Id, forest.getId());
 
-            when(conditionEvaluationService.isMet(eq(gd), any(), any())).thenReturn(true);
             when(gameQueryService.findPermanentById(gd, forest.getId())).thenReturn(forest);
             when(dealDamageHandlerProvider.getObject()).thenReturn(dealDamageHandler);
 
@@ -654,26 +653,6 @@ class LandTapTriggerCollectorServiceTest {
             verify(dealDamageHandler).resolve(
                     eq(gd), any(StackEntry.class), eq(new DealDamageToPlayersEffect(
                             1, DamageRecipient.TARGET_PLAYER)));
-        }
-
-        @Test
-        @DisplayName("does not resolve a conditional mana-and-damage ability when its condition fails")
-        void skipsConditionalSequenceWhenConditionFails() {
-            Permanent triggerPerm = createPermanent("Barbflare Gremlin");
-            Permanent forest = createLandPermanent("Forest", ManaColor.GREEN);
-            var effect = new ConditionalEffect(new SourceIsTapped(), SequenceEffect.of(
-                    new AddOneOfEachManaTypeProducedByLandEffect(false),
-                    new DealDamageOnLandTapEffect(1)));
-
-            when(conditionEvaluationService.isMet(eq(gd), any(), any())).thenReturn(false);
-
-            boolean result = registry.dispatch(match(triggerPerm, player1Id, effect),
-                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect,
-                    new TriggerContext.LandTap(player2Id, forest.getId()));
-
-            assertThat(result).isFalse();
-            assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.GREEN)).isZero();
-            assertThat(gd.stack).isEmpty();
         }
 
         @Test

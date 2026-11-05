@@ -23,7 +23,7 @@ public class GraspingShadows extends Card {
         setBackFaceCard(new ShadowsLair());
 
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 SequenceEffect.of(
                         new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET),
                         new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET),

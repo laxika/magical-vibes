@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 
 @CardRegistration(set = "WTH", collectorNumber = "88")
 @CardRegistration(set = "7ED", collectorNumber = "172")
@@ -19,6 +19,7 @@ public class AetherFlash extends Card {
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER),
                 new DealDamageToTargetCreatureEffect(2));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConditionalEffect(new SourceIsCreature(), new DealDamageToSourceEffect(2)));
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsCreature()),
+                new DealDamageToSourceEffect(2));
     }
 }

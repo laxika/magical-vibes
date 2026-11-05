@@ -22,8 +22,8 @@ public class PrimalEmpathy extends Card {
     public PrimalEmpathy() {
         ControlsCreatureWithGreatestPower greatestPower = new ControlsCreatureWithGreatestPower();
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
-                ConditionalEffect.unless(greatestPower, new DrawCardEffect()),
-                ConditionalEffect.unless(new NotCondition(greatestPower),
+                new ConditionalEffect(greatestPower, new DrawCardEffect()),
+                new ConditionalEffect(new NotCondition(greatestPower),
                         new PutCounterOnChosenOwnPermanentEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1), new PermanentIsCreaturePredicate(),
                                 false, true))));

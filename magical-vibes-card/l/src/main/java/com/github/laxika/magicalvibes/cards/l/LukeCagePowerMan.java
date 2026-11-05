@@ -16,7 +16,7 @@ public class LukeCagePowerMan extends Card {
 
     public LukeCagePowerMan() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 SequenceEffect.of(
                         new BoostSelfEffect(2, 0),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));

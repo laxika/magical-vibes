@@ -39,7 +39,7 @@ public class AuroraShifter extends Card {
                 anotherCreatureYouControl,
                 "Target must be another creature you control"
         )).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new MayEffect(
-                ConditionalEffect.unless(new ControllerEnergyAtLeast(2),
+                new ConditionalEffect(new ControllerEnergyAtLeast(2),
                         SequenceEffect.of(
                                 new EnergyCountersEffect(-2),
                                 new QueueReflexiveAbilityEffect(new BecomeCopyOfTargetCreaturePermanentlyEffect(

@@ -22,8 +22,8 @@ public class ArmoredKincaller extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MayRevealSubtypeFromHandEffect(
                         CardSubtype.DINOSAUR,
-                        ConditionalEffect.unless(new NotCondition(controlsAnotherDinosaur), new GainLifeEffect(3)),
+                        new ConditionalEffect(new NotCondition(controlsAnotherDinosaur), new GainLifeEffect(3)),
                         "Reveal a Dinosaur card from your hand?"),
-                ConditionalEffect.unless(controlsAnotherDinosaur, new GainLifeEffect(3)));
+                new ConditionalEffect(controlsAnotherDinosaur, new GainLifeEffect(3)));
     }
 }

@@ -43,7 +43,7 @@ public class AssaultronDominator extends Card {
 
         addTrigger(Triggers.creatureYouControlAttacks().withFilter(artifactCreature),
                 new MayEffect(
-                        ConditionalEffect.unless(new ControllerEnergyAtLeast(1),
+                        new ConditionalEffect(new ControllerEnergyAtLeast(1),
                                 SequenceEffect.of(new EnergyCountersEffect(-1), counterChoice)),
                         "Pay {E} to put your choice of a +1/+1, first strike, or trample counter on that creature?"));
     }

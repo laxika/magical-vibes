@@ -18,7 +18,7 @@ public class SkulkingKiller extends Card {
 
     public SkulkingKiller() {
         target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentNotPredicate(
                                 new PermanentControllerControlsPermanentPredicate(
                                         new PermanentIsCreaturePredicate(), true))),

@@ -2401,7 +2401,7 @@ public class LibraryChoiceHandlerService {
         if (effect instanceof com.github.laxika.magicalvibes.model.effect.ConditionalEffect conditional
                 && conditional.wrapped() instanceof ChosenCardAwareEffect aware) {
             return new com.github.laxika.magicalvibes.model.effect.ConditionalEffect(conditional.condition(),
-                    aware.withChosenCard(chosenCard), conditional.interveningIf(), conditional.triggerTimeOnly());
+                    aware.withChosenCard(chosenCard));
         }
         return effect;
     }

@@ -19,12 +19,12 @@ public class NefaroxOverlordOfGrixis extends Card {
         // records the attacker as the non-targeting trigger target and AttacksAlone restricts it
         // to lone attackers.
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostTargetCreatureEffect(1, 1));
 
         // Whenever Nefarox attacks alone, defending player sacrifices a creature of their choice.
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new SacrificePermanentsEffect(
                         1, new PermanentIsCreaturePredicate(), SacrificeRecipient.DEFENDING_PLAYER));
     }

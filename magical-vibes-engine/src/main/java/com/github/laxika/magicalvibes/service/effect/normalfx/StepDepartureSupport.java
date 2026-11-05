@@ -181,7 +181,7 @@ public class StepDepartureSupport {
                 dispatch(gameData, entry, payload);
             }
         } else {
-            insertAfterResolvingStep(entry, ConditionalEffect.unless(PermanentLeftThisWay.sacrificed(), payload));
+            insertAfterResolvingStep(entry, new ConditionalEffect(PermanentLeftThisWay.sacrificed(), payload));
         }
     }
 

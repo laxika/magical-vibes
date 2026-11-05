@@ -33,7 +33,7 @@ public class BloodSpatterAnalysis extends Card {
                 SequenceEffect.of(
                 new MillEffect(1, MillRecipient.CONTROLLER),
                 new PutCountersOnSelfEffect(CounterType.BLOODSTAIN),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new SourceCounterThreshold(5, CounterType.BLOODSTAIN),
                         SacrificeSelfThenEffect.reflexive(ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.HAND)

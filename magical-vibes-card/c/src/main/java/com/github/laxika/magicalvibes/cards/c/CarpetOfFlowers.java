@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceAddedManaThisTurn;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 
 @CardRegistration(set = "USG", collectorNumber = "240")
 @CardRegistration(set = "SLD", collectorNumber = "279")
@@ -34,18 +34,18 @@ public class CarpetOfFlowers extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent");
         SpellTarget opponentTarget = target(opponent);
-        opponentTarget.addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU), ability());
-        opponentTarget.addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU), ability());
+        TriggerOptions noManaAddedYet = TriggerOptions.DEFAULT.withInterveningIf(
+                new NotCondition(new SourceAddedManaThisTurn()));
+        opponentTarget.addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU), noManaAddedYet, ability());
+        opponentTarget.addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU), noManaAddedYet, ability());
     }
 
     private CardEffect ability() {
         PermanentCount islands = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.ISLAND), CountScope.TARGET_PLAYER);
-        return new ConditionalEffect(
-                new NotCondition(new SourceAddedManaThisTurn()),
-                new MayEffect(
-                        new AwardAnyColorManaEffect(islands, ManaSpendRestriction.NONE, null,
-                                false, true, false, true, false, false),
-                        "Add mana with Carpet of Flowers?"));
+        return new MayEffect(
+                new AwardAnyColorManaEffect(islands, ManaSpendRestriction.NONE, null,
+                        false, true, false, true, false, false),
+                "Add mana with Carpet of Flowers?");
     }
 }

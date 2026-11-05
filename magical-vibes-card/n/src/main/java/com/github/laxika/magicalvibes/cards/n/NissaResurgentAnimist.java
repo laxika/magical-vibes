@@ -23,7 +23,7 @@ public class NissaResurgentAnimist extends Card {
 
     public NissaResurgentAnimist() {
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), new AwardAnyColorManaEffect(),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                 new NthAbilityResolutionThisTurn(2),
                 new RevealUntilCardPredicateRestOnBottomRandomEffect(
                         new CardAnyOfPredicate(List.of(

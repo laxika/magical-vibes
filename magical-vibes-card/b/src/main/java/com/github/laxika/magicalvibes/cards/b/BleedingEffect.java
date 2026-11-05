@@ -61,7 +61,7 @@ public class BleedingEffect extends Card {
     }
 
     private static CardEffect grantKeywordFromGraveyard(Keyword keyword) {
-        return ConditionalEffect.unless(
+        return new ConditionalEffect(
                 new GraveyardCardThreshold(1, new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardKeywordPredicate(keyword)
@@ -70,7 +70,7 @@ public class BleedingEffect extends Card {
     }
 
     private static CardEffect grantRestrictedHexproofFromGraveyard(TargetingRestrictionEffect restriction) {
-        return ConditionalEffect.unless(
+        return new ConditionalEffect(
                 new GraveyardCardThreshold(1, new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardKeywordPredicate(Keyword.HEXPROOF, restriction)))),

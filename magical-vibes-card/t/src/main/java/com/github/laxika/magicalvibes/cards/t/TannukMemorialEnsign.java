@@ -16,6 +16,6 @@ public class TannukMemorialEnsign extends Card {
     public TannukMemorialEnsign() {
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                 new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
-                ConditionalEffect.unless(new NthAbilityResolutionThisTurn(2), new DrawCardEffect(1)));
+                new ConditionalEffect(new NthAbilityResolutionThisTurn(2), new DrawCardEffect(1)));
     }
 }

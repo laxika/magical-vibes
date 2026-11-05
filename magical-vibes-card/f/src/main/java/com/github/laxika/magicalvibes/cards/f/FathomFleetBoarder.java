@@ -16,7 +16,7 @@ public class FathomFleetBoarder extends Card {
 
     public FathomFleetBoarder() {
         // When this creature enters, you lose 2 life unless you control another Pirate.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), ConditionalEffect.unless(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new NotCondition(new ControlsAnotherPermanent(
                         new PermanentHasSubtypePredicate(CardSubtype.PIRATE))),
                 new LoseLifeEffect(2)));

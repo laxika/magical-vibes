@@ -21,7 +21,7 @@ public class PeerlessSamurai extends Card {
                         .withFilter(new PermanentAnyOfPredicate(List.of(
                                 new PermanentHasSubtypePredicate(CardSubtype.SAMURAI),
                                 new PermanentHasSubtypePredicate(CardSubtype.WARRIOR)))),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new ReduceCastCostForNextMatchingSpellEffect(new CardTruePredicate(), 1));
     }
 }

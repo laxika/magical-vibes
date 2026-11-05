@@ -2894,8 +2894,7 @@ public class DrawService {
                     continue;
                 }
 
-                if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
-                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                if (!conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
                         ConditionContext.forPermanent(perm, drawingPlayerId))) {
                     continue;
                 }
@@ -3145,12 +3144,9 @@ public class DrawService {
                             continue;
                         }
                     }
-                    if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()) {
-                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
-                                ConditionContext.forPermanent(perm, playerId)
-                                        .withTargetId(drawingPlayerId))) {
-                            continue;
-                        }
+                    if (!conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
+                            ConditionContext.forPermanent(perm, playerId).withTargetId(drawingPlayerId))) {
+                        continue;
                     }
                     int triggerCopies = 1 + gameQueryService.countAdditionalDrawTriggeredAbilityTriggers(
                             gameData, playerId, perm);

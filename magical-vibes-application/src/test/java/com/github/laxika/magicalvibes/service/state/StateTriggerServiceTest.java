@@ -304,7 +304,7 @@ class StateTriggerServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getEffectsToResolve())
-                    .containsExactly(new ConditionalEffect(new ControllerTurn(), new GainLifeEffect(1), true));
+                    .containsExactly(new ConditionalEffect(new ControllerTurn(), new GainLifeEffect(1)));
         }
 
         @Test

@@ -23,16 +23,16 @@ public class BezaTheBoundingSpring extends Card {
 
     public BezaTheBoundingSpring() {
         // Beza's comparisons are resolution-time conditions, not intervening-if ETB gates.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), ConditionalEffect.unless(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new OpponentControlsMoreLands(),
                 CreateTokenEffect.ofTreasureToken(1)),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                 new AnOpponentHasMoreLifeThanController(), new GainLifeEffect(4)),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                 new OpponentControlsMoreCreatures(1),
                 new CreateTokenEffect(2, "Fish", 1, 1, CardColor.BLUE,
                         List.of(CardSubtype.FISH), Set.of(), Set.of())),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                 new AnOpponentHasMoreCardsInHandThanController(), new DrawCardEffect(1)));
     }
 }

@@ -28,7 +28,7 @@ public class HaliyaGuidedByLight extends Card {
                                 new PermanentNotPredicate(new PermanentIsCreaturePredicate()))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
                 new GainLifeEffect(1));
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), ConditionalEffect.unless(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
                 new GainedLifeThisTurn(3), new DrawCardEffect(1)));
 
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{W}"))));

@@ -19,7 +19,7 @@ public class SeiferAlmasy extends Card {
 
     public SeiferAlmasy() {
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET));
 
         addTrigger(Triggers.dealsCombatDamageToPlayer(),

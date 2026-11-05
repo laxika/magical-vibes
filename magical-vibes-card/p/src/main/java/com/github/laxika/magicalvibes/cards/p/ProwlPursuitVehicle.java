@@ -41,7 +41,7 @@ public class ProwlPursuitVehicle extends Card {
         addTrigger(Triggers.enters(anotherCreatureOrVehicle, ObjectRelation.ANOTHER_YOU_CONTROL),
                 SequenceEffect.of(
                         new PutCountersOnSourceEffect(1, 1, 1),
-                        ConditionalEffect.unless(new NthAbilityResolutionThisTurn(2),
+                        new ConditionalEffect(new NthAbilityResolutionThisTurn(2),
                                 new TransformSelfEffect())));
     }
 }

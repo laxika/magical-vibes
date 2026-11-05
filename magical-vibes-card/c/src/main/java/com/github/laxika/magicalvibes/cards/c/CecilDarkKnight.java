@@ -24,7 +24,7 @@ public class CecilDarkKnight extends Card {
 
         addTrigger(Triggers.dealsDamage(), SequenceEffect.of(
                 new LoseLifeEffect(new EventValue(), LoseLifeRecipient.CONTROLLER),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         ControllerLifeAtMost.atHalfStartingLife(),
                         SequenceEffect.of(
                                 new UntapPermanentsEffect(TapUntapScope.SELF),

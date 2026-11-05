@@ -84,7 +84,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -409,21 +408,6 @@ class MiscTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("graveyard-leave trigger skips a false intervening turn condition")
-    void graveyardLeaveTriggerSkipsFalseInterveningCondition() {
-        Permanent perm = createPermanent("Kishla Skimmer");
-        var effect = new ConditionalEffect(new ControllerTurn(), new DrawCardEffect(1));
-        var ctx = new TriggerContext.ControllerCardsLeaveGraveyard(player1Id);
-        when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(false);
-
-        boolean result = registry.dispatch(
-                match(perm, player1Id, effect), ZoneChangeWatch.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD, effect, ctx);
-
-        assertThat(result).isFalse();
-        assertThat(gd.stack).isEmpty();
-    }
-
-    @Test
     @DisplayName("controller life-gain conditional trigger queues its wrapped effect")
     void controllerLifeGainConditionalTriggerQueuesWrappedEffect() {
         Permanent perm = createPermanent("Vampire Scrivener");
@@ -465,7 +449,6 @@ class MiscTriggerCollectorServiceTest {
         Permanent perm = createPermanent("Fabrication Module");
         var effect = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1);
         var ctx = new TriggerContext.EnergyGain(player1Id, 1);
-        when(conditionEvaluationService.isInterveningIfMet(any(), any(), any(), any())).thenReturn(true);
 
         boolean result = registry.dispatch(
                 match(perm, player1Id, effect), CounterWatch.ON_CONTROLLER_GETS_ENERGY, effect, ctx);
@@ -499,26 +482,9 @@ class MiscTriggerCollectorServiceTest {
     }
 
     @Test
-    void conditionalProliferateTriggerSkipsWhenInterveningIfIsFalse() {
+    void conditionalProliferateTriggerQueuesWithItsInterveningIfToBeCheckedAsItResolves() {
         Permanent perm = createPermanent("Contagion Dispenser");
         var effect = new ConditionalEffect(new ControllerTurn(), new GainLifeEffect(1));
-        when(conditionEvaluationService.isMet(eq(gd), eq(new ControllerTurn()), any(ConditionContext.class)))
-                .thenReturn(false);
-
-        boolean result = registry.dispatch(
-                match(perm, player1Id, effect), CounterWatch.ON_CONTROLLER_PROLIFERATES, effect,
-                new TriggerContext.Proliferate(player1Id));
-
-        assertThat(result).isFalse();
-        assertThat(gd.stack).isEmpty();
-    }
-
-    @Test
-    void conditionalProliferateTriggerQueuesWhenInterveningIfIsTrue() {
-        Permanent perm = createPermanent("Contagion Dispenser");
-        var effect = new ConditionalEffect(new ControllerTurn(), new GainLifeEffect(1));
-        when(conditionEvaluationService.isMet(eq(gd), eq(new ControllerTurn()), any(ConditionContext.class)))
-                .thenReturn(true);
 
         boolean result = registry.dispatch(
                 match(perm, player1Id, effect), CounterWatch.ON_CONTROLLER_PROLIFERATES, effect,

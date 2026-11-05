@@ -22,7 +22,7 @@ public class EzioAuditoreDaFirenze extends Card {
                 "{B}{B}", new CardSubtypePredicate(CardSubtype.ASSASSIN)));
 
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new TargetPlayerLifeAtMost(10),
                         new MayPayManaEffect(
                                 "{W}{U}{B}{R}{G}",

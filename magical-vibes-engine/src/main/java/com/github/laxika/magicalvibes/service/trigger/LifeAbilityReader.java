@@ -30,10 +30,11 @@ import java.util.UUID;
  * ({@link LifeEffect#firstTimeEachTurn()}, a count of the player's events) and the limit ({@link LifeEffect#limit()},
  * marked by {@link TriggeredAbility#limitKey()} on the source).
  * <p>
- * The intervening "if" (CR 603.4) and the event condition (CR 603.2) reach the collectors as the
- * {@link ConditionalEffect}s they judge, until step 15 of effect-slot-refactor.md makes the effects read the event: the
- * intervening "if" is a {@link ConditionalEffect} around each effect and the event condition the
- * {@link ConditionalEffect#atTriggerTime} inside it.
+ * The intervening "if" (CR 603.4) and the event condition (CR 603.2) are the ability's options: its collector judges
+ * them as the ability triggers, in the context of its event, from the records' {@code ability()} or through a
+ * {@link TriggerJudge} on the abilities an effect list is read from. The reader wraps the intervening "if" around each
+ * effect as the {@link ConditionalEffect} that checks it again as the ability resolves; the event condition is never
+ * checked again.
  */
 public final class LifeAbilityReader {
 
@@ -118,12 +119,22 @@ public final class LifeAbilityReader {
         return effects(printed(card, watch), watch.trigger());
     }
 
+    /** {@link #printedEffects(Card, LifeWatch)} of the abilities {@code judge} lets trigger. */
+    public static List<CardEffect> printedEffects(Card card, LifeWatch watch, TriggerJudge judge) {
+        return effects(judge.filter(printed(card, watch)), watch.trigger());
+    }
+
     /**
      * The registrations of the abilities of {@code card} that {@code watch} reads, for a collector that judges no
      * narrower event, count or limit (this throws on one).
      */
     public static List<EffectRegistration> printedRegistrations(Card card, LifeWatch watch) {
-        List<LifeEffect> effects = read(printed(card, watch), watch.trigger());
+        return printedRegistrations(card, watch, TriggerJudge.NONE);
+    }
+
+    /** {@link #printedRegistrations(Card, LifeWatch)} of the abilities {@code judge} lets trigger. */
+    public static List<EffectRegistration> printedRegistrations(Card card, LifeWatch watch, TriggerJudge judge) {
+        List<LifeEffect> effects = read(judge.filter(printed(card, watch)), watch.trigger());
         effects.forEach(effect -> requireNothingToJudge(effect, watch.trigger()));
         return effects.stream().map(effect -> new EffectRegistration(effect.effect(), effect.simultaneousWithPrevious())).toList();
     }
@@ -166,16 +177,12 @@ public final class LifeAbilityReader {
             throw new IllegalStateException("The \"an opponent loses life\" collector reads no options on \"for the "
                     + "first time during each of their turns\": " + ability);
         }
-        Condition eventCondition = options.eventCondition();
         Condition interveningIf = options.interveningIf();
         List<LifeEffect> effects = new ArrayList<>(ability.effects().size());
         for (EffectRegistration registration : ability.effects()) {
             CardEffect effect = registration.effect();
-            if (eventCondition != null) {
-                effect = ConditionalEffect.atTriggerTime(eventCondition, effect);
-            }
             if (interveningIf != null) {
-                effect = new ConditionalEffect(interveningIf, effect, true);
+                effect = new ConditionalEffect(interveningIf, effect);
             }
             effects.add(new LifeEffect(effect, ability, condition.event(), condition.firstEachTurn(),
                     registration.simultaneousWithPrevious()));

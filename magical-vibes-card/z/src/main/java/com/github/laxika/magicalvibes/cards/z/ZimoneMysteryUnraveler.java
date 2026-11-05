@@ -15,9 +15,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ZimoneMysteryUnraveler extends Card {
 
     public ZimoneMysteryUnraveler() {
-        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), ConditionalEffect.unless(
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), new ConditionalEffect(
                 new NthAbilityResolutionThisTurn(1), ManifestDreadEffect.forController()),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                 new NotCondition(new NthAbilityResolutionThisTurn(1)),
                 new MayEffect(TurnOwnCreatureFaceUpEffect.anyPermanent(), "Turn a permanent you control face up?")));
     }

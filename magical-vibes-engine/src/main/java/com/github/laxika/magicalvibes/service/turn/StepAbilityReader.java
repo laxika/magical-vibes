@@ -134,7 +134,7 @@ public final class StepAbilityReader {
         List<CardEffect> effects = new ArrayList<>(ability.effects().size());
         for (EffectRegistration registration : ability.effects()) {
             CardEffect effect = registration.effect();
-            effects.add(interveningIf == null ? effect : new ConditionalEffect(interveningIf, effect, true));
+            effects.add(interveningIf == null ? effect : new ConditionalEffect(interveningIf, effect));
         }
         return effects;
     }

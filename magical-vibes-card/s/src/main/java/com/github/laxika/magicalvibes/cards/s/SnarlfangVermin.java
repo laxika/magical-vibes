@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SuspectAndPerpetuallyGrantAbilityToTargetCreatureEffect;
@@ -24,8 +23,7 @@ public class SnarlfangVermin extends Card {
                                 new PermanentIsSuspectedPredicate(),
                                 ObjectRelation.OPPONENT_CONTROLS),
                         AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT,
-                new ConditionalEffect(new SourceCardInGraveyard(),
-                        new LoseLifeEffect(1, LoseLifeRecipient.DYING_CREATURE_CONTROLLER)));
+                TriggerOptions.DEFAULT.withEventCondition(new SourceCardInGraveyard()),
+                new LoseLifeEffect(1, LoseLifeRecipient.DYING_CREATURE_CONTROLLER));
     }
 }

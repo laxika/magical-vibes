@@ -69,6 +69,7 @@ import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class DrawServiceTest {
@@ -206,6 +207,11 @@ class DrawServiceTest {
 
     @BeforeEach
     void setUp() {
+        // The draw collectors judge each ability's intervening "if" and event condition through the service.
+        lenient().when(conditionEvaluationService.triggerConditionsMet(any(), any(), any())).thenAnswer(invocation -> {
+            TriggerOptions options = invocation.getArgument(1);
+            return options.interveningIf() == null && options.eventCondition() == null;
+        });
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");

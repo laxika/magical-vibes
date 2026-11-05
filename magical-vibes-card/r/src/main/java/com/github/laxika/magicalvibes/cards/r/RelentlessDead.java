@@ -28,7 +28,7 @@ public class RelentlessDead extends Card {
         // graveyard incarnation is still there when the ability resolves (CR 400.7).
         addTrigger(Triggers.dies(ObjectRelation.THIS), new MayPayManaEffect("{B}",
                 new ConditionalEffect(new SourceCardInGraveyard(),
-                        new ReturnSourceCardFromGraveyardToOwnerHandEffect(), false),
+                        new ReturnSourceCardFromGraveyardToOwnerHandEffect()),
                 "Pay {B} to return Relentless Dead to its owner's hand?"));
 
         addTrigger(Triggers.dies(ObjectRelation.THIS), new PayXManaReturnTargetCreatureWithManaValueXEffect(

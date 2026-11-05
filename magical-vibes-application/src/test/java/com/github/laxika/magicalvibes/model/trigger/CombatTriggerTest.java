@@ -115,7 +115,7 @@ class CombatTriggerTest {
 
         assertThat(reads).hasSize(1);
         CombatAbilityReader.CombatEffect read = reads.getFirst();
-        assertThat(read.effect()).isEqualTo(new ConditionalEffect(ALONE, DRAW, true));
+        assertThat(read.effect()).isEqualTo(new ConditionalEffect(ALONE, DRAW));
         assertThat(read.filter()).isEqualTo(DRAGON);
         assertThat(read.limit()).isEqualTo(TriggerLimit.ONCE_EACH_TURN);
         assertThat(read.ability()).isSameAs(card.getTriggeredAbilities().getFirst());
@@ -123,14 +123,14 @@ class CombatTriggerTest {
     }
 
     @Test
-    void theEventConditionIsCheckedOnlyAsTheAbilityTriggersInsideTheInterveningIf() {
+    void theReaderWrapsOnlyTheInterveningIfAndLeavesTheEventConditionToTheCollector() {
         Card card = new Card();
         card.addTrigger(Triggers.attacks(), TriggerOptions.DEFAULT.withEventCondition(ALONE)
                 .withInterveningIf(ALONE), DRAW);
 
         assertThat(CombatAbilityReader.effects(WatchedAbilities.printed(card, CombatWatch.ON_ATTACK),
                 Triggers.attacks())).containsExactly(
-                new ConditionalEffect(ALONE, ConditionalEffect.atTriggerTime(ALONE, DRAW), true));
+                new ConditionalEffect(ALONE, DRAW));
     }
 
     @Test
@@ -154,7 +154,7 @@ class CombatTriggerTest {
         assertThat(reads).containsExactly(
                 new CombatAbilityReader.AllyCombatDamage(null, false, false, false, DRAW),
                 new CombatAbilityReader.AllyCombatDamage(DRAGON, true, false, false,
-                        new ConditionalEffect(ALONE, GAIN, true)),
+                        new ConditionalEffect(ALONE, GAIN)),
                 new CombatAbilityReader.AllyCombatDamage(DRAGON, false, true, false, counter));
         CombatAbilityReader.CombatEffect bothFilters = CombatAbilityReader.read(
                 twoFilters.getTriggeredAbilities().getFirst(),
@@ -178,7 +178,7 @@ class CombatTriggerTest {
         assertThat(CombatAbilityReader.effects(WatchedAbilities.printed(guarded,
                         CombatWatch.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER),
                 Triggers.creatureYouControlDealsCombatDamageToPlayer())).containsExactly(
-                new AllyCombatDamageTriggerEffect(DRAGON, new ConditionalEffect(ALONE, DRAW, true), true, true));
+                new AllyCombatDamageTriggerEffect(DRAGON, new ConditionalEffect(ALONE, DRAW), true, true));
     }
 
     @Test

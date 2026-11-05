@@ -32,11 +32,11 @@ import java.util.function.Predicate;
  * ({@link DamageEffect#limit()}, marked by {@link TriggeredAbility#limitKey()} on the source, or for each creature) and
  * "once for each source" ({@link DamageEffect#eachSource()}, CR 603.2c).
  * <p>
- * The intervening "if" (CR 603.4) and the event condition (CR 603.2) reach the collectors as the
- * {@link ConditionalEffect}s their handlers judge in contexts of their own (the damage amount, the damaged permanent),
- * until step 15 of effect-slot-refactor.md makes the effects read the event: the intervening "if" is a
- * {@link ConditionalEffect} around each effect, checked as the ability triggers and again as it resolves, and the event
- * condition the {@link ConditionalEffect#atTriggerTime} inside it, checked only as it triggers.
+ * The intervening "if" (CR 603.4) and the event condition (CR 603.2) are the ability's options: its collector judges
+ * them as the ability triggers, in the context of its event, from the records' {@code ability()} or through a
+ * {@link TriggerJudge} on the abilities an effect list is read from. The reader wraps the intervening "if" around each
+ * effect as the {@link ConditionalEffect} that checks it again as the ability resolves; the event condition is never
+ * checked again.
  */
 public final class DamageAbilityReader {
 
@@ -135,6 +135,21 @@ public final class DamageAbilityReader {
         return effects(printed(card, watch), watch.trigger());
     }
 
+    /** {@link #printedEffects(Card, DamageWatch)} of the abilities {@code judge} lets trigger. */
+    public static List<CardEffect> printedEffects(Card card, DamageWatch watch, TriggerJudge judge) {
+        return effects(judge.filter(printed(card, watch)), watch.trigger());
+    }
+
+    /** {@link #temporaryEffects(Permanent, DamageWatch)} of the abilities {@code judge} lets trigger. */
+    public static List<CardEffect> temporaryEffects(Permanent permanent, DamageWatch watch, TriggerJudge judge) {
+        return effects(judge.filter(WatchedAbilities.temporary(permanent, watch.trigger())), watch.trigger());
+    }
+
+    /** {@link #persistentEffects(Permanent, DamageWatch)} of the abilities {@code judge} lets trigger. */
+    public static List<CardEffect> persistentEffects(Permanent permanent, DamageWatch watch, TriggerJudge judge) {
+        return effects(judge.filter(WatchedAbilities.persistent(permanent, watch.trigger())), watch.trigger());
+    }
+
     /**
      * The effects of the abilities {@code watch} reads granted to {@code permanent} until end of turn, end of combat or
      * next upkeep, for a collector that reads no filter, limit or multiplicity (this throws on one).
@@ -164,16 +179,12 @@ public final class DamageAbilityReader {
     public static List<DamageEffect> read(TriggeredAbility ability, Trigger watched) {
         PermanentPredicate filter = filter(ability, watched);
         TriggerOptions options = ability.options();
-        Condition eventCondition = options.eventCondition();
         Condition interveningIf = options.interveningIf();
         List<DamageEffect> effects = new ArrayList<>(ability.effects().size());
         for (EffectRegistration registration : ability.effects()) {
             CardEffect effect = registration.effect();
-            if (eventCondition != null) {
-                effect = ConditionalEffect.atTriggerTime(eventCondition, effect);
-            }
             if (interveningIf != null) {
-                effect = new ConditionalEffect(interveningIf, effect, true);
+                effect = new ConditionalEffect(interveningIf, effect);
             }
             effects.add(new DamageEffect(effect, ability, filter,
                     registration.simultaneousWithPrevious()));

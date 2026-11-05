@@ -20,6 +20,6 @@ public class MindwrackDemon extends Card {
     public MindwrackDemon() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(4, MillRecipient.CONTROLLER));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                ConditionalEffect.unless(new NotCondition(new Delirium()), new LoseLifeEffect(4)));
+                new ConditionalEffect(new NotCondition(new Delirium()), new LoseLifeEffect(4)));
     }
 }

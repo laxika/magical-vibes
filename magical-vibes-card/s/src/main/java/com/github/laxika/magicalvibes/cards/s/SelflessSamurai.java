@@ -29,7 +29,7 @@ public class SelflessSamurai extends Card {
                         .withFilter(new PermanentAnyOfPredicate(List.of(
                                 new PermanentHasSubtypePredicate(CardSubtype.SAMURAI),
                                 new PermanentHasSubtypePredicate(CardSubtype.WARRIOR)))),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET));
 
         addActivatedAbility(new ActivatedAbility(

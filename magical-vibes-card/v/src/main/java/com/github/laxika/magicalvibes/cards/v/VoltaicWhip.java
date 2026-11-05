@@ -24,7 +24,7 @@ public class VoltaicWhip extends Card {
         // Equipped creature has "Whenever this creature attacks alone, you draw a card and lose 1 life."
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.attacks(),
-                        TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                        TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                         SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1))),
                 GrantScope.EQUIPPED_CREATURE));
 

@@ -18,14 +18,14 @@ public class SovereignsOfLostAlara extends Card {
         // of turn. Same wiring as Battlegrace Angel — Triggers.creatureYouControlAttacks() records the lone
         // attacker as the non-targeting trigger target and AttacksAlone restricts it to solo attackers.
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostTargetCreatureEffect(1, 1));
 
         // Whenever a creature you control attacks alone, you may search your library for an Aura card
         // that could enchant that creature and put it onto the battlefield attached to it. The search
         // reads the recorded lone attacker (the trigger's non-targeting target) as the host.
         addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksAlone()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new MayEffect(new SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffect(),
                         "Search your library for an Aura card to attach to the attacking creature?"));
     }
