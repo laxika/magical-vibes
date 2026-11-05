@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 
-import java.util.UUID;
 
 /**
  * Death-trigger effect for "put that card onto the battlefield under your control at the beginning
@@ -14,9 +13,8 @@ import java.util.UUID;
  * ({@code Triggers.creatureDies(YOU_CONTROL)}, wrapped in a {@code MayEffect}), plus Lifeline's owner-control
  * return from {@code Triggers.creatureDies(ANY)}.
  *
- * <p>On resolution the handler reads the dying creature's card id from {@code dyingCardId} when the
- * collector bound one (the {@code MayEffect} flow does not carry the stack entry's triggering-card
- * id) and otherwise from the trigger entry ({@code StackEntry.triggeringCardId}), then queues a
+ * <p>On resolution the handler reads the dying creature's card from the stack entry's triggering card
+ * ({@code StackEntry.triggeringCardId}) and its graveyard incarnation, then queues a
  * {@code DelayedGraveyardToBattlefieldUnderControl} carrying the riders below, drained in
  * {@code StepTriggerService.handleEndStepTriggers}.
  *
@@ -39,9 +37,6 @@ import java.util.UUID;
  *                                     of the ability controller's control (Lifeline)
  * @param requireAnotherCreature        when true, the trigger is only collected and resolved while
  *                                     another creature is on the battlefield (Lifeline)
- * @param dyingCardId                  the dying creature's card id, bound by the trigger collector
- *                                     on the {@code MayEffect} path; null lets the handler fall back
- *                                     to the stack entry's triggering-card id
  * @param targetOpponent               when true, the death trigger targets an opponent and that
  *                                     player becomes the controller of the delayed return
  * @param optionalReturn               when true the delayed end-step trigger asks its controller
@@ -58,21 +53,20 @@ public record RegisterDelayedReturnDyingCreatureUnderControlEffect(
         boolean requireSourceOnBattlefield,
         boolean returnUnderOwnersControl,
         boolean requireAnotherCreature,
-        UUID dyingCardId,
         boolean targetOpponent,
         boolean optionalReturn
-) implements CardEffect, DyingCreatureCardAwareEffect {
+) implements CardEffect {
 
     /** Seraph: plain return linked to the source permanent, no counters and no grants. */
     public RegisterDelayedReturnDyingCreatureUnderControlEffect() {
-        this(true, null, 0, null, null, false, false, false, null, false, false);
+        this(true, null, 0, null, null, false, false, false, false, false);
     }
 
     /** Grave Betrayal-style: counter and colour/subtype riders, no source-presence requirement. */
     public RegisterDelayedReturnDyingCreatureUnderControlEffect(boolean sacrificeOnSourceControlLoss,
             CounterType counterType, int counterAmount, CardColor grantColor, CardSubtype grantSubtype) {
         this(sacrificeOnSourceControlLoss, counterType, counterAmount, grantColor, grantSubtype,
-                false, false, false, null, false, false);
+                false, false, false, false, false);
     }
 
     /** Lifeline-style: return under the card's owner's control while another creature remains. */
@@ -81,7 +75,7 @@ public record RegisterDelayedReturnDyingCreatureUnderControlEffect(
             boolean requireSourceOnBattlefield, boolean returnUnderOwnersControl,
             boolean requireAnotherCreature) {
         this(sacrificeOnSourceControlLoss, counterType, counterAmount, grantColor, grantSubtype,
-                requireSourceOnBattlefield, returnUnderOwnersControl, requireAnotherCreature, null, false, false);
+                requireSourceOnBattlefield, returnUnderOwnersControl, requireAnotherCreature, false, false);
     }
 
     /**
@@ -90,13 +84,13 @@ public record RegisterDelayedReturnDyingCreatureUnderControlEffect(
      */
     public static RegisterDelayedReturnDyingCreatureUnderControlEffect optionalWhileSourceRemains() {
         return new RegisterDelayedReturnDyingCreatureUnderControlEffect(
-                false, null, 0, null, null, true, false, false, null, false, true);
+                false, null, 0, null, null, true, false, false, false, true);
     }
 
     /** Endless Whispers: the creature's controller chooses an opponent to control the return. */
     public static RegisterDelayedReturnDyingCreatureUnderControlEffect forOpponent() {
         return new RegisterDelayedReturnDyingCreatureUnderControlEffect(
-                false, null, 0, null, null, false, false, false, null, true, false);
+                false, null, 0, null, null, false, false, false, true, false);
     }
 
     @Override
@@ -107,12 +101,5 @@ public record RegisterDelayedReturnDyingCreatureUnderControlEffect(
     @Override
     public PlayerRelation targetPlayerRelation() {
         return targetOpponent ? PlayerRelation.OPPONENT : PlayerRelation.ANY;
-    }
-
-    @Override
-    public CardEffect boundToDyingCard(UUID dyingCardId) {
-        return new RegisterDelayedReturnDyingCreatureUnderControlEffect(sacrificeOnSourceControlLoss,
-                counterType, counterAmount, grantColor, grantSubtype, requireSourceOnBattlefield,
-                returnUnderOwnersControl, requireAnotherCreature, dyingCardId, targetOpponent, optionalReturn);
     }
 }

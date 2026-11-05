@@ -51,7 +51,8 @@ public class ConjureCardIntoGraveyardThenDoubleAndShuffleEffectHandler implement
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var conjure = (ConjureCardIntoGraveyardThenDoubleAndShuffleEffect) effect;
-        if (conjure.dyingCardId() == null) {
+        UUID dyingCardId = entry.getTriggeringCardId();
+        if (dyingCardId == null) {
             return;
         }
 
@@ -63,13 +64,13 @@ public class ConjureCardIntoGraveyardThenDoubleAndShuffleEffectHandler implement
                 gameData, controllerId, duplicate);
         triggerCollectionService.checkConjureTriggers(gameData, controllerId, 1);
 
-        rememberDouble(gameData, conjure.dyingCardId(), duplicate);
+        rememberDouble(gameData, dyingCardId, duplicate);
         rememberDouble(gameData, duplicate.getId(), duplicate);
 
         Map<UUID, Integer> movedByOwner = new HashMap<>();
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
-            moveToOwnersLibrary(gameData, conjure.dyingCardId(), movedByOwner);
+            moveToOwnersLibrary(gameData, dyingCardId, movedByOwner);
             if (duplicateEnteredGraveyard) {
                 moveToOwnersLibrary(gameData, duplicate.getId(), movedByOwner);
             }

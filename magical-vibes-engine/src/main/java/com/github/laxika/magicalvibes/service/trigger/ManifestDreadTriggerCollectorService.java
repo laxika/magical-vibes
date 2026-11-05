@@ -29,8 +29,8 @@ public class ManifestDreadTriggerCollectorService {
         TriggerContext.ManifestDread manifestDread = (TriggerContext.ManifestDread) context;
         Card sourceCard = match.permanent().getCard();
         Card graveyardCard = manifestDread.cardPutIntoGraveyard();
-        ReturnTriggeringCardToOwnerHandEffect baked = new ReturnTriggeringCardToOwnerHandEffect(
-                graveyardCard == null ? null : graveyardCard.getId(), manifestDread.manifestingPlayerId());
+        ReturnTriggeringCardToOwnerHandEffect baked =
+                new ReturnTriggeringCardToOwnerHandEffect(manifestDread.manifestingPlayerId());
         StackEntry trigger = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
@@ -40,9 +40,9 @@ public class ManifestDreadTriggerCollectorService {
                 null,
                 match.permanent().getId());
         if (graveyardCard != null) {
-            // CR 400.7: if the card leaves the graveyard before the trigger resolves, it is a new object
-            // and the return must not happen.
-            trigger.setTriggeringCardGraveyardEntryVersion(
+            // "That card": if it leaves the graveyard before the trigger resolves, it is a new object
+            // and the return must not happen (CR 400.7).
+            trigger.setTriggeringCard(graveyardCard.getId(),
                     match.gameData().graveyardEntryVersion(graveyardCard.getId()));
         }
         match.gameData().enqueueTrigger(trigger);

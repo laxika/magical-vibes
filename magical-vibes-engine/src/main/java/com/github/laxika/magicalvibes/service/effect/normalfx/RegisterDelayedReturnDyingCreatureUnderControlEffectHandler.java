@@ -32,9 +32,7 @@ public class RegisterDelayedReturnDyingCreatureUnderControlEffectHandler impleme
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (RegisterDelayedReturnDyingCreatureUnderControlEffect) effect;
-        // The MayEffect flow (Shirei) does not carry the entry's triggering-card id, so the
-        // collector binds the dying card onto the effect itself.
-        var dyingCardId = e.dyingCardId() != null ? e.dyingCardId() : entry.getTriggeringCardId();
+        var dyingCardId = entry.getTriggeringCardId();
         if (dyingCardId == null && e.targetOpponent()) {
             dyingCardId = entry.getCard().getId();
         }

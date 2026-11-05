@@ -64,6 +64,6 @@ public class TheScarabGod extends Card {
                 "{2}{U}{B}: Exile target creature card from a graveyard. Create a token that's a copy of it, except it's a 4/4 black Zombie."));
 
         // When The Scarab God dies, return it to its owner's hand at the beginning of the next end step.
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new RegisterDelayedReturnCardFromGraveyardToHandEffect(null));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new RegisterDelayedReturnCardFromGraveyardToHandEffect());
     }
 }

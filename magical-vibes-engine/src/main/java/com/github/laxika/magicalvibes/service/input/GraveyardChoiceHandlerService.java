@@ -1999,6 +1999,9 @@ public class GraveyardChoiceHandlerService {
         Integer pendingTriggeringPermanentPowerAtTrigger =
                 gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger;
         UUID pendingTriggeringPermanentId = gameData.graveyardTargetOperation.triggeringPermanentId;
+        UUID pendingTriggeringCardId = gameData.graveyardTargetOperation.triggeringCardId;
+        long pendingTriggeringCardGraveyardEntryVersion =
+                gameData.graveyardTargetOperation.triggeringCardGraveyardEntryVersion;
         List<Permanent> pendingAttackingPermanentSnapshots =
                 gameData.graveyardTargetOperation.attackingPermanentSnapshots;
         String pendingChapterName = gameData.graveyardTargetOperation.chapterName;
@@ -2054,6 +2057,8 @@ public class GraveyardChoiceHandlerService {
         gameData.graveyardTargetOperation.sourceAlternateCostAtTrigger = false;
         gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger = null;
         gameData.graveyardTargetOperation.triggeringPermanentId = null;
+        gameData.graveyardTargetOperation.triggeringCardId = null;
+        gameData.graveyardTargetOperation.triggeringCardGraveyardEntryVersion = -1;
         gameData.graveyardTargetOperation.attackingPermanentSnapshots = List.of();
         gameData.graveyardTargetOperation.chapterName = null;
         gameData.graveyardTargetOperation.spellCounterTargetId = null;
@@ -2199,6 +2204,9 @@ public class GraveyardChoiceHandlerService {
                 triggeredEntry.setAttackedTargetId(pendingAttackedTargetId);
             }
             triggeredEntry.setTriggeringPermanentId(pendingTriggeringPermanentId);
+            if (pendingTriggeringCardId != null) {
+                triggeredEntry.setTriggeringCard(pendingTriggeringCardId, pendingTriggeringCardGraveyardEntryVersion);
+            }
             triggeredEntry.setAttackingPermanentSnapshots(pendingAttackingPermanentSnapshots);
             if (pendingCard != null && pendingEffects.stream().anyMatch(effect ->
                     effect instanceof ReturnCardFromGraveyardEffect returnEffect

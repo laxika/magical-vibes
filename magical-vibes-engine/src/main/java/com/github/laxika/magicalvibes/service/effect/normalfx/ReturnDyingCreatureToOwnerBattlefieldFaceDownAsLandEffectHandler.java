@@ -37,7 +37,7 @@ public class ReturnDyingCreatureToOwnerBattlefieldFaceDownAsLandEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var returnEffect = (ReturnDyingCreatureToOwnerBattlefieldFaceDownAsLandEffect) effect;
-        UUID dyingCardId = returnEffect.dyingCardId();
+        UUID dyingCardId = entry.getTriggeringCardId();
         if (dyingCardId == null) {
             return;
         }

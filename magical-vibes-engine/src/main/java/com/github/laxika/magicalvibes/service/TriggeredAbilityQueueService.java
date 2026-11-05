@@ -259,6 +259,7 @@ public class TriggeredAbilityQueueService {
                                     ? null : pending.sourcePermanentSnapshot().getId()
                     );
                     entry.setSourcePermanentSnapshot(pending.sourcePermanentSnapshot());
+                    pending.carryTriggeringCardTo(entry);
                     gameData.stack.add(entry);
                     gameLogService.append(gameData, GameLog.cardThen(pending.dyingCard(),
                             "'s death trigger triggers without a target."));
@@ -295,6 +296,7 @@ public class TriggeredAbilityQueueService {
                                 ? null : pending.sourcePermanentSnapshot().getId()
                 );
                 entry.setSourcePermanentSnapshot(pending.sourcePermanentSnapshot());
+                pending.carryTriggeringCardTo(entry);
                 gameData.stack.add(entry);
                 gameLogService.append(gameData, GameLog.cardThen(pending.dyingCard(),
                         "'s death trigger targets " + gameQueryService.findPermanentById(
@@ -318,6 +320,7 @@ public class TriggeredAbilityQueueService {
                 );
                 entry.setEventValue(pending.eventValue() == null ? 0 : pending.eventValue());
                 entry.setSourcePermanentSnapshot(pending.sourcePermanentSnapshot());
+                pending.carryTriggeringCardTo(entry);
                 gameData.stack.add(entry);
                 gameLogService.append(gameData, GameLog.cardThen(pending.dyingCard(),
                         "'s death trigger randomly targets " + gameData.playerIdToName.get(targetId) + "."));
@@ -497,14 +500,16 @@ public class TriggeredAbilityQueueService {
                 // "Any number of target cards" is legally satisfied by zero targets, so the trigger
                 // still goes on the stack and its non-targeting half still resolves (Iname, Life
                 // Aspect's "you may exile it").
-                gameData.stack.add(new StackEntry(
+                StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         pending.dyingCard(),
                         pending.controllerId(),
                         pending.dyingCard().getName() + "'s ability",
                         new ArrayList<>(pending.effects()),
                         List.of()
-                ));
+                );
+                pending.carryTriggeringCardTo(entry);
+                gameData.stack.add(entry);
                 gameLogService.append(gameData, GameLog.cardThen(pending.dyingCard(),
                         "'s death trigger triggers targeting no cards."));
                 log.info("Game {} - {} death graveyard trigger pushed with 0 targets",
@@ -521,6 +526,9 @@ public class TriggeredAbilityQueueService {
         gameData.graveyardTargetOperation.card = pending.dyingCard();
         gameData.graveyardTargetOperation.controllerId = pending.controllerId();
         gameData.graveyardTargetOperation.effects = new ArrayList<>(pending.effects());
+        gameData.graveyardTargetOperation.triggeringCardId = pending.triggeringCardId();
+        gameData.graveyardTargetOperation.triggeringCardGraveyardEntryVersion =
+                pending.triggeringCardGraveyardEntryVersion();
         gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger = pending.eventValue() != null
                 ? pending.eventValue()
                 : pending.sourcePermanentSnapshot() == null

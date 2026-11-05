@@ -46,7 +46,7 @@ public class ReturnDyingCreatureToBattlefieldAsNamedLandEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var returnEffect = (ReturnDyingCreatureToBattlefieldAsNamedLandEffect) effect;
-        UUID dyingCardId = returnEffect.dyingCardId();
+        UUID dyingCardId = entry.getTriggeringCardId();
         UUID controllerId = entry.getControllerId();
         if (dyingCardId == null || controllerId == null) {
             return;

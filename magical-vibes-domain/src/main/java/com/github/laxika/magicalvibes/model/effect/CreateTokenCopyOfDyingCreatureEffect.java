@@ -3,26 +3,13 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 
-import java.util.UUID;
-
 /**
- * Creates a token copy of the creature that caused an ally-creature death trigger.
- * The trigger collector binds the dying card id, while the stack entry retains the
- * creature's last-known card for token deaths and cards removed before resolution.
+ * Creates a token copy of the creature that caused an ally-creature death trigger. The creature's card is the
+ * stack entry's triggering card; the entry also keeps the creature's last-known card for token deaths and cards
+ * removed before resolution.
  */
-public record CreateTokenCopyOfDyingCreatureEffect(
-        UUID dyingCardId,
-        CreateTokenCopyOfTargetPermanentEffect tokenCopyEffect
-) implements CardEffect, DyingCreatureCardAwareEffect, TokenCreatingEffect {
-
-    public CreateTokenCopyOfDyingCreatureEffect(CreateTokenCopyOfTargetPermanentEffect tokenCopyEffect) {
-        this(null, tokenCopyEffect);
-    }
-
-    @Override
-    public CardEffect boundToDyingCard(UUID dyingCardId) {
-        return new CreateTokenCopyOfDyingCreatureEffect(dyingCardId, tokenCopyEffect);
-    }
+public record CreateTokenCopyOfDyingCreatureEffect(CreateTokenCopyOfTargetPermanentEffect tokenCopyEffect)
+        implements CardEffect, TokenCreatingEffect {
 
     @Override
     public DynamicAmount tokenAmount() {

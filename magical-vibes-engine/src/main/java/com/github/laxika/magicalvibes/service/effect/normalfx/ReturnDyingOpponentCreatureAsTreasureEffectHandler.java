@@ -40,10 +40,9 @@ public class ReturnDyingOpponentCreatureAsTreasureEffectHandler implements Norma
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var treasureEffect = (ReturnDyingOpponentCreatureAsTreasureEffect) effect;
         UUID controllerId = entry.getControllerId();
 
-        entry.setTargetId(treasureEffect.dyingCardId());
+        entry.setTargetId(entry.getTriggeringCardId());
         GraveyardReturnSupport.StolenCreatureResult result =
                 graveyardReturnSupport.stealFromGraveyard(gameData, entry, controllerId, false);
         if (result == null) {

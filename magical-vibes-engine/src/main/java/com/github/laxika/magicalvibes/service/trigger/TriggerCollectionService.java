@@ -189,7 +189,6 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.ReselectTargetAtRandomEffect;
-import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCounterAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDyingCreatureToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.LeavingCreatureNameAwareEffect;
@@ -12827,16 +12826,14 @@ public class TriggerCollectionService {
     // ── Death / leaves-battlefield triggers ───────────────────────────
 
     /**
-     * {@code effect}, a "when this dies" effect of {@code dyingCard}, bound to the card that died, the Auras and
-     * Equipment that were attached to it and its graveyard incarnation (CR 400.7, CR 603.10a).
+     * {@code effect}, a "when this dies" effect of {@code dyingCard}, bound to the Auras and Equipment that were
+     * attached to it and its graveyard incarnation (CR 400.7, CR 603.10a). The card that died is the stack entry's
+     * triggering card.
      */
     public CardEffect bindSelfDeathEffect(GameData gameData, Card dyingCard, Permanent dyingPermanent,
                                           DepartedAttachments attachments, CardEffect effect) {
         UUID dyingCardId = dyingPermanent != null ? dyingPermanent.getOriginalCard().getId() : dyingCard.getId();
         CardEffect bound = effect;
-        if (bound instanceof DyingCreatureCardAwareEffect aware) {
-            bound = bindDyingCard(gameData, aware, dyingCardId);
-        }
         if (dyingPermanent != null) {
             bound = bindDyingCreatureAttachments(bound, DyingCreatureAttachmentSnapshot.of(attachments));
         }
@@ -12919,9 +12916,6 @@ public class TriggerCollectionService {
             if (resolvedEffect instanceof DyingCreatureCountersAwareEffect aware) {
                 resolvedEffect = aware.boundToDyingCreatureCounters(dyingCounters);
             }
-            if (resolvedEffect instanceof DyingCreatureCardAwareEffect aware) {
-                resolvedEffect = bindDyingCard(gameData, aware, dyingCard);
-            }
             if (resolvedEffect instanceof DyingCreatureAttachmentsAwareEffect aware) {
                 resolvedEffect = aware.boundToDyingCreatureAttachments(
                         death.attachments().auraCardIds(), death.attachments().equipmentPermanentIds());
@@ -12944,7 +12938,7 @@ public class TriggerCollectionService {
                         perm.getCard(), controllerId, new ArrayList<>(List.of(resolvedEffect)),
                         dyingPower, new Permanent(perm), null, dyingPermanent.getOriginalCard().getId(), true,
                         markOnAcceptance
-                ));
+                ).withTriggeringCard(dyingCard.getId(), gameData.graveyardEntryVersion(dyingCard.getId())));
                 anyEffectFired = true;
             } else if (resolvedEffect instanceof MayPayManaEffect
                     || resolvedEffect instanceof MayPayLifeEffect
@@ -12958,7 +12952,7 @@ public class TriggerCollectionService {
                         && returnToOwner.handOwnerId() == null) {
                     UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, dyingCard.getId());
                     if (ownerId != null) {
-                        resolvedEffect = new ReturnTriggeringCardToOwnerHandEffect(dyingCard.getId(), ownerId);
+                        resolvedEffect = new ReturnTriggeringCardToOwnerHandEffect(ownerId);
                     }
                 }
                 if (resolvedEffect instanceof DyingCreatureCounterAwareEffect aware) {
@@ -12992,8 +12986,7 @@ public class TriggerCollectionService {
                     e -> e instanceof ConditionalEffect c
                             && c.condition() instanceof TriggeringPermanentPowerGreaterThanSourcePower);
             entry.setTriggeringPermanentPowerAtTrigger(comparesPower ? dyingPowerAtDeath : dyingPower);
-            entry.setTriggeringCardId(dyingCard.getId());
-            entry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(dyingCard.getId()));
+            entry.setTriggeringCard(dyingCard.getId(), gameData.graveyardEntryVersion(dyingCard.getId()));
             // A mana value bound compares against the creature's actual last known power, which can be
             // negative (CR 208.3), so an unclamped power excludes even mana value 0.
             boolean powerBoundsManaValue = entryEffects.stream().anyMatch(
@@ -13027,12 +13020,8 @@ public class TriggerCollectionService {
                 death.power(), death.toughness(), dyingPermanent.getId(), dyingPermanent);
         boolean triggered = false;
         for (CardEffect effect : effects) {
-            CardEffect resolvedEffect = effect;
-            if (resolvedEffect instanceof DyingCreatureCardAwareEffect aware) {
-                resolvedEffect = bindDyingCard(gameData, aware, dyingCard);
-            }
-            var match = new TriggerMatchContext(gameData, perm, playerId, resolvedEffect);
-            if (dispatchCreatureDeath(match, CreatureDeathWatch.ANY, resolvedEffect, ctx)) {
+            var match = new TriggerMatchContext(gameData, perm, playerId, effect);
+            if (dispatchCreatureDeath(match, CreatureDeathWatch.ANY, effect, ctx)) {
                 triggered = true;
             }
         }
@@ -13049,13 +13038,9 @@ public class TriggerCollectionService {
         boolean triggered = false;
         boolean markOnAcceptance = limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN;
         for (CardEffect effect : effects) {
-            CardEffect resolvedEffect = effect;
-            if (resolvedEffect instanceof DyingCreatureCardAwareEffect aware) {
-                resolvedEffect = bindDyingCard(gameData, aware, dyingCard);
-            }
-            var match = new TriggerMatchContext(gameData, perm, playerId, resolvedEffect, perm.getCard(),
+            var match = new TriggerMatchContext(gameData, perm, playerId, effect, perm.getCard(),
                     markOnAcceptance);
-            if (dispatchCreatureDeath(match, CreatureDeathWatch.OPPONENT, resolvedEffect, ctx)) {
+            if (dispatchCreatureDeath(match, CreatureDeathWatch.OPPONENT, effect, ctx)) {
                 triggered = true;
             }
         }
@@ -13178,8 +13163,7 @@ public class TriggerCollectionService {
         UUID dyingCreatureCardId = dyingCreatureCard.getId();
         boolean triggered = false;
         for (CardEffect effect : effects) {
-            CardEffect materializedEffect = materializeDamagedCreatureDiesEffect(effect, dyingCreatureCard,
-                    dyingPermanent);
+            CardEffect materializedEffect = materializeDamagedCreatureDiesEffect(effect, dyingPermanent);
             triggered = true;
             if (materializedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                     || materializedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
@@ -13200,10 +13184,9 @@ public class TriggerCollectionService {
             );
             // The dying creature's card id as last-known information, for effects that act on it
             // (e.g. Seraph returns "that card" at the next end step).
-            triggerEntry.setTriggeringCardId(dyingCreatureCardId);
             // The graveyard visit this trigger refers to (CR 400.7): a later effect that acts on "that card"
             // must not act on the same card after it has left and returned to a graveyard again.
-            triggerEntry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(dyingCreatureCardId));
+            triggerEntry.setTriggeringCard(dyingCreatureCardId, gameData.graveyardEntryVersion(dyingCreatureCardId));
             // "its controller loses N life" reads the dying creature's last-known controller from
             // the entry's targetId; the ability itself chooses no target. Other abilities use targetId
             // for their own purposes, so it is only bound for that recipient.
@@ -13219,22 +13202,14 @@ public class TriggerCollectionService {
     }
 
     /**
-     * Binds the dying creature's last-known information into effects that need it. The "you may exile
-     * that card" ability (Unscythe) loses the stack entry's triggering-card id once wrapped as a may
-     * ability, so the dying card id is bound onto the wrapped effect here instead.
+     * Binds the dying creature's last-known toughness into the effects that need it; the card itself is the
+     * stack entry's triggering card.
      */
-    private static CardEffect materializeDamagedCreatureDiesEffect(CardEffect effect, Card dyingCreatureCard,
-                                                                   Permanent dyingPermanent) {
+    private static CardEffect materializeDamagedCreatureDiesEffect(CardEffect effect, Permanent dyingPermanent) {
         if (effect instanceof GainLifeEqualToToughnessEffect) {
             int toughness = dyingPermanent.getLastKnownToughness() != null
                     ? dyingPermanent.getLastKnownToughness() : dyingPermanent.getEffectiveToughness();
             return new GainLifeEffect(Math.max(0, toughness));
-        }
-        if (effect instanceof MayEffect may && may.wrapped() instanceof DyingCreatureCardAwareEffect aware) {
-            return new MayEffect(aware.boundToDyingCard(dyingCreatureCard.getId()), may.prompt());
-        }
-        if (effect instanceof DyingCreatureCardAwareEffect aware) {
-            return aware.boundToDyingCard(dyingCreatureCard.getId());
         }
         return effect;
     }
@@ -13398,9 +13373,6 @@ public class TriggerCollectionService {
                         CreatureDeathWatch.ANY, resolved, context);
                 triggered = true;
             } else {
-                if (resolved instanceof DyingCreatureCardAwareEffect aware) {
-                    resolved = bindDyingCard(gameData, aware, dyingCard);
-                }
                 stackEffects.add(resolved);
             }
         }
@@ -13412,6 +13384,7 @@ public class TriggerCollectionService {
         entry.setSourcePermanentSnapshot(new Permanent(watcher));
         entry.setTriggeringPermanentId(dyingPermanent.getId());
         entry.setTriggeringPermanentPowerAtTrigger(dyingPower);
+        entry.setTriggeringCard(dyingCard.getId(), gameData.graveyardEntryVersion(dyingCard.getId()));
         gameData.enqueueTrigger(entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
         return true;
@@ -13449,9 +13422,6 @@ public class TriggerCollectionService {
                         watcher.getCard(), markOnAcceptance), watch, resolved, context);
                 triggered = true;
             } else {
-                if (resolved instanceof DyingCreatureCardAwareEffect aware) {
-                    resolved = bindDyingCard(gameData, aware, dyingCard);
-                }
                 if (resolved instanceof DyingCreatureCounterAwareEffect aware) {
                     resolved = aware.boundToDyingCreatureCounterCount(countCountersOnPermanent(dyingPermanent));
                 }
@@ -13466,6 +13436,7 @@ public class TriggerCollectionService {
         entry.setTriggeringPermanentId(dyingPermanent.getId());
         entry.setTriggeringPermanentPowerAtTrigger(dyingPower);
         entry.setEventCardIds(eventCardIds);
+        entry.setTriggeringCard(dyingCard.getId(), gameData.graveyardEntryVersion(dyingCard.getId()));
         gameData.stack.add(entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
         return true;
@@ -13932,9 +13903,6 @@ public class TriggerCollectionService {
                     .toList();
             for (CardEffect effect : ZoneChangeAbilityReader.strictEffects(abilities)) {
                 CardEffect resolved = effect;
-                if (resolved instanceof DyingCreatureCardAwareEffect aware) {
-                    resolved = bindDyingCard(gameData, aware, dyingCard);
-                }
                 if (resolved.targetSpec().targetPredicate() != null) {
                     gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                             object.getCard(), planarControllerId, List.of(resolved), false,
@@ -13950,7 +13918,7 @@ public class TriggerCollectionService {
                         object.getCard().getName() + "'s ability",
                         List.of(resolved));
                 entry.setSourcePlanarObject(object.copy());
-                entry.setTriggeringCardId(dyingCard.getId());
+                entry.setTriggeringCard(dyingCard.getId(), gameData.graveyardEntryVersion(dyingCard.getId()));
                 entry.setTriggeringPermanentId(dyingPermanent.getId());
                 entry.setTriggeringPermanentControllerId(dyingCreatureControllerId);
                 entry.setTriggeringPermanentPowerAtTrigger(Math.max(0, dyingPermanent.getEffectivePower()));
@@ -16271,23 +16239,6 @@ public class TriggerCollectionService {
                                   TriggerContext.PermanentEnters ctx) {
         var match = new TriggerMatchContext(gameData, perm, controllerId, rawEffect);
         return dispatch(match, slot, resolvedEffect, ctx);
-    }
-
-    /**
-     * Binds the dying creature card and the graveyard-entry version it just received into an
-     * effect that later returns or otherwise acts on that card, so a card that left the graveyard
-     * and came back is a new object the original trigger cannot act on (CR 400.7).
-     */
-    private static CardEffect bindDyingCard(GameData gameData, DyingCreatureCardAwareEffect aware, Card dyingCard) {
-        return bindDyingCard(gameData, aware, dyingCard.getId());
-    }
-
-    private static CardEffect bindDyingCard(GameData gameData, DyingCreatureCardAwareEffect aware, UUID dyingCardId) {
-        CardEffect bound = aware.boundToDyingCard(dyingCardId);
-        if (bound instanceof DyingCreatureCardAwareEffect versioned) {
-            return versioned.boundToDyingCardEntryVersion(gameData.graveyardEntryVersion(dyingCardId));
-        }
-        return bound;
     }
 
     private boolean dispatch(TriggerMatchContext match, Object slot, CardEffect effect,

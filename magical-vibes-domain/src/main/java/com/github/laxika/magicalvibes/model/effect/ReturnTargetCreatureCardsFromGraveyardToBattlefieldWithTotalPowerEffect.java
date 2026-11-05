@@ -3,28 +3,17 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
-import java.util.List;
-import java.util.UUID;
-
 /** Returns any number of target creature cards from the controller's graveyard within a power cap. */
-public record ReturnTargetCreatureCardsFromGraveyardToBattlefieldWithTotalPowerEffect(int maxTotalPower,
-        UUID dyingCardId)
-        implements GraveyardCardChoosingEffect, DyingCreatureCardAwareEffect, DyingCreaturePermanentAwareEffect {
+public record ReturnTargetCreatureCardsFromGraveyardToBattlefieldWithTotalPowerEffect(int maxTotalPower)
+        implements GraveyardCardChoosingEffect, DyingCreaturePermanentAwareEffect {
 
     private static final CardPredicate CREATURE_CARD = new CardTypePredicate(CardType.CREATURE);
 
-    public ReturnTargetCreatureCardsFromGraveyardToBattlefieldWithTotalPowerEffect(int maxTotalPower) {
-        this(maxTotalPower, null);
-    }
-
     public ReturnTargetCreatureCardsFromGraveyardToBattlefieldWithTotalPowerEffect() {
-        this(0, null);
+        this(0);
     }
 
     public ReturnTargetCreatureCardsFromGraveyardToBattlefieldWithTotalPowerEffect {
@@ -40,9 +29,7 @@ public record ReturnTargetCreatureCardsFromGraveyardToBattlefieldWithTotalPowerE
 
     @Override
     public CardPredicate graveyardChoiceFilter() {
-        return dyingCardId == null
-                ? CREATURE_CARD
-                : new CardAllOfPredicate(List.of(CREATURE_CARD, new CardNotPredicate(new CardIsSelfPredicate())));
+        return CREATURE_CARD;
     }
 
     @Override
@@ -51,15 +38,9 @@ public record ReturnTargetCreatureCardsFromGraveyardToBattlefieldWithTotalPowerE
     }
 
     @Override
-    public CardEffect boundToDyingCard(UUID dyingCardId) {
-        return new ReturnTargetCreatureCardsFromGraveyardToBattlefieldWithTotalPowerEffect(
-                maxTotalPower, dyingCardId);
-    }
-
-    @Override
     public CardEffect boundToDyingCreature(Permanent dyingCreature) {
         return new ReturnTargetCreatureCardsFromGraveyardToBattlefieldWithTotalPowerEffect(
-                Math.max(0, dyingCreature.getEffectivePower()), dyingCardId);
+                Math.max(0, dyingCreature.getEffectivePower()));
     }
 
     @Override

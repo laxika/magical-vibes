@@ -162,11 +162,12 @@ class ImprintDyingCreatureEffectHandlerTest {
                 Card dyingCard = createCreatureCard("Grizzly Bears");
                 gd.playerGraveyards.get(player2Id).add(dyingCard);
 
-                ImprintDyingCreatureEffect effect = new ImprintDyingCreatureEffect(dyingCard.getId());
+                ImprintDyingCreatureEffect effect = new ImprintDyingCreatureEffect();
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY, vatCard, player1Id, "Mimic Vat trigger",
                         List.of(effect), vatPerm.getId(), (UUID) null
                 );
+                entry.setTriggeringCardId(dyingCard.getId());
 
                 when(gameQueryService.findPermanentById(gd, vatPerm.getId())).thenReturn(vatPerm);
 
@@ -195,11 +196,12 @@ class ImprintDyingCreatureEffectHandlerTest {
                 Card dyingCard = createCreatureCard("Grizzly Bears");
                 gd.playerGraveyards.get(player2Id).add(dyingCard);
 
-                ImprintDyingCreatureEffect effect = new ImprintDyingCreatureEffect(dyingCard.getId());
+                ImprintDyingCreatureEffect effect = new ImprintDyingCreatureEffect();
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY, vatCard, player1Id, "Mimic Vat trigger",
                         List.of(effect), vatPerm.getId(), (UUID) null
                 );
+                entry.setTriggeringCardId(dyingCard.getId());
 
                 when(gameQueryService.findPermanentById(gd, vatPerm.getId())).thenReturn(vatPerm);
 
@@ -223,11 +225,12 @@ class ImprintDyingCreatureEffectHandlerTest {
                 UUID vatId = UUID.randomUUID();
                 Card vatCard = createCard("Mimic Vat");
 
-                ImprintDyingCreatureEffect effect = new ImprintDyingCreatureEffect(dyingCard.getId());
+                ImprintDyingCreatureEffect effect = new ImprintDyingCreatureEffect();
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY, vatCard, player1Id, "Mimic Vat trigger",
                         List.of(effect), vatId, (UUID) null
                 );
+                entry.setTriggeringCardId(dyingCard.getId());
 
                 when(gameQueryService.findPermanentById(gd, vatId)).thenReturn(null);
 
@@ -245,11 +248,12 @@ class ImprintDyingCreatureEffectHandlerTest {
                 Permanent vatPerm = new Permanent(vatCard);
 
                 UUID dyingCardId = UUID.randomUUID();
-                ImprintDyingCreatureEffect effect = new ImprintDyingCreatureEffect(dyingCardId);
+                ImprintDyingCreatureEffect effect = new ImprintDyingCreatureEffect();
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY, vatCard, player1Id, "Mimic Vat trigger",
                         List.of(effect), vatPerm.getId(), (UUID) null
                 );
+                entry.setTriggeringCardId(dyingCardId);
 
                 when(gameQueryService.findPermanentById(gd, vatPerm.getId())).thenReturn(vatPerm);
 
@@ -267,11 +271,12 @@ class ImprintDyingCreatureEffectHandlerTest {
                 Card dyingCard = createCreatureCard("Grizzly Bears");
                 gd.playerGraveyards.get(player2Id).add(dyingCard);
 
-                ImprintDyingCreatureEffect effect = new ImprintDyingCreatureEffect(dyingCard.getId());
+                ImprintDyingCreatureEffect effect = new ImprintDyingCreatureEffect();
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY, vatCard, player1Id, "Mimic Vat trigger",
                         List.of(effect), vatPerm.getId(), (UUID) null
                 );
+                entry.setTriggeringCardId(dyingCard.getId());
 
                 when(gameQueryService.findPermanentById(gd, vatPerm.getId())).thenReturn(vatPerm);
 

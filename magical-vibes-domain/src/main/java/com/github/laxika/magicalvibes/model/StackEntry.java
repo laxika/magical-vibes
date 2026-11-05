@@ -525,6 +525,10 @@ public class StackEntry {
     @Setter private Card triggeringCardSnapshot;
     /** The targets the triggering spell had when this ability triggered, kept in case the spell leaves the stack first. */
     @Setter private List<UUID> triggeringSpellTargetIds = List.of();
+    /**
+     * The graveyard incarnation {@link #triggeringCardId} had as the ability triggered, or {@code -1} when none was
+     * recorded: a card that left the graveyard and came back is a new object (CR 400.7).
+     */
     @Setter private long triggeringCardGraveyardEntryVersion = -1;
     /** Mixed-zone card targets remember their original permanent identity or graveyard incarnation. */
     private final Map<UUID, UUID> mixedZoneTargetPermanentIds = new HashMap<>();
@@ -1990,6 +1994,25 @@ public class StackEntry {
      */
     public boolean isBattlefieldChosenTargetCard(UUID cardId) {
         return battlefieldChosenTargetCardIds.contains(cardId);
+    }
+
+    /**
+     * Records {@code cardId} as the card the trigger event was about ("that card", "it"), with the graveyard
+     * incarnation it had as the ability triggered ({@code -1} for none), for the effects that read it as they
+     * resolve.
+     */
+    public void setTriggeringCard(UUID cardId, long graveyardEntryVersion) {
+        this.triggeringCardId = cardId;
+        this.triggeringCardGraveyardEntryVersion = graveyardEntryVersion;
+    }
+
+    /**
+     * Whether a card whose current graveyard incarnation is {@code currentGraveyardEntryVersion} is still the
+     * triggering card the event named: always when no incarnation was recorded (CR 400.7).
+     */
+    public boolean isTriggeringCardIncarnation(long currentGraveyardEntryVersion) {
+        return triggeringCardGraveyardEntryVersion < 0
+                || triggeringCardGraveyardEntryVersion == currentGraveyardEntryVersion;
     }
 
     public void rememberLastKnownPermanentCard(UUID permanentId, Card card) {

@@ -38,8 +38,7 @@ public class ReturnDyingCreatureToBattlefieldFaceDownAsCybermanEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var returnEffect = (ReturnDyingCreatureToBattlefieldFaceDownAsCybermanEffect) effect;
-        UUID dyingCardId = returnEffect.dyingCardId();
+        UUID dyingCardId = entry.getTriggeringCardId();
         if (dyingCardId == null) {
             return;
         }

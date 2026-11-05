@@ -51,7 +51,7 @@ public class ExileDyingCreatureCardAndCreateTokenEffectHandler implements Normal
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ExileDyingCreatureCardAndCreateTokenEffect) effect;
-        UUID dyingCardId = e.dyingCardId();
+        UUID dyingCardId = entry.getTriggeringCardId();
         if (dyingCardId == null) {
             return;
         }

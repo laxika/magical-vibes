@@ -445,7 +445,7 @@ class LegacyTriggerBindingsTest {
     }
 
     @Test
-    void transformedDeathBindsThePhysicalCardId() {
+    void transformedDeathGivesThePhysicalCardAsTheTriggeringCard() {
         Card front = createCreature("Front", 2, 2);
         Card back = createCreature("Back", 4, 4);
         Permanent permanent = new Permanent(front);
@@ -456,8 +456,8 @@ class LegacyTriggerBindingsTest {
 
         trigger(context, effect);
 
-        assertThat(gd.stack.getFirst().getEffectsToResolve())
-                .containsExactly(new PutTriggeringCardFromGraveyardOnBottomOfLibraryEffect(front.getId()));
+        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+        assertThat(gd.stack.getFirst().getTriggeringCardId()).isEqualTo(front.getId());
     }
 
     @Test

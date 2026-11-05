@@ -43,13 +43,12 @@ public class TheMasterGallifreysEndEffectHandler implements NormalEffectHandlerB
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        TheMasterGallifreysEndEffect typed = (TheMasterGallifreysEndEffect) effect;
         VillainousChoiceState state = gameData.villainousChoice;
 
         if (!state.active) {
             state.reset();
             state.active = true;
-            if (!exileDyingCard(gameData, typed.dyingCardId())) {
+            if (!exileDyingCard(gameData, entry.getTriggeringCardId())) {
                 finish(gameData);
                 return;
             }
@@ -92,7 +91,7 @@ public class TheMasterGallifreysEndEffectHandler implements NormalEffectHandlerB
                             List.of(new PlayersLoseLifeEffect(Map.of(state.currentTargetId, 4))));
                 }
             } else if (TheMasterGallifreysEndEffect.CREATE_TOKEN_OPTION.equals(chosen)) {
-                ExiledCardEntry exiled = gameData.findExiledCard(typed.dyingCardId());
+                ExiledCardEntry exiled = gameData.findExiledCard(entry.getTriggeringCardId());
                 if (exiled != null) {
                     tokenCopySupport.createTokenCopies(gameData, entry, List.of(exiled.card()), null,
                             entry.getControllerId(), new CreateTokenCopyOfTargetPermanentEffect());

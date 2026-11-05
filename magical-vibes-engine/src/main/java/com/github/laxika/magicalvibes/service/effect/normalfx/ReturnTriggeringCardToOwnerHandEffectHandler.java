@@ -35,13 +35,12 @@ public class ReturnTriggeringCardToOwnerHandEffectHandler implements NormalEffec
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ReturnTriggeringCardToOwnerHandEffect) effect;
-        UUID dyingCardId = e.dyingCardId();
+        UUID dyingCardId = entry.getTriggeringCardId();
         UUID recipientId = e.handOwnerId() != null ? e.handOwnerId() : entry.getControllerId();
         if (dyingCardId == null || recipientId == null) {
             return;
         }
-        if (entry.getTriggeringCardGraveyardEntryVersion() >= 0
-                && gameData.graveyardEntryVersion(dyingCardId) != entry.getTriggeringCardGraveyardEntryVersion()) {
+        if (!entry.isTriggeringCardIncarnation(gameData.graveyardEntryVersion(dyingCardId))) {
             return;
         }
 

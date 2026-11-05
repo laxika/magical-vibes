@@ -43,6 +43,6 @@ public class TheLocustGod extends Card {
                 "{2}{U}{R}: Draw a card, then discard a card."));
 
         // When The Locust God dies, return it to its owner's hand at the beginning of the next end step.
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new RegisterDelayedReturnCardFromGraveyardToHandEffect(null));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new RegisterDelayedReturnCardFromGraveyardToHandEffect());
     }
 }

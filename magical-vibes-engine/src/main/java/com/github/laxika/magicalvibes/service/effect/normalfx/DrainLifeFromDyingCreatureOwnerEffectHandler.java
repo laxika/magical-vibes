@@ -34,8 +34,8 @@ public class DrainLifeFromDyingCreatureOwnerEffectHandler implements NormalEffec
         var drain = (DrainLifeFromDyingCreatureOwnerEffect) effect;
         if (drain.amount() <= 0) return;
 
-        UUID dyingCardId = drain.dyingCardId() != null
-                ? drain.dyingCardId() : entry.getTriggeringPermanentId();
+        UUID dyingCardId = entry.getTriggeringCardId() != null
+                ? entry.getTriggeringCardId() : entry.getTriggeringPermanentId();
         Card dyingCard = entry.getTriggeringPermanentId() == null
                 ? null : entry.lastKnownPermanentCard(entry.getTriggeringPermanentId());
         if (dyingCardId == null) return;

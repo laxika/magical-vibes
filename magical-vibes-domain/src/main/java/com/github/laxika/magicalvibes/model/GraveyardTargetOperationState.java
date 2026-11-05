@@ -96,6 +96,10 @@ public class GraveyardTargetOperationState {
     public List<Permanent> attackingPermanentSnapshots = List.of();
     /** Permanent that caused a triggered ability, retained through graveyard target selection. */
     public UUID triggeringPermanentId;
+    /** The trigger event's card ("that card"), retained through graveyard target selection for the stack entry. */
+    public UUID triggeringCardId;
+    /** The graveyard incarnation {@link #triggeringCardId} had as the ability triggered, {@code -1} for none. */
+    public long triggeringCardGraveyardEntryVersion = -1;
     /** Attack destination captured for an attack trigger whose graveyard target is chosen interactively. */
     public UUID attackedTargetId;
     /** Chapter name for saga chapter graveyard targets (e.g. "I", "II"). */

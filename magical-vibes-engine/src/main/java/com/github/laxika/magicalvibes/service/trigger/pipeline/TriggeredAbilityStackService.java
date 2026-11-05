@@ -266,9 +266,14 @@ public class TriggeredAbilityStackService {
                 1 + additionalTriggers(gameData, candidate, event, kind));
         try {
             if (targets(effects)) {
-                gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(candidate.sourceCard(),
-                        candidate.controllerId(), effects, lastKnownPower, new Permanent(source), null, null, false,
-                        markOnAcceptance));
+                PermanentChoiceContext.DeathTriggerTarget target = new PermanentChoiceContext.DeathTriggerTarget(
+                        candidate.sourceCard(), candidate.controllerId(), effects, lastKnownPower,
+                        new Permanent(source), null, null, false, markOnAcceptance);
+                if (event.to() == Zone.GRAVEYARD) {
+                    target = target.withTriggeringCard(event.card().getId(),
+                            gameData.graveyardEntryVersion(event.card().getId()));
+                }
+                gameData.queueInteraction(target);
             } else {
                 StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, candidate.sourceCard(),
                         candidate.controllerId(), candidate.sourceCard().getName() + "'s ability", effects,
@@ -280,9 +285,9 @@ public class TriggeredAbilityStackService {
                     entry.setSourcePermanentSnapshot(new Permanent(candidate.sourcePermanent()));
                 }
                 if (event.to() == Zone.GRAVEYARD) {
-                    // A graveyard card that leaves and comes back before this resolves is a new object (CR 400.7).
-                    entry.setTriggeringCardId(event.card().getId());
-                    entry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(event.card().getId()));
+                    // "That card": a graveyard card that leaves and comes back before this resolves is a new object
+                    // (CR 400.7).
+                    entry.setTriggeringCard(event.card().getId(), gameData.graveyardEntryVersion(event.card().getId()));
                 }
                 gameData.enqueueTrigger(entry);
             }

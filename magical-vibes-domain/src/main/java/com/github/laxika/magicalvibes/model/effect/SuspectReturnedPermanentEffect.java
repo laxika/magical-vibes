@@ -1,17 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.UUID;
-
-/** Gives a returned creature permanent the suspected designation. */
-public record SuspectReturnedPermanentEffect(UUID returnedCardId)
-        implements CardEffect, DyingCreatureCardAwareEffect {
-
-    public SuspectReturnedPermanentEffect() {
-        this(null);
-    }
-
-    @Override
-    public CardEffect boundToDyingCard(UUID dyingCardId) {
-        return new SuspectReturnedPermanentEffect(dyingCardId);
-    }
+/**
+ * Gives a returned creature permanent the suspected designation: the stack entry's triggering card on a death
+ * trigger (Presumed Dead's "return it ... and suspect it"), else the spell's target (It Doesn't Add Up).
+ */
+public record SuspectReturnedPermanentEffect() implements CardEffect {
 }

@@ -34,8 +34,7 @@ public class ImprintDyingCreatureEffectHandler implements NormalEffectHandlerBea
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (ImprintDyingCreatureEffect) effect;
-        UUID dyingCardId = e.dyingCardId();
+        UUID dyingCardId = entry.getTriggeringCardId();
         if (dyingCardId == null) return;
 
         // The ability resolves even if the source left the battlefield: the card is still exiled and the

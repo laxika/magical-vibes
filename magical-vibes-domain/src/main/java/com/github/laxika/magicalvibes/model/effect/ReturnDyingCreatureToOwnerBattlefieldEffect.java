@@ -6,50 +6,34 @@ import com.github.laxika.magicalvibes.model.Keyword;
 
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 /**
  * Returns a dying creature card from its owner's graveyard to the battlefield, applying persistent
  * subtype, keyword, and counter riders as it enters. The default return is under the owner's
  * control; {@code returnUnderController} supports effects that say "under your control".
  *
- * @param dyingCardGraveyardEntryVersion the graveyard-entry version of the dying card when the trigger
- *                                       was collected, or {@code null} if unbound; a card that left the
- *                                       graveyard and came back is a new object (CR 400.7) and is not returned
+ * <p>The dying card is the stack entry's triggering card; a card that left the graveyard and came back after the
+ * ability triggered is a new object (CR 400.7) and is not returned.
  */
 public record ReturnDyingCreatureToOwnerBattlefieldEffect(
-        UUID dyingCardId,
         CounterType enterWithCounter,
         int enterWithCounterCount,
         CardSubtype grantSubtype,
         Set<Keyword> grantKeywords,
         boolean enterTapped,
         boolean returnUnderController,
-        List<CardSubtype> subtypeOverride,
-        Long dyingCardGraveyardEntryVersion
-) implements CardEffect, DyingCreatureCardAwareEffect {
-
-    public ReturnDyingCreatureToOwnerBattlefieldEffect(UUID dyingCardId,
-                                                       CounterType enterWithCounter,
-                                                       int enterWithCounterCount,
-                                                       CardSubtype grantSubtype,
-                                                       Set<Keyword> grantKeywords,
-                                                       boolean enterTapped,
-                                                       boolean returnUnderController,
-                                                       List<CardSubtype> subtypeOverride) {
-        this(dyingCardId, enterWithCounter, enterWithCounterCount, grantSubtype, grantKeywords,
-                enterTapped, returnUnderController, subtypeOverride, null);
-    }
+        List<CardSubtype> subtypeOverride
+) implements CardEffect {
 
     public ReturnDyingCreatureToOwnerBattlefieldEffect() {
-        this(null, null, 0, null, Set.of(), false, false, List.of());
+        this(null, 0, null, Set.of(), false, false, List.of());
     }
 
     public ReturnDyingCreatureToOwnerBattlefieldEffect(CounterType enterWithCounter,
                                                        int enterWithCounterCount,
                                                        CardSubtype grantSubtype,
                                                        Set<Keyword> grantKeywords) {
-        this(null, enterWithCounter, enterWithCounterCount, grantSubtype, grantKeywords, false, false, List.of());
+        this(enterWithCounter, enterWithCounterCount, grantSubtype, grantKeywords, false, false, List.of());
     }
 
     public ReturnDyingCreatureToOwnerBattlefieldEffect(CounterType enterWithCounter,
@@ -57,7 +41,7 @@ public record ReturnDyingCreatureToOwnerBattlefieldEffect(
                                                        CardSubtype grantSubtype,
                                                        Set<Keyword> grantKeywords,
                                                        boolean enterTapped) {
-        this(null, enterWithCounter, enterWithCounterCount, grantSubtype, grantKeywords, enterTapped, false, List.of());
+        this(enterWithCounter, enterWithCounterCount, grantSubtype, grantKeywords, enterTapped, false, List.of());
     }
 
     public ReturnDyingCreatureToOwnerBattlefieldEffect(CounterType enterWithCounter,
@@ -66,37 +50,12 @@ public record ReturnDyingCreatureToOwnerBattlefieldEffect(
                                                        Set<Keyword> grantKeywords,
                                                        boolean enterTapped,
                                                        boolean returnUnderController) {
-        this(null, enterWithCounter, enterWithCounterCount, grantSubtype, grantKeywords,
+        this(enterWithCounter, enterWithCounterCount, grantSubtype, grantKeywords,
                 enterTapped, returnUnderController, List.of());
-    }
-
-    public ReturnDyingCreatureToOwnerBattlefieldEffect(CounterType enterWithCounter,
-                                                       int enterWithCounterCount,
-                                                       CardSubtype grantSubtype,
-                                                       Set<Keyword> grantKeywords,
-                                                       boolean enterTapped,
-                                                       boolean returnUnderController,
-                                                       List<CardSubtype> subtypeOverride) {
-        this(null, enterWithCounter, enterWithCounterCount, grantSubtype, grantKeywords,
-                enterTapped, returnUnderController, subtypeOverride);
     }
 
     public ReturnDyingCreatureToOwnerBattlefieldEffect {
         grantKeywords = grantKeywords == null ? Set.of() : Set.copyOf(grantKeywords);
         subtypeOverride = subtypeOverride == null ? List.of() : List.copyOf(subtypeOverride);
-    }
-
-    @Override
-    public CardEffect boundToDyingCard(UUID dyingCardId) {
-        return new ReturnDyingCreatureToOwnerBattlefieldEffect(
-                dyingCardId, enterWithCounter, enterWithCounterCount, grantSubtype, grantKeywords,
-                enterTapped, returnUnderController, subtypeOverride, dyingCardGraveyardEntryVersion);
-    }
-
-    @Override
-    public CardEffect boundToDyingCardEntryVersion(long graveyardEntryVersion) {
-        return new ReturnDyingCreatureToOwnerBattlefieldEffect(
-                dyingCardId, enterWithCounter, enterWithCounterCount, grantSubtype, grantKeywords,
-                enterTapped, returnUnderController, subtypeOverride, graveyardEntryVersion);
     }
 }

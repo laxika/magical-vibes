@@ -18,6 +18,6 @@ public class RienneAngelOfRebirth extends Card {
                 new PermanentIsMulticoloredPredicate()));
 
         addTrigger(Triggers.creatureDies(new PermanentIsMulticoloredPredicate(), ObjectRelation.ANOTHER_YOU_CONTROL),
-                new RegisterDelayedReturnCardFromGraveyardToHandEffect(null));
+                new RegisterDelayedReturnCardFromGraveyardToHandEffect());
     }
 }

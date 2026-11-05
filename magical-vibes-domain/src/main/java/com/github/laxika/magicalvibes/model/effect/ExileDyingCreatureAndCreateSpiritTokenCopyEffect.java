@@ -1,20 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.UUID;
-
 /**
- * Exiles the card of a dying creature and creates a Spirit token copy of it.
- * The dying card ID is bound by the ally-death trigger collector.
+ * Exiles the card of a dying creature and creates a Spirit token copy of it. The card that died is the stack
+ * entry's triggering card.
  */
-public record ExileDyingCreatureAndCreateSpiritTokenCopyEffect(UUID dyingCardId)
-        implements CardEffect, DyingCreatureCardAwareEffect {
-
-    public ExileDyingCreatureAndCreateSpiritTokenCopyEffect() {
-        this(null);
-    }
-
-    @Override
-    public CardEffect boundToDyingCard(UUID dyingCardId) {
-        return new ExileDyingCreatureAndCreateSpiritTokenCopyEffect(dyingCardId);
-    }
+public record ExileDyingCreatureAndCreateSpiritTokenCopyEffect() implements CardEffect {
 }

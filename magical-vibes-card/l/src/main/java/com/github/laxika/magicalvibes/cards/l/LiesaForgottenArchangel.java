@@ -15,9 +15,9 @@ public class LiesaForgottenArchangel extends Card {
 
     public LiesaForgottenArchangel() {
         // Whenever another nontoken creature you control dies, return that card to its owner's hand
-        // at the beginning of the next end step. The collector binds the dying card's id.
+        // at the beginning of the next end step. The card is the stack entry's triggering card.
         addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
-                new RegisterDelayedReturnCardFromGraveyardToHandEffect(null));
+                new RegisterDelayedReturnCardFromGraveyardToHandEffect());
 
         // If a creature an opponent controls would die, exile it instead.
         addStaticEffect(new ExileOpponentCreaturesInsteadOfDyingEffect());

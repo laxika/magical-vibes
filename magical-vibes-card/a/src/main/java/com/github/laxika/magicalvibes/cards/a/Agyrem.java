@@ -29,7 +29,7 @@ public class Agyrem extends Card {
                         false, null, 0, null, null, false, true, false));
         addTrigger(new TriggerCondition(Triggers.creatureDies(new PermanentNotPredicate(white), ObjectRelation.ANY),
                         AbilityZones.COMMAND),
-                TriggerOptions.DEFAULT, new RegisterDelayedReturnCardFromGraveyardToHandEffect(null));
+                TriggerOptions.DEFAULT, new RegisterDelayedReturnCardFromGraveyardToHandEffect());
         addTrigger(Triggers.chaosEnsues(), new GrantStaticEffectToPlayerUntilPlaneswalkEffect(
                 new CreaturesCantAttackControllerUnlessPredicateEffect(
                         new PermanentNotPredicate(new PermanentTruePredicate()))));

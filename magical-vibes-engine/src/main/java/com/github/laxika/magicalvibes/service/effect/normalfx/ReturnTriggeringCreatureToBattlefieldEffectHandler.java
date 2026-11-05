@@ -35,13 +35,12 @@ public class ReturnTriggeringCreatureToBattlefieldEffectHandler implements Norma
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID dyingCardId = ((ReturnTriggeringCreatureToBattlefieldEffect) effect).dyingCardId();
+        UUID dyingCardId = entry.getTriggeringCardId();
         UUID controllerId = entry.getControllerId();
         if (dyingCardId == null || controllerId == null) {
             return;
         }
-        if (entry.getTriggeringCardGraveyardEntryVersion() >= 0
-                && entry.getTriggeringCardGraveyardEntryVersion() != gameData.graveyardEntryVersion(dyingCardId)) {
+        if (!entry.isTriggeringCardIncarnation(gameData.graveyardEntryVersion(dyingCardId))) {
             return;
         }
 

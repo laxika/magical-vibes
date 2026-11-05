@@ -10,23 +10,15 @@ import java.util.UUID;
  * permanent other than Yomiji is put into a graveyard from the battlefield, return that card to
  * its owner's hand."
  *
- * <p>Card definitions use the no-arg ctor; both fields are bound at trigger time. {@code dyingCardId}
- * is bound via {@link DyingCreatureCardAwareEffect} in the ally-creature-dies path, and the
- * other trigger collectors bake both ids directly.
+ * <p>The card to return is the stack entry's triggering card. Card definitions use the no-arg ctor; the
+ * trigger collectors bake {@code handOwnerId}.
  *
- * @param dyingCardId the card ID to return ({@code null} in the card definition)
  * @param handOwnerId the player whose graveyard is searched and whose hand receives the card;
  *                    {@code null} means the ability controller (Enduring Renewal's "your hand")
  */
-public record ReturnTriggeringCardToOwnerHandEffect(UUID dyingCardId, UUID handOwnerId)
-        implements CardEffect, DyingCreatureCardAwareEffect {
+public record ReturnTriggeringCardToOwnerHandEffect(UUID handOwnerId) implements CardEffect {
 
     public ReturnTriggeringCardToOwnerHandEffect() {
-        this(null, null);
-    }
-
-    @Override
-    public CardEffect boundToDyingCard(UUID dyingCardId) {
-        return new ReturnTriggeringCardToOwnerHandEffect(dyingCardId, handOwnerId);
+        this(null);
     }
 }

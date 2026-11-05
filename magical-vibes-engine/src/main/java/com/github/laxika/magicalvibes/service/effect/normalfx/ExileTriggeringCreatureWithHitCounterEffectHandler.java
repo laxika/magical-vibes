@@ -33,7 +33,7 @@ public class ExileTriggeringCreatureWithHitCounterEffectHandler implements Norma
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID dyingCardId = ((ExileTriggeringCreatureWithHitCounterEffect) effect).dyingCardId();
+        UUID dyingCardId = entry.getTriggeringCardId();
         if (dyingCardId == null) {
             return;
         }

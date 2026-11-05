@@ -41,7 +41,6 @@ import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongContro
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreaturesOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForEachDyingSourceCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCountersAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreaturePermanentAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileEquippedCreatureEffect;
@@ -71,7 +70,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetForEachLea
 import com.github.laxika.magicalvibes.model.effect.PutImprintedCardIntoOwnersHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryAndReturnExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCreateTokenCopyOfDyingSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSelfReturnFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSelfReturnFromGraveyardWithOneFewerCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
@@ -897,12 +895,14 @@ public class LegacyTriggerBindings {
         return true;
     }
     private boolean handleDeathMayPayLife(Ctx c, MayPayLifeEffect mayPay) {
-        c.gameData().stack.add(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 c.dyingCard(),
                 c.controllerId(),
                 c.dyingCard().getName() + "'s ability",
-                new ArrayList<>(List.of(mayPay))));
+                new ArrayList<>(List.of(mayPay)));
+        markDyingCard(c, entry);
+        c.gameData().stack.add(entry);
         return true;
     }
     private boolean handleDeathModalAtTriggerTime(Ctx c, ChooseOneAtTriggerTimeEffect effect) {
@@ -930,15 +930,6 @@ public class LegacyTriggerBindings {
     }
     private boolean handleDeathMayEffect(Ctx c, MayEffect may) {
         MayEffect resolvedMay = (MayEffect) snapshotDynamicMaxManaValue(c, may);
-        // Rebuild only when the binding changes: the card's target-group registration is keyed by
-        // effect identity, so a needless copy would drop the card-level target filter for this ability.
-        if (resolvedMay.wrapped() instanceof DyingCreatureCardAwareEffect aware && c.dyingPermanent() != null) {
-            CardEffect bound = aware.boundToDyingCard(c.dyingPermanent().getOriginalCard().getId());
-            if (bound != resolvedMay.wrapped()) {
-                resolvedMay = new MayEffect(bound, resolvedMay.prompt(), resolvedMay.elseEffect(),
-                        resolvedMay.choicePlayer(), resolvedMay.choicePlayerId());
-            }
-        }
         // CR 603.3d: targeted "may" abilities need the target chosen when stacking — including one
         // whose targets are cards in a graveyard (Iname, Life Aspect's "you may exile it. If you do,
         // return any number of target Spirit cards from your graveyard to your hand").
@@ -946,9 +937,9 @@ public class LegacyTriggerBindings {
         if (resolvedMay.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                 || resolvedMay.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                 || graveyardTarget) {
-            c.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
+            c.gameData().queueInteraction(withDyingCard(c, new PermanentChoiceContext.DeathTriggerTarget(
                     c.dyingCard(), c.controllerId(), new ArrayList<>(List.of(resolvedMay)), c.dyingPower(),
-                    new Permanent(c.permanent())));
+                    new Permanent(c.permanent()))));
         } else {
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
@@ -960,6 +951,7 @@ public class LegacyTriggerBindings {
             entry.setSourcePermanentSnapshot(new Permanent(c.permanent()));
             entry.setTriggeringPermanentPowerAtTrigger(Math.max(0, c.dyingPower()));
             entry.setTriggeringCardGraveyardEntryVersion(c.gameData().graveyardEntryVersion(c.dyingCard().getId()));
+            markDyingCard(c, entry);
             c.gameData().stack.add(entry);
         }
         return true;
@@ -1067,19 +1059,6 @@ public class LegacyTriggerBindings {
                 && c.dyingPermanent() != null) {
             triggerEffect = aware.boundToDyingCreature(c.dyingPermanent());
         }
-        if (triggerEffect instanceof DyingCreatureCardAwareEffect aware
-                && c.dyingCard() != null) {
-            UUID dyingCardId = c.dyingPermanent() == null ? c.dyingCard().getId()
-                    : c.dyingPermanent().getOriginalCard().getId();
-            triggerEffect = aware.boundToDyingCard(dyingCardId);
-        }
-        // The delayed return is tied to the graveyard object that died; a card that leaves and
-        // re-enters the graveyard before this trigger resolves is a new object (CR 400.7).
-        if (triggerEffect instanceof com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect register
-                && register.cardId() != null && register.graveyardEntryVersion() == null) {
-            triggerEffect = new com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect(
-                    register.cardId(), c.gameData().graveyardEntryVersion(register.cardId()));
-        }
         if (triggerEffect instanceof DyingCreatureCountersAwareEffect aware
                 && c.dyingPermanent() != null) {
             triggerEffect = aware.boundToDyingCreatureCounters(snapshotConcreteCounters(c.dyingPermanent()));
@@ -1099,10 +1078,10 @@ public class LegacyTriggerBindings {
         if (triggerEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || triggerEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                 || triggerEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
                 || graveyardTargetingSupport.findTarget(List.of(triggerEffect)) != null) {
-            c.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
+            c.gameData().queueInteraction(withDyingCard(c, new PermanentChoiceContext.DeathTriggerTarget(
                     c.dyingCard(), c.controllerId(), new ArrayList<>(List.of(triggerEffect)), c.dyingPower(),
                     new Permanent(c.permanent())
-            ));
+            )));
         } else {
             // A ConditionalEffect's intervening-"if" may be about the dying permanent itself
             // (Fyndhorn Druid's "if it was blocked this turn"), so carry its id even though the
@@ -1127,6 +1106,7 @@ public class LegacyTriggerBindings {
                     ? c.dyingPermanent().getCard().getManaValue()
                     : c.dyingCard().getManaValue());
             entry.setTriggeringCardGraveyardEntryVersion(c.gameData().graveyardEntryVersion(graveyardCardIdOf(c)));
+            markDyingCard(c, entry);
             c.gameData().stack.add(entry);
         }
         return true;
@@ -1520,6 +1500,27 @@ public class LegacyTriggerBindings {
         return c.dyingPermanent() != null
                 ? c.dyingPermanent().getOriginalCard().getId()
                 : c.dyingCard().getId();
+    }
+
+    /**
+     * Gives {@code entry} the card that went to the graveyard ("return it", "exile that card") as its triggering card,
+     * with the graveyard incarnation it has now (CR 400.7), for the effects that read it as they resolve.
+     */
+    private static void markDyingCard(Ctx c, StackEntry entry) {
+        if (c.destination() == Zone.GRAVEYARD) {
+            UUID cardId = graveyardCardIdOf(c);
+            entry.setTriggeringCard(cardId, c.gameData().graveyardEntryVersion(cardId));
+        }
+    }
+
+    /** {@code target} with the card that went to the graveyard as its triggering card, as {@link #markDyingCard}. */
+    private static PermanentChoiceContext.DeathTriggerTarget withDyingCard(
+            Ctx c, PermanentChoiceContext.DeathTriggerTarget target) {
+        if (c.destination() != Zone.GRAVEYARD) {
+            return target;
+        }
+        UUID cardId = graveyardCardIdOf(c);
+        return target.withTriggeringCard(cardId, c.gameData().graveyardEntryVersion(cardId));
     }
 
 

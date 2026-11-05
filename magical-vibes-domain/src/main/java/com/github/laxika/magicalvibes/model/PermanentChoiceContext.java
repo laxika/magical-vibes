@@ -1161,12 +1161,40 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *                                when no such restriction applies.
      * @param markSourceOncePerTurnOnAcceptance whether the once-per-turn limit of the source is used
      *                                          only when the "you may" is accepted on resolution
+     * @param triggeringCardId the card the death event was about ("that card", "it"), which the stack entry
+     *                         carries for the effects that read it as they resolve; {@code null} for none
+     * @param triggeringCardGraveyardEntryVersion the graveyard incarnation {@code triggeringCardId} had as the
+     *                                            ability triggered (CR 400.7), {@code -1} for none
      */
     record DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects,
                               Integer eventValue, Permanent sourcePermanentSnapshot,
                               TargetFilter targetFilter, UUID excludedGraveyardCardId,
                               boolean creaturesOnly,
-                              boolean markSourceOncePerTurnOnAcceptance) implements PermanentChoiceContext {
+                              boolean markSourceOncePerTurnOnAcceptance,
+                              UUID triggeringCardId,
+                              long triggeringCardGraveyardEntryVersion) implements PermanentChoiceContext {
+
+        public DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects,
+                                  Integer eventValue, Permanent sourcePermanentSnapshot,
+                                  TargetFilter targetFilter, UUID excludedGraveyardCardId,
+                                  boolean creaturesOnly, boolean markSourceOncePerTurnOnAcceptance) {
+            this(dyingCard, controllerId, effects, eventValue, sourcePermanentSnapshot, targetFilter,
+                    excludedGraveyardCardId, creaturesOnly, markSourceOncePerTurnOnAcceptance, null, -1L);
+        }
+
+        /** This choice with {@code cardId} as the triggering card, in its graveyard incarnation {@code version}. */
+        public DeathTriggerTarget withTriggeringCard(UUID cardId, long version) {
+            return new DeathTriggerTarget(dyingCard, controllerId, effects, eventValue, sourcePermanentSnapshot,
+                    targetFilter, excludedGraveyardCardId, creaturesOnly, markSourceOncePerTurnOnAcceptance, cardId,
+                    version);
+        }
+
+        /** Gives {@code entry}, the stack entry this choice puts on the stack, the triggering card, if any. */
+        public void carryTriggeringCardTo(StackEntry entry) {
+            if (triggeringCardId != null) {
+                entry.setTriggeringCard(triggeringCardId, triggeringCardGraveyardEntryVersion);
+            }
+        }
 
         public DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects,
                                   Integer eventValue, Permanent sourcePermanentSnapshot,

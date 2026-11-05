@@ -28,8 +28,7 @@ public class SuspectReturnedPermanentEffectHandler implements NormalEffectHandle
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        SuspectReturnedPermanentEffect suspectEffect = (SuspectReturnedPermanentEffect) effect;
-        UUID returnedCardId = suspectEffect.returnedCardId();
+        UUID returnedCardId = entry.getTriggeringCardId();
         if (returnedCardId == null) {
             returnedCardId = entry.getTargetId();
         }

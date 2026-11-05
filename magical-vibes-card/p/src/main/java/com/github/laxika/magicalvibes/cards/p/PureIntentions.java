@@ -21,6 +21,6 @@ public class PureIntentions extends Card {
                         .discardedByOpponentThisTurn(true)
                         .build())));
         addTrigger(Triggers.opponentCausesYouToDiscardThisCard(),
-                new RegisterDelayedReturnCardFromGraveyardToHandEffect(null));
+                new RegisterDelayedReturnCardFromGraveyardToHandEffect());
     }
 }

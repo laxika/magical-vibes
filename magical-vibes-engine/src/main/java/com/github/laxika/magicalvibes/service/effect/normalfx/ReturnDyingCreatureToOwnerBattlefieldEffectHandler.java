@@ -41,7 +41,7 @@ public class ReturnDyingCreatureToOwnerBattlefieldEffectHandler implements Norma
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var returnEffect = (ReturnDyingCreatureToOwnerBattlefieldEffect) effect;
-        UUID dyingCardId = returnEffect.dyingCardId();
+        UUID dyingCardId = entry.getTriggeringCardId();
         if (dyingCardId == null) {
             return;
         }
@@ -51,8 +51,7 @@ public class ReturnDyingCreatureToOwnerBattlefieldEffectHandler implements Norma
         if (cardToReturn == null || ownerId == null) {
             return;
         }
-        if (returnEffect.dyingCardGraveyardEntryVersion() != null
-                && gameData.graveyardEntryVersion(dyingCardId) != returnEffect.dyingCardGraveyardEntryVersion()) {
+        if (!entry.isTriggeringCardIncarnation(gameData.graveyardEntryVersion(dyingCardId))) {
             return;
         }
         if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, cardToReturn, Zone.GRAVEYARD)) {

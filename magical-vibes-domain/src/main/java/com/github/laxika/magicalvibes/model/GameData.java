@@ -10745,6 +10745,9 @@ public class GameData {
                 this.graveyardTargetOperation.triggeringPermanentPowerAtTrigger;
         copy.graveyardTargetOperation.triggeringPermanentId =
                 this.graveyardTargetOperation.triggeringPermanentId;
+        copy.graveyardTargetOperation.triggeringCardId = this.graveyardTargetOperation.triggeringCardId;
+        copy.graveyardTargetOperation.triggeringCardGraveyardEntryVersion =
+                this.graveyardTargetOperation.triggeringCardGraveyardEntryVersion;
         copy.graveyardTargetOperation.spellCounterTargetId = this.graveyardTargetOperation.spellCounterTargetId;
         copy.graveyardTargetOperation.permanentTargetIds = this.graveyardTargetOperation.permanentTargetIds == null
                 ? null : new ArrayList<>(this.graveyardTargetOperation.permanentTargetIds);

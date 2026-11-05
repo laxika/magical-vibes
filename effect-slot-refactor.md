@@ -30,7 +30,7 @@ re-check them with a grep before acting on them.
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
 | 14 | Trigger options replace trigger-only wrapper effects | done (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; run 16l, family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader`; run 16m, family 10 (sagas): no chapter or final-chapter ability has a legacy view, and the final-chapter collectors read the abilities through `SagaAbilityReader`; run 16n, family 11's player and keyword actions: every `ActionWatch` collector reads the abilities through `ActionAbilityReader`; run 16o, family 11's rest: every `MiscWatch` collector and the planar reader read the abilities through `MiscAbilityReader`; run 16p, the zone changes but "when this enters" and the permanent changes: no such ability has a legacy view, and the readers outside the trigger pipeline read them through `ZoneChangeAbilityReader`; run 16q, "when this enters": no ability has a legacy view; the own enters collector reads the abilities and judges their limit, the other readers read `Card.getOwnEntryEffects()`, and `OnceOnlyTriggerEffect` is gone; run 16r, every triggered ability is one object on the stack: the abilities of one Oracle ability are merged by script, the own enters and combat collectors group effects by ability, and `TriggerMode` is gone; run 16s, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags are gone: a `ConditionalEffect` is an effect's "if", and every collector judges the intervening "if" and event condition from the ability; run 16t, the trigger-only wrapper classes: the `Triggering…ConditionalEffect` filters, `SelfExiledFromBattlefieldEffect`, `OncePerTurnPerCreatureTriggerEffect` and `OncePerTurnTriggerEffect`'s keyed, per-grant, mark-on-acceptance and first-time forms are gone, their cards written with trigger filters, `TriggerLimit`s and `TriggeringCardMatches`; Bill Potts' `OncePerTurnTriggerEffect` and the may-unwrapping moved to step 15, with the user) |
-| 15 | Effects read the trigger event (repeatable) | open |
+| 15 | Effects read the trigger event (repeatable) | open (run 1, with the user: the dying card, `DyingCreatureCardAwareEffect` gone; effects read the stack entry's triggering card) |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
 ## Why
@@ -9415,6 +9415,114 @@ described cards earlier runs converted) and dropped the deleted classes from the
   Shield, Zombie Boa) led to the becomes-blocked collectors reading filters.
 - Application: the whole module (5,013 tests) against a HEAD baseline in a worktree (with main's card-data cache): the
   same 618 failures at HEAD and here, none new.
+- Engine: the whole module, with the one failure at HEAD, `GameMutationBoundaryRatchetTest`.
+- AI: the whole module (1,620 tests), with the same 10 failures as before.
+- The full suite was not run here.
+
+### Step 15
+
+#### Run 1: the dying card
+
+Step 15 had no run table; run 1's scope was chosen with the user from three proposals (the departed object's last-known
+information, its counters only, or the dying card): `DyingCreatureCardAwareEffect`, the binding of "that card" / "it"
+of a death or other graveyard arrival into the effect. Effects now read the stack entry's triggering card as they
+resolve, and the interface, its `boundToDyingCard` / `boundToDyingCardEntryVersion` and every collector's binding are
+gone. The other 24 `…AwareEffect` interfaces are untouched.
+
+**What the scan found.** 33 classes implemented the interface: 30 effects with a bound id (`dyingCardId`,
+`returnedCardId` on `SuspectReturnedPermanentEffect`, `cardId` and `graveyardEntryVersion` on
+`RegisterDelayedReturnCardFromGraveyardToHandEffect`, `dyingCardGraveyardEntryVersion` on the two return-to-battlefield
+effects) and three delegators (`MayPayLifeEffect`, `SacrificeSelfThenEffect`, `SequenceEffect`). About 35 binding sites
+in `TriggerCollectionService`, `DeathTriggerCollectorService`, `LegacyTriggerBindings`, `ManifestDreadTriggerCollectorService`
+and `ResolveEffectOnTargetDeathThisTurnEffectHandler`, plus the engine-built bound copies (Tiana's optional return, the
+emblem's artifact return, Nim Deathmantle's and Vraska's rebuilt may-pays). A card scan (every card class naming one of
+the effects, by statement) found one targeted ability that carries a dying-card effect, Illicit Masquerade ("exile it.
+Return up to one other target creature card"), whose target is chosen as the ability goes on the stack.
+
+**The model.**
+
+- The effects lose the bound id: 15 records have no component left (`scripts/step15-dying-card-records.py`), the rest keep
+  their other components (`ReturnTriggeringCardToOwnerHandEffect(UUID handOwnerId)`,
+  `ReturnDyingCreatureToBattlefieldEffect(boolean attachSource, CounterType, int)`,
+  `RegisterDelayedReturnCardFromGraveyardToHandEffect(boolean optional)`, …); `ReturnTargetCreatureCardsFromGraveyardToBattlefieldWithTotalPowerEffect`
+  loses its "other" filter, which only a bound id switched on and no card reached (Nethroi and Reunion of the House
+  aren't death triggers).
+- `StackEntry.setTriggeringCard(cardId, graveyardEntryVersion)` and `isTriggeringCardIncarnation(version)` (new): the
+  card the event was about and its graveyard incarnation (**CR 400.7**, checked), copied with the entry as before.
+- `PermanentChoiceContext.DeathTriggerTarget` gains `triggeringCardId` / `triggeringCardGraveyardEntryVersion`
+  (`withTriggeringCard`, `carryTriggeringCardTo`), and `GraveyardTargetOperationState` the same two fields (copied in
+  `GameData`'s simulation copy), so a death trigger whose targets are chosen as it goes on the stack still gives its
+  entry the card: every entry `TriggeredAbilityQueueService` and `PermanentChoiceTriggerHandlerService.handleDeathTrigger`
+  build from the context, and the graveyard-target path through `GraveyardChoiceHandlerService`. The multi-target
+  (`ETBTokenMultiTargetTrigger`) and counter-distribution paths don't carry it; no dying-card effect reaches them.
+
+**The engine.**
+
+- The handlers read `entry.getTriggeringCardId()` where they read the bound id, and judge the incarnation through
+  `isTriggeringCardIncarnation` where they judged the bound version. Fallbacks stay: The Locust God's delayed return and
+  `ReturnSourceAsAuraEffect` take the source card when the entry has no triggering card, `SuspectReturnedPermanentEffect`
+  the spell's target (It Doesn't Add Up), Endless Whispers' `forOpponent` return the source card.
+- Each collector that bound the card sets it on what it queues instead (`markDyingCard` in `DeathTriggerCollectorService`
+  and `LegacyTriggerBindings`, `setTriggeringCard` in `TriggerCollectionService`, the pipeline's `triggerAll`), with the
+  id the binding used (for a copy that died through the pipeline, the physical card). The may-ability entries
+  (`queueMayAbility`, then the entry on top of the stack) carry it, so the old reason to bind ("the may flow drops the
+  entry's triggering-card id") is gone with the binding: since run 16a a "you may" resolves on the stack entry.
+- Handlers that only bound the card are gone, the default handler of their watch doing the rest: the equipped-creature
+  exile-and-track, and the "nontoken creature you control dies" exile-and-track, Spirit token copy and delayed return.
+  `bindDyingCard`, `bindAllyNontokenDyingCard` and the may-pay rebuilds' bindings are gone; Nim Deathmantle's rebuilt
+  `MayPayManaEffect` keeps the card's own return effect (it rebuilt one without its counter rider).
+
+**Behaviour changes.** No card test changed.
+
+- CR 400.7: the return effects that checked the bound graveyard incarnation only on some paths
+  (`ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect`, the delayed hand return) now
+  check the entry's on every path that records one; the equipped-creature returns (Oathkeeper, Sword of the Realms),
+  the "any creature" and opponent-creature entries and the one-or-more death entries now record it. A card that left
+  the graveyard and came back before the ability resolved is a new object and isn't returned.
+- The "whenever a creature an opponent controls dies" and "whenever a creature dies" "you may" abilities give their
+  entry the dying card, which no collector bound before (no card is known to have needed it).
+
+**Kept, with their reason.** The other `…AwareEffect` interfaces, the may-unwrapping (the creature-death dispatch still
+hands a may's inner effect to its handler), Bill Potts' `OncePerTurnTriggerEffect`, the `…Triggering…` classes and the
+other effects with a baked `dyingCardId` that never implemented the interface (`BecomeCopyOfDyingCreatureEffect`,
+`ReturnDyingOpponentCreatureUnderYourControlEffect`, `ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect`,
+`StealDyingOpponentPermanentUnlessPaysLifeEffect`, `ExileTriggeringCreatureAndReturnSourceToHandEffect`): later runs.
+
+**For later runs.** The grouping proposed with run 1, by the event data the effects read: the departed object's
+last-known information (`DyingCreatureCounter(s)`, `DyingCreatureName`, `DyingCreatureManaValue`,
+`DyingCreaturePermanent`, `DyingCreatureAttachments`, `LeavingCreatureCounters`, `LeavingCreatureName`,
+`LeavingPermanentCounters`, `LeavingPermanentId`, `ArtifactGraveyardCounters`, `SacrificedPermanentManaValue` /
+`SacrificedPermanentCard`); damage and combat (`CombatDamageAmount`, `CombatDamageDealer`, `CombatExcessDamage`,
+`DamageSource`, `DamageSourceController`, `AttackingCreatures`); the bindings that aren't trigger events
+(`ChosenCard`, `AcceptedPlayers`, `GrantingPermanent`, `ProducedManaColor`, `TriggeringCards`); then Bill Potts, the
+may-unwrapping and the `…Triggering…` classes. The baked-id effects above can follow this run's pattern: the entry
+already carries the card on the paths that bind them.
+
+**Scripts.** `scripts/step15-dying-card-records.py` (the single-component records), `scripts/step15-dying-card-cards.py`
+(per letter: `RegisterDelayedReturnCardFromGraveyardToHandEffect(null)` became the no-arg constructor and two stale
+comments, 9 card classes: Agyrem, Liesa, Mangara's Blessing, Pure Intentions, Rienne, The Locust God, The
+Scarab God, The Scorpion God, Tiana), `scripts/step15-dying-card-docs.py` (exact replacements in `EFFECTS_INDEX.md`,
+`EFFECTS_QUICK_REFERENCE.md`, `ORACLE_TEXT_EFFECT_MAP.md` and two `CARD_PATTERNS` files); the other records, the
+handlers and the collectors were edited by hand, and `ARCHITECTURE.md` gained a note on the triggering card. The skills
+didn't name the interface.
+
+**Tests changed.**
+
+- `DeathTriggerCollectorServiceTest`: the equipped return, token-copy, nontoken may-pay, imprint and opponent-default
+  cases assert the entry's triggering card in place of the effect's bound id; the Tiana case (failing at HEAD: it
+  expected a `MayEffect` the handler hasn't built since the optional return moved into the effect) asserts the
+  optional delayed return and the triggering card, and passes; its other two cases only lost the `null` argument.
+- `LegacyTriggerBindingsTest#transformedDeathBindsThePhysicalCardId` became
+  `transformedDeathGivesThePhysicalCardAsTheTriggeringCard`.
+- `ImprintDyingCreatureEffectHandlerTest`: the five cases set the entry's triggering card in place of the effect's id.
+
+**Test runs.**
+
+- Card: the test class of every card with a death, sacrifice, graveyard-arrival, manifest-dread or discarded-this-card
+  trigger or naming one of the changed effects (1,640 card classes), and every card test that constructs one
+  (2,893 classes, 24,062 tests): all passing.
+- Application: the whole module (5,013 tests) against a HEAD baseline in a worktree (with main's card-data cache):
+  617 failures here, 618 at HEAD, none new; the Tiana case above is the one fixed.
 - Engine: the whole module, with the one failure at HEAD, `GameMutationBoundaryRatchetTest`.
 - AI: the whole module (1,620 tests), with the same 10 failures as before.
 - The full suite was not run here.

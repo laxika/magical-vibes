@@ -308,7 +308,7 @@ class DeathTriggerCollectorServiceTest {
     class EquippedCreatureReturn {
 
         @Test
-        @DisplayName("Binds the dying card and carries the source Equipment as the entry's target")
+        @DisplayName("Gives the entry the dying card and carries the source Equipment as its target")
         void bindsDyingCardAndSource() {
             Card equipment = createEquipment("Oathkeeper");
             Card dying = createCreature("Samurai", 3, 3);
@@ -320,9 +320,8 @@ class DeathTriggerCollectorServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getTargetId()).isEqualTo(perm.getId());
-            var bound = (ReturnDyingCreatureToBattlefieldEffect) gd.stack.get(0).getEffectsToResolve().get(0);
-            assertThat(bound.dyingCardId()).isEqualTo(dying.getId());
-            assertThat(bound.attachSource()).isFalse();
+            assertThat(gd.stack.get(0).getTriggeringCardId()).isEqualTo(dying.getId());
+            assertThat(gd.stack.get(0).getEffectsToResolve()).containsExactly(effect);
         }
 
         @Test
@@ -955,7 +954,7 @@ class DeathTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("CreateTokenCopyOfDyingCreature binds the dying permanent")
+        @DisplayName("CreateTokenCopyOfDyingCreature gives the entry the dying permanent and its card")
         void createTokenCopyBindsDyingPermanent() {
             Card watcher = createCreature("Genestealer Patriarch", 4, 4);
             Card dying = createCreature("Dead Creature", 2, 2);
@@ -972,9 +971,7 @@ class DeathTriggerCollectorServiceTest {
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(perm.getId());
             assertThat(gd.stack.getFirst().getTriggeringPermanentId()).isEqualTo(dyingPermanent.getId());
-            var bound = (CreateTokenCopyOfDyingCreatureEffect)
-                    gd.stack.getFirst().getEffectsToResolve().getFirst();
-            assertThat(bound.dyingCardId()).isEqualTo(dying.getId());
+            assertThat(gd.stack.getFirst().getTriggeringCardId()).isEqualTo(dying.getId());
             assertThat(gd.stack.getFirst().lastKnownPermanentCard(dyingPermanent.getId()))
                     .isEqualTo(dying);
         }
@@ -1042,7 +1039,7 @@ class DeathTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("MayPayManaEffect binds a dying-card-aware wrapped effect")
+        @DisplayName("MayPayManaEffect goes on the stack with the dying card as the entry's triggering card")
         void mayPayBindsDyingCardAwareWrappedEffect() {
             Card dying = createCreature("Dead Creature", 2, 2);
             Card watcher = createCreature("Decaying Soil", 0, 0);
@@ -1055,9 +1052,8 @@ class DeathTriggerCollectorServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(perm.getId());
-            var queued = (MayPayManaEffect) gd.stack.getFirst().getEffectsToResolve().getFirst();
-            var bound = (ReturnTriggeringCardToOwnerHandEffect) queued.wrapped();
-            assertThat(bound.dyingCardId()).isEqualTo(dying.getId());
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(mayPay);
+            assertThat(gd.stack.getFirst().getTriggeringCardId()).isEqualTo(dying.getId());
         }
     }
 
@@ -1067,7 +1063,7 @@ class DeathTriggerCollectorServiceTest {
     class AnyNontokenCreatureDeathHandlers {
 
         @Test
-        @DisplayName("Imprint goes on the stack with its may and the dying card ID baked in (CR 603.5)")
+        @DisplayName("Imprint goes on the stack with its may and the dying card as its triggering card (CR 603.5)")
         void imprintBakesDyingCardId() {
             Card dying = createCreature("Dying Nontoken", 3, 3);
             Card watcher = createCreature("Mimic Vat", 0, 0);
@@ -1082,8 +1078,8 @@ class DeathTriggerCollectorServiceTest {
             assertThat(gd.stack).hasSize(1);
             var may = (MayEffect) gd.stack.getFirst().getEffectsToResolve().getFirst();
             assertThat(may.prompt()).isEqualTo("Exile and imprint?");
-            var bakedImprint = (ImprintDyingCreatureEffect) may.wrapped();
-            assertThat(bakedImprint.dyingCardId()).isEqualTo(dying.getId());
+            assertThat(may.wrapped()).isEqualTo(imprint);
+            assertThat(gd.stack.getFirst().getTriggeringCardId()).isEqualTo(dying.getId());
             assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(perm.getId());
             assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
         }
@@ -1166,7 +1162,7 @@ class DeathTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("Default binds a dying-card-aware effect to the opponent creature that died")
+        @DisplayName("Default gives the entry the opponent creature that died as its triggering card")
         void defaultBindsDyingCardAwareEffect() {
             Card watcher = createCreature("Vein Patron", 4, 4);
             Card dying = createCreature("Dead Creature", 2, 2);
@@ -1176,9 +1172,8 @@ class DeathTriggerCollectorServiceTest {
 
             svc.handleOpponentCreatureDeathDefault(match(perm, PLAYER2_ID, effect), effect, ctx);
 
-            var resolved = (ExileTriggeringCreatureFromGraveyardEffect)
-                    gd.stack.get(0).getEffectsToResolve().get(0);
-            assertThat(resolved.dyingCardId()).isEqualTo(dying.getId());
+            assertThat(gd.stack.get(0).getEffectsToResolve()).containsExactly(effect);
+            assertThat(gd.stack.get(0).getTriggeringCardId()).isEqualTo(dying.getId());
         }
     }
 
@@ -1192,20 +1187,20 @@ class DeathTriggerCollectorServiceTest {
     class RegisterDelayedReturn {
 
         @Test
-        @DisplayName("Queues MayEffect with baked dying card ID")
+        @DisplayName("Queues the optional delayed return with the dying card as the entry's triggering card")
         void queuesMayEffectWithBakedCardId() {
             Card dyingAura = createEnchantment("Dying Aura");
             Card tiana = createCreature("Tiana", 3, 3);
-            var effect = new RegisterDelayedReturnCardFromGraveyardToHandEffect(null);
+            var effect = new RegisterDelayedReturnCardFromGraveyardToHandEffect();
             Permanent perm = new Permanent(tiana);
             var ctx = new TriggerContext.AllyAuraOrEquipmentGraveyard(dyingAura, PLAYER1_ID);
 
             svc.handleRegisterDelayedReturn(match(perm, PLAYER1_ID, effect), effect, ctx);
 
             assertThat(gd.stack).hasSize(1);
-            MayEffect may = (MayEffect) gd.stack.get(0).getEffectsToResolve().get(0);
-            var delayed = (RegisterDelayedReturnCardFromGraveyardToHandEffect) may.wrapped();
-            assertThat(delayed.cardId()).isEqualTo(dyingAura.getId());
+            assertThat(gd.stack.get(0).getEffectsToResolve())
+                    .containsExactly(new RegisterDelayedReturnCardFromGraveyardToHandEffect(true));
+            assertThat(gd.stack.get(0).getTriggeringCardId()).isEqualTo(dyingAura.getId());
         }
 
         @Test
@@ -1213,7 +1208,7 @@ class DeathTriggerCollectorServiceTest {
         void promptIncludesDyingCardName() {
             Card dyingEquip = createEquipment("Lost Sword");
             Card tiana = createCreature("Tiana", 3, 3);
-            var effect = new RegisterDelayedReturnCardFromGraveyardToHandEffect(null);
+            var effect = new RegisterDelayedReturnCardFromGraveyardToHandEffect();
             Permanent perm = new Permanent(tiana);
             var ctx = new TriggerContext.AllyAuraOrEquipmentGraveyard(dyingEquip, PLAYER1_ID);
 
@@ -1228,7 +1223,7 @@ class DeathTriggerCollectorServiceTest {
         void logsMessage() {
             Card dyingAura = createEnchantment("Fallen Aura");
             Card tiana = createCreature("Tiana Ship's Caretaker", 3, 3);
-            var effect = new RegisterDelayedReturnCardFromGraveyardToHandEffect(null);
+            var effect = new RegisterDelayedReturnCardFromGraveyardToHandEffect();
             Permanent perm = new Permanent(tiana);
             var ctx = new TriggerContext.AllyAuraOrEquipmentGraveyard(dyingAura, PLAYER1_ID);
 

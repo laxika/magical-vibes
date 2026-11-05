@@ -14,9 +14,9 @@ public class MangarasBlessing extends Card {
 
         // "When a spell or ability an opponent controls causes you to discard this card, you gain
         // 2 life, and you return this card from your graveyard to your hand at the beginning of
-        // the next end step." The null cardId makes the delayed return use the discarded card.
+        // the next end step." The delayed return takes the discarded card, the stack entry's triggering card.
         addTrigger(Triggers.opponentCausesYouToDiscardThisCard(), new GainLifeEffect(2));
         addTrigger(Triggers.opponentCausesYouToDiscardThisCard(),
-                new RegisterDelayedReturnCardFromGraveyardToHandEffect(null));
+                new RegisterDelayedReturnCardFromGraveyardToHandEffect());
     }
 }

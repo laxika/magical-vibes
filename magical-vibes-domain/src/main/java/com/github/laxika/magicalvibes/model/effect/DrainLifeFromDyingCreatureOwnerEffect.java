@@ -1,20 +1,9 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.UUID;
-
 /**
  * Makes the owner of the creature that caused an ally-creature-death trigger lose life, then
- * makes the triggered ability's controller gain the same amount.
+ * makes the triggered ability's controller gain the same amount. The creature's card is the stack entry's
+ * triggering card.
  */
-public record DrainLifeFromDyingCreatureOwnerEffect(int amount, UUID dyingCardId)
-        implements CardEffect, DyingCreatureCardAwareEffect {
-
-    public DrainLifeFromDyingCreatureOwnerEffect(int amount) {
-        this(amount, null);
-    }
-
-    @Override
-    public CardEffect boundToDyingCard(UUID dyingCardId) {
-        return new DrainLifeFromDyingCreatureOwnerEffect(amount, dyingCardId);
-    }
+public record DrainLifeFromDyingCreatureOwnerEffect(int amount) implements CardEffect {
 }

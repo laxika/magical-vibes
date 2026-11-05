@@ -34,7 +34,7 @@ public class PutTriggeringCardFromGraveyardOnBottomOfLibraryEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID dyingCardId = ((PutTriggeringCardFromGraveyardOnBottomOfLibraryEffect) effect).dyingCardId();
+        UUID dyingCardId = entry.getTriggeringCardId();
         if (dyingCardId == null) {
             return;
         }

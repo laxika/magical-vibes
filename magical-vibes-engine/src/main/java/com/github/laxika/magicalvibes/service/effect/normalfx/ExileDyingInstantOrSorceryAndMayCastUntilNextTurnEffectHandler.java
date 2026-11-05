@@ -36,8 +36,7 @@ public class ExileDyingInstantOrSorceryAndMayCastUntilNextTurnEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID dyingCardId = ((ExileDyingInstantOrSorceryAndMayCastUntilNextTurnEffect) effect)
-                .dyingCardId();
+        UUID dyingCardId = entry.getTriggeringCardId();
         if (dyingCardId == null) {
             return;
         }

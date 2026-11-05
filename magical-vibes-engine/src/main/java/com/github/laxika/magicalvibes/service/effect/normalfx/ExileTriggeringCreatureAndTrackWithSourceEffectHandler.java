@@ -37,8 +37,7 @@ public class ExileTriggeringCreatureAndTrackWithSourceEffectHandler implements N
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (ExileTriggeringCreatureAndTrackWithSourceEffect) effect;
-        UUID dyingCardId = e.dyingCardId();
+        UUID dyingCardId = entry.getTriggeringCardId();
         UUID sourcePermanentId = entry.getSourcePermanentId();
         if (sourcePermanentId == null && entry.getSourcePlanarObject() != null && entry.getCard() != null) {
             sourcePermanentId = entry.getCard().getId();

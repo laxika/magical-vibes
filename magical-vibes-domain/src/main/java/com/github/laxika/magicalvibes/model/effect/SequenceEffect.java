@@ -53,7 +53,7 @@ import java.util.UUID;
 public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean optionalTarget,
                              boolean simultaneous)
         implements CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect,
-        EndStepPlayerTargetedEffect, DyingCreatureCardAwareEffect, DyingCreatureCountersAwareEffect,
+        EndStepPlayerTargetedEffect, DyingCreatureCountersAwareEffect,
         DyingCreaturePermanentAwareEffect, CombatOpponentReferencingEffect, DamageSourceControllerAwareEffect {
 
     public SequenceEffect(List<CardEffect> steps) {
@@ -118,18 +118,6 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
     @Override
     public boolean hasAbilityResolutionCondition() {
         return steps.stream().anyMatch(CardEffect::hasAbilityResolutionCondition);
-    }
-
-    @Override
-    public CardEffect boundToDyingCard(UUID dyingCardId) {
-        if (steps.stream().noneMatch(DyingCreatureCardAwareEffect.class::isInstance)) {
-            return this;
-        }
-        List<CardEffect> boundSteps = steps.stream()
-                .map(step -> step instanceof DyingCreatureCardAwareEffect aware
-                        ? aware.boundToDyingCard(dyingCardId) : step)
-                  .toList();
-        return boundSteps.equals(steps) ? this : withSteps(boundSteps);
     }
 
     @Override

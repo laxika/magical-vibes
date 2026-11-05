@@ -29,10 +29,10 @@ public class CreateTokenCopyOfDyingCreatureEffectHandler implements NormalEffect
         var dyingCopy = (CreateTokenCopyOfDyingCreatureEffect) effect;
         Card dyingCard = entry.lastKnownPermanentCard(entry.getTriggeringPermanentId());
         if (dyingCard == null) {
-            dyingCard = entry.lastKnownPermanentCard(dyingCopy.dyingCardId());
+            dyingCard = entry.lastKnownPermanentCard(entry.getTriggeringCardId());
         }
-        if (dyingCard == null && dyingCopy.dyingCardId() != null) {
-            dyingCard = gameQueryService.findCardInGraveyardById(gameData, dyingCopy.dyingCardId());
+        if (dyingCard == null && entry.getTriggeringCardId() != null) {
+            dyingCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTriggeringCardId());
         }
         if (dyingCard == null) {
             return;

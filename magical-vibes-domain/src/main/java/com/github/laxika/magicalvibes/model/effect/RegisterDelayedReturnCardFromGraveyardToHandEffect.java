@@ -1,40 +1,21 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.UUID;
-
 /**
  * When resolved, registers a delayed trigger that fires at the beginning of the next end step,
- * returning the specified card from its owner's graveyard to their hand (if it is still there).
+ * returning a card from its owner's graveyard to their hand (if it is still there).
  *
- * <p>Used by Tiana, Ship's Caretaker: "Whenever an Aura or Equipment you control is put into
- * a graveyard from the battlefield, you may return that card to its owner's hand at the
- * beginning of the next end step." The collector bakes the dying card's id into {@code cardId}.
+ * <p>The card is the stack entry's triggering card, as the trigger event left it in the graveyard: Tiana, Ship's
+ * Caretaker's dying Aura or Equipment ("you may return that card to its owner's hand at the beginning of the next
+ * end step"), Liesa's dying creature. With no triggering card it is the source card ("when this dies", The Locust
+ * God). A card that left the graveyard and entered it again after the ability triggered is a new object
+ * (CR 400.7) and is not returned.
  *
- * <p>Also used by The Locust God on "when this dies" with {@code cardId == null}: the handler
- * falls back to the stack-entry source card. On creature-death slots, the trigger collector binds
- * the dying card through {@link DyingCreatureCardAwareEffect}.
- *
- * @param cardId               the UUID of the card to return, or {@code null} to use the resolving source card
- * @param graveyardEntryVersion the graveyard entry the trigger event happened to, or {@code null} to take
- *                             the card's entry as the effect resolves; a card that left the graveyard and
- *                             entered it again is a new object (CR 400.7) and is not returned
- * @param optional             whether the registered end-step trigger is a "you may return" ability, so the
- *                             choice is made as that delayed trigger resolves rather than when this one does
+ * @param optional whether the registered end-step trigger is a "you may return" ability, so the
+ *                 choice is made as that delayed trigger resolves rather than when this one does
  */
-public record RegisterDelayedReturnCardFromGraveyardToHandEffect(UUID cardId, Long graveyardEntryVersion,
-                                                                 boolean optional)
-        implements CardEffect, DyingCreatureCardAwareEffect {
+public record RegisterDelayedReturnCardFromGraveyardToHandEffect(boolean optional) implements CardEffect {
 
-    public RegisterDelayedReturnCardFromGraveyardToHandEffect(UUID cardId, Long graveyardEntryVersion) {
-        this(cardId, graveyardEntryVersion, false);
-    }
-
-    public RegisterDelayedReturnCardFromGraveyardToHandEffect(UUID cardId) {
-        this(cardId, null, false);
-    }
-
-    @Override
-    public CardEffect boundToDyingCard(UUID dyingCardId) {
-        return new RegisterDelayedReturnCardFromGraveyardToHandEffect(dyingCardId);
+    public RegisterDelayedReturnCardFromGraveyardToHandEffect() {
+        this(false);
     }
 }

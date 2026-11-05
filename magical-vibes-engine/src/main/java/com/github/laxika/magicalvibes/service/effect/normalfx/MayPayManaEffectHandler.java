@@ -96,8 +96,8 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        if (e.wrapped() instanceof ExileDyingCreatureCardAndCreateTokenEffect exile && exile.dyingCardId() != null
-                && gameQueryService.findCardInGraveyardById(gameData, exile.dyingCardId()) == null) {
+        if (e.wrapped() instanceof ExileDyingCreatureCardAndCreateTokenEffect && entry.getTriggeringCardId() != null
+                && gameQueryService.findCardInGraveyardById(gameData, entry.getTriggeringCardId()) == null) {
             // "you may pay {1} and exile it": exiling the card is part of the payment, so a card that
             // already left the graveyard makes the payment impossible.
             return;

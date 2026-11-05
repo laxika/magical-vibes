@@ -1,14 +1,12 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.UUID;
-
 /**
  * Resolution-time optional life payment that resolves {@code wrapped} when accepted and payable,
  * or {@code elseEffect} when the payment is declined or cannot be made.
  */
 public record MayPayLifeEffect(int lifeCost, CardEffect wrapped, String prompt,
                                MayPayPayer payer, CardEffect elseEffect)
-        implements CardEffect, DyingCreatureCardAwareEffect {
+        implements CardEffect {
 
     public MayPayLifeEffect(int lifeCost, CardEffect wrapped, String prompt) {
         this(lifeCost, wrapped, prompt, MayPayPayer.CONTROLLER, null);
@@ -27,23 +25,5 @@ public record MayPayLifeEffect(int lifeCost, CardEffect wrapped, String prompt,
             }
         }
         return elseEffect == null ? TargetSpec.NONE : elseEffect.targetSpec();
-    }
-
-    @Override
-    public CardEffect boundToDyingCard(UUID dyingCardId) {
-        CardEffect boundWrapped = wrapped instanceof DyingCreatureCardAwareEffect aware
-                ? aware.boundToDyingCard(dyingCardId) : wrapped;
-        CardEffect boundElse = elseEffect instanceof DyingCreatureCardAwareEffect aware
-                ? aware.boundToDyingCard(dyingCardId) : elseEffect;
-        return new MayPayLifeEffect(lifeCost, boundWrapped, prompt, payer, boundElse);
-    }
-
-    @Override
-    public CardEffect boundToDyingCardEntryVersion(long graveyardEntryVersion) {
-        CardEffect versionedWrapped = wrapped instanceof DyingCreatureCardAwareEffect aware
-                ? aware.boundToDyingCardEntryVersion(graveyardEntryVersion) : wrapped;
-        CardEffect versionedElse = elseEffect instanceof DyingCreatureCardAwareEffect aware
-                ? aware.boundToDyingCardEntryVersion(graveyardEntryVersion) : elseEffect;
-        return new MayPayLifeEffect(lifeCost, versionedWrapped, prompt, payer, versionedElse);
     }
 }

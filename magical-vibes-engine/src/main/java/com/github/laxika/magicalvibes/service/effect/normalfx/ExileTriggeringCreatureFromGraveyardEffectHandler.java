@@ -34,7 +34,7 @@ public class ExileTriggeringCreatureFromGraveyardEffectHandler implements Normal
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID dyingCardId = ((ExileTriggeringCreatureFromGraveyardEffect) effect).dyingCardId();
+        UUID dyingCardId = entry.getTriggeringCardId();
         if (dyingCardId == null) {
             return;
         }

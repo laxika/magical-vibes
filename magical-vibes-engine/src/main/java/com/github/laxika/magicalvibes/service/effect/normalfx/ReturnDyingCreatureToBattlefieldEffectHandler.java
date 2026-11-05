@@ -43,9 +43,9 @@ public class ReturnDyingCreatureToBattlefieldEffectHandler implements NormalEffe
         String playerName = gameData.playerIdToName.get(controllerId);
 
         // Find the dying card in a graveyard
-        Card dyingCard = gameQueryService.findCardInGraveyardById(gameData, e.dyingCardId());
-        if (dyingCard != null && e.dyingCardGraveyardEntryVersion() != null
-                && gameData.graveyardEntryVersion(dyingCard.getId()) != e.dyingCardGraveyardEntryVersion()) {
+        Card dyingCard = entry.getTriggeringCardId() == null ? null
+                : gameQueryService.findCardInGraveyardById(gameData, entry.getTriggeringCardId());
+        if (dyingCard != null && !entry.isTriggeringCardIncarnation(gameData.graveyardEntryVersion(dyingCard.getId()))) {
             dyingCard = null;
         }
         if (dyingCard == null) {

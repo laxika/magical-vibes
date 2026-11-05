@@ -59,7 +59,7 @@ public class ResolveEffectOnTargetDeathThisTurnEffectHandler implements NormalEf
             if (ownerId == null) {
                 ownerId = gameQueryService.findPermanentController(gameData, target.getId());
             }
-            delayedEffect = new ReturnTriggeringCardToOwnerHandEffect(target.getCard().getId(), ownerId);
+            delayedEffect = new ReturnTriggeringCardToOwnerHandEffect(ownerId);
         }
 
         gameData.permanentTriggeringEffectOnDeathThisTurn

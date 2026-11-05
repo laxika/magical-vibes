@@ -38,8 +38,8 @@ public class ConjureDuplicatesOfDyingCreatureIntoLibraryEffectHandler implements
         }
 
         Card dyingCard = entry.lastKnownPermanentCard(entry.getTriggeringPermanentId());
-        if (dyingCard == null && conjure.dyingCardId() != null) {
-            dyingCard = gameQueryService.findCardInGraveyardById(gameData, conjure.dyingCardId());
+        if (dyingCard == null && entry.getTriggeringCardId() != null) {
+            dyingCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTriggeringCardId());
         }
         List<Card> library = gameData.playerDecks.get(entry.getControllerId());
         if (dyingCard == null || library == null) {

@@ -342,6 +342,7 @@ public class PermanentChoiceTriggerHandlerService {
             entry.setTargetId(permanentId);
         }
         entry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(dtt.dyingCard().getId()));
+        dtt.carryTriggeringCardTo(entry);
         // Carry the death event's numeric payload (e.g. the dying creature's last-known power) so an
         // EventValue-based amount can be evaluated at resolution.
         if (dtt.eventValue() != null) {

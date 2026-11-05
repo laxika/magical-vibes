@@ -45,8 +45,7 @@ public class ExileDyingCreatureAndCreateSpiritTokenCopyEffectHandler implements 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var hofriEffect = (ExileDyingCreatureAndCreateSpiritTokenCopyEffect) effect;
-        UUID dyingCardId = hofriEffect.dyingCardId();
+        UUID dyingCardId = entry.getTriggeringCardId();
         if (dyingCardId == null) {
             return;
         }

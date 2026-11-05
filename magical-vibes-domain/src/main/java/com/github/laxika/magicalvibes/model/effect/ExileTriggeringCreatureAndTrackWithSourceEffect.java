@@ -1,25 +1,10 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.UUID;
-
 /**
  * Death-trigger effect for Colfenor's Urn: exile the dying creature card from the
  * graveyard it went to and track it as "exiled with" the source (via
  * {@code GameData.exiledCards} by source ID), so the source can later
- * count and return those cards.
- *
- * @param dyingCardId the card ID of the dying creature (null in the card definition,
- *                    filled at trigger time by the death-trigger collector)
+ * count and return those cards. The card that died is the stack entry's triggering card.
  */
-public record ExileTriggeringCreatureAndTrackWithSourceEffect(UUID dyingCardId)
-        implements CardEffect, DyingCreatureCardAwareEffect {
-
-    public ExileTriggeringCreatureAndTrackWithSourceEffect() {
-        this(null);
-    }
-
-    @Override
-    public CardEffect boundToDyingCard(UUID dyingCardId) {
-        return new ExileTriggeringCreatureAndTrackWithSourceEffect(dyingCardId);
-    }
+public record ExileTriggeringCreatureAndTrackWithSourceEffect() implements CardEffect {
 }

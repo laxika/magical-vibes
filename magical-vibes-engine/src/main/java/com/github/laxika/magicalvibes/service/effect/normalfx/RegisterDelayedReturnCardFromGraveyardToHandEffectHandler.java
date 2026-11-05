@@ -31,9 +31,9 @@ public class RegisterDelayedReturnCardFromGraveyardToHandEffectHandler implement
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (RegisterDelayedReturnCardFromGraveyardToHandEffect) effect;
 
-        // Explicit cardId (Tiana bakes the dying Aura/Equipment). Null = source card on the
-        // stack entry ("when this dies" self-return, e.g. The Locust God).
-        UUID cardId = e.cardId() != null ? e.cardId() : entry.getCard().getId();
+        // The trigger event's card (Tiana's dying Aura or Equipment), else the source card on the stack entry
+        // ("when this dies" self-return, e.g. The Locust God).
+        UUID cardId = entry.getTriggeringCardId() != null ? entry.getTriggeringCardId() : entry.getCard().getId();
         if (cardId == null) return;
 
         // Find the card's owner (whose graveyard it's in)
@@ -46,8 +46,8 @@ public class RegisterDelayedReturnCardFromGraveyardToHandEffectHandler implement
             }
         }
 
-        if (ownerId != null && e.graveyardEntryVersion() != null
-                && gameData.graveyardEntryVersion(cardId) != e.graveyardEntryVersion()) {
+        if (ownerId != null && entry.getTriggeringCardId() != null
+                && !entry.isTriggeringCardIncarnation(gameData.graveyardEntryVersion(cardId))) {
             ownerId = null;
         }
 

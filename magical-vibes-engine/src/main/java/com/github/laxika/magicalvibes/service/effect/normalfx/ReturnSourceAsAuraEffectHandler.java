@@ -46,7 +46,7 @@ public class ReturnSourceAsAuraEffectHandler implements NormalEffectHandlerBean 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ReturnSourceAsAuraEffect returnEffect = (ReturnSourceAsAuraEffect) effect;
-        UUID cardId = returnEffect.dyingCardId() != null ? returnEffect.dyingCardId() : entry.getCard().getId();
+        UUID cardId = entry.getTriggeringCardId() != null ? entry.getTriggeringCardId() : entry.getCard().getId();
         UUID controllerId = entry.getControllerId();
         Card sourceCard = gameQueryService.findCardInGraveyardById(gameData, cardId);
         if (sourceCard == null) {

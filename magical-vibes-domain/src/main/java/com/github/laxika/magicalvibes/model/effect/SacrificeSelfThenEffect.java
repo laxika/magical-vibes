@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.UUID;
-
 /**
  * "Sacrifice this permanent. If you do, {@code thenEffect}." Sacrifices the stack entry's source
  * permanent and resolves {@code thenEffect} only when the sacrifice actually happened — the
@@ -18,7 +16,7 @@ import java.util.UUID;
  * @param reflexive whether the payload is put on the stack as a separate reflexive ability
  */
 public record SacrificeSelfThenEffect(CardEffect thenEffect, boolean reflexive)
-        implements CombatDamageTriggerContextEffect, DyingCreatureCardAwareEffect {
+        implements CombatDamageTriggerContextEffect {
 
     public SacrificeSelfThenEffect(CardEffect thenEffect) {
         this(thenEffect, false);
@@ -32,18 +30,6 @@ public record SacrificeSelfThenEffect(CardEffect thenEffect, boolean reflexive)
         if (thenEffect == null) {
             throw new IllegalArgumentException("SacrificeSelfThenEffect requires a payload; use SacrificeSelfEffect for a bare sacrifice");
         }
-    }
-
-    /**
-     * Forwards the binding to the payload — on a death trigger it is the payload that acts on the
-     * dying card (Angelic Renewal), never the sacrifice half.
-     */
-    @Override
-    public CardEffect boundToDyingCard(UUID dyingCardId) {
-        if (thenEffect instanceof DyingCreatureCardAwareEffect aware) {
-            return new SacrificeSelfThenEffect(aware.boundToDyingCard(dyingCardId), reflexive);
-        }
-        return this;
     }
 
     /** The payload supplies chosen targets; the wrapper also needs its source bound for sacrifice. */

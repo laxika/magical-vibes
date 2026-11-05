@@ -32,7 +32,6 @@ public class ReturnOtherCreatureCardsWithTotalPowerFromGraveyardToBattlefieldEff
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (ReturnOtherCreatureCardsWithTotalPowerFromGraveyardToBattlefieldEffect) effect;
         UUID controllerId = entry.getControllerId();
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         if (graveyard == null) {
@@ -40,7 +39,7 @@ public class ReturnOtherCreatureCardsWithTotalPowerFromGraveyardToBattlefieldEff
         }
         List<Card> candidates = graveyard.stream()
                 .filter(card -> card.hasType(CardType.CREATURE) && !card.isToken())
-                .filter(card -> e.dyingCardId() == null || !e.dyingCardId().equals(card.getId()))
+                .filter(card -> !card.getId().equals(entry.getTriggeringCardId()))
                 .toList();
         if (candidates.isEmpty()) {
             return;
