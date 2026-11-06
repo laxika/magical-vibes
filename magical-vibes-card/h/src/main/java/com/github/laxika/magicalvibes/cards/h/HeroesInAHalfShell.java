@@ -5,9 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnCombatDamageDealersEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,8 +25,8 @@ public class HeroesInAHalfShell extends Card {
                                 CardSubtype.MUTANT, CardSubtype.NINJA, CardSubtype.TURTLE))),
                 TriggerOptions.ONE_OR_MORE,
                 SequenceEffect.of(
-                        new PutCountersOnCombatDamageDealersEffect(
-                                CounterType.PLUS_ONE_PLUS_ONE, 1),
+                        new PutCounterOnEachMatchingPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1,
+                                new PermanentTruePredicate(), EachPermanentScope.TRIGGERING_PERMANENTS),
                         new DrawCardEffect(1)));
     }
 }

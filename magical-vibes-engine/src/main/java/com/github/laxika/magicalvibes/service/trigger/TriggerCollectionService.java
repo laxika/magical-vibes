@@ -97,8 +97,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCardNameAtRe
 import com.github.laxika.magicalvibes.model.effect.CommanderCreaturesDealPowerDamageToPreventedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetControllerIsTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.AttackingCreaturesAwareEffect;
-import com.github.laxika.magicalvibes.model.effect.AttackingPermanentSnapshot;
 import com.github.laxika.magicalvibes.model.effect.LoseGameIfSourceDealtDamageToPlayerThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -162,6 +160,8 @@ import com.github.laxika.magicalvibes.model.effect.ReplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.NextMatchingSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCastTriggerToSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerGrant;
 import com.github.laxika.magicalvibes.model.effect.PutVoyageCounterOnExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -15769,27 +15769,6 @@ public class TriggerCollectionService {
         }
     }
 
-    /**
-     * Binds the attackers matching an {@link AttackingCreaturesAwareEffect} at trigger creation, so the
-     * effect acts on the creatures that attacked rather than on whatever is attacking at resolution.
-     * Returns {@code null} when no attacking creature matches, meaning the trigger does not happen.
-     */
-    private CardEffect bindAttackingCreatures(GameData gameData, UUID attackingPlayerId, CardEffect effect) {
-        if (!(effect instanceof AttackingCreaturesAwareEffect aware)) {
-            return effect;
-        }
-        FilterContext context = FilterContext.of(gameData).withSourceControllerId(attackingPlayerId);
-        List<AttackingPermanentSnapshot> attackers = gameData.playerBattlefields
-                .getOrDefault(attackingPlayerId, List.of()).stream()
-                .filter(Permanent::isAttacking)
-                .filter(attacker -> predicateEvaluationService.matchesPermanentPredicate(
-                        attacker, aware.attackingCreaturePredicate(), context))
-                .map(attacker -> new AttackingPermanentSnapshot(
-                        attacker.getId(), gameQueryService.getEffectivePower(gameData, attacker)))
-                .toList();
-        return attackers.isEmpty() ? null : aware.withAttackingCreatures(attackers);
-    }
-
     /** Collects once-per-combat attack triggers from face-up planes. */
     public void checkPlanarAllyCreaturesAttackTriggers(GameData gameData, UUID attackingPlayerId,
                                                        int attackerCount) {
@@ -15813,10 +15792,7 @@ public class TriggerCollectionService {
                         continue;
                     }
                     if (conditional.condition() instanceof ExactlyAttackers) {
-                        CardEffect bound = bindAttackingCreatures(gameData, attackingPlayerId, conditional.wrapped());
-                        if (bound != null) {
-                            matchingEffects.add(bound);
-                        }
+                        matchingEffects.add(conditional.wrapped());
                     } else {
                         matchingEffects.add(effect);
                     }
@@ -15847,6 +15823,15 @@ public class TriggerCollectionService {
             entry.setXValue(attackerCount);
             entry.setSourcePlanarObject(object.copy());
             entry.setNonTargeting(true);
+            // "Those creatures gain double strike" (Valor's Reach): the creatures that attacked are the grant's
+            // declared, untargeted recipients, fixed as the ability triggers.
+            if (matchingEffects.stream().anyMatch(effect -> effect instanceof GrantKeywordEffect grant
+                    && grant.scope() == GrantScope.TARGETS)) {
+                entry.setDeclaredTargetIds(gameData.playerBattlefields.getOrDefault(attackingPlayerId, List.of()).stream()
+                        .filter(Permanent::isAttacking)
+                        .map(Permanent::getId)
+                        .toList());
+            }
             gameData.enqueueTrigger(entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(object.getCard()));
         }

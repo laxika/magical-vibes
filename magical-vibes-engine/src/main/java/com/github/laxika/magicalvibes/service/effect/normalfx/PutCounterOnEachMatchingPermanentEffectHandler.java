@@ -53,6 +53,12 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
         if (e.scope() == EachPermanentScope.TARGET_PLAYER) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getTargetId());
             if (battlefield != null) candidates.addAll(battlefield);
+        } else if (e.scope() == EachPermanentScope.TRIGGERING_PERMANENTS) {
+            // "Each of them": the permanents of the trigger event, wherever they are on the battlefield now.
+            for (UUID permanentId : entry.getTriggeringPermanentIds()) {
+                Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+                if (permanent != null) candidates.add(permanent);
+            }
         } else {
             for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
                 candidates.addAll(battlefield);

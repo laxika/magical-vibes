@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -18,7 +17,7 @@ import java.util.UUID;
  *                            the player attacked by an attack trigger
  */
 public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect, MayChoicePlayer choicePlayer, UUID choicePlayerId)
-        implements GrantingPermanentAwareEffect, CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect,
+        implements GrantingPermanentAwareEffect, CombatDamageTriggerContextEffect,
         TriggeringPermanentSourceEffect, CombatOpponentReferencingEffect,
         TriggeringPermanentManaValueEffect, TriggeringPermanentEntryExclusionEffect {
 
@@ -84,14 +83,6 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
         return wrapped instanceof CombatDamageTriggerContextEffect contextEffect
                 ? contextEffect.combatDamageTriggerContext()
                 : null;
-    }
-
-    @Override
-    public CardEffect withCombatDamageDealerIds(List<UUID> dealerIds) {
-        CardEffect boundWrapped = wrapped instanceof CombatDamageDealerAwareEffect aware
-                ? aware.withCombatDamageDealerIds(dealerIds)
-                : wrapped;
-        return new MayEffect(boundWrapped, prompt, elseEffect, choicePlayer, choicePlayerId);
     }
 
     @Override

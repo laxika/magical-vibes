@@ -458,7 +458,6 @@ public class PermanentChoiceHandlerService {
                 || context instanceof PermanentChoiceContext.ExploitSacrifice
                 || context instanceof PermanentChoiceContext.SacrificePermanentThen
                 || context instanceof PermanentChoiceContext.SacrificeOtherCreatureThenRevealUntilLowerManaValue
-                || context instanceof PermanentChoiceContext.SacrificeOneOfCombatDamageDealersThenRevealMatchingCreature
                 || context instanceof PermanentChoiceContext.SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureType
                 || context instanceof PermanentChoiceContext.SacrificeCreatureThenMassDamageEqualToPower
                 || context instanceof PermanentChoiceContext.MaySacrificeForCounterOnSource
@@ -587,9 +586,6 @@ public class PermanentChoiceHandlerService {
             case PermanentChoiceContext.SacrificeOtherCreatureThenRevealUntilLowerManaValue kethek ->
                     battlefieldHandler.handleSacrificeOtherCreatureThenRevealUntilLowerManaValue(
                             gameData, permanentId, kethek);
-            case PermanentChoiceContext.SacrificeOneOfCombatDamageDealersThenRevealMatchingCreature descendantsFury ->
-                    battlefieldHandler.handleSacrificeOneOfCombatDamageDealersThenRevealMatchingCreature(
-                            gameData, permanentId, descendantsFury);
             case PermanentChoiceContext.SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureType descendantsFury -> {
                 gameData.playerBattlefields.getOrDefault(descendantsFury.controllerId(), java.util.List.of()).stream()
                         .filter(permanent -> permanent.getId().equals(permanentId))

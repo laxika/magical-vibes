@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTriggeringAttackersEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -24,8 +24,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class TyvarTheBellicose extends Card {
 
     public TyvarTheBellicose() {
-        addTrigger(Triggers.youAttack(), new GrantKeywordToTriggeringAttackersEffect(
-                new PermanentHasSubtypePredicate(CardSubtype.ELF), Keyword.DEATHTOUCH));
+        addTrigger(Triggers.youAttack().withFilter(new PermanentHasSubtypePredicate(CardSubtype.ELF)),
+                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGETS));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.thisManaAbilityResolves(),
                         TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),

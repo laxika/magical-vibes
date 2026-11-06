@@ -40,11 +40,12 @@ public class SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeE
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var typedEffect = (SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeEffect) effect;
+        // "One of them": the creatures of the combat damage event, the stack entry's triggering permanents.
+        List<UUID> dealerIds = entry.getTriggeringPermanentIds();
         UUID controllerId = entry.getControllerId();
         List<UUID> validIds = gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
-                .filter(permanent -> typedEffect.combatDamageDealerIds().contains(permanent.getId()))
+                .filter(permanent -> dealerIds.contains(permanent.getId()))
                 .filter(permanent -> !gameQueryService.cantBeChosenToSacrifice(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();

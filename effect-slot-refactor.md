@@ -30,7 +30,7 @@ re-check them with a grep before acting on them.
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
 | 14 | Trigger options replace trigger-only wrapper effects | done (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; run 16l, family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader`; run 16m, family 10 (sagas): no chapter or final-chapter ability has a legacy view, and the final-chapter collectors read the abilities through `SagaAbilityReader`; run 16n, family 11's player and keyword actions: every `ActionWatch` collector reads the abilities through `ActionAbilityReader`; run 16o, family 11's rest: every `MiscWatch` collector and the planar reader read the abilities through `MiscAbilityReader`; run 16p, the zone changes but "when this enters" and the permanent changes: no such ability has a legacy view, and the readers outside the trigger pipeline read them through `ZoneChangeAbilityReader`; run 16q, "when this enters": no ability has a legacy view; the own enters collector reads the abilities and judges their limit, the other readers read `Card.getOwnEntryEffects()`, and `OnceOnlyTriggerEffect` is gone; run 16r, every triggered ability is one object on the stack: the abilities of one Oracle ability are merged by script, the own enters and combat collectors group effects by ability, and `TriggerMode` is gone; run 16s, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags are gone: a `ConditionalEffect` is an effect's "if", and every collector judges the intervening "if" and event condition from the ability; run 16t, the trigger-only wrapper classes: the `Triggering…ConditionalEffect` filters, `SelfExiledFromBattlefieldEffect`, `OncePerTurnPerCreatureTriggerEffect` and `OncePerTurnTriggerEffect`'s keyed, per-grant, mark-on-acceptance and first-time forms are gone, their cards written with trigger filters, `TriggerLimit`s and `TriggeringCardMatches`; Bill Potts' `OncePerTurnTriggerEffect` and the may-unwrapping moved to step 15, with the user) |
-| 15 | Effects read the trigger event (repeatable) | open (run 1, with the user: the dying card, `DyingCreatureCardAwareEffect` gone; effects read the stack entry's triggering card; run 2, with the user: the departed permanent's last-known information, its 13 `…AwareEffect` interfaces gone; effects read the stack entry's triggering permanent; run 3: the rest of the departed object, the last-known rebuilds and baked dying-card ids run 2 kept, 4 classes gone and 5 lose their bound ids; run 4: the departed permanent's trigger-time rebuilds and skips run 3 kept, 6 classes gone, their skips trigger filters; run 5: the last departed-permanent rebuilds of `LegacyTriggerBindings` but the counter distribution, 3 classes gone, modular's "you may" and flag on the card; run 6, with the user: the death counter distribution reads its total from the entry and announces its targets and division as it goes on the stack (a rules fix), Martyr's Bond's "it" is the triggering permanent; run 7: the enters-side rebindings of the source to the entering permanent, Confusion in the Ranks' "another player" and "it" and Lucy MacLean's exclusion read the triggering permanent, its current types a rules fix; run 8: the damage source, `DamageSourceAwareEffect` and `DamageSourceControllerAwareEffect` gone, "that source" is the stack entry's triggering permanent and "that source's controller" its controller as the ability resolves (a rules fix for five cards), 4 effects replaced by existing ones with `TRIGGERING_PERMANENT_CONTROLLER` recipients, "each source" a trigger option on the cards) |
+| 15 | Effects read the trigger event (repeatable) | open (run 1, with the user: the dying card, `DyingCreatureCardAwareEffect` gone; effects read the stack entry's triggering card; run 2, with the user: the departed permanent's last-known information, its 13 `…AwareEffect` interfaces gone; effects read the stack entry's triggering permanent; run 3: the rest of the departed object, the last-known rebuilds and baked dying-card ids run 2 kept, 4 classes gone and 5 lose their bound ids; run 4: the departed permanent's trigger-time rebuilds and skips run 3 kept, 6 classes gone, their skips trigger filters; run 5: the last departed-permanent rebuilds of `LegacyTriggerBindings` but the counter distribution, 3 classes gone, modular's "you may" and flag on the card; run 6, with the user: the death counter distribution reads its total from the entry and announces its targets and division as it goes on the stack (a rules fix), Martyr's Bond's "it" is the triggering permanent; run 7: the enters-side rebindings of the source to the entering permanent, Confusion in the Ranks' "another player" and "it" and Lucy MacLean's exclusion read the triggering permanent, its current types a rules fix; run 8: the damage source, `DamageSourceAwareEffect` and `DamageSourceControllerAwareEffect` gone, "that source" is the stack entry's triggering permanent and "that source's controller" its controller as the ability resolves (a rules fix for five cards), 4 effects replaced by existing ones with `TRIGGERING_PERMANENT_CONTROLLER` recipients, "each source" a trigger option on the cards; run 9: the event's permanents, `CombatDamageDealerAwareEffect` and `AttackingCreaturesAwareEffect` gone, "them" / "each of them" are the stack entry's triggering permanents and attacking snapshots, "whenever you attack with one or more [filter]" a trigger filter, 6 effects replaced by existing ones, one dead effect gone) |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
 ## Why
@@ -10451,6 +10451,140 @@ MCP's `get_rulings` (committed separately).
     `CardFreezeTest` pass.
 - Engine: the whole module. The one failure is the known HEAD one, `GameMutationBoundaryRatchetTest`.
 - AI: compiles. Its tests weren't run, since no AI code changed.
+- The full suite was not run here.
+
+#### Run 9: the event's permanents
+
+Run 8 left four combat interfaces. This run takes the two that bound a *group of permanents* from the event into the
+effect: `CombatDamageDealerAwareEffect` (the creatures of a "one or more creatures deal combat damage" batch) and
+`AttackingCreaturesAwareEffect` (the matching attackers of "whenever you attack with one or more …"). Both are gone,
+with `AttackingPermanentSnapshot`. The two that bind an *amount*, `CombatDamageAmountAwareEffect` and
+`CombatExcessDamageAwareEffect`, are left for a run of their own (below): 7 `…AwareEffect` interfaces are left.
+
+**What the scan found.**
+
+- `CombatDamageDealerAwareEffect`: 5 effects plus `MayEffect` and `SequenceEffect` as delegators, bound in one place,
+  the `ONE_OR_MORE` branch of `CombatDamageService.checkAllyCreatureCombatDamageToPlayerTriggers`. 6 cards (Descendants'
+  Fury, Heroes in a Half Shell, Kaito, Dancing Shadow, Vodalian Tide Mage, Vulture, Feathered Fiend, Zurgo and Ojutai).
+  `SacrificeOneOfCombatDamageDealersThenRevealMatchingCreatureEffect` was dead: no card used it (Descendants' Fury uses
+  the `…UntilSharedCreatureType` one), though `ORACLE_TEXT_EFFECT_MAP.md` named it for Descendants' Fury.
+- `AttackingCreaturesAwareEffect`: 4 effects, bound in `CombatAttackService`'s "whenever you attack" collector and, for
+  Valor's Reach, `TriggerCollectionService.checkPlanarAllyCreaturesAttackTriggers`. The effect's predicate was the
+  trigger condition ("no matching attacker means no trigger"); the collector threw on a trigger filter. 5 cards (Lulu's
+  green face, Tyvar the Bellicose, Valor's Reach, Vrestin, Menoptra Leader, Witch-king, Sky Scourge).
+- The stack entry already had both stores: `triggeringPermanentIds` (an event's group of permanents) and
+  `attackingPermanentSnapshots` (the declared attackers with last-known characteristics), and existing effects and
+  amounts read the snapshots (`BoostAllOwnCreaturesEffect.forDeclaredAttackers`,
+  `TotalPowerOfControlledCreatures.declaredAttackers`, `GrantKeywordEffect` with `GrantScope.TARGETS` and the
+  attack collector's declared recipients).
+
+**The model.**
+
+- "Whenever you attack with one or more [filter] creatures" is `Triggers.youAttack().withFilter(filter)`. The collector
+  judges the filter against each declared attacker as the ability triggers (**CR 603.2**, checked): no match, no
+  trigger. For that ability, the matching attackers stand in for the declared ones: the entry's attacking snapshots,
+  its declared `GrantScope.TARGETS` recipients, its attacker count, and its triggering permanents
+  (`setTriggeringPermanentIds`). A filtered ability is its own group, so the filter is its group's: a printed or
+  granted filtered ability never shares a stack object with the first printed ability (**CR 603.3**, checked).
+- A "one or more" combat damage entry carries the matching dealers as its triggering permanents. The collector computes
+  them for every `ONE_OR_MORE` ability (it computed them only for the dealer-aware effects).
+- `EachPermanentScope.TRIGGERING_PERMANENTS` (new value): the entry's triggering permanents wherever they are on the
+  battlefield. Only `PutCounterOnEachMatchingPermanentEffect` reads it; the other `EachPermanentScope` readers treat an
+  unknown scope as `ALL_PLAYERS`, so don't use it with them.
+- Valor's Reach (a plane): the planar "whenever you attack" collector no longer binds; when the ability has a
+  `GrantScope.TARGETS` grant, the entry's declared recipients are the attacking player's attacking creatures, as the
+  battlefield collector does for Love on the Battlefield.
+
+**Gone, replaced by existing effects (AGENTS.md's reuse rule), cards by script.**
+
+| Card | Now |
+|---|---|
+| Tyvar the Bellicose | `youAttack().withFilter(Elf)`, `GrantKeywordEffect(DEATHTOUCH, GrantScope.TARGETS)` |
+| Valor's Reach | `GrantKeywordEffect(DOUBLE_STRIKE, GrantScope.TARGETS)` (its `ExactlyAttackers(2)` "if" unchanged) |
+| Lulu, Wild Hollyphant | `youAttack().withFilter(other flyers)`, `BoostAllOwnCreaturesEffect(2, 2).forDeclaredAttackers()` |
+| Witch-king, Sky Scourge | `youAttack().withFilter(Wraith)`, `ExileTopCardsMayPlayThisTurnEffect(TotalPowerOfControlledCreatures.declaredAttackers(null))` |
+| Vrestin, Menoptra Leader | `youAttack().withFilter(Insect)`, `PutCounterOnEachMatchingPermanentEffect(PLUS_ONE_PLUS_ONE, 1, PermanentTruePredicate, TRIGGERING_PERMANENTS)` |
+| Heroes in a Half Shell, Vulture, Feathered Fiend | the same counter effect in place of `PutCountersOnCombatDamageDealersEffect` |
+
+`BoostTriggeringAttackersEffect`, `GrantKeywordToTriggeringAttackersEffect`, `PutCounterOnTriggeringAttackersEffect`,
+`ExileTopCardsForAttackingCreaturesMayPlayThisTurnEffect`, `PutCountersOnCombatDamageDealersEffect` and their handlers
+are gone, and so is the dead `SacrificeOneOfCombatDamageDealersThenRevealMatchingCreatureEffect` with its handler, its
+`PermanentChoiceContext` record and its two choice-handler branches.
+
+**Kept, now reading the entry.** No existing effect expresses "choose one of them, then …":
+`ConjureDuplicateOfChosenCombatDamageDealerIntoHandEffect()`, `ReturnOneOfCombatDamageDealersToHandThenEffect(then,
+description)` and `SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeEffect()` lost their dealer ids and
+read `entry.getTriggeringPermanentIds()`. Their cards didn't change (the no-argument constructors stay).
+
+**Behaviour changes.** No existing card test changed.
+
+- A filtered "whenever you attack" ability is its own stack object (CR 603.3). Before, Tyvar's, Lulu's, Witch-king's and
+  Vrestin's ability shared an entry with any "whenever you attack" ability granted to the same permanent. No card test
+  covers a granted one.
+- Tyvar's deathtouch and Lulu's +2/+2 go through the shared handlers, which don't skip a matching attacker that stopped
+  being a creature before resolution (the old handlers did). The objects are fixed as the ability triggers, and **CR
+  611.2c** (checked) fixes the affected set when the effect begins, so the boost and keyword apply to those objects;
+  it matters only if the permanent is a creature again later that turn. No test.
+- Every "one or more creatures deal combat damage" entry that reaches the plain stack-entry path now carries its
+  dealers as triggering permanents. No handler that reads them is used by such a card besides the three above and the
+  counter effect (checked by grep: Fear of Ridicule's token copy goes through `TokenCopySupport`).
+
+**Kept, with their reason.**
+
+- `CombatDamageAmountAwareEffect` (37 implementers) and `CombatExcessDamageAwareEffect` (Overclocked Electromancer):
+  the event's amount, a run of its own. Their snapshots (`snapshotCombatDamage`) fix a graveyard target's mana value
+  before a stack entry exists, like the `snapshot…ManaValue` helpers of runs 3 to 6. The excess-damage collector
+  (`processCombatDamageToCreatureTriggers`) reads only effects, not the ability's options, so Electromancer's "if that
+  creature was dealt excess damage this turn" can't be an intervening "if" there yet.
+- The dealers ride only the plain stack-entry path of the ally combat damage collector. Its modal, graveyard-target
+  and `AttackTriggerTarget` paths don't carry them; no dealer effect reaches them. Likewise a filtered "whenever you
+  attack" ability's targeted, graveyard-target and modal paths get the narrowed attacker list but no triggering
+  permanents; none of the five cards is targeted.
+- The "whenever you attack" readers outside the battlefield collector (command zone, exile, graveyard, temporary
+  global triggers) don't judge a trigger filter; no filtered card works from there.
+- Lulu's other four faces still write "one or more other creatures with flying" as an intervening "if"
+  (`MinimumMatchingAttackers`) with the count as event value. The filter would say it better, and an intervening "if"
+  rechecked as the ability resolves is wrong if the flyers left (**CR 603.4**, checked); unchanged here.
+- `GrantKeywordEffect` with `GrantScope.TARGETS` and a filter (Frontier Warmonger) is still rewritten by the attack
+  collector into declared recipients as the ability triggers; a later run can make that filter a trigger filter too.
+
+**For later runs.** The event's amount (`CombatDamageAmountAwareEffect`, `CombatExcessDamageAwareEffect`), the bindings
+that aren't trigger events (`ChosenCard`, `AcceptedPlayers`, `GrantingPermanent`, `ProducedManaColor`,
+`TriggeringCards`), Bill Potts, the may-unwrapping and the `…Triggering…` classes, as run 1 listed.
+
+**Scripts.**
+
+- `scripts/step15-event-permanents-cards.py` (idempotent, per letter module): the 7 card classes above.
+- `scripts/step15-event-permanents-tests.py` (idempotent, per letter test module): two new Witch-king tests.
+- `scripts/step15-event-permanents-docs.py`: exact line edits in `EFFECTS_INDEX.md`, `EFFECTS_QUICK_REFERENCE.md` (the
+  "whenever you attack with one or more …" line and the new scope), `ORACLE_TEXT_EFFECT_MAP.md` (with Descendants'
+  Fury's row pointing at the effect it uses), `CARD_PATTERN_INDEX.md`, `CARD_PATTERNS_CREATURES_TRIGGERED.md` and
+  `ACTIVATED_ABILITY_GUIDE.md` (the `youAttack()` filter).
+
+The effects, scope, handlers and collectors were edited by hand, as were `Triggers.youAttack()`'s Javadoc and
+`ARCHITECTURE.md`'s triggering-permanent paragraph. The skills didn't name these classes.
+
+**Tests changed.**
+
+- New card tests (by script): `WitchKingSkyScourgeTest#doesNotTriggerWhenNoWraithAttacks` (the trigger filter; an
+  unfiltered trigger would exile the Bears' 2) and `WitchKingSkyScourgeTest#wraithThatLeftCountsWithItsLastKnownPower`
+  (the card's official ruling, **CR 608.2h**, checked). The card had one test.
+- No existing test changed; no unit test named the removed classes.
+
+**Test runs.**
+
+- Card: before the new tests, the test class of every card with a `Triggers.youAttack()` / `playerAttacks()` trigger
+  or a "creature you control deals combat damage to a player (or battle)" trigger, every user of
+  `PutCounterOnEachMatchingPermanentEffect`, `forDeclaredAttackers` / `declaredAttackers` and the three kept effects,
+  and every plane test: 576 test classes, 4,476 test cases, all passing. Then the converted cards' classes, Love on
+  the Battlefield and the new tests, all passing (the 11 converted or affected classes also passed at HEAD).
+- Application: `CombatAttackServiceTest`, `CombatDamageServiceTest`, `PlanechaseServiceTest`, `CardFreezeTest`,
+  `TriggerCollectorRegistryTest`, `TargetSpecRatchetTest` and the architecture tests. The failures are the known HEAD
+  ones: `CombatDamageServiceTest` 40, `PlanechaseServiceTest` 2, and `SimulationCopyCompletenessTest`,
+  `CardImmutabilityArchTest`, `CardEffectTargetingConsistencyTest`, `CostEffectClassificationTest` 1 each; their
+  messages name none of the changed classes.
+- Engine: the whole module. The one failure is the known HEAD one, `GameMutationBoundaryRatchetTest`.
+- AI: compiles (`compileTestJava`). Its tests weren't run, since no AI code changed.
 - The full suite was not run here.
 
 ## Prompt

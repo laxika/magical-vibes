@@ -36,8 +36,8 @@ public class ConjureDuplicateOfChosenCombatDamageDealerIntoHandEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var conjure = (ConjureDuplicateOfChosenCombatDamageDealerIntoHandEffect) effect;
-        List<UUID> validIds = currentDealerIds(gameData, conjure.combatDamageDealerIds());
+        // "One of them": the creatures of the combat damage event, the stack entry's triggering permanents.
+        List<UUID> validIds = currentDealerIds(gameData, entry.getTriggeringPermanentIds());
         if (validIds.isEmpty()) {
             return;
         }

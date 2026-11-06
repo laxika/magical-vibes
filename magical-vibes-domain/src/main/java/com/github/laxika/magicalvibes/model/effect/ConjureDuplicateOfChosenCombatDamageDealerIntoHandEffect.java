@@ -1,26 +1,9 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.List;
-import java.util.UUID;
-
 /**
- * Chooses one of the creatures captured from a batched combat-damage event and conjures a
- * duplicate of it into the controller's hand.
+ * "Conjure a duplicate of one of them into your hand": chooses one of the creatures of a "one or more creatures deal
+ * combat damage" event and conjures a duplicate of it into the controller's hand. The creatures are the stack entry's
+ * triggering permanents, which the combat damage collector sets as the ability triggers.
  */
-public record ConjureDuplicateOfChosenCombatDamageDealerIntoHandEffect(
-        List<UUID> combatDamageDealerIds
-) implements CombatDamageDealerAwareEffect {
-
-    public ConjureDuplicateOfChosenCombatDamageDealerIntoHandEffect() {
-        this(List.of());
-    }
-
-    public ConjureDuplicateOfChosenCombatDamageDealerIntoHandEffect {
-        combatDamageDealerIds = List.copyOf(combatDamageDealerIds);
-    }
-
-    @Override
-    public CardEffect withCombatDamageDealerIds(List<UUID> dealerIds) {
-        return new ConjureDuplicateOfChosenCombatDamageDealerIntoHandEffect(dealerIds);
-    }
+public record ConjureDuplicateOfChosenCombatDamageDealerIntoHandEffect() implements CardEffect {
 }

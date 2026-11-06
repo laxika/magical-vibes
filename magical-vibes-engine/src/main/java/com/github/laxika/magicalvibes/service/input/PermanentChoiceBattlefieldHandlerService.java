@@ -225,8 +225,6 @@ public class PermanentChoiceBattlefieldHandlerService {
             targetPlayerSacrificesNontokenCreatureThenConjuresDuplicateHandler;
     private final SacrificeCreatureThenMassDamageEqualToPowerEffectHandler sacrificeCreatureThenMassDamageHandler;
     private final SacrificeOtherCreatureThenRevealUntilLowerManaValueEffectHandler sacrificeOtherCreatureThenRevealHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOneOfCombatDamageDealersThenRevealMatchingCreatureEffectHandler
-            sacrificeOneOfCombatDamageDealersThenRevealHandler;
     private final SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeEffectHandler
             sacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeHandler;
     private final SacrificeAnotherCreatureDrawAndMayPutPermanentEffectHandler sacrificeAnotherCreatureDrawAndMayPutPermanentHandler;
@@ -1005,18 +1003,6 @@ public class PermanentChoiceBattlefieldHandlerService {
                 0,
                 context.sourcePermanentId());
         blightEffectHandler.placeCountersAndQueueThen(gameData, sourceEntry, creature, context.effect());
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleSacrificeOneOfCombatDamageDealersThenRevealMatchingCreature(
-            GameData gameData, UUID permanentId,
-            PermanentChoiceContext.SacrificeOneOfCombatDamageDealersThenRevealMatchingCreature context) {
-        Permanent creature = gameQueryService.findPermanentById(gameData, permanentId);
-        if (creature == null) {
-            throw new IllegalStateException("Chosen creature no longer exists");
-        }
-
-        sacrificeOneOfCombatDamageDealersThenRevealHandler.resolveAfterChoice(gameData, context, creature);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

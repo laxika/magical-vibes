@@ -33,6 +33,8 @@ public class ReturnOneOfCombatDamageDealersToHandThenEffectHandler implements No
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ReturnOneOfCombatDamageDealersToHandThenEffect) effect;
+        // "One of them": the permanents of the combat damage event, the stack entry's triggering permanents.
+        List<UUID> dealerIds = entry.getTriggeringPermanentIds();
         List<UUID> validIds = new ArrayList<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -40,7 +42,7 @@ public class ReturnOneOfCombatDamageDealersToHandThenEffectHandler implements No
                 continue;
             }
             for (Permanent permanent : battlefield) {
-                if (e.combatDamageDealerIds().contains(permanent.getId())) {
+                if (dealerIds.contains(permanent.getId())) {
                     validIds.add(permanent.getId());
                 }
             }

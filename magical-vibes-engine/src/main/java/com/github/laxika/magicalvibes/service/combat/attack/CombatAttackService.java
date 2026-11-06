@@ -109,8 +109,6 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.condition.VoidCondition;
 import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
-import com.github.laxika.magicalvibes.model.effect.AttackingCreaturesAwareEffect;
-import com.github.laxika.magicalvibes.model.effect.AttackingPermanentSnapshot;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyRemoveKeywordEffect;
@@ -1905,13 +1903,16 @@ public class CombatAttackService {
                     }
                     continue;
                 }
-                if (registration.ability() == firstYouAttackAbility) {
+                if (registration.ability() == firstYouAttackAbility && registration.filter() == null) {
                     combinedEffects.add(registration);
                 } else {
                     laterYouAttack.add(registration);
                 }
             }
-            combinedEffects.addAll(CombatAbilityReader.read(grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, perm, youAttack), youAttack));
+            for (var granted : CombatAbilityReader.read(
+                    grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, perm, youAttack), youAttack)) {
+                (granted.filter() == null ? combinedEffects : laterYouAttack).add(granted);
+            }
             if (!combinedEffects.isEmpty()) {
                 attackTriggerSources.add(new AttackTriggerSource(perm,
                         CombatWatch.ON_ALLY_CREATURES_ATTACK, combinedEffects));
@@ -1924,6 +1925,13 @@ public class CombatAttackService {
             Permanent perm = triggerSource.permanent();
             List<CombatAbilityReader.CombatEffect> allyAttackEffects = triggerSource.effects();
             if (allyAttackEffects.isEmpty()) continue;
+            // "Whenever you attack with one or more Wraiths": the ability triggers only if a declared attacker matches
+            // its filter (CR 603.2), and "they", "those creatures" and "their total power" are the matching attackers
+            // as they were declared. A filtered ability is a group of its own, so its filter is the group's.
+            PermanentPredicate attackerFilter = allyAttackEffects.getFirst().filter();
+            List<Integer> sourceAttackerIndices = attackerFilter == null ? attackerIndices
+                    : matchingAttackerIndices(gameData, battlefield, attackerIndices, perm, playerId, attackerFilter);
+            if (sourceAttackerIndices.isEmpty()) continue;
 
             // Pre-filter attacker-group conditional effects — skip if no matching attacker exists,
             // if the attacker count is below the threshold, or if not every matching creature is
@@ -1945,14 +1953,14 @@ public class CombatAttackService {
                 boolean once = read.limit() == TriggerLimit.ONCE;
                 boolean firstTime = read.limit() == TriggerLimit.FIRST_TIME_EACH_TURN;
                 if ((read.limit() != TriggerLimit.NONE && !firstOfTurn && !once && !firstTime)
-                        || read.multiplicity() != TriggerMultiplicity.EACH || read.filter() != null) {
+                        || read.multiplicity() != TriggerMultiplicity.EACH) {
                     throw new IllegalStateException("The \"whenever you attack\" collector reads no "
-                            + read.options() + " or filter: " + read.ability());
+                            + read.options() + ": " + read.ability());
                 }
                 // The ability's event condition (CR 603.2) and intervening "if" (CR 603.4), with the number of
                 // attackers.
                 if (!conditionEvaluationService.triggerConditionsMet(gameData, read.options(),
-                        ConditionContext.forPermanent(perm, playerId).withXValue(attackerIndices.size()))) {
+                        ConditionContext.forPermanent(perm, playerId).withXValue(sourceAttackerIndices.size()))) {
                     continue;
                 }
                 if (firstOfTurn) {
@@ -1979,15 +1987,6 @@ public class CombatAttackService {
                 // mark, as the ability goes on the stack with it.
                 do {
                     CardEffect normalizedEffect = effect;
-                    if (effect instanceof AttackingCreaturesAwareEffect aware) {
-                        List<AttackingPermanentSnapshot> attackers = snapshotMatchingAttackerPowers(
-                                gameData, battlefield, attackerIndices, perm, playerId,
-                                aware.attackingCreaturePredicate());
-                        if (attackers.isEmpty()) {
-                            continue;
-                        }
-                        normalizedEffect = aware.withAttackingCreatures(attackers);
-                    }
                     if (effect instanceof ConditionalEffect ce
                             && ce.condition() instanceof AttackingCreaturesTotalPowerAtLeast) {
                         if (!conditionEvaluationService.isMet(gameData, ce.condition(),
@@ -1999,7 +1998,7 @@ public class CombatAttackService {
                     if (effect instanceof ConditionalEffect ce
                             && ce.condition() instanceof MinimumAttackers minimumAttackers) {
                         boolean minimumMet = conditionEvaluationService.isMet(gameData, ce.condition(),
-                                ConditionContext.forPermanent(perm, playerId).withXValue(attackerIndices.size()));
+                                ConditionContext.forPermanent(perm, playerId).withXValue(sourceAttackerIndices.size()));
                         if (!minimumMet) {
                             log.info("Game {} - {} attack trigger skipped (too few attackers; minimum {})",
                                     gameData.id, perm.getCard().getName(), minimumAttackers.minimumAttackers());
@@ -2019,7 +2018,7 @@ public class CombatAttackService {
                         filteredEffects.add(normalizedEffect);
                     } else if (effect instanceof ConditionalEffect ce && ce.condition() instanceof MinimumAttackers minimumAttackers) {
                         boolean minimumMet = conditionEvaluationService.isMet(gameData, ce.condition(),
-                                ConditionContext.forPermanent(perm, playerId).withXValue(attackerIndices.size()));
+                                ConditionContext.forPermanent(perm, playerId).withXValue(sourceAttackerIndices.size()));
                         if (!minimumMet) {
                             log.info("Game {} - {} attack trigger skipped (too few attackers; minimum {})",
                                     gameData.id, perm.getCard().getName(), minimumAttackers.minimumAttackers());
@@ -2068,7 +2067,7 @@ public class CombatAttackService {
                             && ce.condition() instanceof AttackingCreaturesGreaterThanSourceCounters) {
                         boolean countGreaterThanCounters = conditionEvaluationService.isMet(
                                 gameData, ce.condition(),
-                                ConditionContext.forPermanent(perm, playerId).withXValue(attackerIndices.size()));
+                                ConditionContext.forPermanent(perm, playerId).withXValue(sourceAttackerIndices.size()));
                         if (!countGreaterThanCounters) {
                             log.info("Game {} - {} attack trigger skipped (attacker count does not exceed source counters)",
                                     gameData.id, perm.getCard().getName());
@@ -2079,7 +2078,7 @@ public class CombatAttackService {
                             && ce.condition() instanceof ExactlyAttackers exactlyAttackers) {
                         boolean exactCountMet = conditionEvaluationService.isMet(
                                 gameData, ce.condition(),
-                                ConditionContext.forPermanent(perm, playerId).withXValue(attackerIndices.size()));
+                                ConditionContext.forPermanent(perm, playerId).withXValue(sourceAttackerIndices.size()));
                         if (!exactCountMet) {
                             log.info("Game {} - {} attack trigger skipped (not exactly {} attackers)",
                                     gameData.id, perm.getCard().getName(), exactlyAttackers.attackerCount());
@@ -2097,7 +2096,7 @@ public class CombatAttackService {
                         }
                         if (matchingAttackerCount == null) {
                             matchingAttackerCount = countMatchingAttackerIndices(
-                                    gameData, battlefield, attackerIndices, perm, playerId, matchingAttackers.predicate());
+                                    gameData, battlefield, sourceAttackerIndices, perm, playerId, matchingAttackers.predicate());
                         }
                         filteredEffects.add(ce.wrapped());
                     } else if (effect instanceof ConditionalEffect ce
@@ -2124,7 +2123,7 @@ public class CombatAttackService {
                     FilterContext attackFilterContext = FilterContext.of(gameData)
                             .withSourceCardId(perm.getCard().getId())
                             .withSourceControllerId(playerId);
-                    filteredDeclaredAttackerIds = attackerIndices.stream()
+                    filteredDeclaredAttackerIds = sourceAttackerIndices.stream()
                             .map(battlefield::get)
                             .filter(attacker -> predicateEvaluationService.matchesPermanentPredicate(
                                     attacker, grant.filter(), attackFilterContext))
@@ -2162,12 +2161,12 @@ public class CombatAttackService {
                             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                                     perm.getCard(), playerId, filteredEffects, null, 0, 0, 0, null, false, null,
                                     perm.getId(), false,
-                                    attackerIndices.stream().map(battlefield::get)
+                                    sourceAttackerIndices.stream().map(battlefield::get)
                                             .map(attacker -> snapshotDeclaredAttacker(gameData, attacker)).toList()));
                         } else {
                             graveyardTargetingService.handleAttackGraveyardTargeting(
                                     gameData, playerId, perm.getCard(), filteredEffects, perm.getId(), null,
-                                    attackerIndices.stream().map(battlefield::get)
+                                    sourceAttackerIndices.stream().map(battlefield::get)
                                             .map(attacker -> snapshotDeclaredAttacker(gameData, attacker)).toList());
                         }
                         gameLogService.append(gameData,
@@ -2189,11 +2188,11 @@ public class CombatAttackService {
                         if (allyAttackCard.getTargetGroups().size() > 1 && !singleBoundTargetGroup) {
                             gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                                     perm.getCard(), playerId, filteredEffects, perm.getId(),
-                                    List.of(), 0, 0, List.of(), attackerIndices.size()));
+                                    List.of(), 0, 0, List.of(), sourceAttackerIndices.size()));
                         } else {
                             gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                                     perm.getCard(), playerId, filteredEffects, perm.getId(), playerId, null,
-                                    null, attackerIndices.size()));
+                                    null, sourceAttackerIndices.size()));
                         }
                         gameLogService.append(gameData,
                                 GameLog.builder().card(perm.getCard()).text("'s attack ability triggers.").build());
@@ -2209,7 +2208,7 @@ public class CombatAttackService {
                                 playerId,
                                 perm.getCard().getName() + "'s attack trigger",
                                 filteredEffects,
-                                attackerIndices.size(),
+                                sourceAttackerIndices.size(),
                                 null,
                                 perm.getId(),
                                 null,
@@ -2218,7 +2217,7 @@ public class CombatAttackService {
                                 filteredDeclaredAttackerIds != null
                                         ? filteredDeclaredAttackerIds
                                         : referencesDeclaredAttackers
-                                        ? attackerIndices.stream().map(battlefield::get).map(Permanent::getId).toList()
+                                        ? sourceAttackerIndices.stream().map(battlefield::get).map(Permanent::getId).toList()
                                         : null
                         );
                         attackTrigger.setNonTargeting(referencesDeclaredAttackers);
@@ -2229,8 +2228,13 @@ public class CombatAttackService {
                         if (matchingAttackerCount != null) {
                             attackTrigger.setEventValue(matchingAttackerCount);
                         }
-                        attackTrigger.setAttackingPermanentSnapshots(attackerIndices.stream()
+                        attackTrigger.setAttackingPermanentSnapshots(sourceAttackerIndices.stream()
                                 .map(battlefield::get).map(attacker -> snapshotDeclaredAttacker(gameData, attacker)).toList());
+                        if (attackerFilter != null) {
+                            // "Each of them" (Vrestin): the matching attackers are the event's permanents.
+                            attackTrigger.setTriggeringPermanentIds(sourceAttackerIndices.stream()
+                                    .map(battlefield::get).map(Permanent::getId).toList());
+                        }
                         gameData.stack.add(attackTrigger);
                         if (perm.isAttacking()) {
                             triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
@@ -2247,7 +2251,7 @@ public class CombatAttackService {
                         gameLogService.append(gameData,
                                 GameLog.builder().card(perm.getCard()).text("'s attack ability triggers.").build());
                         log.info("Game {} - {} ON_ALLY_CREATURES_ATTACK trigger pushed onto stack (attacker count: {})",
-                                gameData.id, perm.getCard().getName(), attackerIndices.size());
+                                gameData.id, perm.getCard().getName(), sourceAttackerIndices.size());
                     }
                 }
             } finally {
@@ -4471,7 +4475,8 @@ public class CombatAttackService {
         return count;
     }
 
-    private List<AttackingPermanentSnapshot> snapshotMatchingAttackerPowers(
+    /** The declared attackers that match {@code predicate}, judged for {@code source}'s ability as it triggers. */
+    private List<Integer> matchingAttackerIndices(
             GameData gameData, List<Permanent> battlefield, List<Integer> attackerIndices,
             Permanent source, UUID controllerId, PermanentPredicate predicate) {
         FilterContext sourceContext = FilterContext.of(gameData)
@@ -4479,11 +4484,8 @@ public class CombatAttackService {
                 .withSourceControllerId(controllerId)
                 .withSourcePermanentId(source.getId());
         return attackerIndices.stream()
-                .map(battlefield::get)
-                .filter(attacker -> predicateEvaluationService.matchesPermanentPredicate(
-                        attacker, predicate, sourceContext))
-                .map(attacker -> new AttackingPermanentSnapshot(
-                        attacker.getId(), gameQueryService.getEffectivePower(gameData, attacker)))
+                .filter(index -> predicateEvaluationService.matchesPermanentPredicate(
+                        battlefield.get(index), predicate, sourceContext))
                 .toList();
     }
 

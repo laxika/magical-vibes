@@ -423,12 +423,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             UUID controllerId, Card sourceCard, com.github.laxika.magicalvibes.model.filter.CardPredicate predicate)
             implements PermanentChoiceContext {}
 
-    /** Descendants' Fury: choose one of the creatures that dealt combat damage to sacrifice. */
-    record SacrificeOneOfCombatDamageDealersThenRevealMatchingCreature(
-            UUID controllerId, Card sourceCard,
-            com.github.laxika.magicalvibes.model.effect.SacrificeOneOfCombatDamageDealersThenRevealMatchingCreatureEffect effect)
-            implements PermanentChoiceContext {}
-
     /** Descendants' Fury: choose a creature from the triggering combat-damage event. */
     record SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureType(
             UUID controllerId, Card sourceCard) implements PermanentChoiceContext {}

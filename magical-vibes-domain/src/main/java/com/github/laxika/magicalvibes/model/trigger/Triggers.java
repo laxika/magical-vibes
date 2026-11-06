@@ -533,7 +533,11 @@ public final class Triggers {
         return new CombatTrigger(CombatTrigger.CombatEvent.ATTACKS_WHILE_YOU_DEFEND, ObjectRelation.OPPONENT_CONTROLS);
     }
 
-    /** "Whenever you attack": one or more creatures you control attack. */
+    /**
+     * "Whenever you attack": one or more creatures you control attack. With {@link CombatTrigger#withFilter}, "whenever
+     * you attack with one or more Wraiths": the ability triggers only if a declared attacker matches the filter, and
+     * "they" are the matching attackers (the stack entry's attacking snapshots and triggering permanents).
+     */
     public static CombatTrigger youAttack() {
         return new CombatTrigger(CombatTrigger.CombatEvent.ONE_OR_MORE_ATTACK, ObjectRelation.YOU_CONTROL);
     }

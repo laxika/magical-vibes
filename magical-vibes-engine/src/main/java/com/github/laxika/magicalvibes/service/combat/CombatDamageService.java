@@ -57,7 +57,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTur
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageAmountAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageAssignmentToDefendingPlayerAndCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.CombatDamageDealerAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageDealerReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
@@ -3063,16 +3062,17 @@ public class CombatDamageService {
                         }
                         firedEffect = conditional.wrapped();
                     }
-                    if (trigger.oneOrMore() && firedEffect instanceof CombatDamageDealerAwareEffect aware) {
-                        List<UUID> dealerIds = combatDamageDealtToPlayer.entrySet().stream()
-                                .filter(dealer -> dealer.getValue() > 0
-                                        && (trigger.dealerFilter() == null
-                                        || predicateEvaluationService.matchesPermanentPredicate(
-                                        dealer.getKey(), trigger.dealerFilter(), triggerContext)))
-                                .map(dealer -> dealer.getKey().getId())
-                                .toList();
-                        firedEffect = aware.withCombatDamageDealerIds(dealerIds);
-                    }
+                    // "One or more creatures deal combat damage": the creatures of the batch that match the trigger,
+                    // which "them" and "each of them" read from the stack entry as the ability resolves.
+                    List<UUID> dealerIds = trigger.oneOrMore()
+                            ? combatDamageDealtToPlayer.entrySet().stream()
+                            .filter(dealer -> dealer.getValue() > 0
+                                    && (trigger.dealerFilter() == null
+                                    || predicateEvaluationService.matchesPermanentPredicate(
+                                    dealer.getKey(), trigger.dealerFilter(), triggerContext)))
+                            .map(dealer -> dealer.getKey().getId())
+                            .toList()
+                            : List.of();
                     int triggerDamage = trigger.oneOrMore()
                             ? combatDamageDealtToPlayer.entrySet().stream()
                             .filter(dealer -> dealer.getValue() > 0
@@ -3155,6 +3155,7 @@ public class CombatDamageService {
                     // The combat damage dealt is this trigger's event value, so "put that many
                     // +1/+1 counters on it" (Necropolis Regent) can read it back at resolution.
                     se.setEventValue(triggerDamage);
+                    se.setTriggeringPermanentIds(dealerIds);
                     se.setNonTargeting(true);
                     if (trigger.bindSourceToDealer()) {
                         // The dealer may have left the battlefield by resolution; keep its last known
