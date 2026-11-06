@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,22 +21,19 @@ public class ManifestDreadTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsActionTrigger(value = ReturnTriggeringCardToOwnerHandEffect.class,
-            watch = ActionWatch.ON_CONTROLLER_MANIFESTS_DREAD)
-    private boolean handleReturnToHand(TriggerMatchContext match,
-                                       ReturnTriggeringCardToOwnerHandEffect effect,
-                                       TriggerContext context) {
+    /** "Whenever you manifest dread": "that card", the card put into the graveyard, is the entry's triggering card. */
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_MANIFESTS_DREAD)
+    private boolean handleManifestDreadDefault(TriggerMatchContext match, CardEffect effect,
+                                               TriggerContext context) {
         TriggerContext.ManifestDread manifestDread = (TriggerContext.ManifestDread) context;
         Card sourceCard = match.permanent().getCard();
         Card graveyardCard = manifestDread.cardPutIntoGraveyard();
-        ReturnTriggeringCardToOwnerHandEffect baked =
-                new ReturnTriggeringCardToOwnerHandEffect(manifestDread.manifestingPlayerId());
         StackEntry trigger = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(baked)),
+                new ArrayList<>(List.of(effect)),
                 null,
                 match.permanent().getId());
         if (graveyardCard != null) {

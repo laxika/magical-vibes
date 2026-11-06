@@ -93,7 +93,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseColorForSourceEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachedCreatureBecomesCopyOfExiledCreatureEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCardNameAtResolutionEffectHandler;
 import com.github.laxika.magicalvibes.model.effect.CommanderCreaturesDealPowerDamageToPreventedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetControllerIsTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseGameIfSourceDealtDamageToPlayerThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
@@ -152,7 +151,6 @@ import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfCasualtyPaidEf
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForXValueEffect;
 import com.github.laxika.magicalvibes.model.effect.DemonstrateEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.AbandonSchemeAndSetTriggeringSchemeInMotionAgainEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.NextMatchingSpellCostEffect;
@@ -247,7 +245,6 @@ import com.github.laxika.magicalvibes.model.effect.MayPayLifeEqualToAmountEffect
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchBlueOrBlackCreatureToBattlefieldOnAllyCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchCreatureToBattlefieldOnControllerCastsCreatureSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -10472,12 +10469,11 @@ public class TriggerCollectionService {
                             : permanent.getCard().getTargetFilter();
                     boolean playerTargetOnly = effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                             && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
-                    UUID targetControllerId = effect instanceof TargetControllerIsTriggeringPlayerEffect
-                            ? monarchPlayerId : null;
+                    // "That player" is the player who became the monarch, the entry's triggering player.
                     gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                             permanent.getCard(), ownerId, effects, playerTargetOnly, targetFilter,
                             0, permanent.getId(), new Permanent(permanent), false, null,
-                            targetControllerId, ownerId));
+                            null, ownerId).withTriggeringPlayer(monarchPlayerId));
                 } else {
                     StackEntry entry = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
@@ -10489,6 +10485,7 @@ public class TriggerCollectionService {
                             permanent.getId()
                     );
                     entry.setNonTargeting(true);
+                    entry.setTriggeringPlayerId(monarchPlayerId);
                     entry.setSourcePermanentSnapshot(new Permanent(permanent));
                     gameData.enqueueTrigger(entry);
                 }
@@ -12904,13 +12901,6 @@ public class TriggerCollectionService {
                 dispatchCreatureDeath(match, CreatureDeathWatch.ALLY, resolvedEffect, ctx);
                 anyEffectFired = true;
             } else {
-                if (resolvedEffect instanceof ReturnTriggeringCardToOwnerHandEffect returnToOwner
-                        && returnToOwner.handOwnerId() == null) {
-                    UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, dyingCard.getId());
-                    if (ownerId != null) {
-                        resolvedEffect = new ReturnTriggeringCardToOwnerHandEffect(ownerId);
-                    }
-                }
                 stackEffects.add(resolvedEffect);
             }
         }
@@ -16889,8 +16879,8 @@ public class TriggerCollectionService {
 
     /**
      * Puts a "whenever you set a scheme in motion" ability of {@code source} on the stack, all its {@code effects} one
-     * object (CR 603.3), once its controller sets the scheme in motion; an effect that sets the triggering scheme in
-     * motion again is bound to the scheme as it was.
+     * object (CR 603.3), once its controller sets the scheme in motion; the entry's triggering spell is the scheme's
+     * set-in-motion object as it was, which "set that scheme in motion again" reads.
      */
     private boolean collectSchemeAbility(GameData gameData, Permanent source, UUID controllerId,
                                          List<CardEffect> effects, TriggerContext.SchemeSetInMotion context) {
@@ -16904,26 +16894,14 @@ public class TriggerCollectionService {
                 source.getCard(),
                 controllerId,
                 source.getCard().getName() + "'s ability",
-                new ArrayList<>(effects.stream().map(effect -> bindSchemeSnapshot(effect, schemeEntry)).toList()),
+                new ArrayList<>(effects),
                 null,
                 source.getId());
         entry.setTriggeringCardId(schemeCard.getId());
+        entry.setTriggeringSpell(schemeEntry);
         entry.setNonTargeting(true);
         gameData.enqueueTrigger(entry);
         return true;
-    }
-
-    private static CardEffect bindSchemeSnapshot(CardEffect effect, StackEntry schemeEntry) {
-        if (effect instanceof AbandonSchemeAndSetTriggeringSchemeInMotionAgainEffect repeat
-                && repeat.schemeSnapshot() == null) {
-            return new AbandonSchemeAndSetTriggeringSchemeInMotionAgainEffect(new StackEntry(schemeEntry));
-        }
-        if (effect instanceof MayEffect may) {
-            CardEffect wrapped = bindSchemeSnapshot(may.wrapped(), schemeEntry);
-            CardEffect elseEffect = may.elseEffect() == null ? null : bindSchemeSnapshot(may.elseEffect(), schemeEntry);
-            return new MayEffect(wrapped, may.prompt(), elseEffect, may.choicePlayer());
-        }
-        return effect;
     }
 
     /** "A nonland card", the discarded card the "first nonland discard each turn" ability counts. */

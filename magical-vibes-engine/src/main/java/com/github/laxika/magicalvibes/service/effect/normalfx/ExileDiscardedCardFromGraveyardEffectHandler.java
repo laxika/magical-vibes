@@ -34,9 +34,9 @@ public class ExileDiscardedCardFromGraveyardEffectHandler implements NormalEffec
         if (exileEffect.trackWithSource() && entry.getSourcePermanentId() == null) {
             return;
         }
-        if (!entry.getTriggeringCardIds().isEmpty()) {
+        if (!entry.getTriggeringCards().isEmpty()) {
             // One discard event: exile every card it discarded that is still the same graveyard object.
-            for (UUID cardId : entry.getTriggeringCardIds()) {
+            for (UUID cardId : entry.triggeringCardIds()) {
                 exileFromGraveyard(gameData, entry, exileEffect, cardId,
                         entry.getTargetCardGraveyardVersions().getOrDefault(cardId, -1L));
             }

@@ -37,7 +37,7 @@ public class ExileOneOfDiscardedCardsFromGraveyardEffectHandler implements Norma
         }
 
         UUID controllerId = entry.getControllerId();
-        List<UUID> triggeringCardIds = entry.getTriggeringCardIds();
+        List<UUID> triggeringCardIds = entry.triggeringCardIds();
         List<UUID> candidateIds = triggeringCardIds.isEmpty() && entry.getTriggeringCardId() != null
                 ? List.of(entry.getTriggeringCardId()) : triggeringCardIds;
         List<Card> candidates = gameData.playerGraveyards.getOrDefault(controllerId, List.of()).stream()

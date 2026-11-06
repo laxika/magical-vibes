@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringAuraFromGraveyardMayCastUntilNextTurnEffect;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOpponentOfSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -29,7 +31,10 @@ public class MazzyTrueswordPaladin extends Card {
                         new BoostTargetCreatureEffect(2, 0),
                         new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)));
 
-        addTrigger(Triggers.dies(Triggers.AURA_OR_EQUIPMENT, ObjectRelation.YOU_CONTROL),
+        // "Whenever an Aura you control is put into your graveyard from the battlefield".
+        addTrigger(Triggers.dies(new PermanentAllOfPredicate(List.of(
+                                Triggers.AURA_OR_EQUIPMENT, new PermanentHasSubtypePredicate(CardSubtype.AURA))),
+                        ObjectRelation.YOU_CONTROL),
                 new ExileTriggeringAuraFromGraveyardMayCastUntilNextTurnEffect());
     }
 }

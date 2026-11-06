@@ -22,7 +22,7 @@ public class DrawThreeIfFewerThanThreeCardsDiscardedEffectHandler implements Nor
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        if (entry.getTriggeringCardIds().size() < 3) {
+        if (entry.getTriggeringCards().size() < 3) {
             drawCardEffectHandler.resolve(gameData, entry, new DrawCardEffect(3));
         }
     }

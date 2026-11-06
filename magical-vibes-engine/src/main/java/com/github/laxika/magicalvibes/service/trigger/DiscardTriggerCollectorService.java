@@ -159,7 +159,7 @@ public class DiscardTriggerCollectorService {
                 match.permanent().getCard(), match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(may)), null, match.permanent().getId());
-        entry.setTriggeringCardIds(discard.discardedCards().stream().map(Card::getId).toList());
+        entry.setTriggeringCards(discard.discardedCards());
         for (Card card : discard.discardedCards()) {
             entry.getEventCardGraveyardEntryVersions().put(card.getId(),
                     match.gameData().graveyardEntryVersion(card.getId()));
@@ -482,7 +482,7 @@ public class DiscardTriggerCollectorService {
                 new ArrayList<>(List.of(trigger)),
                 null,
                 match.permanent().getId());
-        entry.setTriggeringCardIds(discardEvent.discardedCards().stream().map(Card::getId).toList());
+        entry.setTriggeringCards(discardEvent.discardedCards());
         for (Card discarded : discardEvent.discardedCards()) {
             entry.recordTargetCardGraveyardVersion(discarded.getId(),
                     gameData.graveyardEntryVersion(discarded.getId()));

@@ -7,16 +7,16 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Enduring Renewal / Yomiji, Who Bars the Way resolution: return the dead permanent's card from a
- * player's graveyard to that same player's hand. Fizzles if the card left that graveyard in
+ * Enduring Renewal / Yomiji, Who Bars the Way resolution: return the stack entry's triggering card from the
+ * graveyard that holds it, its owner's, to that player's hand. Fizzles if the card left that graveyard in
  * response (or was a token).
  */
 @Slf4j
@@ -25,6 +25,7 @@ import org.springframework.stereotype.Component;
 public class ReturnTriggeringCardToOwnerHandEffectHandler implements NormalEffectHandlerBean {
 
     private final PermanentRemovalService permanentRemovalService;
+    private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
 
     @Override
@@ -34,27 +35,19 @@ public class ReturnTriggeringCardToOwnerHandEffectHandler implements NormalEffec
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (ReturnTriggeringCardToOwnerHandEffect) effect;
         UUID dyingCardId = entry.getTriggeringCardId();
-        UUID recipientId = e.handOwnerId() != null ? e.handOwnerId() : entry.getControllerId();
-        if (dyingCardId == null || recipientId == null) {
+        if (dyingCardId == null) {
             return;
         }
         if (!entry.isTriggeringCardIncarnation(gameData.graveyardEntryVersion(dyingCardId))) {
             return;
         }
 
-        List<Card> graveyard = gameData.playerGraveyards.get(recipientId);
-        if (graveyard == null) {
-            return;
-        }
-        Card deadCard = null;
-        for (Card card : graveyard) {
-            if (card.getId().equals(dyingCardId)) {
-                deadCard = card;
-                break;
-            }
-        }
+        UUID recipientId = gameQueryService.findGraveyardOwnerById(gameData, dyingCardId);
+        Card deadCard = recipientId == null ? null : gameData.playerGraveyards.get(recipientId).stream()
+                .filter(card -> card.getId().equals(dyingCardId))
+                .findFirst()
+                .orElse(null);
         if (deadCard == null) {
             gameLogService.append(gameData,
                     GameLog.cardThen(entry.getCard(), "'s ability fizzles (card not in graveyard)."));

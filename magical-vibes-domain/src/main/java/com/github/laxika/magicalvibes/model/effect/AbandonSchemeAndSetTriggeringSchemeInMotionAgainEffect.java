@@ -1,14 +1,10 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.StackEntry;
-
-/** Abandons this scheme, then sets the scheme that caused this trigger in motion again. */
-public record AbandonSchemeAndSetTriggeringSchemeInMotionAgainEffect(StackEntry schemeSnapshot)
-        implements CardEffect {
-
-    public AbandonSchemeAndSetTriggeringSchemeInMotionAgainEffect() {
-        this(null);
-    }
+/**
+ * Abandons this scheme, then sets the scheme that caused this trigger in motion again: the stack entry's triggering
+ * spell, which holds that scheme's set-in-motion stack object as it was when this ability triggered.
+ */
+public record AbandonSchemeAndSetTriggeringSchemeInMotionAgainEffect() implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {

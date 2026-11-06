@@ -14,7 +14,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class MindsDilation extends Card {
 
     public MindsDilation() {
-        addTrigger(Triggers.opponentCastsSpell(),
+        // "Whenever an opponent casts their first spell each turn".
+        addTrigger(Triggers.opponentCastsSpell().nthThisTurn(1),
                 new ExileTopCardOfTriggeringPlayerLibraryAndMayCastFreeEffect());
     }
 }

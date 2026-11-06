@@ -49,7 +49,6 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDiesLoseLife
 import com.github.laxika.magicalvibes.model.effect.EnchantedControllerSacrificesCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTriggeringAuraFromGraveyardMayCastUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsFromEnchantedCreatureOwnerAndAllowCastEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndReturnSourceToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndTrackWithSourceEffect;
@@ -90,7 +89,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGr
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToChosenCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToSharedTypeCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToCreatureOrNonAuraOnDeathEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringLandFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
@@ -222,9 +220,6 @@ public class DeathTriggerCollectorService {
                         (PerpetuallyGrantTriggeredAbilityToSourceCardEffect) effect, context));
         registerCreatureDeath(CreatureDeathWatch.EQUIPPED, CardEffect.class,
                 (match, effect, context) -> handleEquippedCreatureDeathDefault(match, (CardEffect) effect, context));
-        registerCreatureDeath(CreatureDeathWatch.EQUIPPED, ReturnTriggeringCardToOwnerHandEffect.class,
-                (match, effect, context) -> handleEquippedCreatureReturnToHand(match,
-                        (ReturnTriggeringCardToOwnerHandEffect) effect, context));
         registerCreatureDeath(CreatureDeathWatch.ALLY_ARTIFACT_OR_CREATURE, CardEffect.class,
                 this::handleAllyArtifactOrCreatureDeath);
         registerCreatureDeath(CreatureDeathWatch.ANY, ReturnTriggeringPermanentToBattlefieldEffect.class,
@@ -1572,10 +1567,10 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsWatchTrigger(value = com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyardOnTopOfLibraryEffect.class,
+    /** "Whenever a creature is put into your graveyard from the battlefield": "that card" is the entry's triggering card. */
+    @CollectsWatchTrigger(value = CardEffect.class,
             watch = ZoneChangeWatch.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)
-    boolean handleCreaturePutIntoOwnerGraveyardToLibrary(TriggerMatchContext match,
-            com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyardOnTopOfLibraryEffect effect,
+    boolean handleCreaturePutIntoOwnerGraveyardDefault(TriggerMatchContext match, CardEffect effect,
             TriggerContext ctx) {
         var death = (TriggerContext.AnyPermanentGraveyard) ctx;
         StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
@@ -1585,35 +1580,6 @@ public class DeathTriggerCollectorService {
         markDyingCard(match.gameData(), entry, death.dyingCard());
         match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        return true;
-    }
-
-    /** Bakes the dead card's owner into graveyard-to-hand triggers; the card is the entry's triggering card. */
-    @CollectsWatchTrigger(value = ReturnTriggeringCardToOwnerHandEffect.class,
-            watch = ZoneChangeWatch.ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
-    @CollectsWatchTrigger(value = ReturnTriggeringCardToOwnerHandEffect.class,
-            watch = ZoneChangeWatch.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)
-    @CollectsWatchTrigger(value = ReturnTriggeringCardToOwnerHandEffect.class,
-            watch = ZoneChangeWatch.ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
-    boolean handlePermanentGraveyardReturnToHand(TriggerMatchContext match,
-            ReturnTriggeringCardToOwnerHandEffect effect, TriggerContext ctx) {
-        TriggerContext.AnyPermanentGraveyard apg = (TriggerContext.AnyPermanentGraveyard) ctx;
-        ReturnTriggeringCardToOwnerHandEffect baked = new ReturnTriggeringCardToOwnerHandEffect(
-                apg.graveyardOwnerId());
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(baked)),
-                null,
-                match.permanent().getId()
-        );
-        markDyingCard(match.gameData(), entry, apg.dyingCard());
-        match.gameData().stack.add(entry);
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers (permanent {} put into graveyard from battlefield)",
-                match.gameData().id, match.permanent().getCard().getName(), apg.dyingCard().getName());
         return true;
     }
 
@@ -1646,30 +1612,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    boolean handleEquippedCreatureReturnToHand(TriggerMatchContext match,
-            ReturnTriggeringCardToOwnerHandEffect effect, TriggerContext ctx) {
-        TriggerContext.EquippedCreatureDeath ecd = (TriggerContext.EquippedCreatureDeath) ctx;
-        if (ecd.dyingCard() == null) {
-            return false;
-        }
-        UUID handOwnerId = gameQueryService.findGraveyardOwnerById(match.gameData(), ecd.dyingCard().getId());
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new ReturnTriggeringCardToOwnerHandEffect(handOwnerId))),
-                null,
-                match.permanent().getId()
-        );
-        markDyingCard(match.gameData(), entry, ecd.dyingCard());
-        match.gameData().stack.add(entry);
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers (equipped creature returns to hand)",
-                match.gameData().id, match.permanent().getCard().getName());
-        return true;
-    }
-
     @CollectsWatchTrigger(value = ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect.class,
             watch = ZoneChangeWatch.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleDyingCreatureReturnUnlessTargetPaysLife(TriggerMatchContext match,
@@ -1692,7 +1634,7 @@ public class DeathTriggerCollectorService {
     boolean handleAnyPermanentGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.AnyPermanentGraveyard apg = (TriggerContext.AnyPermanentGraveyard) ctx;
-        match.gameData().stack.add(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
@@ -1700,7 +1642,9 @@ public class DeathTriggerCollectorService {
                 new ArrayList<>(List.of(effect)),
                 apg.graveyardOwnerId(),
                 match.permanent().getId()
-        ));
+        );
+        markDyingCard(match.gameData(), entry, apg.dyingCard());
+        match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (permanent put into a graveyard from the battlefield)",
                 match.gameData().id, match.permanent().getCard().getName());
@@ -1739,6 +1683,7 @@ public class DeathTriggerCollectorService {
         );
         // The graveyard's owner is "that permanent's owner", not a target of the ability.
         entry.setNonTargeting(true);
+        markDyingCard(match.gameData(), entry, apg.dyingCard());
         match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (nontoken permanent put into a graveyard from the battlefield)",
@@ -1750,7 +1695,7 @@ public class DeathTriggerCollectorService {
             watch = ZoneChangeWatch.ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleAllyNontokenPermanentGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
-        match.gameData().stack.add(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
@@ -1758,7 +1703,9 @@ public class DeathTriggerCollectorService {
                 new ArrayList<>(List.of(effect)),
                 null,
                 match.permanent().getId()
-        ));
+        );
+        markDyingCard(match.gameData(), entry, ((TriggerContext.AnyPermanentGraveyard) ctx).dyingCard());
+        match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (nontoken permanent put into controller's graveyard)",
                 match.gameData().id, match.permanent().getCard().getName());
@@ -2914,15 +2861,17 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsWatchTrigger(value = ExileTriggeringAuraFromGraveyardMayCastUntilNextTurnEffect.class,
+    /**
+     * "Whenever an Aura or Equipment you control is put into a graveyard from the battlefield": "that card" is the
+     * entry's triggering card. An ability that watches only Auras (Mazzy, Truesword Paladin) says so in its trigger
+     * filter, which the pipeline judges on the departed permanent.
+     */
+    @CollectsWatchTrigger(value = CardEffect.class,
             watch = ZoneChangeWatch.ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
-    boolean handleExileTriggeringAuraMayCast(TriggerMatchContext match,
-            ExileTriggeringAuraFromGraveyardMayCastUntilNextTurnEffect effect, TriggerContext ctx) {
+    boolean handleAllyAuraOrEquipmentGraveyardDefault(TriggerMatchContext match, CardEffect effect,
+            TriggerContext ctx) {
         TriggerContext.AllyAuraOrEquipmentGraveyard aaeg = (TriggerContext.AllyAuraOrEquipmentGraveyard) ctx;
         Card dyingCard = aaeg.dyingCard();
-        if (!dyingCard.isAura()) {
-            return false;
-        }
 
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
@@ -2932,13 +2881,13 @@ public class DeathTriggerCollectorService {
                 new ArrayList<>(List.of(effect)),
                 null,
                 match.permanent().getId());
-        entry.setTriggeringCardId(dyingCard.getId());
+        markDyingCard(match.gameData(), entry, dyingCard);
         entry.setNonTargeting(true);
         match.gameData().stack.add(entry);
 
         gameLogService.append(match.gameData(), GameLog.cardTextCard(match.permanent().getCard(),
                 "'s ability triggers (", dyingCard, " was put into a graveyard from the battlefield)."));
-        log.info("Game {} - {} triggers to exile Aura {} and grant cast permission",
+        log.info("Game {} - {} triggers (Aura or Equipment {} put into a graveyard from the battlefield)",
                 match.gameData().id, match.permanent().getCard().getName(), dyingCard.getName());
         return true;
     }

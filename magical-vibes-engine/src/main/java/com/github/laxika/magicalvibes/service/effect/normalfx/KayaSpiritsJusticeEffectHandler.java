@@ -34,8 +34,8 @@ public class KayaSpiritsJusticeEffectHandler implements NormalEffectHandlerBean 
             return;
         }
         List<Card> creatureCards = new ArrayList<>();
-        for (java.util.UUID cardId : ((KayaSpiritsJusticeEffect) effect).creatureCardIds()) {
-            ExiledCardEntry exiled = gameData.findExiledCard(cardId);
+        for (Card triggeringCard : entry.getTriggeringCards()) {
+            ExiledCardEntry exiled = gameData.findExiledCard(triggeringCard.getId());
             if (exiled != null && !exiled.faceDown()
                     && !exiled.card().isToken()
                     && exiled.card().hasType(com.github.laxika.magicalvibes.model.CardType.CREATURE)) {

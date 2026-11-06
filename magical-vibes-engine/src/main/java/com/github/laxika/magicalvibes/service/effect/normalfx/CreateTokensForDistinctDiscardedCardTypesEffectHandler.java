@@ -7,9 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensForDistinctDiscardedCardTypesEffect;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.EnumSet;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -18,7 +16,6 @@ import org.springframework.stereotype.Component;
 public class CreateTokensForDistinctDiscardedCardTypesEffectHandler
         implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
     private final CreateTokenEffectHandler createTokenEffectHandler;
 
     @Override
@@ -31,11 +28,8 @@ public class CreateTokensForDistinctDiscardedCardTypesEffectHandler
         CreateTokensForDistinctDiscardedCardTypesEffect createTokens =
                 (CreateTokensForDistinctDiscardedCardTypesEffect) effect;
         EnumSet<CardType> cardTypes = EnumSet.noneOf(CardType.class);
-        for (UUID cardId : entry.getTriggeringCardIds()) {
-            Card card = gameQueryService.findCardById(gameData, cardId);
-            if (card == null) {
-                continue;
-            }
+        // The discarded cards as they were discarded, so a card that has since ceased to exist still counts.
+        for (Card card : entry.getTriggeringCards()) {
             if (card.getType() != null) {
                 cardTypes.add(card.getType());
             }

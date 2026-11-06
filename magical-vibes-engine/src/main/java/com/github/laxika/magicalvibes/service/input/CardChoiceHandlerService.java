@@ -1725,7 +1725,7 @@ public class CardChoiceHandlerService {
                     && gameData.pendingEffectResolutionEntry != null) {
                 StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
                 copyDiscardFollowUpContext(gameData, pendingEntry, discardedCard, followUp);
-                pendingEntry.setTriggeringCardIds(followUp.discardedCardIds());
+                pendingEntry.setTriggeringCards(discardedCards(gameData, followUp));
                 pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, List.of(thenEffect));
                 resumeRemainingEffectsAfterDiscard(gameData);
                 return;
@@ -1950,8 +1950,16 @@ public class CardChoiceHandlerService {
                     gameData.graveyardEntryVersion(discardedCard.getId()));
         }
         if (!followUp.discardedCardIds().isEmpty()) {
-            entry.setTriggeringCardIds(followUp.discardedCardIds());
+            entry.setTriggeringCards(discardedCards(gameData, followUp));
         }
+    }
+
+    /** The cards the follow-up's discard put into a graveyard (or exile, for madness), found by id just after it. */
+    private List<Card> discardedCards(GameData gameData, DiscardFollowUp followUp) {
+        return followUp.discardedCardIds().stream()
+                .map(cardId -> gameQueryService.findCardById(gameData, cardId))
+                .filter(java.util.Objects::nonNull)
+                .toList();
     }
 
     /**

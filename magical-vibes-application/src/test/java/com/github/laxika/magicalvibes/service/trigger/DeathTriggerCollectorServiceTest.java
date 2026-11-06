@@ -1262,4 +1262,113 @@ class DeathTriggerCollectorServiceTest {
                     });
         }
     }
+
+    @Nested
+    @DisplayName("Graveyard defaults give the entry \"that card\"")
+    class GraveyardDefaultsCarryTheTriggeringCard {
+
+        private Card dyingInGraveyard(UUID ownerId, long version) {
+            Card dying = createCreature("Grizzly Bears", 2, 2);
+            gd.playerGraveyards.get(ownerId).add(dying);
+            gd.graveyardEntryVersions.put(dying.getId(), version);
+            return dying;
+        }
+
+        private void assertCarriesTheCardUnchanged(CardEffect effect, Card dying, long version) {
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+            assertThat(entry.getTriggeringCardId()).isEqualTo(dying.getId());
+            assertThat(entry.isTriggeringCardIncarnation(version)).isTrue();
+            assertThat(entry.isTriggeringCardIncarnation(version + 1)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Any permanent: Yomiji's return goes on the stack unchanged, the dying card its triggering card")
+        void anyPermanentDefaultCarriesTheDyingCard() {
+            Card dying = dyingInGraveyard(PLAYER2_ID, 4L);
+            Permanent perm = new Permanent(createCreature("Yomiji, Who Bars the Way", 4, 4));
+            var effect = new ReturnTriggeringCardToOwnerHandEffect();
+            var ctx = new TriggerContext.AnyPermanentGraveyard(dying, PLAYER2_ID, PLAYER2_ID);
+
+            assertThat(svc.handleAnyPermanentGraveyardDefault(match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
+
+            assertCarriesTheCardUnchanged(effect, dying, 4L);
+        }
+
+        @Test
+        @DisplayName("A creature put into your graveyard: Enduring Renewal's and Mortuary's effects go through the default")
+        void ownedCreatureDefaultCarriesTheDyingCard() {
+            Card dying = dyingInGraveyard(PLAYER1_ID, 2L);
+            Permanent perm = new Permanent(createEnchantment("Enduring Renewal"));
+            var effect = new ReturnTriggeringCardToOwnerHandEffect();
+            var ctx = new TriggerContext.AnyPermanentGraveyard(dying, PLAYER2_ID, PLAYER1_ID);
+
+            assertThat(svc.handleCreaturePutIntoOwnerGraveyardDefault(match(perm, PLAYER1_ID, effect), effect, ctx))
+                    .isTrue();
+
+            assertCarriesTheCardUnchanged(effect, dying, 2L);
+        }
+
+        @Test
+        @DisplayName("A nontoken permanent you control: the default gives the dying card")
+        void allyNontokenDefaultCarriesTheDyingCard() {
+            Card dying = dyingInGraveyard(PLAYER1_ID, 3L);
+            Permanent perm = new Permanent(createEnchantment("Watcher"));
+            var effect = new ReturnTriggeringCardToOwnerHandEffect();
+            var ctx = new TriggerContext.AnyPermanentGraveyard(dying, PLAYER1_ID, PLAYER1_ID);
+
+            assertThat(svc.handleAllyNontokenPermanentGraveyardDefault(match(perm, PLAYER1_ID, effect), effect, ctx))
+                    .isTrue();
+
+            assertCarriesTheCardUnchanged(effect, dying, 3L);
+        }
+
+        @Test
+        @DisplayName("Any nontoken permanent: the default gives the dying card")
+        void anyNontokenDefaultCarriesTheDyingCard() {
+            Card dying = dyingInGraveyard(PLAYER2_ID, 5L);
+            Permanent perm = new Permanent(createEnchantment("Watcher"));
+            var effect = new ReturnTriggeringCardToOwnerHandEffect();
+            var ctx = new TriggerContext.AnyPermanentGraveyard(dying, PLAYER2_ID, PLAYER2_ID);
+
+            assertThat(svc.handleAnyNontokenPermanentGraveyardDefault(match(perm, PLAYER1_ID, effect), effect, ctx))
+                    .isTrue();
+
+            assertCarriesTheCardUnchanged(effect, dying, 5L);
+        }
+
+        @Test
+        @DisplayName("An equipped creature: Sword of the Realms' return goes through the default unchanged")
+        void equippedDefaultCarriesTheDyingCard() {
+            Card dying = dyingInGraveyard(PLAYER1_ID, 6L);
+            Permanent perm = new Permanent(createEquipment("Sword of the Realms"));
+            var effect = new ReturnTriggeringCardToOwnerHandEffect();
+            var ctx = new TriggerContext.EquippedCreatureDeath(UUID.randomUUID(), PLAYER1_ID, dying);
+
+            svc.handleEquippedCreatureDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
+
+            assertCarriesTheCardUnchanged(effect, dying, 6L);
+        }
+
+        @Test
+        @DisplayName("An Aura or Equipment you control: the default triggers for an Equipment too, the card its triggering card")
+        void auraOrEquipmentDefaultCarriesTheCard() {
+            Card equipment = createEquipment("Bonesplitter");
+            gd.playerGraveyards.get(PLAYER1_ID).add(equipment);
+            gd.graveyardEntryVersions.put(equipment.getId(), 1L);
+            Permanent perm = new Permanent(createCreature("Watcher", 1, 1));
+            var effect = new DrawCardEffect(1);
+            var ctx = new TriggerContext.AllyAuraOrEquipmentGraveyard(equipment, PLAYER1_ID);
+
+            assertThat(svc.handleAllyAuraOrEquipmentGraveyardDefault(match(perm, PLAYER1_ID, effect), effect, ctx))
+                    .isTrue();
+
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+                assertThat(entry.getTriggeringCardId()).isEqualTo(equipment.getId());
+                assertThat(entry.isTriggeringCardIncarnation(1L)).isTrue();
+            });
+        }
+    }
 }

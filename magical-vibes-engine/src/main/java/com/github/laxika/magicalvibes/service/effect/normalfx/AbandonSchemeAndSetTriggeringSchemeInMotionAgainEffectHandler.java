@@ -30,8 +30,8 @@ public class AbandonSchemeAndSetTriggeringSchemeInMotionAgainEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var repeat = (AbandonSchemeAndSetTriggeringSchemeInMotionAgainEffect) effect;
-        if (repeat.schemeSnapshot() == null) {
+        StackEntry schemeSnapshot = entry.getTriggeringSpellSnapshot();
+        if (schemeSnapshot == null) {
             return;
         }
 
@@ -44,7 +44,6 @@ public class AbandonSchemeAndSetTriggeringSchemeInMotionAgainEffectHandler
             return;
         }
 
-        StackEntry schemeSnapshot = repeat.schemeSnapshot();
         StackEntry replay = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 schemeSnapshot.getCard(),

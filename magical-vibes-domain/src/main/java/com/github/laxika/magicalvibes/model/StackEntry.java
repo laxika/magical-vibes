@@ -570,7 +570,8 @@ public class StackEntry {
     @Setter private List<UUID> triggeringSpellTargetIds = List.of();
     /**
      * The spell a spell-cast trigger was about ("that spell", "its controller", "its colors", "its mana value"), or the
-     * activated ability an activation trigger was about ({@link #triggeringActivatedAbility}), as it was on the stack
+     * activated ability an activation trigger was about ({@link #triggeringActivatedAbility}), or the scheme a "whenever
+     * you set a scheme in motion" trigger was about (its set-in-motion stack object), as it was on the stack
      * when the ability triggered: the last-known information the effects use once that spell has left
      * the stack (CR 608.2h), while it is still there they read it live. {@code null} when the event was about no spell.
      * Set through {@link #setTriggeringSpell}, which keeps a copy of its own.
@@ -604,11 +605,11 @@ public class StackEntry {
     private final Map<UUID, Long> targetCardGraveyardVersions = new HashMap<>();
     /** Graveyard entry chosen as this spell's primary target when it was cast. */
     @Setter private long targetGraveyardEntryVersion = -1;
-    @Setter private List<UUID> triggeringCardIds = List.of();
     /**
      * The cards a "one or more cards" trigger event was about ("those cards", "the discarded cards"), as they were in
-     * the event: the cards discarded, put into a graveyard from a library or that left a graveyard. Empty when the
-     * event was about no cards. Set through {@link #setTriggeringCards}; immutable, so copies share it.
+     * the event: the cards discarded (by one discard event or by the discard a resolving ability made), put into a
+     * graveyard from a library, exiled together or that left a graveyard. Empty when the event was about no cards.
+     * Set through {@link #setTriggeringCards}; immutable, so copies share it.
      */
     private List<Card> triggeringCards = List.of();
     /** Card id of the permanent sacrificed as an additional cost to cast this spell, when one was paid. */
@@ -659,7 +660,10 @@ public class StackEntry {
      * a resolution-time choice can be limited to the group that caused the trigger. Not a target.
      */
     @Setter private List<UUID> triggeringPermanentIds = List.of();
-    /** Player whose monarch status was captured when a monarch-triggered target was created. */
+    /**
+     * The player a trigger event was about, for the effects that read "that player" from it: the player who became the
+     * monarch. Not a target. Most other collectors still give "that player" as the non-targeting {@link #targetId}.
+     */
     @Setter private UUID triggeringPlayerId;
     /** Controller of the triggering permanent when its non-targeting reference was captured. */
     @Setter private UUID triggeringPermanentControllerId;
@@ -1222,8 +1226,6 @@ public class StackEntry {
         this.mixedZoneTargetGraveyardVersions.putAll(source.mixedZoneTargetGraveyardVersions);
         this.targetCardGraveyardVersions.putAll(source.targetCardGraveyardVersions);
         this.targetGraveyardEntryVersion = source.targetGraveyardEntryVersion;
-        this.triggeringCardIds = source.triggeringCardIds.isEmpty()
-                ? List.of() : new ArrayList<>(source.triggeringCardIds);
         this.triggeringCards = source.triggeringCards;
         this.sacrificedCardId = source.sacrificedCardId;
         this.sacrificedCardGraveyardVersions = source.sacrificedCardGraveyardVersions;
@@ -2100,6 +2102,11 @@ public class StackEntry {
     /** Records {@code cards} as the cards the trigger event was about, for the effects that read them as they resolve. */
     public void setTriggeringCards(List<Card> cards) {
         this.triggeringCards = cards == null ? List.of() : List.copyOf(cards);
+    }
+
+    /** The ids of {@link #getTriggeringCards()}, in event order. */
+    public List<UUID> triggeringCardIds() {
+        return triggeringCards.stream().map(Card::getId).toList();
     }
 
     /**

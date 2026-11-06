@@ -192,9 +192,7 @@ public class PermanentChoiceTriggerHandlerService {
         }
         entry.setMarkSourceOncePerTurnOnAcceptance(markOnAcceptance);
         entry.setTriggeringPermanentId(stt.triggeringPermanentId());
-        if (stt.permanentTargetControllerId() != null) {
-            entry.setTriggeringPlayerId(stt.permanentTargetControllerId());
-        }
+        entry.setTriggeringPlayerId(stt.triggeringPlayerId());
         Permanent triggeringPermanent = stt.triggeringPermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, stt.triggeringPermanentId());
         if (triggeringPermanent != null) {
@@ -2029,6 +2027,7 @@ public class PermanentChoiceTriggerHandlerService {
                 targetId,
                 dpt.sourcePermanentId()
         );
+        entry.setTriggeringCards(dpt.triggeringCards());
         pushTriggeredEntry(gameData, entry);
 
         String targetName = getTargetDisplayName(gameData, targetId);

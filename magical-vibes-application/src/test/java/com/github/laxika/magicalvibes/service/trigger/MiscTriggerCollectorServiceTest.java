@@ -202,6 +202,67 @@ class MiscTriggerCollectorServiceTest {
     }
 
     @Test
+    @DisplayName("A card put into your graveyard: Planar Void's exile goes through the default, the card and its graveyard incarnation the entry's")
+    void cardPutIntoOwnGraveyardIsTheEntrysTriggeringCard() {
+        Permanent source = createPermanent("Planar Void");
+        var effect = new com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect();
+        Card card = createCard("Discarded card");
+        gd.graveyardEntryVersions.put(card.getId(), 3L);
+
+        boolean collected = registry.dispatch(match(source, player1Id, effect),
+                ZoneChangeWatch.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, effect,
+                new TriggerContext.CardPutIntoGraveyard(card, player1Id));
+
+        assertThat(collected).isTrue();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+            assertThat(entry.getTriggeringCardId()).isEqualTo(card.getId());
+            assertThat(entry.isTriggeringCardIncarnation(3L)).isTrue();
+            assertThat(entry.isTriggeringCardIncarnation(4L)).isFalse();
+        });
+    }
+
+    @Test
+    @DisplayName("A card put into an opponent's graveyard is the entry's triggering card, the graveyard's owner \"that player\"")
+    void cardPutIntoOpponentGraveyardIsTheEntrysTriggeringCard() {
+        Permanent source = createPermanent("Planar Void");
+        var effect = new com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect();
+        Card card = createCard("Milled card");
+        gd.graveyardEntryVersions.put(card.getId(), 2L);
+
+        boolean collected = registry.dispatch(match(source, player1Id, effect),
+                ZoneChangeWatch.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE, effect,
+                new TriggerContext.CardPutIntoGraveyard(card, player2Id));
+
+        assertThat(collected).isTrue();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+            assertThat(entry.getTargetId()).isEqualTo(player2Id);
+            assertThat(entry.getTriggeringCardId()).isEqualTo(card.getId());
+            assertThat(entry.isTriggeringCardIncarnation(2L)).isTrue();
+        });
+    }
+
+    @Test
+    @DisplayName("Kaya's token-target choice carries the exiled creature cards as its triggering cards, the effect unchanged")
+    void kayaTargetChoiceCarriesTheExiledCardsAsTriggeringCards() {
+        Permanent source = createPermanent("Kaya, Spirits' Justice");
+        var effect = new com.github.laxika.magicalvibes.model.effect.KayaSpiritsJusticeEffect();
+        Card first = createCard("First exiled creature card");
+        Card second = createCard("Second exiled creature card");
+
+        boolean collected = registry.dispatch(match(source, player1Id, effect),
+                ZoneChangeWatch.ON_CONTROLLER_CREATURES_OR_CREATURE_CARDS_EXILED, effect,
+                new TriggerContext.ControllerCreaturesOrCreatureCardsExiled(player1Id, 2, List.of(first, second)));
+
+        assertThat(collected).isTrue();
+        var choice = gd.pollPendingInteraction(PermanentChoiceContext.DrawTriggerPermanentTarget.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.effects()).containsExactly(effect);
+        assertThat(choice.triggeringCards()).containsExactly(first, second);
+    }
+
+    @Test
     void enchantedPermanentTapModalWaitsForModeAndTargetBeforeGoingOnTheStack() {
         Permanent aura = createPermanent("Modal aura");
         Permanent tapped = createPermanent("Artifact");

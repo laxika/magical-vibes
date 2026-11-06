@@ -33,7 +33,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToLifeGainedEff
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileMilledCreatureAndCreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringLandFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldEffect;
@@ -1773,7 +1772,8 @@ public class MiscTriggerCollectorService {
                     match.permanent().getId()
             );
             if (triggeringCard != null) {
-                entry.setTriggeringCardId(triggeringCard.getId());
+                // "That card" is the graveyard object the card became (CR 400.7).
+                entry.setTriggeringCard(triggeringCard.getId(), gameData.graveyardEntryVersion(triggeringCard.getId()));
             }
             if (ctx instanceof TriggerContext.CardsPutIntoGraveyardFromLibrary cardsPut) {
                 entry.setTriggeringCards(cardsPut.cards());
@@ -1817,41 +1817,6 @@ public class MiscTriggerCollectorService {
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers (nonblack card put into a graveyard from anywhere)",
                 match.gameData().id, sourceCard.getName());
-        return true;
-    }
-
-    @CollectsWatchTrigger(value = ExileTriggeringCardFromGraveyardEffect.class,
-                    watch = ZoneChangeWatch.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
-    @CollectsWatchTrigger(value = ExileTriggeringCardFromGraveyardEffect.class,
-                    watch = ZoneChangeWatch.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
-    private boolean handleExileTriggeringCardFromGraveyard(TriggerMatchContext match,
-            ExileTriggeringCardFromGraveyardEffect effect, TriggerContext ctx) {
-        if (!(ctx instanceof TriggerContext.CardPutIntoGraveyard cardPut)) {
-            return false;
-        }
-
-        Card triggeringCard = cardPut.card();
-        var gameData = match.gameData();
-        List<Card> graveyard = gameData.playerGraveyards.get(cardPut.graveyardOwnerId());
-        if (graveyard == null || graveyard.stream().noneMatch(card -> card.getId().equals(triggeringCard.getId()))) {
-            return false;
-        }
-
-        String cardName = match.permanent().getCard().getName();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                cardName + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId());
-        entry.setTriggeringCardId(triggeringCard.getId());
-        entry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(triggeringCard.getId()));
-        gameData.enqueueTrigger(entry);
-        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers to exile {} from a graveyard", gameData.id, cardName,
-                triggeringCard.getName());
         return true;
     }
 
@@ -2052,7 +2017,7 @@ public class MiscTriggerCollectorService {
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
 
-        gameData.enqueueTrigger(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
@@ -2060,7 +2025,10 @@ public class MiscTriggerCollectorService {
                 new ArrayList<>(List.of(effect)),
                 cardPut.graveyardOwnerId(),
                 match.permanent().getId()
-        ));
+        );
+        // "That card" is the graveyard object the card became (CR 400.7).
+        entry.setTriggeringCard(cardPut.card().getId(), gameData.graveyardEntryVersion(cardPut.card().getId()));
+        gameData.enqueueTrigger(entry);
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (card put into opponent's graveyard from anywhere)", gameData.id, cardName);
@@ -3380,11 +3348,11 @@ public class MiscTriggerCollectorService {
             match.gameData().queueInteraction(new PermanentChoiceContext.DrawTriggerPermanentTarget(
                     match.permanent().getCard(),
                     match.controllerId(),
-                    new ArrayList<>(List.of(new KayaSpiritsJusticeEffect(
-                            exiled.creatureCards().stream().map(Card::getId).toList()))),
+                    new ArrayList<>(List.of(effect)),
                     match.permanent().getId(),
                     new ControlledPermanentPredicateTargetFilter(
-                            new PermanentIsTokenPredicate(), "Target must be a token you control")));
+                            new PermanentIsTokenPredicate(), "Target must be a token you control"))
+                    .withTriggeringCards(exiled.creatureCards()));
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
             log.info("Game {} - {} triggers (creatures or creature cards exiled) and needs a token target",
                     match.gameData().id, match.permanent().getCard().getName());
@@ -3400,7 +3368,7 @@ public class MiscTriggerCollectorService {
                 match.permanent().getId()
         );
         entry.setEventValue(exiled.count());
-        entry.setTriggeringCardIds(exiled.creatureCards().stream().map(Card::getId).toList());
+        entry.setTriggeringCards(exiled.creatureCards());
         match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (creatures or creature cards exiled)",

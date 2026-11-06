@@ -96,7 +96,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAllCardsWithCastSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsWithCastSpellManaValueEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfTriggeringPlayerLibraryAndMayCastFreeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUntilCardPredicateMayCastWithoutPayingManaEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
@@ -2324,29 +2323,6 @@ public class SpellCastTriggerCollectorService {
         triggerEntry.setNonTargeting(true);
         match.gameData().stack.add(triggerEntry);
         gameLogService.append(match.gameData(), GameLog.cardThen(match.sourceCard(), "'s ability triggers."));
-        return true;
-    }
-
-    @CollectsSpellAbilityTrigger(value = ExileTopCardOfTriggeringPlayerLibraryAndMayCastFreeEffect.class,
-            watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
-    private boolean handleExileTopCardOfTriggeringPlayerLibraryAndMayCastFree(
-            TriggerMatchContext match, ExileTopCardOfTriggeringPlayerLibraryAndMayCastFreeEffect trigger,
-            TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (match.gameData().getSpellsCastThisTurnCount(sc.castingPlayerId()) != 1) {
-            return false;
-        }
-
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(trigger)));
-        entry.setTargetId(sc.castingPlayerId());
-        entry.setNonTargeting(true);
-        entry.setTriggeringCardId(sc.spellCard().getId());
-        match.gameData().stack.add(entry);
         return true;
     }
 

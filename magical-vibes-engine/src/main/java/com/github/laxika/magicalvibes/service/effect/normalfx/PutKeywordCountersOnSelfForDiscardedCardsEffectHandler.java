@@ -39,9 +39,9 @@ public class PutKeywordCountersOnSelfForDiscardedCardsEffectHandler implements N
         }
 
         EnumSet<CounterType> countersToAdd = EnumSet.noneOf(CounterType.class);
-        List<UUID> discardedCardIds = entry.getTriggeringCardIds().isEmpty()
+        List<UUID> discardedCardIds = entry.getTriggeringCards().isEmpty()
                 ? entry.getTriggeringCardId() == null ? List.of() : List.of(entry.getTriggeringCardId())
-                : entry.getTriggeringCardIds();
+                : entry.triggeringCardIds();
         List<Card> discardedCards = discardedCardIds.stream()
                 .map(cardId -> gameQueryService.findCardInGraveyardById(gameData, cardId))
                 .filter(card -> card != null)
