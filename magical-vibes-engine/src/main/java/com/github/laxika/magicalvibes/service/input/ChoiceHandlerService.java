@@ -63,7 +63,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
-import com.github.laxika.magicalvibes.model.effect.ProducedManaColorAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -3159,8 +3158,7 @@ public class ChoiceHandlerService {
 
     private void resolveProducedManaTriggers(GameData gameData, ManaColor manaColor) {
         List<StackEntry> triggers = gameData.pendingManaAbilityTriggers.stream()
-                .filter(entry -> entry.getEffectsToResolve().stream()
-                        .anyMatch(ProducedManaColorAwareEffect.class::isInstance))
+                .filter(StackEntry::isAwaitingProducedManaColor)
                 .toList();
         gameData.pendingManaAbilityTriggers.removeAll(triggers);
         for (StackEntry trigger : triggers) {
@@ -3168,7 +3166,7 @@ public class ChoiceHandlerService {
                     gameData, trigger, manaColor)) {
                 continue;
             }
-            trigger.setProducedManaColor(manaColor);
+            trigger.setProducedManaColors(Set.of(manaColor));
             effectResolutionService.resolveEffects(gameData, trigger);
         }
     }

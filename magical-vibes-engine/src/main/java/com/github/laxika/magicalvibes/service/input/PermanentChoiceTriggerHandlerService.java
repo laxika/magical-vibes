@@ -205,6 +205,7 @@ public class PermanentChoiceTriggerHandlerService {
             entry.setAttachedPermanentSnapshot(stt.triggeringPermanentSnapshot());
         }
         entry.setTriggeringPermanent(stt.departedPermanent());
+        entry.setProducedManaColors(stt.producedManaColors());
         if (stt.triggeringPermanentPowerAtTrigger() != null) {
             entry.setTriggeringPermanentPowerAtTrigger(stt.triggeringPermanentPowerAtTrigger());
         }

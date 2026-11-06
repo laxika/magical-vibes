@@ -410,8 +410,22 @@ public class StackEntry {
     /** Records the cards actually moved to the graveyard by the current library choice. */
     @Setter private boolean recordLibraryGraveyardCount;
     @Setter private boolean markSourceOncePerTurnOnAcceptance;
-    /** The mana type produced by the tap event that created this triggered ability. */
-    @Setter private ManaColor producedManaColor;
+    /**
+     * The types of mana the tap for mana that triggered this ability produced ("the mana that land produced", "one
+     * mana of any type that permanent produced"), set by the tap collector, or by the any-color choice that settles it
+     * for an ability parked while it was pending.
+     */
+    private Set<ManaColor> producedManaColors = Set.of();
+    /**
+     * Whether this mana-tap ability was parked in {@code GameData.pendingManaAbilityTriggers} until the color of the mana
+     * its tap produced is chosen, because its effects read {@link #getProducedManaColors()}.
+     */
+    @Setter private boolean awaitingProducedManaColor;
+    /**
+     * The players who said yes to the "each player may" choice of this resolution ("each opponent who discarded their
+     * hand this way"), set by that choice before its follow-up resolves.
+     */
+    private List<UUID> acceptedPlayerIds = List.of();
     @Setter private Integer dyingPermanentManaValue;
     /** Permanent ids that received counters during the current effect resolution. */
     private final List<UUID> counteredPermanentIdsThisResolution = new ArrayList<>();
@@ -440,6 +454,14 @@ public class StackEntry {
     private final Map<UUID, Long> eventCardGraveyardEntryVersions = new HashMap<>();
     /** Cards exiled during this entry's resolution, excluding earlier uses of the same source. */
     private List<UUID> resolutionExiledCardIds = List.of();
+
+    public void setProducedManaColors(Set<ManaColor> colors) {
+        producedManaColors = Set.copyOf(colors);
+    }
+
+    public void setAcceptedPlayerIds(List<UUID> playerIds) {
+        acceptedPlayerIds = List.copyOf(playerIds);
+    }
 
     public void setResolutionExiledCardIds(List<UUID> cardIds) {
         resolutionExiledCardIds = List.copyOf(cardIds);
@@ -1118,7 +1140,9 @@ public class StackEntry {
         this.gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard = source.gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard;
         this.recordLibraryGraveyardCount = source.recordLibraryGraveyardCount;
         this.markSourceOncePerTurnOnAcceptance = source.markSourceOncePerTurnOnAcceptance;
-        this.producedManaColor = source.producedManaColor;
+        this.producedManaColors = source.producedManaColors;
+        this.awaitingProducedManaColor = source.awaitingProducedManaColor;
+        this.acceptedPlayerIds = source.acceptedPlayerIds;
         this.dyingPermanentManaValue = source.dyingPermanentManaValue;
         this.counteredPermanentIdsThisResolution.addAll(source.counteredPermanentIdsThisResolution);
         this.counteredSpellControllerId = source.counteredSpellControllerId;

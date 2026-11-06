@@ -30,7 +30,7 @@ re-check them with a grep before acting on them.
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
 | 14 | Trigger options replace trigger-only wrapper effects | done (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; run 16l, family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader`; run 16m, family 10 (sagas): no chapter or final-chapter ability has a legacy view, and the final-chapter collectors read the abilities through `SagaAbilityReader`; run 16n, family 11's player and keyword actions: every `ActionWatch` collector reads the abilities through `ActionAbilityReader`; run 16o, family 11's rest: every `MiscWatch` collector and the planar reader read the abilities through `MiscAbilityReader`; run 16p, the zone changes but "when this enters" and the permanent changes: no such ability has a legacy view, and the readers outside the trigger pipeline read them through `ZoneChangeAbilityReader`; run 16q, "when this enters": no ability has a legacy view; the own enters collector reads the abilities and judges their limit, the other readers read `Card.getOwnEntryEffects()`, and `OnceOnlyTriggerEffect` is gone; run 16r, every triggered ability is one object on the stack: the abilities of one Oracle ability are merged by script, the own enters and combat collectors group effects by ability, and `TriggerMode` is gone; run 16s, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags are gone: a `ConditionalEffect` is an effect's "if", and every collector judges the intervening "if" and event condition from the ability; run 16t, the trigger-only wrapper classes: the `Triggering…ConditionalEffect` filters, `SelfExiledFromBattlefieldEffect`, `OncePerTurnPerCreatureTriggerEffect` and `OncePerTurnTriggerEffect`'s keyed, per-grant, mark-on-acceptance and first-time forms are gone, their cards written with trigger filters, `TriggerLimit`s and `TriggeringCardMatches`; Bill Potts' `OncePerTurnTriggerEffect` and the may-unwrapping moved to step 15, with the user) |
-| 15 | Effects read the trigger event (repeatable) | open (run 1, with the user: the dying card, `DyingCreatureCardAwareEffect` gone; effects read the stack entry's triggering card; run 2, with the user: the departed permanent's last-known information, its 13 `…AwareEffect` interfaces gone; effects read the stack entry's triggering permanent; run 3: the rest of the departed object, the last-known rebuilds and baked dying-card ids run 2 kept, 4 classes gone and 5 lose their bound ids; run 4: the departed permanent's trigger-time rebuilds and skips run 3 kept, 6 classes gone, their skips trigger filters; run 5: the last departed-permanent rebuilds of `LegacyTriggerBindings` but the counter distribution, 3 classes gone, modular's "you may" and flag on the card; run 6, with the user: the death counter distribution reads its total from the entry and announces its targets and division as it goes on the stack (a rules fix), Martyr's Bond's "it" is the triggering permanent; run 7: the enters-side rebindings of the source to the entering permanent, Confusion in the Ranks' "another player" and "it" and Lucy MacLean's exclusion read the triggering permanent, its current types a rules fix; run 8: the damage source, `DamageSourceAwareEffect` and `DamageSourceControllerAwareEffect` gone, "that source" is the stack entry's triggering permanent and "that source's controller" its controller as the ability resolves (a rules fix for five cards), 4 effects replaced by existing ones with `TRIGGERING_PERMANENT_CONTROLLER` recipients, "each source" a trigger option on the cards; run 9: the event's permanents, `CombatDamageDealerAwareEffect` and `AttackingCreaturesAwareEffect` gone, "them" / "each of them" are the stack entry's triggering permanents and attacking snapshots, "whenever you attack with one or more [filter]" a trigger filter, 6 effects replaced by existing ones, one dead effect gone; run 10: the event's amount, `CombatDamageAmountAwareEffect` gone, every combat damage to a player entry carries the damage as its event value and the targeted choices carry it into theirs, Froghemoth's "up to that many" an event-aware target count, the graveyard targets restricted by the damage still fixed as they are chosen; `CombatExcessDamageAwareEffect` left for its own run; run 11: the excess damage, `CombatExcessDamageAwareEffect` gone, every "deals combat damage to a creature" entry carries the excess damage dealt to that creature as its event value and the collector judges the abilities' intervening "if" against it, Overclocked Electromancer an `EventValueAtLeast(1)` intervening "if" and `EnergyCountersEffect(new EventValue())`); run 12: the event's cards, `TriggeringCardsAwareEffect` gone, "those cards" / "the discarded cards" are the stack entry's triggering cards, Polluted Cistern's drain the existing `LoseLifeEffect` with a `CardTypesAmongTriggeringCards` amount; runs 13 to 17 are planned in the step's run table) |
+| 15 | Effects read the trigger event (repeatable) | open (run 1, with the user: the dying card, `DyingCreatureCardAwareEffect` gone; effects read the stack entry's triggering card; run 2, with the user: the departed permanent's last-known information, its 13 `…AwareEffect` interfaces gone; effects read the stack entry's triggering permanent; run 3: the rest of the departed object, the last-known rebuilds and baked dying-card ids run 2 kept, 4 classes gone and 5 lose their bound ids; run 4: the departed permanent's trigger-time rebuilds and skips run 3 kept, 6 classes gone, their skips trigger filters; run 5: the last departed-permanent rebuilds of `LegacyTriggerBindings` but the counter distribution, 3 classes gone, modular's "you may" and flag on the card; run 6, with the user: the death counter distribution reads its total from the entry and announces its targets and division as it goes on the stack (a rules fix), Martyr's Bond's "it" is the triggering permanent; run 7: the enters-side rebindings of the source to the entering permanent, Confusion in the Ranks' "another player" and "it" and Lucy MacLean's exclusion read the triggering permanent, its current types a rules fix; run 8: the damage source, `DamageSourceAwareEffect` and `DamageSourceControllerAwareEffect` gone, "that source" is the stack entry's triggering permanent and "that source's controller" its controller as the ability resolves (a rules fix for five cards), 4 effects replaced by existing ones with `TRIGGERING_PERMANENT_CONTROLLER` recipients, "each source" a trigger option on the cards; run 9: the event's permanents, `CombatDamageDealerAwareEffect` and `AttackingCreaturesAwareEffect` gone, "them" / "each of them" are the stack entry's triggering permanents and attacking snapshots, "whenever you attack with one or more [filter]" a trigger filter, 6 effects replaced by existing ones, one dead effect gone; run 10: the event's amount, `CombatDamageAmountAwareEffect` gone, every combat damage to a player entry carries the damage as its event value and the targeted choices carry it into theirs, Froghemoth's "up to that many" an event-aware target count, the graveyard targets restricted by the damage still fixed as they are chosen; `CombatExcessDamageAwareEffect` left for its own run; run 11: the excess damage, `CombatExcessDamageAwareEffect` gone, every "deals combat damage to a creature" entry carries the excess damage dealt to that creature as its event value and the collector judges the abilities' intervening "if" against it, Overclocked Electromancer an `EventValueAtLeast(1)` intervening "if" and `EnergyCountersEffect(new EventValue())`); run 12: the event's cards, `TriggeringCardsAwareEffect` gone, "those cards" / "the discarded cards" are the stack entry's triggering cards, Polluted Cistern's drain the existing `LoseLifeEffect` with a `CardTypesAmongTriggeringCards` amount; run 13a: the chosen card, the accepted players and the produced mana colors, `ChosenCardAwareEffect`, `AcceptedPlayersAwareEffect` and `ProducedManaColorAwareEffect` gone, the choices set the stack entry's chosen card, accepted players and produced mana colors and insert their follow-ups unchanged, a held-out card rides in the may ability, Hinterland Chef the existing `PerpetuallyGrantChosenCardCharacteristicsEffect`; `GrantingPermanentAwareEffect` split off as run 13b; runs 13b to 17 are planned in the step's run table) |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
 ## Why
@@ -667,7 +667,8 @@ first row that isn't done, without asking for a scope. Counts were taken at `57d
 
 | Run | Scope | Size at `57d5915df9` |
 |---|---|---|
-| 13 | The four `…AwareEffect` interfaces left, none of them a trigger event's: `ChosenCardAwareEffect`, `AcceptedPlayersAwareEffect`, `GrantingPermanentAwareEffect`, `ProducedManaColorAwareEffect`. Each binding moves to the stack entry, or to the pending choice or may ability that carries it, so no collector or choice handler rebuilds an effect | 20 implementers |
+| 13a | done: three of the four `…AwareEffect` interfaces left, none of them a trigger event's: `ChosenCardAwareEffect`, `AcceptedPlayersAwareEffect`, `ProducedManaColorAwareEffect`. Each binding moves to the stack entry, or to the pending choice or may ability that carries it, so no choice handler or collector rebuilds an effect | 13 implementers |
+| 13b | `GrantingPermanentAwareEffect` (split from 13, see run 13a's Findings): the granting permanent reaches the stack entry from the granted ability, so `GrantedTriggeredAbilitySupport` and the two grant-until handlers stop rebuilding effects | 6 implementers, 7 cards |
 | 14 | The `…TriggeringSpell…` classes, and Bill Potts' `OncePerTurnTriggerEffect` (its effects copy "that spell or ability" from the trigger event): each becomes an existing effect reading the stack entry's triggering spell where one fits, otherwise it keeps its class but loses its bound data. `OncePerTurnTriggerEffect` and `OncePerTurnTriggerSupport` go | 31 classes, 39 cards |
 | 15 | The classes that read the triggering permanent, creature, land, attacker, Aura, Equipment or artifact (`…TriggeringPermanent…`, `…TriggeringCreature…`, `…TriggeringLand…`, `…TriggeringAttacker…`, `TriggeringObjectController…` and the like), onto the triggering-permanent fields of runs 2 to 9 | 42 classes, 72 cards |
 | 16 | The classes that read the triggering card or player (`…TriggeringCard…`, `…TriggeringPlayer…`, the triggering scheme, the Aura card in a graveyard), and `StackEntry.triggeringCardIds` merged into the triggering cards of run 12 | 20 classes, 72 cards |
@@ -10898,6 +10899,121 @@ edited by hand. The skills didn't name these classes.
   `CostEffectClassificationTest`; their messages name none of the changed classes.
 - Engine: the whole module. The one failure is the known HEAD one, `GameMutationBoundaryRatchetTest`.
 - AI: compiles (`compileTestJava`).
+- The full suite was not run here.
+
+#### Run 13a: the chosen card, the accepted players and the produced mana colors
+
+Run 12 left 4 `…AwareEffect` interfaces, none of them a trigger event's. This run moves three; the fourth,
+`GrantingPermanentAwareEffect`, is split off as run 13b (below). 1 `…AwareEffect` interface is left.
+
+**What the scan found.** The three interfaces had 13 implementers, bound in 9 places, all of them choice handlers or
+the effect handlers that hand a choice's result on, plus one collector:
+
+- `ChosenCardAwareEffect` (10 implementers): `PutChosenCardFromHandOntoBattlefieldEffect`,
+  `PerpetuallyGrantCardCharacteristicsEffect`, `PerpetuallyGrantAnyColorManaAndSelfCastAbilityToCardEffect`,
+  `MayPutSelectedCardOntoBattlefieldEffect`, `HoldDraftedSpellbookCardEffect`, `GrizzledHuntmasterEffect`,
+  `ExileSameNameCardsFromHandAndLibraryThenSeekEffect`, `ExileCardFromHandWithManaValueTimeCountersEffect`,
+  `ExileCardFromHandAndBecomeForetoldEffect`, `ChooseCreatureCardFromHandAndConjureDuplicateIntoHandEffect`, bound by
+  the spellbook-draft, outside-the-game, exile-from-hand, revealed-hand and library-search choice handlers. Six of
+  them were effects that ask for the card themselves and re-entered with the card bound (`null` meaning "ask").
+- `AcceptedPlayersAwareEffect` (1): `DealDamageToPlayersEffect`'s `SELECTED_OPPONENTS` (Snort), bound by
+  `EachPlayerMayDiscardHandThenDrawEffectHandler` after the last "you may".
+- `ProducedManaColorAwareEffect` (2): C.A.M.P.'s `PutCounterOnTargetCreatureAndCreateTokenIfSharesManaColorEffect`,
+  bound by its land-tap collector and by the any-color choice that settles a parked tap, and
+  `AddManaOfTypeProducedByTappedPermanentEffect`, which bound nothing and implemented the interface only so
+  `ChoiceHandlerService` could find the parked abilities that wait for the color.
+
+**The model.**
+
+- The chosen card is the existing `StackEntry.chosenObjectCard` (already set by the revealed-hand and library-search
+  handlers and read by `PerpetuallyGrantChosenCardCharacteristicsEffect` and others). The spellbook-draft,
+  outside-the-game and exile-from-hand handlers now set it too, just before they insert their follow-up, and every
+  handler inserts the follow-up unchanged.
+- An effect that asks for the card and then acts on it inserts its own after-the-choice step as the choice's
+  follow-up: a `cardChosen` component with an `afterChoice()` factory (`ExileCardFromHandAndBecomeForetoldEffect`,
+  `ExileCardFromHandWithManaValueTimeCountersEffect`, `ExileSameNameCardsFromHandAndLibraryThenSeekEffect`,
+  `ChooseCreatureCardFromHandAndConjureDuplicateIntoHandEffect`), or a `Step` for Grizzled Huntmaster's four steps
+  (choose the hand card, exile the same-named cards, choose the outside card, conjure). The effect's own handler builds
+  that step; no choice handler does.
+- `MayPutSelectedCardOntoBattlefieldEffect`'s held-out library card (in no zone until "put it onto the battlefield?"
+  is answered) rides from the entry's chosen card into the may ability: `PendingMayAbility.heldCard` (new component,
+  `withHeldCard`), read by the may handler.
+- Hinterland Chef's draft follow-up is the existing `PerpetuallyGrantChosenCardCharacteristicsEffect` (by script);
+  `PerpetuallyGrantCardCharacteristicsEffect` lost its `cardId` and grants only to the source's own card.
+- `StackEntry.acceptedPlayerIds` (new): the players who said yes to the resolution's "each player may", set by
+  `EachPlayerMayDiscardHandThenDrawEffectHandler` before its follow-up; `SELECTED_OPPONENTS` reads it.
+  `DealDamageToPlayersEffect` lost `selectedPlayerIds`, `withSelectedPlayerIds` and `withAcceptedPlayerIds`.
+- `StackEntry.producedManaColors` (a set, replacing the single `producedManaColor`) and
+  `StackEntry.awaitingProducedManaColor` (new): every mana-tap ability parked in `pendingManaAbilityTriggers` until an
+  any-color choice settles the color is marked, and `ChoiceHandlerService` resolves the marked ones. C.A.M.P.'s parked
+  entry carries its target filter, which tells `queueResolvedProducedManaTriggerTarget` to choose its target instead of
+  resolving it; its target choice carries the colors (`SpellTargetTriggerAnyTarget.producedManaColors`, new component,
+  `withProducedManaColors`) into the entry it builds, in all three places that build one.
+- The copy constructor shares the new entry state (immutable), so simulation copies have it.
+
+**Gone.** `ChosenCardAwareEffect`, `AcceptedPlayersAwareEffect`, `ProducedManaColorAwareEffect`, every
+`withChosenCard` / `withAcceptedPlayerIds` / `withProducedManaColors` on an effect, the bound components (`cardId`,
+`card`, `chosenCard`, `cardName`, `conjureSourceCard`, `selectedPlayerIds`, `producedManaColors`) and
+`LibraryChoiceHandlerService.withChosenCard`.
+
+**Split: run 13b, `GrantingPermanentAwareEffect`.** Its 6 implementers (`MayEffect`, which forwards,
+`TransformGrantingPermanentEffect`, `SacrificePermanentThenEffect`'s granting-permanent modes,
+`SacrificeGrantingEquipmentThenEffect`, `CreateTokenWithAttachedCountCountersEffect`, `BecomePreparedEffect`; 7 cards:
+Optimus Prime, Autobot Leader, Stensian Sanguinist, Trickster's Talisman, Spare Dagger, Sunfire Torch, Dire
+Blunderbuss, Animal Friend) are bound in three places: `GrantedTriggeredAbilitySupport.grantedTriggeredAbilities`
+for an Aura's or Equipment's grant, and `GrantEffectToTargetUntilEndOfCombatEffectHandler` /
+`GrantEffectToChosenCreatureUntilEndOfTurnEffectHandler` at grant time. Unlike this run's bindings, no choice carries
+the granting permanent to the stack: the first is a reader behind 76 collector call sites, and the attack and combat
+damage collectors that put these abilities on the stack flatten them into bare effects (`CombatAbilityReader.effectsOf`)
+before they build entries. Moving it needs the granted `TriggeredAbility` to name the permanent that granted it and the
+entries built from it to carry that (`StackEntry`), through the attack and combat-damage-to-a-player collectors at
+least, with a guard so a granted ability another collector puts on the stack fails loudly instead of losing its
+granting permanent. That is its own run.
+
+**Behaviour changes.** None. Two edge cases keep their old behaviour: an exile-from-hand choice with a follow-up exiles
+one card (every such effect asks for one), and the may-put fallback to the hand's last card is kept though every
+current card reaches it through a library search.
+
+**For later runs.** `GrantingPermanentAwareEffect` (13b), then runs 14 to 17 as planned.
+
+**Scripts.**
+
+- `scripts/step15-chosen-card-cards.py` (idempotent, per letter module): Hinterland Chef.
+- `scripts/step15-chosen-card-docs.py` (idempotent): exact edits in `ORACLE_TEXT_EFFECT_MAP.md` (Hinterland Chef),
+  `EFFECTS_INDEX.md` (the two perpetual grants, `PutChosenCardFromHandOntoBattlefieldEffect`, the discard-and-draw
+  follow-up, `selectedOpponents`, `HoldDraftedSpellbookCardEffect`), `EFFECTS_QUICK_REFERENCE.md` (the two perpetual
+  grants, the discard-and-draw follow-up, `selectedOpponents`) and `CARD_PATTERN_INDEX.md` (Hinterland Chef).
+
+The records, handlers, choice handlers, collectors, `StackEntry`, `PendingMayAbility`, `PermanentChoiceContext` and a
+paragraph in `ARCHITECTURE.md` were edited by hand. The skills didn't name these classes.
+
+**Tests changed.**
+
+- `LibraryChoiceHandlerServiceTest#selectedCardAwareFollowUpReceivesTheChosenCard` is now
+  `selectedCardFollowUpIsInsertedUnchangedWithTheChosenCardOnTheEntry`: it asserted the follow-up bound with the card;
+  it now asserts the follow-up inserted unchanged and the card as the entry's chosen card.
+- New: `LandTapTriggerCollectorServiceTest#campTriggerParkedForTheManaColorTakesTheChosenColorIntoItsTargetChoice` and
+  `DealDamageToPlayersEffectHandlerTest#selectedOpponentsTakeNoDamageWhenNoPlayerAccepted`;
+  `LandTapTriggerCollectorServiceTest#waitsForTheLandsManaColorChoice` also asserts the parked entry is marked. A
+  positive "damages the accepted opponents" unit case was dropped: `DealDamageToPlayersEffectHandlerTest` can't deal
+  damage at HEAD (13 of its 15 cases fail on a null `DamageJournalService` in its mock wiring), so Snort's card test
+  (`damagesOnlyAcceptingOpponents`) covers it through the engine.
+
+**Test runs.**
+
+- Card: the test class of every card that constructs a changed class, a spellbook draft or conjure, a library-search
+  follow-up, a seek, a `DealDamageToPlayersEffect`, an "each player may" discard or shuffle, a hand-choice follow-up, an
+  outside-the-game choice or a tap-for-mana trigger: 765 test classes (768 result files), 5,965 cases, all passing (1
+  skipped).
+- Application: `LibraryChoiceHandlerServiceTest`, `LandTapTriggerCollectorServiceTest`,
+  `DealDamageToPlayersEffectHandlerTest`, `CardFreezeTest`, `SimulationCopyCompletenessTest`, `GameDataDeepCopyTest`,
+  `TriggerCollectorRegistryTest`, `CardEffectTargetingConsistencyTest`, every `…RatchetTest` and the architecture
+  tests. The failures are HEAD's: `DealDamageToPlayersEffectHandlerTest` 13 (rerun at HEAD with the change stashed: the
+  same 13 of 15), `LandTapTriggerCollectorServiceTest` 2 (the known pair), and 1 each in
+  `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest`, `CardEffectTargetingConsistencyTest` and
+  `CostEffectClassificationTest`. The new and changed cases pass.
+- Engine: the whole module. The one failure is the known HEAD one, `GameMutationBoundaryRatchetTest`.
+- AI: compiles (`compileJava`, `compileTestJava`).
 - The full suite was not run here.
 
 ## Prompt

@@ -9,14 +9,16 @@ import java.util.UUID;
  * Each player may discard their hand and then draw the evaluated number of cards.
  *
  * <p>The player choices are carried in active-player-first order so all choices are made before
- * any accepted player's hand changes.
+ * any accepted player's hand changes. {@code acceptedPlayersFollowUp} ("then ... each opponent who discarded
+ * their hand this way") resolves after the draws and reads the players who said yes from the stack entry
+ * ({@code StackEntry.getAcceptedPlayerIds()}).
  */
 public record EachPlayerMayDiscardHandThenDrawEffect(
         DynamicAmount cardsToDraw,
         UUID sourceControllerId,
         List<UUID> remainingPlayerIds,
         List<UUID> acceptedPlayerIds,
-        AcceptedPlayersAwareEffect acceptedPlayersFollowUp
+        CardEffect acceptedPlayersFollowUp
 ) implements CardEffect {
 
     public EachPlayerMayDiscardHandThenDrawEffect(int cardsToDraw) {
@@ -28,12 +30,12 @@ public record EachPlayerMayDiscardHandThenDrawEffect(
     }
 
     public EachPlayerMayDiscardHandThenDrawEffect(int cardsToDraw,
-                                                   AcceptedPlayersAwareEffect acceptedPlayersFollowUp) {
+                                                   CardEffect acceptedPlayersFollowUp) {
         this(new Fixed(cardsToDraw), null, List.of(), List.of(), acceptedPlayersFollowUp);
     }
 
     public EachPlayerMayDiscardHandThenDrawEffect(DynamicAmount cardsToDraw,
-                                                   AcceptedPlayersAwareEffect acceptedPlayersFollowUp) {
+                                                   CardEffect acceptedPlayersFollowUp) {
         this(cardsToDraw, null, List.of(), List.of(), acceptedPlayersFollowUp);
     }
 

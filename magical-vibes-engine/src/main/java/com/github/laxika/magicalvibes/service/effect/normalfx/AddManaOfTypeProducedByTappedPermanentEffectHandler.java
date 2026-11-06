@@ -26,10 +26,10 @@ public class AddManaOfTypeProducedByTappedPermanentEffectHandler implements Norm
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        ManaColor manaColor = entry.getProducedManaColor();
-        if (manaColor == null) {
+        if (entry.getProducedManaColors().size() != 1) {
             return;
         }
+        ManaColor manaColor = entry.getProducedManaColors().iterator().next();
 
         AddManaOfTypeProducedByTappedPermanentEffect trigger =
                 (AddManaOfTypeProducedByTappedPermanentEffect) effect;

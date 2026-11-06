@@ -107,6 +107,7 @@ public class ManaTapTriggerCollectorService {
                     null,
                     match.permanent().getId());
             entry.setNonTargeting(true);
+            entry.setAwaitingProducedManaColor(true);
             match.gameData().pendingManaAbilityTriggers.add(entry);
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
             return true;
@@ -178,6 +179,7 @@ public class ManaTapTriggerCollectorService {
             if (match.sourcePlanarObject() != null) {
                 entry.setSourcePlanarObject(match.sourcePlanarObject().copy());
             }
+            entry.setAwaitingProducedManaColor(true);
             match.gameData().pendingManaAbilityTriggers.add(entry);
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
             return true;

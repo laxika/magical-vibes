@@ -1,25 +1,15 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.Card;
-
 import java.util.Objects;
-import java.util.UUID;
 
-/** Perpetually grants a card any-color casting permission and an ability that triggers when it is cast. */
-public record PerpetuallyGrantAnyColorManaAndSelfCastAbilityToCardEffect(
-        UUID cardId, CardEffect selfCastAbility) implements CardEffect, ChosenCardAwareEffect {
-
-    public PerpetuallyGrantAnyColorManaAndSelfCastAbilityToCardEffect(CardEffect selfCastAbility) {
-        this(null, selfCastAbility);
-    }
+/**
+ * Perpetually grants the card a preceding choice selected (the stack entry's chosen card,
+ * {@code StackEntry.getChosenObjectCard()}) any-color casting permission and an ability that triggers when it is cast.
+ */
+public record PerpetuallyGrantAnyColorManaAndSelfCastAbilityToCardEffect(CardEffect selfCastAbility)
+        implements CardEffect {
 
     public PerpetuallyGrantAnyColorManaAndSelfCastAbilityToCardEffect {
         Objects.requireNonNull(selfCastAbility, "selfCastAbility");
-    }
-
-    @Override
-    public CardEffect withChosenCard(Card card) {
-        return new PerpetuallyGrantAnyColorManaAndSelfCastAbilityToCardEffect(
-                card.getId(), selfCastAbility);
     }
 }

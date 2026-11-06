@@ -28,7 +28,6 @@ import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedB
 import com.github.laxika.magicalvibes.model.effect.AddManaForEachOtherLandWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.AddProducedManaWhenLandOfSubtypeTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.AddProducedManaWhenSnowLandTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.ProducedManaColorAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetCreatureAndCreateTokenIfSharesManaColorEffect;
 import com.github.laxika.magicalvibes.model.effect.IntensifySourceCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -155,6 +154,7 @@ public class LandTapTriggerCollectorService {
         if (landTap.producedColors().isEmpty()
                 && match.gameData().interaction.activeInteraction() instanceof PendingInteraction.ColorChoice) {
             entry.getEffectsToResolve().addFirst(new AddManaOfTypeProducedByTappedPermanentEffect());
+            entry.setAwaitingProducedManaColor(true);
             match.gameData().pendingManaAbilityTriggers.add(entry);
             return true;
         }
@@ -403,6 +403,8 @@ public class LandTapTriggerCollectorService {
                     null,
                     source.getId());
             entry.setSourcePermanentSnapshot(new Permanent(source));
+            entry.setTargetFilter(TargetFilters.creatureYouControl());
+            entry.setAwaitingProducedManaColor(true);
             match.gameData().pendingManaAbilityTriggers.add(entry);
             return true;
         }
@@ -412,36 +414,45 @@ public class LandTapTriggerCollectorService {
         }
 
         queueCampTargetChoice(match.gameData(), source.getCard(), match.controllerId(),
-                source.getId(), new Permanent(source), trigger.withProducedManaColors(lt.producedColors()));
+                source.getId(), new Permanent(source), trigger, lt.producedColors());
         return true;
     }
 
-    /** Completes a C.A.M.P. trigger parked while an any-color mana choice was pending. */
+    /**
+     * Completes an ability parked while an any-color mana choice was pending whose target is still to be chosen
+     * (C.A.M.P., parked with its target filter): its target is chosen as it goes on the stack, with {@code manaColor}
+     * as the mana the tap produced.
+     */
     public boolean queueResolvedProducedManaTriggerTarget(GameData gameData, StackEntry entry,
             ManaColor manaColor) {
-        for (CardEffect effect : entry.getEffectsToResolve()) {
-            if (effect instanceof ProducedManaColorAwareEffect colorAware
-                    && colorAware.requiresTargetChoiceAfterProducedMana()) {
-                queueCampTargetChoice(gameData, entry.getCard(), entry.getControllerId(),
-                        entry.getSourcePermanentId(), entry.getSourcePermanentSnapshot(),
-                        colorAware.withProducedManaColors(Set.of(manaColor)));
-                return true;
-            }
+        if (entry.getTargetFilter() == null) {
+            return false;
         }
-        return false;
+        queueCampTargetChoice(gameData, entry.getCard(), entry.getControllerId(),
+                entry.getSourcePermanentId(), entry.getSourcePermanentSnapshot(),
+                List.copyOf(entry.getEffectsToResolve()), Set.of(manaColor));
+        return true;
     }
 
     private void queueCampTargetChoice(GameData gameData, Card sourceCard, UUID controllerId,
-            UUID sourcePermanentId, Permanent sourcePermanentSnapshot, CardEffect effect) {
+            UUID sourcePermanentId, Permanent sourcePermanentSnapshot, CardEffect effect,
+            Set<ManaColor> producedManaColors) {
+        queueCampTargetChoice(gameData, sourceCard, controllerId, sourcePermanentId, sourcePermanentSnapshot,
+                List.of(effect), producedManaColors);
+    }
+
+    private void queueCampTargetChoice(GameData gameData, Card sourceCard, UUID controllerId,
+            UUID sourcePermanentId, Permanent sourcePermanentSnapshot, List<CardEffect> effects,
+            Set<ManaColor> producedManaColors) {
         gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 sourceCard,
                 controllerId,
-                List.of(effect),
+                effects,
                 false,
                 TargetFilters.creatureYouControl(),
                 0,
                 sourcePermanentId,
-                sourcePermanentSnapshot));
+                sourcePermanentSnapshot).withProducedManaColors(producedManaColors));
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         if (!gameData.interaction.isAwaitingInput()) {
             triggerCollectionServiceProvider.getObject().processNextSpellTargetTrigger(gameData);
@@ -518,6 +529,7 @@ public class LandTapTriggerCollectorService {
                     new ArrayList<>(List.of(new AddManaOfTypeProducedByTappedPermanentEffect())),
                     null, match.permanent() == null ? null : match.permanent().getId());
             entry.setNonTargeting(true);
+            entry.setAwaitingProducedManaColor(true);
             match.gameData().pendingManaAbilityTriggers.add(entry);
             return true;
         }
@@ -589,6 +601,7 @@ public class LandTapTriggerCollectorService {
                     match.permanent().getCard().getName() + "'s mana ability",
                     deferredMana, null, match.permanent().getId());
             deferred.setNonTargeting(true);
+            deferred.setAwaitingProducedManaColor(true);
             gameData.pendingManaAbilityTriggers.add(deferred);
             return true;
         }
@@ -674,6 +687,7 @@ public class LandTapTriggerCollectorService {
                     null,
                     match.permanent().getId());
             entry.setNonTargeting(true);
+            entry.setAwaitingProducedManaColor(true);
             match.gameData().pendingManaAbilityTriggers.add(entry);
             return true;
         }
@@ -714,6 +728,7 @@ public class LandTapTriggerCollectorService {
                     null,
                     match.permanent().getId());
             entry.setNonTargeting(true);
+            entry.setAwaitingProducedManaColor(true);
             match.gameData().pendingManaAbilityTriggers.add(entry);
             return true;
         }

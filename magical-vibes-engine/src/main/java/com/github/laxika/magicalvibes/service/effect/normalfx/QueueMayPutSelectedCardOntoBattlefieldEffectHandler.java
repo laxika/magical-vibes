@@ -4,10 +4,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.MayPutSelectedCardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -27,12 +28,15 @@ public class QueueMayPutSelectedCardOntoBattlefieldEffectHandler implements Norm
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         MayPutSelectedCardOntoBattlefieldEffect typed = (MayPutSelectedCardOntoBattlefieldEffect) effect;
+        // A library search's selected card is held out of every zone for this decision (the stack entry's chosen
+        // card); otherwise the selected card is the one the preceding effect put into the hand.
+        Card heldCard = entry.getChosenObjectCard();
         List<Card> hand = gameData.playerHands.get(entry.getControllerId());
-        if (typed.chosenCard() == null && (hand == null || hand.isEmpty())) {
+        if (heldCard == null && (hand == null || hand.isEmpty())) {
             return;
         }
 
-        Card selectedCard = typed.chosenCard() != null ? typed.chosenCard() : hand.getLast();
+        Card selectedCard = heldCard != null ? heldCard : hand.getLast();
         if (!predicateEvaluationService.matchesCardPredicate(
                 selectedCard, typed.predicate(), entry.getCard().getId(), gameData, entry.getControllerId())
                 || selectedCard.getManaValue() > typed.manaValueAtMost()) {
@@ -43,14 +47,21 @@ public class QueueMayPutSelectedCardOntoBattlefieldEffectHandler implements Norm
                 ? "Put the revealed card onto the battlefield tapped?"
                 : "Put the revealed card onto the battlefield?";
 
-        gameData.queueMayAbilityForPlayer(
+        gameData.pendingMayAbilities.add(new PendingMayAbility(
                 entry.getCard(),
                 entry.getControllerId(),
-                new MayEffect(typed, destination),
+                new ArrayList<>(List.of(typed)),
+                entry.getCard().getName() + " - " + destination,
                 selectedCard.getId(),
+                null,
                 entry.getSourcePermanentId(),
+                null,
+                0,
+                0,
+                null,
+                null,
                 entry.getControllerId(),
-                entry.getSourcePermanentSnapshot());
+                entry.getSourcePermanentSnapshot()).withHeldCard(heldCard));
         playerInputService.processNextMayAbility(gameData);
     }
 }

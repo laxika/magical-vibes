@@ -6,7 +6,10 @@ public enum DamageRecipient {
     TARGET_PLAYER,
     /** Every opponent of the effect's controller. */
     EACH_OPPONENT,
-    /** The opponents in the effect's resolution-time player-id selection. */
+    /**
+     * The opponents who said yes to the preceding "each player may" choice of this resolution (the stack entry's
+     * accepted players).
+     */
     SELECTED_OPPONENTS,
     /** Every opponent of the effect's controller except the player recorded on the stack entry. */
     EACH_OTHER_OPPONENT,

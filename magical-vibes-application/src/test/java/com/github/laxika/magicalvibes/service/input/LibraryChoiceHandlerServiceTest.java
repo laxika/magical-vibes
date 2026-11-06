@@ -981,7 +981,7 @@ class LibraryChoiceHandlerServiceTest {
         }
 
         @Test
-        void selectedCardAwareFollowUpReceivesTheChosenCard() {
+        void selectedCardFollowUpIsInsertedUnchangedWithTheChosenCardOnTheEntry() {
             Card found = createCard("Found", CardType.CREATURE);
             gd.playerDecks.get(player1Id).add(found);
             gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(
@@ -989,7 +989,7 @@ class LibraryChoiceHandlerServiceTest {
                             .canFailToFind(true)
                             .destination(LibrarySearchDestination.HAND)
                             .followUp(LibrarySearchFollowUp.forSelectedCard(new CardTypePredicate(CardType.CREATURE),
-                                    new ExileCardFromHandAndBecomeForetoldEffect()))
+                                    ExileCardFromHandAndBecomeForetoldEffect.afterChoice()))
                             .build(), "Choose a card", true));
             StackEntry paused = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Source"),
                     player1Id, "Source", List.of());
@@ -1003,7 +1003,8 @@ class LibraryChoiceHandlerServiceTest {
 
             assertThat(gd.playerHands.get(player1Id)).containsExactly(found);
             assertThat(paused.getEffectsToResolve())
-                    .containsExactly(new ExileCardFromHandAndBecomeForetoldEffect(found));
+                    .containsExactly(ExileCardFromHandAndBecomeForetoldEffect.afterChoice());
+            assertThat(paused.getChosenObjectCard()).isSameAs(found);
         }
     }
 

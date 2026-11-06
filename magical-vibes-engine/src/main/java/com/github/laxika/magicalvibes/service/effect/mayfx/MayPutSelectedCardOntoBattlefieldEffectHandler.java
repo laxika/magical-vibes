@@ -40,12 +40,12 @@ public class MayPutSelectedCardOntoBattlefieldEffectHandler implements MayEffect
                 .orElse(null);
         if (accepted && effect != null) {
             List<Card> hand = gameData.playerHands.get(player.getId());
-            Card selectedCard = effect.chosenCard() != null ? effect.chosenCard() : hand == null ? null : hand.stream()
+            Card selectedCard = ability.heldCard() != null ? ability.heldCard() : hand == null ? null : hand.stream()
                     .filter(card -> card.getId().equals(ability.targetCardId()))
                     .findFirst()
                     .orElse(null);
             if (selectedCard != null) {
-                if (effect.chosenCard() == null) {
+                if (ability.heldCard() == null) {
                     hand.remove(selectedCard);
                 }
                 Permanent permanent = new Permanent(selectedCard, Zone.LIBRARY);
@@ -73,8 +73,8 @@ public class MayPutSelectedCardOntoBattlefieldEffectHandler implements MayEffect
             }
         }
 
-        if (!accepted && effect != null && effect.chosenCard() != null) {
-            gameData.addCardToHand(player.getId(), effect.chosenCard());
+        if (!accepted && effect != null && ability.heldCard() != null) {
+            gameData.addCardToHand(player.getId(), ability.heldCard());
         }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

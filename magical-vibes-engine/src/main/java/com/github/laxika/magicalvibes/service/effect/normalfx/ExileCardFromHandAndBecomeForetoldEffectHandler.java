@@ -33,7 +33,7 @@ public class ExileCardFromHandAndBecomeForetoldEffectHandler implements NormalEf
         var e = (ExileCardFromHandAndBecomeForetoldEffect) effect;
         UUID controllerId = entry.getControllerId();
 
-        if (e.chosenCard() == null) {
+        if (!e.cardChosen()) {
             List<Card> hand = gameData.playerHands.get(controllerId);
             if (hand == null || hand.isEmpty()) {
                 gameLogService.append(gameData, GameLog.text(
@@ -43,11 +43,15 @@ public class ExileCardFromHandAndBecomeForetoldEffectHandler implements NormalEf
 
             playerInputService.beginExileFromHandChoice(
                     gameData, controllerId, null, null, 1, List.of(), 0,
-                    true, false, null, false, null, 0, false, e);
+                    true, false, null, false, null, 0, false,
+                    ExileCardFromHandAndBecomeForetoldEffect.afterChoice());
             return;
         }
 
-        Card card = e.chosenCard();
+        Card card = entry.getChosenObjectCard();
+        if (card == null) {
+            return;
+        }
         ManaCost foretellCost = card.getParsedManaCost() == null
                 ? null : card.getParsedManaCost().reducedBy(new ManaCost("{2}"));
         if (!gameData.markExiledCardAsForetold(card.getId(), controllerId, foretellCost)) {

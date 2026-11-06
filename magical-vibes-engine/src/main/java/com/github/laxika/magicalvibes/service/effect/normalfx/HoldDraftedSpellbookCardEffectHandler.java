@@ -16,9 +16,8 @@ public class HoldDraftedSpellbookCardEffectHandler implements NormalEffectHandle
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var hold = (HoldDraftedSpellbookCardEffect) effect;
-        if (hold.card() != null) {
-            gameData.heldSpellbookCards.add(hold.card());
+        if (entry.getChosenObjectCard() != null) {
+            gameData.heldSpellbookCards.add(entry.getChosenObjectCard());
         }
     }
 }

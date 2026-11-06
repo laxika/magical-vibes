@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.BeholdEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ChosenCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileArtifactThenSeekArtifactAndPerpetuallyBecomeCreatureEffect;
@@ -5079,7 +5078,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                boolean faceDown, boolean returnOnSourceLeave,
                                UUID untapPermanentId, boolean playPermissionToChooser,
                                UUID playPermissionTaxSourceControllerId, int exilePlayOpponentTax,
-                               boolean landsEnterTapped, ChosenCardAwareEffect chosenCardThenEffect,
+                               boolean landsEnterTapped, CardEffect chosenCardThenEffect,
                                int exiledCount)
             implements PendingInteraction, HandChoice {
 
@@ -5117,7 +5116,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                    boolean faceDown, boolean returnOnSourceLeave,
                                    UUID untapPermanentId, boolean playPermissionToChooser,
                                    UUID playPermissionTaxSourceControllerId, int exilePlayOpponentTax,
-                                   boolean landsEnterTapped, ChosenCardAwareEffect chosenCardThenEffect) {
+                                   boolean landsEnterTapped, CardEffect chosenCardThenEffect) {
             this(playerId, validIndices, sourcePermanentId, playPermissionControllerId, remainingCount,
                     prompt, remainingChoosers, cardsPerPlayer, faceDown, returnOnSourceLeave,
                     untapPermanentId, playPermissionToChooser, playPermissionTaxSourceControllerId,

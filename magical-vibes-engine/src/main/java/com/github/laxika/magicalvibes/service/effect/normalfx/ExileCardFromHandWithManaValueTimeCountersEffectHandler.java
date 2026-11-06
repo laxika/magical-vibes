@@ -35,15 +35,18 @@ public class ExileCardFromHandWithManaValueTimeCountersEffectHandler implements 
                 (ExileCardFromHandWithManaValueTimeCountersEffect) effect;
         UUID controllerId = entry.getControllerId();
 
-        if (alaundoEffect.chosenCard() == null) {
+        if (!alaundoEffect.cardChosen()) {
             List<com.github.laxika.magicalvibes.model.Card> hand = gameData.playerHands.get(controllerId);
             if (hand != null && !hand.isEmpty()) {
-                playerInputService.beginExileFromHandChoice(gameData, controllerId, alaundoEffect);
+                playerInputService.beginExileFromHandChoice(gameData, controllerId, alaundoEffect.afterChoice());
             }
             return;
         }
 
-        UUID chosenCardId = alaundoEffect.chosenCard().getId();
+        if (entry.getChosenObjectCard() == null) {
+            return;
+        }
+        UUID chosenCardId = entry.getChosenObjectCard().getId();
         ExiledCardEntry chosenEntry = gameData.findExiledCard(chosenCardId);
         if (chosenEntry == null || !controllerId.equals(chosenEntry.ownerId())) {
             return;

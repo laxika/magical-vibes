@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.AcceptedPlayersAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayDiscardHandThenDrawEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -64,7 +63,7 @@ public class EachPlayerMayDiscardHandThenDrawEffectHandler implements NormalEffe
     public void resolveAcceptedPlayers(GameData gameData, StackEntry entry, Card sourceCard,
                                        UUID sourceControllerId, List<UUID> acceptedPlayerIds,
                                        DynamicAmount cardsToDraw,
-                                       AcceptedPlayersAwareEffect followUp) {
+                                       CardEffect followUp) {
         Permanent source = sourcePermanent(gameData, entry);
 
         for (UUID playerId : acceptedPlayerIds) {
@@ -77,9 +76,9 @@ public class EachPlayerMayDiscardHandThenDrawEffectHandler implements NormalEffe
         }
 
         if (followUp != null && gameData.pendingEffectResolutionEntry != null) {
+            gameData.pendingEffectResolutionEntry.setAcceptedPlayerIds(acceptedPlayerIds);
             gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
-                    gameData.pendingEffectResolutionIndex,
-                    List.of(followUp.withAcceptedPlayerIds(acceptedPlayerIds)));
+                    gameData.pendingEffectResolutionIndex, List.of(followUp));
         }
     }
 

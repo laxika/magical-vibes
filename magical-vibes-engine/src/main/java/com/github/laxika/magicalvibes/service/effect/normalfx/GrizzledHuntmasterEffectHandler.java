@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrizzledHuntmasterEffect;
+import com.github.laxika.magicalvibes.model.effect.GrizzledHuntmasterEffect.Step;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.OutsideGameCards;
@@ -38,33 +39,35 @@ public class GrizzledHuntmasterEffectHandler implements NormalEffectHandlerBean 
         GrizzledHuntmasterEffect huntmaster = (GrizzledHuntmasterEffect) effect;
         UUID controllerId = entry.getControllerId();
 
-        if (huntmaster.conjureSourceCard() != null) {
-            conjureCopies(gameData, controllerId, huntmaster.conjureSourceCard(), huntmaster.handExiledCount());
-            return;
-        }
-
-        if (huntmaster.cardName() == null) {
-            beginInitialHandChoice(gameData, entry, huntmaster);
-            return;
-        }
-
-        if (!huntmaster.sameNameCardsExiled()) {
-            List<Card> matchingCards = matchingCards(gameData, controllerId, huntmaster.cardName());
-            if (!matchingCards.isEmpty()) {
-                playerInputService.beginMultiZoneExileChoice(
-                        gameData, controllerId, matchingCards, controllerId, huntmaster.cardName(), false,
-                        new GrizzledHuntmasterEffect(huntmaster.cardName(), huntmaster.handExiledCount(), true, null));
-                return;
+        switch (huntmaster.step()) {
+            case CHOOSE_HAND_CARD -> beginInitialHandChoice(gameData, entry);
+            case HAND_CARD_CHOSEN -> {
+                if (entry.getChosenObjectCard() == null) {
+                    return;
+                }
+                String cardName = entry.getChosenObjectCard().getName();
+                List<Card> matchingCards = matchingCards(gameData, controllerId, cardName);
+                if (!matchingCards.isEmpty()) {
+                    playerInputService.beginMultiZoneExileChoice(
+                            gameData, controllerId, matchingCards, controllerId, cardName, false,
+                            new GrizzledHuntmasterEffect(Step.SAME_NAME_CARDS_EXILED, cardName, 1));
+                    return;
+                }
+                LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+                beginOutsideGameChoice(gameData, controllerId, 1, cardName);
             }
-            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            case SAME_NAME_CARDS_EXILED -> beginOutsideGameChoice(gameData, controllerId,
+                    huntmaster.handExiledCount() + entry.getEventValue(), huntmaster.cardName());
+            case CONJURE -> {
+                if (entry.getChosenObjectCard() != null) {
+                    conjureCopies(gameData, controllerId, entry.getChosenObjectCard(),
+                            huntmaster.handExiledCount());
+                }
+            }
         }
-
-        beginOutsideGameChoice(gameData, controllerId,
-                huntmaster.handExiledCount() + (huntmaster.sameNameCardsExiled() ? entry.getEventValue() : 0),
-                huntmaster.cardName());
     }
 
-    private void beginInitialHandChoice(GameData gameData, StackEntry entry, GrizzledHuntmasterEffect effect) {
+    private void beginInitialHandChoice(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
         UUID originalTargetId = entry.getTargetId();
         entry.setTargetId(controllerId);
@@ -72,7 +75,8 @@ public class GrizzledHuntmasterEffectHandler implements NormalEffectHandlerBean 
             playerInteractionSupport.resolveHandRevealAndChooseWithChosenCardThen(
                     gameData, entry, 1, List.of(), List.of(CardType.CREATURE), null,
                     false, true, null, true, false, 0, false,
-                    false, false, false, 0, null, effect);
+                    false, false, false, 0, null,
+                    new GrizzledHuntmasterEffect(Step.HAND_CARD_CHOSEN, null, 0));
         } finally {
             entry.setTargetId(originalTargetId);
         }
@@ -92,7 +96,7 @@ public class GrizzledHuntmasterEffectHandler implements NormalEffectHandlerBean 
         playerInputService.beginOutsideGameCardChoice(
                 gameData, controllerId, creatureCards, new CardTypePredicate(CardType.CREATURE),
                 "creature card", true, true,
-                new GrizzledHuntmasterEffect(cardName, conjureCount, true, null));
+                new GrizzledHuntmasterEffect(Step.CONJURE, cardName, conjureCount));
     }
 
     private List<Card> matchingCards(GameData gameData, UUID controllerId, String cardName) {

@@ -35,19 +35,14 @@ public class PerpetuallyGrantCardCharacteristicsEffectHandler implements NormalE
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         PerpetuallyGrantCardCharacteristicsEffect perpetual =
                 (PerpetuallyGrantCardCharacteristicsEffect) effect;
-        Permanent source = perpetual.cardId() == null && entry.getSourcePermanentId() != null
+        Permanent source = entry.getSourcePermanentId() != null
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) : null;
-        UUID cardId;
-        if (perpetual.cardId() != null) {
-            cardId = perpetual.cardId();
-        } else {
-            Card card = source == null || source.getOriginalCard() == null
-                    ? entry.getCard() : source.getOriginalCard();
-            if (card == null) {
-                return;
-            }
-            cardId = card.getId();
+        Card card = source == null || source.getOriginalCard() == null
+                ? entry.getCard() : source.getOriginalCard();
+        if (card == null) {
+            return;
         }
+        UUID cardId = card.getId();
 
         mergeCardTypes(gameData, cardId, perpetual.cardTypes());
         if (perpetual.replacesCreatureTypes()) {

@@ -201,7 +201,7 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
         if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;
 
         UUID controllerId = entry.getControllerId();
-        for (UUID playerId : e.selectedPlayerIds()) {
+        for (UUID playerId : entry.getAcceptedPlayerIds()) {
             if (!gameData.playerIds.contains(playerId) || playerId.equals(controllerId)) continue;
             int amount = evaluateAmount(gameData, entry, e, controllerId);
             int damage = amount;

@@ -1909,6 +1909,7 @@ public class TriggeredAbilityQueueService {
         entry.setTriggeringPermanentId(pending.triggeringPermanentId());
         entry.setSourcePermanentSnapshot(pending.sourcePermanentSnapshot());
         entry.setTriggeringPermanent(pending.departedPermanent());
+        entry.setProducedManaColors(pending.producedManaColors());
         if (pending.targetFilter() != null) {
             entry.setTargetFilter(pending.targetFilter());
         }
@@ -2104,6 +2105,7 @@ public class TriggeredAbilityQueueService {
         entry.setSourcePermanentSnapshot(pending.sourcePermanentSnapshot());
         entry.setSourcePlanarObject(pending.planarSource());
         entry.setTriggeringPermanent(pending.departedPermanent());
+        entry.setProducedManaColors(pending.producedManaColors());
         gameData.stack.add(entry);
     }
 

@@ -56,7 +56,6 @@ import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUp
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ChosenCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardInGraveyardUntilEndOfTurnEffect;
@@ -2394,18 +2393,6 @@ public class LibraryChoiceHandlerService {
         return effect instanceof com.github.laxika.magicalvibes.model.effect.MayPutSelectedCardOntoBattlefieldEffect;
     }
 
-    private static CardEffect withChosenCard(CardEffect effect, Card chosenCard) {
-        if (effect instanceof ChosenCardAwareEffect aware) {
-            return aware.withChosenCard(chosenCard);
-        }
-        if (effect instanceof com.github.laxika.magicalvibes.model.effect.ConditionalEffect conditional
-                && conditional.wrapped() instanceof ChosenCardAwareEffect aware) {
-            return new com.github.laxika.magicalvibes.model.effect.ConditionalEffect(conditional.condition(),
-                    aware.withChosenCard(chosenCard));
-        }
-        return effect;
-    }
-
     private void insertSelectedCardFollowUp(GameData gameData, LibrarySearchFollowUp followUp,
             Card chosenCard, UUID playerId) {
         LibrarySearchFollowUp.SelectedCardFollowUp selectedCardFollowUp = followUp.selectedCardFollowUp();
@@ -2419,11 +2406,9 @@ public class LibraryChoiceHandlerService {
                 gameData.pendingEffectResolutionEntry.setEventValue(chosenCard.getManaValue());
             }
             gameData.pendingEffectResolutionEntry.setChosenObjectCard(chosenCard);
-            CardEffect followUpEffect = selectedCardFollowUp.effect();
-            followUpEffect = withChosenCard(followUpEffect, chosenCard);
             gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
                     gameData.pendingEffectResolutionIndex,
-                    List.of(followUpEffect));
+                    List.of(selectedCardFollowUp.effect()));
         }
     }
 

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ChosenCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.HoldDraftedSpellbookCardEffect;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -83,12 +82,9 @@ public class SpellbookDraftChoiceInteractionHandler
         }
         if (!interaction.chosenCardEffects().isEmpty()
                 && gameData.pendingEffectResolutionEntry != null) {
-            List<CardEffect> followUpEffects = interaction.chosenCardEffects().stream()
-                    .map(effect -> effect instanceof ChosenCardAwareEffect chosenCardAwareEffect
-                            ? chosenCardAwareEffect.withChosenCard(chosen) : effect)
-                    .toList();
+            gameData.pendingEffectResolutionEntry.setChosenObjectCard(chosen);
             gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
-                    gameData.pendingEffectResolutionIndex, followUpEffects);
+                    gameData.pendingEffectResolutionIndex, interaction.chosenCardEffects());
         }
         String destination = interaction.putChosenCardOntoBattlefield()
                 ? " onto the battlefield" : interaction.exileChosenCard() ? " into exile" : "";

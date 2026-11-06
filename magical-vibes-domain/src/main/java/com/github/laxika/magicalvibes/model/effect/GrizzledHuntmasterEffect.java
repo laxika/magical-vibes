@@ -1,23 +1,30 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.Card;
+/**
+ * Resolves Grizzled Huntmaster's optional hand exile, same-name exile, and conjure sequence, one {@link Step} at a
+ * time. Each choice's follow-up is the next step; the steps after a card choice read that card from the stack entry
+ * ({@code StackEntry.getChosenObjectCard()}), and the step after the same-name exile reads how many cards it exiled
+ * from the entry's event value.
+ *
+ * @param step            the step to resolve
+ * @param cardName        the name of the creature card exiled from hand (from {@link Step#SAME_NAME_CARDS_EXILED})
+ * @param handExiledCount the number of copies to conjure, once known
+ */
+public record GrizzledHuntmasterEffect(Step step, String cardName, int handExiledCount) implements CardEffect {
 
-/** Resolves Grizzled Huntmaster's optional hand exile, same-name exile, and conjure sequence. */
-public record GrizzledHuntmasterEffect(
-        String cardName,
-        int handExiledCount,
-        boolean sameNameCardsExiled,
-        Card conjureSourceCard) implements CardEffect, ChosenCardAwareEffect {
-
-    public GrizzledHuntmasterEffect() {
-        this(null, 0, false, null);
+    /** The steps of the ability, each the follow-up of the choice before it. */
+    public enum Step {
+        /** Reveal the hand and choose a creature card to exile. */
+        CHOOSE_HAND_CARD,
+        /** The creature card was exiled from hand: exile its same-named cards from hand and library. */
+        HAND_CARD_CHOSEN,
+        /** The same-named cards were exiled: choose a creature card from outside the game. */
+        SAME_NAME_CARDS_EXILED,
+        /** The card outside the game was chosen: conjure its duplicates into hand. */
+        CONJURE
     }
 
-    @Override
-    public CardEffect withChosenCard(Card card) {
-        if (cardName == null) {
-            return new GrizzledHuntmasterEffect(card.getName(), 1, false, null);
-        }
-        return new GrizzledHuntmasterEffect(cardName, handExiledCount, sameNameCardsExiled, card);
+    public GrizzledHuntmasterEffect() {
+        this(Step.CHOOSE_HAND_CARD, null, 0);
     }
 }

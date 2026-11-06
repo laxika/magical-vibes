@@ -22,10 +22,10 @@ public class PerpetuallyGrantAnyColorManaAndSelfCastAbilityToCardEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var grant = (PerpetuallyGrantAnyColorManaAndSelfCastAbilityToCardEffect) effect;
-        UUID cardId = grant.cardId();
-        if (cardId == null) {
+        if (entry.getChosenObjectCard() == null) {
             return;
         }
+        UUID cardId = entry.getChosenObjectCard().getId();
 
         gameData.perpetualAnyColorManaForCastCardIds.add(cardId);
         gameData.grantPerpetualAbilityOnce(cardId, new TriggeredAbility(Triggers.youCastThisSpell(), grant.selfCastAbility()));

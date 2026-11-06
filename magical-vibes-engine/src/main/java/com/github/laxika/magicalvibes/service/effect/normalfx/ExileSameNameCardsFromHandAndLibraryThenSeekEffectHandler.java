@@ -37,18 +37,22 @@ public class ExileSameNameCardsFromHandAndLibraryThenSeekEffectHandler
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ExileSameNameCardsFromHandAndLibraryThenSeekEffect exileThenSeek =
                 (ExileSameNameCardsFromHandAndLibraryThenSeekEffect) effect;
-        if (exileThenSeek.cardName() == null) {
+        if (!exileThenSeek.cardChosen()) {
             entry.setTargetId(entry.getControllerId());
             entry.setNonTargeting(true);
             playerInteractionSupport.resolveHandRevealAndChooseWithChosenCardThen(
                     gameData, entry, 1, List.of(), List.of(CardType.INSTANT, CardType.SORCERY),
                     null, false, true, null, true, false, 0, false,
-                    false, false, false, 0, null, exileThenSeek);
+                    false, false, false, 0, null, exileThenSeek.afterChoice());
             return;
         }
 
+        if (entry.getChosenObjectCard() == null) {
+            return;
+        }
+        String cardName = entry.getChosenObjectCard().getName();
         UUID controllerId = entry.getControllerId();
-        List<Card> matchingCards = matchingCards(gameData, controllerId, exileThenSeek.cardName());
+        List<Card> matchingCards = matchingCards(gameData, controllerId, cardName);
         if (matchingCards.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             entry.insertEffectsToResolve(entry.getEffectsToResolve().indexOf(effect) + 1,
@@ -57,7 +61,7 @@ public class ExileSameNameCardsFromHandAndLibraryThenSeekEffectHandler
         }
 
         playerInputService.beginMultiZoneExileChoice(
-                gameData, controllerId, matchingCards, controllerId, exileThenSeek.cardName(), false,
+                gameData, controllerId, matchingCards, controllerId, cardName, false,
                 new SeekCardsToHandEffect(new Sum(new EventValue(), new Fixed(1)), exileThenSeek.seekFilter()));
     }
 

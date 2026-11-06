@@ -52,7 +52,6 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TargetOpponentsDiscardThenDrawState;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.InlineDiscardFollowUpEffect;
-import com.github.laxika.magicalvibes.model.effect.ChosenCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -1716,8 +1715,7 @@ public class CardChoiceHandlerService {
                 thenEffect = new com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect(
                         new com.github.laxika.magicalvibes.model.amount.Fixed(discardedCard.getManaValue()),
                         playerDamage.recipient(), playerDamage.attachedCountFilter(), playerDamage.unpreventable(),
-                        playerDamage.recordDamageDealt(), playerDamage.triggeredTargetFilter(),
-                        playerDamage.selectedPlayerIds());
+                        playerDamage.recordDamageDealt(), playerDamage.triggeredTargetFilter());
             }
             Card sourceCard = followUp.thenEffectSourceCard();
 
@@ -2141,9 +2139,10 @@ public class CardChoiceHandlerService {
 
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
         if (pendingEntry != null && exileChoice.chosenCardThenEffect() != null) {
+            pendingEntry.setChosenObjectCard(card);
             pendingEntry.insertEffectsToResolve(
                     gameData.pendingEffectResolutionIndex,
-                    List.of(exileChoice.chosenCardThenEffect().withChosenCard(card)));
+                    List.of(exileChoice.chosenCardThenEffect()));
         }
     }
 
@@ -2573,10 +2572,6 @@ public class CardChoiceHandlerService {
         }
 
         CardEffect chosenCardThenEffect = revealedHandChoice.chosenCardThenEffect();
-        if (chosenCardThenEffect instanceof ChosenCardAwareEffect chosenCardAwareEffect
-                && !chosenCards.isEmpty()) {
-            chosenCardThenEffect = chosenCardAwareEffect.withChosenCard(chosenCards.getLast());
-        }
         if ((chosenCardThenEffect != null || keepInHand)
                 && gameData.pendingEffectResolutionEntry != null && !chosenCards.isEmpty()) {
             gameData.pendingEffectResolutionEntry.setChosenObjectCard(chosenCards.get(chosenCards.size() - 1));

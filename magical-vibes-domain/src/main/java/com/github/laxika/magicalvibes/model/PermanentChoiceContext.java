@@ -1843,8 +1843,46 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                        Permanent triggeringPermanentSnapshot,
                                        Integer triggeringPermanentPowerAtTrigger,
                                        boolean markSourceOncePerTurnOnAcceptance,
-                                       Permanent departedPermanent)
+                                       Permanent departedPermanent,
+                                       java.util.Set<com.github.laxika.magicalvibes.model.ManaColor> producedManaColors)
             implements PermanentChoiceContext {
+
+        public SpellTargetTriggerAnyTarget {
+            producedManaColors = producedManaColors == null
+                    ? java.util.Set.of() : java.util.Set.copyOf(producedManaColors);
+        }
+
+        public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                           boolean playerTargetOnly, TargetFilter targetFilter,
+                                           int spellManaSpentX, UUID sourcePermanentId,
+                                           Permanent sourcePermanentSnapshot, boolean optionalTarget,
+                                           UUID triggeringPermanentId, UUID permanentTargetControllerId,
+                                           UUID choosingPlayerId, Integer triggeringSpellManaValue,
+                                           com.github.laxika.magicalvibes.model.planar.PlanarObject planarSource,
+                                           boolean nonTargeting, UUID triggeringCardId,
+                                           Permanent triggeringPermanentSnapshot,
+                                           Integer triggeringPermanentPowerAtTrigger,
+                                           boolean markSourceOncePerTurnOnAcceptance,
+                                           Permanent departedPermanent) {
+            this(sourceCard, controllerId, effects, playerTargetOnly, targetFilter, spellManaSpentX,
+                    sourcePermanentId, sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
+                    permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue, planarSource,
+                    nonTargeting, triggeringCardId, triggeringPermanentSnapshot, triggeringPermanentPowerAtTrigger,
+                    markSourceOncePerTurnOnAcceptance, departedPermanent, java.util.Set.of());
+        }
+
+        /**
+         * This choice for an ability a tap for mana triggered, carrying the types of mana the tap produced into the
+         * stack entry ({@code StackEntry.getProducedManaColors()}).
+         */
+        public SpellTargetTriggerAnyTarget withProducedManaColors(
+                java.util.Set<com.github.laxika.magicalvibes.model.ManaColor> colors) {
+            return new SpellTargetTriggerAnyTarget(sourceCard, controllerId, effects, playerTargetOnly, targetFilter,
+                    spellManaSpentX, sourcePermanentId, sourcePermanentSnapshot, optionalTarget,
+                    triggeringPermanentId, permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue,
+                    planarSource, nonTargeting, triggeringCardId, triggeringPermanentSnapshot,
+                    triggeringPermanentPowerAtTrigger, markSourceOncePerTurnOnAcceptance, departedPermanent, colors);
+        }
 
         public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            boolean playerTargetOnly, TargetFilter targetFilter,
@@ -1870,7 +1908,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
                     permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue, planarSource.copy(),
                     nonTargeting, triggeringCardId, triggeringPermanentSnapshot,
-                    triggeringPermanentPowerAtTrigger, markSourceOncePerTurnOnAcceptance, departedPermanent);
+                    triggeringPermanentPowerAtTrigger, markSourceOncePerTurnOnAcceptance, departedPermanent,
+                    producedManaColors);
         }
 
         /**

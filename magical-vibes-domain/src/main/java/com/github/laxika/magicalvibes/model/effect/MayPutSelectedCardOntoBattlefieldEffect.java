@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -10,19 +9,8 @@ public record MayPutSelectedCardOntoBattlefieldEffect(
         int manaValueAtMost,
         CardPredicate predicate,
         boolean tapped,
-        boolean grantHaste,
-        Card chosenCard
-) implements CardEffect, ChosenCardAwareEffect {
-
-    public MayPutSelectedCardOntoBattlefieldEffect(int manaValueAtMost, CardPredicate predicate,
-                                                   boolean tapped, boolean grantHaste) {
-        this(manaValueAtMost, predicate, tapped, grantHaste, null);
-    }
-
-    @Override
-    public CardEffect withChosenCard(Card card) {
-        return new MayPutSelectedCardOntoBattlefieldEffect(manaValueAtMost, predicate, tapped, grantHaste, card);
-    }
+        boolean grantHaste
+) implements CardEffect {
 
     /** Offers a creature with the given mana value for the battlefield with haste. */
     public MayPutSelectedCardOntoBattlefieldEffect(int manaValueAtMost) {

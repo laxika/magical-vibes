@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
@@ -27,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetCreatureAndCreateTokenIfSharesManaColorEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
@@ -333,6 +335,32 @@ class LandTapTriggerCollectorServiceTest {
         }
     }
 
+    @Test
+    void campTriggerParkedForTheManaColorTakesTheChosenColorIntoItsTargetChoice() {
+        Permanent camp = createPermanent("C.A.M.P.");
+        Permanent land = new Permanent(createLandCard("City of Brass"));
+        camp.setAttachedTo(land.getId());
+        var effect = new PutCounterOnTargetCreatureAndCreateTokenIfSharesManaColorEffect(
+                new CreateTokenEffect("Junk", 0, 0, null, List.of(), Set.of(), Set.of()));
+        gd.interaction.beginInteraction(new PendingInteraction.ColorChoice(
+                player1Id, null, null, null, List.of("RED"), "Choose mana."));
+
+        assertThat(registry.dispatch(match(camp, player1Id, effect), TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect,
+                new TriggerContext.LandTap(player1Id, land.getId()))).isTrue();
+
+        assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
+        StackEntry parked = gd.pendingManaAbilityTriggers.getFirst();
+        assertThat(parked.isAwaitingProducedManaColor()).isTrue();
+        assertThat(parked.getEffectsToResolve()).containsExactly(effect);
+
+        assertThat(sut.queueResolvedProducedManaTriggerTarget(gd, parked, ManaColor.RED)).isTrue();
+
+        assertThat(gd.pendingInteractions).hasSize(1);
+        var targetChoice = (PermanentChoiceContext.SpellTargetTriggerAnyTarget) gd.pendingInteractions.getFirst();
+        assertThat(targetChoice.effects()).containsExactly(effect);
+        assertThat(targetChoice.producedManaColors()).containsExactly(ManaColor.RED);
+    }
+
     @Nested
     @DisplayName("ON_ANY_PLAYER_TAPS_LAND — AddManaOnEnchantedLandTapEffect")
     class AddManaOnEnchantedLandTap {
@@ -601,6 +629,7 @@ class LandTapTriggerCollectorServiceTest {
             assertThat(result).isTrue();
             assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
             assertThat(gd.pendingManaAbilityTriggers.getFirst().getControllerId()).isEqualTo(player2Id);
+            assertThat(gd.pendingManaAbilityTriggers.getFirst().isAwaitingProducedManaColor()).isTrue();
             assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.RED)).isZero();
         }
 

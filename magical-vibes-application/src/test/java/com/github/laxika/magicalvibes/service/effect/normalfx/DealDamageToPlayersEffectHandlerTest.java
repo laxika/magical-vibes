@@ -86,6 +86,16 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
         assertThat(gd.getLife(player2Id)).isEqualTo(18);
     }
 
+    @Test
+    void selectedOpponentsTakeNoDamageWhenNoPlayerAccepted() {
+        StackEntry entry = createEntry(createCard("Snort"), player1Id, null);
+
+        handler.resolve(gd, entry, DealDamageToPlayersEffect.selectedOpponents(5));
+
+        assertThat(gd.getLife(player1Id)).isEqualTo(20);
+        assertThat(gd.getLife(player2Id)).isEqualTo(20);
+    }
+
     @Override
     protected void setUpHandler() {
         handler = new DealDamageToPlayersEffectHandler(

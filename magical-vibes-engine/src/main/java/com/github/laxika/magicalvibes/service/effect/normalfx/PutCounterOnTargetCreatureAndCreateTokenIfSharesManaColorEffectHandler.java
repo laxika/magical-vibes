@@ -42,7 +42,7 @@ public class PutCounterOnTargetCreatureAndCreateTokenIfSharesManaColorEffectHand
         permanentCounterSupport.placeCounterOnPermanent(
                 gameData, entry, target, CounterType.PLUS_ONE_PLUS_ONE, 1);
 
-        if (sharesColor(gameQueryService.getEffectiveColors(gameData, target), e.producedManaColors())) {
+        if (sharesColor(gameQueryService.getEffectiveColors(gameData, target), entry.getProducedManaColors())) {
             entry.getCreatedPermanentIds().addAll(permanentControlSupport.applyCreateToken(
                     gameData, entry.getControllerId(), e.token(), entry.getCard().getSetCode()));
         }

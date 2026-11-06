@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ChosenCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
@@ -3198,7 +3197,7 @@ public class PlayerInputService {
     }
 
     public void beginExileFromHandChoice(GameData gameData, UUID playerId,
-                                         ChosenCardAwareEffect chosenCardThenEffect) {
+                                         CardEffect chosenCardThenEffect) {
         beginExileFromHandChoice(gameData, playerId, null, null, 1,
                 List.of(), 0, false, false, null, false, null, 0, false,
                 chosenCardThenEffect);
@@ -3282,7 +3281,7 @@ public class PlayerInputService {
                                          UUID untapPermanentId, boolean playPermissionToChooser,
                                          UUID playPermissionTaxSourceControllerId,
                                          int exilePlayOpponentTax, boolean landsEnterTapped,
-                                         ChosenCardAwareEffect chosenCardThenEffect) {
+                                         CardEffect chosenCardThenEffect) {
         beginExileFromHandChoice(gameData, playerId, sourcePermanentId, playPermissionControllerId,
                 remainingCount, remainingChoosers, cardsPerPlayer, faceDown, returnOnSourceLeave,
                 untapPermanentId, playPermissionToChooser, playPermissionTaxSourceControllerId,
@@ -3296,7 +3295,7 @@ public class PlayerInputService {
                                          UUID untapPermanentId, boolean playPermissionToChooser,
                                          UUID playPermissionTaxSourceControllerId,
                                          int exilePlayOpponentTax, boolean landsEnterTapped,
-                                         ChosenCardAwareEffect chosenCardThenEffect, int exiledCount) {
+                                         CardEffect chosenCardThenEffect, int exiledCount) {
         List<Card> hand = gameData.playerHands.get(playerId);
         List<Integer> validIndices = allHandIndices(hand);
 

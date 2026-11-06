@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ChosenCardAwareEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -63,10 +62,8 @@ public class SearchOutsideGameOrExileCardChoiceInteractionHandler
                             + interaction.cardLabel() + " into their hand."));
         } else if (interaction.leaveOutsideGame()) {
             CardEffect followUp = interaction.followUpEffect();
-            if (followUp instanceof ChosenCardAwareEffect chosenCardAwareEffect) {
-                followUp = chosenCardAwareEffect.withChosenCard(chosenCard);
-            }
             if (followUp != null && gameData.pendingEffectResolutionEntry != null) {
+                gameData.pendingEffectResolutionEntry.setChosenObjectCard(chosenCard);
                 gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
                         gameData.pendingEffectResolutionIndex, List.of(followUp));
             }

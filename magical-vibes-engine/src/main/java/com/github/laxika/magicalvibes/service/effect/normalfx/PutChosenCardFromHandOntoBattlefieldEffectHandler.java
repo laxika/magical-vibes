@@ -31,13 +31,14 @@ public class PutChosenCardFromHandOntoBattlefieldEffectHandler implements Normal
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         PutChosenCardFromHandOntoBattlefieldEffect chosenEffect =
                 (PutChosenCardFromHandOntoBattlefieldEffect) effect;
-        if (chosenEffect.cardId() == null) {
+        Card chosenCard = entry.getChosenObjectCard();
+        if (chosenCard == null) {
             return;
         }
 
         var hand = gameData.playerHands.get(entry.getControllerId());
         Card selectedCard = hand == null ? null : hand.stream()
-                .filter(card -> card.getId().equals(chosenEffect.cardId()))
+                .filter(card -> card.getId().equals(chosenCard.getId()))
                 .findFirst()
                 .orElse(null);
         if (selectedCard == null) {
