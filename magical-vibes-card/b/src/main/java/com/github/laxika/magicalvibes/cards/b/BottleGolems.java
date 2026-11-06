@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDyingSourcePowerEffect;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -10,6 +11,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class BottleGolems extends Card {
 
     public BottleGolems() {
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new GainLifeEqualToDyingSourcePowerEffect());
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new GainLifeEffect(new SourcePower()));
     }
 }

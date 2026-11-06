@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenIfDyingSourceHadCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -43,11 +43,10 @@ public class ToxrillTheCorrosive extends Card {
                         CounterType.SLIME, 1, opponentsCreatures, EachPermanentScope.ALL_PLAYERS));
         addStaticEffect(new StaticBoostEffect(-1, -1, GrantScope.ALL_CREATURES,
                         opponentsCreatures, CounterType.SLIME, true));
-        addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS),
-                new CreateTokenIfDyingSourceHadCounterEffect(
-                        CounterType.SLIME,
-                        new CreateTokenEffect("Slug", 1, 1, CardColor.BLACK,
-                                List.of(CardSubtype.SLUG), Set.of(), Set.of())));
+        addTrigger(Triggers.creatureDies(new PermanentHasCountersPredicate(CounterType.SLIME),
+                        ObjectRelation.OPPONENT_CONTROLS),
+                new CreateTokenEffect("Slug", 1, 1, CardColor.BLACK,
+                        List.of(CardSubtype.SLUG), Set.of(), Set.of()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

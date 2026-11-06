@@ -40,6 +40,21 @@ class GalufsFinalActTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The death trigger can target only creatures")
+    void deathTriggerTargetsOnlyCreatures() {
+        Permanent anthem = harness.addToBattlefieldAndReturn(player1, new GloriousAnthem());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent recipient = addCreatureReady(player1, new GrizzlyBears());
+
+        castOn(target);
+        target.tap();
+        destroyWithAssassinate(target.getId());
+
+        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).contains(recipient.getId()).doesNotContain(anthem.getId());
+    }
+
+    @Test
     @DisplayName("The up-to-one death target may be declined")
     void deathTargetMayBeDeclined() {
         Permanent target = addCreatureReady(player1, new GrizzlyBears());

@@ -37,7 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileMilledCreatureAndCreateT
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringLandFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldWithCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardsExiledWithSourceOnUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringPermanentCardFromLibraryWithCroakCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherPermanentUnlessDiscardForEachLifeLostEffect;
@@ -3436,15 +3436,14 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsWatchTrigger(value = ReturnTriggeringPermanentToBattlefieldWithCounterEffect.class,
+    @CollectsWatchTrigger(value = ReturnTriggeringPermanentToBattlefieldEffect.class,
             watch = ZoneChangeWatch.ON_ANY_CREATURE_EXILED_FROM_BATTLEFIELD)
-    boolean handleAnyCreatureExiledReturnCounteredPermanent(TriggerMatchContext match,
-            ReturnTriggeringPermanentToBattlefieldWithCounterEffect effect, TriggerContext ctx) {
+    boolean handleAnyCreatureExiledReturnTriggeringPermanent(TriggerMatchContext match,
+            ReturnTriggeringPermanentToBattlefieldEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.CreatureExiledFromBattlefield exiled)
                 || effect.fromZone() != Zone.EXILE
                 || exiled.exiledPermanent() == null
-                || exiled.exiledPermanent().getCard() == null
-                || exiled.exiledPermanent().getCounterCount(effect.counterType()) < 1) {
+                || exiled.exiledPermanent().getCard() == null) {
             return false;
         }
 
@@ -3464,7 +3463,7 @@ public class MiscTriggerCollectorService {
         entry.setTriggeringPermanentControllerId(exiled.exiledControllerId());
         match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers (countered creature exiled from battlefield)",
+        log.info("Game {} - {} triggers (creature exiled from battlefield, returning it)",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
     }

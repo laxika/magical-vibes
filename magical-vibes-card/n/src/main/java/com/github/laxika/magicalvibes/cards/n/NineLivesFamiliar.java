@@ -3,11 +3,14 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.CountersOnTriggeringPermanent;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSelfReturnFromGraveyardWithOneFewerCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSelfReturnFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,7 +23,8 @@ public class NineLivesFamiliar extends Card {
     public NineLivesFamiliar() {
         addStaticEffect(new ConditionalEffect(new WasCast(),
                 new EnterWithCountersEffect(CounterType.REVIVAL, new Fixed(8))));
-        addTrigger(Triggers.dies(ObjectRelation.THIS),
-                new RegisterDelayedSelfReturnFromGraveyardWithOneFewerCounterEffect(CounterType.REVIVAL));
+        addTrigger(Triggers.dies(new PermanentHasCountersPredicate(CounterType.REVIVAL), ObjectRelation.THIS),
+                new RegisterDelayedSelfReturnFromGraveyardEffect(CounterType.REVIVAL,
+                        new Sum(new CountersOnTriggeringPermanent(CounterType.REVIVAL), new Fixed(-1))));
     }
 }

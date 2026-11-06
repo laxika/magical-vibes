@@ -1,39 +1,16 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+
 /**
- * Death-trigger descriptor for a delayed token copy whose counter amount is snapshotted from the
- * dying source. The death-trigger collector supplies the snapshot before putting this effect on
- * the stack; the normal effect handler registers the next-end-step token copy.
+ * "Create a token that's a copy of it at the beginning of the next end step. The token enters with
+ * [N] +1/+1 counters on it" (Ochre Jelly): registers the delayed token copy of the source as the death trigger
+ * resolves. The counter amount is evaluated then, against the stack entry, so "half that many" reads the triggering
+ * permanent's counters as it last existed on the battlefield (CR 603.10a); "if it had two or more" is the trigger's
+ * filter.
  *
- * @param minimumCounterCount minimum number of +1/+1 counters required for the trigger
- * @param counterDivisor divisor applied to the snapshotted counter count
- * @param initialPlusOnePlusOneCounters counter count to put on the delayed token, or zero before
- *                                      the death trigger supplies the snapshot
+ * @param plusOnePlusOneCounters the number of +1/+1 counters the token enters with
  */
-public record RegisterDelayedCreateTokenCopyOfDyingSourceEffect(
-        int minimumCounterCount,
-        int counterDivisor,
-        int initialPlusOnePlusOneCounters
-) implements CardEffect {
-
-    public RegisterDelayedCreateTokenCopyOfDyingSourceEffect(int minimumCounterCount, int counterDivisor) {
-        this(minimumCounterCount, counterDivisor, 0);
-    }
-
-    public RegisterDelayedCreateTokenCopyOfDyingSourceEffect {
-        if (minimumCounterCount < 0) {
-            throw new IllegalArgumentException("minimumCounterCount must not be negative");
-        }
-        if (counterDivisor <= 0) {
-            throw new IllegalArgumentException("counterDivisor must be positive");
-        }
-        if (initialPlusOnePlusOneCounters < 0) {
-            throw new IllegalArgumentException("initialPlusOnePlusOneCounters must not be negative");
-        }
-    }
-
-    public RegisterDelayedCreateTokenCopyOfDyingSourceEffect withInitialCounters(int counters) {
-        return new RegisterDelayedCreateTokenCopyOfDyingSourceEffect(
-                minimumCounterCount, counterDivisor, counters);
-    }
+public record RegisterDelayedCreateTokenCopyOfDyingSourceEffect(DynamicAmount plusOnePlusOneCounters)
+        implements CardEffect {
 }

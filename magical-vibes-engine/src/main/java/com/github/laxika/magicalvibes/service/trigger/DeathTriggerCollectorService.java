@@ -24,7 +24,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfDyingCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenIfDyingSourceHadCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithTotalDyingCreaturesPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPermanentControllerEffect;
@@ -78,7 +77,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldWithCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingOpponentCreatureAsTreasureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect;
@@ -242,9 +241,9 @@ public class DeathTriggerCollectorService {
                         (ReturnTriggeringCardToOwnerHandEffect) effect, context));
         registerCreatureDeath(CreatureDeathWatch.ALLY_ARTIFACT_OR_CREATURE, CardEffect.class,
                 this::handleAllyArtifactOrCreatureDeath);
-        registerCreatureDeath(CreatureDeathWatch.ANY, ReturnTriggeringPermanentToBattlefieldWithCounterEffect.class,
-                (match, effect, context) -> handleAnyCreatureDeathReturnCounteredPermanent(match,
-                        (ReturnTriggeringPermanentToBattlefieldWithCounterEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY, ReturnTriggeringPermanentToBattlefieldEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathReturnTriggeringPermanent(match,
+                        (ReturnTriggeringPermanentToBattlefieldEffect) effect, context));
         registerCreatureDeath(CreatureDeathWatch.ANY, BoostSelfEffect.class,
                 (match, effect, context) -> handleAnyCreatureDeathBoostSelf(match, (BoostSelfEffect) effect, context));
         registerCreatureDeath(CreatureDeathWatch.ANY, PutCountersOnSourceEffect.class,
@@ -348,9 +347,6 @@ public class DeathTriggerCollectorService {
         registerCreatureDeath(CreatureDeathWatch.OPPONENT, RegisterDelayedReturnDyingCreatureUnderControlEffect.class,
                 (match, effect, context) -> handleOpponentCreatureDelayedReturnUnderControl(match,
                         (RegisterDelayedReturnDyingCreatureUnderControlEffect) effect, context));
-        registerCreatureDeath(CreatureDeathWatch.OPPONENT, CreateTokenIfDyingSourceHadCounterEffect.class,
-                (match, effect, context) -> handleOpponentCreatureDeathCreateTokenIfDyingSourceHadCounter(match,
-                        (CreateTokenIfDyingSourceHadCounterEffect) effect, context));
         registerCreatureDeath(CreatureDeathWatch.OPPONENT, CardEffect.class,
                 (match, effect, context) -> handleOpponentCreatureDeathDefault(match, (CardEffect) effect, context));
         registerCreatureDeath(CreatureDeathWatch.ANY, PutCountersOnSourceCardEffect.class,
@@ -2011,13 +2007,11 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    boolean handleAnyCreatureDeathReturnCounteredPermanent(TriggerMatchContext match,
-            ReturnTriggeringPermanentToBattlefieldWithCounterEffect effect, TriggerContext ctx) {
+    boolean handleAnyCreatureDeathReturnTriggeringPermanent(TriggerMatchContext match,
+            ReturnTriggeringPermanentToBattlefieldEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.CreatureDeath death)
                 || effect.fromZone() != Zone.GRAVEYARD
-                || death.dyingPermanent() == null
-                || death.dyingCard() == null
-                || death.dyingPermanent().getCounterCount(effect.counterType()) < 1) {
+                || death.dyingCard() == null) {
             return false;
         }
 
@@ -2994,20 +2988,6 @@ public class DeathTriggerCollectorService {
         match.gameData().stack.add(entry);
         logOpponentCreatureDeath(match);
         return true;
-    }
-
-    boolean handleOpponentCreatureDeathCreateTokenIfDyingSourceHadCounter(
-            TriggerMatchContext match, CreateTokenIfDyingSourceHadCounterEffect effect,
-            TriggerContext ctx) {
-        TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
-        Permanent dyingPermanent = cd.dyingPermanent();
-        if (dyingPermanent == null
-                || (effect.counterType() == CounterType.ANY
-                ? dyingPermanent.getTotalCounterCount()
-                : dyingPermanent.getCounterCount(effect.counterType())) < 1) {
-            return false;
-        }
-        return handleOpponentCreatureDeathDefault(match, effect.tokenTemplate(), ctx);
     }
 
     boolean handleOpponentCreatureDeathDefault(TriggerMatchContext match,

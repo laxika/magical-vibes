@@ -16,9 +16,9 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Resolves the historical damage lookup for
- * {@link SetBasePowerToughnessOfCreaturesThatDamagedSourceEffect}, then delegates each individual
- * base-stat change to the normal base power/toughness handler.
+ * Resolves {@link SetBasePowerToughnessOfCreaturesThatDamagedSourceEffect}: finds the creatures that dealt damage to
+ * the source this turn, then delegates each individual base-stat change to the normal base power/toughness
+ * handler.
  */
 @Component
 @RequiredArgsConstructor
@@ -35,19 +35,14 @@ public class SetBasePowerToughnessOfCreaturesThatDamagedSourceEffectHandler impl
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (SetBasePowerToughnessOfCreaturesThatDamagedSourceEffect) effect;
-        UUID sourceCardId = entry.getCard().getId();
+        Set<UUID> damagerIds = damagerIdsOf(gameData, entry);
         for (UUID playerId : apnapOrder(gameData)) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) {
                 continue;
             }
             for (Permanent permanent : List.copyOf(battlefield)) {
-                Set<UUID> damaged = gameData.creatureCardsDamagedBySourceThatDiedThisTurn
-                        .get(permanent.getId());
-                boolean dealtDamage = e.damagingPermanentIds() != null
-                        ? e.damagingPermanentIds().contains(permanent.getId())
-                        : damaged != null && damaged.contains(sourceCardId);
-                if (!dealtDamage || !gameQueryService.isCreature(gameData, permanent)) {
+                if (!damagerIds.contains(permanent.getId()) || !gameQueryService.isCreature(gameData, permanent)) {
                     continue;
                 }
                 StackEntry targetEntry = new StackEntry(entry);
@@ -56,6 +51,21 @@ public class SetBasePowerToughnessOfCreaturesThatDamagedSourceEffectHandler impl
                         SetBasePowerToughnessEffect.indefinitely(e.power(), e.toughness()));
             }
         }
+    }
+
+    /**
+     * The permanents that dealt damage to the source this turn: for a death trigger, to the stack entry's triggering
+     * permanent, the source as it last existed on the battlefield (CR 603.10a); otherwise to the source itself.
+     */
+    private Set<UUID> damagerIdsOf(GameData gameData, StackEntry entry) {
+        Permanent source = entry.getTriggeringPermanentSnapshot();
+        if (source == null && entry.getSourcePermanentId() != null) {
+            source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        }
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        return source == null ? Set.of() : Set.copyOf(source.getPermanentIdsThatDealtDamageThisTurn());
     }
 
     private static List<UUID> apnapOrder(GameData gameData) {

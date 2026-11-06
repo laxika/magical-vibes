@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 /**
  * Registers a delayed trigger that returns the source card from its owner's graveyard to the
@@ -17,6 +19,10 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * <p>Breathkeeper Seraph uses {@link #returningAtControllersNextUpkeep()}: the card returns under its owner's
  * control at the beginning of the next upkeep of the player who controlled it when it died.
  *
+ * <p>The counter amount is evaluated as the registering ability resolves, against its stack entry: Nine-Lives
+ * Familiar's "with one fewer revival counter on it" is the triggering permanent's revival counters, as it last existed
+ * on the battlefield (CR 603.10a), minus one.
+ *
  * @param counterType             counter to enter with, or {@code null} for none
  * @param counterAmount           number of counters (ignored when {@code counterType} is null)
  * @param atNextUpkeep            {@code true} to return at an upkeep instead of the next end step
@@ -26,7 +32,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
  */
 public record RegisterDelayedSelfReturnFromGraveyardEffect(
         CounterType counterType,
-        int counterAmount,
+        DynamicAmount counterAmount,
         boolean atNextUpkeep,
         boolean tapped,
         boolean atControllersNextUpkeep
@@ -37,14 +43,19 @@ public record RegisterDelayedSelfReturnFromGraveyardEffect(
         this(null, 0, false, false);
     }
 
-    /** No counters, next end step. */
+    /** Next end step, untapped. */
     public RegisterDelayedSelfReturnFromGraveyardEffect(CounterType counterType, int counterAmount) {
-        this(counterType, counterAmount, false, false);
+        this(counterType, new Fixed(counterAmount));
+    }
+
+    /** Next end step, untapped, with a counter amount evaluated as the registering ability resolves. */
+    public RegisterDelayedSelfReturnFromGraveyardEffect(CounterType counterType, DynamicAmount counterAmount) {
+        this(counterType, counterAmount, false, false, false);
     }
 
     public RegisterDelayedSelfReturnFromGraveyardEffect(CounterType counterType, int counterAmount,
                                                         boolean atNextUpkeep, boolean tapped) {
-        this(counterType, counterAmount, atNextUpkeep, tapped, false);
+        this(counterType, new Fixed(counterAmount), atNextUpkeep, tapped, false);
     }
 
     /** Returns tapped at the beginning of the owner's next upkeep (Phytotitan). */
@@ -54,6 +65,6 @@ public record RegisterDelayedSelfReturnFromGraveyardEffect(
 
     /** Returns at the beginning of the next upkeep of the player who controlled it when it died (Breathkeeper Seraph). */
     public static RegisterDelayedSelfReturnFromGraveyardEffect returningAtControllersNextUpkeep() {
-        return new RegisterDelayedSelfReturnFromGraveyardEffect(null, 0, true, false, true);
+        return new RegisterDelayedSelfReturnFromGraveyardEffect(null, new Fixed(0), true, false, true);
     }
 }

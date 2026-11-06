@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldWithCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -22,10 +22,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
-/** Returns a countered creature that triggered Athreos from its graveyard or exile. */
+/** Returns the card of the creature that triggered Athreos from its graveyard or exile. */
 @Component
 @RequiredArgsConstructor
-public class ReturnTriggeringPermanentToBattlefieldWithCounterEffectHandler
+public class ReturnTriggeringPermanentToBattlefieldEffectHandler
         implements NormalEffectHandlerBean {
 
     private final BattlefieldEntryService battlefieldEntryService;
@@ -37,13 +37,13 @@ public class ReturnTriggeringPermanentToBattlefieldWithCounterEffectHandler
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
-        return ReturnTriggeringPermanentToBattlefieldWithCounterEffect.class;
+        return ReturnTriggeringPermanentToBattlefieldEffect.class;
     }
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        ReturnTriggeringPermanentToBattlefieldWithCounterEffect returnEffect =
-                (ReturnTriggeringPermanentToBattlefieldWithCounterEffect) effect;
+        ReturnTriggeringPermanentToBattlefieldEffect returnEffect =
+                (ReturnTriggeringPermanentToBattlefieldEffect) effect;
         UUID triggeringCardId = entry.getTriggeringCardId();
         UUID controllerId = entry.getControllerId();
         if (triggeringCardId == null || controllerId == null) {

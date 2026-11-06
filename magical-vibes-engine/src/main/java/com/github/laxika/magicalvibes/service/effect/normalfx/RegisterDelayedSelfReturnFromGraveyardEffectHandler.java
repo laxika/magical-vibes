@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSelfReturnFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 
 import java.util.UUID;
 
@@ -23,6 +25,7 @@ public class RegisterDelayedSelfReturnFromGraveyardEffectHandler implements Norm
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -46,8 +49,10 @@ public class RegisterDelayedSelfReturnFromGraveyardEffectHandler implements Norm
                 ? entry.getTriggeringCardGraveyardEntryVersion()
                 : gameData.graveyardEntryVersion(card.getId());
         UUID upkeepPlayerId = e.atNextUpkeep() && !e.atControllersNextUpkeep() ? ownerId : entry.getControllerId();
+        int counterAmount = e.counterType() == null ? 0 : Math.max(0, amountEvaluationService.evaluate(gameData,
+                e.counterAmount(), AmountContext.forStackEntry(entry, null)));
         gameData.queueDelayedAction(new DelayedGraveyardToBattlefieldSelfReturn(
-                card.getId(), ownerId, e.counterType(), e.counterAmount(), e.atNextUpkeep(), e.tapped(),
+                card.getId(), ownerId, e.counterType(), counterAmount, e.atNextUpkeep(), e.tapped(),
                 upkeepPlayerId, graveyardEntryVersion));
         gameLogService.append(gameData, GameLog.cardThen(card, !e.atNextUpkeep()
                 ? " will return to the battlefield at the beginning of the next end step."

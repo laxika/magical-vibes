@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenIfDyingSourceHadCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -29,8 +29,8 @@ public class VillagePillagers extends Card {
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new DealDamageToEachMatchingPermanentEffect(1, opponentsCreatures, EachPermanentScope.ALL_PLAYERS));
-        addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS),
-                new CreateTokenIfDyingSourceHadCounterEffect(
-                        CounterType.ANY, CreateTokenEffect.ofTreasureToken(1, true)));
+        addTrigger(Triggers.creatureDies(new PermanentHasCountersPredicate(CounterType.ANY),
+                        ObjectRelation.OPPONENT_CONTROLS),
+                CreateTokenEffect.ofTreasureToken(1, true));
     }
 }

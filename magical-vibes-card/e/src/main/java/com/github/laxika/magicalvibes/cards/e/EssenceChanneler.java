@@ -27,6 +27,6 @@ public class EssenceChanneler extends Card {
         addTrigger(Triggers.youGainLife(),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
         target(TargetFilters.creatureYouControl()).addTrigger(Triggers.dies(ObjectRelation.THIS),
-                new MoveDyingSourceCountersToTargetCreatureEffect(true, false));
+                new MoveDyingSourceCountersToTargetCreatureEffect(true));
     }
 }

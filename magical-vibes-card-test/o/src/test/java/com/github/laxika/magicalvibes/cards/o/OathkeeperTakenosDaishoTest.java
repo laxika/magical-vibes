@@ -135,6 +135,23 @@ class OathkeeperTakenosDaishoTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An unattached Oathkeeper's ability still goes on the stack and exiles nothing")
+    void unattachedOathkeeperStillPutsItsAbilityOnTheStack() {
+        addCreatureReady(player1, new JukaiMessenger());
+        Permanent oathkeeper = harness.addToBattlefieldAndReturn(player1, new OathkeeperTakenosDaisho());
+
+        destroyOathkeeper(oathkeeper);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Oathkeeper, Takeno's Daisho");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Jukai Messenger");
+    }
+
+    @Test
     @DisplayName("A creature trained as a Samurai stays in the graveyard if its card is not a Samurai")
     void trainedNonSamuraiStaysInGraveyard() {
         Permanent sensei = addCreatureReady(player1, new SenseiGoldenTail());

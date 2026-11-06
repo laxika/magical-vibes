@@ -14046,7 +14046,7 @@ public class TriggerCollectionService {
                                                           TriggerContext context) {
         boolean triggered = false;
         for (CardEffect effect : effects) {
-            if (effect instanceof com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldWithCounterEffect
+            if (effect instanceof com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldEffect
                     || effect instanceof com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerMayDrawCardEffect) {
                 triggered |= dispatch(new TriggerMatchContext(gameData, source, controllerId, effect), slot, effect,
                         context);

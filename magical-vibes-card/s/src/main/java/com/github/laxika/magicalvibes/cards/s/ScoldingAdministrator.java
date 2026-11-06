@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MoveDyingSourceCountersToTarg
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -32,6 +33,7 @@ public class ScoldingAdministrator extends Card {
 
         // When this creature dies, if it had counters on it, put those counters on up to
         // one target creature.
-        target(0, 1).addTrigger(Triggers.dies(ObjectRelation.THIS), new MoveDyingSourceCountersToTargetCreatureEffect());
+        target(0, 1).addTrigger(Triggers.dies(new PermanentHasCountersPredicate(CounterType.ANY), ObjectRelation.THIS),
+                new MoveDyingSourceCountersToTargetCreatureEffect());
     }
 }

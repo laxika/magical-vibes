@@ -18,7 +18,7 @@ public class HeroicSacrifice extends Card {
                 .addSpellEffect(new RedirectYourDamageToTargetCreatureThisTurnEffect())
                 .addSpellEffect(new ResolveEffectOnTargetDeathThisTurnEffect(
                         SequenceEffect.upToOneTarget(
-                                MoveDyingSourceCountersToTargetCreatureEffect.alwaysTriggers(true),
+                                new MoveDyingSourceCountersToTargetCreatureEffect(true),
                                 new DrawCardEffect(1))));
     }
 }

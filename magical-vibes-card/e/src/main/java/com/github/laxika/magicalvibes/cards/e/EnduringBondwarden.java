@@ -35,7 +35,7 @@ public class EnduringBondwarden extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentControlledBySourceControllerPredicate()
         ));
-        CardEffect transferCounters = MoveDyingSourceCountersToTargetCreatureEffect.alwaysTriggers(true);
+        CardEffect transferCounters = new MoveDyingSourceCountersToTargetCreatureEffect(true);
 
         target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),

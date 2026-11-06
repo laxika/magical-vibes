@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.CountersOnTriggeringPermanent;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
@@ -39,13 +39,11 @@ import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetForEachDyingSourcePowerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyardOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -308,18 +306,20 @@ class LegacyTriggerBindingsTest {
     }
 
     @Test
-    @DisplayName("Snapshots the dying creature's effective power")
-    void snapshotsPower() {
+    @DisplayName("Counters equal to its power wait for their target unchanged, with the dying creature as it last existed")
+    void powerCountersCarryTheDyingCreature() {
         Card card = createCreature("Galuf's target", 3, 2);
         Permanent perm = new Permanent(card);
-        var effect = new PutCountersOnTargetForEachDyingSourcePowerEffect();
+        var effect = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new SourcePower(), null,
+                new PermanentIsCreaturePredicate(), false, null, true);
         var ctx = dies(card, PLAYER1_ID, perm);
 
         assertThat(trigger(ctx, effect)).isTrue();
 
         var pending = gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
-        var baked = (PutCountersOnTargetForEachDyingSourcePowerEffect) pending.effects().getFirst();
-        assertThat(baked.count()).isEqualTo(3);
+        assertThat(pending.effects()).containsExactly(effect);
+        assertThat(pending.sourcePermanentSnapshot().getLastKnownPower()).isEqualTo(3);
+        assertThat(pending.triggeringPermanent().getId()).isEqualTo(perm.getId());
     }
 
     @Test
@@ -368,35 +368,6 @@ class LegacyTriggerBindingsTest {
         assertThat(pending.effect()).isEqualTo(choice);
         assertThat(pending.sourcePermanentId()).isEqualTo(perm.getId());
         assertThat(gd.stack).isEmpty();
-    }
-
-    @Test
-    @DisplayName("Bakes effective power from permanent")
-    void bakesPowerFromPermanent() {
-        Card card = createCreature("Vengeful", 4, 3);
-        var effect = new TargetPlayerLosesLifeEqualToPowerEffect();
-        Permanent perm = new Permanent(card);
-        var ctx = dies(card, PLAYER1_ID, perm);
-
-        trigger(ctx, effect);
-
-        var resolved = (LoseLifeEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
-        assertThat(resolved.amount()).isEqualTo(new Fixed(4));
-    }
-
-    @Test
-    @DisplayName("Clamps negative power to 0")
-    void clampsNegativePower() {
-        Card card = createCreature("Weakened", 2, 2);
-        var effect = new TargetPlayerLosesLifeEqualToPowerEffect();
-        Permanent perm = new Permanent(card);
-        perm.setPowerModifier(-5);
-        var ctx = dies(card, PLAYER1_ID, perm);
-
-        trigger(ctx, effect);
-
-        var resolved = (LoseLifeEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
-        assertThat(resolved.amount()).isEqualTo(new Fixed(0));
     }
 
     @Test
@@ -538,8 +509,8 @@ class LegacyTriggerBindingsTest {
     }
 
     @Test
-    @DisplayName("Binds the Equipment's last-known attachment")
-    void bindsLastKnownAttachment() {
+    @DisplayName("Carries the Equipment's last-known attachment as the triggering permanent")
+    void carriesLastKnownAttachment() {
         Card equipment = createEquipment("Oathkeeper");
         Permanent perm = new Permanent(equipment);
         UUID equippedId = UUID.randomUUID();
@@ -550,20 +521,20 @@ class LegacyTriggerBindingsTest {
         trigger(ctx, effect);
 
         assertThat(gd.stack).hasSize(1);
-        var bound = (ExileEquippedCreatureEffect) gd.stack.get(0).getEffectsToResolve().get(0);
-        assertThat(bound.equippedCreatureId()).isEqualTo(equippedId);
+        assertThat(gd.stack.get(0).getEffectsToResolve()).containsExactly(effect);
+        assertThat(gd.stack.get(0).getTriggeringPermanentSnapshot().getAttachedTo()).isEqualTo(equippedId);
     }
 
     @Test
-    @DisplayName("Does not fire when the Equipment was unattached")
-    void unattachedDoesNotFire() {
+    @DisplayName("Still triggers when the Equipment was unattached (no intervening if, CR 603.2)")
+    void unattachedStillTriggers() {
         Card equipment = createEquipment("Oathkeeper");
         Permanent perm = new Permanent(equipment);
         var effect = new ExileEquippedCreatureEffect();
         var ctx = dies(equipment, PLAYER1_ID, perm);
 
-        assertThat(trigger(ctx, effect)).isFalse();
-        assertThat(gd.stack).isEmpty();
+        assertThat(trigger(ctx, effect)).isTrue();
+        assertThat(gd.stack).hasSize(1);
     }
 
     @Test

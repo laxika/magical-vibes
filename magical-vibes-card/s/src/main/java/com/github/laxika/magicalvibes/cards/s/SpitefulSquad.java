@@ -15,6 +15,6 @@ public class SpitefulSquad extends Card {
     public SpitefulSquad() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2)));
 
-        addTrigger(Triggers.dies(ObjectRelation.THIS), MoveDyingSourceCountersToTargetCreatureEffect.alwaysTriggers(true));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MoveDyingSourceCountersToTargetCreatureEffect(true));
     }
 }

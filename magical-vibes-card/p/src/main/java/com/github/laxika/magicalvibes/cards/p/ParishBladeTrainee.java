@@ -12,6 +12,6 @@ public class ParishBladeTrainee extends Card {
 
     public ParishBladeTrainee() {
         addTrigger(Triggers.dies(ObjectRelation.THIS),
-                MoveDyingSourceCountersToTargetCreatureEffect.alwaysTriggers(true));
+                new MoveDyingSourceCountersToTargetCreatureEffect(true));
     }
 }

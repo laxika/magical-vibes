@@ -11,9 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link ExileEquippedCreatureEffect} (Oathkeeper, Takeno's Daisho): exiles the creature
- * the source Equipment was attached to when it was put into a graveyard. Fizzles if that creature
- * has already left the battlefield.
+ * Resolves {@link ExileEquippedCreatureEffect} (Oathkeeper, Takeno's Daisho): exiles the creature the stack entry's
+ * triggering permanent, the Equipment as it last existed on the battlefield (CR 603.10a), was attached to. Does
+ * nothing if it was attached to nothing or that creature has already left the battlefield.
  */
 @Component
 @RequiredArgsConstructor
@@ -29,11 +29,11 @@ public class ExileEquippedCreatureEffectHandler implements NormalEffectHandlerBe
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (ExileEquippedCreatureEffect) effect;
-        if (e.equippedCreatureId() == null) {
+        Permanent equipment = entry.getTriggeringPermanentSnapshot();
+        if (equipment == null || equipment.getAttachedTo() == null) {
             return;
         }
-        Permanent creature = gameQueryService.findPermanentById(gameData, e.equippedCreatureId());
+        Permanent creature = gameQueryService.findPermanentById(gameData, equipment.getAttachedTo());
         if (creature == null) {
             return;
         }

@@ -31,7 +31,7 @@ public class SinUnendingCataclysm extends Card {
 
         target(TargetFilters.creatureYouControl()).addTrigger(Triggers.dies(ObjectRelation.THIS),
                 SequenceEffect.of(
-                        MoveDyingSourceCountersToTargetCreatureEffect.alwaysTriggers(true),
+                        new MoveDyingSourceCountersToTargetCreatureEffect(true),
                         new ShuffleSelfFromGraveyardIntoLibraryEffect()));
     }
 }

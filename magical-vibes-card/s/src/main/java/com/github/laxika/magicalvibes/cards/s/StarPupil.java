@@ -14,6 +14,6 @@ public class StarPupil extends Card {
 
     public StarPupil() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), MoveDyingSourceCountersToTargetCreatureEffect.alwaysTriggers(true));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MoveDyingSourceCountersToTargetCreatureEffect(true));
     }
 }

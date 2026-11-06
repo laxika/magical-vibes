@@ -11,9 +11,10 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldWithCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -43,9 +44,11 @@ public class AthreosShroudVeiled extends Card {
                         PutCounterOnTargetPermanentEffect.withTargetRestriction(
                                 CounterType.COIN, 1, anotherCreature));
 
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANY),
-                new ReturnTriggeringPermanentToBattlefieldWithCounterEffect(CounterType.COIN, Zone.GRAVEYARD));
-        addTrigger(Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD), Triggers.CREATURE, ObjectRelation.ANY),
-                new ReturnTriggeringPermanentToBattlefieldWithCounterEffect(CounterType.COIN, Zone.EXILE));
+        PermanentPredicate coinCounter = new PermanentHasCountersPredicate(CounterType.COIN);
+        addTrigger(Triggers.creatureDies(coinCounter, ObjectRelation.ANY),
+                new ReturnTriggeringPermanentToBattlefieldEffect(Zone.GRAVEYARD));
+        addTrigger(Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD),
+                        new PermanentAllOfPredicate(List.of(Triggers.CREATURE, coinCounter)), ObjectRelation.ANY),
+                new ReturnTriggeringPermanentToBattlefieldEffect(Zone.EXILE));
     }
 }
