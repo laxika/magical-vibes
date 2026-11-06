@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.List;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.Permanent;
 import lombok.RequiredArgsConstructor;
@@ -26,15 +27,18 @@ public class DealDamageToBlockedAttackersOnDeathEffectHandler implements NormalE
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DealDamageToBlockedAttackersOnDeathEffect) effect;
 
+        Permanent dying = entry.getTriggeringPermanentSnapshot();
+        if (dying == null) {
+            return;
+        }
         int damage = e.damage();
         if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;
-        for (UUID targetId : entry.getTargetIds()) {
-            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-            if (target == null) continue;
-            if (!damageSupport.isDamagePreventedForCreature(gameData, entry, target)) {
-                damageSupport.dealCreatureDamage(gameData, entry, target, damage);
+        for (UUID blockedId : List.copyOf(dying.getBlockedAttackerIdsThisCombat())) {
+            Permanent blocked = gameQueryService.findPermanentById(gameData, blockedId);
+            if (blocked == null) continue;
+            if (!damageSupport.isDamagePreventedForCreature(gameData, entry, blocked)) {
+                damageSupport.dealCreatureDamage(gameData, entry, blocked, damage);
             }
         }
-    
     }
 }

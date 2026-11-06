@@ -43,7 +43,6 @@ import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerMaySea
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentOfDyingCreatureControllerDrawsAndGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsSharingDyingPermanentTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerMaySearchLibraryForCreatureToBattlefieldEffect;
@@ -112,14 +111,8 @@ import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -139,7 +132,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -352,58 +344,6 @@ public class DeathTriggerCollectorService {
         registerCreatureDeath(CreatureDeathWatch.ANY, PutCountersOnSourceCardEffect.class,
                 (match, effect, context) -> handleAnyCreatureDeathPutCountersOnSourceCard(match,
                         (PutCountersOnSourceCardEffect) effect, context));
-    }
-
-    @CollectsWatchTrigger(value = SacrificePermanentsSharingDyingPermanentTypeEffect.class,
-            watch = ZoneChangeWatch.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
-    boolean handleMartyrsBondAllyPermanentDeath(TriggerMatchContext match,
-            SacrificePermanentsSharingDyingPermanentTypeEffect effect, TriggerContext ctx) {
-        TriggerContext.AnyPermanentGraveyard death = (TriggerContext.AnyPermanentGraveyard) ctx;
-        Permanent dyingPermanent = death.dyingPermanent() != null
-                ? death.dyingPermanent() : new Permanent(death.dyingCard());
-        return queueMartyrsBondSacrificeTrigger(match, match.permanent(), match.controllerId(),
-                dyingPermanent);
-    }
-
-    private boolean queueMartyrsBondSacrificeTrigger(TriggerMatchContext match, Permanent source,
-            UUID controllerId, Permanent dyingPermanent) {
-        List<PermanentPredicate> typePredicates = dyingPermanent == null ? List.of()
-                : gameQueryService.getEffectiveCardTypes(match.gameData(), dyingPermanent).stream()
-                        .filter(CardType::isPermanentType)
-                        .map(this::permanentTypePredicate)
-                        .filter(Objects::nonNull)
-                        .toList();
-        if (source == null || typePredicates.isEmpty()) {
-            return false;
-        }
-
-        Card sourceCard = source.getCard();
-        match.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                controllerId,
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(new SacrificePermanentsEffect(
-                        1, new PermanentAnyOfPredicate(typePredicates), SacrificeRecipient.EACH_OPPONENT))),
-                null,
-                source.getId()
-        ));
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers (a permanent sharing a card type with it was put into a graveyard)",
-                match.gameData().id, sourceCard.getName());
-        return true;
-    }
-
-    private PermanentPredicate permanentTypePredicate(CardType cardType) {
-        return switch (cardType) {
-            case LAND -> new PermanentIsLandPredicate();
-            case CREATURE -> new PermanentIsCreaturePredicate();
-            case ENCHANTMENT -> new PermanentIsEnchantmentPredicate();
-            case ARTIFACT -> new PermanentIsArtifactPredicate();
-            case PLANESWALKER -> new PermanentIsPlaneswalkerPredicate();
-            case BATTLE -> new PermanentIsBattlePredicate();
-            default -> null;
-        };
     }
 
     boolean handleDistributeCountersAmongCreaturesOnDeath(TriggerMatchContext match,

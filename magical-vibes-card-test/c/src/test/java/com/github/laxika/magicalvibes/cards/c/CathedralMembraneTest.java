@@ -66,8 +66,7 @@ class CathedralMembraneTest extends BaseCardTest {
         // Triggered ability should be on the stack
         assertThat(gd.stack).anyMatch(e ->
                 e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getCard().getName().equals("Cathedral Membrane")
-                && e.getTargetIds().contains(attackerId));
+                && e.getCard().getName().equals("Cathedral Membrane"));
 
         // Resolve the triggered ability — 6 damage to a 3/3 is lethal
         harness.passBothPriorities();

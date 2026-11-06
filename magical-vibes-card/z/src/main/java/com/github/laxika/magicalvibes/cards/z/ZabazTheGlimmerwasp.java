@@ -11,11 +11,10 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -28,14 +27,8 @@ public class ZabazTheGlimmerwasp extends Card {
         addStaticEffect(new AddOnePlusOneCountersToModularAbilityEffect());
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));
         addTrigger(Triggers.dies(ObjectRelation.THIS),
-                new PutCounterOnTargetForEachDyingSourceCounterEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE,
-                        true,
-                        new PermanentAllOfPredicate(List.of(
-                                new PermanentIsArtifactPredicate(),
-                                new PermanentIsCreaturePredicate()
-                        )),
-                        true));
+                new MayEffect(PutCounterOnTargetForEachDyingSourceCounterEffect.modularAbility(),
+                        PutCounterOnTargetForEachDyingSourceCounterEffect.MODULAR_PROMPT));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

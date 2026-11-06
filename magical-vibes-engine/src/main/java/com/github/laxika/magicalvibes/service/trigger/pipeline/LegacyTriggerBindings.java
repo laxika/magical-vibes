@@ -4,17 +4,13 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
@@ -24,9 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEf
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForEmergeSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForImprintedCardOwnerEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensForExiledCardsWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyMerfolkTappedForSourceAbilitiesEffect;
@@ -35,14 +29,11 @@ import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongContro
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreaturesOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTokensCreatedWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToLifeLostWhenEnteredEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutImprintedCardIntoOwnersHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryAndReturnExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
@@ -55,9 +46,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardAndShuffleTopCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsSharingDyingPermanentTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SelfExiledWhileActivatingCraftAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
@@ -72,12 +60,6 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
@@ -98,7 +80,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiPredicate;
@@ -374,10 +355,6 @@ public class LegacyTriggerBindings {
 
     private void registerDeathHandlers() {
         Map<Class<? extends CardEffect>, Handler> h = deathHandlers;
-        register(h, SacrificePermanentsSharingDyingPermanentTypeEffect.class, this::handleMartyrsBondDeath);
-        register(h, DealDamageToBlockedAttackersOnDeathEffect.class, this::handleDealDamageToBlockedAttackers);
-        register(h, PutCounterOnTargetForEachDyingSourceCounterEffect.class,
-                this::handlePutCounterOnTargetForEachDyingSourceCounter);
         register(h, DistributeCountersAmongCreaturesOnDeathEffect.class,
                 this::handleDistributeCountersAmongCreaturesOnDeath);
         register(h, MayPayManaEffect.class, this::handleDeathMayPayMana);
@@ -415,65 +392,9 @@ public class LegacyTriggerBindings {
                 this::handleSelfLeavesCreateTokenForImprintedCardOwner);
         register(h, CreateTokensForExiledCardsWithSourceEffect.class,
                 this::handleSelfLeavesCreateTokensForExiledCardsWithSource);
-        register(h, CreateTokenForTargetPlayerEffect.class, this::handleSelfLeavesCreateTokenForTargetPlayer);
-        register(h, GainLifeEqualToLifeLostWhenEnteredEffect.class,
-                this::handleSelfLeavesGainLifeEqualToLifeLostWhenEntered);
         register(h, TargetPlayerGainsLifeEffect.class, this::handleSelfLeavesTargetPlayerGainsLife);
     }
 
-    private boolean handleMartyrsBondDeath(Ctx c, SacrificePermanentsSharingDyingPermanentTypeEffect effect) {
-        Permanent dyingPermanent = c.dyingPermanent();
-        if (dyingPermanent == null) {
-            return false;
-        }
-        return queueMartyrsBondSacrificeTrigger(c, c.permanent(), c.controllerId(),
-                dyingPermanent);
-    }
-    private boolean handleDealDamageToBlockedAttackers(Ctx c, DealDamageToBlockedAttackersOnDeathEffect deathDmg) {
-        Permanent dyingPermanent = c.dyingPermanent();
-        TurnStep step = c.gameData().currentStep;
-        if (dyingPermanent == null || step == null
-                || step.ordinal() < TurnStep.BEGINNING_OF_COMBAT.ordinal()
-                || step.ordinal() > TurnStep.END_OF_COMBAT.ordinal()) {
-            return false;
-        }
-        List<UUID> targetIds = new ArrayList<>(dyingPermanent.getBlockedAttackerIdsThisCombat());
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                c.dyingCard(),
-                c.controllerId(),
-                c.dyingCard().getName() + "'s ability",
-                new ArrayList<>(List.of(deathDmg)),
-                0,
-                targetIds
-        );
-        entry.setNonTargeting(true);
-        c.gameData().stack.add(entry);
-        return true;
-    }
-    private boolean handlePutCounterOnTargetForEachDyingSourceCounter(Ctx c, PutCounterOnTargetForEachDyingSourceCounterEffect effect) {
-        Permanent dyingPermanent = c.dyingPermanent();
-        if (dyingPermanent == null) {
-            return false;
-        }
-        // The counters are counted on the stack entry's triggering permanent, the source as it last existed on the
-        // battlefield (CR 603.10a), as the ability resolves.
-        boolean modular = effect.modular() || dyingPermanent.getCard().hasKeyword(Keyword.MODULAR);
-        CardEffect baked = modular == effect.modular() ? effect : new PutCounterOnTargetForEachDyingSourceCounterEffect(
-                effect.counterType(), effect.optional(), effect.targetPredicate(), true);
-        // "you may …" (Soulstinger): the target is still chosen now (CR 603.3d), but the controller
-        // may decline placing the counters when the trigger resolves — gate it behind a MayEffect.
-        String counterDescription = effect.counterType() == CounterType.PLUS_ONE_PLUS_ONE ? "+1/+1" : "-1/-1";
-        CardEffect queued = effect.optional()
-                ? new MayEffect(baked, "put a " + counterDescription + " counter on target creature for each "
-                        + counterDescription + " counter on "
-                        + c.dyingCard().getName() + "?")
-                : baked;
-        c.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
-                c.dyingCard(), c.controllerId(), new ArrayList<>(List.of(queued))
-        ).withTriggeringPermanent(dyingPermanent));
-        return true;
-    }
     private boolean handleDistributeCountersAmongCreaturesOnDeath(Ctx c, DistributeCountersAmongCreaturesOnDeathEffect effect) {
         Permanent dyingPermanent = c.dyingPermanent();
         if (dyingPermanent == null) {
@@ -981,33 +902,6 @@ public class LegacyTriggerBindings {
         return true;
     }
 
-    /**
-     * "When this permanent leaves the battlefield, target player creates an X/X token, where X is
-     * [something about this permanent]." The source is already gone by the time the trigger resolves,
-     * so the blueprint's dynamic power/toughness is evaluated here against the leaving permanent and
-     * frozen into the queued effect; the target choice then runs through the ordinary self-leaves
-     * queue. Phantasmal Sphere.
-     */
-    private boolean handleSelfLeavesCreateTokenForTargetPlayer(Ctx c, CreateTokenForTargetPlayerEffect effect) {
-        CreateTokenEffect blueprint = effect.tokenEffect();
-        AmountContext amountContext = new AmountContext(c.controllerId(), c.permanent(), null, 0, 0);
-        CreateTokenEffect frozen = blueprint.withPowerToughness(
-                amountEvaluationService.evaluate(c.gameData(), blueprint.power(), amountContext),
-                amountEvaluationService.evaluate(c.gameData(), blueprint.toughness(), amountContext));
-        c.gameData().queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                c.dyingCard(), c.controllerId(),
-                new ArrayList<>(List.of(new CreateTokenForTargetPlayerEffect(frozen)))
-        ));
-        logSelfLeaves(c);
-        return true;
-    }
-
-    private boolean handleSelfLeavesGainLifeEqualToLifeLostWhenEntered(Ctx c, GainLifeEqualToLifeLostWhenEnteredEffect effect) {
-        int amount = Objects.equals(c.controllerId(), c.permanent().getLifeLostWhenEnteredControllerId())
-                ? c.permanent().getLifeLostWhenEntered() : 0;
-        return handleSelfLeavesDefault(c, new GainLifeEffect(amount));
-    }
-
     private boolean handleSelfLeavesTargetPlayerGainsLife(Ctx c, TargetPlayerGainsLifeEffect effect) {
         UUID targetPlayerId = c.permanent().getRememberedTargetPlayerId();
         if (targetPlayerId == null) {
@@ -1071,18 +965,6 @@ public class LegacyTriggerBindings {
         return withPermanent.withTriggeringCard(cardId, c.gameData().graveyardEntryVersion(cardId));
     }
 
-
-    private PermanentPredicate permanentTypePredicate(CardType cardType) {
-        return switch (cardType) {
-            case LAND -> new PermanentIsLandPredicate();
-            case CREATURE -> new PermanentIsCreaturePredicate();
-            case ENCHANTMENT -> new PermanentIsEnchantmentPredicate();
-            case ARTIFACT -> new PermanentIsArtifactPredicate();
-            case PLANESWALKER -> new PermanentIsPlaneswalkerPredicate();
-            case BATTLE -> new PermanentIsBattlePredicate();
-            default -> null;
-        };
-    }
 
     /**
      * Takes the division staged in {@code pendingETBDamageAssignments} as the division announced for
@@ -1179,35 +1061,6 @@ public class LegacyTriggerBindings {
                 .filter(gameData.playerIds::contains)
                 .findFirst()
                 .orElse(null);
-    }
-
-    private boolean queueMartyrsBondSacrificeTrigger(Ctx c, Permanent source,
-            UUID controllerId, Permanent dyingPermanent) {
-        List<PermanentPredicate> typePredicates = dyingPermanent == null ? List.of()
-                : gameQueryService.getEffectiveCardTypes(c.gameData(), dyingPermanent).stream()
-                        .filter(CardType::isPermanentType)
-                        .map(this::permanentTypePredicate)
-                        .filter(Objects::nonNull)
-                        .toList();
-        if (source == null || typePredicates.isEmpty()) {
-            return false;
-        }
-
-        Card sourceCard = source.getCard();
-        c.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                controllerId,
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(new SacrificePermanentsEffect(
-                        1, new PermanentAnyOfPredicate(typePredicates), SacrificeRecipient.EACH_OPPONENT))),
-                null,
-                source.getId()
-        ));
-        gameLogService.append(c.gameData(), GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers (a permanent sharing a card type with it was put into a graveyard)",
-                c.gameData().id, sourceCard.getName());
-        return true;
     }
 
     private boolean handleSelfLeavesDefault(Ctx c, CardEffect effect) {

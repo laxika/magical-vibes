@@ -270,6 +270,7 @@ import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorManaSymbo
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellTargetCount;
 import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentToughness;
 import com.github.laxika.magicalvibes.model.amount.CountersOnTriggeringPermanent;
+import com.github.laxika.magicalvibes.model.amount.LifeLostWhenTriggeringPermanentEntered;
 import com.github.laxika.magicalvibes.model.amount.UnlockedRoomDoorsCount;
 import com.github.laxika.magicalvibes.model.amount.UntappedLandsAtTurnStart;
 import com.github.laxika.magicalvibes.model.amount.WebSlingingReturnedCreatureManaValue;
@@ -642,6 +643,12 @@ public class AmountEvaluationService {
                     countCountersOnStackEntryCard(gameData, c, ctx);
             case CountersOnTriggeringPermanent c ->
                     ctx.stackEntry() == null ? 0 : ctx.stackEntry().triggeringPermanentCounterCount(c.counterType());
+            case LifeLostWhenTriggeringPermanentEntered ignored -> {
+                Permanent entered = ctx.stackEntry() == null ? null : ctx.stackEntry().getTriggeringPermanentSnapshot();
+                yield entered != null && ctx.controllerId() != null
+                        && ctx.controllerId().equals(entered.getLifeLostWhenEnteredControllerId())
+                        ? entered.getLifeLostWhenEntered() : 0;
+            }
             case TimesSourceRegeneratedThisTurn ignored ->
                     ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getTimesRegeneratedThisTurn();
             case TokensCreatedThisTurn ignored ->

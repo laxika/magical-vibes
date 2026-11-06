@@ -30,7 +30,7 @@ re-check them with a grep before acting on them.
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
 | 14 | Trigger options replace trigger-only wrapper effects | done (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; run 16l, family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader`; run 16m, family 10 (sagas): no chapter or final-chapter ability has a legacy view, and the final-chapter collectors read the abilities through `SagaAbilityReader`; run 16n, family 11's player and keyword actions: every `ActionWatch` collector reads the abilities through `ActionAbilityReader`; run 16o, family 11's rest: every `MiscWatch` collector and the planar reader read the abilities through `MiscAbilityReader`; run 16p, the zone changes but "when this enters" and the permanent changes: no such ability has a legacy view, and the readers outside the trigger pipeline read them through `ZoneChangeAbilityReader`; run 16q, "when this enters": no ability has a legacy view; the own enters collector reads the abilities and judges their limit, the other readers read `Card.getOwnEntryEffects()`, and `OnceOnlyTriggerEffect` is gone; run 16r, every triggered ability is one object on the stack: the abilities of one Oracle ability are merged by script, the own enters and combat collectors group effects by ability, and `TriggerMode` is gone; run 16s, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags are gone: a `ConditionalEffect` is an effect's "if", and every collector judges the intervening "if" and event condition from the ability; run 16t, the trigger-only wrapper classes: the `Triggering…ConditionalEffect` filters, `SelfExiledFromBattlefieldEffect`, `OncePerTurnPerCreatureTriggerEffect` and `OncePerTurnTriggerEffect`'s keyed, per-grant, mark-on-acceptance and first-time forms are gone, their cards written with trigger filters, `TriggerLimit`s and `TriggeringCardMatches`; Bill Potts' `OncePerTurnTriggerEffect` and the may-unwrapping moved to step 15, with the user) |
-| 15 | Effects read the trigger event (repeatable) | open (run 1, with the user: the dying card, `DyingCreatureCardAwareEffect` gone; effects read the stack entry's triggering card; run 2, with the user: the departed permanent's last-known information, its 13 `…AwareEffect` interfaces gone; effects read the stack entry's triggering permanent; run 3: the rest of the departed object, the last-known rebuilds and baked dying-card ids run 2 kept, 4 classes gone and 5 lose their bound ids; run 4: the departed permanent's trigger-time rebuilds and skips run 3 kept, 6 classes gone, their skips trigger filters) |
+| 15 | Effects read the trigger event (repeatable) | open (run 1, with the user: the dying card, `DyingCreatureCardAwareEffect` gone; effects read the stack entry's triggering card; run 2, with the user: the departed permanent's last-known information, its 13 `…AwareEffect` interfaces gone; effects read the stack entry's triggering permanent; run 3: the rest of the departed object, the last-known rebuilds and baked dying-card ids run 2 kept, 4 classes gone and 5 lose their bound ids; run 4: the departed permanent's trigger-time rebuilds and skips run 3 kept, 6 classes gone, their skips trigger filters; run 5: the last departed-permanent rebuilds of `LegacyTriggerBindings` but the counter distribution, 3 classes gone, modular's "you may" and flag on the card) |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
 ## Why
@@ -9932,6 +9932,114 @@ Potts, the may-unwrapping and the `…Triggering…` classes, as run 1 listed.
   also fails at HEAD (`9fcb2e25aa`, checked in a worktree with main's card-data cache).
 - Engine: the whole module. The one failure is the known HEAD one, `GameMutationBoundaryRatchetTest`.
 - AI: compiles. Its tests weren't run, since no AI code changed.
+- The full suite was not run here.
+
+#### Run 5: the last departed-permanent rebuilds
+
+Run 4's "for later runs" listed this group first: the rebuilds its "Kept" list left in `LegacyTriggerBindings`. Five of
+the seven are gone; each effect now reads the stack entry as it resolves, or its skip is the ability's event condition.
+The counter distribution and the three `snapshot…ManaValue` helpers are kept (below). The 11 `…AwareEffect` interfaces
+are untouched.
+
+**What the scan found.** Seven rebuild handlers in `LegacyTriggerBindings`: `DistributeCountersAmongCreaturesOnDeathEffect`,
+`PutCounterOnTargetForEachDyingSourceCounterEffect` (modular and "you may"), `DealDamageToBlockedAttackersOnDeathEffect`,
+Martyr's Bond (`SacrificePermanentsSharingDyingPermanentTypeEffect`), `GainLifeEqualToLifeLostWhenEnteredEffect`,
+`CreateTokenForTargetPlayerEffect`'s P/T freeze, and the `snapshot…ManaValue` helpers. Martyr's Bond's marker was dead:
+the card has been written with `SacrificePermanentsEffect` and `PermanentSharesCardTypeWithSourcePermanentPredicate`
+since step 14 run 3a, and its `DeathTriggerCollectorService` handler was dead too. 29 card classes use the rest.
+
+**Gone.**
+
+- `SacrificePermanentsSharingDyingPermanentTypeEffect`, its two handlers (`LegacyTriggerBindings`,
+  `DeathTriggerCollectorService`) and their `permanentTypePredicate` helpers: no card used them.
+- `GainLifeEqualToLifeLostWhenEnteredEffect` (Soulgorger Orgg) became `GainLifeEffect(new
+  LifeLostWhenTriggeringPermanentEntered())`, a new `DynamicAmount` that reads `getLifeLostWhenEntered()` from the
+  entry's triggering permanent. Oracle's "the life **you** lost when it entered" keeps the old controller check: 0 when
+  the ability's controller isn't the player who lost it (new card test
+  `SoulgorgerOrggTest#anotherControllerGainsNoLifeWhenItLeaves`).
+- Phantasmal Sphere's P/T freeze. Its X is `CountersOnTriggeringPermanent(PLUS_ONE_PLUS_ONE)`, which
+  `CreateTokenForTargetPlayerEffectHandler` already evaluated against the entry. Its trigger, and Baffling End's, now
+  go through the self-leaves default, so their target choice carries the source id and snapshot and the triggering
+  permanent.
+
+**Kept, now reading the entry.**
+
+- `DealDamageToBlockedAttackersOnDeathEffect(int)` (Cathedral Membrane). Its handler damages the creatures in the
+  triggering permanent's `getBlockedAttackerIdsThisCombat()`, not the entry's target ids. "Dies during combat" is the
+  ability's event condition, `TriggerOptions.DEFAULT.withEventCondition(new DuringCombat())`. It is checked as it
+  triggers and isn't an intervening "if" (**CR 603.2**, **CR 603.4**, checked). `DuringCombat` is the same five steps
+  the skip checked.
+- `PutCounterOnTargetForEachDyingSourceCounterEffect(CounterType, PermanentPredicate, boolean modular)` lost
+  `optional`. A "you may" is a `MayEffect` on the card (**CR 603.5**, checked), which the death `MayEffect` handler
+  queues with its target as before (**CR 603.3d**, checked). `modularAbility()` is modular's ability (**CR 702.43a**,
+  checked): the +1/+1 count, the artifact-creature target and `modular = true`. Cards write it
+  `new MayEffect(PutCounterOnTargetForEachDyingSourceCounterEffect.modularAbility(), MODULAR_PROMPT)`. The collector
+  used to switch the flag on from the dying card's printed Modular keyword; the cards now say it. (`modular()` would
+  clash with the record accessor.)
+
+**Behaviour changes.**
+
+- Rules fix, CR 702.43a (checked): Blaster, Combat DJ grants "modular 1" to other nontoken artifact creatures and
+  Vehicles you control. That granted ability is a modular triggered ability, but the old keyword check didn't mark it,
+  because the dying creature had no printed Modular, so Zabaz, the Glimmerwasp didn't add its counter. New card test
+  `BlasterCombatDJTest#grantedModularIsAModularTriggeredAbilityForZabaz` (fails with the flag off: 2 instead of 3).
+- The "you may" prompts are the card's text: modular's `MODULAR_PROMPT`, and Soulstinger's "…for each -1/-1 counter on
+  this creature?". They no longer use a prompt naming the dying card.
+- Cathedral Membrane's entry has no target ids; the damaged creatures are the same.
+
+**Kept, with their reason.**
+
+- `DistributeCountersAmongCreaturesOnDeathEffect` and its two rebuilds (`LegacyTriggerBindings`, Grand Ossuary's in
+  `DeathTriggerCollectorService`). Its targeted forms (Quirion Beastcaller, Jugan, Grand Ossuary) announce the division
+  as the ability goes on the stack (**CR 601.2d**, as run 4 kept it), so the total must be known then. It can move once
+  the announcement reads the entry's triggering permanent. Vastwood Hydra's untargeted form could move on its own.
+- The three `snapshot…ManaValue` helpers, for run 3's reason.
+- Martyr's Bond's "another nonland permanent" trigger reaches `DeathTriggerCollectorService.handleAllyPermanentGraveyardSacrifice`.
+  That handler sets the entry's **source** snapshot to the dying permanent, so the source-relative
+  `PermanentSharesCardTypeWithSourcePermanentPredicate` compares with "it". This is a trigger-time rebinding of the same
+  kind: a predicate that reads the triggering permanent would retire it.
+- Mongrel Pack writes "dies during combat" as an intervening "if" (`withInterveningIf(new DuringCombat())`). It is an
+  event condition like Cathedral Membrane's. The result is the same, because the death trigger resolves in the combat
+  step it died in. Unchanged here.
+
+**For later runs.** The distribution and Martyr's Bond's rebinding above, then the damage and combat interfaces, the
+bindings that aren't trigger events, Bill Potts, the may-unwrapping and the `…Triggering…` classes, as run 1 listed.
+
+**Scripts.**
+
+- `scripts/step15-departed-leftovers-cards.py` (idempotent, per letter module) changed 29 card classes: the 24 modular
+  cards (the Arcbound cards, Zabaz, Power Depot, Scrapyard Recombiner, both Blaster faces), Soulstinger, Servant of the
+  Scale, Phantasmal Sphere, Soulgorger Orgg and Cathedral Membrane. Run on `magical-vibes-card-test/c`, it also changes
+  `CathedralMembraneTest`.
+- `scripts/step15-departed-leftovers-docs.py` makes exact line edits in `ORACLE_TEXT_EFFECT_MAP.md` (with a new
+  Cathedral Membrane row), `EFFECTS_INDEX.md` (with the new amount), `EFFECTS_QUICK_REFERENCE.md` and
+  `CARD_PATTERNS_CREATURES_ETB.md`.
+- The effects, the amount, the handlers and the collectors were edited by hand. The skills didn't name these classes.
+
+**Tests changed.**
+
+- `LegacyTriggerBindingsTest`:
+  - The four Cathedral Membrane cases ("Triggers during combat when creature was blocking", "Does not trigger outside
+    combat", "Triggers with no creatures to damage when it blocked none", "Does not trigger when step is null") became
+    one: "Blocked-attacker damage goes on the stack unchanged, with the dying blocker as its triggering permanent".
+    The combat check is now the event condition, which `TriggeredAbilityStackService` judges before the bindings run;
+    `CathedralMembraneTest#noTriggerOutsideCombat` covers it.
+  - "Carries the dying creature as the triggering permanent and preserves the target predicate" became "Modular's
+    \"you may\" waits for its target unchanged, with the dying creature as the triggering permanent".
+- `CathedralMembraneTest#deathTriggerDeals6DamageToBlockedCreature` no longer asserts that the blocked attacker is
+  among the entry's target ids (by script). The attacker dying to the 6 damage still shows which creature was hit.
+- New card tests: `BlasterCombatDJTest#grantedModularIsAModularTriggeredAbilityForZabaz` and
+  `SoulgorgerOrggTest#anotherControllerGainsNoLifeWhenItLeaves`.
+
+**Test runs.**
+
+- Card: the test class of every card test naming a converted card, Baffling End, Martyr's Bond, Grief Tyrant or Reyhan:
+  47 test classes, 360 test cases, all passing.
+- Application: `LegacyTriggerBindingsTest`, `DeathTriggerCollectorServiceTest` and
+  `CreateTokenForTargetPlayerEffectHandlerTest`. The one failure, `DeathTriggerCollectorServiceTest$RegisterDelayedReturn`
+  "May prompt includes dying card name", is run 4's known HEAD failure.
+- Engine: the whole module. The one failure is the known HEAD one, `GameMutationBoundaryRatchetTest`.
+- AI: compiles (`compileTestJava`). Its tests weren't run, since no AI code changed.
 - The full suite was not run here.
 
 ## Prompt

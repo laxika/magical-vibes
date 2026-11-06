@@ -1,14 +1,18 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.c.ControlMagic;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SoulgorgerOrgg.class})
+@CardUsed({SoulgorgerOrgg.class, ControlMagic.class})
 class SoulgorgerOrggTest extends BaseCardTest {
 
     @Test
@@ -51,6 +55,27 @@ class SoulgorgerOrggTest extends BaseCardTest {
         resolveLeaveTrigger();
 
         harness.assertLife(player1, 12);
+    }
+
+    /** "The life you lost when it entered": its new controller lost none, so gains none. */
+    @Test
+    void anotherControllerGainsNoLifeWhenItLeaves() {
+        castAndResolveEntry(20);
+        Permanent orgg = findPermanent(player1, "Soulgorger Orgg");
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new ControlMagic()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.castEnchantment(player2, 0, orgg.getId());
+        resolveAllTriggers();
+        Permanent stolen = findPermanent(player2, "Soulgorger Orgg");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, stolen));
+        resolveLeaveTrigger();
+
+        harness.assertLife(player1, 1);
+        harness.assertLife(player2, 20);
     }
 
     private void castAndResolveEntry(int startingLife) {

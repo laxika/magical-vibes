@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -22,6 +23,7 @@ public class Soulstinger extends Card {
         // counter on this creature." Any creature is a legal target — the death effect carries its
         // own targeting, independent of the ETB's "creature you control" filter above.
         addTrigger(Triggers.dies(ObjectRelation.THIS),
-                new PutCounterOnTargetForEachDyingSourceCounterEffect(CounterType.MINUS_ONE_MINUS_ONE, true));
+                new MayEffect(new PutCounterOnTargetForEachDyingSourceCounterEffect(CounterType.MINUS_ONE_MINUS_ONE),
+                        "Put a -1/-1 counter on target creature for each -1/-1 counter on this creature?"));
     }
 }

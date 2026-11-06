@@ -12,12 +12,12 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveCountersFromSourceToTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -36,11 +36,9 @@ public class BlasterMoraleBooster extends Card {
                         new PermanentIsSourcePermanentPredicate())));
 
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3)));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new PutCounterOnTargetForEachDyingSourceCounterEffect(
-                CounterType.PLUS_ONE_PLUS_ONE, true,
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsArtifactPredicate(),
-                        new PermanentIsCreaturePredicate()))));
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
+                new MayEffect(PutCounterOnTargetForEachDyingSourceCounterEffect.modularAbility(),
+                        PutCounterOnTargetForEachDyingSourceCounterEffect.MODULAR_PROMPT));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

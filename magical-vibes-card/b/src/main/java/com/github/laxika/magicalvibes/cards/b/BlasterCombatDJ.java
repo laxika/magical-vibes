@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentsEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -33,9 +33,6 @@ public class BlasterCombatDJ extends Card {
         setBackFaceCard(new BlasterMoraleBooster());
         addCastingOption(AlternateHandCast.moreThanMeetsTheEye("{1}{R}{G}"));
 
-        PermanentPredicate artifactCreature = new PermanentAllOfPredicate(List.of(
-                new PermanentIsArtifactPredicate(),
-                new PermanentIsCreaturePredicate()));
         PermanentPredicate modularEntryTarget = new PermanentAllOfPredicate(List.of(
                 new PermanentNotPredicate(new PermanentIsTokenPredicate()),
                 new PermanentIsArtifactPredicate(),
@@ -53,8 +50,8 @@ public class BlasterCombatDJ extends Card {
         addStaticEffect(new ControlledPermanentsEnterWithAdditionalCountersEffect(modularEntryTarget, 1));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
-                new PutCounterOnTargetForEachDyingSourceCounterEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE, true, artifactCreature)),
+                new MayEffect(PutCounterOnTargetForEachDyingSourceCounterEffect.modularAbility(),
+                        PutCounterOnTargetForEachDyingSourceCounterEffect.MODULAR_PROMPT)),
                 GrantScope.OWN_PERMANENTS,
                 modularTarget));
         addTrigger(Triggers.youPutPlusOneCountersOnThis(), new TransformToBackFaceEffect());

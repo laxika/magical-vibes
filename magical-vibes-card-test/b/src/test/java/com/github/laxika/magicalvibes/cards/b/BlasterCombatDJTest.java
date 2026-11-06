@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.cards.s.SmugglersCopter;
+import com.github.laxika.magicalvibes.cards.z.ZabazTheGlimmerwasp;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -22,7 +23,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BlasterCombatDJ.class, BlasterMoraleBooster.class, Battlegrowth.class, CommonBond.class,
-        DoomBlade.class, FountainOfYouth.class, Ornithopter.class, Shatter.class, SmugglersCopter.class})
+        DoomBlade.class, FountainOfYouth.class, Ornithopter.class, Shatter.class, SmugglersCopter.class,
+        ZabazTheGlimmerwasp.class})
 class BlasterCombatDJTest extends BaseCardTest {
 
     @Test
@@ -99,6 +101,34 @@ class BlasterCombatDJTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    /**
+     * The granted "modular 1" is a modular triggered ability (CR 702.43a), so Zabaz's "if a modular triggered ability
+     * would put one or more +1/+1 counters on a creature you control" adds one, though the dying creature has no
+     * printed modular.
+     */
+    @Test
+    void grantedModularIsAModularTriggeredAbilityForZabaz() {
+        harness.addToBattlefield(player1, new BlasterCombatDJ());
+        Permanent zabaz = harness.addToBattlefieldAndReturn(player1, new ZabazTheGlimmerwasp());
+        zabaz.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent modular = addCreatureReady(player1, new Ornithopter());
+        modular.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent recipient = addCreatureReady(player1, new Ornithopter());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new DoomBlade()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, modular.getId());
+
+        harness.handlePermanentChosen(player1, recipient.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
     @Test

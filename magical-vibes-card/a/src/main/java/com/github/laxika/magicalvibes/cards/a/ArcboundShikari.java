@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -22,10 +23,6 @@ import java.util.List;
 public class ArcboundShikari extends Card {
 
     public ArcboundShikari() {
-        PermanentPredicate artifactCreature = new PermanentAllOfPredicate(List.of(
-                new PermanentIsArtifactPredicate(),
-                new PermanentIsCreaturePredicate()
-        ));
         PermanentPredicate otherArtifactCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(),
                 new PermanentIsCreaturePredicate(),
@@ -37,7 +34,7 @@ public class ArcboundShikari extends Card {
                 new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, otherArtifactCreature));
         addTrigger(Triggers.dies(ObjectRelation.THIS),
-                new PutCounterOnTargetForEachDyingSourceCounterEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE, true, artifactCreature));
+                new MayEffect(PutCounterOnTargetForEachDyingSourceCounterEffect.modularAbility(),
+                        PutCounterOnTargetForEachDyingSourceCounterEffect.MODULAR_PROMPT));
     }
 }

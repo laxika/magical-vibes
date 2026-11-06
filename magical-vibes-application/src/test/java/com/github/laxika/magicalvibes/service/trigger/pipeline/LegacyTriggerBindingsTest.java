@@ -44,8 +44,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourc
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
@@ -205,8 +203,8 @@ class LegacyTriggerBindingsTest {
     }
 
     @Test
-    @DisplayName("Triggers during combat when creature was blocking")
-    void triggersDuringCombat() {
+    @DisplayName("Blocked-attacker damage goes on the stack unchanged, with the dying blocker as its triggering permanent")
+    void blockedAttackerDamageCarriesTheDyingBlocker() {
         Card card = createCreature("Blocker", 1, 1);
         var deathDmg = new DealDamageToBlockedAttackersOnDeathEffect(2);
         Permanent perm = new Permanent(card);
@@ -215,53 +213,14 @@ class LegacyTriggerBindingsTest {
         gd.currentStep = TurnStep.COMBAT_DAMAGE;
         var ctx = dies(card, PLAYER1_ID, perm);
 
-        boolean result = trigger(ctx, deathDmg);
-
-        assertThat(result).isTrue();
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.get(0).getTargetIds()).containsExactly(attackerId);
-    }
-
-    @Test
-    @DisplayName("Does not trigger outside combat")
-    void doesNotTriggerOutsideCombat() {
-        Card card = createCreature("Blocker", 1, 1);
-        var deathDmg = new DealDamageToBlockedAttackersOnDeathEffect(2);
-        Permanent perm = new Permanent(card);
-        perm.getBlockingTargetIds().add(UUID.randomUUID());
-        gd.currentStep = TurnStep.PRECOMBAT_MAIN;
-        var ctx = dies(card, PLAYER1_ID, perm);
-
-        boolean result = trigger(ctx, deathDmg);
-
-        assertThat(result).isFalse();
-        assertThat(gd.stack).isEmpty();
-    }
-
-    @Test
-    @DisplayName("Triggers with no creatures to damage when it blocked none")
-    void triggersWithNoCreaturesWhenNotBlocking() {
-        Card card = createCreature("NonBlocker", 1, 1);
-        var deathDmg = new DealDamageToBlockedAttackersOnDeathEffect(2);
-        Permanent perm = new Permanent(card);
-        gd.currentStep = TurnStep.COMBAT_DAMAGE;
-        var ctx = dies(card, PLAYER1_ID, perm);
-
         assertThat(trigger(ctx, deathDmg)).isTrue();
-        assertThat(gd.stack.getFirst().getTargetIds()).isEmpty();
-    }
 
-    @Test
-    @DisplayName("Does not trigger when step is null")
-    void doesNotTriggerWhenStepNull() {
-        Card card = createCreature("Blocker", 1, 1);
-        var deathDmg = new DealDamageToBlockedAttackersOnDeathEffect(2);
-        Permanent perm = new Permanent(card);
-        perm.getBlockingTargetIds().add(UUID.randomUUID());
-        gd.currentStep = null;
-        var ctx = dies(card, PLAYER1_ID, perm);
-
-        assertThat(trigger(ctx, deathDmg)).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        StackEntry entry = gd.stack.getFirst();
+        assertThat(entry.getEffectsToResolve()).containsExactly(deathDmg);
+        assertThat(entry.getTargetIds()).isEmpty();
+        assertThat(entry.getTriggeringPermanentSnapshot().getBlockedAttackerIdsThisCombat())
+                .containsExactly(attackerId);
     }
 
     @Test
@@ -282,27 +241,20 @@ class LegacyTriggerBindingsTest {
     }
 
     @Test
-    @DisplayName("Carries the dying creature as the triggering permanent and preserves the target predicate")
-    void carriesTheDyingCreatureAndPreservesTargetPredicate() {
+    @DisplayName("Modular's \"you may\" waits for its target unchanged, with the dying creature as the triggering permanent")
+    void modularWaitsForItsTargetWithTheDyingCreature() {
         Card card = createCreature("Arcbound Bruiser", 0, 0);
         Permanent perm = new Permanent(card);
         perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
-        var targetPredicate = new PermanentAllOfPredicate(List.of(
-                new PermanentIsArtifactPredicate(),
-                new PermanentIsCreaturePredicate()
-        ));
-        var effect = new PutCounterOnTargetForEachDyingSourceCounterEffect(
-                CounterType.PLUS_ONE_PLUS_ONE, true, targetPredicate);
+        var effect = new MayEffect(PutCounterOnTargetForEachDyingSourceCounterEffect.modularAbility(),
+                PutCounterOnTargetForEachDyingSourceCounterEffect.MODULAR_PROMPT);
         var ctx = dies(card, PLAYER1_ID, perm);
 
         assertThat(trigger(ctx, effect)).isTrue();
 
-        MayEffect may = (MayEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)
-                .effects().getFirst();
-        var baked = (PutCounterOnTargetForEachDyingSourceCounterEffect) may.wrapped();
-        assertThat(baked.targetPredicate()).isEqualTo(targetPredicate);
-        assertThat(gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).triggeringPermanent()
-                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        var pending = gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
+        assertThat(pending.effects()).containsExactly(effect);
+        assertThat(pending.triggeringPermanent().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
     @Test

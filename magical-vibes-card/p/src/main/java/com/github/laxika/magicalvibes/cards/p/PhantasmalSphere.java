@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.amount.CountersOnTriggeringPermanent;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyUnlessPaysPerCounterEffect;
@@ -36,14 +36,14 @@ public class PhantasmalSphere extends Card {
 
         // When this creature leaves the battlefield, target opponent creates an X/X blue Orb
         // creature token with flying, where X is the number of +1/+1 counters on this creature.
-        // X is frozen from the leaving permanent when the trigger is collected.
+        // X is read from the permanent as it last existed on the battlefield as the ability resolves.
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new CreateTokenForTargetPlayerEffect(
                 new CreateTokenEffect("Orb",
-                        new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE),
-                        new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE),
+                        new CountersOnTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE),
+                        new CountersOnTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE),
                         CardColor.BLUE, List.of(CardSubtype.ORB),
                         Set.of(Keyword.FLYING), Set.of())
         ));

@@ -8,15 +8,10 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveCounterFromTargetCreatureToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "DST", collectorNumber = "96")
 public class ArcboundFiend extends Card {
@@ -30,12 +25,7 @@ public class ArcboundFiend extends Card {
                         "Move a +1/+1 counter from target creature onto this creature?"));
 
         addTrigger(Triggers.dies(ObjectRelation.THIS),
-                new PutCounterOnTargetForEachDyingSourceCounterEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE,
-                        true,
-                        new PermanentAllOfPredicate(List.of(
-                                new PermanentIsArtifactPredicate(),
-                                new PermanentIsCreaturePredicate()
-                        ))));
+                new MayEffect(PutCounterOnTargetForEachDyingSourceCounterEffect.modularAbility(),
+                        PutCounterOnTargetForEachDyingSourceCounterEffect.MODULAR_PROMPT));
     }
 }

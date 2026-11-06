@@ -23,7 +23,6 @@ public class ServantOfTheScale extends Card {
         addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new PutCounterOnTargetForEachDyingSourceCounterEffect(
                         CounterType.PLUS_ONE_PLUS_ONE,
-                        false,
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentControlledBySourceControllerPredicate()
