@@ -27,14 +27,12 @@ public class LoseLifeToOwnerOfTriggeringSpellEffectHandler implements NormalEffe
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        LoseLifeToOwnerOfTriggeringSpellEffect lifeLoss =
-                (LoseLifeToOwnerOfTriggeringSpellEffect) effect;
         Card triggeringSpell = gameQueryService.findCardById(gameData, entry.getTriggeringCardId());
         if (triggeringSpell == null || triggeringSpell.getOwnerId() == null) {
             return;
         }
 
         UUID ownerId = triggeringSpell.getOwnerId();
-        lifeSupport.applyLifeLoss(gameData, ownerId, lifeLoss.amount(), entry.getCard().getName());
+        lifeSupport.applyLifeLoss(gameData, ownerId, entry.getEventValue(), entry.getCard().getName());
     }
 }

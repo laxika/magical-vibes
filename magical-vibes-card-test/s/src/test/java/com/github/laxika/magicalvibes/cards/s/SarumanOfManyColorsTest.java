@@ -229,4 +229,27 @@ class SarumanOfManyColorsTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(firstMilled, secondMilled, target);
         harness.passBothPriorities();
     }
+
+    @Test
+    @DisplayName("Only a card with mana value equal to or less than the second spell's can be exiled")
+    void exiledCardManaValueIsAtMostTheSecondSpells() {
+        harness.addToBattlefield(player1, new SarumanOfManyColors());
+        Divination tooExpensive = new Divination();
+        LightningBolt cheapEnough = new LightningBolt();
+        harness.setGraveyard(player2, List.of(tooExpensive, cheapEnough));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new Divination(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiGraveyardChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(targetChoice).isNotNull();
+        assertThat(targetChoice.validCardIds()).containsExactly(cheapEnough.getId());
+    }
 }

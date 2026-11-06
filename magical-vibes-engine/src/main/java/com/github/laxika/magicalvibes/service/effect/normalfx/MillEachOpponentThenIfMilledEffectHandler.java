@@ -39,7 +39,6 @@ public class MillEachOpponentThenIfMilledEffectHandler implements NormalEffectHa
             }
         }
 
-        entry.setEventValue(milled.size());
         if (milled.isEmpty()) {
             return;
         }

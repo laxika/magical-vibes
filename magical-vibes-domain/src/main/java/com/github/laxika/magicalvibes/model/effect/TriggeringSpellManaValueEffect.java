@@ -1,13 +1,9 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Marks a spell-cast trigger effect that needs the triggering spell's mana value snapshotted
- * onto the triggered ability at trigger time.
+ * Marks a spell-cast trigger effect that reads the triggering spell's mana value as the stack entry's event value:
+ * the collector sets the event value to the spell's mana value as the ability triggers, and the effect reads it as it
+ * resolves. No effect is rebuilt with the mana value bound in.
  */
 public interface TriggeringSpellManaValueEffect extends CardEffect {
-
-    /** Returns the trigger-time snapshot of this effect for the supplied spell mana value. */
-    default CardEffect snapshotTriggeringSpellManaValue(int manaValue) {
-        return this;
-    }
 }

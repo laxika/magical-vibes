@@ -40,8 +40,7 @@ public class GrantProtectionFromTriggeringSpellColorsEffectHandler implements No
 
         Set<CardColor> colors = triggeringSpell != null
                 ? gameQueryService.getEffectiveCardColors(gameData, triggeringSpell.getCard())
-                : lastKnownSpellColors(gameData, entry.getTriggeringCardId(),
-                        (GrantProtectionFromTriggeringSpellColorsEffect) effect);
+                : lastKnownSpellColors(gameData, entry);
         if (colors == null) {
             colors = Set.of();
         }
@@ -58,10 +57,10 @@ public class GrantProtectionFromTriggeringSpellColorsEffectHandler implements No
     /**
      * Colors of a spell that has already left the stack (e.g. countered): its last known information
      * (CR 608.2h), which is the color it most recently had before leaving, falling back to the colors
-     * captured when the trigger was collected.
+     * of the spell as it was when the ability triggered (the stack entry's triggering spell).
      */
-    private Set<CardColor> lastKnownSpellColors(GameData gameData, UUID triggeringCardId,
-                                                GrantProtectionFromTriggeringSpellColorsEffect effect) {
+    private Set<CardColor> lastKnownSpellColors(GameData gameData, StackEntry entry) {
+        UUID triggeringCardId = entry.getTriggeringCardId();
         if (triggeringCardId != null) {
             Set<CardColor> temporary = gameData.spellColorOverridesUntilEndOfTurn.get(triggeringCardId);
             if (temporary != null) {
@@ -72,6 +71,7 @@ public class GrantProtectionFromTriggeringSpellColorsEffectHandler implements No
                 return indefinite;
             }
         }
-        return effect.triggeringColors();
+        StackEntry spell = entry.getTriggeringSpellSnapshot();
+        return spell == null ? null : Set.copyOf(spell.getCard().getColors());
     }
 }

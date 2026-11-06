@@ -298,6 +298,30 @@ class MayAbilityHandlerServiceTest {
                 .isEqualTo(grantingPermanentId);
     }
 
+    @Test
+    @DisplayName("An accepted may ability keeps the triggering spell of the ability that asked it")
+    void acceptedMayAbilityKeepsTriggeringSpell() {
+        Card sourceCard = new Card();
+        sourceCard.setName("Test Source");
+        sourceCard.setType(CardType.CREATURE);
+        Card spellCard = new Card();
+        spellCard.setName("Opponent Spell");
+        spellCard.setType(CardType.INSTANT);
+        CardEffect effect = new CardEffect() { };
+
+        gd.pendingMayAbilities.add(new PendingMayAbility(sourceCard, PLAYER1_ID, List.of(effect),
+                "Test Source — effect?", null, null, UUID.randomUUID())
+                .withTriggeringSpell(new StackEntry(spellCard, PLAYER2_ID)));
+        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(
+                PLAYER1_ID, "Test Source — effect?", null));
+
+        svc.handleMayAbilityChosen(gd, player1, true);
+
+        assertThat(gd.stack).singleElement()
+                .extracting(entry -> entry.getTriggeringSpellSnapshot().getCard())
+                .isSameAs(spellCard);
+    }
+
     private void acceptMayAbility(CardEffect effect) {
         Card sourceCard = new Card();
         sourceCard.setName("Test Source");

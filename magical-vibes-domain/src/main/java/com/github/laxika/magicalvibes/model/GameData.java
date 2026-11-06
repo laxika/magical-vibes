@@ -3996,8 +3996,8 @@ public class GameData {
     public final Set<UUID> oncePerTurnLibraryPlayPermissionsUsedThisTurn = ConcurrentHashMap.newKeySet();
 
     /** Tracks which source permanents or graveyard cards (by UUID) have used a once-each-turn mark kept for the whole
-     *  source this turn: "do this only once each turn" (CR 603.2h) as the action is taken, and Bill Potts'
-     *  {@code OncePerTurnTriggerEffect}. Cleared at start of new turn; graveyard-card entries are removed when those
+     *  source this turn: "do this only once each turn" (CR 603.2h) as the action is taken. Cleared at start of new
+     *  turn; graveyard-card entries are removed when those
      *  cards leave the graveyard. */
     public final Set<UUID> oncePerTurnTriggersFiredThisTurn = ConcurrentHashMap.newKeySet();
 
@@ -4049,7 +4049,7 @@ public class GameData {
     /** Token creation event paused for a once-per-turn replacement choice. */
     public PendingTokenCreationReplacement pendingTokenCreationReplacement;
 
-    /** Tracks which permanents (by UUID) have already fired a {@code OncePerTurnTriggerEffect} in the
+    /** Tracks which permanents (by UUID) have already fired a once-each-turn
      *  {@code Triggers.attacks()} ability this turn — "attacks for the first time each turn" (Aurelia, the
      *  Warleader). Kept separate from {@link #oncePerTurnTriggersFiredThisTurn} so a permanent with
      *  both a once-each-turn death watcher and a once-each-turn attack trigger doesn't gate one on the

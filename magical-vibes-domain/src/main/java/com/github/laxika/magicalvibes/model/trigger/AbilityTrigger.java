@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.trigger;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 
 import java.util.Objects;
 
@@ -14,8 +15,11 @@ import java.util.Objects;
  *               or {@code null} for any
  * @param kind   what kind of activated ability it must be ("a loyalty ability", "a ninjutsu ability"), or
  *               {@code null} for any
+ * @param stackEntry what the activated ability on the stack must be, with its targets ("that targets only Bill
+ *               Potts"), or {@code null} for any; see {@link #withStackEntryFilter}
  */
-public record AbilityTrigger(AbilityEvent event, PlayerRelation player, PermanentPredicate source, AbilityKind kind)
+public record AbilityTrigger(AbilityEvent event, PlayerRelation player, PermanentPredicate source, AbilityKind kind,
+                             StackEntryPredicate stackEntry)
         implements Trigger {
 
     public AbilityTrigger {
@@ -24,25 +28,35 @@ public record AbilityTrigger(AbilityEvent event, PlayerRelation player, Permanen
     }
 
     public AbilityTrigger(AbilityEvent event, PlayerRelation player) {
-        this(event, player, null, null);
+        this(event, player, null, null, null);
     }
 
     /** This trigger for an ability of a permanent that matches {@code source} only. */
     public AbilityTrigger withSource(PermanentPredicate source) {
-        return new AbilityTrigger(event, player, Objects.requireNonNull(source, "source"), kind);
+        return new AbilityTrigger(event, player, Objects.requireNonNull(source, "source"), kind, stackEntry);
     }
 
     /** This trigger for an activated ability of {@code kind} only. */
     public AbilityTrigger withKind(AbilityKind kind) {
-        return new AbilityTrigger(event, player, source, Objects.requireNonNull(kind, "kind"));
+        return new AbilityTrigger(event, player, source, Objects.requireNonNull(kind, "kind"), stackEntry);
     }
 
     /**
-     * This trigger without its filters: the trigger the source and kind narrow. The activation collectors read every
-     * ability of an event by this trigger, and judge the filters themselves.
+     * This trigger for an activated ability whose stack entry matches {@code stackEntry} only, judged with the
+     * ability's targets once it is on the stack ("an ability that targets only Bill Potts"). Only the collector of the
+     * abilities that copy the activated ability ({@code CopyTriggeringSpellOrAbilityEffect}) reads it, as it collects
+     * them once the activated ability is on the stack.
+     */
+    public AbilityTrigger withStackEntryFilter(StackEntryPredicate stackEntry) {
+        return new AbilityTrigger(event, player, source, kind, Objects.requireNonNull(stackEntry, "stackEntry"));
+    }
+
+    /**
+     * This trigger without its filters: the trigger the source, kind and stack-entry filter narrow. The activation
+     * collectors read every ability of an event by this trigger, and judge the filters themselves.
      */
     public AbilityTrigger unfiltered() {
-        return source == null && kind == null ? this : new AbilityTrigger(event, player);
+        return source == null && kind == null && stackEntry == null ? this : new AbilityTrigger(event, player);
     }
 
     /** The activations an {@link AbilityTrigger} triggers on. */

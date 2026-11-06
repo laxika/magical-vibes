@@ -37,7 +37,8 @@ public class FlipCoinForTriggeringSpellAndCounterOnLossEffectHandler implements 
         if (spellId == null) return;
 
         // The caster flips even when the spell was already countered or otherwise left the stack.
-        UUID casterId = ((FlipCoinForTriggeringSpellAndCounterOnLossEffect) effect).casterId();
+        UUID casterId = entry.getTriggeringSpellSnapshot() == null
+                ? null : entry.getTriggeringSpellSnapshot().getControllerId();
         if (casterId == null) {
             StackEntry triggeringSpell = gameData.stack.stream()
                     .filter(stackEntry -> stackEntry.getTargetableId().equals(spellId))

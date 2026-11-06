@@ -53,15 +53,6 @@ public record QueueReflexiveAbilityEffect(CardEffect effect, boolean optionalTar
         return true;
     }
 
-    @Override
-    public CardEffect snapshotTriggeringSpellManaValue(int manaValue) {
-        CardEffect snapshot = effect instanceof TriggeringSpellManaValueEffect manaAware
-                ? manaAware.snapshotTriggeringSpellManaValue(manaValue)
-                : effect;
-        return new QueueReflexiveAbilityEffect(snapshot, optionalTarget, useEventValueAsX,
-                useEntryTargetAsTriggeringPermanent, sourcePermanentId);
-    }
-
     /** A combat-damage trigger needs the context of the reflexive effect it queues ("that player"). */
     @Override
     public TriggerContext combatDamageTriggerContext() {

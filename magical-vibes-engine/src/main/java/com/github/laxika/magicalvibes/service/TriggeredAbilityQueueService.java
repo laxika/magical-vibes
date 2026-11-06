@@ -3064,9 +3064,10 @@ public class TriggeredAbilityQueueService {
                             predicateEvaluationService.matchesCardPredicate(
                                     graveyardCard, candidateFilter, pending.sourceCard().getId(), gameData, playerId,
                                     null, pending.sourcePowerAtTrigger()))
+                            // An X in the filter ("equal or lesser mana value than that spell") is the choice's X.
                             : filter == null || predicateEvaluationService.matchesCardPredicate(
                             graveyardCard, filter, pending.sourceCard().getId(), gameData, playerId,
-                            null, pending.sourcePowerAtTrigger());
+                            null, pending.sourcePowerAtTrigger(), pending.xValue());
                     if (matches) {
                         matchingCards.add(graveyardCard);
                     }

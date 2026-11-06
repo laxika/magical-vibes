@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.UUID;
-
 /**
  * Wrapper effect: "Flip a coin. If you win the flip, [wrapped effect].
  * If you lose the flip, [lost effect]."
@@ -11,26 +9,21 @@ import java.util.UUID;
  *
  * @param wrapped the effect to execute on a coin flip win
  * @param lost    the effect to execute on a coin flip loss (may be null)
- * @param triggeringSpellController whether the spell-cast collector binds the caster as the flipping player
- * @param flippingPlayerId the player bound when the trigger is collected, or null for the ability's controller
+ * @param triggeringSpellController whether the triggering spell's controller flips (the stack entry's triggering
+ *                                  spell, "that player"), rather than the ability's controller
  * @param countsAsWinOrLoss whether the flip is a win/loss flip (CR 705.2) that fires "whenever you win or lose a
  *                          coin flip" triggers; {@code false} for heads-or-tails flips such as Odds
  */
 public record FlipCoinWinEffect(CardEffect wrapped, CardEffect lost,
-                                boolean triggeringSpellController, UUID flippingPlayerId,
+                                boolean triggeringSpellController,
                                 boolean countsAsWinOrLoss) implements CardEffect {
 
     public FlipCoinWinEffect(CardEffect wrapped, CardEffect lost) {
-        this(wrapped, lost, false, null, true);
-    }
-
-    public FlipCoinWinEffect(CardEffect wrapped, CardEffect lost,
-                             boolean triggeringSpellController, UUID flippingPlayerId) {
-        this(wrapped, lost, triggeringSpellController, flippingPlayerId, true);
+        this(wrapped, lost, false, true);
     }
 
     public static FlipCoinWinEffect forTriggeringSpellController(CardEffect wrapped, CardEffect lost) {
-        return new FlipCoinWinEffect(wrapped, lost, true, null, true);
+        return new FlipCoinWinEffect(wrapped, lost, true, true);
     }
 
     /**
@@ -38,7 +31,7 @@ public record FlipCoinWinEffect(CardEffect wrapped, CardEffect lost,
      * {@code tails}, and neither result is a win or a loss of the flip (CR 705.2).
      */
     public static FlipCoinWinEffect headsOrTails(CardEffect heads, CardEffect tails) {
-        return new FlipCoinWinEffect(heads, tails, false, null, false);
+        return new FlipCoinWinEffect(heads, tails, false, false);
     }
 
     /** Coin flip with only a win effect (nothing happens on a loss). */

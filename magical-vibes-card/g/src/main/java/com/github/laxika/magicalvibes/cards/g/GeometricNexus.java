@@ -7,10 +7,11 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnCreatedPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEqualToTriggeringSpellManaValueEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -27,7 +28,7 @@ public class GeometricNexus extends Card {
                         .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),
                                 new CardTypePredicate(CardType.SORCERY)))),
-                new PutCountersOnSelfEqualToTriggeringSpellManaValueEffect(CounterType.CHARGE));
+                new PutCountersOnSelfEffect(CounterType.CHARGE, new TargetSpellManaValue()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

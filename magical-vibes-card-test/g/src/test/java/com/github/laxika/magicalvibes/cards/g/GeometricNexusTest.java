@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GeometricNexus.class, TellingTime.class, GrizzlyBears.class, Cultivate.class})
+@CardUsed({GeometricNexus.class, TellingTime.class, GrizzlyBears.class, Cultivate.class, Cancel.class})
 class GeometricNexusTest extends BaseCardTest {
 
     @Test
@@ -134,6 +135,32 @@ class GeometricNexusTest extends BaseCardTest {
                         && "Fractal".equals(permanent.getCard().getName()))
                 .findFirst().orElseThrow();
         assertThat(fractal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(nexus.getCounterCount(CounterType.CHARGE)).isEqualTo(5);
+    }
+
+
+    @Test
+    @DisplayName("Uses the mana value of a spell countered before the ability resolves")
+    void usesManaValueOfSpellCounteredBeforeResolution() {
+        Permanent nexus = addNexus(player1);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        TellingTime tellingTime = new TellingTime();
+        harness.setHand(player2, List.of(tellingTime));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.setHand(player1, List.of(new Cancel()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castInstant(player2, 0);
+        harness.castInstant(player1, 0, tellingTime.getId());
+        // Cancel is an instant too: its own trigger resolves first, then Cancel counters Telling Time.
+        harness.passBothPriorities();
+        assertThat(nexus.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(tellingTime);
+        harness.passBothPriorities();
+
         assertThat(nexus.getCounterCount(CounterType.CHARGE)).isEqualTo(5);
     }
 

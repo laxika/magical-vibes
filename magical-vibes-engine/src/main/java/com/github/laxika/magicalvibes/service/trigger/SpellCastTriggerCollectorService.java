@@ -48,12 +48,10 @@ import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyEnchantedHandCardOnCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.DemonstrateEffect;
 import com.github.laxika.magicalvibes.model.effect.FlurryCopyOrDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachPriorInstantOrSorceryEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetedSpellPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
@@ -100,7 +98,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsWithCastSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfTriggeringPlayerLibraryAndMayCastFreeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUntilCardPredicateMayCastWithoutPayingManaEffect;
-import com.github.laxika.magicalvibes.model.effect.FlipCoinCopyTriggeringSpellOrDealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellChosenColorCount;
@@ -156,7 +153,6 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCreatureByCastSpellMana
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -236,8 +232,6 @@ import java.util.Set;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
-import com.github.laxika.magicalvibes.model.effect.GandalfWestwardVoyagerEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromTriggeringSpellColorsEffect;
 
 /**
  * Trigger collectors for spell-cast events (ON_ANY_PLAYER_CASTS_SPELL,
@@ -1179,7 +1173,7 @@ public class SpellCastTriggerCollectorService {
                 match.controllerId(), match.permanent());
 
         List<CardEffect> resolvedEffects = targetsPermanentOrPlayer && !triggeringSpell.getCard().isCantBeCopied()
-                ? List.of(new CopyTriggeringSpellEffect(false, false, new StackEntry(triggeringSpell)))
+                ? List.of(new CopyTriggeringSpellEffect())
                 : List.of(new DrawCardEffect());
         StackEntry triggerEntry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
@@ -1190,6 +1184,7 @@ public class SpellCastTriggerCollectorService {
                 null,
                 match.permanent().getId());
         triggerEntry.setTriggeringCardId(sc.spellCard().getId());
+        triggerEntry.setTriggeringSpell(triggeringSpell);
         triggerEntry.setNonTargeting(true);
         match.gameData().stack.add(triggerEntry);
         return true;
@@ -2916,10 +2911,9 @@ public class SpellCastTriggerCollectorService {
 
         List<CardEffect> resolved = new ArrayList<>(trigger.effects());
         if (triggeringSpell != null) {
-            StackEntry spellSnapshot = new StackEntry(triggeringSpell);
             resolved = resolved.stream()
-                    .map(effect -> snapshotTriggeringSpell(effect, spellSnapshot, castingPlayerId,
-                            match.gameData(), match.controllerId()))
+                    .map(effect -> bindTriggeringSpellTargetCount(effect, triggeringSpell, match.gameData(),
+                            match.controllerId()))
                     .toList();
         }
         // Snapshot CountersOnSource damage at trigger time (Imminent Doom ruling: damage equals
@@ -3017,13 +3011,12 @@ public class SpellCastTriggerCollectorService {
                     spellCard.getId()));
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         } else if (needsGraveyardTarget) {
-            boolean markOnAcceptance = match.markSourceOncePerTurnOnAcceptance();
-            match.gameData().queueInteraction(markOnAcceptance
-                    ? new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                            sourceCard, match.controllerId(), resolved, null, 0, 0, 0, null, false, null,
-                            sourcePermanentId, true)
-                    : new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                            sourceCard, match.controllerId(), resolved));
+            // A graveyard target restricted by "that spell's mana value" (Krile Baldesion) is chosen now, as the ability
+            // goes on the stack (CR 603.3d), against the spell's mana value as the choice's X.
+            int graveyardTargetX = carriesTriggeringSpellManaValue ? triggeringSpellManaValue : 0;
+            match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                    sourceCard, match.controllerId(), resolved, null, 0, graveyardTargetX, 0, null, false, null,
+                    sourcePermanentId, match.markSourceOncePerTurnOnAcceptance()));
             log.info("Game {} - {} spell-cast graveyard-target trigger queued",
                     match.gameData().id, sourceCard.getName());
         } else if (needsSpellTarget && !needsTargeting) {
@@ -3042,6 +3035,7 @@ public class SpellCastTriggerCollectorService {
                     List.of()
             );
             entry.setTriggeringCardId(spellCard.getId());
+            entry.setTriggeringSpell(triggeringSpell);
             // The caster stays known if the spell leaves the stack (e.g. is countered) before this resolves.
             entry.setCounteredSpellControllerId(castingPlayerId);
             preservePlanarSource(entry, match);
@@ -3139,8 +3133,9 @@ public class SpellCastTriggerCollectorService {
                 entry.setNonTargeting(true);
             }
             // Contextual "it" = the spell that caused the trigger, still on the stack below this
-            // ability (Bloodlord of Vaasgoth's bloodthirst grant).
+            // ability (Bloodlord of Vaasgoth's bloodthirst grant), and as it was then once it has left (CR 608.2h).
             entry.setTriggeringCardId(spellCard.getId());
+            entry.setTriggeringSpell(triggeringSpell);
             if (triggeringSpell != null && resolved.stream().anyMatch(effect ->
                     effect instanceof GrantKeywordEffect grant && grant.scope() == GrantScope.TARGETS)) {
                 List<UUID> spellTargets = new ArrayList<>();
@@ -3339,18 +3334,15 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    private CardEffect snapshotTriggeringSpell(CardEffect effect, StackEntry spellSnapshot,
-                                               UUID castingPlayerId, GameData gameData,
-                                               UUID sourceControllerId) {
-        if (effect instanceof com.github.laxika.magicalvibes.model.effect.DiscoverEffect discover
-                && discover.discoverValue() instanceof com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue) {
-            return new com.github.laxika.magicalvibes.model.effect.DiscoverEffect(
-                    new Fixed(spellSnapshot.getSpellManaValue()));
-        }
-        if (effect instanceof TriggeringSpellManaValueEffect manaValueAware) {
-            return manaValueAware.snapshotTriggeringSpellManaValue(
-                    spellSnapshot.getSpellManaValue());
-        }
+    /**
+     * {@code effect} with a "that many" target count of the triggering spell (Arcee, Acrobatic Coupe; Voracious
+     * Bibliophile) counted now, as the ability triggers; every other effect as it is. The spell itself, its controller,
+     * colors and mana value are the stack entry's triggering spell ({@link StackEntry#setTriggeringSpell}), which the
+     * effects read as they resolve; only this count is still bound into an effect (effect-slot-refactor.md step 15,
+     * run 17).
+     */
+    private CardEffect bindTriggeringSpellTargetCount(CardEffect effect, StackEntry spellSnapshot,
+                                                      GameData gameData, UUID sourceControllerId) {
         if (effect instanceof DrawCardEffect draw && draw.amount() instanceof TriggeringSpellTargetCount targetCount) {
             return new DrawCardEffect(
                     new Fixed(countMatchingSpellTargets(gameData, spellSnapshot, targetCount, sourceControllerId)), draw.castTimeXValue(), draw.rememberAmount());
@@ -3363,85 +3355,7 @@ public class SpellCastTriggerCollectorService {
                     putCounters.targetsPlayer(), putCounters.excludeDamageSource(),
                     putCounters.hasExternalPermanentTarget());
         }
-        if (effect instanceof DemonstrateEffect demonstrate && demonstrate.spellSnapshot() == null) {
-            return new DemonstrateEffect(new StackEntry(spellSnapshot));
-        }
-        if (effect instanceof CopyTriggeringSpellEffect copy
-                && copy.spellSnapshot() == null) {
-            return new CopyTriggeringSpellEffect(
-                    copy.tokenCopy(), copy.retargetToSource(), new StackEntry(spellSnapshot),
-                    copy.mayChooseNewTargets());
-        }
-        if (effect instanceof com.github.laxika.magicalvibes.model.effect.RevealTopCardAndCounterTriggeringSpellIfCardTypeMatchesEffect reveal
-                && reveal.spellSnapshot() == null) {
-            return new com.github.laxika.magicalvibes.model.effect.RevealTopCardAndCounterTriggeringSpellIfCardTypeMatchesEffect(
-                    new StackEntry(spellSnapshot));
-        }
-        if (effect instanceof GandalfWestwardVoyagerEffect gandalf && gandalf.spellSnapshot() == null) {
-            return new GandalfWestwardVoyagerEffect(new StackEntry(spellSnapshot));
-        }
-        if (effect instanceof GrantProtectionFromTriggeringSpellColorsEffect) {
-            return new GrantProtectionFromTriggeringSpellColorsEffect(
-                    Set.copyOf(spellSnapshot.getCard().getColors()));
-        }
-        if (effect instanceof SequenceEffect sequence) {
-            return sequence.withSteps(sequence.steps().stream()
-                    .map(step -> snapshotTriggeringSpell(step, spellSnapshot, castingPlayerId,
-                            gameData, sourceControllerId)).toList());
-        }
-        if (effect instanceof ConditionalEffect conditional) {
-            return new ConditionalEffect(conditional.condition(),
-                    snapshotTriggeringSpell(conditional.wrapped(), spellSnapshot, castingPlayerId,
-                            gameData, sourceControllerId));
-        }
-        if (effect instanceof RollD20Effect roll) {
-            return new RollD20Effect(
-                    snapshotRollBranch(roll.zeroOrLess(), spellSnapshot, castingPlayerId, gameData, sourceControllerId),
-                    snapshotRollBranch(roll.oneToNine(), spellSnapshot, castingPlayerId, gameData, sourceControllerId),
-                    snapshotRollBranch(roll.tenToNineteen(), spellSnapshot, castingPlayerId, gameData, sourceControllerId),
-                    snapshotRollBranch(roll.twenty(), spellSnapshot, castingPlayerId, gameData, sourceControllerId),
-                    roll.amountToSubtract(), roll.amountToAdd(), roll.firstBranchMax(),
-                    roll.repeatOnHighBranch(), roll.twentyUsesRawResult());
-        }
-        if (effect instanceof com.github.laxika.magicalvibes.model.effect.FlipCoinForTriggeringSpellAndCounterOnLossEffect flipForSpell
-                && flipForSpell.casterId() == null) {
-            return new com.github.laxika.magicalvibes.model.effect.FlipCoinForTriggeringSpellAndCounterOnLossEffect(
-                    castingPlayerId);
-        }
-        if (effect instanceof FlipCoinWinEffect flip && flip.triggeringSpellController()) {
-            return new FlipCoinWinEffect(flip.wrapped(), flip.lost(), true, castingPlayerId, flip.countsAsWinOrLoss());
-        }
-        if (effect instanceof FlipCoinCopyTriggeringSpellOrDealDamageEffect breechesEffect
-                && breechesEffect.spellSnapshot() == null) {
-            return new FlipCoinCopyTriggeringSpellOrDealDamageEffect(
-                    new StackEntry(spellSnapshot), castingPlayerId);
-        }
-        if (effect instanceof MayEffect may) {
-            CardEffect wrapped = snapshotTriggeringSpell(may.wrapped(), spellSnapshot, castingPlayerId,
-                    gameData, sourceControllerId);
-            CardEffect elseEffect = may.elseEffect() == null
-                    ? null
-                    : snapshotTriggeringSpell(may.elseEffect(), spellSnapshot, castingPlayerId,
-                            gameData, sourceControllerId);
-            return new MayEffect(wrapped, may.prompt(), elseEffect, may.choicePlayer());
-        }
-        if (effect instanceof SacrificePermanentThenEffect sacrifice && sacrifice.thenEffect() != null) {
-            return new SacrificePermanentThenEffect(
-                    sacrifice.filter(),
-                    snapshotTriggeringSpell(sacrifice.thenEffect(), spellSnapshot, castingPlayerId,
-                            gameData, sourceControllerId),
-                    sacrifice.permanentDescription(),
-                    sacrifice.targetBeforeSacrifice(),
-                    sacrifice.reflexive());
-        }
         return effect;
-    }
-
-    private CardEffect snapshotRollBranch(CardEffect branch, StackEntry spellSnapshot,
-                                          UUID castingPlayerId, GameData gameData,
-                                          UUID sourceControllerId) {
-        return branch == null ? null
-                : snapshotTriggeringSpell(branch, spellSnapshot, castingPlayerId, gameData, sourceControllerId);
     }
 
     private int countMatchingSpellTargets(GameData gameData, StackEntry spellSnapshot,

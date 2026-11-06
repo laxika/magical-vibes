@@ -1,19 +1,14 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-/** Mills each opponent and resolves the follow-up if at least one card was milled this way. */
+/**
+ * Mills each opponent and resolves the follow-up if at least one card was milled this way. It leaves the stack
+ * entry's event value alone, so a follow-up reads the triggering spell's mana value from it (Saruman of Many Colors).
+ */
 public record MillEachOpponentThenIfMilledEffect(int count, CardEffect thenEffect)
         implements TriggeringSpellManaValueEffect {
 
     @Override
     public TargetSpec targetSpec() {
         return thenEffect.targetSpec();
-    }
-
-    @Override
-    public CardEffect snapshotTriggeringSpellManaValue(int manaValue) {
-        CardEffect snapshot = thenEffect instanceof TriggeringSpellManaValueEffect manaAware
-                ? manaAware.snapshotTriggeringSpellManaValue(manaValue)
-                : thenEffect;
-        return new MillEachOpponentThenIfMilledEffect(count, snapshot);
     }
 }

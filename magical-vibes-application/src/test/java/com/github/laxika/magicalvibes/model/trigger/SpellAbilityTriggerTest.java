@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryKickedPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -61,6 +62,15 @@ class SpellAbilityTriggerTest {
                 .isEqualTo(new AbilityTrigger(AbilityTrigger.AbilityEvent.ACTIVATED, PlayerRelation.YOU))
                 .isNotEqualTo(Triggers.youActivateNonManaAbility())
                 .isNotEqualTo(Triggers.opponentActivatesAbility());
+    }
+
+    @Test
+    void anActivationStackEntryFilterNarrowsTheTriggerItsCollectorsReadItBy() {
+        AbilityTrigger targetsSource = Triggers.youActivateAbility()
+                .withStackEntryFilter(new StackEntryTargetsSourcePredicate());
+        assertThat(targetsSource.stackEntry()).isEqualTo(new StackEntryTargetsSourcePredicate());
+        assertThat(targetsSource).isNotEqualTo(Triggers.youActivateAbility());
+        assertThat(targetsSource.unfiltered()).isEqualTo(Triggers.youActivateAbility());
     }
 
     @Test

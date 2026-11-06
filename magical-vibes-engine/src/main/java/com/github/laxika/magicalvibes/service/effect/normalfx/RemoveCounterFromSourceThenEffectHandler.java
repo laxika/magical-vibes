@@ -145,6 +145,7 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
                 null,
                 null);
         reflexive.setTriggeringCardId(entry.getTriggeringCardId());
+        reflexive.setTriggeringSpell(entry.getTriggeringSpellSnapshot());
         gameData.stack.add(reflexive);
     }
 
@@ -251,6 +252,7 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
                 null,
                 null);
         reflexive.setTriggeringCardId(entry.getTriggeringCardId());
+        reflexive.setTriggeringSpell(entry.getTriggeringSpellSnapshot());
         gameData.stack.add(reflexive);
     }
 

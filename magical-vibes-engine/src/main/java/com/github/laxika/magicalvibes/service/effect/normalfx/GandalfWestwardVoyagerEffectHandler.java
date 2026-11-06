@@ -43,7 +43,7 @@ public class GandalfWestwardVoyagerEffectHandler implements NormalEffectHandlerB
         if (triggeringSpell == null || triggeringSpell.getCard() == null) {
             // The spell was countered or otherwise left the stack; the copy is still made from the
             // spell as it was when the ability triggered.
-            triggeringSpell = ((GandalfWestwardVoyagerEffect) effect).spellSnapshot();
+            triggeringSpell = entry.getTriggeringSpellSnapshot();
             if (triggeringSpell == null || triggeringSpell.getCard() == null) {
                 return;
             }

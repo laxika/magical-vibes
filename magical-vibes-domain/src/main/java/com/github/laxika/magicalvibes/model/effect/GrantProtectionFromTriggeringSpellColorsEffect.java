@@ -1,18 +1,10 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.CardColor;
-import java.util.Set;
-
-/** Grants the source permanent protection from every color of the spell that caused its trigger. */
-public record GrantProtectionFromTriggeringSpellColorsEffect(Set<CardColor> triggeringColors) implements CardEffect {
-
-    public GrantProtectionFromTriggeringSpellColorsEffect() {
-        this(null);
-    }
-
-    public GrantProtectionFromTriggeringSpellColorsEffect {
-        triggeringColors = triggeringColors == null ? null : Set.copyOf(triggeringColors);
-    }
+/**
+ * Grants the source permanent protection from every color of the spell that caused its trigger: the spell's colors on
+ * the stack, or its last-known colors once it has left (CR 608.2h), read from the stack entry's triggering spell.
+ */
+public record GrantProtectionFromTriggeringSpellColorsEffect() implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {

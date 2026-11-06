@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WallOfBlossoms;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OminousLockbox.class, GrizzlyBears.class, WallOfBlossoms.class})
+@CardUsed({OminousLockbox.class, GrizzlyBears.class, WallOfBlossoms.class, Cancel.class})
 class OminousLockboxTest extends BaseCardTest {
 
     private Permanent castLockbox(int chosenNumber) {
@@ -51,6 +52,36 @@ class OminousLockboxTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    void copiesTheSpellEvenIfItWasCounteredBeforeTheAbilityResolves() {
+        Permanent lockbox = castLockbox(2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player2, List.of(bears));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castCreature(player2, 0);
+        harness.setHand(player1, List.of(new Cancel()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castInstant(player1, 0, bears.getId());
+
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(bears);
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anySatisfy(card -> assertThat(card.getId()).isEqualTo(lockbox.getCard().getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .singleElement()
+                .satisfies(permanent -> {
+                    assertThat(permanent.getCard().getName()).isEqualTo("Grizzly Bears");
+                    assertThat(permanent.getCard().isToken()).isTrue();
+                });
     }
 
     @Test

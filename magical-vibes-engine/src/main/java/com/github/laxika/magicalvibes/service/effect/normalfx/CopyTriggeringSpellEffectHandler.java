@@ -42,7 +42,8 @@ public class CopyTriggeringSpellEffectHandler implements NormalEffectHandlerBean
                 .findFirst()
                 .orElse(null);
         if (spell == null) {
-            spell = triggeringSpellEffect.spellSnapshot();
+            // The spell left the stack: it is copied as it last existed there (CR 608.2h).
+            spell = entry.getTriggeringSpellSnapshot();
         }
         if (spell == null || spell.isCopy()) return;
 

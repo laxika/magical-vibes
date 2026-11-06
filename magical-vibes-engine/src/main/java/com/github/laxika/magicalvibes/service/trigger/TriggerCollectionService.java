@@ -67,8 +67,6 @@ import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGr
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
@@ -182,7 +180,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.ReselectTargetAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.StormCopyEffect;
@@ -278,7 +276,6 @@ import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupp
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
 import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
-import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
@@ -729,15 +726,11 @@ public class TriggerCollectionService {
                     delayed.sourceCard(),
                     delayed.controllerId(),
                     delayed.sourceCard().getName() + "'s delayed trigger",
-                    delayed.resolvedEffects().stream().map(effect -> effect instanceof CopyTriggeringSpellEffect copy
-                            ? (CardEffect) new CopyTriggeringSpellEffect(copy.tokenCopy(), copy.retargetToSource(),
-                            spellEntry == null ? null : new StackEntry(spellEntry), copy.mayChooseNewTargets())
-                            : effect instanceof TriggeringSpellManaValueEffect manaValueAware
-                            ? manaValueAware.snapshotTriggeringSpellManaValue(spellManaValue(gameData, spellCard))
-                            : effect).toList(),
+                    new ArrayList<>(delayed.resolvedEffects()),
                     null,
                     delayed.sourcePermanentId());
             entry.setTriggeringCardId(spellCard.getId());
+            entry.setTriggeringSpell(spellEntry);
             if (spellEntry != null) {
                 entry.setXValue(spellEntry.getXValue());
             }
@@ -2274,15 +2267,6 @@ public class TriggerCollectionService {
                                         StackEntry selfCastSpellEntry, List<CardEffect> effects) {
         List<CardEffect> selfCastTriggeredEffects = new ArrayList<>();
         for (CardEffect effect : effects) {
-            if (selfCastSpellEntry != null && effect instanceof MayEffect may
-                    && may.wrapped() instanceof DemonstrateEffect demonstrate
-                    && demonstrate.spellSnapshot() == null) {
-                effect = new MayEffect(new DemonstrateEffect(new StackEntry(selfCastSpellEntry)),
-                        may.prompt(), may.elseEffect(), may.choicePlayer());
-            } else if (selfCastSpellEntry != null && effect instanceof DemonstrateEffect demonstrate
-                    && demonstrate.spellSnapshot() == null) {
-                effect = new DemonstrateEffect(new StackEntry(selfCastSpellEntry));
-            }
             if (effect instanceof ExileTriggeringSpellWithSuspendCountersEffect suspend
                     && suspend.skipIfCastFromExile() && castZone == Zone.EXILE) {
                 continue;
@@ -2461,6 +2445,7 @@ public class TriggerCollectionService {
                         new ArrayList<>(List.of(effect)));
                 demonstrateTrigger.setSourceZone(castZone);
                 demonstrateTrigger.setTriggeringCardId(spellCard.getId());
+                demonstrateTrigger.setTriggeringSpell(selfCastSpellEntry);
                 demonstrateTrigger.setNonTargeting(true);
                 gameData.stack.add(demonstrateTrigger);
                 gameLogService.append(gameData, GameLog.abilityTriggers(spellCard));
@@ -10757,12 +10742,33 @@ public class TriggerCollectionService {
                 List<CardEffect> judged = activationEffects(gameData, perm, ownerId, activation, ability,
                         activatedPermanent);
                 if (judged == null) continue;
-                // Bill Potts's "this ability triggers only once each turn" covers its cast trigger too, so it is the
-                // card's own once-each-turn wrapper.
-                CardEffect authoredEffect = activation.copyEffect();
-                CardEffect availableEffect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm,
-                        authoredEffect);
-                if (!(availableEffect instanceof CopyControllerActivatedAbilityTriggerEffect trigger)) {
+                if (activation.copiesTheTriggeringObject()) {
+                    // "Copy that spell or ability" (Bill Potts): the ability's own effects, with the activated
+                    // ability on the stack as the entry's triggering object; its stack-entry filter is judged here.
+                    StackEntryPredicate stackEntryFilter = activation.trigger().stackEntry();
+                    if (stackEntryFilter != null && !targetLegalityService.matchesStackEntryPredicate(
+                            gameData, abilityEntry, stackEntryFilter, ownerId, perm)) {
+                        continue;
+                    }
+                    StackEntry triggerEntry = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            ownerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(judged),
+                            null,
+                            perm.getId());
+                    triggerEntry.setTriggeringSpell(abilityEntry);
+                    triggerEntry.setTriggeringActivatedAbility(ability);
+                    triggerEntry.setMarkSourceOncePerTurnOnAcceptance(activation.marksOnAcceptance());
+                    gameData.enqueueTrigger(triggerEntry);
+                    markActivationLimit(gameData, perm, activation);
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    log.info("Game {} - {} triggers on ability activation ({})",
+                            gameData.id, perm.getCard().getName(), abilityEntry.getCard().getName());
+                    continue;
+                }
+                if (!(activation.copyEffect() instanceof CopyControllerActivatedAbilityTriggerEffect trigger)) {
                     continue;
                 }
                 if (trigger.sourceFilter() != null && !targetLegalityService.matchesStackEntryPredicate(
@@ -10815,7 +10821,6 @@ public class TriggerCollectionService {
                     triggerEntry.setMarkSourceOncePerTurnOnAcceptance(true);
                 }
                 gameData.enqueueTrigger(triggerEntry);
-                OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
                 markActivationLimit(gameData, perm, activation);
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                 log.info("Game {} - {} triggers on ability activation ({})",
@@ -11178,9 +11183,13 @@ public class TriggerCollectionService {
          * ability is on the stack so the copy has its targets and X.
          */
         boolean copiesTheAbility() {
-            return effects().stream().anyMatch(effect -> effect instanceof CopyControllerActivatedAbilityTriggerEffect
-                    || effect instanceof OncePerTurnTriggerEffect once
-                    && once.wrapped() instanceof CopyControllerActivatedAbilityTriggerEffect);
+            return copiesTheTriggeringObject() || effects().stream()
+                    .anyMatch(CopyControllerActivatedAbilityTriggerEffect.class::isInstance);
+        }
+
+        /** Whether the ability copies "that spell or ability" from the stack entry (Bill Potts). */
+        boolean copiesTheTriggeringObject() {
+            return effects().stream().anyMatch(CopyTriggeringSpellOrAbilityEffect.class::isInstance);
         }
 
         /** The copy descriptor of an ability that {@link #copiesTheAbility()}, its only effect. */
@@ -11231,6 +11240,11 @@ public class TriggerCollectionService {
                                                ActivationAbility activation, ActivatedAbility activated,
                                                Permanent activatedPermanent) {
         AbilityTrigger trigger = activation.trigger();
+        if (trigger.stackEntry() != null && !activation.copiesTheTriggeringObject()) {
+            throw new IllegalStateException(watcher.getCard().getName() + "'s activation ability has a stack-entry "
+                    + "filter, which only the collector of the abilities that copy the activated ability judges: "
+                    + activation.ability());
+        }
         if (trigger.kind() != null && (activated == null || !trigger.kind().matches(activated))) {
             return null;
         }
@@ -16206,8 +16220,7 @@ public class TriggerCollectionService {
                 && grantedSpellEffects.stream().allMatch(CascadeEffect.class::isInstance);
         // "This ability triggers only once each turn" caps the ability at one trigger a turn, so an
         // effect that makes it trigger additional times (Clara Oswald) cannot add a second copy.
-        boolean triggersOnlyOnceEachTurn = match.triggersOnlyOnceEachTurn()
-                || match.rawEffect() instanceof OncePerTurnTriggerEffect;
+        boolean triggersOnlyOnceEachTurn = match.triggersOnlyOnceEachTurn();
         int previousCopies = match.gameData().beginTriggeredAbilityCopies(
                 grantedSpellCascade || triggersOnlyOnceEachTurn ? 1 : 1 +
                 gameQueryService.countAdditionalTriggeredAbilityTriggers(
@@ -16373,10 +16386,6 @@ public class TriggerCollectionService {
         log.info("Game {} - {} triggers for {} entering ({})", gameData.id, source.getCard().getName(),
                 enteringCreature.getName(), exactStats.triggerDescription(enteringCreature));
         return exactStats.wrapped();
-    }
-
-    private CardEffect unwrapOncePerTurnTrigger(GameData gameData, Permanent source, CardEffect effect) {
-        return OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, source, effect);
     }
 
     private CardEffect unwrapLifeChangeConditional(GameData gameData, Permanent source,
@@ -17477,16 +17486,9 @@ public class TriggerCollectionService {
             }
             conditionedEffect = conditional.wrapped();
         }
-        CardEffect toDispatch = unwrapOncePerTurnTrigger(gameData, perm, conditionedEffect);
-        if (toDispatch == null) return false;
-
-        boolean dispatched = dispatch(new TriggerMatchContext(gameData, perm, controllerId, effect,
+        return dispatch(new TriggerMatchContext(gameData, perm, controllerId, effect,
                         perm != null ? perm.getCard() : null, null, markOnAcceptance, triggersOnlyOnceEachTurn),
-                slot, toDispatch, ctx);
-        if (dispatched && toDispatch != conditionedEffect) {
-            OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, conditionedEffect);
-        }
-        return dispatched;
+                slot, conditionedEffect, ctx);
     }
 
     /**

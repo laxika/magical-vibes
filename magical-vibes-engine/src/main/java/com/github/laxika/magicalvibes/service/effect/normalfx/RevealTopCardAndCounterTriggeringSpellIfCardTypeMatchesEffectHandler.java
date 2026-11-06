@@ -59,8 +59,7 @@ public class RevealTopCardAndCounterTriggeringSpellIfCardTypeMatchesEffectHandle
         // rest of the ability still acts on it as it last existed (only the counter itself is skipped).
         StackEntry liveSpell = counterSupport.findCounterTargetIgnoringCounterability(
                 gameData, triggeringCardId, entry);
-        StackEntry triggeringSpell = liveSpell != null ? liveSpell
-                : ((RevealTopCardAndCounterTriggeringSpellIfCardTypeMatchesEffect) effect).spellSnapshot();
+        StackEntry triggeringSpell = liveSpell != null ? liveSpell : entry.getTriggeringSpellSnapshot();
         if (triggeringSpell == null) {
             return;
         }

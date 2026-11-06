@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * {@link com.github.laxika.magicalvibes.model.LibrarySearchDestination#CAST_WITHOUT_PAYING} flow to
  * optionally cast that card for free and put the rest on the bottom in a random order.</p>
  *
- * <p>The {@link TriggeringSpellManaValueEffect} marker lets generic spell-cast triggers snapshot
- * the triggering spell's mana value for this effect.</p>
+ * <p>The {@link TriggeringSpellManaValueEffect} marker has the generic spell-cast triggers set the stack entry's
+ * event value to the triggering spell's mana value for this effect.</p>
  *
  * @param instantOrSorceryOnly whether the qualifying card must be an instant or sorcery instead of
  *                             any nonland card

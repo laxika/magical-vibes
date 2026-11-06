@@ -39,7 +39,6 @@ import com.github.laxika.magicalvibes.model.effect.MayPayTapAndSacrificePermanen
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.RollD6Effect;
@@ -1068,7 +1067,6 @@ public class Card {
                     e.elseEffects().forEach(innerEffect -> bindEffectToTargetGroup(innerEffect, targetIndex));
                 }
             }
-            case OncePerTurnTriggerEffect e -> bindEffectToTargetGroup(e.wrapped(), targetIndex);
             // Ally combat-damage triggers resolve their wrapped effect when the trigger fires;
             // preserve its target-group binding for deferred trigger-time target selection.
             case AllyCombatDamageTriggerEffect e -> bindEffectToTargetGroup(e.effect(), targetIndex);
@@ -1414,10 +1412,6 @@ public class Card {
         }
         if (effect instanceof ConditionalEffect conditional) {
             return targetIndicesForEffect(conditional.wrapped());
-        }
-        // Bill Potts' "triggers only once each turn" wrapper targets through the effect it wraps.
-        if (effect instanceof OncePerTurnTriggerEffect once) {
-            return targetIndicesForEffect(once.wrapped());
         }
         if (effect instanceof SequenceEffect sequence) {
             // A sequence assembled at resolution (a reflexive trigger's counters-then-phase-out) targets

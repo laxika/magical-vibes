@@ -1405,14 +1405,24 @@ public class AmountEvaluationService {
             boolean isTriggeringSpell = triggeringCardId != null
                     && se.getTargetableId().equals(triggeringCardId);
             if (isTargetedSpell || isTriggeringSpell) {
-                Card spellCard = se.getTargetingCard();
-                Card effectiveSpell = spellCard == null ? se.getCard() : spellCard;
-                int xSymbols = effectiveSpell.getParsedManaCost() == null ? 0
-                        : effectiveSpell.getParsedManaCost().getXSymbolCount();
-                return se.isCastFaceDown() ? 0 : effectiveSpell.getManaValue() + xSymbols * se.getXValue();
+                return spellManaValue(se);
             }
         }
-        return ctx.stackEntry() == null ? 0 : ctx.stackEntry().getEventValue();
+        if (ctx.stackEntry() == null) {
+            return 0;
+        }
+        // The triggering spell left the stack: its mana value as it last existed there (CR 608.2h).
+        StackEntry triggeringSpell = ctx.stackEntry().getTriggeringSpellSnapshot();
+        return triggeringSpell != null ? spellManaValue(triggeringSpell) : ctx.stackEntry().getEventValue();
+    }
+
+    /** The mana value of {@code spell} on the stack: its card's, with the chosen X (CR 202.3e); 0 cast face down. */
+    private static int spellManaValue(StackEntry spell) {
+        Card spellCard = spell.getTargetingCard();
+        Card effectiveSpell = spellCard == null ? spell.getCard() : spellCard;
+        int xSymbols = effectiveSpell.getParsedManaCost() == null ? 0
+                : effectiveSpell.getParsedManaCost().getXSymbolCount();
+        return spell.isCastFaceDown() ? 0 : effectiveSpell.getManaValue() + xSymbols * spell.getXValue();
     }
 
     /**

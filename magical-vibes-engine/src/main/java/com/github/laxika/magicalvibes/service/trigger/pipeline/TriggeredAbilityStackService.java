@@ -349,7 +349,7 @@ public class TriggeredAbilityStackService {
             case NONE -> false;
             case ONCE_EACH_TURN -> gameData.keyedOncePerTurnTriggersFiredThisTurn
                     .getOrDefault(sourceId, Set.of()).contains(key);
-            // Taking the action (accepting it) marks the source, as OncePerTurnTriggerEffect's markOnAcceptance does.
+            // Taking the action (accepting it) marks the source.
             case DO_ONLY_ONCE_EACH_TURN -> gameData.oncePerTurnTriggersFiredThisTurn.contains(sourceId);
             case ONCE -> gameData.keyedOnceOnlyTriggersFired.getOrDefault(sourceId, Set.of()).contains(key);
             case ONCE_EACH_TURN_FOR_EACH_CREATURE -> throw new IllegalStateException(

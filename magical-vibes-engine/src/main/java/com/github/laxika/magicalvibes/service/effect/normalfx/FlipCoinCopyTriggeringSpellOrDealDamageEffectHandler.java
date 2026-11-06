@@ -37,9 +37,8 @@ public class FlipCoinCopyTriggeringSpellOrDealDamageEffectHandler implements Nor
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
-        var breechesEffect = (FlipCoinCopyTriggeringSpellOrDealDamageEffect) effect;
-        StackEntry triggeringSpell = breechesEffect.spellSnapshot() != null
-                ? new StackEntry(breechesEffect.spellSnapshot())
+        StackEntry triggeringSpell = entry.getTriggeringSpellSnapshot() != null
+                ? new StackEntry(entry.getTriggeringSpellSnapshot())
                 : gameQueryService.findStackEntryByCardId(gameData, entry.getTriggeringCardId());
         CoinFlipService.CoinFlipResult result = coinFlipService.flip(gameData, controllerId);
         boolean wonFlip = result.heads();
@@ -58,10 +57,7 @@ public class FlipCoinCopyTriggeringSpellOrDealDamageEffectHandler implements Nor
         if (wonFlip && result.isActualCoinFlip()) {
             triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
             CardEffect copyEffect = new CopyControllerCastSpellEffect(
-                    spellSnapshot,
-                    breechesEffect.castingPlayerId() != null
-                            ? breechesEffect.castingPlayerId()
-                            : triggeringSpell.getControllerId());
+                    spellSnapshot, triggeringSpell.getControllerId());
             StackEntry reflexiveTrigger = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY, entry.getCard(), controllerId,
                     entry.getCard().getName() + "'s coin-flip trigger", new ArrayList<>(List.of(copyEffect)),

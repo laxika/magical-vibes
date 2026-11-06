@@ -20,16 +20,17 @@ class FlipCoinWinEffectHandlerTest extends AbstractPlayerInteractionHandlerTest 
 
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
-    @DisplayName("A bound spell caster flips the coin and determines the resolved branch")
-    void boundCasterFlipsCoin(boolean won) {
+    @DisplayName("The triggering spell's caster flips the coin and determines the resolved branch")
+    void triggeringSpellCasterFlipsCoin(boolean won) {
         when(coinFlipService.flip(gd, player2Id))
                 .thenReturn(new CoinFlipService.CoinFlipResult(won, 1));
         EffectHandler drawHandler = mock(EffectHandler.class);
         registry.register(DrawCardEffect.class, drawHandler);
         DrawCardEffect winEffect = new DrawCardEffect(1);
         DrawCardEffect lossEffect = new DrawCardEffect(2);
-        FlipCoinWinEffect effect = new FlipCoinWinEffect(winEffect, lossEffect, true, player2Id);
+        FlipCoinWinEffect effect = FlipCoinWinEffect.forTriggeringSpellController(winEffect, lossEffect);
         StackEntry entry = createEntry(createCard("Planar Chaos"), player1Id, List.of(effect));
+        entry.setTriggeringSpell(new StackEntry(createCard("Opponent Spell"), player2Id));
 
         resolveEffect(gd, entry, effect);
 

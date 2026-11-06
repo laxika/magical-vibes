@@ -86,6 +86,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnchantedCreatur
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterWhenOpponentCastsSpellEffect;
@@ -1971,6 +1972,61 @@ class SpellCastTriggerCollectorServiceTest {
             assertThat(stackEntry.getControllerId()).isEqualTo(player1Id);
             assertThat(stackEntry.getSourcePermanentId()).isEqualTo(perm.getId());
             assertThat(stackEntry.getEffectsToResolve()).containsExactly(effect);
+        }
+    }
+
+    @Nested
+    @DisplayName("A cast ability's entry — the triggering spell")
+    class TriggeringSpell {
+
+        @Test
+        @DisplayName("carries a copy of the spell as it is on the stack, its effect put on the stack unchanged")
+        void entryCarriesTheTriggeringSpell() {
+            Permanent perm = createPermanent("Izzet Steam Maze");
+            var copy = new CopyTriggeringSpellEffect();
+            var effect = castAbility(Triggers.playerCastsSpell().anySpell(), copy);
+            Card spellCard = createInstant("Lightning Bolt");
+            StackEntry spell = new StackEntry(StackEntryType.INSTANT_SPELL, spellCard, player2Id,
+                    spellCard.getName(), List.of(), 0, player1Id, java.util.Map.of());
+            gd.stack.add(spell);
+            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
+            everySpellMatches();
+
+            boolean result = sut.collectCastAbility(match(perm, player1Id, copy), effect, ctx, true);
+
+            assertThat(result).isTrue();
+            StackEntry entry = gd.stack.getLast();
+            assertThat(entry.getEffectsToResolve()).containsExactly(copy);
+            assertThat(entry.getTriggeringCardId()).isEqualTo(spellCard.getId());
+            assertThat(entry.getTriggeringSpellSnapshot()).isNotSameAs(spell);
+            assertThat(entry.getTriggeringSpellSnapshot().getCard()).isSameAs(spellCard);
+            assertThat(entry.getTriggeringSpellSnapshot().getControllerId()).isEqualTo(player2Id);
+            assertThat(entry.getTriggeringSpellSnapshot().getTargetId()).isEqualTo(player1Id);
+        }
+
+        @Test
+        @DisplayName("chooses a graveyard target restricted by the spell's mana value with that mana value as X")
+        void graveyardTargetChoiceHasTheSpellsManaValueAsX() {
+            Permanent perm = createPermanent("Krile Baldesion");
+            ReturnCardFromGraveyardEffect returnEffect = ReturnCardFromGraveyardEffect.builder()
+                    .destination(GraveyardChoiceDestination.HAND)
+                    .filter(new CardTypePredicate(CardType.CREATURE))
+                    .targetGraveyard(true)
+                    .requiresManaValueEqualsX(true)
+                    .build();
+            var effect = castAbility(Triggers.youCastSpell().anySpell(), returnEffect);
+            Card spellCard = createInstant("Divination");
+            spellCard.setManaCost("{2}{U}");
+            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+            everySpellMatches();
+
+            boolean result = sut.collectCastAbility(match(perm, player1Id, returnEffect), effect, ctx, true);
+
+            assertThat(result).isTrue();
+            var choice = gd.peekPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
+            assertThat(choice).isNotNull();
+            assertThat(choice.xValue()).isEqualTo(3);
+            assertThat(choice.effects()).containsExactly(returnEffect);
         }
     }
 

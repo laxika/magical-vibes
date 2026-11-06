@@ -79,6 +79,22 @@ class MayEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
             }
 
             @Test
+            @DisplayName("Carries the entry's triggering spell into the pending may ability")
+            void carriesTriggeringSpell() {
+                MayEffect mayEffect = new MayEffect(new DrawCardEffect(1), "Draw a card?");
+                StackEntry entry = createEntryWithTarget(createCard("Swindler's Scheme"), player1Id,
+                        List.of(mayEffect), player2Id);
+                Card spellCard = createCard("Opponent Spell");
+                entry.setTriggeringSpell(new StackEntry(spellCard, player2Id));
+
+                resolveEffect(gd, entry, mayEffect);
+
+                StackEntry carried = gd.pendingMayAbilities.getFirst().triggeringSpellSnapshot();
+                assertThat(carried.getCard()).isSameAs(spellCard);
+                assertThat(carried.getControllerId()).isEqualTo(player2Id);
+            }
+
+            @Test
             @DisplayName("Offers a MayEffect with a decline branch to the target permanent's controller")
             void offersChoiceToTargetPermanentController() {
                 Card card = createCard("Blazing Salvo");

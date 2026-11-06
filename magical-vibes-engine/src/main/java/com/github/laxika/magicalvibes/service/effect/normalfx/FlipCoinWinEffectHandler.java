@@ -35,7 +35,9 @@ public class FlipCoinWinEffectHandler implements NormalEffectHandlerBean, Choose
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (FlipCoinWinEffect) effect;
 
-        UUID controllerId = e.flippingPlayerId() != null ? e.flippingPlayerId() : entry.getControllerId();
+        // "That player flips a coin": the triggering spell's controller, as it was cast.
+        UUID controllerId = e.triggeringSpellController() && entry.getTriggeringSpellSnapshot() != null
+                ? entry.getTriggeringSpellSnapshot().getControllerId() : entry.getControllerId();
         String sourceName = entry.getCard().getName();
         CoinFlipService.CoinFlipResult result = coinFlipService.flip(gameData, controllerId);
         boolean wonFlip = result.heads();

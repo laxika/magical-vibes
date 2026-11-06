@@ -569,6 +569,20 @@ public class StackEntry {
     /** The targets the triggering spell had when this ability triggered, kept in case the spell leaves the stack first. */
     @Setter private List<UUID> triggeringSpellTargetIds = List.of();
     /**
+     * The spell a spell-cast trigger was about ("that spell", "its controller", "its colors", "its mana value"), or the
+     * activated ability an activation trigger was about ({@link #triggeringActivatedAbility}), as it was on the stack
+     * when the ability triggered: the last-known information the effects use once that spell has left
+     * the stack (CR 608.2h), while it is still there they read it live. {@code null} when the event was about no spell.
+     * Set through {@link #setTriggeringSpell}, which keeps a copy of its own.
+     */
+    private StackEntry triggeringSpellSnapshot;
+    /**
+     * The activated ability an activation trigger was about, when the event was an activation: with
+     * {@link #triggeringSpellSnapshot} holding that ability's stack entry as it was when this ability triggered, "copy
+     * that spell or ability" copies the ability (Bill Potts). {@code null} otherwise. Immutable, so copies share it.
+     */
+    @Setter private ActivatedAbility triggeringActivatedAbility;
+    /**
      * The graveyard incarnation {@link #triggeringCardId} had as the ability triggered, or {@code -1} when none was
      * recorded: a card that left the graveyard and came back is a new object (CR 400.7).
      */
@@ -1197,6 +1211,9 @@ public class StackEntry {
         this.triggerOrderChosen = source.triggerOrderChosen;
         this.triggeringCardSnapshot = source.triggeringCardSnapshot;
         this.triggeringSpellTargetIds = source.triggeringSpellTargetIds;
+        this.triggeringSpellSnapshot = source.triggeringSpellSnapshot == null
+                ? null : new StackEntry(source.triggeringSpellSnapshot);
+        this.triggeringActivatedAbility = source.triggeringActivatedAbility;
         this.triggeringCardGraveyardEntryVersion = source.triggeringCardGraveyardEntryVersion;
         this.triggeringPermanentSnapshot = source.triggeringPermanentSnapshot == null
                 ? null : new Permanent(source.triggeringPermanentSnapshot);
@@ -2070,6 +2087,14 @@ public class StackEntry {
     public void setTriggeringCard(UUID cardId, long graveyardEntryVersion) {
         this.triggeringCardId = cardId;
         this.triggeringCardGraveyardEntryVersion = graveyardEntryVersion;
+    }
+
+    /**
+     * Records {@code spell}, a copy of which is kept, as the spell the trigger event was about, as it was on the stack
+     * when the ability triggered. A {@code null} spell clears it. The collector sets the triggering card id apart.
+     */
+    public void setTriggeringSpell(StackEntry spell) {
+        this.triggeringSpellSnapshot = spell == null ? null : new StackEntry(spell);
     }
 
     /** Records {@code cards} as the cards the trigger event was about, for the effects that read them as they resolve. */
