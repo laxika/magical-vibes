@@ -1,7 +1,7 @@
 - Do not start committing changes until I tell you to do so.
 - In commit messages and descriptions, never write out full card set names — refer to a set only by its short set code (e.g. `INR`).
 - You should always work on the main branch!
-- Rules accuracy is the number one priority — never ship rules-incorrect engine behavior. If a card's behavior is at all ambiguous, search the web for the official ruling.
+- Rules accuracy is the number one priority — never ship rules-incorrect engine behavior. If a card's behavior is at all ambiguous, check its official rulings with the Scryfall MCP `get_rulings` tool first, then search the web if they don't settle it.
 - **Verifying Comprehensive Rules numbers is mandatory.** Before writing a CR number anywhere — code, comment, Javadoc, test name, commit message, agent-docs — confirm it with the `rules` MCP `get_rule` tool and check that the returned text actually says what you are claiming. Rule numbers drift between releases (rules get merged, split, and renumbered), so a number recalled from memory is often stale or now points at a different rule. If verification fails, find the current number with `search_rules`. Never cite an unverified number.
 - Reuse over creation: build effects by combining existing ones (e.g. "2 damage to any target and 3 to you" = `DealDamageToAnyTargetEffect` + `DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER)`) and parameterize with predicates (`DestroyTargetPermanentEffect` + a `PermanentPredicate`, not `DestroyTargetArtifactEffect`) rather than adding new classes. When you do add a new effect/predicate, update the relevant `agent-docs/` files.
 - If unit tests exist for a service you extend, add tests for the new behavior too.

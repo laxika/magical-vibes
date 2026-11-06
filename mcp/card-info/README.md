@@ -31,9 +31,13 @@ included for Codex (`.codex/config.toml`), Claude Code (`.mcp.json`), and Cursor
 (`.cursor/mcp.json`). Restart/reload the client after pulling this change; Claude Code will ask you
 to approve the project-scoped server the first time.
 
-The server exposes one read-only tool:
+The server exposes two read-only tools:
 
 - `get_card(set_code, collector_number)`
+- `get_rulings(set_code, collector_number)`: the card's rulings as `{ date, source, text }`, where
+  `source` is `wotc` for an official Gatherer ruling and `scryfall` for Scryfall's own note. The
+  printing is looked up first, so a wrong collector number fails and the card's `name` comes
+  back with the rulings. Rulings belong to the card, so every printing returns the same list.
 
 ## Command-line mode
 
@@ -42,6 +46,9 @@ The same implementation is used by the repository's PowerShell card helpers in `
 ```sh
 # Return one compact card; downloads the whole set on a cache miss
 node mcp/card-info/server.mjs get-card DKA 76
+
+# Return one card's rulings; one Scryfall request on a cache miss
+node mcp/card-info/server.mjs get-rulings NPH 68
 
 # Download/read a whole set and print a short cache summary
 node mcp/card-info/server.mjs cache-set DKA
@@ -58,7 +65,13 @@ cache miss and shared by all MCP clients, helpers, and updated repository checko
 same user. It contains compact MCP data and lock/rate-limit files; the rules MCP also stores
 `comprehensive-rules.json` here. The Java loader continues using the checkout's `card-data-cache`.
 
-Cache entries never expire. Delete a set's global cache file manually if it must be downloaded
+Rulings are cached in `~/.magical-vibes-mcp/cache/<set>.rulings.json`, keyed by collector
+number. A Scryfall rulings miss is one `/cards/<set>/<number>/rulings` request through the same
+request lock and cooldown as set downloads. Its fallback downloads the set's MTGJSON file and
+caches the rulings of every printing in it (MTGJSON's rulings are the Gatherer ones), so later
+lookups in that set need no network. A card with no rulings is cached as an empty list.
+
+Cache entries never expire. Delete a set's global cache file (or its `.rulings.json`) manually if it must be downloaded
 again. Set `CARD_INFO_CACHE_DIR` to relocate the card cache; an override also relocates its
 locks and rate limiter. Older checkouts' `mcp/card-info/cache/<set>.json` files can be copied into
 the global directory without overwriting existing entries. Restart running MCP clients after

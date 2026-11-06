@@ -1,10 +1,11 @@
 import { mkdir, open, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { compactMtgjsonCards } from './mtgjson.mjs';
+import { compactMtgjsonCards, mtgjsonRulings } from './mtgjson.mjs';
 import { DEFAULT_MCP_CACHE_DIR } from '../cache-directory.mjs';
 
 const API_ROOT = 'https://api.scryfall.com';
 const CACHE_SCHEMA_VERSION = 1;
+const RULINGS_SCHEMA_VERSION = 1;
 const LOCK_WAIT_MS = 30_000;
 const LOCK_STALE_MS = 120_000;
 const LOCK_POLL_MS = 100;
@@ -84,6 +85,11 @@ export function normalizeCollectorNumber(collectorNumber) {
   return normalized;
 }
 
+/** Keeps a Scryfall ruling's publication date, origin (`wotc` or `scryfall`) and text. */
+export function compactScryfallRuling(ruling) {
+  return { date: ruling?.published_at, source: ruling?.source, text: ruling?.comment };
+}
+
 function compactJson(value) {
   return JSON.stringify(value);
 }
@@ -131,6 +137,117 @@ export class ScryfallSetCache {
       source: cachedSet.source || 'scryfall',
       ...(cachedSet.source_date ? { source_date: cachedSet.source_date } : {}),
     };
+  }
+
+  rulingsPath(setCode) {
+    return path.join(this.cacheDir, `${normalizeSetCode(setCode)}.rulings.json`);
+  }
+
+  /**
+   * Returns the official rulings of one printing. The printing is looked up first, so a wrong
+   * collector number fails instead of returning another card's rulings, and the card's name is
+   * returned with them. Rulings are cached per set and never expire, like the set cache.
+   */
+  async getRulings(setCode, collectorNumber) {
+    const card = await this.getCard(setCode, collectorNumber);
+    const normalizedSetCode = normalizeSetCode(setCode);
+    const key = card.collector_number.toLowerCase();
+
+    let entry = (await this.readRulingsCache(normalizedSetCode))?.cards[key];
+    if (!entry) entry = await this.downloadAndCacheRulings(normalizedSetCode, card.collector_number);
+    if (!entry) {
+      throw new CardInfoError(
+        `No rulings data found for ${normalizedSetCode.toUpperCase()} #${card.collector_number}`,
+      );
+    }
+    return {
+      name: card.name,
+      set: normalizedSetCode,
+      collector_number: card.collector_number,
+      source: entry.source,
+      ...(entry.source_date ? { source_date: entry.source_date } : {}),
+      rulings: entry.rulings,
+    };
+  }
+
+  async downloadAndCacheRulings(setCode, collectorNumber) {
+    const key = collectorNumber.toLowerCase();
+    await mkdir(this.cacheDir, { recursive: true });
+    const lockFile = `${this.rulingsPath(setCode)}.lock`;
+    const lock = await this.acquireFileLock(lockFile);
+    if (!lock) {
+      const cached = (await this.readRulingsCache(setCode))?.cards[key];
+      if (cached) return cached;
+      throw new CardInfoError(`Timed out waiting for the ${setCode.toUpperCase()} rulings cache`);
+    }
+
+    try {
+      const cache = (await this.readRulingsCache(setCode))
+        ?? { schema_version: RULINGS_SCHEMA_VERSION, set: setCode, cards: {} };
+      if (cache.cards[key]) return cache.cards[key];
+      Object.assign(cache.cards, await this.downloadRulings(setCode, collectorNumber));
+      await this.writeJsonAtomic(this.rulingsPath(setCode), cache);
+      return cache.cards[key];
+    } finally {
+      await lock.close();
+      await rm(lockFile, { force: true });
+    }
+  }
+
+  async readRulingsCache(setCode) {
+    try {
+      const parsed = JSON.parse(await readFile(this.rulingsPath(setCode), 'utf8'));
+      if (
+        parsed.schema_version !== RULINGS_SCHEMA_VERSION ||
+        parsed.set !== setCode ||
+        typeof parsed.cards !== 'object' || parsed.cards === null
+      ) {
+        return null;
+      }
+      return parsed;
+    } catch (error) {
+      if (error?.code === 'ENOENT' || error instanceof SyntaxError) return null;
+      throw error;
+    }
+  }
+
+  /**
+   * Scryfall's rulings for one printing, keyed by its lower-case collector number; on a fallback
+   * error, MTGJSON's rulings for every printing of the set, since the whole set file is downloaded.
+   */
+  async downloadRulings(setCode, collectorNumber) {
+    try {
+      const url = `${API_ROOT}/cards/${encodeURIComponent(setCode)}/${encodeURIComponent(collectorNumber)}/rulings`;
+      const payload = await this.fetchPage(url);
+      if (!Array.isArray(payload?.data)) {
+        throw new CardInfoError('Scryfall returned a malformed rulings list', { fallback: true });
+      }
+      return {
+        [collectorNumber.toLowerCase()]: {
+          source: 'scryfall',
+          downloaded_at: new Date(this.now()).toISOString(),
+          rulings: payload.data.map(compactScryfallRuling),
+        },
+      };
+    } catch (error) {
+      if (!(error instanceof CardInfoError) || !error.fallback) throw error;
+      try {
+        const payload = await this.fetchMtgjsonSet(setCode);
+        const downloadedAt = new Date(this.now()).toISOString();
+        const entries = {};
+        for (const [number, rulings] of mtgjsonRulings(payload.data.cards)) {
+          entries[number.toLowerCase()] = {
+            source: 'mtgjson',
+            source_date: payload.meta?.date,
+            downloaded_at: downloadedAt,
+            rulings,
+          };
+        }
+        return entries;
+      } catch (fallbackError) {
+        throw new CardInfoError(`${error.message}; MTGJSON fallback failed: ${fallbackError.message}`);
+      }
+    }
   }
 
   async getSet(setCode) {
@@ -200,7 +317,10 @@ export class ScryfallSetCache {
   }
 
   async writeCache(setCode, payload) {
-    const destination = this.cachePath(setCode);
+    await this.writeJsonAtomic(this.cachePath(setCode), payload);
+  }
+
+  async writeJsonAtomic(destination, payload) {
     const temporary = `${destination}.${process.pid}.tmp`;
     await writeFile(temporary, `${compactJson(payload)}\n`, 'utf8');
     await rename(temporary, destination);
@@ -219,12 +339,17 @@ export class ScryfallSetCache {
     }
   }
 
-  async downloadMtgjsonSet(setCode) {
+  async fetchMtgjsonSet(setCode) {
     const sourceSet = setCode === 'mb1' ? 'cmb1' : setCode;
     const payload = await this.fetchJson(`https://mtgjson.com/api/v5/${sourceSet.toUpperCase()}.json`, 'MTGJSON');
     if (payload?.data?.code?.toLowerCase() !== sourceSet || !Array.isArray(payload.data.cards)) {
       throw new CardInfoError('MTGJSON returned a malformed or mismatched set');
     }
+    return payload;
+  }
+
+  async downloadMtgjsonSet(setCode) {
+    const payload = await this.fetchMtgjsonSet(setCode);
     const cards = compactMtgjsonCards(payload.data.cards, setCode);
     if (cards.length === 0) throw new CardInfoError(`MTGJSON returned no English cards for ${setCode.toUpperCase()}`);
     return {

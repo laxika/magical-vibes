@@ -3,7 +3,7 @@ import { Readable, Writable } from 'node:stream';
 import test from 'node:test';
 import { createRequestHandler, runStdioServer } from '../server.mjs';
 
-test('MCP handler advertises one compact lookup tool and returns compact JSON text', async () => {
+test('MCP handler advertises the card and rulings lookups and returns compact JSON text', async () => {
   const requestedCard = { name: 'Tragic Slip', set: 'dka', collector_number: '76' };
   const calls = [];
   const handler = createRequestHandler({
@@ -21,7 +21,7 @@ test('MCP handler advertises one compact lookup tool and returns compact JSON te
   assert.deepEqual(initialized.capabilities, { tools: { listChanged: false } });
 
   const listed = await handler({ method: 'tools/list' });
-  assert.deepEqual(listed.tools.map((tool) => tool.name), ['get_card']);
+  assert.deepEqual(listed.tools.map((tool) => tool.name), ['get_card', 'get_rulings']);
 
   const result = await handler({
     method: 'tools/call',

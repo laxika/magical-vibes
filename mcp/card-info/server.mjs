@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { CardInfoError, ScryfallSetCache } from './card-cache.mjs';
 
 const SERVER_NAME = 'magical-vibes-card-info';
-const SERVER_VERSION = '1.1.0';
+const SERVER_VERSION = '1.2.0';
 const LATEST_PROTOCOL_VERSION = '2025-11-25';
 const SUPPORTED_PROTOCOL_VERSIONS = new Set([
   '2024-11-05',
@@ -41,6 +41,17 @@ const GET_CARD_TOOL = {
   },
 };
 
+const GET_RULINGS_TOOL = {
+  name: 'get_rulings',
+  title: 'Get official card rulings',
+  description:
+    'Get the rulings of one printing (shared by every printing of the card): Scryfall with automatic MTGJSON fallback. Each ruling has its date, source ("wotc" for official Gatherer rulings, "scryfall" for Scryfall\'s own notes) and text. The card\'s name is included so a wrong collector number is noticed.',
+  inputSchema: GET_CARD_TOOL.inputSchema,
+  annotations: GET_CARD_TOOL.annotations,
+};
+
+const TOOLS = [GET_CARD_TOOL, GET_RULINGS_TOOL];
+
 export function createRequestHandler(cache = new ScryfallSetCache()) {
   return async function handleRequest(message) {
     const method = message?.method;
@@ -59,25 +70,27 @@ export function createRequestHandler(cache = new ScryfallSetCache()) {
           version: SERVER_VERSION,
         },
         instructions:
-          'Use get_card for card implementation and review. Scryfall failures automatically fall back to MTGJSON; either source can verify Oracle text and support-card parameters. It returns only useful oracle fields and identifies the source; do not fetch raw card JSON.',
+          'Use get_card for card implementation and review. Scryfall failures automatically fall back to MTGJSON; either source can verify Oracle text and support-card parameters. It returns only useful oracle fields and identifies the source; do not fetch raw card JSON. Use get_rulings for a card\'s official rulings instead of fetching Scryfall or Gatherer pages.',
       };
     }
 
     if (method === 'ping') return {};
-    if (method === 'tools/list') return { tools: [GET_CARD_TOOL] };
+    if (method === 'tools/list') return { tools: TOOLS };
     if (method === 'resources/list') return { resources: [] };
     if (method === 'resources/templates/list') return { resourceTemplates: [] };
     if (method === 'prompts/list') return { prompts: [] };
 
     if (method === 'tools/call') {
-      if (params.name !== GET_CARD_TOOL.name) {
+      const lookup = params.name === GET_CARD_TOOL.name ? 'getCard'
+        : params.name === GET_RULINGS_TOOL.name ? 'getRulings' : null;
+      if (!lookup) {
         return toolError(`Unknown tool: ${params.name ?? '(missing)'}`);
       }
       const args = params.arguments ?? {};
       try {
-        const card = await cache.getCard(args.set_code, args.collector_number);
+        const result = await cache[lookup](args.set_code, args.collector_number);
         return {
-          content: [{ type: 'text', text: JSON.stringify(card) }],
+          content: [{ type: 'text', text: JSON.stringify(result) }],
           isError: false,
         };
       } catch (error) {
@@ -153,6 +166,10 @@ async function runCli(arguments_) {
     console.log(JSON.stringify(await cache.getCard(setCode, collectorNumber)));
     return;
   }
+  if (command === 'get-rulings' && setCode && collectorNumber) {
+    console.log(JSON.stringify(await cache.getRulings(setCode, collectorNumber)));
+    return;
+  }
   if ((command === 'get-set' || command === 'cache-set') && setCode) {
     const set = await cache.getSet(setCode);
     console.log(
@@ -165,7 +182,7 @@ async function runCli(arguments_) {
     return;
   }
   throw new CardInfoError(
-    'Usage: server.mjs [get-card <set> <collector> | get-set <set> | cache-set <set>]',
+    'Usage: server.mjs [get-card <set> <collector> | get-rulings <set> <collector> | get-set <set> | cache-set <set>]',
   );
 }
 

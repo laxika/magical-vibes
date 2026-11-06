@@ -57,3 +57,24 @@ export function compactMtgjsonCards(entries, setCode) {
     return card;
   });
 }
+
+/**
+ * Collects the rulings of every English printing, keyed by collector number. MTGJSON repeats a
+ * card's rulings on each face entry, so they are merged without duplicates. Its rulings are the
+ * official Gatherer rulings, hence the `wotc` source.
+ */
+export function mtgjsonRulings(entries) {
+  const byNumber = new Map();
+  for (const card of entries) {
+    if (card.language && card.language !== 'English') continue;
+    if (!card.number) continue;
+    const number = String(card.number);
+    if (!byNumber.has(number)) byNumber.set(number, new Map());
+    const rulings = byNumber.get(number);
+    for (const ruling of card.rulings || []) {
+      const key = `${ruling.date}\u0000${ruling.text}`;
+      if (!rulings.has(key)) rulings.set(key, { date: ruling.date, source: 'wotc', text: ruling.text });
+    }
+  }
+  return new Map([...byNumber].map(([number, rulings]) => [number, [...rulings.values()]]));
+}

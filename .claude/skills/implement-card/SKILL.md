@@ -23,7 +23,7 @@ bash -c 'powershell.exe -NoProfile -File scripts/implement-card-context.ps1 <SET
 
 For a **multi-face card** (transform, MDFC, split) the script prints every face's oracle text and then stops, because no class name can be derived from a two-faced name. Decide how — or whether — the engine represents that card before going further; re-run with `-ClassName <Name>` to get the reprint check once you have.
 
-For any additional card lookup, use the configured Scryfall MCP `get_card` tool. Never fetch or place raw Scryfall card JSON in model context; the MCP response intentionally omits images, prices, legalities, purchase links, and other fields irrelevant to implementation.
+For any additional card lookup, use the configured Scryfall MCP `get_card` tool, and `get_rulings` for a card's official rulings. Never fetch or place raw Scryfall card JSON in model context; the MCP response intentionally omits images, prices, legalities, purchase links, and other fields irrelevant to implementation.
 
 ## Step 2 — Reprint short-circuit
 
