@@ -30,7 +30,7 @@ re-check them with a grep before acting on them.
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
 | 14 | Trigger options replace trigger-only wrapper effects | done (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; run 16l, family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader`; run 16m, family 10 (sagas): no chapter or final-chapter ability has a legacy view, and the final-chapter collectors read the abilities through `SagaAbilityReader`; run 16n, family 11's player and keyword actions: every `ActionWatch` collector reads the abilities through `ActionAbilityReader`; run 16o, family 11's rest: every `MiscWatch` collector and the planar reader read the abilities through `MiscAbilityReader`; run 16p, the zone changes but "when this enters" and the permanent changes: no such ability has a legacy view, and the readers outside the trigger pipeline read them through `ZoneChangeAbilityReader`; run 16q, "when this enters": no ability has a legacy view; the own enters collector reads the abilities and judges their limit, the other readers read `Card.getOwnEntryEffects()`, and `OnceOnlyTriggerEffect` is gone; run 16r, every triggered ability is one object on the stack: the abilities of one Oracle ability are merged by script, the own enters and combat collectors group effects by ability, and `TriggerMode` is gone; run 16s, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags are gone: a `ConditionalEffect` is an effect's "if", and every collector judges the intervening "if" and event condition from the ability; run 16t, the trigger-only wrapper classes: the `Triggering…ConditionalEffect` filters, `SelfExiledFromBattlefieldEffect`, `OncePerTurnPerCreatureTriggerEffect` and `OncePerTurnTriggerEffect`'s keyed, per-grant, mark-on-acceptance and first-time forms are gone, their cards written with trigger filters, `TriggerLimit`s and `TriggeringCardMatches`; Bill Potts' `OncePerTurnTriggerEffect` and the may-unwrapping moved to step 15, with the user) |
-| 15 | Effects read the trigger event (repeatable) | open (run 1, with the user: the dying card, `DyingCreatureCardAwareEffect` gone; effects read the stack entry's triggering card; run 2, with the user: the departed permanent's last-known information, its 13 `…AwareEffect` interfaces gone; effects read the stack entry's triggering permanent; run 3: the rest of the departed object, the last-known rebuilds and baked dying-card ids run 2 kept, 4 classes gone and 5 lose their bound ids; run 4: the departed permanent's trigger-time rebuilds and skips run 3 kept, 6 classes gone, their skips trigger filters; run 5: the last departed-permanent rebuilds of `LegacyTriggerBindings` but the counter distribution, 3 classes gone, modular's "you may" and flag on the card; run 6, with the user: the death counter distribution reads its total from the entry and announces its targets and division as it goes on the stack (a rules fix), Martyr's Bond's "it" is the triggering permanent; run 7: the enters-side rebindings of the source to the entering permanent, Confusion in the Ranks' "another player" and "it" and Lucy MacLean's exclusion read the triggering permanent, its current types a rules fix; run 8: the damage source, `DamageSourceAwareEffect` and `DamageSourceControllerAwareEffect` gone, "that source" is the stack entry's triggering permanent and "that source's controller" its controller as the ability resolves (a rules fix for five cards), 4 effects replaced by existing ones with `TRIGGERING_PERMANENT_CONTROLLER` recipients, "each source" a trigger option on the cards; run 9: the event's permanents, `CombatDamageDealerAwareEffect` and `AttackingCreaturesAwareEffect` gone, "them" / "each of them" are the stack entry's triggering permanents and attacking snapshots, "whenever you attack with one or more [filter]" a trigger filter, 6 effects replaced by existing ones, one dead effect gone; run 10: the event's amount, `CombatDamageAmountAwareEffect` gone, every combat damage to a player entry carries the damage as its event value and the targeted choices carry it into theirs, Froghemoth's "up to that many" an event-aware target count, the graveyard targets restricted by the damage still fixed as they are chosen; `CombatExcessDamageAwareEffect` left for its own run) |
+| 15 | Effects read the trigger event (repeatable) | open (run 1, with the user: the dying card, `DyingCreatureCardAwareEffect` gone; effects read the stack entry's triggering card; run 2, with the user: the departed permanent's last-known information, its 13 `…AwareEffect` interfaces gone; effects read the stack entry's triggering permanent; run 3: the rest of the departed object, the last-known rebuilds and baked dying-card ids run 2 kept, 4 classes gone and 5 lose their bound ids; run 4: the departed permanent's trigger-time rebuilds and skips run 3 kept, 6 classes gone, their skips trigger filters; run 5: the last departed-permanent rebuilds of `LegacyTriggerBindings` but the counter distribution, 3 classes gone, modular's "you may" and flag on the card; run 6, with the user: the death counter distribution reads its total from the entry and announces its targets and division as it goes on the stack (a rules fix), Martyr's Bond's "it" is the triggering permanent; run 7: the enters-side rebindings of the source to the entering permanent, Confusion in the Ranks' "another player" and "it" and Lucy MacLean's exclusion read the triggering permanent, its current types a rules fix; run 8: the damage source, `DamageSourceAwareEffect` and `DamageSourceControllerAwareEffect` gone, "that source" is the stack entry's triggering permanent and "that source's controller" its controller as the ability resolves (a rules fix for five cards), 4 effects replaced by existing ones with `TRIGGERING_PERMANENT_CONTROLLER` recipients, "each source" a trigger option on the cards; run 9: the event's permanents, `CombatDamageDealerAwareEffect` and `AttackingCreaturesAwareEffect` gone, "them" / "each of them" are the stack entry's triggering permanents and attacking snapshots, "whenever you attack with one or more [filter]" a trigger filter, 6 effects replaced by existing ones, one dead effect gone; run 10: the event's amount, `CombatDamageAmountAwareEffect` gone, every combat damage to a player entry carries the damage as its event value and the targeted choices carry it into theirs, Froghemoth's "up to that many" an event-aware target count, the graveyard targets restricted by the damage still fixed as they are chosen; `CombatExcessDamageAwareEffect` left for its own run; run 11: the excess damage, `CombatExcessDamageAwareEffect` gone, every "deals combat damage to a creature" entry carries the excess damage dealt to that creature as its event value and the collector judges the abilities' intervening "if" against it, Overclocked Electromancer an `EventValueAtLeast(1)` intervening "if" and `EnergyCountersEffect(new EventValue())`) |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
 ## Why
@@ -10701,6 +10701,95 @@ interface.
   `CardEffectTargetingConsistencyTest` and `CostEffectClassificationTest` 1 each.
 - Engine: the whole module. The one failure is the known HEAD one, `GameMutationBoundaryRatchetTest`.
 - AI: compiles; `GameDataDeepCopyTest` passes.
+- The full suite was not run here.
+
+#### Run 11: the excess damage
+
+Run 10 left `CombatExcessDamageAwareEffect`, the binding of "that excess damage" of a "deals combat damage to a
+creature" trigger into the effect. It is gone: the stack entry carries the excess as its event value, set by the
+collector whatever the effect, and the collector judges each ability's intervening "if" against it as the ability
+triggers. 5 `…AwareEffect` interfaces are left, none of them a trigger event's: `ChosenCard`, `AcceptedPlayers`,
+`GrantingPermanent`, `ProducedManaColor` and `TriggeringCards`.
+
+**What the scan found.**
+
+- One implementer, `GainEnergyEqualToExcessCombatDamageEffect` (Overclocked Electromancer), with one reader,
+  `CombatDamageService.processCombatDamageToCreatureTriggers`: it skipped the effect when the excess was 0 (the card's
+  intervening "if", written as the effect's class) and set the excess as the entry's event value only for it.
+- The collector read the abilities' effects (`printedCombatEffects` and `grantedCombatEffects`), not the abilities, so
+  it could judge no option; run 10 left the interface for that reason.
+- 23 card classes use `Triggers.dealsCombatDamageToCreature()`, plus two grants (Kaldra Compleat's germ and Snarlfang
+  Vermin's `SuspectAndPerpetuallyGrantAbilityToTargetCreatureEffect`). None but Electromancer is written with an
+  intervening "if", event condition or filter, and none reads `EventValue`.
+
+**The model.**
+
+- The collector keeps each damage source's abilities (printed, until end of turn / combat / next upkeep, until it
+  leaves, granted by static abilities, in that order, captured before combat deaths as before) instead of their
+  effects. For each creature dealt damage it computes the excess (**CR 120.4a**, checked: marked damage, damage from
+  other sources at the same time and deathtouch taken into account; the existing `combatExcessDamage`), judges the
+  abilities with `ConditionEvaluationService.judge(gameData, ctx, excess)` (context: the source, its controller and the
+  damaged creature as target id), reads the effects of those that trigger through `CombatAbilityReader.effects`, and
+  gives every entry the excess as its event value.
+- Overclocked Electromancer (by script): `TriggerOptions.DEFAULT.withInterveningIf(new EventValueAtLeast(1))` and the
+  existing `EnergyCountersEffect(new EventValue())`. The intervening "if" (**CR 603.4**, checked) is judged with the
+  excess as the ability triggers: no excess, no trigger. The reader wraps it as a `ConditionalEffect` checked again on
+  resolution against the entry's event value, which doesn't change.
+- `Triggers.dealsCombatDamageToCreature()`'s Javadoc says what the event value is.
+
+**Gone.** `CombatExcessDamageAwareEffect`, `GainEnergyEqualToExcessCombatDamageEffect` and its handler, and the
+collector's two `instanceof` checks.
+
+**Behaviour changes.** No existing card test changed.
+
+- Every "deals combat damage to a creature" entry carries the excess (often 0) as its event value; before, only
+  Electromancer's did, the others 0. No card reads it (checked by grep).
+- The collector judges the intervening "if" and event condition of every such ability as it triggers. None but
+  Electromancer has one.
+- "If that creature was dealt excess damage this turn" is judged on this combat damage step's excess. A creature dealt
+  excess damage earlier this turn (an indestructible one, say) and none in this step would, by the Oracle text, still
+  let the ability trigger, but "that excess damage" would then be 0 and the controller gets no energy either way; only
+  whether an ability goes on the stack differs. Unchanged from before (the turn-long set
+  `GameData.permanentsDealtExcessDamageThisTurn` exists, but no condition reads it for the triggering creature).
+
+**For later runs.** The bindings that aren't trigger events (`ChosenCard`, `AcceptedPlayers`, `GrantingPermanent`,
+`ProducedManaColor`, `TriggeringCards`), the graveyard-target rebuilds kept since run 3 (with Warsinger's and
+Soundwave's), `DamagedPlayerControlsTargetEffect`'s binding, Bill Potts, the may-unwrapping and the `…Triggering…`
+classes.
+
+**Scripts.**
+
+- `scripts/step15-excess-damage-cards.py` (idempotent, per letter module): Overclocked Electromancer.
+- `scripts/step15-excess-damage-tests.py` (idempotent, per letter test module): two new Electromancer tests.
+- `scripts/step15-excess-damage-docs.py`: exact edits in `ORACLE_TEXT_EFFECT_MAP.md` (Electromancer's row),
+  `EFFECTS_INDEX.md` (the two rows gone), `EFFECTS_QUICK_REFERENCE.md` (a line on the to-creature trigger's
+  `EventValue` in place of the two) and `ACTIVATED_ABILITY_GUIDE.md` (the trigger's row).
+
+The collector, the trigger factory's Javadoc and a sentence in `ARCHITECTURE.md`'s damage paragraph were edited by hand.
+The skills didn't name these classes.
+
+**Tests changed.**
+
+- New card tests (by script): `OverclockedElectromancerTest#doesNotTriggerWithoutExcessDamage` (the intervening "if"
+  judged as the ability triggers: the log shows no trigger, not just no energy) and
+  `OverclockedElectromancerTest#triggersOnceWithExcessDamage` (the same log line appears once, so the first test isn't
+  vacuous). The harness resolves the trigger as combat damage ends, so neither can inspect the stack entry; a first
+  version that asserted the entry's event value found an empty stack and was rewritten.
+- No existing test changed; no unit test named the removed classes.
+
+**Test runs.**
+
+- Card: the test class of every card with a `Triggers.dealsCombatDamageToCreature()` trigger, an
+  `EventValueAtLeast` condition, an `EnergyCountersEffect(new EventValue())` or the suspect-and-grant effect: 76 test
+  classes, 591 test cases. The one failure was the first version of the new event-value test (above); after the
+  rewrite `OverclockedElectromancerTest` passes, 12 cases.
+- Application: `CombatDamageServiceTest`, `CardFreezeTest`, `TriggerCollectorRegistryTest`, every `…RatchetTest` and
+  the architecture tests. The failures are HEAD's: `CombatDamageServiceTest` 40 (`StoriedEffectHandler` not wired, and
+  one null key), and `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest`,
+  `CardEffectTargetingConsistencyTest` and `CostEffectClassificationTest` 1 each; their messages name none of the
+  changed classes.
+- Engine: the whole module. The one failure is the known HEAD one, `GameMutationBoundaryRatchetTest`.
+- AI: compiles (`compileTestJava`).
 - The full suite was not run here.
 
 ## Prompt

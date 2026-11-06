@@ -684,7 +684,12 @@ public final class Triggers {
         return new CombatTrigger(CombatTrigger.CombatEvent.COMBAT_DAMAGE_TO_OWNER, ObjectRelation.ANY);
     }
 
-    /** "Whenever this creature deals combat damage to a creature", once for each creature. */
+    /**
+     * "Whenever this creature deals combat damage to a creature", once for each creature. The stack entry's event value
+     * is the excess damage dealt to that creature in that combat damage step ("that excess damage"; {@code EventValue}),
+     * against which an intervening "if" such as {@code EventValueAtLeast(1)} ("if that creature was dealt excess
+     * damage") is judged as the ability triggers.
+     */
     public static CombatTrigger dealsCombatDamageToCreature() {
         return new CombatTrigger(CombatTrigger.CombatEvent.COMBAT_DAMAGE_TO_CREATURE, ObjectRelation.THIS);
     }

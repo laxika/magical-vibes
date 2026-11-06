@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -88,6 +89,38 @@ class OverclockedElectromancerTest extends BaseCardTest {
 
         assertThat(gd.playerEnergyCounters.getOrDefault(player1.getId(), 0)).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(electromancer);
+    }
+
+    @Test
+    void doesNotTriggerWithoutExcessDamage() {
+        Permanent electromancer = addCreatureReady(player1, new OverclockedElectromancer());
+        addCreatureReady(player2, new HillGiant());
+
+        electromancer.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        String triggers = electromancer.getCard().getName() + "'s ability triggers";
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(log -> log.contains(triggers));
+    }
+
+    @Test
+    void triggersOnceWithExcessDamage() {
+        Permanent electromancer = addCreatureReady(player1, new OverclockedElectromancer());
+        Permanent hillGiant = addCreatureReady(player2, new HillGiant());
+        hillGiant.addMarkedDamage(null, 2);
+
+        electromancer.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        String triggers = electromancer.getCard().getName() + "'s ability triggers";
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).filteredOn(log -> log.contains(triggers))
+                .hasSize(1);
     }
 
     @Test

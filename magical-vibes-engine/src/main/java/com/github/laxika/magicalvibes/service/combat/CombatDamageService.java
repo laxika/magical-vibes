@@ -59,7 +59,6 @@ import com.github.laxika.magicalvibes.model.effect.CombatDamageAssignmentToDefen
 import com.github.laxika.magicalvibes.model.effect.CombatDamageDealerReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
-import com.github.laxika.magicalvibes.model.effect.CombatExcessDamageAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
@@ -812,12 +811,15 @@ public class CombatDamageService {
             cardBefore.put(p.getId(), p.getCard());
         }
 
-        Map<Permanent, List<CardEffect>> damageToCreatureEffects = new HashMap<>();
+        Map<Permanent, List<TriggeredAbility>> damageToCreatureAbilities = new HashMap<>();
         for (Permanent source : state.combatDamageDealtToCreatures.keySet()) {
-            List<CardEffect> effects = new ArrayList<>(
-                    printedCombatEffects(source.getCard(), CombatWatch.ON_COMBAT_DAMAGE_TO_CREATURE));
-            effects.addAll(grantedCombatEffects(gameData, source, CombatWatch.ON_COMBAT_DAMAGE_TO_CREATURE));
-            damageToCreatureEffects.put(source, effects);
+            Trigger watched = CombatWatch.ON_COMBAT_DAMAGE_TO_CREATURE.trigger();
+            List<TriggeredAbility> abilities = new ArrayList<>(
+                    WatchedAbilities.printed(source.getCard(), CombatWatch.ON_COMBAT_DAMAGE_TO_CREATURE));
+            abilities.addAll(WatchedAbilities.temporary(source, watched));
+            abilities.addAll(WatchedAbilities.persistent(source, watched));
+            abilities.addAll(grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, source, watched));
+            damageToCreatureAbilities.put(source, abilities);
         }
         Map<Permanent, UUID> attachedDamageSources = new LinkedHashMap<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
@@ -922,7 +924,7 @@ public class CombatDamageService {
         processSelfDealsCombatDamageToPlayerOrBattleTriggers(gameData, state);
         processCombatDamageToBattleTriggers(gameData, state);
         processCombatDamageToCreatureTriggers(gameData, state.combatDamageDealtToCreatures,
-                state.combatDamageDealerControllers, state.combatDamageTargetControllers, damageToCreatureEffects,
+                state.combatDamageDealerControllers, state.combatDamageTargetControllers, damageToCreatureAbilities,
                 state, damagedCreatureSnapshots);
         processCombatDamageToBlockingCreatureTriggers(gameData, state);
 
@@ -3581,11 +3583,18 @@ public class CombatDamageService {
         }
     }
 
+    /**
+     * Puts "whenever this creature deals combat damage to a creature" abilities on the stack, once for each creature
+     * dealt damage. The damaged creature is the entry's fixed "that creature" (its target, non-targeting) and its
+     * triggering permanent, and the excess damage dealt to it in this combat damage step (CR 120.4a) is the entry's
+     * event value, "that excess damage". Each ability's intervening "if" and event condition are judged against that
+     * creature and that excess as the ability triggers (CR 603.4, CR 603.2).
+     */
     private void processCombatDamageToCreatureTriggers(GameData gameData,
                                                         Map<Permanent, List<UUID>> combatDamageDealtToCreatures,
                                                         Map<Permanent, UUID> combatDamageDealerControllers,
                                                         Map<UUID, UUID> combatDamageTargetControllers,
-                                                        Map<Permanent, List<CardEffect>> damageToCreatureEffects,
+                                                        Map<Permanent, List<TriggeredAbility>> damageToCreatureAbilities,
                                                         CombatDamageState state,
                                                         Map<UUID, Permanent> damagedCreatureSnapshots) {
         Map<UUID, Integer> damageByCreature = new HashMap<>();
@@ -3598,18 +3607,18 @@ public class CombatDamageService {
             UUID controllerId = combatDamageDealerControllers.get(source);
             if (controllerId == null) continue;
 
-            List<CardEffect> effects = damageToCreatureEffects.getOrDefault(source, List.of());
-            if (effects.isEmpty()) continue;
+            List<TriggeredAbility> abilities = damageToCreatureAbilities.getOrDefault(source, List.of());
+            if (abilities.isEmpty()) continue;
 
+            Trigger watched = CombatWatch.ON_COMBAT_DAMAGE_TO_CREATURE.trigger();
             for (UUID damagedCreatureId : entry.getValue()) {
                 int excessDamage = combatExcessDamage(gameData, state, damagedCreatureId,
                         damagedCreatureSnapshots.get(damagedCreatureId),
                         damageByCreature.getOrDefault(damagedCreatureId, 0));
-                for (CardEffect effect : effects) {
-                    if (effect instanceof CombatExcessDamageAwareEffect && excessDamage <= 0) {
-                        continue;
-                    }
-                    // Damaged creature is the fixed "that creature" — bake it as targetId, no choice.
+                TriggerJudge judge = conditionEvaluationService.judge(gameData,
+                        ConditionContext.forPermanent(source, controllerId).withTargetId(damagedCreatureId),
+                        excessDamage);
+                for (CardEffect effect : CombatAbilityReader.effects(judge.filter(abilities), watched)) {
                     StackEntry trigger = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             source.getCard(),
@@ -3623,9 +3632,7 @@ public class CombatDamageService {
                     trigger.setTriggeringPermanentId(damagedCreatureId);
                     trigger.setTriggeringPermanentControllerId(combatDamageTargetControllers.get(damagedCreatureId));
                     trigger.setNonTargeting(true);
-                    if (effect instanceof CombatExcessDamageAwareEffect) {
-                        trigger.setEventValue(excessDamage);
-                    }
+                    trigger.setEventValue(excessDamage);
                     gameData.stack.add(trigger);
                     gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
                 }
