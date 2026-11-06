@@ -34,7 +34,6 @@ public class BecomeCopyOfDyingCreatureEffectHandler implements NormalEffectHandl
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (BecomeCopyOfDyingCreatureEffect) effect;
 
         // The source permanent (Cemetery Puca) is carried as the stack entry's self-target.
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId() != null
@@ -44,9 +43,11 @@ public class BecomeCopyOfDyingCreatureEffectHandler implements NormalEffectHandl
             return;
         }
 
-        // Copy the dying creature from last-known information — its card sits in a graveyard.
-        Card dyingCard = e.dyingCardSnapshot() != null ? e.dyingCardSnapshot()
-                : gameQueryService.findCardInGraveyardById(gameData, e.dyingCardId());
+        // Copy the dying creature from last-known information (CR 608.2h) — its card sits in a graveyard.
+        Card dyingCard = entry.getTriggeringPermanentSnapshot() != null
+                ? entry.getTriggeringPermanentSnapshot().getCard().createRuntimeCopy()
+                : entry.getTriggeringCardId() == null ? null
+                : gameQueryService.findCardInGraveyardById(gameData, entry.getTriggeringCardId());
         if (dyingCard == null) {
             
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s ability fizzles (the creature that died is no longer available to copy)."));

@@ -172,6 +172,25 @@ class OmarthisGhostfireInitiateTest extends BaseCardTest {
     }
 
     @Test
+    void deathWithNoCountersStillPutsTheAbilityOnTheStack() {
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(new OmarthisGhostfireInitiate()));
+
+        harness.castCreature(player1, 0, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Omarthis, Ghostfire Initiate");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
     void deathCountsOtherCounterTypesAndManifestsNoncreatureCardsToo() {
         Card first = new LightningBolt();
         Card second = new BurstOfStrength();

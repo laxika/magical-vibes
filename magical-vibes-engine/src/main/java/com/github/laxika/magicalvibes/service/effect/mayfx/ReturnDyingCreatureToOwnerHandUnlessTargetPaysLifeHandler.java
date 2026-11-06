@@ -46,7 +46,7 @@ public class ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeHandler implement
                 return;
             }
         } else {
-            effectHandler.returnDyingCard(gameData, effect.dyingCardId(), ability.sourceCard());
+            effectHandler.returnDyingCard(gameData, ability.triggeringCardId(), ability.sourceCard());
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

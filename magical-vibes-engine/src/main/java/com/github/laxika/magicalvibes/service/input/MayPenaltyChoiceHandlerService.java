@@ -1409,7 +1409,7 @@ public class MayPenaltyChoiceHandlerService {
         } else {
             // Declined (or can no longer pay) — the thief puts that card onto the battlefield.
             stealDyingOpponentPermanentUnlessPaysLifeEffectHandler.stealPermanent(
-                    gameData, thiefId, effect.dyingCardId(), ability.sourceCard());
+                    gameData, thiefId, ability.triggeringCardId(), ability.sourceCard());
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.f.FeralShadow;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.n.NevinyrralsDisk;
 import com.github.laxika.magicalvibes.cards.r.RitualOfSteel;
+import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.cards.z.ZhalfirinKnight;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,7 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({GrimFeast.class, DarkBanishing.class, FeralShadow.class, Incinerate.class,
-        RitualOfSteel.class, ZhalfirinKnight.class, AnimateArtifact.class, NevinyrralsDisk.class})
+        RitualOfSteel.class, ZhalfirinKnight.class, AnimateArtifact.class, NevinyrralsDisk.class, Shatter.class})
 class GrimFeastTest extends BaseCardTest {
 
     @Test
@@ -172,6 +173,24 @@ class GrimFeastTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Nevinyrral's Disk");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife + 4);
+    }
+
+    @Test
+    @DisplayName("Does not trigger when a noncreature permanent is put into an opponent's graveyard")
+    void doesNotTriggerForNoncreaturePermanent() {
+        harness.addToBattlefield(player1, new GrimFeast());
+        Permanent disk = harness.addToBattlefieldAndReturn(player2, new NevinyrralsDisk());
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+        harness.setHand(player1, List.of(new Shatter()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, disk.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Nevinyrral's Disk");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife);
     }
 
     @Test

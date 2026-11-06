@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.CountersOnTriggeringPermanent;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForEachDyingSourceCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -27,6 +28,6 @@ public class MarketbackWalker extends Card {
         ));
 
         addTrigger(Triggers.dies(ObjectRelation.THIS),
-                new DrawCardForEachDyingSourceCounterEffect(CounterType.PLUS_ONE_PLUS_ONE));
+                new DrawCardEffect(new CountersOnTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE)));
     }
 }

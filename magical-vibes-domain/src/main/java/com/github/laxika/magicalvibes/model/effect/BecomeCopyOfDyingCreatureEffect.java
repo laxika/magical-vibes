@@ -1,24 +1,12 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.UUID;
-import com.github.laxika.magicalvibes.model.Card;
-
 /**
- * Triggered effect: the source permanent becomes a copy of a creature that just died,
- * except it keeps this triggered ability. Used by Cemetery Puca's
- * "you may pay {1}. If you do, this creature becomes a copy of that creature,
+ * Triggered effect: the source permanent becomes a copy of the creature that died, except it keeps this triggered
+ * ability. Used by Cemetery Puca's "you may pay {1}. If you do, this creature becomes a copy of that creature,
  * except it has this ability." death trigger.
  *
- * @param dyingCardId the card ID of the creature that died (null in the card definition,
- *                    filled in at trigger time from the dying creature's last-known information)
+ * <p>The creature copied is the stack entry's triggering permanent as it last existed on the battlefield
+ * (CR 608.2h), or its triggering card when there is no snapshot.
  */
-public record BecomeCopyOfDyingCreatureEffect(UUID dyingCardId, Card dyingCardSnapshot) implements CardEffect {
-
-    public BecomeCopyOfDyingCreatureEffect(UUID dyingCardId) {
-        this(dyingCardId, null);
-    }
-
-    public BecomeCopyOfDyingCreatureEffect() {
-        this(null);
-    }
+public record BecomeCopyOfDyingCreatureEffect() implements CardEffect {
 }

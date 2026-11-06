@@ -46,14 +46,18 @@ public class StealDyingOpponentPermanentUnlessPaysLifeEffectHandler implements N
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (StealDyingOpponentPermanentUnlessPaysLifeEffect) effect;
         UUID controllerId = entry.getControllerId();
-        UUID payingPlayerId = e.payingPlayerId();
+        // "That opponent" controlled the permanent as it last existed on the battlefield (CR 608.2h).
+        UUID payingPlayerId = entry.getTriggeringPermanentControllerId();
+        if (payingPlayerId == null) {
+            return;
+        }
 
         boolean canPay = gameQueryService.canPlayerLifeChange(gameData, payingPlayerId)
                 && gameData.getLife(payingPlayerId) >= e.lifeCost();
 
         if (!canPay) {
             // Can't pay — steal immediately.
-            stealPermanent(gameData, controllerId, e.dyingCardId(), entry.getCard());
+            stealPermanent(gameData, controllerId, entry.getTriggeringCardId(), entry.getCard());
             return;
         }
 
@@ -62,7 +66,8 @@ public class StealDyingOpponentPermanentUnlessPaysLifeEffectHandler implements N
         String prompt = "Pay " + e.lifeCost() + " life? If you don't, the permanent is put onto the "
                 + "battlefield under an opponent's control. (" + entry.getCard().getName() + ")";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                entry.getCard(), payingPlayerId, List.of(e), prompt, controllerId));
+                entry.getCard(), payingPlayerId, List.of(e), prompt, controllerId)
+                .withTriggeringCard(entry.getTriggeringCardId(), entry.getTriggeringCardGraveyardEntryVersion()));
     }
 
     /**
@@ -71,6 +76,9 @@ public class StealDyingOpponentPermanentUnlessPaysLifeEffectHandler implements N
      * no longer in a graveyard (e.g. it was a token, or moved).
      */
     public void stealPermanent(GameData gameData, UUID controllerId, UUID dyingCardId, Card sourceCard) {
+        if (dyingCardId == null) {
+            return;
+        }
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, dyingCardId);
         Card card = gameQueryService.findCardInGraveyardById(gameData, dyingCardId);
         if (card == null || ownerId == null) {

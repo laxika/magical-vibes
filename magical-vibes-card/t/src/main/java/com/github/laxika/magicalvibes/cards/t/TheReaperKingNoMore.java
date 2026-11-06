@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingOpponentCreatureUnderYourControlEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -29,6 +30,7 @@ public class TheReaperKingNoMore extends Card {
                         new PermanentHasCountersPredicate(CounterType.MINUS_ONE_MINUS_ONE),
                         ObjectRelation.OPPONENT_CONTROLS),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.DO_ONLY_ONCE_EACH_TURN),
-                new ReturnDyingOpponentCreatureUnderYourControlEffect());
+                new MayEffect(new ReturnDyingOpponentCreatureUnderYourControlEffect(),
+                        "Put that card onto the battlefield under your control?"));
     }
 }

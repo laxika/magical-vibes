@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.amount.CountersOnTriggeringPermanent;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -37,7 +38,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachLeavingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetForEachDyingSourcePowerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyardOnBottomOfLibraryEffect;
@@ -596,36 +596,20 @@ class LegacyTriggerBindingsTest {
     }
 
     @Test
-    @DisplayName("Leaving-source counter trigger snapshots its count and queues target selection")
-    void leavingSourceCounterTriggerSnapshotsCount() {
+    @DisplayName("Leaving-source counter trigger carries the leaving permanent and queues target selection")
+    void leavingSourceCounterTriggerCarriesTheLeavingPermanent() {
         Card card = createCreature("Counter Captain", 1, 1);
         Permanent perm = new Permanent(card);
         perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        var effect = new PutCounterOnTargetForEachLeavingSourceCounterEffect(
-                CounterType.PLUS_ONE_PLUS_ONE);
+        var effect = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE,
+                new CountersOnTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE));
         var ctx = leaves(perm, PLAYER1_ID);
 
         assertThat(trigger(ctx, effect)).isTrue();
 
         var pending = gd.peekPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
-        var baked = (PutCounterOnTargetForEachLeavingSourceCounterEffect) pending.effects().getFirst();
-        assertThat(baked.count()).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("Leaving-source counter trigger is retained when the source has no counters")
-    void leavingSourceCounterTriggerRetainsZeroCount() {
-        Card card = createCreature("Counterless Captain", 1, 1);
-        Permanent perm = new Permanent(card);
-        var effect = new PutCounterOnTargetForEachLeavingSourceCounterEffect(
-                CounterType.PLUS_ONE_PLUS_ONE);
-        var ctx = leaves(perm, PLAYER1_ID);
-
-        assertThat(trigger(ctx, effect)).isTrue();
-
-        var pending = gd.peekPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
-        var baked = (PutCounterOnTargetForEachLeavingSourceCounterEffect) pending.effects().getFirst();
-        assertThat(baked.count()).isZero();
+        assertThat(pending.effects()).containsExactly(effect);
+        assertThat(pending.triggeringPermanent().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test

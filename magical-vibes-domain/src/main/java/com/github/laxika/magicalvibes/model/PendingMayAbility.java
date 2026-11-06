@@ -206,6 +206,18 @@ public record PendingMayAbility(
                 triggeringPermanentToughnessAtTrigger, triggeringCardGraveyardEntryVersion);
     }
 
+    /**
+     * This ability with {@code cardId} as the card the trigger event was about ("that card") and the graveyard
+     * incarnation it had ({@code -1}: none), carried from the stack entry that asked the question.
+     */
+    public PendingMayAbility withTriggeringCard(UUID cardId, long graveyardEntryVersion) {
+        return new PendingMayAbility(sourceCard, controllerId, effects, description, targetCardId, manaCost,
+                sourcePermanentId, tapPermanentsCost, lifeCost, additionalLifeCost, attackedTargetId,
+                activePlayerId, choicePlayerId, sourcePermanentSnapshot, sourceControllerId, cardId,
+                eventValue, triggeringPermanentId, sourcePowerAtTrigger, xValue,
+                triggeringPermanentToughnessAtTrigger, graveyardEntryVersion);
+    }
+
     public PendingMayAbility withEventValue(int updatedEventValue) {
         return new PendingMayAbility(sourceCard, controllerId, effects, description, targetCardId, manaCost,
                 sourcePermanentId, tapPermanentsCost, lifeCost, additionalLifeCost, attackedTargetId,

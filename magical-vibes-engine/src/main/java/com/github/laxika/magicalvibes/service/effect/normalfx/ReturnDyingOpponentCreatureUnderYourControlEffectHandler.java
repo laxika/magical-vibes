@@ -42,10 +42,10 @@ public class ReturnDyingOpponentCreatureUnderYourControlEffectHandler implements
         var e = (ReturnDyingOpponentCreatureUnderYourControlEffect) effect;
         UUID controllerId = entry.getControllerId();
 
-        // The dying card id is carried on the effect (not the stack entry's targetId, which would
-        // make the trigger validate against on-battlefield permanents and fizzle). Feed it to the
-        // shared steal-from-graveyard helper via the entry.
-        entry.setTargetId(e.dyingCardId());
+        // "That card" is the entry's triggering card. Feed it to the shared steal-from-graveyard helper as the
+        // entry's target as the effect resolves (as a target chosen with the trigger it would be validated against
+        // on-battlefield permanents and fizzle).
+        entry.setTargetId(entry.getTriggeringCardId());
         GraveyardReturnSupport.StolenCreatureResult result =
                 graveyardReturnSupport.stealFromGraveyard(gameData, entry, controllerId, false);
         if (result == null) return;

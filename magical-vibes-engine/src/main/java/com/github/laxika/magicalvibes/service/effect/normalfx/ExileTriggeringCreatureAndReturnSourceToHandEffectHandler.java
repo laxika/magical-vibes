@@ -38,10 +38,9 @@ public class ExileTriggeringCreatureAndReturnSourceToHandEffectHandler implement
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var linkedEffect = (ExileTriggeringCreatureAndReturnSourceToHandEffect) effect;
-        Card dyingCard = linkedEffect.dyingCardId() == null
+        Card dyingCard = entry.getTriggeringCardId() == null
                 ? null
-                : gameQueryService.findCardInGraveyardById(gameData, linkedEffect.dyingCardId());
+                : gameQueryService.findCardInGraveyardById(gameData, entry.getTriggeringCardId());
         if (dyingCard != null) {
             UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, dyingCard.getId());
             permanentRemovalService.removeCardFromGraveyardById(gameData, dyingCard.getId());

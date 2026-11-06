@@ -40,14 +40,15 @@ public class ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffectHandler imp
         }
 
         if (!canPay(gameData, payingPlayerId, e.lifeCost())) {
-            returnDyingCard(gameData, e.dyingCardId(), entry.getCard());
+            returnDyingCard(gameData, entry.getTriggeringCardId(), entry.getCard());
             return;
         }
 
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), payingPlayerId, List.of(e),
                 "Pay " + e.lifeCost() + " life to prevent the creature from returning to its owner's hand?",
-                payingPlayerId));
+                payingPlayerId).withTriggeringCard(entry.getTriggeringCardId(),
+                entry.getTriggeringCardGraveyardEntryVersion()));
     }
 
     public boolean canPay(GameData gameData, UUID playerId, int lifeCost) {
@@ -57,6 +58,9 @@ public class ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffectHandler imp
 
     /** Returns the dead card to its owner's hand, or fizzles if it has moved since the trigger. */
     public void returnDyingCard(GameData gameData, UUID dyingCardId, Card sourceCard) {
+        if (dyingCardId == null) {
+            return;
+        }
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, dyingCardId);
         Card deadCard = gameQueryService.findCardInGraveyardById(gameData, dyingCardId);
         if (deadCard == null || ownerId == null) {

@@ -605,19 +605,19 @@ public class MiscTriggerCollectorService {
             TriggerContext ctx) {
         TriggerContext.OpponentNontokenPermanentSacrificed sacrificed =
                 (TriggerContext.OpponentNontokenPermanentSacrificed) ctx;
-        StealDyingOpponentPermanentUnlessPaysLifeEffect baked =
-                new StealDyingOpponentPermanentUnlessPaysLifeEffect(
-                        effect.lifeCost(), sacrificed.sacrificedCard().getId(),
-                        sacrificed.sacrificingPlayerId());
+        // "That card" is the entry's triggering card and "that player" the player who sacrificed it.
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(baked)),
+                new ArrayList<>(List.of(effect)),
                 null,
                 match.permanent().getId());
         entry.setNonTargeting(true);
+        UUID sacrificedCardId = sacrificed.sacrificedCard().getId();
+        entry.setTriggeringCard(sacrificedCardId, match.gameData().graveyardEntryVersion(sacrificedCardId));
+        entry.setTriggeringPermanentControllerId(sacrificed.sacrificingPlayerId());
         match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         return true;

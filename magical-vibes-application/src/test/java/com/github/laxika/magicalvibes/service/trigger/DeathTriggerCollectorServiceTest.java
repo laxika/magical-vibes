@@ -912,33 +912,24 @@ class DeathTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("BecomeCopyOfDyingCreature queues a pay-mana may ability with the dying card baked in")
-        void becomeCopyQueuesMayPayAbility() {
+        @DisplayName("BecomeCopyOfDyingCreature's may-pay goes on the stack unchanged with the dying creature")
+        void becomeCopyCarriesTheDyingCreature() {
             Card puca = createCreature("Cemetery Puca", 1, 2);
             Card dying = createCreature("Dead Creature", 2, 2);
-            var copyEffect = new BecomeCopyOfDyingCreatureEffect();
-            var rawMayPay = new MayPayManaEffect("{1}", copyEffect, "Pay {1}?");
+            Permanent dyingPermanent = new Permanent(dying);
+            var rawMayPay = new MayPayManaEffect("{1}", new BecomeCopyOfDyingCreatureEffect(), "Pay {1}?");
             Permanent perm = new Permanent(puca);
-            var ctx = new TriggerContext.CreatureDeath(dying, PLAYER1_ID, 2, 2);
+            var ctx = new TriggerContext.CreatureDeath(dying, PLAYER1_ID, 2, 2, dyingPermanent.getId(),
+                    dyingPermanent);
 
-            assertThat(svc.handleAnyCreatureDeathBecomeCopy(match(perm, PLAYER1_ID, rawMayPay), copyEffect, ctx)).isTrue();
-            assertThat(gd.pendingMayAbilities).hasSize(1);
-            assertThat(gd.pendingMayAbilities.get(0).manaCost()).isEqualTo("{1}");
-            var baked = (BecomeCopyOfDyingCreatureEffect) gd.pendingMayAbilities.get(0).effects().get(0);
-            assertThat(baked.dyingCardId()).isEqualTo(dying.getId());
-        }
+            assertThat(svc.dispatchCreatureDeath(CreatureDeathWatch.ANY, match(perm, PLAYER1_ID, rawMayPay),
+                    rawMayPay, ctx)).isTrue();
 
-        @Test
-        @DisplayName("BecomeCopyOfDyingCreature does not fire when the dying card is null")
-        void becomeCopyNoFireWithoutDyingCard() {
-            Card puca = createCreature("Cemetery Puca", 1, 2);
-            var copyEffect = new BecomeCopyOfDyingCreatureEffect();
-            var rawMayPay = new MayPayManaEffect("{1}", copyEffect, "Pay {1}?");
-            Permanent perm = new Permanent(puca);
-            var ctx = new TriggerContext.CreatureDeath(null, PLAYER1_ID, 0, 0);
-
-            assertThat(svc.handleAnyCreatureDeathBecomeCopy(match(perm, PLAYER1_ID, rawMayPay), copyEffect, ctx)).isFalse();
-            assertThat(gd.pendingMayAbilities).isEmpty();
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getEffectsToResolve()).containsExactly(rawMayPay);
+            assertThat(entry.getTriggeringCardId()).isEqualTo(dying.getId());
+            assertThat(entry.getTriggeringPermanentSnapshot().getId()).isEqualTo(dyingPermanent.getId());
         }
 
         @Test

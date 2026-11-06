@@ -187,7 +187,6 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.ReselectTargetAtRandomEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDyingCreatureToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.StormCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherInstantsAndSorceriesCastCountEffect;
 import com.github.laxika.magicalvibes.model.effect.StormEffect;
@@ -12884,9 +12883,6 @@ public class TriggerCollectionService {
         for (CardEffect effect : effects) {
             CardEffect resolvedEffect = effect;
             resolvedEffect = snapshotDyingPermanentManaValue(gameData, controllerId, resolvedEffect, dyingPermanent);
-            if (resolvedEffect instanceof GainLifeEqualToDyingCreatureToughnessEffect) {
-                resolvedEffect = new GainLifeEffect(Math.max(0, dyingToughnessAtDeath));
-            }
 
             if (resolvedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                     || resolvedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
@@ -12950,6 +12946,8 @@ public class TriggerCollectionService {
             entry.setTriggeringPermanentPowerAtTrigger(comparesPower ? dyingPowerAtDeath : dyingPower);
             entry.setTriggeringCard(dyingCard.getId(), gameData.graveyardEntryVersion(dyingCard.getId()));
             entry.setTriggeringPermanent(dyingPermanent, death.attachments());
+            // "Its toughness" (Proper Burial, South Wind Avatar): its last-known toughness (CR 608.2h).
+            entry.setTriggeringPermanentToughnessAtTrigger(dyingToughnessAtDeath);
             // A mana value bound compares against the creature's actual last known power, which can be
             // negative (CR 208.3), so an unclamped power excludes even mana value 0.
             boolean powerBoundsManaValue = entryEffects.stream().anyMatch(
