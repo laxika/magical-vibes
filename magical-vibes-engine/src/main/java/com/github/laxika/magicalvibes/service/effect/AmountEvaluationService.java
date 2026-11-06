@@ -1077,9 +1077,9 @@ public class AmountEvaluationService {
     }
 
     /**
-     * Evaluates a death-trigger amount using the last-known source permanent when the source has
-     * already left the battlefield. This is used for dynamic limits that are fixed as the trigger
-     * is collected, such as Kodama of the Center Tree's soulshift value.
+     * Evaluates a death-trigger amount with the object that died, as it last existed, as its source. This is used for
+     * a graveyard target's dynamic mana value limit, fixed as the target is chosen while the ability goes on the stack,
+     * such as Kodama of the Center Tree's soulshift value (which counts the Kodama itself).
      */
     public int evaluateAtDeath(GameData gameData, DynamicAmount amount, UUID controllerId,
                                Permanent dyingPermanent) {

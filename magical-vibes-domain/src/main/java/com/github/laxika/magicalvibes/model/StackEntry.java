@@ -435,6 +435,14 @@ public class StackEntry {
      */
     @Setter private UUID grantingPermanentId;
     @Setter private Integer dyingPermanentManaValue;
+    /**
+     * The mana value limit of the graveyard cards this triggered ability targets, fixed from the trigger event as its
+     * targets were chosen while it was put on the stack (CR 603.3d): a death trigger's
+     * {@code ReturnCardFromGraveyardEffect.dynamicMaxManaValue()} evaluated against the object that died as it last
+     * existed (CR 603.10a), so "with lesser mana value" and Soulshift X keep the value the event gave them. {@code null}
+     * when the limit, if any, is evaluated as the ability resolves.
+     */
+    @Setter private Integer graveyardTargetMaxManaValue;
     /** Permanent ids that received counters during the current effect resolution. */
     private final List<UUID> counteredPermanentIdsThisResolution = new ArrayList<>();
     /** Controller of the spell targeted by a counter effect, retained after that spell leaves the stack. */
@@ -1184,6 +1192,7 @@ public class StackEntry {
         this.acceptedPlayerIds = source.acceptedPlayerIds;
         this.grantingPermanentId = source.grantingPermanentId;
         this.dyingPermanentManaValue = source.dyingPermanentManaValue;
+        this.graveyardTargetMaxManaValue = source.graveyardTargetMaxManaValue;
         this.counteredPermanentIdsThisResolution.addAll(source.counteredPermanentIdsThisResolution);
         this.counteredSpellControllerId = source.counteredSpellControllerId;
         this.eventPlayerIds = source.eventPlayerIds.isEmpty() ? List.of() : new ArrayList<>(source.eventPlayerIds);

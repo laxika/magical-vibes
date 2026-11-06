@@ -26,6 +26,11 @@ import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanXPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCreatureCardInOpponentGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -747,6 +752,31 @@ class MiscTriggerCollectorServiceTest {
             assertThat(pending.controllerId()).isEqualTo(player1Id);
             assertThat(pending.sourcePermanentId()).isEqualTo(perm.getId());
             assertThat(pending.effects()).containsExactly(effect);
+        }
+
+        @Test
+        @DisplayName("a graveyard target is chosen with the sacrificed permanent's mana value as X, the effect unchanged")
+        void graveyardTargetChoiceHasTheSacrificedManaValueAsX() {
+            Permanent perm = createPermanent("Riveteers Ascendancy");
+            Card sacrificed = createCard("Sacrificed creature");
+            sacrificed.setType(CardType.CREATURE);
+            sacrificed.setManaCost("{2}{B}");
+            var effect = new MayEffect(ReturnCardFromGraveyardEffect.builder()
+                    .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                    .filter(new CardAllOfPredicate(List.of(
+                            new CardTypePredicate(CardType.CREATURE), new CardManaValueLessThanXPredicate())))
+                    .targetGraveyard(true)
+                    .build(), "Return target creature card with lesser mana value?");
+            var ctx = new TriggerContext.AllySacrificed(player1Id, sacrificed);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
+
+            assertThat(result).isTrue();
+            var pending = gd.peekPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
+            assertThat(pending.effects()).containsExactly(effect);
+            assertThat(pending.xValue()).isEqualTo(3);
         }
     }
 

@@ -25,7 +25,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyMerfolkTappedForSourceAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTokensCreatedWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTokensCreatedWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -429,7 +428,7 @@ public class LegacyTriggerBindings {
         return true;
     }
     private boolean handleDeathMayEffect(Ctx c, MayEffect may) {
-        MayEffect resolvedMay = (MayEffect) snapshotDynamicMaxManaValue(c, may);
+        MayEffect resolvedMay = (MayEffect) bindImprintedCard(c, may);
         // CR 603.3d: targeted "may" abilities need the target chosen when stacking — including one
         // whose targets are cards in a graveyard (Iname, Life Aspect's "you may exile it. If you do,
         // return any number of target Spirit cards from your graveyard to your hand").
@@ -439,7 +438,8 @@ public class LegacyTriggerBindings {
                 || graveyardTarget) {
             c.gameData().queueInteraction(withDyingCard(c, new PermanentChoiceContext.DeathTriggerTarget(
                     c.dyingCard(), c.controllerId(), new ArrayList<>(List.of(resolvedMay)), c.dyingPower(),
-                    new Permanent(c.permanent()))));
+                    new Permanent(c.permanent())))
+                    .withGraveyardTargetMaxManaValue(graveyardTargetMaxManaValueAtDeath(c, resolvedMay)));
         } else {
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
@@ -545,7 +545,7 @@ public class LegacyTriggerBindings {
                 && !c.controllerId().equals(gameQueryService.findGraveyardOwnerById(c.gameData(), c.dyingCard().getId()))) {
             return true;
         }
-        CardEffect triggerEffect = snapshotDynamicMaxManaValue(c, effect);
+        CardEffect triggerEffect = bindImprintedCard(c, effect);
         // "Another target card" excludes this card: for a copy (Phantasmal Image copying Gixian
         // Puppeteer) that is the copy's own physical card, not the copied card.
         if (triggerEffect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.filter() != null
@@ -564,7 +564,7 @@ public class LegacyTriggerBindings {
             c.gameData().queueInteraction(withDyingCard(c, new PermanentChoiceContext.DeathTriggerTarget(
                     c.dyingCard(), c.controllerId(), new ArrayList<>(List.of(triggerEffect)), c.dyingPower(),
                     new Permanent(c.permanent())
-            )));
+            )).withGraveyardTargetMaxManaValue(graveyardTargetMaxManaValueAtDeath(c, triggerEffect)));
         } else {
             // A ConditionalEffect's intervening-"if" may be about the dying permanent itself
             // (Fyndhorn Druid's "if it was blocked this turn"), so carry its id even though the
@@ -921,29 +921,33 @@ public class LegacyTriggerBindings {
         };
     }
 
-    private CardEffect snapshotDynamicMaxManaValue(Ctx c, CardEffect effect) {
+    /**
+     * The mana value limit of the graveyard target of {@code effect} ({@code ReturnCardFromGraveyardEffect
+     * .dynamicMaxManaValue()}), evaluated as the ability triggers with {@code lastKnown}, the object that died as it
+     * last existed, as the amount's source, so it looks back at the others that died with it (CR 603.10a): Soulshift X
+     * counts the Kodama, "with lesser mana value" is the dying object's. The choice carries it to the stack entry.
+     * {@code null} when the effect has no such limit.
+     */
+    private Integer graveyardTargetMaxManaValueAtDeath(Ctx c, CardEffect effect) {
+        var target = graveyardTargetingSupport.findTarget(List.of(effect));
+        if (target == null || target.maximumManaValue() == null) {
+            return null;
+        }
+        Permanent lastKnown = c.dyingPermanent() != null ? c.dyingPermanent() : c.permanent();
+        return amountEvaluationService.evaluateAtDeath(c.gameData(), target.maximumManaValue(), c.controllerId(),
+                lastKnown);
+    }
+
+    private CardEffect bindImprintedCard(Ctx c, CardEffect effect) {
         if (effect instanceof MayEffect may) {
-            CardEffect wrapped = snapshotDynamicMaxManaValue(c, may.wrapped());
+            CardEffect wrapped = bindImprintedCard(c, may.wrapped());
             return wrapped == may.wrapped() ? may : new MayEffect(wrapped, may.prompt(), may.elseEffect());
         }
         if (effect instanceof PutImprintedCardIntoOwnersHandEffect put && put.boundCardId() == null) {
             Card imprinted = c.gameData().getImprintedCard(c.dyingCard());
             return imprinted == null ? effect : new PutImprintedCardIntoOwnersHandEffect(imprinted.getId());
         }
-        if (effect instanceof ExileSourceCardFromGraveyardThenEffect exileThen) {
-            CardEffect snapshotted = snapshotDynamicMaxManaValue(c, exileThen.thenEffect());
-            return snapshotted == exileThen.thenEffect() ? exileThen
-                    : new ExileSourceCardFromGraveyardThenEffect(snapshotted, exileThen.reflexive());
-        }
-        if (!(effect instanceof ReturnCardFromGraveyardEffect returnEffect)
-                || returnEffect.dynamicMaxManaValue() == null) {
-            return effect;
-        }
-
-        Permanent dyingPermanent = c.dyingPermanent() != null
-                ? c.dyingPermanent() : c.permanent();
-        return returnEffect.withMaxManaValue(amountEvaluationService.evaluateAtDeath(
-                c.gameData(), returnEffect.dynamicMaxManaValue(), c.controllerId(), dyingPermanent));
+        return effect;
     }
 
 

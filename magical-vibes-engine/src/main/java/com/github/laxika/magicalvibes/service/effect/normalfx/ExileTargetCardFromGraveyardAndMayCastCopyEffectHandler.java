@@ -59,7 +59,7 @@ public class ExileTargetCardFromGraveyardAndMayCastCopyEffectHandler
         if (copyEffect.filter() != null
                 && !predicateEvaluationService.matchesCardPredicate(targetCard, copyEffect.filter(),
                 entry.getCard().getId(), gameData, graveyardOwnerId, entry.getSourcePermanentId(),
-                entry.getTriggeringPermanentPowerAtTrigger())) {
+                entry.getTriggeringPermanentPowerAtTrigger(), entry.getXValue())) {
             gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target is no longer a valid "
                     + CardPredicateUtils.describeFilter(copyEffect.filter()) + ")."));
             return;

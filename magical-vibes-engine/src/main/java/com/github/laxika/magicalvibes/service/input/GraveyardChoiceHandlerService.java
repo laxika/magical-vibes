@@ -1998,6 +1998,7 @@ public class GraveyardChoiceHandlerService {
         UUID pendingAttackedTargetId = gameData.graveyardTargetOperation.attackedTargetId;
         Integer pendingTriggeringPermanentPowerAtTrigger =
                 gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger;
+        Integer pendingGraveyardTargetMaxManaValue = gameData.graveyardTargetOperation.graveyardTargetMaxManaValue;
         UUID pendingTriggeringPermanentId = gameData.graveyardTargetOperation.triggeringPermanentId;
         UUID pendingTriggeringCardId = gameData.graveyardTargetOperation.triggeringCardId;
         long pendingTriggeringCardGraveyardEntryVersion =
@@ -2056,6 +2057,7 @@ public class GraveyardChoiceHandlerService {
                 gameData.graveyardTargetOperation.sourceAlternateCostAtTrigger;
         gameData.graveyardTargetOperation.sourceAlternateCostAtTrigger = false;
         gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger = null;
+        gameData.graveyardTargetOperation.graveyardTargetMaxManaValue = null;
         gameData.graveyardTargetOperation.triggeringPermanentId = null;
         gameData.graveyardTargetOperation.triggeringCardId = null;
         gameData.graveyardTargetOperation.triggeringCardGraveyardEntryVersion = -1;
@@ -2200,6 +2202,7 @@ public class GraveyardChoiceHandlerService {
             if (pendingTriggeringPermanentPowerAtTrigger != null) {
                 triggeredEntry.setTriggeringPermanentPowerAtTrigger(pendingTriggeringPermanentPowerAtTrigger);
             }
+            triggeredEntry.setGraveyardTargetMaxManaValue(pendingGraveyardTargetMaxManaValue);
             if (pendingAttackedTargetId != null) {
                 triggeredEntry.setAttackedTargetId(pendingAttackedTargetId);
             }

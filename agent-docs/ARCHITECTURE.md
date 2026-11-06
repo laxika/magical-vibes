@@ -115,6 +115,7 @@ Myriad prepares copies and applies token replacements before choosing a player o
 `SourceCardInGraveyard` can retain an expected graveyard entry version. Graveyard creature-put triggers bind this version when collected, so leaving and reentering the graveyard cannot satisfy an older Bridge from Below ability.
 
 Delayed graveyard returns use stack entries and `CardIdSetPredicate` with graveyard entry versions.
+A graveyard target restricted by the trigger event is chosen as the ability goes on the stack, before its entry exists, so the restriction rides on the choice, never in a rebuilt effect: a combat damage trigger's choice has the damage as its X, a sacrifice trigger's the sacrificed permanent's mana value, and a death trigger's collector evaluates the effect's `dynamicMaxManaValue` as the ability triggers (the dying object as it last existed as the amount's source) into `DeathTriggerTarget.graveyardTargetMaxManaValue`, which the entry keeps as `StackEntry.graveyardTargetMaxManaValue`.
 Divided damage assignments belong to the individual stack entry; copies retain their division
 while offering legal replacement targets. Additional ETB abilities on token copies are abilities
 of their own, so they keep their targets and resolution separate from the copied abilities (CR 603.3).

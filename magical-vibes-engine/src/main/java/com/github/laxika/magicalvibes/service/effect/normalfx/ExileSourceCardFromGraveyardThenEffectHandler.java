@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
@@ -13,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import java.util.List;
@@ -28,6 +31,7 @@ public class ExileSourceCardFromGraveyardThenEffectHandler implements NormalEffe
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final QueueReflexiveAbilityEffectHandler queueReflexiveAbilityEffectHandler;
     private final EffectHandlerRegistry effectHandlerRegistry;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -70,9 +74,25 @@ public class ExileSourceCardFromGraveyardThenEffectHandler implements NormalEffe
         } else {
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     entry.getCard(), entry.getControllerId(), List.of(exileThen.thenEffect()),
-                    null, 0, 0, 0, entry.getTriggeringPermanentPowerAtTrigger()));
+                    null, 0, 0, 0, entry.getTriggeringPermanentPowerAtTrigger())
+                    .withGraveyardTargetMaxManaValue(reflexiveMaxManaValue(gameData, entry, exileThen.thenEffect())));
             triggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger(gameData);
         }
+    }
+
+    /**
+     * The mana value limit of the reflexive ability's graveyard target ("return target creature card with mana value
+     * less than or equal to this creature's power"), fixed as the reflexive ability triggers and its target is chosen,
+     * from this resolving ability: its source as it last existed (CR 608.2h). {@code null} when it has no such limit.
+     */
+    private Integer reflexiveMaxManaValue(GameData gameData, StackEntry entry, CardEffect thenEffect) {
+        if (!(thenEffect instanceof ReturnCardFromGraveyardEffect returnEffect)
+                || returnEffect.dynamicMaxManaValue() == null) {
+            return null;
+        }
+        return amountEvaluationService.evaluate(gameData, returnEffect.dynamicMaxManaValue(),
+                AmountContext.forStackEntry(entry,
+                        gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())));
     }
 
     /**

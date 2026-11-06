@@ -1165,6 +1165,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *                            name or mana value as they resolve; {@code null} for none
      * @param triggeringAttachments the Auras and Equipment attached to {@code triggeringPermanent} just before it
      *                              left
+     * @param graveyardTargetMaxManaValue the mana value limit of the graveyard target
+     *                                    ({@code ReturnCardFromGraveyardEffect.dynamicMaxManaValue()}), evaluated by
+     *                                    the collector as the ability triggered, against the object that died as it
+     *                                    last existed and the others that died with it (CR 603.10a); the stack entry
+     *                                    keeps it. {@code null} for none
      */
     record DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects,
                               Integer eventValue, Permanent sourcePermanentSnapshot,
@@ -1174,10 +1179,30 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                               UUID triggeringCardId,
                               long triggeringCardGraveyardEntryVersion,
                               Permanent triggeringPermanent,
-                              DepartedAttachments triggeringAttachments) implements PermanentChoiceContext {
+                              DepartedAttachments triggeringAttachments,
+                              Integer graveyardTargetMaxManaValue) implements PermanentChoiceContext {
 
         public DeathTriggerTarget {
             triggeringAttachments = triggeringAttachments == null ? DepartedAttachments.NONE : triggeringAttachments;
+        }
+
+        public DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects,
+                                  Integer eventValue, Permanent sourcePermanentSnapshot,
+                                  TargetFilter targetFilter, UUID excludedGraveyardCardId,
+                                  boolean creaturesOnly, boolean markSourceOncePerTurnOnAcceptance,
+                                  UUID triggeringCardId, long triggeringCardGraveyardEntryVersion,
+                                  Permanent triggeringPermanent, DepartedAttachments triggeringAttachments) {
+            this(dyingCard, controllerId, effects, eventValue, sourcePermanentSnapshot, targetFilter,
+                    excludedGraveyardCardId, creaturesOnly, markSourceOncePerTurnOnAcceptance, triggeringCardId,
+                    triggeringCardGraveyardEntryVersion, triggeringPermanent, triggeringAttachments, null);
+        }
+
+        /** This choice with its graveyard target's mana value limit fixed at {@code maxManaValue}. */
+        public DeathTriggerTarget withGraveyardTargetMaxManaValue(Integer maxManaValue) {
+            return new DeathTriggerTarget(dyingCard, controllerId, effects, eventValue, sourcePermanentSnapshot,
+                    targetFilter, excludedGraveyardCardId, creaturesOnly, markSourceOncePerTurnOnAcceptance,
+                    triggeringCardId, triggeringCardGraveyardEntryVersion, triggeringPermanent, triggeringAttachments,
+                    maxManaValue);
         }
 
         public DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects,
@@ -1193,7 +1218,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         public DeathTriggerTarget withTriggeringCard(UUID cardId, long version) {
             return new DeathTriggerTarget(dyingCard, controllerId, effects, eventValue, sourcePermanentSnapshot,
                     targetFilter, excludedGraveyardCardId, creaturesOnly, markSourceOncePerTurnOnAcceptance, cardId,
-                    version, triggeringPermanent, triggeringAttachments);
+                    version, triggeringPermanent, triggeringAttachments, graveyardTargetMaxManaValue);
         }
 
         /**
@@ -1204,7 +1229,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             return new DeathTriggerTarget(dyingCard, controllerId, effects, eventValue, sourcePermanentSnapshot,
                     targetFilter, excludedGraveyardCardId, creaturesOnly, markSourceOncePerTurnOnAcceptance,
                     triggeringCardId, triggeringCardGraveyardEntryVersion,
-                    lastKnown == null ? null : new Permanent(lastKnown), attachments);
+                    lastKnown == null ? null : new Permanent(lastKnown), attachments, graveyardTargetMaxManaValue);
         }
 
         /** This choice with a copy of {@code lastKnown} as the triggering permanent and nothing attached to it. */
@@ -3192,12 +3217,37 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                        UUID triggeringPermanentId,
                                        UUID sourcePermanentId,
                                        boolean markSourceOncePerTurnOnAcceptance,
-                                       List<Permanent> attackingPermanentSnapshots)
+                                       List<Permanent> attackingPermanentSnapshots,
+                                       Integer graveyardTargetMaxManaValue)
     implements PermanentChoiceContext {
 
         public SpellGraveyardTargetTrigger {
             attackingPermanentSnapshots = attackingPermanentSnapshots == null
                     ? List.of() : List.copyOf(attackingPermanentSnapshots);
+        }
+
+        public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                           UUID graveyardOwnerId, int minCount, int xValue, int maxCount,
+                                           Integer sourcePowerAtTrigger,
+                                           boolean sourceAlternateCostAtTrigger,
+                                           UUID triggeringPermanentId,
+                                           UUID sourcePermanentId,
+                                           boolean markSourceOncePerTurnOnAcceptance,
+                                           List<Permanent> attackingPermanentSnapshots) {
+            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, maxCount,
+                    sourcePowerAtTrigger, sourceAlternateCostAtTrigger, triggeringPermanentId, sourcePermanentId,
+                    markSourceOncePerTurnOnAcceptance, attackingPermanentSnapshots, null);
+        }
+
+        /**
+         * This choice with its graveyard target's mana value limit fixed at {@code maxManaValue}, as the ability
+         * that triggered gave it (a reflexive "when you do" ability's "this creature's power", read from its source
+         * as it last existed); the stack entry carries it ({@code StackEntry.graveyardTargetMaxManaValue}).
+         */
+        public SpellGraveyardTargetTrigger withGraveyardTargetMaxManaValue(Integer maxManaValue) {
+            return new SpellGraveyardTargetTrigger(sourceCard, controllerId, effects, graveyardOwnerId, minCount,
+                    xValue, maxCount, sourcePowerAtTrigger, sourceAlternateCostAtTrigger, triggeringPermanentId,
+                    sourcePermanentId, markSourceOncePerTurnOnAcceptance, attackingPermanentSnapshots, maxManaValue);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,

@@ -69,7 +69,6 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCurseAtt
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldEffect;
@@ -100,10 +99,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -321,20 +317,20 @@ public class DeathTriggerCollectorService {
                         (PutCountersOnSourceCardEffect) effect, context));
     }
 
-    private CardEffect snapshotArtifactManaValue(CardEffect effect, int artifactManaValue) {
-        if (!(effect instanceof ReturnCardFromGraveyardEffect returnEffect)
-                || !returnEffect.targetGraveyard()) {
-            return effect;
+    /**
+     * The mana value limit of the graveyard target of {@code effect} ({@code ReturnCardFromGraveyardEffect
+     * .dynamicMaxManaValue()}), evaluated as the ability triggers with {@code lastKnown}, the object that died as it
+     * last existed, as the amount's source, so it looks back at the others that died with it (CR 603.10a): Soulshift X
+     * counts the Kodama, "with lesser mana value" is the dying object's. The choice carries it to the stack entry.
+     * {@code null} when the effect has no such limit.
+     */
+    private Integer graveyardTargetMaxManaValueAtDeath(GameData gameData, UUID controllerId, CardEffect effect,
+                                                       Permanent lastKnown) {
+        var target = graveyardTargetingSupport.findTarget(List.of(effect));
+        if (target == null || target.maximumManaValue() == null || lastKnown == null) {
+            return null;
         }
-
-        CardPredicate manaValueFilter = new CardMaxManaValuePredicate(artifactManaValue - 1);
-        CardPredicate filter = returnEffect.filter() == null
-                ? manaValueFilter
-                : new CardAllOfPredicate(List.of(returnEffect.filter(), manaValueFilter));
-        return returnEffect.toBuilder()
-                .filter(filter)
-                .dynamicMaxManaValue(null)
-                .build();
+        return amountEvaluationService.evaluateAtDeath(gameData, target.maximumManaValue(), controllerId, lastKnown);
     }
 
     boolean handleAllyCreatureMayPay(TriggerMatchContext match,
@@ -1209,8 +1205,8 @@ public class DeathTriggerCollectorService {
 
     /**
      * "Whenever an artifact [you control] is put into a graveyard from the battlefield": the artifact, as it last
-     * existed on the battlefield (CR 603.10a), is the stack entry's triggering permanent, a graveyard target's mana
-     * value bound is the artifact's, and its target is chosen as it goes on the stack (CR 603.3d).
+     * existed on the battlefield (CR 603.10a), is the stack entry's triggering permanent and the source of a graveyard
+     * target's mana value limit, and its target is chosen as it goes on the stack (CR 603.3d).
      */
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleArtifactGraveyardDefault(TriggerMatchContext match,
@@ -1219,10 +1215,11 @@ public class DeathTriggerCollectorService {
         CardEffect triggerEffect = effect;
         if (triggerEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
                 || graveyardTargetingSupport.findTarget(List.of(triggerEffect)) != null) {
-            CardEffect baked = snapshotArtifactManaValue(triggerEffect, ag.artifactManaValue());
             match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
-                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(baked)))
-                    .withTriggeringPermanent(ag.artifactPermanent()));
+                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(triggerEffect)))
+                    .withTriggeringPermanent(ag.artifactPermanent())
+                    .withGraveyardTargetMaxManaValue(graveyardTargetMaxManaValueAtDeath(
+                            match.gameData(), match.controllerId(), triggerEffect, ag.artifactPermanent())));
             logArtifactGraveyard(match);
             return true;
         }

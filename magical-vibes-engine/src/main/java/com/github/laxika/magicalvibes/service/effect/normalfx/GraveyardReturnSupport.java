@@ -581,7 +581,11 @@ public class GraveyardReturnSupport {
                 && card.getManaValue() > effect.requiredManaValue(entry.getXValue())) {
             return false;
         }
-        if (effect.dynamicMaxManaValue() != null) {
+        if (entry.getGraveyardTargetMaxManaValue() != null) {
+            if (card.getManaValue() > entry.getGraveyardTargetMaxManaValue()) {
+                return false;
+            }
+        } else if (effect.dynamicMaxManaValue() != null) {
             Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
             int maximum = amountEvaluationService.evaluate(gameData, effect.dynamicMaxManaValue(),
                     com.github.laxika.magicalvibes.service.effect.AmountContext.forStackEntry(entry, source));

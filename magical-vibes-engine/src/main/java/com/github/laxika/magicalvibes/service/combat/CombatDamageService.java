@@ -74,7 +74,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstestStrikeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToControlledCreatureCombatDamageEffect;
@@ -85,7 +84,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseGameIfSourceDealtDamageTo
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCombatDamageWithMillEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndTargetDiscardsPerPoisonCounterEffect;
@@ -2327,9 +2325,8 @@ public class CombatDamageService {
                                 may.targetSpec().graveyardScope().orElse(null) == GraveyardSearchScope.OPPONENT_GRAVEYARD
                                         ? defenderId : attackerId;
                         gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                                creature.getCard(), attackerId,
-                                List.of(withGraveyardTargetFixedToDamage(effect, damageDealt)), mayGraveyardOwnerId,
-                                1, 0, 1, null, false, null, creature.getId()));
+                                creature.getCard(), attackerId, List.of(effect), mayGraveyardOwnerId,
+                                1, damageDealt, 1, null, false, null, creature.getId()));
                         gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
                                 "'s combat damage trigger goes on the stack — choose a graveyard target."));
                         continue;
@@ -2513,9 +2510,8 @@ public class CombatDamageService {
                             effect.targetSpec().graveyardScope().orElse(null) == GraveyardSearchScope.OPPONENT_GRAVEYARD
                                     ? defenderId : null;
                     gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                            creature.getCard(), attackerId,
-                            new ArrayList<>(List.of(withGraveyardTargetFixedToDamage(effect, damageDealt))),
-                            graveyardOwnerId, 0, 0,
+                            creature.getCard(), attackerId, new ArrayList<>(List.of(effect)),
+                            graveyardOwnerId, 0, damageDealt,
                             creature.isAlternateCost()));
                     gameLogService.append(gameData, GameLog.text(creature.getCard().getName() + "'s combat damage trigger fires."));
                     continue;
@@ -2832,27 +2828,6 @@ public class CombatDamageService {
     }
 
     /**
-     * A combat damage trigger's graveyard-target restriction that depends on the damage dealt, fixed at
-     * {@code damageDealt}: Venerable Warsinger's "mana value X or less" and Soundwave's "mana value equal to the
-     * damage dealt". The target is chosen as the ability goes on the stack (CR 603.3d), before the stack entry that
-     * carries the damage exists, so the restriction can't read the entry's event value yet.
-     */
-    private static CardEffect withGraveyardTargetFixedToDamage(CardEffect effect, int damageDealt) {
-        if (effect instanceof MayEffect may) {
-            CardEffect fixed = withGraveyardTargetFixedToDamage(may.wrapped(), damageDealt);
-            return fixed == may.wrapped() ? may
-                    : new MayEffect(fixed, may.prompt(), may.elseEffect(), may.choicePlayer(), may.choicePlayerId());
-        }
-        if (effect instanceof ReturnCardFromGraveyardEffect returnEffect) {
-            return returnEffect.withMaxManaValue(damageDealt);
-        }
-        if (effect instanceof ExileTargetCardFromGraveyardAndMayCastCopyEffect exileAndCast) {
-            return exileAndCast.withManaValueEqualToDamage(damageDealt);
-        }
-        return effect;
-    }
-
-    /**
      * Checks for curse enchantments attached to the defending player that trigger on combat damage.
      * E.g. Curse of Stalked Prey: "Whenever a creature deals combat damage to enchanted player,
      * put a +1/+1 counter on that creature."
@@ -3087,7 +3062,7 @@ public class CombatDamageService {
                                 == GraveyardSearchScope.OPPONENT_GRAVEYARD ? defenderId : null;
                         gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                                 perm.getCard(), attackerId,
-                                new ArrayList<>(List.of(withGraveyardTargetFixedToDamage(firedEffect, triggerDamage))),
+                                new ArrayList<>(List.of(firedEffect)),
                                 graveyardOwnerId,
                                 0, triggerDamage, 0, null, false, perm.getId()));
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),

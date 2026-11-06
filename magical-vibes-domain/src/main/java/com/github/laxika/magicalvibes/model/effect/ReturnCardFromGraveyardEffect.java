@@ -9,8 +9,6 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.condition.Condition;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -271,8 +269,11 @@ import lombok.Builder;
  *                             {@link #returnAtRandom} path, where it overrides {@link #destination}
  * @param shuffleGraveyardBeforeRandomSelection {@code true} to randomly reorder the controller's graveyard before
  *                             selecting random cards; only honoured on the {@link #returnAtRandom} path
- * @param dynamicMaxManaValue dynamic mana-value limit to snapshot when a death trigger is collected;
- *                             used for abilities such as Kodama of the Center Tree's soulshift X
+ * @param dynamicMaxManaValue dynamic mana-value limit of the target. A death trigger's is evaluated as its
+ *                             target is chosen, against the object that died as it last existed (Kodama of the
+ *                             Center Tree's soulshift X), and the stack entry keeps it
+ *                             ({@code StackEntry.graveyardTargetMaxManaValue}); otherwise it is evaluated as
+ *                             the target is chosen and again as the ability resolves
  * @param unearth              {@code true} when the battlefield return is an unearth activation,
  *                             so the returned permanent can be recognized by effects that treat
  *                             unearth returns specially
@@ -511,37 +512,5 @@ public record ReturnCardFromGraveyardEffect(
     /** Returns the effective mana-value bound for an X-based target restriction. */
     public int requiredManaValue(int xValue) {
         return xValue + ((requiresManaValueEqualsX || requiresManaValueAtMostX) ? manaValueXOffset : 0);
-    }
-
-    /**
-     * This effect with its card filter narrowed to cards with mana value less than {@code manaValue} ("target
-     * creature card with lesser mana value" than the permanent a sacrifice trigger is about), for a target chosen
-     * as the trigger goes on the stack (CR 603.3d), before the stack entry exists.
-     */
-    public ReturnCardFromGraveyardEffect withManaValueLessThan(int manaValue) {
-        CardPredicate manaValueFilter = new CardMaxManaValuePredicate(manaValue - 1);
-        CardPredicate combinedFilter = filter == null
-                ? manaValueFilter
-                : new CardAllOfPredicate(List.of(filter, manaValueFilter));
-        return toBuilder().filter(combinedFilter).build();
-    }
-
-    /**
-     * This effect with its dynamic mana value limit fixed at {@code maxManaValue} (the damage dealt, the dying
-     * permanent's last-known value) and moved into its card filter, for a graveyard target chosen as the trigger goes
-     * on the stack (CR 603.3d), before the stack entry exists. An effect without a dynamic limit is returned as is.
-     */
-    public ReturnCardFromGraveyardEffect withMaxManaValue(int maxManaValue) {
-        if (dynamicMaxManaValue == null) {
-            return this;
-        }
-        CardPredicate manaValueFilter = new CardMaxManaValuePredicate(maxManaValue);
-        CardPredicate combinedFilter = filter == null
-                ? manaValueFilter
-                : new CardAllOfPredicate(List.of(filter, manaValueFilter));
-        return toBuilder()
-                .filter(combinedFilter)
-                .dynamicMaxManaValue(null)
-                .build();
     }
 }

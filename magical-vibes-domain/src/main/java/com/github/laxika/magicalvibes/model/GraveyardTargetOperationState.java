@@ -41,6 +41,11 @@ public class GraveyardTargetOperationState {
      * Scarab Feast). Enforced in {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen}.
      */
     public boolean singleGraveyard;
+    /**
+     * The mana value limit of the graveyard targets a death trigger chose as it went on the stack, fixed from the dying
+     * object as it last existed; the triggered entry carries it ({@code StackEntry.graveyardTargetMaxManaValue}).
+     */
+    public Integer graveyardTargetMaxManaValue;
     /** Evaluated aggregate mana-value limit for an ETB graveyard return choice, when present. */
     public Integer totalManaValueCap;
     /** In-progress cumulative-upkeep payments, one single-graveyard choice per age counter. */

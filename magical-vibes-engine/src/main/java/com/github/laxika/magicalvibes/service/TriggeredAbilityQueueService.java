@@ -443,6 +443,7 @@ public class TriggeredAbilityQueueService {
     private List<Card> matchingDeathGraveyardCards(GameData gameData,
             PermanentChoiceContext.DeathTriggerTarget pending, GraveyardTargetingSupport.Target target) {
         CardPredicate filter = target.filter();
+        Integer maxManaValue = pending.graveyardTargetMaxManaValue();
         UUID predicateSourceCardId = pending.excludedGraveyardCardId() == null
                 ? pending.dyingCard().getId() : pending.excludedGraveyardCardId();
 
@@ -454,6 +455,9 @@ public class TriggeredAbilityQueueService {
             for (Card graveyardCard : graveyard) {
                 if (pending.excludedGraveyardCardId() != null
                         && graveyardCard.getId().equals(pending.excludedGraveyardCardId())) {
+                    continue;
+                }
+                if (maxManaValue != null && graveyardCard.getManaValue() > maxManaValue) {
                     continue;
                 }
                 if (filter == null
@@ -522,6 +526,7 @@ public class TriggeredAbilityQueueService {
                 : pending.sourcePermanentSnapshot() == null
                 ? null : pending.sourcePermanentSnapshot().getEffectivePower();
         gameData.graveyardTargetOperation.targetPlayerId = primaryTargetId;
+        gameData.graveyardTargetOperation.graveyardTargetMaxManaValue = pending.graveyardTargetMaxManaValue();
         if (pending.markSourceOncePerTurnOnAcceptance() && pending.sourcePermanentSnapshot() != null) {
             gameData.graveyardTargetOperation.sourcePermanentId = pending.sourcePermanentSnapshot().getId();
             gameData.graveyardTargetOperation.markSourceOncePerTurnOnAcceptance = true;
@@ -2996,7 +3001,9 @@ public class TriggeredAbilityQueueService {
                 filter = graveyardFilter.predicate();
                 scope = graveyardFilter.scope();
             }
-            Integer aggregateManaValueCap = describedTarget != null && describedTarget.maximumManaValue() != null
+            Integer aggregateManaValueCap = pending.graveyardTargetMaxManaValue() != null
+                    ? pending.graveyardTargetMaxManaValue()
+                    : describedTarget != null && describedTarget.maximumManaValue() != null
                     && !(describedTarget.maximumManaValue() instanceof com.github.laxika.magicalvibes.model.amount.TotalPowerOfControlledCreatures totalPower
                     && totalPower.declaredAttackersOnly())
                     ? amountEvaluationService.evaluate(gameData, describedTarget.maximumManaValue(),
@@ -3105,6 +3112,7 @@ public class TriggeredAbilityQueueService {
             gameData.graveyardTargetOperation.effects = new ArrayList<>(pending.effects());
             gameData.graveyardTargetOperation.xValue = pending.xValue();
             gameData.graveyardTargetOperation.totalManaValueCap = aggregateManaValueCap;
+            gameData.graveyardTargetOperation.graveyardTargetMaxManaValue = pending.graveyardTargetMaxManaValue();
             gameData.graveyardTargetOperation.singleGraveyard =
                     describedTarget != null && describedTarget.singleGraveyard();
             gameData.graveyardTargetOperation.sourceAlternateCostAtTrigger =

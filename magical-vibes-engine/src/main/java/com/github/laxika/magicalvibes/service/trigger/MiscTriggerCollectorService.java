@@ -486,11 +486,13 @@ public class MiscTriggerCollectorService {
                 && returnEffect.targetGraveyard()) {
             // The card is targeted as the trigger is put on the stack (CR 603.3d), so the may choice
             // comes at resolution. "Do this only once each turn" is used up only by an accepted return.
+            // The choice's X is the sacrificed permanent's mana value as it last existed (CR 603.10a), which a
+            // target filter's X reads ("target creature card with lesser mana value", Riveteers Ascendancy).
             boolean markOnAcceptance = match.markSourceOncePerTurnOnAcceptance();
-            CardEffect withTargetRestriction = withLesserManaValueThanSacrificed(effect, as.sacrificedCard());
+            int sacrificedManaValue = as.sacrificedCard() == null ? 0 : as.sacrificedCard().getManaValue();
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(withTargetRestriction)),
-                    null, 0, 0, 0, null, false, null, match.permanent().getId(), markOnAcceptance));
+                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect)),
+                    null, 0, sacrificedManaValue, 0, null, false, null, match.permanent().getId(), markOnAcceptance));
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
             return true;
         }
@@ -528,23 +530,6 @@ public class MiscTriggerCollectorService {
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on matching permanent sacrifice", match.gameData().id, cardName);
         return true;
-    }
-
-    /**
-     * "Return target card with lesser mana value" than the sacrificed permanent: its target is chosen as the trigger
-     * goes on the stack (CR 603.3d), before there is a stack entry to read the sacrificed permanent from, so the
-     * restriction is narrowed here.
-     */
-    private static CardEffect withLesserManaValueThanSacrificed(CardEffect effect, Card sacrificedCard) {
-        if (sacrificedCard == null) {
-            return effect;
-        }
-        if (effect instanceof MayEffect may && may.wrapped() instanceof ReturnCardFromGraveyardEffect returnEffect) {
-            return new MayEffect(returnEffect.withManaValueLessThan(sacrificedCard.getManaValue()), may.prompt(),
-                    may.elseEffect(), may.choicePlayer(), may.choicePlayerId());
-        }
-        return effect instanceof ReturnCardFromGraveyardEffect returnEffect
-                ? returnEffect.withManaValueLessThan(sacrificedCard.getManaValue()) : effect;
     }
 
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_OPPONENT_PERMANENT_SACRIFICED)

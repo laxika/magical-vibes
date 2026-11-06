@@ -242,7 +242,6 @@ import com.github.laxika.magicalvibes.model.effect.MayFightTargetCreatureOnAllyC
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEqualToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchBlueOrBlackCreatureToBattlefieldOnAllyCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchCreatureToBattlefieldOnControllerCastsCreatureSpellEffect;
@@ -12836,7 +12835,6 @@ public class TriggerCollectionService {
 
         for (CardEffect effect : effects) {
             CardEffect resolvedEffect = effect;
-            resolvedEffect = snapshotDyingPermanentManaValue(gameData, controllerId, resolvedEffect, dyingPermanent);
 
             if (resolvedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                     || resolvedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
@@ -12853,7 +12851,9 @@ public class TriggerCollectionService {
                         dyingPower, new Permanent(perm), null, dyingPermanent.getOriginalCard().getId(), true,
                         markOnAcceptance
                 ).withTriggeringCard(dyingCard.getId(), gameData.graveyardEntryVersion(dyingCard.getId()))
-                        .withTriggeringPermanent(dyingPermanent, death.attachments()));
+                        .withTriggeringPermanent(dyingPermanent, death.attachments())
+                        .withGraveyardTargetMaxManaValue(graveyardTargetMaxManaValueAtDeath(
+                                gameData, controllerId, resolvedEffect, dyingPermanent)));
                 anyEffectFired = true;
             } else if (resolvedEffect instanceof MayPayManaEffect
                     || resolvedEffect instanceof MayPayLifeEffect
@@ -13452,21 +13452,20 @@ public class TriggerCollectionService {
         return null;
     }
 
-    private CardEffect snapshotDyingPermanentManaValue(GameData gameData, UUID controllerId,
-                                                       CardEffect effect, Permanent dyingPermanent) {
-        if (effect instanceof MayEffect may && may.wrapped() instanceof ReturnCardFromGraveyardEffect) {
-            CardEffect snapshotted = snapshotDyingPermanentManaValue(
-                    gameData, controllerId, may.wrapped(), dyingPermanent);
-            return snapshotted == may.wrapped() ? effect : new MayEffect(
-                    snapshotted, may.prompt(), may.elseEffect(), may.choicePlayer(), may.choicePlayerId());
+    /**
+     * The mana value limit of the graveyard target of {@code effect} ({@code ReturnCardFromGraveyardEffect
+     * .dynamicMaxManaValue()}), evaluated as the ability triggers with {@code lastKnown}, the object that died as it
+     * last existed, as the amount's source, so it looks back at the others that died with it (CR 603.10a): Soulshift X
+     * counts the Kodama, "with lesser mana value" is the dying object's. The choice carries it to the stack entry.
+     * {@code null} when the effect has no such limit.
+     */
+    private Integer graveyardTargetMaxManaValueAtDeath(GameData gameData, UUID controllerId, CardEffect effect,
+                                                       Permanent lastKnown) {
+        var target = graveyardTargetingSupport.findTarget(List.of(effect));
+        if (target == null || target.maximumManaValue() == null || lastKnown == null) {
+            return null;
         }
-        if (!(effect instanceof ReturnCardFromGraveyardEffect returnEffect)
-                || returnEffect.dynamicMaxManaValue() == null
-                || dyingPermanent == null) {
-            return effect;
-        }
-        return returnEffect.withMaxManaValue(amountEvaluationService.evaluateAtDeath(
-                gameData, returnEffect.dynamicMaxManaValue(), controllerId, dyingPermanent));
+        return amountEvaluationService.evaluateAtDeath(gameData, target.maximumManaValue(), controllerId, lastKnown);
     }
 
     private void collectAllyCreatureOrCreatureSpellBecomesTargetOfOpponentTriggers(

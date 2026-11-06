@@ -10767,6 +10767,8 @@ public class GameData {
         copy.graveyardTargetOperation.sourcePermanentId = this.graveyardTargetOperation.sourcePermanentId;
         copy.graveyardTargetOperation.triggeringPermanentPowerAtTrigger =
                 this.graveyardTargetOperation.triggeringPermanentPowerAtTrigger;
+        copy.graveyardTargetOperation.graveyardTargetMaxManaValue =
+                this.graveyardTargetOperation.graveyardTargetMaxManaValue;
         copy.graveyardTargetOperation.triggeringPermanentId =
                 this.graveyardTargetOperation.triggeringPermanentId;
         copy.graveyardTargetOperation.triggeringCardId = this.graveyardTargetOperation.triggeringCardId;
