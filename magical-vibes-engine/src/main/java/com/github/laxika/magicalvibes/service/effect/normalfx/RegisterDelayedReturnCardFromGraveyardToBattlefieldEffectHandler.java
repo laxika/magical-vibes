@@ -19,8 +19,7 @@ public class RegisterDelayedReturnCardFromGraveyardToBattlefieldEffectHandler im
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var delayedReturn = (RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect) effect;
-        UUID cardId = delayedReturn.cardId() != null ? delayedReturn.cardId() : entry.getTriggeringCardId();
+        UUID cardId = entry.getTriggeringCardId();
         if (cardId == null) {
             return;
         }

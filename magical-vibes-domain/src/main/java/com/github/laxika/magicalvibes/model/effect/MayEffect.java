@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.AbilityZones;
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -22,9 +20,7 @@ import java.util.UUID;
 public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect, MayChoicePlayer choicePlayer, UUID choicePlayerId)
         implements GrantingPermanentAwareEffect, CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect,
         TriggeringPermanentSourceEffect, CombatOpponentReferencingEffect,
-        SacrificedPermanentManaValueAwareEffect, DyingCreaturePermanentAwareEffect,
-        TriggeringPermanentManaValueEffect, TriggeringPermanentEntryExclusionEffect,
-        DyingCreatureCountersAwareEffect, LeavingPermanentCountersAwareEffect {
+        TriggeringPermanentManaValueEffect, TriggeringPermanentEntryExclusionEffect {
 
     public MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect, MayChoicePlayer choicePlayer) {
         this(wrapped, prompt, elseEffect, choicePlayer, null);
@@ -133,55 +129,5 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
     private static boolean suppressesTriggeringPermanentEntry(CardEffect effect) {
         return effect instanceof TriggeringPermanentEntryExclusionEffect exclusion
                 && exclusion.suppressesTriggeringPermanentEntry();
-    }
-
-    @Override
-    public MayEffect boundToSacrificedPermanentManaValue(int manaValue) {
-        CardEffect boundWrapped = wrapped instanceof SacrificedPermanentManaValueAwareEffect aware
-                ? aware.boundToSacrificedPermanentManaValue(manaValue)
-                : wrapped;
-        return new MayEffect(boundWrapped, prompt, elseEffect, choicePlayer, choicePlayerId);
-    }
-
-    @Override
-    public CardEffect boundToDyingCreature(com.github.laxika.magicalvibes.model.Permanent dyingCreature) {
-        CardEffect boundWrapped = wrapped instanceof DyingCreaturePermanentAwareEffect aware
-                ? aware.boundToDyingCreature(dyingCreature)
-                : wrapped;
-        CardEffect boundElse = elseEffect instanceof DyingCreaturePermanentAwareEffect aware
-                ? aware.boundToDyingCreature(dyingCreature)
-                : elseEffect;
-        if (boundWrapped == wrapped && boundElse == elseEffect) {
-            return this;
-        }
-        return new MayEffect(boundWrapped, prompt, boundElse, choicePlayer, choicePlayerId);
-    }
-
-    @Override
-    public CardEffect boundToDyingCreatureCounters(Map<CounterType, Integer> counters) {
-        CardEffect boundWrapped = wrapped instanceof DyingCreatureCountersAwareEffect aware
-                ? aware.boundToDyingCreatureCounters(counters)
-                : wrapped;
-        CardEffect boundElse = elseEffect instanceof DyingCreatureCountersAwareEffect aware
-                ? aware.boundToDyingCreatureCounters(counters)
-                : elseEffect;
-        if (boundWrapped == wrapped && boundElse == elseEffect) {
-            return this;
-        }
-        return new MayEffect(boundWrapped, prompt, boundElse, choicePlayer, choicePlayerId);
-    }
-
-    @Override
-    public CardEffect boundToLeavingPermanentCounters(Map<CounterType, Integer> counters) {
-        CardEffect boundWrapped = wrapped instanceof LeavingPermanentCountersAwareEffect aware
-                ? aware.boundToLeavingPermanentCounters(counters)
-                : wrapped;
-        CardEffect boundElse = elseEffect instanceof LeavingPermanentCountersAwareEffect aware
-                ? aware.boundToLeavingPermanentCounters(counters)
-                : elseEffect;
-        if (boundWrapped == wrapped && boundElse == elseEffect) {
-            return this;
-        }
-        return new MayEffect(boundWrapped, prompt, boundElse, choicePlayer, choicePlayerId);
     }
 }

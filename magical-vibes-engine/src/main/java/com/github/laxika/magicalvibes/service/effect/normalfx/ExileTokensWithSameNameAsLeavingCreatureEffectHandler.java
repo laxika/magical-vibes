@@ -29,7 +29,12 @@ public class ExileTokensWithSameNameAsLeavingCreatureEffectHandler implements No
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        String creatureName = ((ExileTokensWithSameNameAsLeavingCreatureEffect) effect).creatureName();
+        // The name the creature had as it last existed on the battlefield (CR 603.10a).
+        Permanent leaving = entry.getTriggeringPermanentSnapshot();
+        if (leaving == null) {
+            return;
+        }
+        String creatureName = leaving.getCard().getName();
         if (creatureName == null) {
             return;
         }

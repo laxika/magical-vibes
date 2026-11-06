@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 
 @CardRegistration(set = "TMT", collectorNumber = "36")
 @CardRegistration(set = "TMT", collectorNumber = "216")
@@ -67,7 +68,9 @@ public class DonatelloMutantMechanic extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED));
 
         target(artifactOrCreatureYouControlTarget, 0, 1).addTrigger(Triggers.dies(
-                        Triggers.ARTIFACT,
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.ARTIFACT,
+                                new PermanentHasCountersPredicate(CounterType.ANY))),
                         ObjectRelation.YOU_CONTROL),
                 new PutCountersOnTargetForEachLeavingSourceCountersEffect(artifactOrCreatureYouControl));
     }

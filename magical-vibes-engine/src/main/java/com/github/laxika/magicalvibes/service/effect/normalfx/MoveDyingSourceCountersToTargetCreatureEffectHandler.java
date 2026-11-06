@@ -26,13 +26,12 @@ public class MoveDyingSourceCountersToTargetCreatureEffectHandler implements Nor
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (MoveDyingSourceCountersToTargetCreatureEffect) effect;
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
 
-        for (Map.Entry<CounterType, Integer> counter : e.counters().entrySet()) {
+        for (Map.Entry<CounterType, Integer> counter : entry.triggeringPermanentCounters().entrySet()) {
             permanentCounterSupport.placeCounterOnPermanent(gameData, entry, target, counter.getKey(), counter.getValue());
         }
     }

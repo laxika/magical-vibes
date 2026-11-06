@@ -247,6 +247,18 @@ public record CreateTokenEffect(
                 newTokenTargetFilter, investigate, simultaneousTokens, attackingUntapped, manaCost);
     }
 
+    /**
+     * Copy of this blueprint whose token count is {@code newAmount}, evaluated as the effect resolves ("create a
+     * token for each counter on it"), all other fields preserved.
+     */
+    public CreateTokenEffect withAmount(DynamicAmount newAmount) {
+        return new CreateTokenEffect(primaryType, newAmount, tokenName, power, toughness, color,
+                colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
+                tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
+                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate,
+                simultaneousTokens, attackingUntapped, manaCost);
+    }
+
     /** Copy of this blueprint with a different (already-evaluated) token count, all other fields preserved. */
     public CreateTokenEffect withAmount(int newAmount) {
         return new CreateTokenEffect(primaryType, new Fixed(newAmount), tokenName, power, toughness, color,

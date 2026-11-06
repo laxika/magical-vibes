@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokensForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromMatchingPermanentsEffect;
@@ -21,6 +20,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.amount.CountersOnTriggeringPermanent;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 
 @CardRegistration(set = "USG", collectorNumber = "273")
 public class Sporogenesis extends Card {
@@ -37,11 +38,11 @@ public class Sporogenesis extends Card {
                                 nontokenCreature),
                         "Put a fungus counter on the target creature?"));
 
-        var saprolingsForFungusCounters = new CreateTokensForEachDyingSourceCounterEffect(
-                CounterType.FUNGUS,
-                new CreateTokenEffect("Saproling", 1, 1, CardColor.GREEN,
-                        List.of(CardSubtype.SAPROLING), Set.of(), Set.of()));
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANY), saprolingsForFungusCounters);
+        var saprolingsForFungusCounters = new CreateTokenEffect("Saproling", 1, 1, CardColor.GREEN,
+                        List.of(CardSubtype.SAPROLING), Set.of(), Set.of())
+                                .withAmount(new CountersOnTriggeringPermanent(CounterType.FUNGUS));
+        addTrigger(Triggers.creatureDies(new PermanentHasCountersPredicate(CounterType.FUNGUS),
+                ObjectRelation.ANY), saprolingsForFungusCounters);
 
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new RemoveAllCountersFromMatchingPermanentsEffect(

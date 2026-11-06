@@ -25,8 +25,8 @@ public class PutPlusOnePlusOneCountersOnTargetForEachDyingSourceCounterEffectHan
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (PutPlusOnePlusOneCountersOnTargetForEachDyingSourceCounterEffect) effect;
-        if (e.count() <= 0) {
+        int count = entry.triggeringPermanentCounterCount(null);
+        if (count <= 0) {
             return;
         }
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
@@ -34,6 +34,6 @@ public class PutPlusOnePlusOneCountersOnTargetForEachDyingSourceCounterEffectHan
             return;
         }
         permanentCounterSupport.placeCounterOnPermanent(
-                gameData, entry, target, CounterType.PLUS_ONE_PLUS_ONE, e.count());
+                gameData, entry, target, CounterType.PLUS_ONE_PLUS_ONE, count);
     }
 }

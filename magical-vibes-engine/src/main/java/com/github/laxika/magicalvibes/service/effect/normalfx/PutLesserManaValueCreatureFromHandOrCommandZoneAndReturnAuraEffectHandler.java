@@ -28,9 +28,7 @@ public class PutLesserManaValueCreatureFromHandOrCommandZoneAndReturnAuraEffectH
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        PutLesserManaValueCreatureFromHandOrCommandZoneAndReturnAuraEffect nextOfKinEffect =
-                (PutLesserManaValueCreatureFromHandOrCommandZoneAndReturnAuraEffect) effect;
-        Integer dyingManaValue = nextOfKinEffect.dyingCreatureManaValue();
+        Integer dyingManaValue = entry.getDyingPermanentManaValue();
         if (dyingManaValue == null || dyingManaValue <= 0) {
             return;
         }

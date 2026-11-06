@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -30,15 +31,16 @@ public class SearchLibraryForSameNameAsDyingCreatureToHandEffectHandler implemen
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        SearchLibraryForSameNameAsDyingCreatureToHandEffect sameNameEffect =
-                (SearchLibraryForSameNameAsDyingCreatureToHandEffect) effect;
-        if (sameNameEffect.dyingCreatureName() == null) {
+        // The name the creature had as it last existed on the battlefield (CR 603.10a), even if its card has left
+        // the graveyard since.
+        Permanent dying = entry.getTriggeringPermanentSnapshot();
+        if (dying == null || dying.getCard().getName() == null) {
             return;
         }
 
         searchLibraryEffectHandler.resolve(gameData, entry,
                 new SearchLibraryEffect(
-                        new CardNamedPredicate(sameNameEffect.dyingCreatureName()),
+                        new CardNamedPredicate(dying.getCard().getName()),
                         LibrarySearchDestination.HAND));
     }
 }

@@ -37,7 +37,10 @@ public class CreateTokenCopyOfSacrificedPermanentEffectHandler implements Normal
             return;
         }
 
-        if (copyEffect.copiedCard() == null) {
+        // A sacrifice trigger's "it" is the entry's triggering permanent (CR 603.10a); an activated ability's, the
+        // permanent sacrificed to pay its cost.
+        Permanent sacrificedByTrigger = entry.getTriggeringPermanentSnapshot();
+        if (sacrificedByTrigger == null) {
             Permanent sacrificed = entry.getSacrificedPermanentSnapshot();
             if (sacrificed == null) {
                 return;
@@ -55,7 +58,7 @@ public class CreateTokenCopyOfSacrificedPermanentEffectHandler implements Normal
         // the event creates, added ones such as Queen Allenal's Soldier included.
         UUID controllerId = entry.getControllerId();
         tokenCopySupport.createTokenCopiesWithTokenRider(gameData, entry,
-                Collections.nCopies(copyEffect.amount(), copyEffect.copiedCard()), controllerId,
+                Collections.nCopies(copyEffect.amount(), sacrificedByTrigger.getCard()), controllerId,
                 new CreateTokenCopyOfTargetPermanentEffect(true, false).withHasteUntilEndOfTurn(),
                 token -> gameData.queueDelayedAction(new SacrificePermanentAtControllerEndStepUnlessPays(
                         token.getId(), controllerId, entry.getCard(), new PayManaCost(TOKEN_SACRIFICE_COST), true)));

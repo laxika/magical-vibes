@@ -22,8 +22,9 @@ public class RegisterDelayedTokenCopyEffectHandler implements NormalEffectHandle
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var register = (RegisterDelayedTokenCopyEffect) effect;
-        Card copiedCard = register.copiedCard() != null ? register.copiedCard() : entry.getCard();
+        // "That artifact": the sacrificed permanent as it last existed on the battlefield (CR 603.10a).
+        Card copiedCard = entry.getTriggeringPermanentSnapshot() != null
+                ? entry.getTriggeringPermanentSnapshot().getCard() : entry.getCard();
         if (copiedCard == null) {
             log.info("Game {} - Cannot register delayed token copy without a copied card", gameData.id);
             return;

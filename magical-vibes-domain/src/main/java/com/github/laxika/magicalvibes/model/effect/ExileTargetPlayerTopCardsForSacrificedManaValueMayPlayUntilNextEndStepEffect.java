@@ -1,22 +1,12 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Sacrifice trigger effect: exile the top {@code count} cards of the target player's library and
- * let the ability controller play them until their next end step, using mana of any type for the
- * exiled spells.
+ * Sacrifice trigger effect: exile as many cards from the top of the target player's library as the sacrificed
+ * permanent's mana value and let the ability controller play them until their next end step, using mana of any type
+ * for the exiled spells. The sacrificed permanent is the stack entry's triggering permanent, as it last existed on
+ * the battlefield (CR 603.10a).
  */
-public record ExileTargetPlayerTopCardsForSacrificedManaValueMayPlayUntilNextEndStepEffect(int count)
-        implements CardEffect, SacrificedPermanentManaValueAwareEffect {
-
-    public ExileTargetPlayerTopCardsForSacrificedManaValueMayPlayUntilNextEndStepEffect() {
-        this(0);
-    }
-
-    @Override
-    public CardEffect boundToSacrificedPermanentManaValue(int manaValue) {
-        return new ExileTargetPlayerTopCardsForSacrificedManaValueMayPlayUntilNextEndStepEffect(
-                Math.max(0, manaValue));
-    }
+public record ExileTargetPlayerTopCardsForSacrificedManaValueMayPlayUntilNextEndStepEffect() implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {

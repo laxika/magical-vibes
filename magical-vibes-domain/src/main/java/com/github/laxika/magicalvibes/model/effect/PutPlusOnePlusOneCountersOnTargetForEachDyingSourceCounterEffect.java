@@ -1,21 +1,10 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Places one +1/+1 counter on a target creature for each counter on a permanent that just left
- * the battlefield. The trigger collector binds the total concrete counter count from the event
- * snapshot before the source permanent leaves the battlefield.
+ * Places one +1/+1 counter on a target creature for each counter the permanent that just left
+ * the battlefield had: the stack entry's triggering permanent, as it last existed on the battlefield (CR 603.10a).
  */
-public record PutPlusOnePlusOneCountersOnTargetForEachDyingSourceCounterEffect(int count)
-        implements CardEffect, DyingCreatureCounterAwareEffect {
-
-    public PutPlusOnePlusOneCountersOnTargetForEachDyingSourceCounterEffect() {
-        this(0);
-    }
-
-    @Override
-    public CardEffect boundToDyingCreatureCounterCount(int counterCount) {
-        return new PutPlusOnePlusOneCountersOnTargetForEachDyingSourceCounterEffect(counterCount);
-    }
+public record PutPlusOnePlusOneCountersOnTargetForEachDyingSourceCounterEffect() implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {

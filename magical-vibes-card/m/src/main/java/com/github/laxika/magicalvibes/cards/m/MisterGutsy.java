@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokensForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.amount.CountersOnTriggeringPermanent;
 
 @CardRegistration(set = "PIP", collectorNumber = "136")
 @CardRegistration(set = "PIP", collectorNumber = "433")
@@ -31,8 +31,8 @@ public class MisterGutsy extends Card {
                                 new CardSubtypePredicate(CardSubtype.EQUIPMENT)))),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokensForEachDyingSourceCounterEffect(
-                CounterType.PLUS_ONE_PLUS_ONE, junkToken()));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), junkToken()
+                .withAmount(new CountersOnTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE)));
     }
 
     private static CreateTokenEffect junkToken() {

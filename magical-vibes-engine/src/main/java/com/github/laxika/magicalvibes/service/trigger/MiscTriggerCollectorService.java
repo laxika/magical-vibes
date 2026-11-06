@@ -42,8 +42,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardsExiledWithSourceOn
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringPermanentCardFromLibraryWithCroakCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherPermanentUnlessDiscardForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificedPermanentManaValueAwareEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificedPermanentCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -476,41 +474,37 @@ public class MiscTriggerCollectorService {
     }
 
     /**
-     * "Whenever you sacrifice a [filter] permanent": the trigger pipeline has matched the permanent. The effect is
-     * bound to the sacrificed card or its mana value, a "you may" goes on the stack and is chosen as it resolves
-     * (CR 603.5), and "do this only once each turn" is used up by an accepted graveyard return.
+     * "Whenever you sacrifice a [filter] permanent": the trigger pipeline has matched the permanent. The sacrificed
+     * permanent, as it last existed on the battlefield (CR 603.10a), is the stack entry's triggering permanent and its
+     * card the triggering card; a "you may" goes on the stack and is chosen as it resolves (CR 603.5), and "do this
+     * only once each turn" is used up by an accepted graveyard return.
      */
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED)
     private boolean handleSacrificeDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.AllySacrificed as = (TriggerContext.AllySacrificed) ctx;
         String cardName = match.permanent().getCard().getName();
-        CardEffect wrapped = effect;
-        if (as.sacrificedCard() != null && wrapped instanceof SacrificedPermanentCardAwareEffect cardAware) {
-            wrapped = cardAware.boundToSacrificedPermanent(as.sacrificedCard());
-        }
-        if (as.sacrificedCard() != null && wrapped instanceof SacrificedPermanentManaValueAwareEffect manaValueAware) {
-            wrapped = manaValueAware.boundToSacrificedPermanentManaValue(
-                    as.sacrificedCard().getManaValue());
-        }
-        CardEffect graveyardTargeting = wrapped instanceof MayEffect may ? may.wrapped() : wrapped;
+        Permanent sacrificed = as.sacrificedPermanent() != null ? as.sacrificedPermanent()
+                : as.sacrificedCard() != null ? new Permanent(as.sacrificedCard()) : null;
+        CardEffect graveyardTargeting = effect instanceof MayEffect may ? may.wrapped() : effect;
         if (graveyardTargeting instanceof ReturnCardFromGraveyardEffect returnEffect
                 && returnEffect.targetGraveyard()) {
             // The card is targeted as the trigger is put on the stack (CR 603.3d), so the may choice
             // comes at resolution. "Do this only once each turn" is used up only by an accepted return.
             boolean markOnAcceptance = match.markSourceOncePerTurnOnAcceptance();
+            CardEffect withTargetRestriction = withLesserManaValueThanSacrificed(effect, as.sacrificedCard());
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(wrapped)),
+                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(withTargetRestriction)),
                     null, 0, 0, 0, null, false, null, match.permanent().getId(), markOnAcceptance));
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
             return true;
         }
-        if (wrapped.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || wrapped.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
             match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
                     match.permanent().getCard(),
                     match.controllerId(),
-                    new ArrayList<>(List.of(wrapped)),
-                    match.permanent().getId()));
+                    new ArrayList<>(List.of(effect)),
+                    match.permanent().getId()).withTriggeringPermanent(sacrificed));
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
             log.info("Game {} - {} triggers on matching permanent sacrifice (awaiting target)",
                     match.gameData().id, cardName);
@@ -521,23 +515,40 @@ public class MiscTriggerCollectorService {
                 match.permanent().getCard(),
                 as.sacrificingPlayerId(),
                 cardName + "'s ability",
-                new ArrayList<>(List.of(wrapped)),
+                new ArrayList<>(List.of(effect)),
                 null,
                 match.permanent().getId()
         );
         triggerEntry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
         triggerEntry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
-        if (as.sacrificedCard() != null && wrapped instanceof SacrificedPermanentCardAwareEffect) {
+        triggerEntry.setTriggeringPermanent(sacrificed);
+        if (as.sacrificedCard() != null) {
             // CR 400.7: the trigger refers to this stay in the graveyard; if the card leaves and returns before
             // the trigger resolves, it is a new object the trigger no longer finds.
-            triggerEntry.setTriggeringCardId(as.sacrificedCard().getId());
-            triggerEntry.setTriggeringCardGraveyardEntryVersion(
+            triggerEntry.setTriggeringCard(as.sacrificedCard().getId(),
                     match.gameData().graveyardEntryVersion(as.sacrificedCard().getId()));
         }
         match.gameData().enqueueTrigger(triggerEntry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on matching permanent sacrifice", match.gameData().id, cardName);
         return true;
+    }
+
+    /**
+     * "Return target card with lesser mana value" than the sacrificed permanent: its target is chosen as the trigger
+     * goes on the stack (CR 603.3d), before there is a stack entry to read the sacrificed permanent from, so the
+     * restriction is narrowed here.
+     */
+    private static CardEffect withLesserManaValueThanSacrificed(CardEffect effect, Card sacrificedCard) {
+        if (sacrificedCard == null) {
+            return effect;
+        }
+        if (effect instanceof MayEffect may && may.wrapped() instanceof ReturnCardFromGraveyardEffect returnEffect) {
+            return new MayEffect(returnEffect.withManaValueLessThan(sacrificedCard.getManaValue()), may.prompt(),
+                    may.elseEffect(), may.choicePlayer(), may.choicePlayerId());
+        }
+        return effect instanceof ReturnCardFromGraveyardEffect returnEffect
+                ? returnEffect.withManaValueLessThan(sacrificedCard.getManaValue()) : effect;
     }
 
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_OPPONENT_PERMANENT_SACRIFICED)
@@ -1956,16 +1967,17 @@ public class MiscTriggerCollectorService {
 
     private void enqueueDelayedReturnMatchingCard(TriggerMatchContext match,
             RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect effect, Card card) {
-        CardEffect boundEffect = new RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect(
-                effect.filter(), card.getId());
-        match.gameData().enqueueTrigger(new StackEntry(
+        // One ability for each card ("that card"), which is its stack entry's triggering card.
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(boundEffect)),
+                new ArrayList<>(List.of(effect)),
                 null,
-                match.permanent().getId()));
+                match.permanent().getId());
+        entry.setTriggeringCard(card.getId(), match.gameData().graveyardEntryVersion(card.getId()));
+        match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
     }
 

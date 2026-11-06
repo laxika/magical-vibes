@@ -3288,14 +3288,14 @@ public class PermanentRemovalService {
             if (!creatureDeathTriggersSuppressed) {
                 triggerCollectionService.triggerDelayedEffectOnDeath(
                         gameData, target.getCard().getId(), controllerId, target.getEffectivePower(),
-                        target.getCard().getManaValue(), Map.copyOf(target.getCounters()), target.getId());
+                        target.getCard().getManaValue(), target);
                 triggerCollectionService.triggerDelayedReturnOnDeath(
                         gameData, target.getCard().getId(), target.getOriginalCard(), ownerId);
             }
             if (wasArtifact && !creatureDeathTriggersSuppressed) {
                 triggerCollectionService.checkEmblemArtifactGraveyardTriggers(
                         gameData, ownerId, controllerId, target.getOriginalCard(), target.getCard().getManaValue(),
-                        Map.copyOf(target.getCounters()), wasSacrificed);
+                        target, wasSacrificed);
             }
             if (destroyedBySpellOrAbility && !wasCreature) {
                 recordNoncreaturePermanentDestroyedByOpponent(gameData, target, controllerId);

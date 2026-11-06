@@ -12,6 +12,7 @@ package com.github.laxika.magicalvibes.model.amount;
  * parameterized with a {@code DynamicAmount} instead of one record per derivation.
  */
 public sealed interface DynamicAmount permits
+        CountersOnTriggeringPermanent,
         ArtifactsPutIntoGraveyardFromBattlefieldThisTurn,
         AttachmentsOnSource,
         StartingLifeTotal,

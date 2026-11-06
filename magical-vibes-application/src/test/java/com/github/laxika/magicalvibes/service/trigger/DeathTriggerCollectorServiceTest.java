@@ -734,38 +734,26 @@ class DeathTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("Default effect binds the artifact's counter snapshot")
-        void artifactDefaultBindsArtifactCounters() {
+        @DisplayName("Default effect carries the artifact as it last existed as the triggering permanent")
+        void artifactDefaultCarriesTheArtifactAsTriggeringPermanent() {
             Card watcher = createCreature("Donatello, Mutant Mechanic", 3, 5);
             Permanent perm = new Permanent(watcher);
             var effect = new PutCountersOnTargetForEachLeavingSourceCountersEffect(
                             new PermanentIsCreaturePredicate());
+            Permanent artifact = new Permanent(createCreature("Ornithopter", 0, 2));
+            artifact.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+            artifact.setCounterCount(CounterType.CHARGE, 3);
             var ctx = new TriggerContext.ArtifactGraveyard(
-                    PLAYER1_ID, PLAYER1_ID, null, 0,
-                    Map.of(CounterType.PLUS_ONE_PLUS_ONE, 2, CounterType.CHARGE, 3));
+                    PLAYER1_ID, PLAYER1_ID, artifact.getCard(), 0, artifact, false);
 
             assertThat(svc.handleArtifactGraveyardDefault(
                     match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
 
             var pending = (PermanentChoiceContext.SpellTargetTriggerAnyTarget)
                     gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
-            var bound = (PutCountersOnTargetForEachLeavingSourceCountersEffect) pending.effects().getFirst();
-            assertThat(bound.counters()).containsExactlyInAnyOrderEntriesOf(
+            assertThat(pending.effects()).containsExactly(effect);
+            assertThat(pending.departedPermanent().getCounters()).containsExactlyInAnyOrderEntriesOf(
                     Map.of(CounterType.PLUS_ONE_PLUS_ONE, 2, CounterType.CHARGE, 3));
-        }
-
-        @Test
-        @DisplayName("Default effect does not fire when the artifact had no counters")
-        void artifactDefaultDoesNotFireWithoutArtifactCounters() {
-            Card watcher = createCreature("Donatello, Mutant Mechanic", 3, 5);
-            Permanent perm = new Permanent(watcher);
-            var effect = new PutCountersOnTargetForEachLeavingSourceCountersEffect(
-                            new PermanentIsCreaturePredicate());
-            var ctx = new TriggerContext.ArtifactGraveyard(PLAYER1_ID, PLAYER1_ID);
-
-            assertThat(svc.handleArtifactGraveyardDefault(
-                    match(perm, PLAYER1_ID, effect), effect, ctx)).isFalse();
-            assertThat(gd.pendingInteractions).isEmpty();
         }
     }
 

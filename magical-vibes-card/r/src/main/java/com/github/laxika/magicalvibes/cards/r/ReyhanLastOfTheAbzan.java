@@ -23,7 +23,9 @@ public class ReyhanLastOfTheAbzan extends Card {
                         new PermanentHasAtLeastCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE, 1),
                         ObjectRelation.YOU_CONTROL),
                 counterTransfer);
-        addTrigger(Triggers.putIntoCommandZone(null, ObjectRelation.YOU_OWN),
+        addTrigger(Triggers.putIntoCommandZone(
+                        new PermanentHasAtLeastCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE, 1),
+                        ObjectRelation.YOU_OWN),
                 new MayEffect(
                         new PutCounterOnTargetForEachDyingSourceCounterEffect(CounterType.PLUS_ONE_PLUS_ONE),
                         "Put that many +1/+1 counters on target creature?"));

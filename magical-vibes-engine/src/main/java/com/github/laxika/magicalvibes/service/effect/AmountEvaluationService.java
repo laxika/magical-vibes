@@ -269,6 +269,7 @@ import com.github.laxika.magicalvibes.model.amount.TriggeringSpellChosenColorCou
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorManaSymbols;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellTargetCount;
 import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentToughness;
+import com.github.laxika.magicalvibes.model.amount.CountersOnTriggeringPermanent;
 import com.github.laxika.magicalvibes.model.amount.UnlockedRoomDoorsCount;
 import com.github.laxika.magicalvibes.model.amount.UntappedLandsAtTurnStart;
 import com.github.laxika.magicalvibes.model.amount.WebSlingingReturnedCreatureManaValue;
@@ -639,6 +640,8 @@ public class AmountEvaluationService {
                     countCountersOnTargetPermanent(gameData, c, ctx);
             case CountersOnStackEntryCard c ->
                     countCountersOnStackEntryCard(gameData, c, ctx);
+            case CountersOnTriggeringPermanent c ->
+                    ctx.stackEntry() == null ? 0 : ctx.stackEntry().triggeringPermanentCounterCount(c.counterType());
             case TimesSourceRegeneratedThisTurn ignored ->
                     ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getTimesRegeneratedThisTurn();
             case TokensCreatedThisTurn ignored ->

@@ -1,10 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.Permanent;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -53,8 +50,7 @@ import java.util.UUID;
 public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean optionalTarget,
                              boolean simultaneous)
         implements CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect,
-        EndStepPlayerTargetedEffect, DyingCreatureCountersAwareEffect,
-        DyingCreaturePermanentAwareEffect, CombatOpponentReferencingEffect, DamageSourceControllerAwareEffect {
+        EndStepPlayerTargetedEffect, CombatOpponentReferencingEffect, DamageSourceControllerAwareEffect {
 
     public SequenceEffect(List<CardEffect> steps) {
         this(steps, 0, false);
@@ -118,30 +114,6 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
     @Override
     public boolean hasAbilityResolutionCondition() {
         return steps.stream().anyMatch(CardEffect::hasAbilityResolutionCondition);
-    }
-
-    @Override
-    public CardEffect boundToDyingCreature(Permanent dyingCreature) {
-        if (steps.stream().noneMatch(DyingCreaturePermanentAwareEffect.class::isInstance)) {
-            return this;
-        }
-        List<CardEffect> boundSteps = steps.stream()
-                .map(step -> step instanceof DyingCreaturePermanentAwareEffect aware
-                        ? aware.boundToDyingCreature(dyingCreature) : step)
-                  .toList();
-        return boundSteps.equals(steps) ? this : withSteps(boundSteps);
-    }
-
-    @Override
-    public CardEffect boundToDyingCreatureCounters(Map<CounterType, Integer> counters) {
-        if (steps.stream().noneMatch(DyingCreatureCountersAwareEffect.class::isInstance)) {
-            return this;
-        }
-        List<CardEffect> boundSteps = steps.stream()
-                .map(step -> step instanceof DyingCreatureCountersAwareEffect aware
-                        ? aware.boundToDyingCreatureCounters(counters) : step)
-                  .toList();
-        return boundSteps.equals(steps) ? this : withSteps(boundSteps);
     }
 
     @Override

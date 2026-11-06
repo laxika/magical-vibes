@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokensForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.amount.CountersOnTriggeringPermanent;
 
 @CardRegistration(set = "MOR", collectorNumber = "14")
 public class KinsbaileBorderguard extends Card {
@@ -30,8 +30,8 @@ public class KinsbaileBorderguard extends Card {
 
         // When Kinsbaile Borderguard dies, create a 1/1 white Kithkin Soldier creature token for
         // each counter on it.
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokensForEachDyingSourceCounterEffect(
-                new CreateTokenEffect("Kithkin Soldier", 1, 1, CardColor.WHITE,
-                        List.of(CardSubtype.KITHKIN, CardSubtype.SOLDIER), Set.of(), Set.of())));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenEffect("Kithkin Soldier", 1, 1, CardColor.WHITE,
+                        List.of(CardSubtype.KITHKIN, CardSubtype.SOLDIER), Set.of(), Set.of())
+                                .withAmount(new CountersOnTriggeringPermanent()));
     }
 }

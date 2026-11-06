@@ -386,7 +386,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean hasteUntilEndOfTurn,
         boolean returnToHandAtYourNextEndStep,
         boolean attachToSourceOptional) implements CombatDamageAmountAwareEffect, TargetCardGroupEffect,
-        SacrificedPermanentManaValueAwareEffect, TriggeringSpellManaValueEffect {
+        TriggeringSpellManaValueEffect {
         public ReturnCardFromGraveyardEffect(
         GraveyardChoiceDestination destination,
         CardPredicate filter,
@@ -541,8 +541,12 @@ public record ReturnCardFromGraveyardEffect(
         return xValue + ((requiresManaValueEqualsX || requiresManaValueAtMostX) ? manaValueXOffset : 0);
     }
 
-    @Override
-    public ReturnCardFromGraveyardEffect boundToSacrificedPermanentManaValue(int manaValue) {
+    /**
+     * This effect with its card filter narrowed to cards with mana value less than {@code manaValue} ("target
+     * creature card with lesser mana value" than the permanent a sacrifice trigger is about), for a target chosen
+     * as the trigger goes on the stack (CR 603.3d), before the stack entry exists.
+     */
+    public ReturnCardFromGraveyardEffect withManaValueLessThan(int manaValue) {
         CardPredicate manaValueFilter = new CardMaxManaValuePredicate(manaValue - 1);
         CardPredicate combinedFilter = filter == null
                 ? manaValueFilter

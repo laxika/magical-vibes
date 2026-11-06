@@ -33,10 +33,12 @@ public class ExileTargetPlayerTopCardsForSacrificedManaValueMayPlayUntilNextEndS
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var exileEffect = (ExileTargetPlayerTopCardsForSacrificedManaValueMayPlayUntilNextEndStepEffect) effect;
         UUID targetPlayerId = entry.getTargetId();
         UUID controllerId = entry.getControllerId();
-        if (targetPlayerId == null || exileEffect.count() <= 0) {
+        // The sacrificed permanent's mana value as it last existed on the battlefield (CR 603.10a).
+        int count = entry.getTriggeringPermanentSnapshot() == null ? 0
+                : Math.max(0, entry.getTriggeringPermanentSnapshot().getCard().getManaValue());
+        if (targetPlayerId == null || count <= 0) {
             return;
         }
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
@@ -45,7 +47,7 @@ public class ExileTargetPlayerTopCardsForSacrificedManaValueMayPlayUntilNextEndS
         }
 
         List<String> exiledNames = new ArrayList<>();
-        for (int i = 0; i < exileEffect.count() && !deck.isEmpty(); i++) {
+        for (int i = 0; i < count && !deck.isEmpty(); i++) {
             Card topCard = deck.removeFirst();
             exileService.exileCard(gameData, targetPlayerId, topCard);
             exileSupport.grantPlayUntilOwnersNextEndStep(gameData, topCard.getId(), controllerId);

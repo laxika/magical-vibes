@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokensForEachLeavingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -16,14 +15,20 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.amount.CountersOnTriggeringPermanent;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPredicate;
 
 @CardRegistration(set = "TMT", collectorNumber = "177")
 @CardRegistration(set = "TMT", collectorNumber = "277")
 public class TheOoze extends Card {
 
     public TheOoze() {
-        addTrigger(Triggers.leavesBattlefield(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new CreateTokensForEachLeavingSourceCounterEffect(CounterType.PLUS_ONE_PLUS_ONE, mutagenToken()));
+        addTrigger(Triggers.leavesBattlefield(new PermanentAllOfPredicate(List.of(
+                        Triggers.CREATURE,
+                        new PermanentHasAtLeastCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE, 1))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                mutagenToken().withAmount(new CountersOnTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE)));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

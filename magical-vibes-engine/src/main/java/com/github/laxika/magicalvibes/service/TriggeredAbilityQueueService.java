@@ -259,7 +259,7 @@ public class TriggeredAbilityQueueService {
                                     ? null : pending.sourcePermanentSnapshot().getId()
                     );
                     entry.setSourcePermanentSnapshot(pending.sourcePermanentSnapshot());
-                    pending.carryTriggeringCardTo(entry);
+                    pending.carryTriggeringObjectTo(entry);
                     gameData.stack.add(entry);
                     gameLogService.append(gameData, GameLog.cardThen(pending.dyingCard(),
                             "'s death trigger triggers without a target."));
@@ -296,7 +296,7 @@ public class TriggeredAbilityQueueService {
                                 ? null : pending.sourcePermanentSnapshot().getId()
                 );
                 entry.setSourcePermanentSnapshot(pending.sourcePermanentSnapshot());
-                pending.carryTriggeringCardTo(entry);
+                pending.carryTriggeringObjectTo(entry);
                 gameData.stack.add(entry);
                 gameLogService.append(gameData, GameLog.cardThen(pending.dyingCard(),
                         "'s death trigger targets " + gameQueryService.findPermanentById(
@@ -320,7 +320,7 @@ public class TriggeredAbilityQueueService {
                 );
                 entry.setEventValue(pending.eventValue() == null ? 0 : pending.eventValue());
                 entry.setSourcePermanentSnapshot(pending.sourcePermanentSnapshot());
-                pending.carryTriggeringCardTo(entry);
+                pending.carryTriggeringObjectTo(entry);
                 gameData.stack.add(entry);
                 gameLogService.append(gameData, GameLog.cardThen(pending.dyingCard(),
                         "'s death trigger randomly targets " + gameData.playerIdToName.get(targetId) + "."));
@@ -398,21 +398,9 @@ public class TriggeredAbilityQueueService {
                 && effects.stream().anyMatch(effect -> isBoundToTargetGroup(card, effect, target.getIndex()));
     }
 
-    /**
-     * Whether the effect belongs to the card's target group. A death-trigger effect carrying a
-     * snapshot of the dying creature's counters is a copy of the effect declared on the card, so it
-     * is matched through its unbound form.
-     */
+    /** Whether the effect belongs to the card's target group. */
     private static boolean isBoundToTargetGroup(Card card, CardEffect effect, int targetIndex) {
-        if (card.getEffectTargetIndex(effect) == targetIndex) {
-            return true;
-        }
-        if (!(effect instanceof com.github.laxika.magicalvibes.model.effect.DyingCreatureCountersAwareEffect aware)) {
-            return false;
-        }
-        // The rebuilt record is a new instance, so compare it by value with the declared effects.
-        CardEffect unbound = aware.boundToDyingCreatureCounters(Map.of());
-        return card.getEffectsBoundToTargetGroup(targetIndex).stream().anyMatch(unbound::equals);
+        return card.getEffectTargetIndex(effect) == targetIndex;
     }
 
     /**
@@ -508,7 +496,7 @@ public class TriggeredAbilityQueueService {
                         new ArrayList<>(pending.effects()),
                         List.of()
                 );
-                pending.carryTriggeringCardTo(entry);
+                pending.carryTriggeringObjectTo(entry);
                 gameData.stack.add(entry);
                 gameLogService.append(gameData, GameLog.cardThen(pending.dyingCard(),
                         "'s death trigger triggers targeting no cards."));
@@ -683,6 +671,7 @@ public class TriggeredAbilityQueueService {
                             pending.sourcePermanentId()
                     );
                     entry.setSourcePermanentSnapshot(sourcePermanentSnapshot);
+                    entry.setTriggeringPermanent(pending.triggeringPermanent());
                     gameData.stack.add(entry);
                     gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                             "'s " + pending.eventDescription() + " trigger triggers without a target."));
@@ -811,6 +800,7 @@ public class TriggeredAbilityQueueService {
                 (UUID) null,
                 pending.sourcePermanentId());
         entry.setSourcePermanentSnapshot(sourcePermanentSnapshot);
+        entry.setTriggeringPermanent(pending.triggeringPermanent());
         if (pending.eventValue() != null) {
             entry.setEventValue(pending.eventValue());
         }
@@ -1253,6 +1243,9 @@ public class TriggeredAbilityQueueService {
                             null,
                             pending.sourcePermanentId());
                     entry.setTriggeringPermanentId(pending.enteringPermanentId());
+                    if (pending.triggeringPermanent() != null) {
+                        entry.setTriggeringPermanent(pending.triggeringPermanent());
+                    }
                     gameData.stack.add(entry);
                     gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                             "'s enter trigger triggers without a target."));
@@ -1913,6 +1906,7 @@ public class TriggeredAbilityQueueService {
                 pending.sourcePermanentId());
         entry.setTriggeringPermanentId(pending.triggeringPermanentId());
         entry.setSourcePermanentSnapshot(pending.sourcePermanentSnapshot());
+        entry.setTriggeringPermanent(pending.departedPermanent());
         if (pending.targetFilter() != null) {
             entry.setTargetFilter(pending.targetFilter());
         }
@@ -2107,6 +2101,7 @@ public class TriggeredAbilityQueueService {
         }
         entry.setSourcePermanentSnapshot(pending.sourcePermanentSnapshot());
         entry.setSourcePlanarObject(pending.planarSource());
+        entry.setTriggeringPermanent(pending.departedPermanent());
         gameData.stack.add(entry);
     }
 

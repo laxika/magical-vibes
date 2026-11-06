@@ -1,46 +1,20 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
-import java.util.Map;
-
 /**
  * Leaves-the-battlefield trigger that puts the same number of each counter type on a target
- * permanent as the source had before leaving.
+ * permanent as the permanent that left had: the stack entry's triggering permanent, as it last existed on the
+ * battlefield (CR 603.10a).
  *
- * @param counters        snapshot of the source permanent's counters, keyed by counter type
  * @param targetPredicate optional additional predicate for the target permanent
  */
-public record PutCountersOnTargetForEachLeavingSourceCountersEffect(
-        Map<CounterType, Integer> counters,
-        PermanentPredicate targetPredicate
-) implements CardEffect, ArtifactGraveyardCountersAwareEffect, LeavingPermanentCountersAwareEffect {
-
-    public PutCountersOnTargetForEachLeavingSourceCountersEffect {
-        counters = Map.copyOf(counters);
-    }
+public record PutCountersOnTargetForEachLeavingSourceCountersEffect(PermanentPredicate targetPredicate)
+        implements CardEffect {
 
     public PutCountersOnTargetForEachLeavingSourceCountersEffect() {
-        this(Map.of(), null);
-    }
-
-    public PutCountersOnTargetForEachLeavingSourceCountersEffect(PermanentPredicate targetPredicate) {
-        this(Map.of(), targetPredicate);
-    }
-
-    @Override
-    public CardEffect boundToArtifactGraveyardCounters(Map<CounterType, Integer> counters) {
-        return new PutCountersOnTargetForEachLeavingSourceCountersEffect(counters, targetPredicate);
-    }
-
-    @Override
-    public CardEffect boundToLeavingPermanentCounters(Map<CounterType, Integer> counters) {
-        if (counters.isEmpty()) {
-            return null;
-        }
-        return new PutCountersOnTargetForEachLeavingSourceCountersEffect(counters, targetPredicate);
+        this(null);
     }
 
     @Override

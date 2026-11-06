@@ -1,17 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.Card;
-
-/** Registers a delayed trigger that creates a token copy of a sacrificed artifact. */
-public record RegisterDelayedTokenCopyEffect(Card copiedCard)
-        implements CardEffect, SacrificedPermanentCardAwareEffect {
-
-    public RegisterDelayedTokenCopyEffect() {
-        this(null);
-    }
-
-    @Override
-    public CardEffect boundToSacrificedPermanent(Card sacrificedCard) {
-        return new RegisterDelayedTokenCopyEffect(sacrificedCard);
-    }
+/**
+ * Registers a delayed trigger that creates a token copy of the sacrificed artifact ("that artifact"): the stack entry's
+ * triggering permanent as it last existed on the battlefield (CR 603.10a).
+ */
+public record RegisterDelayedTokenCopyEffect() implements CardEffect {
 }

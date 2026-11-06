@@ -23,13 +23,12 @@ public class MoveDyingSourceCountersToSourceEffectHandler implements NormalEffec
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (MoveDyingSourceCountersToSourceEffect) effect;
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source == null) {
             return;
         }
 
-        e.counters().forEach((counterType, count) ->
+        entry.triggeringPermanentCounters().forEach((counterType, count) ->
                 permanentCounterSupport.placeCounterOnPermanent(gameData, entry, source, counterType, count));
     }
 }

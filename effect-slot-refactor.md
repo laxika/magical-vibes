@@ -30,7 +30,7 @@ re-check them with a grep before acting on them.
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
 | 14 | Trigger options replace trigger-only wrapper effects | done (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; run 16l, family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader`; run 16m, family 10 (sagas): no chapter or final-chapter ability has a legacy view, and the final-chapter collectors read the abilities through `SagaAbilityReader`; run 16n, family 11's player and keyword actions: every `ActionWatch` collector reads the abilities through `ActionAbilityReader`; run 16o, family 11's rest: every `MiscWatch` collector and the planar reader read the abilities through `MiscAbilityReader`; run 16p, the zone changes but "when this enters" and the permanent changes: no such ability has a legacy view, and the readers outside the trigger pipeline read them through `ZoneChangeAbilityReader`; run 16q, "when this enters": no ability has a legacy view; the own enters collector reads the abilities and judges their limit, the other readers read `Card.getOwnEntryEffects()`, and `OnceOnlyTriggerEffect` is gone; run 16r, every triggered ability is one object on the stack: the abilities of one Oracle ability are merged by script, the own enters and combat collectors group effects by ability, and `TriggerMode` is gone; run 16s, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags are gone: a `ConditionalEffect` is an effect's "if", and every collector judges the intervening "if" and event condition from the ability; run 16t, the trigger-only wrapper classes: the `Triggering…ConditionalEffect` filters, `SelfExiledFromBattlefieldEffect`, `OncePerTurnPerCreatureTriggerEffect` and `OncePerTurnTriggerEffect`'s keyed, per-grant, mark-on-acceptance and first-time forms are gone, their cards written with trigger filters, `TriggerLimit`s and `TriggeringCardMatches`; Bill Potts' `OncePerTurnTriggerEffect` and the may-unwrapping moved to step 15, with the user) |
-| 15 | Effects read the trigger event (repeatable) | open (run 1, with the user: the dying card, `DyingCreatureCardAwareEffect` gone; effects read the stack entry's triggering card) |
+| 15 | Effects read the trigger event (repeatable) | open (run 1, with the user: the dying card, `DyingCreatureCardAwareEffect` gone; effects read the stack entry's triggering card; run 2, with the user: the departed permanent's last-known information, its 13 `…AwareEffect` interfaces gone; effects read the stack entry's triggering permanent) |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
 ## Why
@@ -9525,6 +9525,136 @@ didn't name the interface.
   617 failures here, 618 at HEAD, none new; the Tiana case above is the one fixed.
 - Engine: the whole module, with the one failure at HEAD, `GameMutationBoundaryRatchetTest`.
 - AI: the whole module (1,620 tests), with the same 10 failures as before.
+- The full suite was not run here.
+
+#### Run 2: the departed permanent's last-known information
+
+Run 1's "for later runs" listed this group first; the user chose it whole over its counters-only part. The 13
+interfaces that bound the last-known information of the permanent a death, departure or sacrifice was about into the
+effect are gone: `DyingCreatureCounter(s)`, `DyingCreatureName`, `DyingCreatureManaValue`, `DyingCreaturePermanent`,
+`DyingCreatureAttachments`, `LeavingCreatureCounters`, `LeavingCreatureName`, `LeavingPermanentCounters`,
+`LeavingPermanentId`, `ArtifactGraveyardCounters`, `SacrificedPermanentManaValue` and `SacrificedPermanentCard`
+`…AwareEffect`, with every `boundTo…` method and every collector binding. Effects read the stack entry's triggering
+permanent as they resolve. 11 `…AwareEffect` interfaces are left.
+
+**What the scan found.** 25 effect classes implemented them, plus four delegators (`MayEffect`, `SequenceEffect`,
+`MayPayManaEffect`, and `ReturnCardFromGraveyardEffect`, whose multi-line `implements` the first scan missed). About 50
+binding sites in `TriggerCollectionService`, `DeathTriggerCollectorService`, `LegacyTriggerBindings`,
+`MiscTriggerCollectorService`, `CommanderZoneTriggerCollectorService`, plus the two "unbind to find the target group"
+helpers in `TriggeredAbilityQueueService` and `PermanentChoiceTriggerHandlerService`. Several bindings were also the
+trigger's condition: a collector skipped the trigger when the snapshot was empty (The Ooze, Donatello, Reyhan's
+command-zone half, Sporogenesis, Dual Nature's tokens, Shadow Urchin's own death).
+
+**The model.**
+
+- `StackEntry.setTriggeringPermanent(lastKnown[, DepartedAttachments])` (new) keeps a copy of the permanent the event
+  was about as it last existed on the battlefield (**CR 603.10a**, **CR 608.2h**, checked) and what was attached to
+  it; `getTriggeringPermanentSnapshot()`, `getTriggeringAttachments()`, `triggeringPermanentCounters()` (counter-type
+  order) and `triggeringPermanentCounterCount(type or null)` read it. The copy constructor deep-copies it, so the
+  simulation copy does (`GameDataDeepCopyTest` case added).
+- `CountersOnTriggeringPermanent(CounterType)` (new `DynamicAmount`, null = every counter) reads it for amounts.
+- Targeted triggers carry it to the entry: `DeathTriggerTarget` gains `triggeringPermanent` / `triggeringAttachments`
+  (`withTriggeringPermanent`; `carryTriggeringCardTo` became `carryTriggeringObjectTo` and carries both),
+  `SelfTriggeredAbilityTarget` and `EntersTriggerTarget` gain `triggeringPermanent` (`withTriggeringPermanent`), and
+  `SpellTargetTriggerAnyTarget` gains `departedPermanent` (`withDepartedPermanent`; its existing
+  `triggeringPermanentSnapshot` is the permanent an Aura source was attached to, so the name differs). Every entry those
+  contexts build carries it, the auto-chosen, no-target and random-target paths included.
+- `TriggerContext.ArtifactGraveyard` holds the artifact's last-known `Permanent` instead of a counter map, and
+  `CommanderPutIntoCommandZone` the departed commander; `checkEmblemArtifactGraveyardTriggers` and
+  `triggerDelayedEffectOnDeath` take the permanent instead of a counter map; `bindSelfDeathEffect` lost its
+  attachments argument and `bindDyingCreatureAttachments` is gone.
+
+**The effects.**
+
+- Lost their bound component and now read the entry: `RegisterDelayedTokenCopyEffect()`,
+  `TransformSelfWhenChosenPermanentLeavesEffect()`, `SearchLibraryForSameNameAsDyingCreatureToHandEffect()`,
+  `RevealUntilCreatureSharingTypeWithDyingCreatureToHandEffect()`, `ReturnAurasAttachedToDyingCreatureAndAttachEquipmentEffect()`,
+  `RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect(filter)` (the entry's triggering card; the library
+  "one or more" path gives each card's entry its card), `PutPlusOnePlusOneCountersOnTargetForEachDyingSourceCounterEffect()`,
+  `PutLesserManaValueCreatureFromHandOrCommandZoneAndReturnAuraEffect()` (the entry's existing `dyingPermanentManaValue`),
+  `PutLeavingCreatureCountersOnSourceEffect()`, `PutCountersOnTargetForEachLeavingSourceCountersEffect(predicate)`,
+  `PutCounterOnTargetForEachDyingSourceCounterEffect(type, optional, predicate, modular)`,
+  `MoveDyingSourceCountersToTargetCreatureEffect(controllerOnly, requiresCounters)`, `MoveDyingSourceCountersToSourceEffect()`,
+  `ExileTokensWithSameNameAsLeavingCreatureEffect()`, `ExileTargetPlayerTopCardsForSacrificedManaValueMayPlayUntilNextEndStepEffect()`,
+  `ExileSacrificedPermanentWithSourceEffect(counterIfToken)`, `CreateTokenWithDyingSourceCounterPTEffect(template, type)`,
+  `CreateTokenCopyOfSacrificedPermanentEffect(amount)` (a triggering permanent means the sacrifice-trigger form, none
+  the activation-cost form), `ConjureDuplicatesOfDyingCreatureIntoLibraryEffect()`.
+- Gone, replaced by existing effects with the new amount (AGENTS.md's reuse rule):
+  `CreateTokensForEachDyingSourceCounterEffect` and `CreateTokensForEachLeavingSourceCounterEffect` became
+  `template.withAmount(new CountersOnTriggeringPermanent(type))` (`CreateTokenEffect.withAmount(DynamicAmount)` is new
+  and keeps the simultaneous tokens), and `ExileTopCardsForEachDyingCreatureCounterMayPlayUntilNextEndStepEffect`
+  became `ExileTopCardsMayPlayUntilNextEndStepEffect(new CountersOnTriggeringPermanent())`, whose count is now a
+  `DynamicAmount` (an `int` constructor keeps the other cards).
+- `ReturnTargetCreatureCardsFromGraveyardToBattlefieldWithTotalPowerEffect`'s binding to the dying creature's power was
+  dead (no death trigger has it) and is gone.
+- `ReturnCardFromGraveyardEffect`'s sacrifice binding became the plain `withManaValueLessThan(int)`, which the sacrifice
+  collector applies to a graveyard-targeting return (Riveteers Ascendancy's "lesser mana value"): its target is chosen
+  before there is a stack entry, so this one still narrows the effect at trigger time.
+
+**The engine.** Each collector that bound the information sets the triggering permanent on what it queues: the
+self-death and self-leave paths of `LegacyTriggerBindings` (`markDyingCard` / `withDyingCard` now also give the
+permanent and its attachments, the leave default and the may-pay death path set it), the pipeline's `triggerAll` for a
+departure, the ally / batched ally / equipped / any / nontoken / enchanted-player death defaults and the ally and
+nontoken "you may" handlers, the any-permanent-graveyard may (Yuna), the artifact graveyard default (Donatello), the
+leave collectors (another permanent, another creature, ally permanent, ally creature, scheme), the sacrifice default
+(which now always gives its entry the sacrificed card as triggering card, not only for the card-aware effects), the
+commander-zone collector and the delayed "when that creature dies this turn" path. The effect-class handlers that only
+bound or rebuilt (`handleCreateTokensForEachDyingSourceCounter`, `handleExileTopCardsForEachDyingCreatureCounter`,
+`handleConditionalSelfLeavesTrigger`, `handlePutCountersOnTargetForEachLeavingSourceCounters`, the any-death token
+handler) are gone; the defaults do the rest. `isBoundToTargetGroup` no longer unbinds.
+
+**Cards (by script).** `scripts/step15-lki-cards.py` (idempotent, per letter module), 17 card classes: the 13 users of
+the three gone classes (Big Mother Mouser, Boss's Chauffeur, Chasm Skulker, Eumidian Hatchery, Felisa, Hangarback
+Walker, Hooded Hydra, J'Tun Owl Keeper, Kinsbaile Borderguard, Mister Gutsy, Shadow Urchin, Sporogenesis, The Ooze),
+Essence Channeler (lost its empty `Map.of()` snapshot argument), and the trigger conditions the collectors used to judge
+by skipping, now written as filters the pipeline judges on the departed permanent: The Ooze's "with a +1/+1 counter on
+it", Donatello's "if it had counters on it", Sporogenesis' "with a fungus counter on it", Dual Nature's "nontoken
+creature", Reyhan's command-zone "if it had one or more +1/+1 counters on it" (as its death half already was). The
+watch lookup falls back from a filter it doesn't know to the first predicate of an `AllOf` or to no filter, so the
+filtered triggers keep their collectors.
+
+**Behaviour changes.** None intended and no card test changed. The filters replace the skips one for one (**CR 603.4**,
+checked, for the intervening "if"s). `CreateTokenEffect.withAmount(DynamicAmount)` keeps a template's simultaneous
+tokens where the old `withAmount(int)` rebuild dropped them (none of the 13 templates has any). A sacrifice trigger's
+entry now always names the sacrificed card as its triggering card.
+
+**Kept, with their reason.** `MoveDyingSourceCountersToTargetCreatureEffect.requiresCounters` is still judged by the
+self-death handler (an effect-class judgment of an intervening "if"); the other LKI rebuilds that never implemented an
+interface (`DrawCardForEachDyingSourceCounterEffect`, `ManifestTopCardsForEachDyingSourceCounterEffect`,
+`ExileIfHadCounterElseReturnWithCounterEffect`, `PutCounterOnTargetForEachLeavingSourceCounterEffect`,
+`CreateTokenWithDyingSourceCountersEffect`, `CreateTokenWithDyingSourcePowerCountersEffect`,
+`GainLifeEqualToDyingCreatureToughnessEffect`, `snapshotDyingPermanentManaValue`, `snapshotDynamicMaxManaValue`,
+`snapshotArtifactManaValue`) and run 1's baked-id effects; Riveteers Ascendancy's target restriction. Paths that don't
+carry the triggering permanent: the dynamic-target `MultiPermanentChoiceContext.SelfTriggeredAbilityTargets`, the
+graveyard-target operation (`GraveyardTargetOperationState`), `queueMayAbilityForPlayer`'s `PendingMayAbility`, the
+opponent-creature-death default and the ally may-pay handlers; no effect of this run reaches them.
+
+**For later runs.** The rebuilds listed under "Kept" can now read `triggeringPermanentCounterCount` /
+`CountersOnTriggeringPermanent` (draw and manifest "for each counter" become `DrawCardEffect` / `ManifestTopCardEffect`
+with the amount); then the damage and combat group, the bindings that aren't trigger events, Bill Potts, the
+may-unwrapping and the `…Triggering…` classes, as run 1 listed.
+
+**Tests changed.**
+
+- `DeathTriggerCollectorServiceTest`: "Default effect binds the artifact's counter snapshot" became "Default effect
+  carries the artifact as it last existed as the triggering permanent" (asserts the context's `departedPermanent` and
+  the unchanged effect); "Default effect does not fire when the artifact had no counters" is gone: that is now
+  Donatello's trigger filter, which its card test `doesNotTriggerForArtifactWithoutCounters` covers.
+- `LegacyTriggerBindingsTest`: the `bindSelfDeathEffect` stub lost an argument; "Snapshots counters and preserves the
+  target predicate" became "Carries the dying creature as the triggering permanent and preserves the target
+  predicate".
+- `PermanentRemovalServiceTest`: the two emblem artifact-graveyard verifications match the permanent's counters instead
+  of a counter map.
+- `GameDataDeepCopyTest` (AI): new case for the stack entry's triggering permanent and attachments.
+
+**Test runs.**
+
+- Card: the test class of every card with a death, leave, sacrifice, command-zone or mutate trigger or naming one of
+  the changed effects (2,708 card classes; 2,670 test classes, 21,669 tests): all passing.
+- Application, engine and AI: the whole modules against a HEAD baseline in a worktree (with main's card-data cache):
+  application 617 failures of 5,012 here and 617 of 5,013 at HEAD (the one fewer test is the removed Donatello case),
+  engine 1 (`GameMutationBoundaryRatchetTest`), AI 10, the same failing cases in both trees, none new. The two
+  rewritten `PermanentRemovalServiceTest` emblem cases fail in both trees on the class's `DepartureService` mock wiring.
 - The full suite was not run here.
 
 ## Prompt

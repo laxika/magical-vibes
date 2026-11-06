@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 
 /**
@@ -37,7 +36,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 public record MayPayManaEffect(String manaCost, DynamicAmount dynamicManaCost, CardEffect wrapped, String prompt,
                                MayPayPayer payer, CardEffect elseEffect, int lifeCost,
                                boolean sourceIsTriggeringPermanent)
-        implements CombatDamageTriggerContextEffect, SacrificedPermanentCardAwareEffect {
+        implements CombatDamageTriggerContextEffect {
 
     /** A payment whose generic mana amount is evaluated when the ability resolves. */
     public static MayPayManaEffect dynamic(DynamicAmount amount, CardEffect wrapped, String prompt,
@@ -86,18 +85,6 @@ public record MayPayManaEffect(String manaCost, DynamicAmount dynamicManaCost, C
         return wrapped instanceof CombatDamageTriggerContextEffect contextEffect
                 ? contextEffect.combatDamageTriggerContext()
                 : null;
-    }
-
-    @Override
-    public CardEffect boundToSacrificedPermanent(Card sacrificedCard) {
-        CardEffect boundWrapped = wrapped instanceof SacrificedPermanentCardAwareEffect aware
-                ? aware.boundToSacrificedPermanent(sacrificedCard)
-                : wrapped;
-        CardEffect boundElse = elseEffect instanceof SacrificedPermanentCardAwareEffect aware
-                ? aware.boundToSacrificedPermanent(sacrificedCard)
-                : elseEffect;
-        return new MayPayManaEffect(manaCost, dynamicManaCost, boundWrapped, prompt, payer, boundElse, lifeCost,
-                sourceIsTriggeringPermanent);
     }
 
     public MayPayManaEffect(String manaCost, CardEffect wrapped, String prompt) {

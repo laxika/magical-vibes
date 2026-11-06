@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokensForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -23,6 +22,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.amount.CountersOnTriggeringPermanent;
 
 @CardRegistration(set = "C21", collectorNumber = "2")
 @CardRegistration(set = "C21", collectorNumber = "329")
@@ -43,8 +43,8 @@ public class FelisaFangOfSilverquill extends Card {
                 Set.of(CardColor.WHITE, CardColor.BLACK),
                 List.of(CardSubtype.INKLING), Set.of(Keyword.FLYING), Set.of())
                 .withTapped(true);
-        CreateTokensForEachDyingSourceCounterEffect createInklings =
-                new CreateTokensForEachDyingSourceCounterEffect(inkling);
+        CreateTokenEffect createInklings =
+                inkling.withAmount(new CountersOnTriggeringPermanent());
         CardEffect nontokenWithCounters =
                 createInklings;
 

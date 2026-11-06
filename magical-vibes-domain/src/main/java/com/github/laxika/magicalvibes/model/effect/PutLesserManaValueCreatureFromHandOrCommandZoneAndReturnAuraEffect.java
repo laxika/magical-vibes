@@ -1,21 +1,9 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Next of Kin's death trigger: optionally put a lower-mana-value creature from hand or the
- * command zone onto the battlefield, then return the source Aura attached to it at the next end
- * step.
+ * Next of Kin's death trigger: optionally put a creature with lesser mana value than the creature that died from hand
+ * or the command zone onto the battlefield, then return the source Aura attached to it at the next end step. The
+ * dying creature's mana value is the stack entry's, as it last existed on the battlefield (CR 603.10a).
  */
-public record PutLesserManaValueCreatureFromHandOrCommandZoneAndReturnAuraEffect(
-        Integer dyingCreatureManaValue
-) implements CardEffect, DyingCreatureManaValueAwareEffect {
-
-    /** Card-definition constructor; the trigger collector binds the dying creature's mana value. */
-    public PutLesserManaValueCreatureFromHandOrCommandZoneAndReturnAuraEffect() {
-        this(null);
-    }
-
-    @Override
-    public CardEffect snapshotDyingCreatureManaValue(int manaValue) {
-        return new PutLesserManaValueCreatureFromHandOrCommandZoneAndReturnAuraEffect(manaValue);
-    }
+public record PutLesserManaValueCreatureFromHandOrCommandZoneAndReturnAuraEffect() implements CardEffect {
 }

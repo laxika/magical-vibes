@@ -38,7 +38,9 @@ public class ExileSacrificedPermanentWithSourceEffectHandler implements NormalEf
         if (sourcePermanentId == null && entry.getSourcePermanentSnapshot() != null) {
             sourcePermanentId = entry.getSourcePermanentSnapshot().getId();
         }
-        Card sacrificed = exileEffect.sacrificedCard();
+        // The sacrificed permanent as it last existed on the battlefield (CR 603.10a).
+        Card sacrificed = entry.getTriggeringPermanentSnapshot() == null
+                ? null : entry.getTriggeringPermanentSnapshot().getCard();
         if (sourcePermanentId == null || sacrificed == null) {
             return;
         }

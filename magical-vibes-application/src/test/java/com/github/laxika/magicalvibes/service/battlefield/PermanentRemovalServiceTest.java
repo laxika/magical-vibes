@@ -607,8 +607,9 @@ class PermanentRemovalServiceTest {
             prs.removePermanentToGraveyard(gd, artifact);
 
             verify(triggerCollectionService).checkEmblemArtifactGraveyardTriggers(
-                    gd, player1Id, player1Id, artifact.getOriginalCard(), artifact.getCard().getManaValue(),
-                    Map.of(CounterType.CHARGE, 2), false);
+                    eq(gd), eq(player1Id), eq(player1Id), eq(artifact.getOriginalCard()),
+                    eq(artifact.getCard().getManaValue()),
+                    argThat((Permanent lastKnown) -> lastKnown.getCounterCount(CounterType.CHARGE) == 2), eq(false));
         }
 
         @Test
@@ -627,8 +628,9 @@ class PermanentRemovalServiceTest {
 
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(artifact);
             verify(triggerCollectionService).checkEmblemArtifactGraveyardTriggers(
-                    gd, player1Id, player1Id, artifact.getOriginalCard(), artifact.getCard().getManaValue(),
-                    Map.of(CounterType.CHARGE, 2), true);
+                    eq(gd), eq(player1Id), eq(player1Id), eq(artifact.getOriginalCard()),
+                    eq(artifact.getCard().getManaValue()),
+                    argThat((Permanent lastKnown) -> lastKnown.getCounterCount(CounterType.CHARGE) == 2), eq(true));
         }
 
         @Test

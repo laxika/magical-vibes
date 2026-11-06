@@ -7,13 +7,13 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokensForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.amount.CountersOnTriggeringPermanent;
 
 @CardRegistration(set = "M15", collectorNumber = "46")
 @CardRegistration(set = "PIO", collectorNumber = "49")
@@ -27,9 +27,8 @@ public class ChasmSkulker extends Card {
     public ChasmSkulker() {
         addTrigger(Triggers.youDrawCard(),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokensForEachDyingSourceCounterEffect(
-                CounterType.PLUS_ONE_PLUS_ONE,
-                new CreateTokenEffect("Squid", 1, 1, CardColor.BLUE,
-                        List.of(CardSubtype.SQUID), Set.of(Keyword.ISLANDWALK), Set.of())));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenEffect("Squid", 1, 1, CardColor.BLUE,
+                        List.of(CardSubtype.SQUID), Set.of(Keyword.ISLANDWALK), Set.of())
+                                .withAmount(new CountersOnTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE)));
     }
 }

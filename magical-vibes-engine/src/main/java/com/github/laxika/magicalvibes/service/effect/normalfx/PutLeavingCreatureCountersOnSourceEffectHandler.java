@@ -32,8 +32,7 @@ public class PutLeavingCreatureCountersOnSourceEffectHandler implements NormalEf
             return;
         }
 
-        for (Map.Entry<CounterType, Integer> counter :
-                ((PutLeavingCreatureCountersOnSourceEffect) effect).counters().entrySet()) {
+        for (Map.Entry<CounterType, Integer> counter : entry.triggeringPermanentCounters().entrySet()) {
             permanentCounterSupport.placeCounterOnPermanent(
                     gameData, entry, source, counter.getKey(), counter.getValue());
         }

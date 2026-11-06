@@ -122,8 +122,8 @@ class LegacyTriggerBindingsTest {
         bindings = new LegacyTriggerBindings(gameQueryService, predicateEvaluationService, gameLogService,
                 amountEvaluationService, conditionEvaluationService, graveyardTargetingSupport,
                 targetLegalityService, graveyardTargetingService, triggerCollectionService);
-        lenient().when(triggerCollectionService.bindSelfDeathEffect(any(), any(), any(), any(), any()))
-                .thenAnswer(invocation -> invocation.getArgument(4));
+        lenient().when(triggerCollectionService.bindSelfDeathEffect(any(), any(), any(), any()))
+                .thenAnswer(invocation -> invocation.getArgument(3));
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
         gd.orderedPlayerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));
         gd.playerIdToName.put(PLAYER1_ID, "Player1");
@@ -284,8 +284,8 @@ class LegacyTriggerBindingsTest {
     }
 
     @Test
-    @DisplayName("Snapshots counters and preserves the target predicate")
-    void snapshotsCountersAndPreservesTargetPredicate() {
+    @DisplayName("Carries the dying creature as the triggering permanent and preserves the target predicate")
+    void carriesTheDyingCreatureAndPreservesTargetPredicate() {
         Card card = createCreature("Arcbound Bruiser", 0, 0);
         Permanent perm = new Permanent(card);
         perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
@@ -302,8 +302,9 @@ class LegacyTriggerBindingsTest {
         MayEffect may = (MayEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)
                 .effects().getFirst();
         var baked = (PutCounterOnTargetForEachDyingSourceCounterEffect) may.wrapped();
-        assertThat(baked.count()).isEqualTo(3);
         assertThat(baked.targetPredicate()).isEqualTo(targetPredicate);
+        assertThat(gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).triggeringPermanent()
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
     @Test

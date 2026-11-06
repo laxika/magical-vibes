@@ -23,13 +23,12 @@ public class PutCountersOnTargetForEachLeavingSourceCountersEffectHandler implem
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (PutCountersOnTargetForEachLeavingSourceCountersEffect) effect;
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
 
-        e.counters().forEach((counterType, count) -> {
+        entry.triggeringPermanentCounters().forEach((counterType, count) -> {
             if (count > 0) {
                 permanentCounterSupport.placeCounterOnPermanent(
                         gameData, entry, target, counterType, count);

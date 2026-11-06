@@ -204,6 +204,7 @@ public class PermanentChoiceTriggerHandlerService {
         if (stt.triggeringPermanentSnapshot() != null) {
             entry.setAttachedPermanentSnapshot(stt.triggeringPermanentSnapshot());
         }
+        entry.setTriggeringPermanent(stt.departedPermanent());
         if (stt.triggeringPermanentPowerAtTrigger() != null) {
             entry.setTriggeringPermanentPowerAtTrigger(stt.triggeringPermanentPowerAtTrigger());
         }
@@ -342,7 +343,7 @@ public class PermanentChoiceTriggerHandlerService {
             entry.setTargetId(permanentId);
         }
         entry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(dtt.dyingCard().getId()));
-        dtt.carryTriggeringCardTo(entry);
+        dtt.carryTriggeringObjectTo(entry);
         // Carry the death event's numeric payload (e.g. the dying creature's last-known power) so an
         // EventValue-based amount can be evaluated at resolution.
         if (dtt.eventValue() != null) {
@@ -397,17 +398,9 @@ public class PermanentChoiceTriggerHandlerService {
                 .anyMatch(target -> target.getMinTargets() == 0 && target.getMaxTargets() == 1);
     }
 
-    /**
-     * Whether the effect belongs to the card's target group. A death-trigger effect carrying a
-     * snapshot of the dying creature's counters is a copy of the effect declared on the card, so it
-     * is matched through its unbound form.
-     */
+    /** Whether the effect belongs to the card's target group. */
     private static boolean isBoundToTargetGroup(Card card, CardEffect effect, int targetIndex) {
-        if (card.getEffectTargetIndex(effect) == targetIndex) {
-            return true;
-        }
-        return effect instanceof com.github.laxika.magicalvibes.model.effect.DyingCreatureCountersAwareEffect aware
-                && card.getEffectTargetIndex(aware.boundToDyingCreatureCounters(java.util.Map.of())) == targetIndex;
+        return card.getEffectTargetIndex(effect) == targetIndex;
     }
 
     public void handleSelfTriggeredAbility(GameData gameData, UUID targetId,
@@ -433,6 +426,7 @@ public class PermanentChoiceTriggerHandlerService {
             entry.setTargetZone(Zone.EXILE);
         }
         entry.setSourcePermanentSnapshot(slt.sourcePermanentSnapshot());
+        entry.setTriggeringPermanent(slt.triggeringPermanent());
         if (slt.eventValue() != null) {
             entry.setEventValue(slt.eventValue());
         }
@@ -1440,6 +1434,9 @@ public class PermanentChoiceTriggerHandlerService {
                     : gameQueryService.findPermanentById(gameData, sourcePermanentId);
             if (kickedSource != null && kickedSource.isKicked()) {
                 entry.setKicked(true);
+            }
+            if (ett.triggeringPermanent() != null) {
+                entry.setTriggeringPermanent(ett.triggeringPermanent());
             }
             pushTriggeredEntry(gameData, entry);
 

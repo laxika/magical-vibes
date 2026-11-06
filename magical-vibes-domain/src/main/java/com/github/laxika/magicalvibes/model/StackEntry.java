@@ -530,6 +530,16 @@ public class StackEntry {
      * recorded: a card that left the graveyard and came back is a new object (CR 400.7).
      */
     @Setter private long triggeringCardGraveyardEntryVersion = -1;
+    /**
+     * The permanent the trigger event was about, as it last existed on the battlefield (CR 603.10a, CR 608.2h): the
+     * creature that died, the permanent that left or was sacrificed. Effects read "its counters", "its name", "its
+     * mana value" and "that creature" from it as they resolve; {@code null} when the event was about no departed
+     * permanent. Set through {@link #setTriggeringPermanent}, which keeps a copy of its own.
+     */
+    private Permanent triggeringPermanentSnapshot;
+    /** The Auras and Equipment attached to {@link #triggeringPermanentSnapshot} just before it left (CR 603.10a). */
+    private com.github.laxika.magicalvibes.model.rules.DepartedAttachments triggeringAttachments =
+            com.github.laxika.magicalvibes.model.rules.DepartedAttachments.NONE;
     /** Mixed-zone card targets remember their original permanent identity or graveyard incarnation. */
     private final Map<UUID, UUID> mixedZoneTargetPermanentIds = new HashMap<>();
     private final Map<UUID, Long> mixedZoneTargetGraveyardVersions = new HashMap<>();
@@ -1136,6 +1146,9 @@ public class StackEntry {
         this.triggeringCardSnapshot = source.triggeringCardSnapshot;
         this.triggeringSpellTargetIds = source.triggeringSpellTargetIds;
         this.triggeringCardGraveyardEntryVersion = source.triggeringCardGraveyardEntryVersion;
+        this.triggeringPermanentSnapshot = source.triggeringPermanentSnapshot == null
+                ? null : new Permanent(source.triggeringPermanentSnapshot);
+        this.triggeringAttachments = source.triggeringAttachments;
         this.mixedZoneTargetPermanentIds.putAll(source.mixedZoneTargetPermanentIds);
         this.mixedZoneTargetGraveyardVersions.putAll(source.mixedZoneTargetGraveyardVersions);
         this.targetCardGraveyardVersions.putAll(source.targetCardGraveyardVersions);
@@ -2004,6 +2017,48 @@ public class StackEntry {
     public void setTriggeringCard(UUID cardId, long graveyardEntryVersion) {
         this.triggeringCardId = cardId;
         this.triggeringCardGraveyardEntryVersion = graveyardEntryVersion;
+    }
+
+    /**
+     * Records {@code lastKnown}, a copy of which is kept, as the permanent the trigger event was about, as it last
+     * existed on the battlefield (CR 603.10a). A {@code null} permanent clears it.
+     */
+    public void setTriggeringPermanent(Permanent lastKnown) {
+        setTriggeringPermanent(lastKnown, com.github.laxika.magicalvibes.model.rules.DepartedAttachments.NONE);
+    }
+
+    /**
+     * Records {@code lastKnown}, a copy of which is kept, as the permanent the trigger event was about, with the Auras
+     * and Equipment attached to it just before it left (CR 603.10a).
+     */
+    public void setTriggeringPermanent(Permanent lastKnown,
+                                       com.github.laxika.magicalvibes.model.rules.DepartedAttachments attachments) {
+        this.triggeringPermanentSnapshot = lastKnown == null ? null : new Permanent(lastKnown);
+        this.triggeringAttachments = attachments == null
+                ? com.github.laxika.magicalvibes.model.rules.DepartedAttachments.NONE : attachments;
+    }
+
+    /**
+     * The counters the triggering permanent had as it last existed on the battlefield (CR 603.10a), by type in
+     * counter-type order; empty when there is no triggering permanent.
+     */
+    public Map<CounterType, Integer> triggeringPermanentCounters() {
+        if (triggeringPermanentSnapshot == null || triggeringPermanentSnapshot.getCounters().isEmpty()) {
+            return Map.of();
+        }
+        return Collections.unmodifiableMap(new EnumMap<>(triggeringPermanentSnapshot.getCounters()));
+    }
+
+    /**
+     * The number of {@code counterType} counters the triggering permanent had as it last existed on the battlefield,
+     * or of all its counters for a {@code null} type; 0 when there is no triggering permanent.
+     */
+    public int triggeringPermanentCounterCount(CounterType counterType) {
+        if (triggeringPermanentSnapshot == null) {
+            return 0;
+        }
+        return counterType == null ? triggeringPermanentSnapshot.getTotalCounterCount()
+                : triggeringPermanentSnapshot.getCounterCount(counterType);
     }
 
     /**

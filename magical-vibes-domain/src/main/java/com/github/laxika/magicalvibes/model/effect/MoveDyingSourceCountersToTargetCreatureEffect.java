@@ -1,59 +1,36 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-
 import java.util.List;
-import java.util.Map;
 
 /**
- * Death trigger for transferring every concrete counter from a dying creature to a target creature
+ * Death trigger for transferring every counter of a dying creature to a target creature
  * (e.g. Scolding Administrator, Host of the Hereafter, and Parish-Blade Trainee).
  * <p>
- * On "when this dies", the death-trigger collector snapshots the dying permanent's counters into
- * {@code counters}. When {@code requiresCounters} is true, an empty snapshot suppresses the
- * trigger; otherwise the trigger still requires a target and simply places no counters. On
- * {@code Triggers.creatureDies(YOU_CONTROL)}, the ally-death pipeline binds the same snapshot through
- * {@link DyingCreatureCountersAwareEffect}. Resolution places each counter on the chosen creature.
+ * The counters are the stack entry's triggering permanent's, as it last existed on the battlefield
+ * (CR 603.10a). When {@code requiresCounters} is true, "when this dies" doesn't trigger if it had no
+ * counters; otherwise the trigger still requires a target and simply places no counters. Resolution
+ * places each counter on the chosen creature.
  *
- * @param counters snapshot of the dying creature's counters, keyed by type (empty on the marker
- *                 instance placed on the card; filled in by the collector)
  * @param controllerOnly whether the target must be a creature controlled by the trigger controller
- * @param requiresCounters whether an empty counter snapshot suppresses the death trigger
+ * @param requiresCounters whether "when this dies" triggers only if the creature had counters on it
  */
-public record MoveDyingSourceCountersToTargetCreatureEffect(
-        Map<CounterType, Integer> counters,
-        boolean controllerOnly,
-        boolean requiresCounters
-)
-        implements CardEffect, DyingCreatureCountersAwareEffect {
-
-    public MoveDyingSourceCountersToTargetCreatureEffect {
-        counters = Map.copyOf(counters);
-    }
+public record MoveDyingSourceCountersToTargetCreatureEffect(boolean controllerOnly, boolean requiresCounters)
+        implements CardEffect {
 
     public MoveDyingSourceCountersToTargetCreatureEffect() {
-        this(Map.of(), false, true);
-    }
-
-    public MoveDyingSourceCountersToTargetCreatureEffect(Map<CounterType, Integer> counters) {
-        this(counters, false, true);
+        this(false, true);
     }
 
     public MoveDyingSourceCountersToTargetCreatureEffect(boolean controllerOnly) {
-        this(Map.of(), controllerOnly, true);
+        this(controllerOnly, true);
     }
 
     /** Creates the mandatory-target form that also triggers when the source had no counters. */
     public static MoveDyingSourceCountersToTargetCreatureEffect alwaysTriggers(boolean controllerOnly) {
-        return new MoveDyingSourceCountersToTargetCreatureEffect(Map.of(), controllerOnly, false);
-    }
-
-    @Override
-    public CardEffect boundToDyingCreatureCounters(Map<CounterType, Integer> counters) {
-        return new MoveDyingSourceCountersToTargetCreatureEffect(counters, controllerOnly, requiresCounters);
+        return new MoveDyingSourceCountersToTargetCreatureEffect(controllerOnly, false);
     }
 
     @Override

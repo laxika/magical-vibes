@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextEndStepEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +25,7 @@ public class ExileTopCardsMayPlayUntilNextEndStepEffectHandler implements Normal
     private final ExileService exileService;
     private final ExileSupport exileSupport;
     private final GameLogService gameLogService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,12 +39,14 @@ public class ExileTopCardsMayPlayUntilNextEndStepEffectHandler implements Normal
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String controllerName = gameData.playerIdToName.get(controllerId);
-        if (deck == null || deck.isEmpty() || exileEffect.count() <= 0) {
+        int count = amountEvaluationService.evaluate(gameData, exileEffect.count(),
+                AmountContext.forStackEntry(entry, entry.getSourcePermanentSnapshot()));
+        if (deck == null || deck.isEmpty() || count <= 0) {
             return;
         }
 
         List<String> exiledNames = new ArrayList<>();
-        for (int i = 0; i < exileEffect.count() && !deck.isEmpty(); i++) {
+        for (int i = 0; i < count && !deck.isEmpty(); i++) {
             Card topCard = deck.removeFirst();
             exileService.exileCard(gameData, controllerId, topCard);
             exileSupport.grantPlayUntilOwnersNextEndStep(gameData, topCard.getId(), controllerId);

@@ -1,32 +1,14 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.List;
-import java.util.UUID;
-
-/** Returns captured Auras from the controller's graveyard and reattaches captured Equipment. */
-public record ReturnAurasAttachedToDyingCreatureAndAttachEquipmentEffect(
-        List<UUID> auraCardIds,
-        List<UUID> equipmentPermanentIds
-) implements CardEffect, DyingCreatureAttachmentsAwareEffect {
-
-    public ReturnAurasAttachedToDyingCreatureAndAttachEquipmentEffect() {
-        this(List.of(), List.of());
-    }
-
-    public ReturnAurasAttachedToDyingCreatureAndAttachEquipmentEffect {
-        auraCardIds = List.copyOf(auraCardIds);
-        equipmentPermanentIds = List.copyOf(equipmentPermanentIds);
-    }
+/**
+ * Returns the Auras that were attached to the creature that died from the controller's graveyard and reattaches the
+ * Equipment that was, to the target creature. The attachments are the stack entry's triggering attachments, as they
+ * were just before the creature left (CR 603.10a).
+ */
+public record ReturnAurasAttachedToDyingCreatureAndAttachEquipmentEffect() implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {
         return TargetSpec.benign(TargetPredicates.creature());
-    }
-
-    @Override
-    public CardEffect boundToDyingCreatureAttachments(List<UUID> auraCardIds,
-                                                       List<UUID> equipmentPermanentIds) {
-        return new ReturnAurasAttachedToDyingCreatureAndAttachEquipmentEffect(
-                auraCardIds, equipmentPermanentIds);
     }
 }

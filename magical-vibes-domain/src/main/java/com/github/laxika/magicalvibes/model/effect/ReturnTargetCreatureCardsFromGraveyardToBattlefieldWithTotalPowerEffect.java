@@ -2,13 +2,12 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 /** Returns any number of target creature cards from the controller's graveyard within a power cap. */
 public record ReturnTargetCreatureCardsFromGraveyardToBattlefieldWithTotalPowerEffect(int maxTotalPower)
-        implements GraveyardCardChoosingEffect, DyingCreaturePermanentAwareEffect {
+        implements GraveyardCardChoosingEffect {
 
     private static final CardPredicate CREATURE_CARD = new CardTypePredicate(CardType.CREATURE);
 
@@ -37,11 +36,6 @@ public record ReturnTargetCreatureCardsFromGraveyardToBattlefieldWithTotalPowerE
         return maxTotalPower;
     }
 
-    @Override
-    public CardEffect boundToDyingCreature(Permanent dyingCreature) {
-        return new ReturnTargetCreatureCardsFromGraveyardToBattlefieldWithTotalPowerEffect(
-                Math.max(0, dyingCreature.getEffectivePower()));
-    }
 
     @Override
     public TargetSpec targetSpec() {

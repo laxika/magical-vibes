@@ -135,7 +135,7 @@ combat damage step is processed.
 | `Triggers.creatureDies(YOU_CONTROL)` (targeting variants) | `TriggerCollectionService.triggerCreatureDeath` (`CreatureDeathWatch.ALLY`) | Death |
 | `Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY)` (targeting variants) | `DeathTriggerCollectorService.handleArtifactGraveyardControllerConditional` / `handleArtifactGraveyardReturnUnlessDamage` | Spell target; the latter carries the exact graveyard card id and uses the source permanent snapshot |
 | `Triggers.postcombatMainPhase(ActivePlayer.YOU)` (graveyard-targeting variants) | `StepTriggerService.handlePostcombatMainTriggers` | Spell graveyard target |
-| `Triggers.creatureDies(YOU_CONTROL)` (targeting variants) | `TriggerCollectionService.triggerCreatureDeath` (`CreatureDeathWatch.ALLY`; non-may effects are batched; `DyingCreatureCountersAwareEffect` implementations receive the dying permanent's concrete counter snapshot before stacking) | Death |
+| `Triggers.creatureDies(YOU_CONTROL)` (targeting variants) | `TriggerCollectionService.triggerCreatureDeath` (`CreatureDeathWatch.ALLY`; non-may effects are batched; the stack entry carries the dying permanent as it last existed on the battlefield (CR 603.10a), which effects read for its counters as they resolve) | Death |
 | `Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY)` (targeting wrapper) | `DeathTriggerCollectorService.handleArtifactGraveyardControllerConditional` | Spell target |
 | `Triggers.dies(ObjectRelation.ENCHANTED)` (targeting branches) | `DeathTriggerCollectorService.addEnchantedPermanentDeathEntry` | Death |
 | `Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL)` | `TriggerCollectionService.checkAllyLandEntersTriggers` (targeted effects use `SpellTargetTriggerAnyTarget`; other effects go directly to the stack) | Spell target |
@@ -398,16 +398,17 @@ with the slot whenever another creature leaves the battlefield by any means, che
 `PermanentRemovalService` via `TriggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers`.
 `ON_CREATURE_EXILED_FROM_BATTLEFIELD` (Soulherder; global watcher — fires on every permanent with
 the slot whenever a creature is exiled from the battlefield, checked after the card enters exile).
-`Triggers.leavesBattlefield(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL)` is the controller-scoped sibling; effects implementing
-`LeavingCreatureCountersAwareEffect` receive a snapshot of the leaving creature's concrete
-counters before the trigger is queued.
+`Triggers.leavesBattlefield(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL)` is the controller-scoped sibling; the stack
+entry carries the leaving creature as it last existed on the battlefield (CR 603.10a), so effects read
+its counters as they resolve.
 `Triggers.leavesBattlefield(null, ObjectRelation.ANOTHER_YOU_CONTROL)` is the controller-scoped watcher for any permanent type;
 use the trigger's filter to narrow it to tokens or another permanent predicate.
 `Triggers.leavesBattlefield(null, ObjectRelation.YOU_CONTROL)` is the batched controller-scoped watcher for "one or more"
 permanents, including the source permanent when it leaves; the removal service snapshots a batch
 before dispatching one trigger per source.
-Effects implementing `LeavingPermanentCountersAwareEffect` can bind the leaving permanent's concrete
-counters before queuing; targeted effects are routed through the trigger-target interaction flow.
+The stack entry carries the leaving permanent as it last existed on the battlefield (CR 603.10a) and
+effects read its counters as they resolve; targeted effects are routed through the trigger-target
+interaction flow (which carries it via `withTriggeringPermanent`).
 Non-targeting: a "you may have target player mill two cards" is a `MayEffect`-wrapped
 `MillEffect(2, TARGET_PLAYER)` whose "may" and player target are resolved on the stack),
 `Triggers.milled(THIS)`, `Triggers.putIntoGraveyardFrom(Zone.LIBRARY, THIS)`, the state triggers (`Triggers.state(…)`), `Triggers.beginningOfCombat(ActivePlayer.YOU)`,

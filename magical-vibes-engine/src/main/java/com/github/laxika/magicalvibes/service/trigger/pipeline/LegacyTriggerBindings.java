@@ -30,7 +30,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourceCou
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourcePowerCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourcePowerEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokensForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensForExiledCardsWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
@@ -41,18 +40,14 @@ import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongContro
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreaturesOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForEachDyingSourceCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.DyingCreatureCountersAwareEffect;
-import com.github.laxika.magicalvibes.model.effect.DyingCreaturePermanentAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileIfHadCounterElseReturnWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTokensCreatedWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsForEachDyingCreatureCounterMayPlayUntilNextEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDyingSourcePowerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToLifeLostWhenEnteredEffect;
-import com.github.laxika.magicalvibes.model.effect.LeavingPermanentCountersAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.ManifestTopCardEffect;
@@ -86,7 +81,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardA
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsSharingDyingPermanentTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
-import com.github.laxika.magicalvibes.model.effect.SacrificedPermanentCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfExiledWhileActivatingCraftAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessOfCreaturesThatDamagedSourceEffect;
@@ -305,7 +299,7 @@ public class LegacyTriggerBindings {
         };
     }
 
-    /** "When this dies": the dying card, its attachments and its graveyard incarnation are bound first. */
+    /** "When this dies": the dying card's graveyard incarnation is bound first. */
     private boolean dies(Ctx c, CardEffect effect) {
         if (effect instanceof ExileSourceCardFromGraveyardAndShuffleTopCardsEffect
                 && !c.controllerId().equals(gameQueryService.findGraveyardOwnerById(c.gameData(),
@@ -314,7 +308,7 @@ public class LegacyTriggerBindings {
             return false;
         }
         CardEffect bound = triggerCollectionService.bindSelfDeathEffect(c.gameData(), c.dyingCard(),
-                c.dyingPermanent(), c.event().attachments(), effect);
+                c.dyingPermanent(), effect);
         return dispatch(deathHandlers, c, bound, this::handleDeathDefault);
     }
 
@@ -417,13 +411,9 @@ public class LegacyTriggerBindings {
                 this::handleCreateTokenWithDyingSourcePowerCounters);
         register(h, CreateTokenWithDyingSourcePowerEffect.class, this::handleCreateTokenWithDyingSourcePower);
         register(h, CreateTokenWithDyingSourceCounterPTEffect.class, this::handleCreateTokenWithDyingSourceCounterPT);
-        register(h, CreateTokensForEachDyingSourceCounterEffect.class,
-                this::handleCreateTokensForEachDyingSourceCounter);
         register(h, ManifestTopCardsForEachDyingSourceCounterEffect.class,
                 this::handleManifestTopCardsForEachDyingSourceCounter);
         register(h, DrawCardForEachDyingSourceCounterEffect.class, this::handleDrawCardForEachDyingSourceCounter);
-        register(h, ExileTopCardsForEachDyingCreatureCounterMayPlayUntilNextEndStepEffect.class,
-                this::handleExileTopCardsForEachDyingCreatureCounter);
         register(h, ExileIfHadCounterElseReturnWithCounterEffect.class,
                 this::handleExileIfHadCounterElseReturnWithCounter);
         register(h, RegisterDelayedSelfReturnFromGraveyardWithOneFewerCounterEffect.class,
@@ -474,11 +464,8 @@ public class LegacyTriggerBindings {
                 this::handleSelfLeavesCreateTokensForExiledCardsWithSource);
         register(h, CreateTokenForTargetPlayerEffect.class, this::handleSelfLeavesCreateTokenForTargetPlayer);
         register(h, GainLifeEffect.class, this::handleSelfLeavesGainLife);
-        register(h, ConditionalEffect.class, this::handleConditionalSelfLeavesTrigger);
         register(h, PutCounterOnTargetForEachLeavingSourceCounterEffect.class,
                 this::handlePutCounterOnTargetForEachLeavingSourceCounter);
-        register(h, PutCountersOnTargetForEachLeavingSourceCountersEffect.class,
-                this::handlePutCountersOnTargetForEachLeavingSourceCounters);
         register(h, GainLifeEqualToLifeLostWhenEnteredEffect.class,
                 this::handleSelfLeavesGainLifeEqualToLifeLostWhenEntered);
         register(h, TargetPlayerGainsLifeEffect.class, this::handleSelfLeavesTargetPlayerGainsLife);
@@ -621,49 +608,16 @@ public class LegacyTriggerBindings {
             return false;
         }
 
-        int counters = dyingPermanent.getCounters().values().stream()
-                .mapToInt(Integer::intValue)
-                .sum();
-
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 c.dyingCard(),
                 c.controllerId(),
                 c.dyingCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect.boundToDyingCreatureCounters(dyingPermanent.getCounters()))));
-        entry.setEventValue(counters);
+                new ArrayList<>(List.of(effect)));
+        entry.setEventValue(dyingPermanent.getTotalCounterCount());
         entry.setSourcePermanentSnapshot(new Permanent(dyingPermanent));
+        entry.setTriggeringPermanent(dyingPermanent);
         c.gameData().stack.add(entry);
-        return true;
-    }
-    private boolean handleCreateTokensForEachDyingSourceCounter(Ctx c, CreateTokensForEachDyingSourceCounterEffect effect) {
-        Permanent dyingPermanent = c.dyingPermanent();
-        if (dyingPermanent == null) {
-            return false;
-        }
-        int counters;
-        if (effect.counterType() != null) {
-            counters = dyingPermanent.getCounterCount(effect.counterType());
-        } else {
-            // Snapshot the total counter count across every concrete counter type (ANY and SILVER are
-            // wildcard categories, not stored on a permanent) — one token is created per counter.
-            counters = 0;
-            for (CounterType type : CounterType.values()) {
-                if (type == CounterType.ANY || type == CounterType.SILVER) {
-                    continue;
-                }
-                counters += dyingPermanent.getCounterCount(type);
-            }
-        }
-        CreateTokenEffect resolved = effect.tokenTemplate().withAmount(counters);
-
-        c.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                c.dyingCard(),
-                c.controllerId(),
-                c.dyingCard().getName() + "'s ability",
-                new ArrayList<>(List.of(resolved))
-        ));
         return true;
     }
     private boolean handleManifestTopCardsForEachDyingSourceCounter(Ctx c, ManifestTopCardsForEachDyingSourceCounterEffect effect) {
@@ -705,24 +659,6 @@ public class LegacyTriggerBindings {
                 c.controllerId(),
                 c.dyingCard().getName() + "'s ability",
                 new ArrayList<>(List.of(drawThen(counters, effect.thenEffect())))
-        ));
-        return true;
-    }
-    private boolean handleExileTopCardsForEachDyingCreatureCounter(Ctx c, ExileTopCardsForEachDyingCreatureCounterMayPlayUntilNextEndStepEffect effect) {
-        Permanent dyingPermanent = c.dyingPermanent();
-        if (dyingPermanent == null) {
-            return false;
-        }
-        int counters = countCountersOnPermanent(dyingPermanent);
-        if (counters <= 0) {
-            return false;
-        }
-        c.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                c.dyingCard(),
-                c.controllerId(),
-                c.dyingCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect.boundToDyingCreatureCounterCount(counters)))
         ));
         return true;
     }
@@ -780,12 +716,11 @@ public class LegacyTriggerBindings {
         if (dyingPermanent == null) {
             return false;
         }
-        // Snapshot the counter count at death — the permanent is off the battlefield by the time this
-        // resolves, so bake the fixed amount into the effect carried to target selection.
-        int counters = dyingPermanent.getCounterCount(effect.counterType());
+        // The counters are counted on the stack entry's triggering permanent, the source as it last existed on the
+        // battlefield (CR 603.10a), as the ability resolves.
         boolean modular = effect.modular() || dyingPermanent.getCard().hasKeyword(Keyword.MODULAR);
-        CardEffect baked = new PutCounterOnTargetForEachDyingSourceCounterEffect(
-                effect.counterType(), counters, effect.optional(), effect.targetPredicate(), modular);
+        CardEffect baked = modular == effect.modular() ? effect : new PutCounterOnTargetForEachDyingSourceCounterEffect(
+                effect.counterType(), effect.optional(), effect.targetPredicate(), true);
         // "you may …" (Soulstinger): the target is still chosen now (CR 603.3d), but the controller
         // may decline placing the counters when the trigger resolves — gate it behind a MayEffect.
         String counterDescription = effect.counterType() == CounterType.PLUS_ONE_PLUS_ONE ? "+1/+1" : "-1/-1";
@@ -796,7 +731,7 @@ public class LegacyTriggerBindings {
                 : baked;
         c.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                 c.dyingCard(), c.controllerId(), new ArrayList<>(List.of(queued))
-        ));
+        ).withTriggeringPermanent(dyingPermanent));
         return true;
     }
     private boolean handleDistributeCountersAmongCreaturesOnDeath(Ctx c, DistributeCountersAmongCreaturesOnDeathEffect effect) {
@@ -843,24 +778,18 @@ public class LegacyTriggerBindings {
         if (dyingPermanent == null) {
             return false;
         }
-        // Intervening-if: only fires if it had one or more counters on it. Snapshot every concrete
-        // counter type (ANY and SILVER are wildcard categories, not stored on a permanent).
-        Map<CounterType, Integer> snapshot = snapshotConcreteCounters(dyingPermanent);
-        if (snapshot.isEmpty() && effect.requiresCounters()) {
+        // Intervening "if" (CR 603.4): only fires if it had one or more counters on it, as it last existed on the
+        // battlefield (CR 603.10a).
+        if (dyingPermanent.getTotalCounterCount() == 0 && effect.requiresCounters()) {
             return false;
         }
 
         c.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
-                c.dyingCard(), c.controllerId(),
-                new ArrayList<>(List.of(new MoveDyingSourceCountersToTargetCreatureEffect(
-                        snapshot, effect.controllerOnly(), effect.requiresCounters())))
-        ));
+                c.dyingCard(), c.controllerId(), new ArrayList<>(List.of(effect))
+        ).withTriggeringPermanent(dyingPermanent));
         return true;
     }
     private boolean handleDeathMayPayMana(Ctx c, MayPayManaEffect mayPay) {
-        if (mayPay instanceof SacrificedPermanentCardAwareEffect cardAware) {
-            mayPay = (MayPayManaEffect) cardAware.boundToSacrificedPermanent(c.dyingCard());
-        }
         // CR 603.3d: the ability's target is chosen as the trigger goes on the stack even though
         // the "you may pay" happens on resolution (Drainpipe Vermin). Untargeted may-pay death
         // triggers (the Spellbomb cycle) skip the stack and prompt directly.
@@ -868,7 +797,7 @@ public class LegacyTriggerBindings {
         if (wrappedSpec.admits(TargetPredicate.Kind.PERMANENT) || wrappedSpec.admits(TargetPredicate.Kind.PLAYER)) {
             c.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                     c.dyingCard(), c.controllerId(), new ArrayList<>(List.of(mayPay))
-            ));
+            ).withTriggeringPermanent(c.dyingPermanent(), c.event().attachments()));
         } else if (wrappedSpec.admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             c.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     c.dyingCard(), c.controllerId(), List.of(mayPay)));
@@ -890,6 +819,7 @@ public class LegacyTriggerBindings {
             entry.setTriggeringCardId(c.dyingCard().getId());
             entry.setTriggeringCardGraveyardEntryVersion(
                     c.gameData().graveyardEntryVersion(c.dyingCard().getId()));
+            entry.setTriggeringPermanent(c.dyingPermanent(), c.event().attachments());
             c.gameData().stack.add(entry);
         }
         return true;
@@ -1054,14 +984,6 @@ public class LegacyTriggerBindings {
             });
             triggerEffect = new SetBasePowerToughnessOfCreaturesThatDamagedSourceEffect(
                     stats.power(), stats.toughness(), damagingIds);
-        }
-        if (triggerEffect instanceof DyingCreaturePermanentAwareEffect aware
-                && c.dyingPermanent() != null) {
-            triggerEffect = aware.boundToDyingCreature(c.dyingPermanent());
-        }
-        if (triggerEffect instanceof DyingCreatureCountersAwareEffect aware
-                && c.dyingPermanent() != null) {
-            triggerEffect = aware.boundToDyingCreatureCounters(snapshotConcreteCounters(c.dyingPermanent()));
         }
         // "Another target card" excludes this card: for a copy (Phantasmal Image copying Gixian
         // Puppeteer) that is the copy's own physical card, not the copied card.
@@ -1410,39 +1332,10 @@ public class LegacyTriggerBindings {
         return handleSelfLeavesDefault(c, frozen);
     }
 
-    private boolean handleConditionalSelfLeavesTrigger(Ctx c, ConditionalEffect effect) {
-        if (!(effect.wrapped() instanceof LeavingPermanentCountersAwareEffect aware)) {
-            return handleSelfLeavesDefault(c, effect);
-        }
-
-        CardEffect bound = aware.boundToLeavingPermanentCounters(snapshotConcreteCounters(c.permanent()));
-        if (bound == null) {
-            return false;
-        }
-        return handleSelfLeavesDefault(c,
-                new ConditionalEffect(effect.condition(), bound));
-    }
-
     private boolean handlePutCounterOnTargetForEachLeavingSourceCounter(Ctx c, PutCounterOnTargetForEachLeavingSourceCounterEffect effect) {
         int count = c.permanent().getCounterCount(effect.counterType());
         CardEffect baked = new PutCounterOnTargetForEachLeavingSourceCounterEffect(
                 effect.counterType(), count, effect.targetPredicate());
-        return handleSelfLeavesDefault(c, baked);
-    }
-
-    private boolean handlePutCountersOnTargetForEachLeavingSourceCounters(Ctx c, PutCountersOnTargetForEachLeavingSourceCountersEffect effect) {
-        Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
-        for (CounterType counterType : CounterType.values()) {
-            if (counterType == CounterType.ANY || counterType == CounterType.SILVER) {
-                continue;
-            }
-            int count = c.permanent().getCounterCount(counterType);
-            if (count > 0) {
-                counters.put(counterType, count);
-            }
-        }
-        CardEffect baked = new PutCountersOnTargetForEachLeavingSourceCountersEffect(
-                counters, effect.targetPredicate());
         return handleSelfLeavesDefault(c, baked);
     }
 
@@ -1478,20 +1371,6 @@ public class LegacyTriggerBindings {
         return true;
     }
 
-    private Map<CounterType, Integer> snapshotConcreteCounters(Permanent permanent) {
-        Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
-        for (CounterType counterType : CounterType.values()) {
-            if (counterType == CounterType.ANY || counterType == CounterType.SILVER) {
-                continue;
-            }
-            int count = permanent.getCounterCount(counterType);
-            if (count > 0) {
-                counters.put(counterType, count);
-            }
-        }
-        return Map.copyOf(counters);
-    }
-
     /**
      * The id of the card that lands in the graveyard when this permanent dies. For a transformed
      * permanent that is the front face it was cast as, not the back face currently on the battlefield.
@@ -1504,23 +1383,30 @@ public class LegacyTriggerBindings {
 
     /**
      * Gives {@code entry} the card that went to the graveyard ("return it", "exile that card") as its triggering card,
-     * with the graveyard incarnation it has now (CR 400.7), for the effects that read it as they resolve.
+     * with the graveyard incarnation it has now (CR 400.7), and the permanent as it last existed on the battlefield
+     * with what was attached to it ("its counters", "that creature", CR 603.10a) as its triggering permanent, for the
+     * effects that read them as they resolve.
      */
     private static void markDyingCard(Ctx c, StackEntry entry) {
         if (c.destination() == Zone.GRAVEYARD) {
             UUID cardId = graveyardCardIdOf(c);
             entry.setTriggeringCard(cardId, c.gameData().graveyardEntryVersion(cardId));
         }
+        if (c.dyingPermanent() != null) {
+            entry.setTriggeringPermanent(c.dyingPermanent(), c.event().attachments());
+        }
     }
 
-    /** {@code target} with the card that went to the graveyard as its triggering card, as {@link #markDyingCard}. */
+    /** {@code target} with the triggering card and permanent {@link #markDyingCard} gives an entry. */
     private static PermanentChoiceContext.DeathTriggerTarget withDyingCard(
             Ctx c, PermanentChoiceContext.DeathTriggerTarget target) {
+        PermanentChoiceContext.DeathTriggerTarget withPermanent = c.dyingPermanent() == null ? target
+                : target.withTriggeringPermanent(c.dyingPermanent(), c.event().attachments());
         if (c.destination() != Zone.GRAVEYARD) {
-            return target;
+            return withPermanent;
         }
         UUID cardId = graveyardCardIdOf(c);
-        return target.withTriggeringCard(cardId, c.gameData().graveyardEntryVersion(cardId));
+        return withPermanent.withTriggeringCard(cardId, c.gameData().graveyardEntryVersion(cardId));
     }
 
 
@@ -1627,16 +1513,6 @@ public class LegacyTriggerBindings {
                 : SequenceEffect.of(new DrawCardEffect(counters), thenEffect);
     }
 
-    private int countCountersOnPermanent(Permanent permanent) {
-        int count = 0;
-        for (CounterType counterType : CounterType.values()) {
-            if (counterType != CounterType.ANY && counterType != CounterType.SILVER) {
-                count += permanent.getCounterCount(counterType);
-            }
-        }
-        return count;
-    }
-
     private UUID findPendingEnterTarget(GameData gameData, Permanent source) {
         return gameData.stack.stream()
                 .filter(entry -> source.getId().equals(entry.getSourcePermanentId()))
@@ -1697,7 +1573,7 @@ public class LegacyTriggerBindings {
             c.gameData().queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
                     c.dyingCard(), c.controllerId(), new ArrayList<>(List.of(effect)),
                     "leaves-the-battlefield", c.permanent().getId(), new Permanent(c.permanent())
-            ));
+            ).withTriggeringPermanent(c.dyingPermanent()));
         } else {
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
@@ -1709,6 +1585,7 @@ public class LegacyTriggerBindings {
                     List.of()
             );
             entry.setSourcePermanentSnapshot(new Permanent(c.permanent()));
+            entry.setTriggeringPermanent(c.dyingPermanent());
             c.gameData().stack.add(entry);
         }
         logSelfLeaves(c);

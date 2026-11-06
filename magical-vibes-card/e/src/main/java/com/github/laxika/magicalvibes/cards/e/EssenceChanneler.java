@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "BLB", collectorNumber = "12")
@@ -28,6 +27,6 @@ public class EssenceChanneler extends Card {
         addTrigger(Triggers.youGainLife(),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
         target(TargetFilters.creatureYouControl()).addTrigger(Triggers.dies(ObjectRelation.THIS),
-                new MoveDyingSourceCountersToTargetCreatureEffect(Map.of(), true, false));
+                new MoveDyingSourceCountersToTargetCreatureEffect(true, false));
     }
 }

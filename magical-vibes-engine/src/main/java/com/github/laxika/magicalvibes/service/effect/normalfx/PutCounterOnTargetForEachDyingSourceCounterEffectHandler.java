@@ -24,7 +24,8 @@ public class PutCounterOnTargetForEachDyingSourceCounterEffectHandler implements
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (PutCounterOnTargetForEachDyingSourceCounterEffect) effect;
-        if (e.count() <= 0) {
+        int count = entry.triggeringPermanentCounterCount(e.counterType());
+        if (count <= 0) {
             return;
         }
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
@@ -32,6 +33,6 @@ public class PutCounterOnTargetForEachDyingSourceCounterEffectHandler implements
             return;
         }
         permanentCounterSupport.placeCounterOnPermanent(
-                gameData, entry, target, e.counterType(), e.count(), e.modular());
+                gameData, entry, target, e.counterType(), count, e.modular());
     }
 }

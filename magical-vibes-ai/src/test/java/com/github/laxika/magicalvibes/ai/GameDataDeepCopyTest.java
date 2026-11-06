@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.rules.DepartedAttachments;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -272,6 +273,26 @@ class GameDataDeepCopyTest {
         GameData copy = gd.simulationCopy();
         assertThat(copy.stack).isEmpty();
         assertThat(copy.stack).isNotSameAs(gd.stack);
+    }
+
+    @Test
+    @DisplayName("Deep copy keeps a stack entry's triggering permanent and attachments, independently")
+    void deepCopyKeepsTriggeringPermanentIndependently() {
+        Permanent dying = new Permanent(new GrizzlyBears());
+        dying.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        UUID auraCardId = UUID.randomUUID();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY, new SerraAngel(), player1.getId(), "Death trigger", List.of());
+        entry.setTriggeringPermanent(dying, new DepartedAttachments(List.of(auraCardId), List.of()));
+        gd.stack.add(entry);
+
+        GameData copy = gd.simulationCopy();
+        StackEntry copied = copy.stack.getFirst();
+        copied.getTriggeringPermanentSnapshot().setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+
+        assertThat(copied.getTriggeringPermanentSnapshot()).isNotSameAs(entry.getTriggeringPermanentSnapshot());
+        assertThat(copied.getTriggeringAttachments().auraCardIds()).containsExactly(auraCardId);
+        assertThat(entry.triggeringPermanentCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test

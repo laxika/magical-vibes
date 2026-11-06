@@ -4,46 +4,35 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
-import java.util.Map;
-
 /**
  * Death trigger for "When this creature dies, put a {@code counterType} counter on target creature
  * for each {@code counterType} counter on this creature" (e.g. Grief Tyrant, which enters with four
  * -1/-1 counters and hands them out on death).
  * <p>
- * Placed on the "when this dies" ability. The death-trigger collector snapshots the dying permanent's
- * count of {@code counterType} at the moment of death into {@code count} (the source is off the
- * battlefield by the time this resolves), queues a targeted death trigger, and resolution places
- * {@code count} counters of {@code counterType} on the chosen creature.
+ * The counters are counted on the stack entry's triggering permanent, as it last existed on the battlefield
+ * (CR 603.10a): the source is off the battlefield by the time this resolves.
  *
  * @param counterType the counter type counted on the dying creature and placed on the target
- * @param count       snapshot of the dying creature's counter count (0 on the marker instance placed
- *                    on the card; filled in by the collector)
  * @param optional    when {@code true} this is a "you may" death trigger (Soulstinger) — the target
  *                    is still chosen as the trigger goes on the stack (CR 603.3d), but the controller
- *                    may decline placing the counters at resolution; the collector wraps the
- *                    snapshotted effect in a {@code MayEffect}
+ *                    may decline placing the counters at resolution; the collector wraps the effect
+ *                    in a {@code MayEffect}
  * @param targetPredicate optional structural restriction for the target; {@code null} means any creature
  * @param modular whether the counter placement is the result of a modular triggered ability
  */
 public record PutCounterOnTargetForEachDyingSourceCounterEffect(
         CounterType counterType,
-        int count,
         boolean optional,
         PermanentPredicate targetPredicate,
         boolean modular
-) implements CardEffect, DyingCreatureCountersAwareEffect, LeavingPermanentCountersAwareEffect {
-
-    public PutCounterOnTargetForEachDyingSourceCounterEffect(CounterType counterType, int count, boolean optional) {
-        this(counterType, count, optional, null, false);
-    }
+) implements CardEffect {
 
     public PutCounterOnTargetForEachDyingSourceCounterEffect(CounterType counterType) {
-        this(counterType, 0, false, null, false);
+        this(counterType, false, null, false);
     }
 
     public PutCounterOnTargetForEachDyingSourceCounterEffect(CounterType counterType, boolean optional) {
-        this(counterType, 0, optional, null, false);
+        this(counterType, optional, null, false);
     }
 
     public PutCounterOnTargetForEachDyingSourceCounterEffect(
@@ -51,36 +40,12 @@ public record PutCounterOnTargetForEachDyingSourceCounterEffect(
             boolean optional,
             PermanentPredicate targetPredicate
     ) {
-        this(counterType, 0, optional, targetPredicate, false);
-    }
-
-    public PutCounterOnTargetForEachDyingSourceCounterEffect(
-            CounterType counterType,
-            boolean optional,
-            PermanentPredicate targetPredicate,
-            boolean modular
-    ) {
-        this(counterType, 0, optional, targetPredicate, modular);
+        this(counterType, optional, targetPredicate, false);
     }
 
     @Override
     public TargetSpec targetSpec() {
         return TargetSpec.benign(TargetPredicates.permanent(),
                 targetPredicate != null ? targetPredicate : new PermanentIsCreaturePredicate());
-    }
-
-    @Override
-    public CardEffect boundToDyingCreatureCounters(Map<CounterType, Integer> counters) {
-        return withCounterCount(counters);
-    }
-
-    @Override
-    public CardEffect boundToLeavingPermanentCounters(Map<CounterType, Integer> counters) {
-        return withCounterCount(counters);
-    }
-
-    private CardEffect withCounterCount(Map<CounterType, Integer> counters) {
-        return new PutCounterOnTargetForEachDyingSourceCounterEffect(
-                counterType, counters.getOrDefault(counterType, 0), optional, targetPredicate, modular);
     }
 }

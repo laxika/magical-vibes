@@ -22,9 +22,7 @@ public class CreateTokenWithDyingSourceCounterPTEffectHandler implements NormalE
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var create = (CreateTokenWithDyingSourceCounterPTEffect) effect;
-        int counters = create.counterType() == null
-                ? create.counters().values().stream().mapToInt(Integer::intValue).sum()
-                : create.counters().getOrDefault(create.counterType(), 0);
+        int counters = entry.triggeringPermanentCounterCount(create.counterType());
         createTokenEffectHandler.resolve(gameData, entry,
                 create.tokenTemplate().withPowerToughness(counters, counters));
     }

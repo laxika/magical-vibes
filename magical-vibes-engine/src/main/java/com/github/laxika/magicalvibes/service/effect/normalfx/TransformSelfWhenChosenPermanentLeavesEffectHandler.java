@@ -24,11 +24,11 @@ public class TransformSelfWhenChosenPermanentLeavesEffectHandler implements Norm
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var transformEffect = (TransformSelfWhenChosenPermanentLeavesEffect) effect;
         UUID sourcePermanentId = entry.getSourcePermanentId();
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (source == null
-                || !transformEffect.leavingPermanentId().equals(source.getChosenPermanentId())) {
+        // The permanent that left is the entry's triggering permanent.
+        Permanent leaving = entry.getTriggeringPermanentSnapshot();
+        if (source == null || leaving == null || !leaving.getId().equals(source.getChosenPermanentId())) {
             return;
         }
 

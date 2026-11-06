@@ -255,7 +255,7 @@ public class TriggeredAbilityStackService {
         for (EffectRegistration registration : registrations) {
             CardEffect effect = kind == LegacyTriggerBindings.Kind.DIES
                     ? triggerCollectionService.bindSelfDeathEffect(gameData, candidate.sourceCard(),
-                    event.permanent(), event.attachments(), registration.effect())
+                    event.permanent(), registration.effect())
                     : registration.effect();
             effects.add(withInterveningIf(interveningIf, effect, false));
         }
@@ -273,7 +273,8 @@ public class TriggeredAbilityStackService {
                     target = target.withTriggeringCard(event.card().getId(),
                             gameData.graveyardEntryVersion(event.card().getId()));
                 }
-                gameData.queueInteraction(target);
+                gameData.queueInteraction(event.leftBattlefield()
+                        ? target.withTriggeringPermanent(event.permanent(), event.attachments()) : target);
             } else {
                 StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, candidate.sourceCard(),
                         candidate.controllerId(), candidate.sourceCard().getName() + "'s ability", effects,
@@ -288,6 +289,11 @@ public class TriggeredAbilityStackService {
                     // "That card": a graveyard card that leaves and comes back before this resolves is a new object
                     // (CR 400.7).
                     entry.setTriggeringCard(event.card().getId(), gameData.graveyardEntryVersion(event.card().getId()));
+                }
+                if (event.leftBattlefield()) {
+                    // "Its counters", "that creature": the permanent as it last existed on the battlefield
+                    // (CR 603.10a).
+                    entry.setTriggeringPermanent(event.permanent(), event.attachments());
                 }
                 gameData.enqueueTrigger(entry);
             }

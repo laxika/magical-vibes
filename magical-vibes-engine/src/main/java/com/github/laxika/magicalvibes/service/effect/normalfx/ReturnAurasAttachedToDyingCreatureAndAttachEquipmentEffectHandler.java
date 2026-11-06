@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.rules.DepartedAttachments;
 import com.github.laxika.magicalvibes.model.effect.ReturnAurasAttachedToDyingCreatureAndAttachEquipmentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
@@ -54,19 +55,19 @@ public class ReturnAurasAttachedToDyingCreatureAndAttachEquipmentEffectHandler
             return;
         }
 
-        ReturnAurasAttachedToDyingCreatureAndAttachEquipmentEffect attachmentEffect =
-                (ReturnAurasAttachedToDyingCreatureAndAttachEquipmentEffect) effect;
+        // The Auras and Equipment attached to the creature just before it died (CR 603.10a).
+        DepartedAttachments attachments = entry.getTriggeringAttachments();
         List<UUID> legalAuraCardIds = legalAuraCardIds(gameData, entry.getControllerId(), target,
-                attachmentEffect);
+                attachments.auraCardIds());
         List<UUID> legalEquipmentIds = legalAuraCardIds.isEmpty()
-                ? legalEquipmentIds(gameData, target, attachmentEffect) : List.of();
+                ? legalEquipmentIds(gameData, target, attachments.equipmentPermanentIds()) : List.of();
         if (!legalAuraCardIds.isEmpty() || !legalEquipmentIds.isEmpty()) {
             playerInputService.beginMultiPermanentChoice(gameData, entry.getControllerId(),
                     legalEquipmentIds, legalAuraCardIds,
                     legalAuraCardIds.size() + legalEquipmentIds.size(),
                     new MultiPermanentChoiceContext.ReturnAurasAndAttachEquipmentToTargetCreature(
-                            target.getId(), legalAuraCardIds.isEmpty() ? List.of() : attachmentEffect.auraCardIds(),
-                            attachmentEffect.equipmentPermanentIds()),
+                            target.getId(), legalAuraCardIds.isEmpty() ? List.of() : attachments.auraCardIds(),
+                            attachments.equipmentPermanentIds()),
                     "Choose any number of Auras and Equipment to attach to " + target.getCard().getName() + ".");
         }
     }
@@ -86,9 +87,7 @@ public class ReturnAurasAttachedToDyingCreatureAndAttachEquipmentEffectHandler
         }
         creatureControlService.recomputeControl(gameData, target);
         if (!context.auraCardIds().isEmpty()) {
-            var equipmentEffect = new ReturnAurasAttachedToDyingCreatureAndAttachEquipmentEffect(
-                    List.of(), context.equipmentPermanentIds());
-            List<UUID> legalEquipmentIds = legalEquipmentIds(gameData, target, equipmentEffect);
+            List<UUID> legalEquipmentIds = legalEquipmentIds(gameData, target, context.equipmentPermanentIds());
             if (!legalEquipmentIds.isEmpty()) {
                 playerInputService.beginMultiPermanentChoice(gameData, controllerId,
                         legalEquipmentIds, List.of(), legalEquipmentIds.size(),
@@ -107,9 +106,9 @@ public class ReturnAurasAttachedToDyingCreatureAndAttachEquipmentEffectHandler
     }
 
     private List<UUID> legalAuraCardIds(GameData gameData, UUID controllerId, Permanent target,
-                                        ReturnAurasAttachedToDyingCreatureAndAttachEquipmentEffect effect) {
+                                        List<UUID> auraCardIds) {
         List<UUID> ids = new ArrayList<>();
-        for (UUID auraCardId : effect.auraCardIds()) {
+        for (UUID auraCardId : auraCardIds) {
             Card aura = findCard(gameData, controllerId, auraCardId);
             if (aura != null && auraAttachmentService.canEnchant(gameData, aura, controllerId, target)) {
                 ids.add(auraCardId);
@@ -118,10 +117,9 @@ public class ReturnAurasAttachedToDyingCreatureAndAttachEquipmentEffectHandler
         return ids;
     }
 
-    private List<UUID> legalEquipmentIds(GameData gameData, Permanent target,
-                                          ReturnAurasAttachedToDyingCreatureAndAttachEquipmentEffect effect) {
+    private List<UUID> legalEquipmentIds(GameData gameData, Permanent target, List<UUID> equipmentPermanentIds) {
         List<UUID> ids = new ArrayList<>();
-        for (UUID equipmentPermanentId : effect.equipmentPermanentIds()) {
+        for (UUID equipmentPermanentId : equipmentPermanentIds) {
             Permanent equipment = gameQueryService.findPermanentById(gameData, equipmentPermanentId);
             if (equipment != null
                     && GameQueryService.permanentHasSubtype(equipment, CardSubtype.EQUIPMENT)

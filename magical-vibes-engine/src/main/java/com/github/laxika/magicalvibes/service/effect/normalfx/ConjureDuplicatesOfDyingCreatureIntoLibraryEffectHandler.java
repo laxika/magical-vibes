@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -31,9 +32,8 @@ public class ConjureDuplicatesOfDyingCreatureIntoLibraryEffectHandler implements
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        ConjureDuplicatesOfDyingCreatureIntoLibraryEffect conjure =
-                (ConjureDuplicatesOfDyingCreatureIntoLibraryEffect) effect;
-        if (conjure.oilCounterCount() <= 0) {
+        int oilCounterCount = entry.triggeringPermanentCounterCount(CounterType.OIL);
+        if (oilCounterCount <= 0) {
             return;
         }
 
@@ -46,21 +46,21 @@ public class ConjureDuplicatesOfDyingCreatureIntoLibraryEffectHandler implements
             return;
         }
 
-        for (int i = 0; i < conjure.oilCounterCount(); i++) {
+        for (int i = 0; i < oilCounterCount; i++) {
             Card duplicate = dyingCard.createConjuredCopy();
             duplicate.setOwnerId(entry.getControllerId());
             duplicate.freeze();
             PerpetualCardPowerToughnessSupport.remember(
-                    gameData, duplicate, conjure.oilCounterCount(), conjure.oilCounterCount());
+                    gameData, duplicate, oilCounterCount, oilCounterCount);
             library.add(duplicate);
         }
 
         triggerCollectionService.checkConjureTriggers(
-                gameData, entry.getControllerId(), conjure.oilCounterCount());
+                gameData, entry.getControllerId(), oilCounterCount);
         LibraryShuffleHelper.shuffleLibrary(gameData, entry.getControllerId());
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
-                " conjures " + conjure.oilCounterCount()
-                        + " duplicate" + (conjure.oilCounterCount() == 1 ? "" : "s")
+                " conjures " + oilCounterCount
+                        + " duplicate" + (oilCounterCount == 1 ? "" : "s")
                         + " into their library, then shuffles."));
     }
 }

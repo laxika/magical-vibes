@@ -642,38 +642,28 @@ public sealed interface TriggerContext {
 
     /**
      * Context for ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD and
-     * ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD triggers.
+     * ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD triggers. {@code artifactPermanent} is the artifact as
+     * it last existed on the battlefield (CR 603.10a), or {@code null} when not known.
      */
     record ArtifactGraveyard(UUID graveyardOwnerId,
                              UUID artifactControllerId,
                              Card artifactCard,
                              int artifactManaValue,
-                             Map<CounterType, Integer> artifactCounters,
+                             Permanent artifactPermanent,
                              boolean wasSacrificed) implements TriggerContext {
 
-        public ArtifactGraveyard {
-            artifactCounters = Map.copyOf(artifactCounters);
-        }
-
         public ArtifactGraveyard(UUID graveyardOwnerId, UUID artifactControllerId) {
-            this(graveyardOwnerId, artifactControllerId, null, 0, Map.of());
+            this(graveyardOwnerId, artifactControllerId, null, 0, null, false);
         }
 
         public ArtifactGraveyard(UUID graveyardOwnerId, UUID artifactControllerId, Card artifactCard) {
             this(graveyardOwnerId, artifactControllerId, artifactCard,
-                    artifactCard == null ? 0 : artifactCard.getManaValue(), Map.of());
+                    artifactCard == null ? 0 : artifactCard.getManaValue(), null, false);
         }
 
         public ArtifactGraveyard(UUID graveyardOwnerId, UUID artifactControllerId,
                                  Card artifactCard, int artifactManaValue) {
-            this(graveyardOwnerId, artifactControllerId, artifactCard, artifactManaValue, Map.of());
-        }
-
-        public ArtifactGraveyard(UUID graveyardOwnerId, UUID artifactControllerId,
-                                 Card artifactCard, int artifactManaValue,
-                                 Map<CounterType, Integer> artifactCounters) {
-            this(graveyardOwnerId, artifactControllerId, artifactCard, artifactManaValue,
-                    artifactCounters, false);
+            this(graveyardOwnerId, artifactControllerId, artifactCard, artifactManaValue, null, false);
         }
     }
 
@@ -759,15 +749,14 @@ public sealed interface TriggerContext {
         }
     }
 
-    /** Context for a controller's commander entering the command zone. */
-    record CommanderPutIntoCommandZone(Card commander, UUID commanderOwnerId,
-                                       Map<CounterType, Integer> commanderCounters) implements TriggerContext {
+    /**
+     * Context for a controller's commander entering the command zone. {@code departedCommander} is the commander as
+     * it last existed on the battlefield (CR 603.10a) when it came from there, {@code null} otherwise.
+     */
+    record CommanderPutIntoCommandZone(Card commander, UUID commanderOwnerId, Permanent departedCommander)
+            implements TriggerContext {
         public CommanderPutIntoCommandZone(Card commander, UUID commanderOwnerId) {
-            this(commander, commanderOwnerId, Map.of());
-        }
-
-        public CommanderPutIntoCommandZone {
-            commanderCounters = commanderCounters == null ? Map.of() : Map.copyOf(commanderCounters);
+            this(commander, commanderOwnerId, null);
         }
     }
 
