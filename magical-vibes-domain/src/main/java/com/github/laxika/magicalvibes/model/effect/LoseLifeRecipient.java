@@ -23,6 +23,11 @@ package com.github.laxika.magicalvibes.model.effect;
  *       that creature dies this turn, its controller loses 2 life" (Touch of Moonglove). The
  *       graveyard pipeline binds that player onto the trigger's {@code targetId} when the ability is
  *       put on the stack; the effect chooses no target.</li>
+ *   <li>{@link #TRIGGERING_PERMANENT_CONTROLLER} — the controller of the permanent the trigger event was about
+ *       ({@code StackEntry.triggeringPermanentId}) as the ability resolves, or its last known controller once it has
+ *       left the battlefield, or the controller the entry recorded for a source that was never a permanent: "its
+ *       controller loses that much life" of an enchanted creature that dealt damage (Visions of Brutality). The
+ *       effect chooses no target.</li>
  *   <li>{@link #DEFENDING_PLAYER} — the player being attacked by the source (or the controller of
  *       the attacked planeswalker), captured as the trigger's {@code attackedTargetId}; used by
  *       combat triggers such as "whenever this creature becomes blocked, defending player loses N
@@ -42,6 +47,7 @@ public enum LoseLifeRecipient {
     TRIGGERING_PLAYER,
     TARGET_PERMANENT_CONTROLLER,
     DYING_CREATURE_CONTROLLER,
+    TRIGGERING_PERMANENT_CONTROLLER,
     DEFENDING_PLAYER,
     /** The player whose upkeep is currently resolving; supplied by the trigger entry. */
     ACTIVE_PLAYER,

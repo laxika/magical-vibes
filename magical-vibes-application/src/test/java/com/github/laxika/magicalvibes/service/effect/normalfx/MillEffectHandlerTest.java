@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -161,6 +162,38 @@ class MillEffectHandlerTest {
 
             verify(graveyardService).resolveMillPlayer(gd, player1Id, 2);
             verify(graveyardService).resolveMillPlayer(gd, player2Id, 4);
+        }
+    }
+
+    @Nested
+    @DisplayName("TRIGGERING_PERMANENT_CONTROLLER")
+    class TriggeringPermanentController {
+
+        @Test
+        @DisplayName("Mills the triggering permanent's controller as the ability resolves the event's amount")
+        void millsTheTriggeringPermanentsController() {
+            MillEffect effect = new MillEffect(new EventValue(), MillRecipient.TRIGGERING_PERMANENT_CONTROLLER);
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Belltower Sphinx"),
+                    player1Id, "Belltower Sphinx", List.of(effect));
+            entry.setEventValue(3);
+            when(gameQueryService.findTriggeringPermanentController(gd, entry)).thenReturn(player2Id);
+
+            handler.resolve(gd, entry, effect);
+
+            verify(graveyardService).resolveMillPlayer(gd, player2Id, 3);
+        }
+
+        @Test
+        @DisplayName("Falls back to the event's player snapshot when no controller is recorded (Mesmeric Orb)")
+        void fallsBackToTheEventPlayerSnapshot() {
+            MillEffect effect = new MillEffect(1, MillRecipient.TRIGGERING_PERMANENT_CONTROLLER);
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Mesmeric Orb"),
+                    player1Id, "Mesmeric Orb", List.of(effect));
+            entry.setEventPlayerIds(List.of(player2Id));
+
+            handler.resolve(gd, entry, effect);
+
+            verify(graveyardService).resolveMillPlayer(gd, player2Id, 1);
         }
     }
 

@@ -11,20 +11,14 @@ import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsCo
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfDamagedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerExilesRandomHandCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.GhyrsonStarnKelermorphEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerAwareEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerMillsEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDamageSourceControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToDamageSourceCreatureOrSpellControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureDamagedPlayerControlsEffect;
@@ -580,7 +574,7 @@ public class DamageTriggerCollectorService {
         if (sourceControllerId == null || sourceControllerId.equals(dc.damagedPlayerId())) return false;
 
         List<CardEffect> effects = new ArrayList<>();
-        effects.add(new DamageSourceControllerGainsControlOfDamagedPermanentEffect(sourceControllerId));
+        effects.add(new DamageSourceControllerGainsControlOfDamagedPermanentEffect());
         if (controlEffect.untap()) {
             effects.add(new UntapPermanentsEffect(TapUntapScope.SELF));
         }
@@ -590,6 +584,8 @@ public class DamageTriggerCollectorService {
                 null, match.permanent().getId());
         entry.setNonTargeting(true);
         entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        entry.setTriggeringPermanentId(sourcePermanent.getId());
+        entry.setTriggeringPermanentControllerId(sourceControllerId);
         gameData.enqueueTrigger(entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         return true;
@@ -749,48 +745,21 @@ public class DamageTriggerCollectorService {
 
     // ── ON_DEALT_DAMAGE ────────────────────────────────────────────────
 
-    @CollectsDamageTrigger(value = DealDamageToDamageSourceCreatureOrSpellControllerEffect.class,
-            watch = DamageWatch.ON_DEALT_DAMAGE)
-    private boolean handleDamageSourceCreatureOrSpellController(
-            TriggerMatchContext match, DealDamageToDamageSourceCreatureOrSpellControllerEffect trigger,
-            TriggerContext ctx) {
-        TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
-        CardEffect effectToAdd = trigger.bindDamageSource(
-                dc.sourceCard(), dc.sourcePermanentId(), dc.damageSourceControllerId(), dc.damageDealt());
-        addDealtDamageEntry(match.gameData(), dc.damagedCreature(), effectToAdd, dc.damageDealt());
-        return true;
-    }
-
-    @CollectsDamageTriggers({
-        @CollectsDamageTrigger(value = DamageSourceControllerSacrificesPermanentsEffect.class, watch = DamageWatch.ON_DEALT_DAMAGE),
-        @CollectsDamageTrigger(value = DamageSourceControllerGetsPoisonCounterEffect.class, watch = DamageWatch.ON_DEALT_DAMAGE),
-        @CollectsDamageTrigger(value = DamageSourceControllerMillsEffect.class, watch = DamageWatch.ON_DEALT_DAMAGE),
-        @CollectsDamageTrigger(value = DamageSourceControllerExilesRandomHandCardEffect.class, watch = DamageWatch.ON_DEALT_DAMAGE),
-        @CollectsDamageTrigger(value = DamageSourceControllerGainsControlOfDamagedPermanentEffect.class,
-                watch = DamageWatch.ON_DEALT_DAMAGE)
-    })
-    private boolean handleDamageSourceControllerAware(TriggerMatchContext match,
-            DamageSourceControllerAwareEffect trigger, TriggerContext ctx) {
-        TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
-        CardEffect effectToAdd = trigger.bindDamageSourceController(
-                dc.damageSourceControllerId(), dc.damageDealt(), dc.sourcePermanentId());
-        addDealtDamageEntry(match.gameData(), dc.damagedCreature(), effectToAdd, dc.damageDealt());
-        return true;
-    }
-
+    /**
+     * Archfiend of Spite's "whenever a source an opponent controls deals damage to this creature": the source's
+     * controller as the damage was dealt must be an opponent. The default queues the ability, with the source as the
+     * triggering permanent the effect reads.
+     */
     @CollectsDamageTrigger(value = DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect.class,
             watch = DamageWatch.ON_DEALT_DAMAGE)
-    private boolean handleOpponentDamageSourceControllerAware(TriggerMatchContext match,
+    private boolean handleOpponentDamageSourceDealtDamage(TriggerMatchContext match,
             DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect trigger, TriggerContext ctx) {
         TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
         if (dc.damageSourceControllerId() == null
                 || dc.damageSourceControllerId().equals(match.controllerId())) {
             return false;
         }
-        CardEffect effectToAdd = trigger.bindDamageSourceController(
-                dc.damageSourceControllerId(), dc.damageDealt());
-        addDealtDamageEntry(match.gameData(), dc.damagedCreature(), effectToAdd, dc.damageDealt());
-        return true;
+        return handleDealtDamageDefault(match, trigger, ctx);
     }
 
     @CollectsDamageTrigger(value = DealDamageToTargetPlayerOrPlaneswalkerEffect.class, watch = DamageWatch.ON_DEALT_DAMAGE)
@@ -2524,7 +2493,7 @@ public class DamageTriggerCollectorService {
                     gameData.id, damagedCreature.getCard().getName());
             return true;
         }
-        addDealtDamageEntry(match.gameData(), dc.damagedCreature(), effect, dc.damageDealt());
+        addDealtDamageEntry(match.gameData(), dc, effect);
         return true;
     }
 
@@ -2555,10 +2524,13 @@ public class DamageTriggerCollectorService {
     /**
      * Queues a plain ON_DEALT_DAMAGE triggered ability. The damage dealt is snapshotted onto the
      * entry's eventValue so "it deals that much damage" effects can read it with an
-     * {@code EventValue} amount (Stuffy Doll).
+     * {@code EventValue} amount (Stuffy Doll), and the damage source is its triggering permanent and controller
+     * ("that source's controller").
      */
     private void addDealtDamageEntry(com.github.laxika.magicalvibes.model.GameData gameData,
-            Permanent damagedCreature, CardEffect effect, int damageDealt) {
+            TriggerContext.DamageToCreature dc, CardEffect effect) {
+        Permanent damagedCreature = dc.damagedCreature();
+        int damageDealt = dc.damageDealt();
         UUID controllerId = gameQueryService.findPermanentController(gameData, damagedCreature.getId());
         if (controllerId == null) return;
 
@@ -2572,6 +2544,10 @@ public class DamageTriggerCollectorService {
                 damagedCreature.getId()
         );
         triggerEntry.setEventValue(damageDealt);
+        // "That source" and "that source's controller": this damage has one source, the permanent it was (if any) and
+        // its controller as it dealt the damage.
+        triggerEntry.setTriggeringPermanentId(dc.sourcePermanentId());
+        triggerEntry.setTriggeringPermanentControllerId(dc.damageSourceControllerId());
         if (effect instanceof DealDamageToPlayersEffect toPlayers
                 && toPlayers.recipient() == DamageRecipient.CHOSEN_PLAYER) {
             triggerEntry.setTargetId(damagedCreature.getRememberedTargetPlayerId());

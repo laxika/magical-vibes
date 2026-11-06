@@ -582,6 +582,58 @@ class GameQueryServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("findTriggeringPermanentController")
+    class FindTriggeringPermanentController {
+
+        private StackEntry triggerEntry() {
+            Card card = createCreature("Belltower Sphinx", 2, 5, CardColor.BLUE);
+            return new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, player1Id, "trigger", List.of());
+        }
+
+        @Test
+        @DisplayName("is the triggering permanent's current controller while it is on the battlefield")
+        void currentControllerOnTheBattlefield() {
+            Permanent source = addPermanent(player2Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+            StackEntry entry = triggerEntry();
+            entry.setTriggeringPermanentId(source.getId());
+            entry.setTriggeringPermanentControllerId(player1Id);
+
+            assertThat(gqs.findTriggeringPermanentController(gd, entry)).isEqualTo(player2Id);
+        }
+
+        @Test
+        @DisplayName("is the controller the entry recorded as it removed the permanent")
+        void controllerRecordedAsTheEntryRemovedIt() {
+            StackEntry entry = triggerEntry();
+            UUID departedId = UUID.randomUUID();
+            entry.setTriggeringPermanentId(departedId);
+            entry.setTriggeringPermanentControllerId(player1Id);
+            entry.rememberRemovedPermanentController(departedId, player2Id);
+
+            assertThat(gqs.findTriggeringPermanentController(gd, entry)).isEqualTo(player2Id);
+        }
+
+        @Test
+        @DisplayName("is the controller recorded as the ability triggered once the permanent has left")
+        void controllerRecordedAsItTriggeredOnceItLeft() {
+            StackEntry entry = triggerEntry();
+            entry.setTriggeringPermanentId(UUID.randomUUID());
+            entry.setTriggeringPermanentControllerId(player2Id);
+
+            assertThat(gqs.findTriggeringPermanentController(gd, entry)).isEqualTo(player2Id);
+        }
+
+        @Test
+        @DisplayName("is the recorded controller of a source that was never a permanent")
+        void recordedControllerWithoutATriggeringPermanent() {
+            StackEntry entry = triggerEntry();
+            entry.setTriggeringPermanentControllerId(player2Id);
+
+            assertThat(gqs.findTriggeringPermanentController(gd, entry)).isEqualTo(player2Id);
+        }
+    }
+
     // ===== findPermanentController =====
 
     @Nested

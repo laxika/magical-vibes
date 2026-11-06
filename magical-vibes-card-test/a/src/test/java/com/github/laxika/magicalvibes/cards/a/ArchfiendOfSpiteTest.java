@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.c.ChancellorOfTheTangle;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.u.Unhinge;
@@ -17,7 +18,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArchfiendOfSpite.class, GrizzlyBears.class, Shock.class, Unhinge.class})
+@CardUsed({ArchfiendOfSpite.class, GrizzlyBears.class, Shock.class, Unhinge.class, ActOfAggression.class,
+        ChancellorOfTheTangle.class})
 class ArchfiendOfSpiteTest extends BaseCardTest {
 
     private static final String SACRIFICE_TWO = "Sacrifice 2 permanents";
@@ -203,5 +205,27 @@ class ArchfiendOfSpiteTest extends BaseCardTest {
         harness.castAndResolveSorcery(player2, 0, player1.getId());
         harness.handleCardChosen(player1, 0);
         return archfiend;
+    }
+
+    @Test
+    @DisplayName("The source's controller as the ability resolves loses the life (official ruling)")
+    void sourcesControllerAsTheAbilityResolvesLosesTheLife() {
+        Permanent chancellor = addCreatureReady(player1, new ChancellorOfTheTangle());
+        Permanent blocker = addCreatureReady(player2, new ArchfiendOfSpite());
+        chancellor.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player2, List.of(new ActOfAggression()));
+        harness.addMana(player2, ManaColor.RED, 5);
+        harness.castAndResolveInstant(player2, 0, chancellor.getId());
+        harness.assertOnBattlefield(player2, "Chancellor of the Tangle");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 14);
     }
 }

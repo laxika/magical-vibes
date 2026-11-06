@@ -93,6 +93,8 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean, AsksDeath
             // The creature is already in the graveyard by the time the trigger resolves, so the
             // graveyard pipeline baked its last-known controller onto the trigger's targetId.
             case DYING_CREATURE_CONTROLLER -> single(entry.getTargetId(), amount);
+            case TRIGGERING_PERMANENT_CONTROLLER ->
+                    single(gameQueryService.findTriggeringPermanentController(gameData, entry), amount);
             case DEFENDING_PLAYER -> single(defendingPlayerId, amount);
             case EACH_PLAYER -> eachPlayerLosses(gameData, e, entry, controllerId, amount, false);
             case EACH_OPPONENT -> eachPlayerLosses(gameData, e, entry, controllerId, amount, true);

@@ -107,8 +107,6 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
-import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerAwareEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDamagedCreatureControllerAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DamagedCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
@@ -4617,24 +4615,19 @@ public class TriggerCollectionService {
             if (effects.isEmpty()) return;
 
             UUID sourceControllerId = gameQueryService.findPermanentController(gameData, sourceCreature.getId());
-            List<CardEffect> boundEffects = effects.stream()
-                    .map(effect -> effect instanceof DamageSourceControllerLosesLifeEffect loss
-                            ? loss.bindCurrentControllerAtResolution(sourceControllerId, damageDealt)
-                            : effect instanceof DamageSourceControllerAwareEffect aware
-                            ? aware.bindDamageSourceController(sourceControllerId, damageDealt)
-                            : effect)
-                    .toList();
 
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     aura.getCard(),
                     auraControllerId,
                     aura.getCard().getName() + "'s ability",
-                    new ArrayList<>(boundEffects),
+                    new ArrayList<>(effects),
                     auraControllerId,
                     aura.getId());
             entry.setEventValue(damageDealt);
+            // "Its controller": the enchanted creature that dealt the damage, and its controller as it did.
             entry.setTriggeringPermanentId(sourceCreature.getId());
+            entry.setTriggeringPermanentControllerId(sourceControllerId);
             entry.setSourcePermanentSnapshot(new Permanent(aura));
             entry.setNonTargeting(true);
             entries.add(entry);

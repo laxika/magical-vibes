@@ -47,9 +47,8 @@ public class DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffectHand
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var trigger = (DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect) effect;
-        UUID playerId = trigger.sacrificingPlayerId();
-        int amount = trigger.amount();
+        UUID playerId = gameQueryService.findTriggeringPermanentController(gameData, entry);
+        int amount = entry.getEventValue();
         EachPlayerSacrificeOrLoseLifeState state = gameData.eachPlayerSacrificeOrLoseLife;
 
         if (playerId == null || amount <= 0 || !gameData.playerIds.contains(playerId)) {

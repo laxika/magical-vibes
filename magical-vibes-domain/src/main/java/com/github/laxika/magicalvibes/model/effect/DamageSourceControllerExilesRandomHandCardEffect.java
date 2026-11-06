@@ -1,27 +1,10 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.UUID;
-
 /**
- * Triggered effect for exiling a random card from the damage source controller's hand and offering
- * the exiled card for a land play or a free cast.
- *
- * <p>The source controller is bound when the damage event is collected because it is not known when
- * the card is defined.
+ * Rona, Tolarian Obliterator's damage trigger: that source's controller exiles a card from their hand at random, and
+ * the ability's controller may put it onto the battlefield (a land) or cast it without paying its mana cost. The
+ * source's controller is the controller of the stack entry's triggering permanent as the ability resolves, or its last
+ * known controller (CR 608.2h), or the controller the entry recorded for a source that was never a permanent.
  */
-public record DamageSourceControllerExilesRandomHandCardEffect(UUID sourceControllerId)
-        implements DamageSourceControllerAwareEffect {
-
-    /** Marker constructor used on card definitions. */
-    public DamageSourceControllerExilesRandomHandCardEffect() {
-        this(null);
-    }
-
-    @Override
-    public CardEffect bindDamageSourceController(UUID controllerId, int damageDealt) {
-        if (controllerId == null || damageDealt <= 0) {
-            return this;
-        }
-        return new DamageSourceControllerExilesRandomHandCardEffect(controllerId);
-    }
+public record DamageSourceControllerExilesRandomHandCardEffect() implements CardEffect {
 }

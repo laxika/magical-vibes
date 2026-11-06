@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.ActOfAggression;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.OrcishArtillery;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -8,12 +9,13 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ContestedWarZone.class, GrizzlyBears.class, OrcishArtillery.class})
+@CardUsed({ContestedWarZone.class, GrizzlyBears.class, OrcishArtillery.class, ActOfAggression.class})
 class ContestedWarZoneTest extends BaseCardTest {
 
     @Test
@@ -233,5 +235,30 @@ class ContestedWarZoneTest extends BaseCardTest {
 
     private Permanent addContestedWarZone(Player player) {
         return harness.addToBattlefieldAndReturn(player, new ContestedWarZone());
+    }
+
+    @Test
+    @DisplayName("The creature's controller as the ability resolves gains control")
+    void creaturesControllerAsTheAbilityResolvesGainsControl() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
+        addContestedWarZone(player2);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+        resolveCombat(player1);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passPriority(player1);
+        harness.setHand(player2, List.of(new ActOfAggression()));
+        harness.addMana(player2, ManaColor.RED, 5);
+        harness.castAndResolveInstant(player2, 0, attacker.getId());
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Contested War Zone");
+        harness.assertNotOnBattlefield(player1, "Contested War Zone");
     }
 }

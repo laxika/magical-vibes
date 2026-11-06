@@ -25,8 +25,11 @@ public enum MillRecipient {
      */
     TARGET_PERMANENT_CONTROLLER,
     /**
-     * The controller of the permanent that caused the trigger, using the controller snapshot in
-     * {@code StackEntry.eventPlayerIds} when one is present.
+     * The controller of the permanent the trigger event was about ({@code StackEntry.triggeringPermanentId}) as the
+     * ability resolves, or its last known controller once it has left the battlefield, or the controller the entry
+     * recorded for a source that was never a permanent, or the controller snapshot in
+     * {@code StackEntry.eventPlayerIds}: "that permanent's controller mills a card" (Mesmeric Orb), "that source's
+     * controller mills that many cards" (Belltower Sphinx).
      */
-    UNTAPPED_PERMANENT_CONTROLLER
+    TRIGGERING_PERMANENT_CONTROLLER
 }

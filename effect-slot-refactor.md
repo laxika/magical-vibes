@@ -30,7 +30,7 @@ re-check them with a grep before acting on them.
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
 | 14 | Trigger options replace trigger-only wrapper effects | done (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; run 16l, family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader`; run 16m, family 10 (sagas): no chapter or final-chapter ability has a legacy view, and the final-chapter collectors read the abilities through `SagaAbilityReader`; run 16n, family 11's player and keyword actions: every `ActionWatch` collector reads the abilities through `ActionAbilityReader`; run 16o, family 11's rest: every `MiscWatch` collector and the planar reader read the abilities through `MiscAbilityReader`; run 16p, the zone changes but "when this enters" and the permanent changes: no such ability has a legacy view, and the readers outside the trigger pipeline read them through `ZoneChangeAbilityReader`; run 16q, "when this enters": no ability has a legacy view; the own enters collector reads the abilities and judges their limit, the other readers read `Card.getOwnEntryEffects()`, and `OnceOnlyTriggerEffect` is gone; run 16r, every triggered ability is one object on the stack: the abilities of one Oracle ability are merged by script, the own enters and combat collectors group effects by ability, and `TriggerMode` is gone; run 16s, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags are gone: a `ConditionalEffect` is an effect's "if", and every collector judges the intervening "if" and event condition from the ability; run 16t, the trigger-only wrapper classes: the `Triggering…ConditionalEffect` filters, `SelfExiledFromBattlefieldEffect`, `OncePerTurnPerCreatureTriggerEffect` and `OncePerTurnTriggerEffect`'s keyed, per-grant, mark-on-acceptance and first-time forms are gone, their cards written with trigger filters, `TriggerLimit`s and `TriggeringCardMatches`; Bill Potts' `OncePerTurnTriggerEffect` and the may-unwrapping moved to step 15, with the user) |
-| 15 | Effects read the trigger event (repeatable) | open (run 1, with the user: the dying card, `DyingCreatureCardAwareEffect` gone; effects read the stack entry's triggering card; run 2, with the user: the departed permanent's last-known information, its 13 `…AwareEffect` interfaces gone; effects read the stack entry's triggering permanent; run 3: the rest of the departed object, the last-known rebuilds and baked dying-card ids run 2 kept, 4 classes gone and 5 lose their bound ids; run 4: the departed permanent's trigger-time rebuilds and skips run 3 kept, 6 classes gone, their skips trigger filters; run 5: the last departed-permanent rebuilds of `LegacyTriggerBindings` but the counter distribution, 3 classes gone, modular's "you may" and flag on the card; run 6, with the user: the death counter distribution reads its total from the entry and announces its targets and division as it goes on the stack (a rules fix), Martyr's Bond's "it" is the triggering permanent; run 7: the enters-side rebindings of the source to the entering permanent, Confusion in the Ranks' "another player" and "it" and Lucy MacLean's exclusion read the triggering permanent, its current types a rules fix) |
+| 15 | Effects read the trigger event (repeatable) | open (run 1, with the user: the dying card, `DyingCreatureCardAwareEffect` gone; effects read the stack entry's triggering card; run 2, with the user: the departed permanent's last-known information, its 13 `…AwareEffect` interfaces gone; effects read the stack entry's triggering permanent; run 3: the rest of the departed object, the last-known rebuilds and baked dying-card ids run 2 kept, 4 classes gone and 5 lose their bound ids; run 4: the departed permanent's trigger-time rebuilds and skips run 3 kept, 6 classes gone, their skips trigger filters; run 5: the last departed-permanent rebuilds of `LegacyTriggerBindings` but the counter distribution, 3 classes gone, modular's "you may" and flag on the card; run 6, with the user: the death counter distribution reads its total from the entry and announces its targets and division as it goes on the stack (a rules fix), Martyr's Bond's "it" is the triggering permanent; run 7: the enters-side rebindings of the source to the entering permanent, Confusion in the Ranks' "another player" and "it" and Lucy MacLean's exclusion read the triggering permanent, its current types a rules fix; run 8: the damage source, `DamageSourceAwareEffect` and `DamageSourceControllerAwareEffect` gone, "that source" is the stack entry's triggering permanent and "that source's controller" its controller as the ability resolves (a rules fix for five cards), 4 effects replaced by existing ones with `TRIGGERING_PERMANENT_CONTROLLER` recipients, "each source" a trigger option on the cards) |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
 ## Why
@@ -10294,6 +10294,161 @@ paragraph. The skills didn't name these classes.
 - Application: `PredicateEvaluationServiceTest`, `EnterTriggerCollectorServiceTest` and `TriggerTargetCollectorTest`
   (258 tests), all passing. `TargetLegalityServiceTest` has 14 failures, the same 14 at HEAD `d3c9c6d5b2` (checked by
   stashing; stack, graveyard and colour cases outside the changed path).
+- Engine: the whole module. The one failure is the known HEAD one, `GameMutationBoundaryRatchetTest`.
+- AI: compiles. Its tests weren't run, since no AI code changed.
+- The full suite was not run here.
+
+#### Run 8: the damage source
+
+Run 7's "for later runs" listed the damage and combat interfaces next. This run takes their damage-source half:
+`DamageSourceAwareEffect` and `DamageSourceControllerAwareEffect`, the binding of "that source" and "that source's
+controller" of a damage event into the effect. Both are gone. The stack entry carries the source as its triggering
+permanent, and effects read it as they resolve. The four combat interfaces (`CombatDamageAmount`, `CombatDamageDealer`,
+`CombatExcessDamage` and `AttackingCreatures…AwareEffect`) are untouched: 9 `…AwareEffect` interfaces are left.
+
+**What the scan found.**
+
+- 8 effects implemented the two interfaces, plus `SequenceEffect` as a delegator. Tephraderm's
+  `DealDamageToDamageSourceCreatureOrSpellControllerEffect` bound the source; the seven `DamageSourceController…Effect`s
+  (mills, sacrifices, poison counter, loses life, loses life unless sacrifices, gains control, exiles a random hand
+  card) bound its controller and the damage.
+- The binding sites:
+  - `CombatDamageService.processDealtDamageTriggers` and `processCombatDamageReceivedTriggers`;
+  - `CombatDamageService.requiresDistinctDamageSource`, which gave an ability one trigger per damage source because
+    of its effect's class;
+  - three `DamageTriggerCollectorService` handlers;
+  - Visions of Brutality's rebuild in `TriggerCollectionService.collectEnchantedCreatureDealsDamageTriggers`.
+- 9 card classes used them.
+- Two engine-built uses of the gains-control effect come from the trigger-only wrapper
+  `DamageSourceControllerGainsControlOfThisPermanentEffect`: Contested War Zone (`handleControlTheftOnDamage`) and
+  Contested Game Ball (`TriggerCollectionService.queueCreatureCombatDamageToYouTriggers`).
+- The binding fixed "that source's controller" as the ability triggered. Only Phyrexian Obliterator and Crag Saurian
+  carried the source to read its current controller. Archfiend of Spite's official ruling (2019-08-23, read through
+  the new `get_rulings` tool of the card-info MCP) says otherwise: "The player who loses life or permanents is the
+  player who controls the source as Archfiend of Spite's triggered ability resolves … If the source is no longer in
+  the zone it was in as it dealt damage, the source's last known information is used" (**CR 608.2h**, checked).
+
+**The model.**
+
+- "That source" is the entry's triggering permanent. The collector sets `setTriggeringPermanentId` (null for a spell
+  source) and `setTriggeringPermanentControllerId` (the source's controller as it dealt the damage). "That much" is
+  the event value, as before.
+- `GameQueryService.findTriggeringPermanentController(gameData, entry)` (new) reads them. It returns the triggering
+  permanent's current controller while the permanent is on the battlefield. Otherwise it returns the controller the
+  entry recorded as it removed the permanent (`lastKnownPermanentController`), or else the recorded controller.
+- The `TRIGGERING_PERMANENT_CONTROLLER` recipients use it:
+  - `LoseLifeRecipient` and `PoisonRecipient` gain the value.
+  - `MillRecipient.UNTAPPED_PERMANENT_CONTROLLER` became `TRIGGERING_PERMANENT_CONTROLLER`. It keeps its
+    `eventPlayerIds` fallback for Mesmeric Orb.
+  - `SacrificeRecipient` and `DamageRecipient` already had it.
+- "Whenever a source deals damage to this" is `TriggerOptions.EACH_SOURCE` on the card (**CR 603.2c**, checked), as
+  Nested Ghoul already wrote it. The combat collector reads only that option, and `requiresDistinctDamageSource` is
+  gone. Combat sets the triggering permanent only for an "each source" ability, because a combined "is dealt damage"
+  event has no single source. A noncombat damage event has one source, so the dealt-damage default
+  (`addDealtDamageEntry`, now given the event context) always sets it.
+
+**Gone, replaced by existing effects (AGENTS.md's reuse rule), cards by script.**
+
+| Card | Effect now |
+|---|---|
+| Belltower Sphinx | `MillEffect(new EventValue(), MillRecipient.TRIGGERING_PERMANENT_CONTROLLER)` |
+| Phyrexian Obliterator | `SacrificePermanentsEffect(new EventValue(), new PermanentTruePredicate(), SacrificeRecipient.TRIGGERING_PERMANENT_CONTROLLER)` |
+| Reaper of Sheoldred | `GivePoisonCountersEffect(1, PoisonRecipient.TRIGGERING_PERMANENT_CONTROLLER)` |
+| Visions of Brutality | `LoseLifeEffect(new EventValue(), LoseLifeRecipient.TRIGGERING_PERMANENT_CONTROLLER)` |
+
+`DamageSourceControllerMillsEffect`, `…SacrificesPermanentsEffect`, `…GetsPoisonCounterEffect` and `…LosesLifeEffect`
+and their handlers are gone, with the two interfaces.
+
+**Kept, now reading the entry.** No existing effect expresses these four. Each lost its bound components.
+
+- `DealDamageToDamageSourceCreatureOrSpellControllerEffect()` (Tephraderm). It damages the triggering permanent if
+  that is still a creature, or else the recorded controller of a spell source.
+- `DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect()` (Archfiend of Spite).
+  `handleOpponentDamageSourceDealtDamage` still judges "a source an opponent controls" by the controller as the
+  damage was dealt. The dealt-damage collector judges no trigger filter, so this condition stays a class-keyed
+  handler.
+- `DamageSourceControllerExilesRandomHandCardEffect()` (Rona, Tolarian Obliterator).
+- `DamageSourceControllerGainsControlOfDamagedPermanentEffect()` (Crag Saurian, Contested War Zone). It keeps a
+  nullable `newControllerId` for Contested Game Ball, built by its collector: that card's Oracle text says "the
+  attacking player", not a creature's controller (its ruling: one trigger "no matter how many creatures deal combat
+  damage to you"). The component goes with the Contested wrapper.
+
+**Cards (by script).** `scripts/step15-damage-source-cards.py` (idempotent, per letter module) changed 9 classes: the
+four users of the gone effects, Archfiend of Spite (its `(0, null)` marker arguments), and the "each source" option on
+Belltower Sphinx, Phyrexian Obliterator, Reaper of Sheoldred, Archfiend of Spite, Crag Saurian, Rona, Tolarian
+Obliterator and Tephraderm. It also renamed Mesmeric Orb's recipient.
+
+**Behaviour changes.**
+
+- Rules fix, **CR 608.2h** (checked), Archfiend of Spite's official ruling: for Belltower Sphinx, Reaper of Sheoldred,
+  Archfiend of Spite, Rona, Tolarian Obliterator and Contested War Zone, "that source's controller" is now the
+  source's controller as the ability resolves, not the one it had as it dealt the damage. New card tests, each
+  changing the source's controller with Act of Aggression while the ability waits:
+  - `BelltowerSphinxTest#sourcesControllerAsTheAbilityResolvesMills`
+  - `ReaperOfSheoldredTest#sourcesControllerAsTheAbilityResolvesGetsThePoisonCounter`
+  - `ArchfiendOfSpiteTest#sourcesControllerAsTheAbilityResolvesLosesTheLife`
+  - `ContestedWarZoneTest#creaturesControllerAsTheAbilityResolvesGainsControl`
+
+  These follow from the old binding (the controller was fixed at trigger time); they weren't run at HEAD. Rona shares
+  Archfiend's code path and has no new test.
+- Phyrexian Obliterator resolves through `SacrificePermanentsEffectHandler`. That handler applies the checks the
+  bespoke one skipped: an effect that can't make the player sacrifice, permanents that can't be sacrificed, and creature
+  tokens protected from resolving triggered abilities. All Obliterator tests pass unchanged.
+- Contested War Zone's entry now carries the attacking creature as its triggering permanent.
+- Every noncombat dealt-damage entry carries its source as the triggering permanent. No dealt-damage card read the
+  triggering permanent before (checked by grep).
+
+**Kept, with their reason.**
+
+- The four combat interfaces: a later run.
+- Archfiend's opponent check as a class-keyed handler: the dealt-damage collectors judge no trigger filter.
+- `DamageSourceControllerGainsControlOfThisPermanentEffect` (Contested War Zone and Game Ball): a trigger-only wrapper
+  whose collectors build the resolution effect. It goes with the wrapper classes.
+- Tephraderm's two Oracle abilities ("a creature" / "a spell") are one ability with one effect. Splitting them needs
+  a filter on the damage source, which no dealt-damage collector judges.
+
+**For later runs.** The combat interfaces (`CombatDamageAmount`, `CombatDamageDealer`, `CombatExcessDamage` and
+`AttackingCreatures…AwareEffect`), the bindings that aren't trigger events (`ChosenCard`, `AcceptedPlayers`,
+`GrantingPermanent`, `ProducedManaColor`, `TriggeringCards`), Bill Potts, the may-unwrapping and the `…Triggering…`
+classes, as run 1 listed. The doc lines for Souls of the Faultless named `DamageSourceControllerLosesLifeEffect`,
+which the card no longer used (it is `LoseLifeEffect(…, ACTIVE_PLAYER)`). They are corrected.
+
+**Scripts.**
+
+- `scripts/step15-damage-source-cards.py`: the card classes.
+- `scripts/step15-damage-source-tests.py`: the four new card tests, per letter test module.
+- `scripts/step15-damage-source-docs.py`: exact line edits in `EFFECTS_INDEX.md` (with the new `LoseLifeRecipient`
+  row), `EFFECTS_QUICK_REFERENCE.md`, `ORACLE_TEXT_EFFECT_MAP.md` and two `CARD_PATTERNS` files.
+
+The effects, recipients, handlers, collectors and `GameQueryService` were edited by hand, as was `ARCHITECTURE.md`'s
+triggering-permanent paragraph. `AGENTS.md` and the `implement-card` / `review-card` skills now point at the card-info
+MCP's `get_rulings` (committed separately).
+
+**Tests changed.**
+
+- `DamageTriggerCollectorServiceTest`: the binding cases are gone. "ON_DEALT_DAMAGE binds the source controller for
+  control gain", the two `DamageSourceSacrifice` cases and the two `DamageSourcePoisonCounter` cases asserted bound
+  effect fields. They became the `DealtDamageSource` nest:
+  - "The default queues the effect unchanged, with the damage source as the triggering permanent"
+  - "A spell source has no triggering permanent, only its controller"
+  - Archfiend of Spite's opponent check, both ways (it had no unit test).
+- New unit tests:
+  - `GameQueryServiceTest$FindTriggeringPermanentController`: 4 cases.
+  - `MillEffectHandlerTest$TriggeringPermanentController`: 2 cases, the new amount and Mesmeric Orb's fallback.
+- New card tests: the four above (by script). No existing card test changed.
+
+**Test runs.**
+
+- Card: the test class of every card with a "dealt damage", "dealt noncombat damage", "enchanted creature deals
+  damage", "a permanent deals damage to you" or "a creature deals combat damage to you" trigger. Also Mesmeric Orb,
+  both Rona faces, Nested Ghoul and Stuffy Doll. That is 109 test classes and 795 test cases, all passing.
+- Application:
+  - `DamageTriggerCollectorServiceTest`, `CombatDamageServiceTest`, `GameQueryServiceTest` and `MillEffectHandlerTest`
+    have 5, 40, 1 and 0 failures. These are the known HEAD failures (the same named `DamageTriggerCollectorServiceTest`
+    cases and `GameQueryServiceTest#conditionalExtraLandPlaysRequireTheirConditionAndApplyOnlyToTheirController`).
+  - The architecture tests `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest`, `CardEffectTargetingConsistencyTest`
+    and `CostEffectClassificationTest` fail as at HEAD. `TargetSpecRatchetTest`, `TriggerCollectorRegistryTest` and
+    `CardFreezeTest` pass.
 - Engine: the whole module. The one failure is the known HEAD one, `GameMutationBoundaryRatchetTest`.
 - AI: compiles. Its tests weren't run, since no AI code changed.
 - The full suite was not run here.

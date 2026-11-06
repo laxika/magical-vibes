@@ -67,8 +67,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
-import com.github.laxika.magicalvibes.model.effect.DamageSourceAwareEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
@@ -4079,10 +4077,9 @@ public class CombatDamageService {
                 UUID controllerId = gameData.findControllerOf(target);
                 if (controllerId == null) continue;
                 int damageAmount = damageAmounts.getOrDefault(targetId, 0);
-                // "Whenever a source deals damage to this" (CR 603.2c) and the effects that name the damage source
-                // trigger once for each source.
+                // "Whenever a source deals damage to this" triggers once for each source (CR 603.2c).
                 List<DamageAbilityReader.DamageEffect> sourceSpecificEffects = effects.stream()
-                        .filter(read -> read.eachSource() || requiresDistinctDamageSource(read.effect()))
+                        .filter(DamageAbilityReader.DamageEffect::eachSource)
                         .toList();
                 effects.removeAll(sourceSpecificEffects);
                 if (!sourceSpecificEffects.isEmpty()) {
@@ -4113,20 +4110,6 @@ public class CombatDamageService {
         return sourceSpecificTriggers;
     }
 
-    private boolean requiresDistinctDamageSource(CardEffect effect) {
-        if (effect instanceof com.github.laxika.magicalvibes.model.effect.SequenceEffect sequence) {
-            return sequence.steps().stream().anyMatch(this::requiresDistinctDamageSource);
-        }
-        if (effect instanceof ConditionalEffect conditional) {
-            return requiresDistinctDamageSource(conditional.wrapped());
-        }
-        if (effect instanceof MayEffect may) {
-            return requiresDistinctDamageSource(may.wrapped());
-        }
-        return effect instanceof DamageSourceAwareEffect
-                || effect instanceof DamageSourceControllerAwareEffect;
-    }
-
     private void processDealtDamageTriggers(GameData gameData, List<DealtDamageTriggerData> triggerData) {
         for (DealtDamageTriggerData data : triggerData) {
             for (DamageAbilityReader.DamageEffect read : data.dealtDamageEffects()) {
@@ -4144,12 +4127,7 @@ public class CombatDamageService {
                 read.markLimit(gameData, data.sourceSnapshot().getId());
                 CardEffect effect = read.effect();
                 CardEffect effectToAdd = effect;
-                if (effect instanceof DamageSourceAwareEffect aware) {
-                    effectToAdd = aware.bindDamageSource(
-                            data.sourceCard(), data.sourcePermanentId(), data.sourceControllerId(), data.damageDealt());
-                } else if (effect instanceof DamageSourceControllerAwareEffect aware) {
-                    effectToAdd = aware.bindDamageSourceController(data.sourceControllerId(), data.damageDealt(), data.sourcePermanentId());
-                } else if (effect instanceof DealDamageToTargetPlayerOrPlaneswalkerEffect burn
+                if (effect instanceof DealDamageToTargetPlayerOrPlaneswalkerEffect burn
                         && burn.playerRelation() == PlayerRelation.OPPONENT) {
                     // Targeting effect — auto-target opponent when no planeswalkers, otherwise queue for choice.
                     // Only the opponent-only wording can be auto-targeted; the plain "target player"
@@ -4233,6 +4211,12 @@ public class CombatDamageService {
                 );
                 triggerEntry.setEventValue(data.damageDealt());
                 triggerEntry.setSourcePermanentSnapshot(data.sourceSnapshot());
+                // "Whenever a source deals damage to this" triggers once for each source (CR 603.2c), so "that
+                // source" and "that source's controller" are that source as it dealt the damage.
+                if (read.eachSource()) {
+                    triggerEntry.setTriggeringPermanentId(data.sourcePermanentId());
+                    triggerEntry.setTriggeringPermanentControllerId(data.sourceControllerId());
+                }
                 if (effectToAdd instanceof DealDamageToPlayersEffect toPlayers
                         && toPlayers.recipient() == DamageRecipient.CHOSEN_PLAYER
                         && data.sourceSnapshot() != null) {
@@ -4261,9 +4245,7 @@ public class CombatDamageService {
             if (data.damageDealt() <= 0) continue;
 
             for (CardEffect effect : data.combatDamageReceivedEffects()) {
-                CardEffect effectToAdd = effect instanceof DamageSourceControllerAwareEffect aware
-                        ? aware.bindDamageSourceController(data.sourceControllerId(), data.damageDealt(), data.sourcePermanentId())
-                        : effect;
+                CardEffect effectToAdd = effect;
                 if (effectToAdd.targetSpec().declaredTarget() != null) {
                     TargetFilter targetFilter = data.card().getEffectTargetIndex(effect) >= 0
                             ? data.card().getTargetFilter() : null;

@@ -3,36 +3,16 @@ package com.github.laxika.magicalvibes.model.effect;
 import java.util.UUID;
 
 /**
- * Triggered effect: "Whenever a source deals damage to this creature, that source's controller
- * gains control of this creature."
+ * "That source's controller gains control of this creature" (Crag Saurian, Contested War Zone): the controller of the
+ * stack entry's triggering permanent as the ability resolves, or its last known controller (CR 608.2h), or the
+ * controller the entry recorded for a source that was never a permanent.
  *
- * <p>The card-level no-argument form is a marker. The damage source's controller is bound when
- * the damage trigger is collected. A permanent damage source is also retained so its current
- * controller can be determined when the ability resolves; a departed source uses the captured
- * controller.
+ * @param newControllerId the player a collector names instead, when the new controller isn't the source's
+ *                        (Contested Game Ball's "the attacking player"); {@code null} on cards
  */
-public record DamageSourceControllerGainsControlOfDamagedPermanentEffect(UUID damageSourceControllerId,
-                                                                         UUID damageSourcePermanentId)
-        implements DamageSourceControllerAwareEffect {
+public record DamageSourceControllerGainsControlOfDamagedPermanentEffect(UUID newControllerId) implements CardEffect {
 
-    public DamageSourceControllerGainsControlOfDamagedPermanentEffect(UUID damageSourceControllerId) {
-        this(damageSourceControllerId, null);
-    }
-
-    /** Marker constructor used on card definitions. */
     public DamageSourceControllerGainsControlOfDamagedPermanentEffect() {
-        this(null, null);
-    }
-
-    @Override
-    public CardEffect bindDamageSourceController(UUID controllerId, int damageDealt) {
-        if (controllerId == null || damageDealt <= 0) return this;
-        return new DamageSourceControllerGainsControlOfDamagedPermanentEffect(controllerId);
-    }
-
-    @Override
-    public CardEffect bindDamageSourceController(UUID controllerId, int damageDealt, UUID sourcePermanentId) {
-        if (controllerId == null || damageDealt <= 0) return this;
-        return new DamageSourceControllerGainsControlOfDamagedPermanentEffect(controllerId, sourcePermanentId);
+        this(null);
     }
 }

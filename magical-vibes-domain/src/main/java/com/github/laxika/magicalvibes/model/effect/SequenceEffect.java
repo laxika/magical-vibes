@@ -50,7 +50,7 @@ import java.util.UUID;
 public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean optionalTarget,
                              boolean simultaneous)
         implements CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect,
-        EndStepPlayerTargetedEffect, CombatOpponentReferencingEffect, DamageSourceControllerAwareEffect {
+        EndStepPlayerTargetedEffect, CombatOpponentReferencingEffect {
 
     public SequenceEffect(List<CardEffect> steps) {
         this(steps, 0, false);
@@ -114,15 +114,6 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
     @Override
     public boolean hasAbilityResolutionCondition() {
         return steps.stream().anyMatch(CardEffect::hasAbilityResolutionCondition);
-    }
-
-    @Override
-    public CardEffect bindDamageSourceController(UUID controllerId, int damageDealt) {
-        return withSteps(steps.stream()
-                .map(step -> step instanceof DamageSourceControllerAwareEffect aware
-                        ? aware.bindDamageSourceController(controllerId, damageDealt)
-                        : step)
-                 .toList());
     }
 
     @Override

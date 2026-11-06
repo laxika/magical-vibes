@@ -1088,6 +1088,30 @@ public class GameQueryService {
     }
 
     /**
+     * The controller of the object a triggered ability's event was about, as the ability resolves ("that source's
+     * controller", "its controller"): the current controller of the entry's triggering permanent while it is on the
+     * battlefield, otherwise its last known controller (CR 608.2h), which is the controller the entry recorded when it
+     * removed the permanent or, failing that, when the ability triggered. A spell or other source that was never a
+     * permanent has no triggering permanent, so the recorded controller is used.
+     *
+     * @return the player, or {@code null} when the entry records neither
+     */
+    public UUID findTriggeringPermanentController(GameData gameData, StackEntry entry) {
+        UUID permanentId = entry.getTriggeringPermanentId();
+        if (permanentId != null) {
+            UUID currentControllerId = findPermanentController(gameData, permanentId);
+            if (currentControllerId != null) {
+                return currentControllerId;
+            }
+            UUID removedControllerId = entry.lastKnownPermanentController(permanentId);
+            if (removedControllerId != null) {
+                return removedControllerId;
+            }
+        }
+        return entry.getTriggeringPermanentControllerId();
+    }
+
+    /**
      * Finds a card in any player's graveyard by its unique ID.
      *
      * @return the card, or {@code null} if not found

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PutExiledCardOntoBattlefieldU
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.List;
 import java.util.UUID;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Component;
 public class DamageSourceControllerExilesRandomHandCardEffectHandler implements NormalEffectHandlerBean {
 
     private final CardRevealService cardRevealService;
+    private final GameQueryService gameQueryService;
     private final ExileService exileService;
     private final GameLogService gameLogService;
 
@@ -38,7 +40,7 @@ public class DamageSourceControllerExilesRandomHandCardEffectHandler implements 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID sourceControllerId = ((DamageSourceControllerExilesRandomHandCardEffect) effect).sourceControllerId();
+        UUID sourceControllerId = gameQueryService.findTriggeringPermanentController(gameData, entry);
         if (sourceControllerId == null) {
             return;
         }

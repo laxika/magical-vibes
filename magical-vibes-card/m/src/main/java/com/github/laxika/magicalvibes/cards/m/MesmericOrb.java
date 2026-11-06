@@ -14,6 +14,6 @@ public class MesmericOrb extends Card {
 
     public MesmericOrb() {
         addTrigger(Triggers.permanentBecomesUntapped(),
-                new MillEffect(1, MillRecipient.UNTAPPED_PERMANENT_CONTROLLER));
+                new MillEffect(1, MillRecipient.TRIGGERING_PERMANENT_CONTROLLER));
     }
 }

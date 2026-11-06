@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.a.ActOfAggression;
+import com.github.laxika.magicalvibes.cards.c.ChancellorOfTheTangle;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.OgreMenial;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -19,7 +21,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ReaperOfSheoldred.class, GrizzlyBears.class, Shock.class, OgreMenial.class, ThunderingTanadon.class})
+@CardUsed({ReaperOfSheoldred.class, GrizzlyBears.class, Shock.class, OgreMenial.class, ThunderingTanadon.class,
+        ActOfAggression.class, ChancellorOfTheTangle.class})
 class ReaperOfSheoldredTest extends BaseCardTest {
 
     // ===== Non-combat damage trigger =====
@@ -214,5 +217,27 @@ class ReaperOfSheoldredTest extends BaseCardTest {
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(2);
         assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isZero();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("The source's controller as the ability resolves gets the poison counter")
+    void sourcesControllerAsTheAbilityResolvesGetsThePoisonCounter() {
+        Permanent chancellor = addCreatureReady(player1, new ChancellorOfTheTangle());
+        Permanent blocker = addCreatureReady(player2, new ReaperOfSheoldred());
+        chancellor.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player2, List.of(new ActOfAggression()));
+        harness.addMana(player2, ManaColor.RED, 5);
+        harness.castAndResolveInstant(player2, 0, chancellor.getId());
+        harness.assertOnBattlefield(player2, "Chancellor of the Tangle");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
     }
 }

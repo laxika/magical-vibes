@@ -1,18 +1,10 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.UUID;
-
 /**
- * Damage trigger: the damage source's controller sacrifices that many permanents or loses that
- * much life.
+ * Archfiend of Spite's damage trigger: that source's controller loses that much life unless they sacrifice that many
+ * permanents. "That much" is the damage dealt, the stack entry's event value; the source's controller is the controller
+ * of the entry's triggering permanent as the ability resolves, or its last known controller (CR 608.2h), or the
+ * controller the entry recorded for a source that was never a permanent.
  */
-public record DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect(
-        int amount, UUID sacrificingPlayerId) implements DamageSourceControllerAwareEffect {
-
-    @Override
-    public CardEffect bindDamageSourceController(UUID controllerId, int damageDealt) {
-        if (controllerId == null || damageDealt <= 0) return this;
-        return new DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect(
-                damageDealt, controllerId);
-    }
+public record DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect() implements CardEffect {
 }

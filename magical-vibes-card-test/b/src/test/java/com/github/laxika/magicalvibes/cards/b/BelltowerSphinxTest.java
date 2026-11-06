@@ -1,9 +1,13 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.a.ActOfAggression;
+import com.github.laxika.magicalvibes.cards.c.ChancellorOfTheTangle;
 import com.github.laxika.magicalvibes.cards.c.Char;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,7 +21,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BelltowerSphinx.class, BorosGuildmage.class, Char.class, Forest.class})
+@CardUsed({BelltowerSphinx.class, BorosGuildmage.class, Char.class, Forest.class, ActOfAggression.class,
+        ChancellorOfTheTangle.class})
 class BelltowerSphinxTest extends BaseCardTest {
 
     private List<Card> library(int size) {
@@ -138,5 +143,29 @@ class BelltowerSphinxTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .filteredOn(c -> c.getName().equals("Forest")).hasSize(2);
         harness.assertOnBattlefield(player2, "Belltower Sphinx");
+    }
+
+    @Test
+    @DisplayName("The source's controller as the ability resolves mills, not the one it had as it dealt damage")
+    void sourcesControllerAsTheAbilityResolvesMills() {
+        harness.setLibrary(player1, library(8));
+        harness.setLibrary(player2, library(8));
+        Permanent chancellor = addCreatureReady(player1, new ChancellorOfTheTangle());
+        Permanent blocker = addCreatureReady(player2, new BelltowerSphinx());
+        chancellor.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player2, List.of(new ActOfAggression()));
+        harness.addMana(player2, ManaColor.RED, 5);
+        harness.castAndResolveInstant(player2, 0, chancellor.getId());
+        harness.assertOnBattlefield(player2, "Chancellor of the Tangle");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(8);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
     }
 }

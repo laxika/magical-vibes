@@ -14,6 +14,10 @@ package com.github.laxika.magicalvibes.model.effect;
  *       id is baked into the trigger's non-targeting {@code targetId}.</li>
  *   <li>{@link #ENCHANTED_PERMANENT_CONTROLLER} — the controller of the enchanted permanent, whose
  *       id is baked into {@code affectedPlayerId} at trigger time (Relic Putrescence).</li>
+ *   <li>{@link #TRIGGERING_PERMANENT_CONTROLLER} — the controller of the permanent the trigger event was about
+ *       ({@code StackEntry.triggeringPermanentId}) as the ability resolves, or its last known controller, or the
+ *       controller the entry recorded for a source that was never a permanent: "that source's controller gets a
+ *       poison counter" (Reaper of Sheoldred).</li>
  *   <li>{@link #EACH_OPPONENT} — every opponent of the controller gets poison.</li>
  * </ul>
  */
@@ -23,5 +27,6 @@ public enum PoisonRecipient {
     EACH_PLAYER,
     EACH_OPPONENT,
     TARGET_PERMANENT_CONTROLLER,
-    ENCHANTED_PERMANENT_CONTROLLER
+    ENCHANTED_PERMANENT_CONTROLLER,
+    TRIGGERING_PERMANENT_CONTROLLER
 }
