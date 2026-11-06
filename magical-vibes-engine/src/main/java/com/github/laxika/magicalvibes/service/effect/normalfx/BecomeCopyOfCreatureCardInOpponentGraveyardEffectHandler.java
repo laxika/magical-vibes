@@ -38,10 +38,10 @@ public class BecomeCopyOfCreatureCardInOpponentGraveyardEffectHandler implements
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (BecomeCopyOfCreatureCardInOpponentGraveyardEffect) effect;
-        if (e.graveyardCard() == null) {
+        if (entry.getTriggeringCards().isEmpty()) {
             return;
         }
+        Card graveyardCard = entry.getTriggeringCards().getFirst();
 
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source == null) {
@@ -56,7 +56,7 @@ public class BecomeCopyOfCreatureCardInOpponentGraveyardEffectHandler implements
                 .filter(ability -> ability.effects().stream().anyMatch(reg -> reg.effect() instanceof MayEffect may
                         && may.wrapped() instanceof BecomeCopyOfCreatureCardInOpponentGraveyardEffect))
                 .toList();
-        permanentCopierService.applyCloneCopy(source, e.graveyardCard(), null, null, Set.of());
+        permanentCopierService.applyCloneCopy(source, graveyardCard, null, null, Set.of());
 
         Card copy = source.getCard();
 
@@ -79,7 +79,7 @@ public class BecomeCopyOfCreatureCardInOpponentGraveyardEffectHandler implements
         }
 
         gameLogService.append(gameData,
-                GameLog.textCardText(retainedName + " becomes a copy of ", e.graveyardCard(), "."));
-        log.info("Game {} - {} becomes a copy of {}", gameData.id, retainedName, e.graveyardCard().getName());
+                GameLog.textCardText(retainedName + " becomes a copy of ", graveyardCard, "."));
+        log.info("Game {} - {} becomes a copy of {}", gameData.id, retainedName, graveyardCard.getName());
     }
 }

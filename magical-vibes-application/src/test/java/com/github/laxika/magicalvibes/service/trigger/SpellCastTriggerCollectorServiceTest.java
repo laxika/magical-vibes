@@ -36,7 +36,6 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchSameNameCardToBattlefieldOnArtifactSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchZonesForCardNamedToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnOnSpellCastEffect;
@@ -2035,44 +2034,26 @@ class SpellCastTriggerCollectorServiceTest {
     class ControllerSameNameArtifactSearch {
 
         @Test
-        @DisplayName("puts the ability on the stack with its may and the artifact spell name snapshotted (CR 603.5)")
-        void snapshotsArtifactSpellName() {
+        @DisplayName("puts the ability on the stack with its may unchanged and the spell as its triggering card (CR 603.5)")
+        void searchReadsTheTriggeringSpellAsItResolves() {
             Permanent perm = createPermanent("Mishra, Artificer Prodigy");
-            var inner = new SearchSameNameCardToBattlefieldOnArtifactSpellCastEffect();
-            var effect = new MayEffect(inner, "Search for a copy?");
+            var may = new MayEffect(SearchZonesForCardNamedToBattlefieldEffect.namedAsTriggeringSpell(),
+                    "Search for a copy?");
+            var ability = castAbility(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.ARTIFACT)),
+                    may);
             Card spellCard = createCard("Spellbook");
             spellCard.setType(CardType.ARTIFACT);
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
-            when(gameQueryService.cardHasType(spellCard, CardType.ARTIFACT, gd, player1Id)).thenReturn(true);
+            everySpellMatches();
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+            boolean result = sut.collectCastAbility(match(perm, player1Id, may), ability, ctx, true);
 
             assertThat(result).isTrue();
             assertThat(gd.pendingMayAbilities).isEmpty();
             assertThat(gd.stack).hasSize(1);
             StackEntry entry = gd.stack.getFirst();
             assertThat(entry.getTriggeringCardId()).isEqualTo(spellCard.getId());
-            assertThat(entry.getEffectsToResolve()).containsExactly(new MayEffect(
-                    new SearchZonesForCardNamedToBattlefieldEffect("Spellbook"), "Search for a copy?"));
-        }
-
-        @Test
-        @DisplayName("does not trigger for a nonartifact spell")
-        void doesNotTriggerForNonartifactSpell() {
-            Permanent perm = createPermanent("Mishra, Artificer Prodigy");
-            var inner = new SearchSameNameCardToBattlefieldOnArtifactSpellCastEffect();
-            var effect = new MayEffect(inner, "Search for a copy?");
-            Card spellCard = createCard("Grizzly Bears");
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
-
-            assertThat(result).isFalse();
-            assertThat(gd.pendingMayAbilities).isEmpty();
+            assertThat(entry.getEffectsToResolve()).containsExactly(may);
         }
     }
 

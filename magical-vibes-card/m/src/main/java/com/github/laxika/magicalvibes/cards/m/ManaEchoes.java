@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ManaEchoes extends Card {
 
     public ManaEchoes() {
-        addTrigger(Triggers.enters(null, ObjectRelation.ANY),
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANY),
                 new MayEffect(new ManaEchoesEffect(), "Add colorless mana?"));
     }
 }

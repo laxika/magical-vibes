@@ -67,7 +67,6 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEqualToEnteringPowerPutOneOnTopRestOnBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.ManaEchoesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeAndPutCountersOnEnteringCreatureEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -151,54 +150,6 @@ public class EnterTriggerCollectorService {
         this.graveyardTargetingService = graveyardTargetingService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.conditionEvaluationService = conditionEvaluationService;
-    }
-
-    @CollectsWatchTrigger(value = ManaEchoesEffect.class,
-            watch = ZoneChangeWatch.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD)
-    private boolean handleManaEchoesEnter(TriggerMatchContext match, ManaEchoesEffect effect,
-                                          TriggerContext ctx) {
-        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
-        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
-        if (enteringPermanentId == null) {
-            return true;
-        }
-        Permanent enteringPermanent = gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
-        if (enteringPermanent == null || !gameQueryService.isCreature(match.gameData(), enteringPermanent)) {
-            return false;
-        }
-
-        Set<CardSubtype> enteringTypes =
-                new HashSet<>(gameQueryService.effectiveCreatureSubtypes(match.gameData(), enteringPermanent));
-        if (gameQueryService.hasKeyword(match.gameData(), enteringPermanent,
-                Keyword.CHANGELING)) {
-            for (CardSubtype subtype : CardSubtype.values()) {
-                if (gameQueryService.isCreatureSubtype(subtype)) {
-                    enteringTypes.add(subtype);
-                }
-            }
-        }
-        CardEffect queuedEffect = new ManaEchoesEffect(enteringTypes);
-        if (match.rawEffect() instanceof MayEffect may) {
-            queuedEffect = new MayEffect(queuedEffect, may.prompt(), may.elseEffect(), may.choicePlayer());
-        }
-
-        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    match.permanent().getCard(),
-                    match.controllerId(),
-                    match.permanent().getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(queuedEffect)),
-                    enteringPermanentId,
-                    match.permanent().getId());
-            entry.setNonTargeting(true);
-            entry.setTriggeringPermanentId(enteringPermanentId);
-            entry.setTriggeringCardId(pe.enteringCard().getId());
-            entry.setTriggeringCardSnapshot(pe.enteringCard());
-            match.gameData().stack.add(entry);
-        }
-        logTriggered(match);
-        return true;
     }
 
     @CollectsWatchTrigger(value = ChampionOfTheHareishTriggerEffect.class,

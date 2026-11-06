@@ -7,11 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "DGM", collectorNumber = "27")
 @CardRegistration(set = "SLD", collectorNumber = "848")
@@ -21,21 +18,15 @@ import java.util.List;
 public class PontiffOfBlight extends Card {
 
     public PontiffOfBlight() {
-        addTrigger(Triggers.youCastSpell(), extort());
+        addTrigger(Triggers.youCastSpell().anySpell(), extort());
         // "Other creatures you control have extort" — OWN_CREATURES excludes the source, which
         // already has its own printed extort above. Each instance triggers separately.
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                new TriggeredAbility(Triggers.youCastSpell(), extort()), GrantScope.OWN_CREATURES));
+                new TriggeredAbility(Triggers.youCastSpell().anySpell(), extort()), GrantScope.OWN_CREATURES));
     }
 
-    private static MayEffect extort() {
-        return new MayEffect(
-                new SpellCastTriggerEffect(
-                        null,
-                        List.of(new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT, true)),
-                        "{W/B}"
-                ),
-                "Pay {W/B} to extort?"
-        );
+    private static MayPayManaEffect extort() {
+        return new MayPayManaEffect("{W/B}",
+                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT, true), "Pay {W/B} to extort?");
     }
 }

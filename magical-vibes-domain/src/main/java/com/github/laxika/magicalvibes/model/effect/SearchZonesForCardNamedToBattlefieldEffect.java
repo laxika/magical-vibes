@@ -43,6 +43,14 @@ public record SearchZonesForCardNamedToBattlefieldEffect(
                 java.util.Set.of(), true);
     }
 
+    /**
+     * "Search your graveyard, hand, and/or library for a card with the same name as that spell": the name is the
+     * triggering spell's, read as the ability resolves.
+     */
+    public static SearchZonesForCardNamedToBattlefieldEffect namedAsTriggeringSpell() {
+        return new SearchZonesForCardNamedToBattlefieldEffect(null, true, false);
+    }
+
     public SearchZonesForCardNamedToBattlefieldEffect {
         additionalCardNames = java.util.List.copyOf(additionalCardNames);
         selectedZones = java.util.Set.copyOf(selectedZones);

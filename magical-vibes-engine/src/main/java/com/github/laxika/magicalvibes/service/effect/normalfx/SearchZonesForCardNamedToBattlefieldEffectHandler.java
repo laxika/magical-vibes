@@ -50,11 +50,37 @@ public class SearchZonesForCardNamedToBattlefieldEffectHandler implements Normal
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var search = (SearchZonesForCardNamedToBattlefieldEffect) effect;
+        if (search.cardName() == null) {
+            String spellName = triggeringSpellName(gameData, entry);
+            if (spellName == null) {
+                return;
+            }
+            search = new SearchZonesForCardNamedToBattlefieldEffect(spellName, search.includeHand(),
+                    search.attachToTarget(), search.additionalCardNames(), search.selectedZones(),
+                    search.alwaysShuffle());
+        }
         if (!search.additionalCardNames().isEmpty()) {
             resolveMultipleNames(gameData, entry, search);
         } else {
             doResolve(gameData, entry, search);
         }
+    }
+
+    /**
+     * The name of the spell {@code entry}'s trigger event was about: the spell on the stack, else as it last existed
+     * there (CR 608.2h); {@code null} when the entry has none.
+     */
+    private static String triggeringSpellName(GameData gameData, StackEntry entry) {
+        UUID spellCardId = entry.getTriggeringCardId();
+        if (spellCardId != null) {
+            for (StackEntry spell : gameData.stack) {
+                if (spell.getCard() != null && spellCardId.equals(spell.getCard().getId())) {
+                    return spell.getCard().getName();
+                }
+            }
+        }
+        StackEntry snapshot = entry.getTriggeringSpellSnapshot();
+        return snapshot == null || snapshot.getCard() == null ? null : snapshot.getCard().getName();
     }
 
     private void doResolve(GameData gameData, StackEntry entry,

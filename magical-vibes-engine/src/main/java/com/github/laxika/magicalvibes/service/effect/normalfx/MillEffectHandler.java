@@ -111,19 +111,11 @@ public class MillEffectHandler implements NormalEffectHandlerBean {
 
     private int evaluateCount(GameData gameData, StackEntry entry, MillEffect mill,
                                Permanent source, UUID targetPlayerId) {
+        // The milling player stands in for the target; the entry stays in the context, so an amount that reads
+        // the trigger event ("that spell's mana value") finds it.
         AmountContext context = targetPlayerId == null
                 ? AmountContext.forStackEntry(entry, source)
-                : new AmountContext(
-                        entry.getControllerId(),
-                        source,
-                        targetPlayerId,
-                        entry.getXValue(),
-                        entry.getEventValue(),
-                        false,
-                        entry.getChosenPermanentId(),
-                        entry.getRepeatedAdditionalCosts(),
-                        entry.getCard()
-                );
+                : AmountContext.forStackEntry(entry, source).withTargetPermanentId(targetPlayerId);
         return Math.max(0, amountEvaluationService.evaluate(gameData, mill.count(), context));
     }
 

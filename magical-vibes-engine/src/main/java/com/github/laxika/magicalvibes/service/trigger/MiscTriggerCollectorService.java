@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCreatureCardInOpponentGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SourcePermanentSnapshotRequiredEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
@@ -26,7 +25,6 @@ import com.github.laxika.magicalvibes.model.effect.CradleOfVitalityLifeGainEffec
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokensForNonlandCardsMilledEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToLifeGainedEffect;
@@ -2035,48 +2033,27 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsWatchTrigger(value = BecomeCopyOfCreatureCardInOpponentGraveyardEffect.class,
-            watch = ZoneChangeWatch.ON_CREATURE_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
-    private boolean handleCreatureCardPutIntoOpponentGraveyardBecomeCopy(TriggerMatchContext match,
-            BecomeCopyOfCreatureCardInOpponentGraveyardEffect effect, TriggerContext ctx) {
-        // Lazav, Dimir Mastermind: the ability doesn't target and doesn't check the graveyard again on
-        // resolution, so bake the triggering card in and copy it as last-known information.
-        var gameData = match.gameData();
-        var triggeringCard = ((TriggerContext.CreatureCardPutIntoGraveyard) ctx).creatureCard();
-        String cardName = match.permanent().getCard().getName();
-
-        gameData.enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                cardName + "'s ability",
-                new ArrayList<>(List.of(new MayEffect(
-                        new BecomeCopyOfCreatureCardInOpponentGraveyardEffect(triggeringCard),
-                        "Become a copy of " + triggeringCard.getName() + "?"))),
-                null,
-                match.permanent().getId()
-        ));
-
-        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers (become a copy of {})", gameData.id, cardName, triggeringCard.getName());
-        return true;
-    }
-
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_CREATURE_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
     private boolean handleCreatureCardPutIntoOpponentGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
 
-        gameData.enqueueTrigger(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 cardName + "'s ability",
                 new ArrayList<>(List.of(effect)),
                 null,
-                match.permanent().getId()
-        ));
+                match.permanent().getId());
+        if (ctx instanceof TriggerContext.CreatureCardPutIntoGraveyard creatureCard
+                && creatureCard.creatureCard() != null) {
+            // "That card", as it was put into the graveyard: the ability doesn't look for it there again.
+            entry.setTriggeringCardId(creatureCard.creatureCard().getId());
+            entry.setTriggeringCards(List.of(creatureCard.creatureCard()));
+        }
+        gameData.enqueueTrigger(entry);
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (creature card put into opponent's graveyard from anywhere)", gameData.id, cardName);
@@ -2373,30 +2350,6 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsWatchTrigger(value = CreateTokensForNonlandCardsMilledEffect.class,
-            watch = ZoneChangeWatch.ON_NONLAND_CARDS_MILLED)
-    private boolean handleCreateTokensForNonlandCardsMilled(TriggerMatchContext match,
-            CreateTokensForNonlandCardsMilledEffect effect, TriggerContext ctx) {
-        TriggerContext.NonlandCardsMilled milled = (TriggerContext.NonlandCardsMilled) ctx;
-        CardEffect queuedEffect = match.rawEffect();
-
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(queuedEffect)),
-                null,
-                match.permanent().getId());
-        entry.setEventValue(milled.nonlandCardCount());
-        entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
-        match.gameData().enqueueTrigger(entry);
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers on nonland cards milled (create tokens)",
-                match.gameData().id, match.permanent().getCard().getName());
-        return true;
-    }
-
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_NONLAND_CARDS_MILLED)
     private boolean handleNonlandCardsMilled(TriggerMatchContext match,
                                              CardEffect effect, TriggerContext ctx) {
@@ -2421,6 +2374,7 @@ public class MiscTriggerCollectorService {
                     null,
                     match.permanent().getId());
             entry.setEventValue(milled.nonlandCardCount());
+            entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
             gameData.enqueueTrigger(entry);
         }
 

@@ -2429,17 +2429,26 @@ public class AmountEvaluationService {
         return manaCost == null ? 0 : manaCost.countColorSymbols(amount.color());
     }
 
+    /**
+     * "That many" for the triggering spell's targets (Voracious Bibliophile), or for those of its targets a filter
+     * admits (Arcee, Acrobatic Coupe), counted as the ability resolves: the spell's targets while it is on the stack,
+     * else the targets it had as it last existed there (the entry's triggering spell, CR 608.2h). A filtered target
+     * that has left the battlefield is judged as it last existed on it.
+     */
     private int triggeringSpellTargetCount(GameData gameData, AmountContext ctx,
                                            TriggeringSpellTargetCount amount) {
-        if (gameData == null || ctx.stackEntry() == null || ctx.stackEntry().getTriggeringCardId() == null) {
+        if (gameData == null || ctx.stackEntry() == null) {
             return 0;
         }
         UUID triggeringCardId = ctx.stackEntry().getTriggeringCardId();
-        StackEntry spellEntry = gameData.stack.stream()
+        StackEntry spellEntry = triggeringCardId == null ? null : gameData.stack.stream()
                 .filter(entry -> entry.getCard() != null)
                 .filter(entry -> triggeringCardId.equals(entry.getCard().getId()))
                 .findFirst()
                 .orElse(null);
+        if (spellEntry == null) {
+            spellEntry = ctx.stackEntry().getTriggeringSpellSnapshot();
+        }
         if (spellEntry == null) {
             return 0;
         }
@@ -2454,12 +2463,28 @@ public class AmountEvaluationService {
         }
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceControllerId(ctx.controllerId());
-        return (int) targetIds.stream()
-                .map(targetId -> gameQueryService.findPermanentById(gameData, targetId))
-                .filter(permanent -> permanent != null)
-                .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
-                        permanent, amount.filter(), filterContext))
-                .count();
+        int count = 0;
+        for (UUID targetId : targetIds) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, targetId);
+            FilterContext targetContext = filterContext;
+            if (permanent == null) {
+                permanent = gameData.departedPermanentSnapshots.values().stream()
+                        .filter(departed -> targetId.equals(departed.getId()))
+                        .findFirst()
+                        .orElse(null);
+                if (permanent == null) {
+                    continue;
+                }
+                // Its controller as it last existed on the battlefield.
+                targetContext = filterContext.withTriggeringPermanentId(targetId)
+                        .withTriggeringPermanentControllerId(
+                                gameData.departedPermanentControllerIds.get(permanent.getCard().getId()));
+            }
+            if (predicateEvaluationService.matchesPermanentPredicate(permanent, amount.filter(), targetContext)) {
+                count++;
+            }
+        }
+        return count;
     }
 
     private Card findTriggeringSpell(GameData gameData, AmountContext ctx) {

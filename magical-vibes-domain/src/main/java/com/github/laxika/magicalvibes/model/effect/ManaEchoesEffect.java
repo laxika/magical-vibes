@@ -1,17 +1,14 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.CardSubtype;
+/**
+ * Mana Echoes: "add {C} for each creature you control that shares a creature type with it", where "it" is the
+ * creature whose entering triggered the ability, read as the ability resolves (CR 608.2h): the creature on the
+ * battlefield, else as it last existed there.
+ */
+public record ManaEchoesEffect() implements CardEffect {
 
-import java.util.Set;
-
-/** Resolves Mana Echoes' optional colorless-mana trigger. */
-public record ManaEchoesEffect(Set<CardSubtype> enteringCreatureTypes) implements CardEffect {
-
-    public ManaEchoesEffect {
-        enteringCreatureTypes = enteringCreatureTypes == null ? Set.of() : Set.copyOf(enteringCreatureTypes);
-    }
-
-    public ManaEchoesEffect() {
-        this(Set.of());
+    @Override
+    public boolean usesEnteringPermanentReference() {
+        return true;
     }
 }

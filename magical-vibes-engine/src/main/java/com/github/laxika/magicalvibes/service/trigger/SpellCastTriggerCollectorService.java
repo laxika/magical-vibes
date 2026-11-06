@@ -34,7 +34,6 @@ import com.github.laxika.magicalvibes.model.effect.CasterLosesLifeOnChosenColorS
 import com.github.laxika.magicalvibes.model.effect.CardAdvantageSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateFoodWhenPlayingCardFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToCastSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.GainLifeForEachChosenColorSpellCastEffect;
@@ -104,7 +103,6 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.amount.TriggeringSpellTargetCount;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
@@ -122,7 +120,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByCastSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.ModalSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealHandAndDiscardMatchingCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -164,7 +161,6 @@ import com.github.laxika.magicalvibes.model.trigger.SpellFilter;
 import com.github.laxika.magicalvibes.model.effect.SpellweaverHelixTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellweaverVoluteTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyEnchantedInstantAndMayCastCopyEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchSameNameCardToBattlefieldOnArtifactSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchZonesForCardNamedToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.StormCopyEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -1343,35 +1339,6 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsSpellAbilityTrigger(value = SearchSameNameCardToBattlefieldOnArtifactSpellCastEffect.class,
-            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
-    private boolean handleSameNameArtifactSpellCastTrigger(TriggerMatchContext match,
-            SearchSameNameCardToBattlefieldOnArtifactSpellCastEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (!gameQueryService.cardHasType(sc.spellCard(), CardType.ARTIFACT, match.gameData(),
-                sc.castingPlayerId())) {
-            return false;
-        }
-
-        CardEffect searchEffect = new SearchZonesForCardNamedToBattlefieldEffect(sc.spellCard().getName());
-        Card sourceCard = match.permanent().getCard();
-        // CR 603.5: a "you may" goes on the stack with the ability and is chosen as it resolves.
-        CardEffect resolved = match.rawEffect() instanceof MayEffect may
-                ? new MayEffect(searchEffect, may.prompt())
-                : searchEffect;
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(resolved)));
-        entry.setTriggeringCardId(sc.spellCard().getId());
-        entry.setNonTargeting(true);
-        match.gameData().stack.add(entry);
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        return true;
-    }
-
     @CollectsSpellAbilityTrigger(value = CastSameNameCardFromGraveyardOnSpellCastEffect.class,
             watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleCastSameNameCardFromGraveyard(TriggerMatchContext match,
@@ -2048,59 +2015,6 @@ public class SpellCastTriggerCollectorService {
         gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 "'s triggered ability triggers — choose up to one target permanent with mana value "
                         + manaValue + " or less."));
-        return true;
-    }
-
-    @CollectsSpellAbilityTrigger(value = MillTargetPlayerByCastSpellManaValueEffect.class,
-            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
-    private boolean handleManaValueMill(TriggerMatchContext match,
-            MillTargetPlayerByCastSpellManaValueEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (!predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
-                match.gameData(), sc.castingPlayerId())) return false;
-
-        int manaValue = spellManaValue(match.gameData(), sc.spellCard());
-        List<CardEffect> resolvedEffects = List.of(new MillEffect(manaValue, MillRecipient.TARGET_PLAYER));
-        if (match.rawEffect() instanceof MayEffect may) {
-            match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                    match.permanent().getCard(), match.controllerId(),
-                    List.of(new MayEffect(resolvedEffects.getFirst(), may.prompt())),
-                    true, null, 0, match.permanent().getId()));
-            gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        } else {
-            match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(resolvedEffects)
-            ));
-            gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
-                    "'s triggered ability triggers - choose a player to mill " + manaValue + " cards."));
-        }
-        return true;
-    }
-
-    @CollectsSpellAbilityTrigger(value = GainLifeEqualToCastSpellManaValueEffect.class,
-            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
-    private boolean handleManaValueLifeGain(TriggerMatchContext match,
-            GainLifeEqualToCastSpellManaValueEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (!predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
-                match.gameData(), sc.castingPlayerId())) return false;
-
-        int manaValue = spellManaValue(match.gameData(), sc.spellCard());
-        // CR 603.5: a "you may" goes on the stack with the ability and is chosen as it resolves.
-        List<CardEffect> resolvedEffects = List.of(match.rawEffect() instanceof MayEffect may
-                ? new MayEffect(new GainLifeEffect(manaValue), may.prompt())
-                : new GainLifeEffect(manaValue));
-        match.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                resolvedEffects,
-                null,
-                match.permanent().getId()));
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} spell-cast mana-value life-gain trigger queued ({})",
-                match.gameData().id, match.permanent().getCard().getName(), manaValue);
         return true;
     }
 
@@ -2886,12 +2800,6 @@ public class SpellCastTriggerCollectorService {
         }
 
         List<CardEffect> resolved = new ArrayList<>(trigger.effects());
-        if (triggeringSpell != null) {
-            resolved = resolved.stream()
-                    .map(effect -> bindTriggeringSpellTargetCount(effect, triggeringSpell, match.gameData(),
-                            match.controllerId()))
-                    .toList();
-        }
         // Snapshot CountersOnSource damage at trigger time (Imminent Doom ruling: damage equals
         // the counter count as the ability triggered, not as it resolves).
         resolved = snapshotCountersOnSourceDamage(resolved, match.permanent());
@@ -3305,52 +3213,6 @@ public class SpellCastTriggerCollectorService {
                 match.permanent().getId()));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         return true;
-    }
-
-    /**
-     * {@code effect} with a "that many" target count of the triggering spell (Arcee, Acrobatic Coupe; Voracious
-     * Bibliophile) counted now, as the ability triggers; every other effect as it is. The spell itself, its controller,
-     * colors and mana value are the stack entry's triggering spell ({@link StackEntry#setTriggeringSpell}), which the
-     * effects read as they resolve; only this count is still bound into an effect (effect-slot-refactor.md step 15,
-     * run 17).
-     */
-    private CardEffect bindTriggeringSpellTargetCount(CardEffect effect, StackEntry spellSnapshot,
-                                                      GameData gameData, UUID sourceControllerId) {
-        if (effect instanceof DrawCardEffect draw && draw.amount() instanceof TriggeringSpellTargetCount targetCount) {
-            return new DrawCardEffect(
-                    new Fixed(countMatchingSpellTargets(gameData, spellSnapshot, targetCount, sourceControllerId)), draw.castTimeXValue(), draw.rememberAmount());
-        }
-        if (effect instanceof PutCountersOnSelfEffect putCounters
-                && putCounters.amount() instanceof TriggeringSpellTargetCount targetCount) {
-            return new PutCountersOnSelfEffect(
-                    putCounters.counterType(), putCounters.count(),
-                    new Fixed(countMatchingSpellTargets(gameData, spellSnapshot, targetCount, sourceControllerId)),
-                    putCounters.targetsPlayer(), putCounters.excludeDamageSource(),
-                    putCounters.hasExternalPermanentTarget());
-        }
-        return effect;
-    }
-
-    private int countMatchingSpellTargets(GameData gameData, StackEntry spellSnapshot,
-                                           TriggeringSpellTargetCount amount,
-                                           UUID sourceControllerId) {
-        List<UUID> targetIds = new ArrayList<>(spellSnapshot.getDeclaredTargetIds());
-        if (amount.filter() == null) {
-            return (spellSnapshot.getTargetId() != null ? 1 : 0)
-                    + targetIds.size() + spellSnapshot.getTargetCardIds().size();
-        }
-        if (spellSnapshot.getTargetId() != null && spellSnapshot.getTargetZone() == null
-                && (targetIds.isEmpty() || spellSnapshot.isPrimaryTargetStoredSeparately())) {
-            targetIds.add(spellSnapshot.getTargetId());
-        }
-        FilterContext filterContext = FilterContext.of(gameData)
-                .withSourceControllerId(sourceControllerId);
-        return (int) targetIds.stream()
-                .map(targetId -> gameQueryService.findPermanentById(gameData, targetId))
-                .filter(permanent -> permanent != null)
-                .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
-                        permanent, amount.filter(), filterContext))
-                .count();
     }
 
     private StackEntry findStackEntryForCard(com.github.laxika.magicalvibes.model.GameData gameData, UUID cardId) {

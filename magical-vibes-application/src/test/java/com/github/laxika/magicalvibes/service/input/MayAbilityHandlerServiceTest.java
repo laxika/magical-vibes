@@ -10,10 +10,13 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.AllowCastTargetCardFromGraveyardThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -320,6 +323,29 @@ class MayAbilityHandlerServiceTest {
         assertThat(gd.stack).singleElement()
                 .extracting(entry -> entry.getTriggeringSpellSnapshot().getCard())
                 .isSameAs(spellCard);
+    }
+
+    @Test
+    @DisplayName("An accepted may ability whose player target was chosen first keeps the triggering card")
+    void acceptedPreTargetedMayAbilityKeepsTriggeringCard() {
+        Card sourceCard = new Card();
+        sourceCard.setName("Cloudhoof Kirin");
+        sourceCard.setType(CardType.CREATURE);
+        UUID spellCardId = UUID.randomUUID();
+        CardEffect mill = new MillEffect(new TargetSpellManaValue(), MillRecipient.TARGET_PLAYER);
+
+        gd.pendingMayAbilities.add(new PendingMayAbility(sourceCard, PLAYER1_ID, List.of(mill),
+                "Cloudhoof Kirin — mill?", PLAYER2_ID, null, UUID.randomUUID())
+                .withTriggeringCard(spellCardId, -1));
+        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(
+                PLAYER1_ID, "Cloudhoof Kirin — mill?", null));
+
+        svc.handleMayAbilityChosen(gd, player1, true);
+
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getTargetId()).isEqualTo(PLAYER2_ID);
+            assertThat(entry.getTriggeringCardId()).isEqualTo(spellCardId);
+        });
     }
 
     private void acceptMayAbility(CardEffect effect) {

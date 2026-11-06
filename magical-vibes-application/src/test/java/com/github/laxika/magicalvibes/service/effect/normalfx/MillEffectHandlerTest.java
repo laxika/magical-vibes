@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
@@ -162,6 +163,23 @@ class MillEffectHandlerTest {
 
             verify(graveyardService).resolveMillPlayer(gd, player1Id, 2);
             verify(graveyardService).resolveMillPlayer(gd, player2Id, 4);
+        }
+
+        @Test
+        @DisplayName("Mills the target player by the triggering spell's mana value (Cloudhoof Kirin)")
+        void millsTargetPlayerByTriggeringSpellManaValue() {
+            Card spellCard = createCard("Ideas Unbound");
+            spellCard.setManaCost("{2}{U}");
+            gd.stack.add(new StackEntry(StackEntryType.SORCERY_SPELL, spellCard, player1Id, "Ideas Unbound",
+                    List.of()));
+            MillEffect effect = new MillEffect(new TargetSpellManaValue(), MillRecipient.TARGET_PLAYER);
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Cloudhoof Kirin"),
+                    player1Id, "Cloudhoof Kirin", List.of(effect), 0, player2Id, null);
+            entry.setTriggeringCardId(spellCard.getId());
+
+            handler.resolve(gd, entry, effect);
+
+            verify(graveyardService).resolveMillPlayer(gd, player2Id, 3);
         }
     }
 

@@ -37,11 +37,13 @@ public class ManaEchoesEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        ManaEchoesEffect manaEchoes = (ManaEchoesEffect) effect;
         Permanent enteringPermanent = entry.getTargetId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        Card lastKnownEntering = enteringPermanent != null || entry.getTargetId() == null
-                ? null : entry.lastKnownPermanentCard(entry.getTargetId());
+        Card lastKnownEntering = enteringPermanent != null ? null
+                : entry.getTargetId() != null && entry.lastKnownPermanentCard(entry.getTargetId()) != null
+                ? entry.lastKnownPermanentCard(entry.getTargetId())
+                // The creature as it entered, when it left before any last-known information was recorded.
+                : entry.getTriggeringCardSnapshot();
         Set<CardSubtype> enteringTypes;
         if (enteringPermanent != null) {
             enteringTypes = creatureTypes(gameData, enteringPermanent);
@@ -60,7 +62,7 @@ public class ManaEchoesEffectHandler implements NormalEffectHandlerBean {
                 }
             }
         } else {
-            enteringTypes = manaEchoes.enteringCreatureTypes();
+            enteringTypes = Set.of();
         }
 
         int matchingCreatures = 0;

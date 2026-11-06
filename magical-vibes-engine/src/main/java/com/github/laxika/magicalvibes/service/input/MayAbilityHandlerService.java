@@ -454,6 +454,8 @@ public class MayAbilityHandlerService {
             }
             entry.setTriggeringPermanentPowerAtTrigger(ability.sourcePowerAtTrigger());
             entry.setTriggeringPermanentToughnessAtTrigger(ability.triggeringPermanentToughnessAtTrigger());
+            entry.setTriggeringCardId(ability.triggeringCardId());
+            entry.setTriggeringCardGraveyardEntryVersion(ability.triggeringCardGraveyardEntryVersion());
             if (ability.xValue() != null) {
                 entry.setXValue(ability.xValue());
             }

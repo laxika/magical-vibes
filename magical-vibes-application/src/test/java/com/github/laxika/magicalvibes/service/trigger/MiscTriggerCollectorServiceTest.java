@@ -26,6 +26,8 @@ import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCreatureCardInOpponentGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
@@ -91,6 +93,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -1603,6 +1606,49 @@ class MiscTriggerCollectorServiceTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
         assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
+    }
+
+    @Test
+    @DisplayName("gives a creature-card-put-into-an-opponent's-graveyard ability the card as its triggering card")
+    void opponentGraveyardCreatureCardDefaultCarriesTheCard() {
+        Permanent perm = createPermanent("Lazav, Dimir Mastermind");
+        var effect = new MayEffect(new BecomeCopyOfCreatureCardInOpponentGraveyardEffect(),
+                "Become a copy of that creature card?");
+        Card bears = createCard("Grizzly Bears");
+        var ctx = new TriggerContext.CreatureCardPutIntoGraveyard(bears, player2Id);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect),
+                ZoneChangeWatch.ON_CREATURE_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE,
+                effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+            assertThat(entry.getTriggeringCardId()).isEqualTo(bears.getId());
+            assertThat(entry.getTriggeringCards()).containsExactly(bears);
+        });
+    }
+
+    @Test
+    @DisplayName("a \"do this only once each turn\" nonland-cards-milled ability is marked as accepted on the stack")
+    void nonlandCardsMilledDefaultCarriesTheOncePerTurnMark() {
+        Permanent perm = createPermanent("Screeching Scorchbeast");
+        var tokens = new CreateTokenEffect(new EventValue(), "Zombie Mutant", 2, 2, CardColor.BLACK,
+                List.of(CardSubtype.ZOMBIE, CardSubtype.MUTANT), Set.of(), Set.of());
+        var effect = new MayEffect(tokens, "Create that many Zombie Mutant tokens?");
+        var ctx = new TriggerContext.NonlandCardsMilled(player2Id, 3);
+
+        boolean result = registry.dispatch(
+                new TriggerMatchContext(gd, perm, player1Id, effect, perm.getCard(), true),
+                ZoneChangeWatch.ON_NONLAND_CARDS_MILLED, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+            assertThat(entry.getEventValue()).isEqualTo(3);
+            assertThat(entry.isMarkSourceOncePerTurnOnAcceptance()).isTrue();
+        });
     }
 
     @Test

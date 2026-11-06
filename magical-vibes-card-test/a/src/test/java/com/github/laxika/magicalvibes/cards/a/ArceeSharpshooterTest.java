@@ -102,6 +102,23 @@ class ArceeSharpshooterTest extends BaseCardTest {
     }
 
     @Test
+    void targetThatLeftTheBattlefieldBeforeTheTriggerResolvesStillCounts() {
+        Permanent arcee = castArceeConverted();
+        Permanent target1 = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent target2 = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        harness.setHand(player1, List.of(new CommonBond()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, List.of(target1.getId(), target2.getId()));
+        harness.sacrifice(target2);
+        harness.passBothPriorities();
+
+        assertThat(arcee.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
     void onlyControlledTargetsContributeCounters() {
         Permanent arcee = castArceeConverted();
         Permanent ownTarget = harness.addToBattlefieldAndReturn(player1, new HillGiant());
