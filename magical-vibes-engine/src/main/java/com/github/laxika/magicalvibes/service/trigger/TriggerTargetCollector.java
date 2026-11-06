@@ -228,6 +228,18 @@ public class TriggerTargetCollector {
                           UUID controllerId, Card sourceCard, Options options,
                           Permanent sourcePermanentSnapshot, UUID defendingPlayerId, Integer xValue,
                           UUID triggeringPermanentId) {
+        return collect(gameData, effects, targetFilter, controllerId, sourceCard, options,
+                sourcePermanentSnapshot, defendingPlayerId, xValue, triggeringPermanentId, null);
+    }
+
+    /**
+     * Collects targets with {@code triggeringPlayerId}, the player the trigger event was about (the player dealt
+     * damage), for the filters that read "that player controls" ({@code PermanentControlledByTriggeringPlayerPredicate}).
+     */
+    public Result collect(GameData gameData, List<CardEffect> effects, TargetFilter targetFilter,
+                          UUID controllerId, Card sourceCard, Options options,
+                          Permanent sourcePermanentSnapshot, UUID defendingPlayerId, Integer xValue,
+                          UUID triggeringPermanentId, UUID triggeringPlayerId) {
 
         List<CardEffect> unwrappedEffects = effects.stream()
                 .map(e -> unwrap(e, options))
@@ -302,6 +314,7 @@ public class TriggerTargetCollector {
                             ? null : sourcePermanentSnapshot.getId())
                     .withDefendingPlayerId(defendingPlayerId)
                     .withTriggeringPermanentId(triggeringPermanentId)
+                    .withTriggeringPlayerId(triggeringPlayerId)
                     : null;
 
             PermanentPredicate effectPredicate = null;
@@ -328,7 +341,8 @@ public class TriggerTargetCollector {
                             .withSourcePermanentId(sourcePermanentSnapshot == null
                                     ? null : sourcePermanentSnapshot.getId())
                             .withDefendingPlayerId(defendingPlayerId)
-                            .withTriggeringPermanentId(triggeringPermanentId);
+                            .withTriggeringPermanentId(triggeringPermanentId)
+                            .withTriggeringPlayerId(triggeringPlayerId);
                 }
             }
 
@@ -421,7 +435,8 @@ public class TriggerTargetCollector {
                                             sourcePermanentSnapshot,
                                             false,
                                             sourcePermanentSnapshot == null ? null : sourcePermanentSnapshot.getId(),
-                                            null, defendingPlayerId, triggeringPermanentId)).isPresent()) {
+                                            null, defendingPlayerId, triggeringPermanentId)
+                                            .withTriggeringPlayerId(triggeringPlayerId)).isPresent()) {
                         continue;
                     }
 

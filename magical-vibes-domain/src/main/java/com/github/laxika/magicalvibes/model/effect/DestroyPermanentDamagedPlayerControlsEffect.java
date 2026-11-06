@@ -7,18 +7,18 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * "Destroy target permanent that player controls" where "that player" is the damaged player.
- * Damage trigger that binds the damaged player's identity before choosing a permanent target.
- * Only fires when the source dealt at least {@code minimumDamage} damage to the player.
- * {@link #forDamagedPlayer(UUID)} creates the targeted effect used on the stack.
+ * "Destroy target permanent that player controls" as Dokuchi Silencer's reflexive "when you do" ability, where "that
+ * player" is the player its combat damage trigger was about; {@link #forDamagedPlayer(UUID)} creates the targeted
+ * effect the reflexive ability goes on the stack with. A triggered ability's own "destroy target permanent that player
+ * controls" is {@link DestroyTargetPermanentEffect} with a
+ * {@code PermanentControlledByTriggeringPlayerPredicate}.
  *
- * @param predicate      filter restricting valid targets (e.g. {@code PermanentIsLandPredicate} for lands)
- * @param minimumDamage  the trigger only fires if this much damage or more was dealt (Deus of Calamity: 6)
+ * @param predicate filter restricting valid targets (e.g. creatures or planeswalkers)
  */
-public record DestroyPermanentDamagedPlayerControlsEffect(PermanentPredicate predicate, int minimumDamage)
+public record DestroyPermanentDamagedPlayerControlsEffect(PermanentPredicate predicate)
         implements DamagedPlayerControlsTargetEffect {
 
-    /** Binds the damaged player before the trigger's target is chosen. */
+    /** Binds the damaged player before the reflexive ability's target is chosen. */
     public DestroyTargetPermanentEffect forDamagedPlayer(UUID playerId) {
         PermanentPredicate controller = new PermanentControlledByPlayerPredicate(playerId);
         return new DestroyTargetPermanentEffect(predicate == null ? controller

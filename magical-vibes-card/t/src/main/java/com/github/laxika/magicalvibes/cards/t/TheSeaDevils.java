@@ -8,8 +8,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureDamagedPlayerControlsEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -32,6 +33,7 @@ public class TheSeaDevils extends Card {
         addTrigger(Triggers.chapter(3), new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
                 new TriggeredAbility(Triggers.creatureDealsCombatDamageToPlayer()
                                 .withFilter(new PermanentHasSubtypePredicate(CardSubtype.SALAMANDER)),
-                        new DealDamageToTargetCreatureDamagedPlayerControlsEffect(new EventValue()))));
+                        new DealDamageToTargetCreatureEffect(new EventValue(), false,
+                                new PermanentControlledByTriggeringPlayerPredicate()))));
     }
 }

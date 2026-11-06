@@ -880,6 +880,15 @@ public final class Triggers {
                 ObjectRelation.YOU_CONTROL);
     }
 
+    /**
+     * "Whenever an instant or sorcery spell you control deals damage to an opponent": once for each opponent dealt
+     * damage, "that player" being that opponent and "that much" the damage dealt to them.
+     */
+    public static DamageTrigger instantOrSorceryYouControlDealsDamageToOpponent() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_OPPONENT,
+                ObjectRelation.YOU_CONTROL);
+    }
+
     /** "Whenever a source you control deals noncombat damage to an opponent". */
     public static DamageTrigger sourceYouControlDealsNoncombatDamageToOpponent() {
         return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, ObjectRelation.YOU_CONTROL);

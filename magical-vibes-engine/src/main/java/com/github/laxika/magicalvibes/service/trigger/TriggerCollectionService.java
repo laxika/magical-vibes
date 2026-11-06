@@ -217,7 +217,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTriggeringSpellWithSuspe
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterOpponentFirstSpellEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.DamagedPlayerControlsTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToManaSpentToCastToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnAllyCreatureEntersEffect;
@@ -248,7 +247,6 @@ import com.github.laxika.magicalvibes.model.effect.SearchCreatureToBattlefieldOn
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.TapChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.TemporaryGlobalTriggerEffect;
@@ -3375,15 +3373,13 @@ public class TriggerCollectionService {
                 continue;
             }
             CardEffect resolvedEffect = read.effect();
-            if (resolvedEffect instanceof DamagedPlayerControlsTargetEffect damagedPlayerTarget) {
-                // The target is chosen as the trigger is put on the stack (CR 603.3d), by the
-                // watcher's controller, from the creatures the damaged player controls.
+            if (resolvedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+                // The target is chosen as the trigger is put on the stack (CR 603.3d), by the watcher's
+                // controller; "that player" is the player dealt damage and "that much" the damage dealt.
                 gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                        watcher.sourceCard(), watcher.controllerId(),
-                        List.of(damagedPlayerTarget.forDamagedPlayer(damagedPlayerId, damageDealt)),
-                        creature.getId(),
-                        damagedPlayerTarget.targetChooserId(damagedPlayerId, watcher.controllerId()),
-                        damagedPlayerId, creature.getId()));
+                        watcher.sourceCard(), watcher.controllerId(), List.of(resolvedEffect),
+                        creature.getId(), watcher.controllerId(), damagedPlayerId, creature.getId())
+                        .withEventValue(damageDealt).withTriggeringPlayer(damagedPlayerId));
                 gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
                 continue;
             }
@@ -3756,15 +3752,21 @@ public class TriggerCollectionService {
             return;
         }
 
-        List<CardEffect> effects = new ArrayList<>(DamageAbilityReader.printedEffects(source.getCard(), DamageWatch.ON_DAMAGE_TO_PLAYER));
-        effects.addAll(DamageAbilityReader.effects(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
-                    gameData, source, DamageWatch.ON_DAMAGE_TO_PLAYER.trigger()), DamageWatch.ON_DAMAGE_TO_PLAYER.trigger()));
+        // The ability's event condition ("deals 6 or more damage", CR 603.2) and intervening "if" as it triggers, with
+        // the damage dealt as the event's value.
+        TriggerJudge damageJudge = conditionEvaluationService.judge(gameData,
+                ConditionContext.forPermanent(source, controllerId), damageDealt);
+        List<CardEffect> effects = new ArrayList<>(DamageAbilityReader.printedEffects(source.getCard(),
+                DamageWatch.ON_DAMAGE_TO_PLAYER, damageJudge));
+        effects.addAll(DamageAbilityReader.effects(damageJudge.filter(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
+                    gameData, source, DamageWatch.ON_DAMAGE_TO_PLAYER.trigger())), DamageWatch.ON_DAMAGE_TO_PLAYER.trigger()));
         if (!controllerId.equals(damagedPlayerId)) {
-            effects.addAll(DamageAbilityReader.printedEffects(source.getCard(), DamageWatch.ON_DAMAGE_TO_OPPONENT));
-            effects.addAll(DamageAbilityReader.temporaryEffects(source, DamageWatch.ON_DAMAGE_TO_OPPONENT));
-            effects.addAll(DamageAbilityReader.persistentEffects(source, DamageWatch.ON_DAMAGE_TO_OPPONENT));
-            effects.addAll(DamageAbilityReader.effects(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
-                    gameData, source, DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger()), DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger()));
+            effects.addAll(DamageAbilityReader.printedEffects(source.getCard(), DamageWatch.ON_DAMAGE_TO_OPPONENT,
+                    damageJudge));
+            effects.addAll(DamageAbilityReader.temporaryEffects(source, DamageWatch.ON_DAMAGE_TO_OPPONENT, damageJudge));
+            effects.addAll(DamageAbilityReader.persistentEffects(source, DamageWatch.ON_DAMAGE_TO_OPPONENT, damageJudge));
+            effects.addAll(DamageAbilityReader.effects(damageJudge.filter(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
+                    gameData, source, DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger())), DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger()));
         }
         // An effect that removes all abilities removes the source's own triggered abilities,
         // so damage dealt after that loss does not trigger them.
@@ -3817,29 +3819,15 @@ public class TriggerCollectionService {
                 source.getId(), damagedPlayerId) < threshold.minimumDamage()) {
             return;
         }
-        CardEffect damageEffect = toQueue instanceof MayEffect may ? may.wrapped() : toQueue;
-        if (damageEffect instanceof TapChosenPermanentEffect tap
-                && tap.chooseFromDamagedPlayer()) {
-            CardEffect targeted = tap.forDamagedPlayer(damagedPlayerId);
-            if (toQueue instanceof MayEffect may) {
-                targeted = new MayEffect(targeted, may.prompt(), may.elseEffect(), may.choicePlayer());
-            }
+        // A target is chosen as the ability goes on the stack (CR 603.3d), a "you may" one too, its question asked as
+        // it resolves (CR 603.5); "that player" is the player dealt damage and "that much" the damage dealt.
+        if (toQueue.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
             gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                    source.getCard(), controllerId, List.of(targeted),
-                    source.getId(), controllerId, damagedPlayerId));
-            return;
-        }
-        if (damageEffect instanceof DamagedPlayerControlsTargetEffect damageTargetEffect) {
-            if (damageDealt >= damageTargetEffect.minimumDamage()) {
-                CardEffect targeted = damageTargetEffect.forDamagedPlayer(damagedPlayerId, damageDealt);
-                if (toQueue instanceof MayEffect may) {
-                    targeted = new MayEffect(targeted, may.prompt(), may.elseEffect(), may.choicePlayer());
-                }
-                gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                        source.getCard(), controllerId, List.of(targeted),
-                        source.getId(), damageTargetEffect.targetChooserId(damagedPlayerId, controllerId),
-                        damagedPlayerId));
-            }
+                    source.getCard(), controllerId, List.of(toQueue),
+                    source.getId(), controllerId, damagedPlayerId)
+                    .withEventValue(damageDealt).withTriggeringPlayer(damagedPlayerId));
+            gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
+                    "'s damage trigger goes on the stack — choose a target."));
             return;
         }
 
@@ -4358,6 +4346,42 @@ public class TriggerCollectionService {
                 var match = new TriggerMatchContext(gameData, permanent, sourceControllerId, effect);
                 dispatch(match, DamageWatch.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE, effect, context);
             }
+            batch.getDamageToPlayers().forEach((damagedPlayerId, damage) -> {
+                if (damage > 0 && !damagedPlayerId.equals(sourceControllerId)) {
+                    queueInstantOrSorceryDealsDamageToOpponentTriggers(gameData, permanent, sourceControllerId,
+                            damagedPlayerId, damage);
+                }
+            });
+        }
+    }
+
+    /**
+     * "Whenever an instant or sorcery spell you control deals damage to an opponent" ({@link
+     * DamageWatch#ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_OPPONENT}) for one opponent dealt damage: each opponent is
+     * an occurrence of its own (CR 603.2c). "That player" is the ability's triggering player and "that much" its event
+     * value; a target is chosen as the ability goes on the stack (CR 603.3d).
+     */
+    private void queueInstantOrSorceryDealsDamageToOpponentTriggers(GameData gameData, Permanent permanent,
+                                                                    UUID controllerId, UUID damagedPlayerId,
+                                                                    int damage) {
+        DamageWatch watch = DamageWatch.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_OPPONENT;
+        TriggerJudge judge = conditionEvaluationService.judge(gameData,
+                ConditionContext.forPermanent(permanent, controllerId).withTargetId(damagedPlayerId), damage);
+        for (CardEffect effect : DamageAbilityReader.printedEffects(permanent.getCard(), watch, judge)) {
+            if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+                gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                        permanent.getCard(), controllerId, List.of(effect), permanent.getId(), controllerId,
+                        damagedPlayerId).withEventValue(damage).withTriggeringPlayer(damagedPlayerId));
+            } else {
+                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, permanent.getCard(), controllerId,
+                        permanent.getCard().getName() + "'s ability", new ArrayList<>(List.of(effect)), null,
+                        permanent.getId());
+                entry.setEventValue(damage);
+                entry.setTriggeringPlayerId(damagedPlayerId);
+                entry.setSourcePermanentSnapshot(new Permanent(permanent));
+                gameData.enqueueTrigger(entry);
+            }
+            gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
         }
     }
 

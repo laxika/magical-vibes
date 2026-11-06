@@ -29,11 +29,10 @@ public class PutImprintedCardIntoOwnersHandEffectHandler implements NormalEffect
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
 
-        var put = (PutImprintedCardIntoOwnersHandEffect) effect;
-        ExiledCardEntry boundEntry = put.boundCardId() == null
-                ? null : gameData.findExiledCard(put.boundCardId());
-        Card imprintedCard = put.boundCardId() != null
-                ? (boundEntry == null ? null : boundEntry.card())
+        UUID linkedCardId = entry.getLinkedExiledCardId();
+        ExiledCardEntry linkedEntry = linkedCardId == null ? null : gameData.findExiledCard(linkedCardId);
+        Card imprintedCard = linkedCardId != null
+                ? (linkedEntry == null ? null : linkedEntry.card())
                 : gameData.getImprintedCard(entry.getCard());
         String cardName = entry.getCard().getName();
 

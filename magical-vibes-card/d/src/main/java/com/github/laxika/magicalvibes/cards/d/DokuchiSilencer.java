@@ -26,8 +26,7 @@ public class DokuchiSilencer extends Card {
                         new DestroyPermanentDamagedPlayerControlsEffect(
                                 new PermanentAnyOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
-                                        new PermanentIsPlaneswalkerPredicate())),
-                                0),
+                                        new PermanentIsPlaneswalkerPredicate()))),
                         "a creature card"),
                 "Discard a creature card to destroy target creature or planeswalker that player controls?"));
     }

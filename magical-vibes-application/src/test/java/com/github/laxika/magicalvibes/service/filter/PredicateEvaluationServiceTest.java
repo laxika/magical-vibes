@@ -148,6 +148,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerToughnessTotalA
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithTriggeringPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPermanentControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherControlledPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithControlledCreatureOrGraveyardCreaturePredicate;
@@ -1077,6 +1078,22 @@ class PredicateEvaluationServiceTest {
             assertThat(evaluator.matchesPermanentPredicate(otherController, predicate, context)).isFalse();
             assertThat(evaluator.matchesPermanentPredicate(sameController, predicate,
                     FilterContext.of(gd).withTriggeringPermanentId(UUID.randomUUID()))).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentControlledByTriggeringPlayerPredicate matches the triggering player's permanents only")
+        void controlledByTriggeringPlayerPredicateMatchesThatPlayersPermanents() {
+            Permanent damagedPlayers = addPermanent(player2Id, createArtifact("Damaged Player's"));
+            Permanent controllers = addPermanent(player1Id, createArtifact("Controller's"));
+            var predicate = new PermanentControlledByTriggeringPlayerPredicate();
+            FilterContext context = FilterContext.of(gd)
+                    .withSourceControllerId(player1Id)
+                    .withTriggeringPlayerId(player2Id);
+
+            assertThat(evaluator.matchesPermanentPredicate(damagedPlayers, predicate, context)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(controllers, predicate, context)).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(damagedPlayers, predicate,
+                    FilterContext.of(gd).withSourceControllerId(player1Id))).isFalse();
         }
 
         @Test

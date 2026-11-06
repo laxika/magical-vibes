@@ -1,18 +1,10 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.UUID;
-
 /**
- * When the source permanent dies, put the imprinted (exiled) card into its owner's hand.
- * Used by cards like Hoarding Dragon.
- *
- * @param boundCardId the exiled card this ability refers to, fixed when the ability triggers so a
- *                    later change to the source's imprint (the Dragon returning and exiling a
- *                    different card) cannot redirect it; {@code null} until bound
+ * "Put the exiled card into its owner's hand": the card the source's linked ability exiled (CR 607.2a). Used by
+ * Hoarding Dragon's death trigger, which reads the stack entry's linked exiled card
+ * ({@code StackEntry.getLinkedExiledCardId()}), fixed as the ability triggered so the Dragon returning and exiling a
+ * different card can't redirect it; without one it reads the source's imprint as it resolves.
  */
-public record PutImprintedCardIntoOwnersHandEffect(UUID boundCardId) implements CardEffect {
-
-    public PutImprintedCardIntoOwnersHandEffect() {
-        this(null);
-    }
+public record PutImprintedCardIntoOwnersHandEffect() implements CardEffect {
 }

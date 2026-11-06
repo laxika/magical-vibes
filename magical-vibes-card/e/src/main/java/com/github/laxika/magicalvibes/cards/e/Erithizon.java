@@ -14,6 +14,6 @@ public class Erithizon extends Card {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.attacks(),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
-        setAttackTriggerTargetChosenByDefendingPlayer(true);
+        setCombatTriggerTargetChosenByDefendingPlayer(true);
     }
 }

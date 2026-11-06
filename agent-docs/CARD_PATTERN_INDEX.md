@@ -479,7 +479,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | suspect a creature / clear suspected creatures | `SuspectEffect(GrantScope.TARGET)` + `UnsuspectAllCreaturesEffect`; for optional non-targeted selection use `MayEffect(SuspectChosenOtherCreatureEffect())` |
 | combat damage suspects a creature and perpetually grants it the same ability; suspected opposing creature dies from graveyard | `SuspectAndPerpetuallyGrantAbilityToTargetCreatureEffect()` + `TriggerCondition(Triggers.creatureDies(PermanentIsSuspectedPredicate, OPPONENT_CONTROLS), GRAVEYARD)` with `ConditionalEffect(SourceCardInGraveyard, ...)` |
 | combat damage trigger, block trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
-| combat damage → damaged player chooses a nonland permanent controlled by one of the source controller's opponents to destroy | `b/BladegriffPrototype.java` + `Triggers.dealsCombatDamageToPlayer() DestroyPermanentChosenByDamagedPlayerAmongOpponentsEffect` |
+| combat damage → damaged player chooses a nonland permanent controlled by one of the source controller's opponents to destroy | `b/BladegriffPrototype.java` + `setCombatTriggerTargetChosenByDefendingPlayer(true)` |
 | combat damage to an opponent, same damage to each other opponent | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | cast-trigger temporary creature theft plus enter tapped/stun counters and combat-damage-to-owner untap/draw | `t/TheBeastDeathlessPrince.java` + existing control, keyword, untap, counter, and draw effects |
 | graveyard trigger, graveyard ability | CARD_PATTERNS_CREATURES_TRIGGERED.md |

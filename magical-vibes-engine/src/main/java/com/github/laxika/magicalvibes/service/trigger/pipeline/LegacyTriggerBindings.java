@@ -31,13 +31,11 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutImprintedCardIntoOwnersHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryAndReturnExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnLinkedCardToOwnerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
@@ -47,12 +45,6 @@ import com.github.laxika.magicalvibes.model.effect.SelfExiledWhileActivatingCraf
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIdSetPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -428,25 +420,24 @@ public class LegacyTriggerBindings {
         return true;
     }
     private boolean handleDeathMayEffect(Ctx c, MayEffect may) {
-        MayEffect resolvedMay = (MayEffect) bindImprintedCard(c, may);
         // CR 603.3d: targeted "may" abilities need the target chosen when stacking — including one
         // whose targets are cards in a graveyard (Iname, Life Aspect's "you may exile it. If you do,
         // return any number of target Spirit cards from your graveyard to your hand").
-        boolean graveyardTarget = graveyardTargetingSupport.findTarget(List.of(resolvedMay)) != null;
-        if (resolvedMay.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || resolvedMay.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+        boolean graveyardTarget = graveyardTargetingSupport.findTarget(List.of(may)) != null;
+        if (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || may.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                 || graveyardTarget) {
             c.gameData().queueInteraction(withDyingCard(c, new PermanentChoiceContext.DeathTriggerTarget(
-                    c.dyingCard(), c.controllerId(), new ArrayList<>(List.of(resolvedMay)), c.dyingPower(),
+                    c.dyingCard(), c.controllerId(), new ArrayList<>(List.of(may)), c.dyingPower(),
                     new Permanent(c.permanent())))
-                    .withGraveyardTargetMaxManaValue(graveyardTargetMaxManaValueAtDeath(c, resolvedMay)));
+                    .withGraveyardTargetMaxManaValue(graveyardTargetMaxManaValueAtDeath(c, may)));
         } else {
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     c.dyingCard(),
                     c.controllerId(),
                     c.dyingCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(resolvedMay))
+                    new ArrayList<>(List.of(may))
             );
             entry.setSourcePermanentSnapshot(new Permanent(c.permanent()));
             entry.setTriggeringPermanentPowerAtTrigger(Math.max(0, c.dyingPower()));
@@ -545,16 +536,7 @@ public class LegacyTriggerBindings {
                 && !c.controllerId().equals(gameQueryService.findGraveyardOwnerById(c.gameData(), c.dyingCard().getId()))) {
             return true;
         }
-        CardEffect triggerEffect = bindImprintedCard(c, effect);
-        // "Another target card" excludes this card: for a copy (Phantasmal Image copying Gixian
-        // Puppeteer) that is the copy's own physical card, not the copied card.
-        if (triggerEffect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.filter() != null
-                && c.dyingPermanent() != null
-                && !c.dyingPermanent().getOriginalCard().getId().equals(c.dyingCard().getId())) {
-            triggerEffect = returnEffect.toBuilder()
-                    .filter(bindSelfToCard(returnEffect.filter(), c.dyingPermanent().getOriginalCard().getId()))
-                    .build();
-        }
+        CardEffect triggerEffect = effect;
         // Graveyard-targeting death triggers (e.g. Ruin Rat: "exile target card from an opponent's
         // graveyard") also queue as a DeathTriggerTarget; processNextDeathTriggerTarget routes them
         // to a graveyard card choice made as the trigger goes on the stack.
@@ -882,11 +864,16 @@ public class LegacyTriggerBindings {
 
     /**
      * Gives {@code entry} the card that went to the graveyard ("return it", "exile that card") as its triggering card,
-     * with the graveyard incarnation it has now (CR 400.7), and the permanent as it last existed on the battlefield
-     * with what was attached to it ("its counters", "that creature", CR 603.10a) as its triggering permanent, for the
-     * effects that read them as they resolve.
+     * with the graveyard incarnation it has now (CR 400.7), the permanent as it last existed on the battlefield with
+     * what was attached to it ("its counters", "that creature", CR 603.10a) as its triggering permanent, and the card
+     * the source's linked ability exiled ("the exiled card", CR 607.2a) as its linked exiled card, for the effects that
+     * read them as they resolve.
      */
     private static void markDyingCard(Ctx c, StackEntry entry) {
+        Card imprinted = c.gameData().getImprintedCard(c.dyingCard());
+        if (imprinted != null) {
+            entry.setLinkedExiledCardId(imprinted.getId());
+        }
         if (c.destination() == Zone.GRAVEYARD) {
             UUID cardId = graveyardCardIdOf(c);
             entry.setTriggeringCard(cardId, c.gameData().graveyardEntryVersion(cardId));
@@ -909,17 +896,6 @@ public class LegacyTriggerBindings {
     }
 
 
-    private static CardPredicate bindSelfToCard(CardPredicate predicate, UUID cardId) {
-        return switch (predicate) {
-            case CardIsSelfPredicate ignored -> new CardIdSetPredicate(Set.of(cardId));
-            case CardNotPredicate not -> new CardNotPredicate(bindSelfToCard(not.predicate(), cardId));
-            case CardAllOfPredicate all -> new CardAllOfPredicate(all.predicates().stream()
-                    .map(p -> bindSelfToCard(p, cardId)).toList());
-            case CardAnyOfPredicate any -> new CardAnyOfPredicate(any.predicates().stream()
-                    .map(p -> bindSelfToCard(p, cardId)).toList());
-            default -> predicate;
-        };
-    }
 
     /**
      * The mana value limit of the graveyard target of {@code effect} ({@code ReturnCardFromGraveyardEffect
@@ -938,17 +914,6 @@ public class LegacyTriggerBindings {
                 lastKnown);
     }
 
-    private CardEffect bindImprintedCard(Ctx c, CardEffect effect) {
-        if (effect instanceof MayEffect may) {
-            CardEffect wrapped = bindImprintedCard(c, may.wrapped());
-            return wrapped == may.wrapped() ? may : new MayEffect(wrapped, may.prompt(), may.elseEffect());
-        }
-        if (effect instanceof PutImprintedCardIntoOwnersHandEffect put && put.boundCardId() == null) {
-            Card imprinted = c.gameData().getImprintedCard(c.dyingCard());
-            return imprinted == null ? effect : new PutImprintedCardIntoOwnersHandEffect(imprinted.getId());
-        }
-        return effect;
-    }
 
 
     private UUID findPendingEnterTarget(GameData gameData, Permanent source) {

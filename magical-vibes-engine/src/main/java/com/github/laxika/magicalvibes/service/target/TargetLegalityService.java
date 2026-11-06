@@ -3968,6 +3968,7 @@ public class TargetLegalityService {
                                                 .withXValue(entry.getXValue())
                                                 .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
                                                 .withTriggeringPermanentId(entry.getTriggeringPermanentId())
+                                                .withTriggeringPlayerId(entry.getTriggeringPlayerId())
                                                 .withActivatedAbilitySource(
                                                         entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY)
                                                 .withMadness(entry.isMadness()));
@@ -3982,7 +3983,9 @@ public class TargetLegalityService {
                                         castFaceCard(entry), entry.getXValue(), entry.getControllerId(),
                                         entry.getSourcePermanentSnapshot(), false, entry.getSourcePermanentId(),
                                         entry.getTriggeringPermanentPowerAtTrigger(), defendingPlayerId(gameData, entry),
-                                        entry.getTriggeringPermanentId()), entry.isTeamworkCostPaid()).isPresent()) {
+                                        entry.getTriggeringPermanentId())
+                                        .withTriggeringPlayerId(entry.getTriggeringPlayerId()),
+                                        entry.isTeamworkCostPaid()).isPresent()) {
                             targetFizzled = true;
                         }
                     }
@@ -4457,7 +4460,8 @@ public class TargetLegalityService {
                                 .withActivatedAbilitySource(entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY)
                                 .withMadness(entry.isMadness())
                                 .withTriggeringPermanentId(entry.getTriggeringPermanentId())
-                                .withTriggeringPermanentSnapshot(entry.getTriggeringPermanentSnapshot()));
+                                .withTriggeringPermanentSnapshot(entry.getTriggeringPermanentSnapshot())
+                                .withTriggeringPlayerId(entry.getTriggeringPlayerId()));
             } catch (IllegalStateException e) {
                 return false;
             }
@@ -4467,7 +4471,7 @@ public class TargetLegalityService {
                 new TargetValidationContext(gameData, targetId, entry.getTargetZone(), entry.getCard(), entry.getXValue(),
                         entry.getControllerId(), entry.getSourcePermanentSnapshot(), false, entry.getSourcePermanentId(),
                         entry.getTriggeringPermanentPowerAtTrigger(), defendingPlayerId(gameData, entry),
-                        entry.getTriggeringPermanentId()),
+                        entry.getTriggeringPermanentId()).withTriggeringPlayerId(entry.getTriggeringPlayerId()),
                         entry.isTeamworkCostPaid())
                 .isPresent()) {
             return false;

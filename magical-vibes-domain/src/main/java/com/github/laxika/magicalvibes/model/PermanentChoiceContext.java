@@ -1544,23 +1544,32 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** A targeted attack trigger. {@code choosingPlayerId} defaults to the ability controller and
      *  differs only for text such as Erithizon's "of defending player's choice". {@code eventValue} is
      *  the amount of the event the ability triggered on (a combat damage trigger's damage dealt), which
-     *  the stack entry built from this choice carries for its {@code EventValue} amounts. */
+     *  the stack entry built from this choice carries for its {@code EventValue} amounts.
+     *  {@code triggeringPlayerId} is the player the event was about (a damage trigger's player dealt damage),
+     *  against which the targets' "that player controls" is judged; the stack entry carries it as its
+     *  triggering player. */
     record AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                UUID sourcePermanentId, UUID choosingPlayerId,
                                UUID attackedTargetId, UUID triggeringPermanentId, Integer xValue,
-                               int eventValue) implements PermanentChoiceContext {
+                               int eventValue, UUID triggeringPlayerId) implements PermanentChoiceContext {
 
         public AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                    UUID sourcePermanentId, UUID choosingPlayerId,
                                    UUID attackedTargetId, UUID triggeringPermanentId, Integer xValue) {
             this(sourceCard, controllerId, effects, sourcePermanentId, choosingPlayerId,
-                    attackedTargetId, triggeringPermanentId, xValue, 0);
+                    attackedTargetId, triggeringPermanentId, xValue, 0, null);
         }
 
         /** This choice with {@code eventValue} as the amount of the event the ability triggered on. */
         public AttackTriggerTarget withEventValue(int eventValue) {
             return new AttackTriggerTarget(sourceCard, controllerId, effects, sourcePermanentId, choosingPlayerId,
-                    attackedTargetId, triggeringPermanentId, xValue, eventValue);
+                    attackedTargetId, triggeringPermanentId, xValue, eventValue, triggeringPlayerId);
+        }
+
+        /** This choice with {@code triggeringPlayerId} as the player the event was about ("that player"). */
+        public AttackTriggerTarget withTriggeringPlayer(UUID triggeringPlayerId) {
+            return new AttackTriggerTarget(sourceCard, controllerId, effects, sourcePermanentId, choosingPlayerId,
+                    attackedTargetId, triggeringPermanentId, xValue, eventValue, triggeringPlayerId);
         }
 
         public AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,

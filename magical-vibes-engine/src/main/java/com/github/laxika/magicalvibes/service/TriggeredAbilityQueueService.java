@@ -444,8 +444,13 @@ public class TriggeredAbilityQueueService {
             PermanentChoiceContext.DeathTriggerTarget pending, GraveyardTargetingSupport.Target target) {
         CardPredicate filter = target.filter();
         Integer maxManaValue = pending.graveyardTargetMaxManaValue();
-        UUID predicateSourceCardId = pending.excludedGraveyardCardId() == null
-                ? pending.dyingCard().getId() : pending.excludedGraveyardCardId();
+        // "Another target card" is judged against the source's own physical card: for a copy (Phantasmal Image
+        // copying Gixian Puppeteer) the copy's card, not the copied one, and for a transformed permanent the face
+        // that went to the graveyard.
+        UUID predicateSourceCardId = pending.excludedGraveyardCardId() != null ? pending.excludedGraveyardCardId()
+                : pending.sourcePermanentSnapshot() != null && pending.sourcePermanentSnapshot().getOriginalCard() != null
+                ? pending.sourcePermanentSnapshot().getOriginalCard().getId()
+                : pending.dyingCard().getId();
 
         List<Card> matchingCards = new ArrayList<>();
         boolean graveyardCardsTargetable = gameQueryService.canGraveyardCardsBeTargeted(gameData);
@@ -1040,7 +1045,8 @@ public class TriggeredAbilityQueueService {
                     targetingSourceCard,
                     TriggerTargetCollector.Options.ATTACK,
                     targetingSource,
-                    defendingPlayerId(gameData, pending.attackedTargetId()));
+                    defendingPlayerId(gameData, pending.attackedTargetId()),
+                    null, null, pending.triggeringPlayerId());
             boolean optionalTarget = hasOptionalSingleTarget(pending.sourceCard(), pending.effects());
             List<UUID> candidateTargets = new ArrayList<>(result.validTargets());
             candidateTargets.addAll(result.validGraveyardCardIds());
@@ -1058,6 +1064,7 @@ public class TriggeredAbilityQueueService {
                             pending.sourcePermanentId());
                     entry.setAttackedTargetId(pending.attackedTargetId());
                     entry.setTriggeringPermanentId(pending.triggeringPermanentId());
+                    entry.setTriggeringPlayerId(pending.triggeringPlayerId());
                     entry.setEventValue(pending.eventValue());
                     gameData.stack.add(entry);
                     gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),

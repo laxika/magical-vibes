@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -41,7 +40,7 @@ class FelineSovereignTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A Cat dealing combat damage presents up to one artifact or enchantment")
+    @DisplayName("A Cat dealing combat damage targets up to one artifact or enchantment that player controls")
     void combatDamageDestroysUpToOneArtifactOrEnchantment() {
         addCreatureReady(player1, new FelineSovereign());
         Permanent attacker = addCreatureReady(player1, new SabertoothMauler());
@@ -51,14 +50,14 @@ class FelineSovereignTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player2, new PackLeader());
 
         resolveCombat();
-        harness.passBothPriorities();
 
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validIds()).contains(artifact.getId(), enchantment.getId())
                 .doesNotContain(creature.getId());
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(artifact.getId()));
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Chrome Replicator");
         harness.assertOnBattlefield(player2, "Garruk's Uprising");
@@ -76,10 +75,11 @@ class FelineSovereignTest extends BaseCardTest {
         harness.addToBattlefield(player2, new ChromeReplicator());
 
         resolveCombat();
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player2, "Chrome Replicator");
     }
 
     @Test
@@ -104,12 +104,12 @@ class FelineSovereignTest extends BaseCardTest {
         Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new GarruksUprising());
 
         resolveCombat();
-        harness.passBothPriorities();
 
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validIds()).contains(enchantment.getId()).doesNotContain(ownArtifact.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of(enchantment.getId()));
+        harness.handlePermanentChosen(player1, enchantment.getId());
+        harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Garruk's Uprising");
         harness.assertOnBattlefield(player1, "Chrome Replicator");

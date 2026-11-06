@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureDamagedPlayerControlsEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -21,8 +22,8 @@ public class MordantDragon extends Card {
                 "{1}{R}: This creature gets +1/+0 until end of turn."));
 
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new MayEffect(
-                        new DealDamageToTargetCreatureDamagedPlayerControlsEffect(new EventValue()),
+                new MayEffect(new DealDamageToTargetCreatureEffect(new EventValue(), false,
+                        new PermanentControlledByTriggeringPlayerPredicate()),
                         "You may have Mordant Dragon deal that much damage to target creature that player controls."));
     }
 }

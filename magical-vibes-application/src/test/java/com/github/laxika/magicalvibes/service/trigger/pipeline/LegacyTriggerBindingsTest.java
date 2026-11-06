@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.PutImprintedCardIntoOwnersHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
@@ -363,6 +364,22 @@ class LegacyTriggerBindingsTest {
         assertThat(entry.getControllerId()).isEqualTo(PLAYER1_ID);
         assertThat(entry.getSourcePermanentId()).isEqualTo(perm.getId());
         assertThat(entry.getEffectsToResolve().get(0)).isInstanceOf(DrawCardEffect.class);
+    }
+
+    @Test
+    @DisplayName("A death entry keeps the card the source had exiled as its linked exiled card")
+    void deathEntryKeepsTheLinkedExiledCard() {
+        Card card = createCreature("Hoarding Dragon", 4, 4);
+        Card exiled = createEquipment("Hoarded Equipment");
+        gd.setImprintedCard(card, exiled);
+        var effect = new MayEffect(new PutImprintedCardIntoOwnersHandEffect(), "Put the exiled card into its owner's hand?");
+
+        trigger(dies(card, PLAYER1_ID, new Permanent(card)), effect);
+        gd.setImprintedCard(card, createEquipment("Later Equipment"));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+        assertThat(gd.stack.getFirst().getLinkedExiledCardId()).isEqualTo(exiled.getId());
     }
 
     @Test

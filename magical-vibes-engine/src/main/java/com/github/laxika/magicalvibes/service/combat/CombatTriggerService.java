@@ -299,7 +299,7 @@ public class CombatTriggerService {
                                     UUID grantedAttackControllerId = permOwnedAttackTrigger
                                             ? auraOwnerId : finalCreatureControllerId;
                                     UUID targetChooserId = slot == CombatWatch.ON_ATTACK
-                                            && perm.getCard().isAttackTriggerTargetChosenByDefendingPlayer()
+                                            && perm.getCard().isCombatTriggerTargetChosenByDefendingPlayer()
                                             ? defendingPlayerId : grantedAttackControllerId;
                                     gameData.queueInteraction(
                                             slot == CombatWatch.ON_ATTACK

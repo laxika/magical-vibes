@@ -2,18 +2,11 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentDamagedPlayerControlsEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -22,9 +15,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SacrificePermanentDamagedPlayerControlsEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
-    private final PredicateEvaluationService predicateEvaluationService;
-    private final GameLogService gameLogService;
-    private final PlayerInputService playerInputService;
     private final GameQueryService gameQueryService;
     private final DestructionSupport destructionSupport;
 
@@ -35,42 +25,15 @@ public class SacrificePermanentDamagedPlayerControlsEffectHandler implements Nor
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (SacrificePermanentDamagedPlayerControlsEffect) effect;
-
-        if (e.damagedPlayerId() != null) {
-            Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-            if (target != null && e.damagedPlayerId().equals(
-                    gameQueryService.findPermanentController(gameData, target.getId()))) {
-                destructionSupport.sacrificeAndLog(gameData, target, e.damagedPlayerId());
-            }
+        // The target is "that player"'s permanent, checked against the entry's triggering player as the ability
+        // resolves; its controller sacrifices it.
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (target == null) {
             return;
         }
-
-        UUID defenderId = entry.getTargetId();
-        UUID controllerId = entry.getControllerId();
-
-        if (defenderId == null) return;
-
-        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
-        List<UUID> validIds = new ArrayList<>();
-        if (defenderBattlefield != null) {
-            for (Permanent perm : defenderBattlefield) {
-                if (e.predicate() == null
-                        || predicateEvaluationService.matchesPermanentPredicate(gameData, perm, e.predicate())) {
-                    validIds.add(perm.getId());
-                }
-            }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        if (controllerId != null) {
+            destructionSupport.sacrificeAndLog(gameData, target, controllerId);
         }
-
-        if (validIds.isEmpty()) {
-            
-            gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text("'s ability resolves, but " + gameData.playerIdToName.get(defenderId) + " has no valid permanents.").build());
-            return;
-        }
-
-        playerInputService.beginMultiPermanentChoice(gameData, controllerId, validIds, 1,
-                new MultiPermanentChoiceContext.SacrificeDamagedPlayerControls(entry.getCard().getName()),
-                entry.getCard().getName() + "'s ability — Choose a permanent "
-                        + gameData.playerIdToName.get(defenderId) + " controls to sacrifice.");
     }
 }

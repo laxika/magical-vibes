@@ -345,6 +345,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentReceivedPlusOnePlusO
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithTriggeringPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPermanentControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithTargetCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesColorWithEquippedCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCreatureTypeWithEnchantedCreaturePredicate;
@@ -1721,6 +1722,11 @@ public class PredicateEvaluationService {
                 UUID triggeringControllerId = triggering == null ? null : gameData.findControllerOf(triggering);
                 yield triggeringControllerId != null
                         && triggeringControllerId.equals(gameData.findControllerOf(permanent));
+            }
+            case PermanentControlledByTriggeringPlayerPredicate ignored -> {
+                UUID triggeringPlayerId = filterContext == null ? null : filterContext.triggeringPlayerId();
+                yield gameData != null && triggeringPlayerId != null
+                        && triggeringPlayerId.equals(gameData.findControllerOf(permanent));
             }
             case PermanentSharesCardTypeWithTargetCardPredicate ignored ->
                     sharesCardTypeWithTargetCard(permanent, filterContext);

@@ -249,8 +249,12 @@ public class Card {
     private boolean allowSharedTargets;
     /** Expanded target positions chosen by an opponent during this spell's announcement. */
     private List<Integer> opponentChosenSpellTargetIndices = List.of();
-    /** Whether this card's targeted attack trigger is chosen by the defending player. */
-    private boolean attackTriggerTargetChosenByDefendingPlayer;
+    /**
+     * Whether the targets of this card's attack and combat damage triggers are chosen by the defending player:
+     * Erithizon's "of defending player's choice", Bladegriff Prototype's "of that player's choice" (the player it dealt
+     * combat damage to).
+     */
+    private boolean combatTriggerTargetChosenByDefendingPlayer;
     /**
      * Whether this Aura's {@code Triggers.attacks()} trigger is the Aura's own ability ("Whenever enchanted creature
      * attacks, ...", controlled by the Aura's controller) rather than an ability it grants to the enchanted
@@ -481,7 +485,7 @@ public class Card {
         this.additionalLifeCostPerTarget = source.additionalLifeCostPerTarget;
         this.allowSharedTargets = source.allowSharedTargets;
         this.opponentChosenSpellTargetIndices = source.opponentChosenSpellTargetIndices;
-        this.attackTriggerTargetChosenByDefendingPlayer = source.attackTriggerTargetChosenByDefendingPlayer;
+        this.combatTriggerTargetChosenByDefendingPlayer = source.combatTriggerTargetChosenByDefendingPlayer;
         this.attackTriggerOwnedByAura = source.attackTriggerOwnedByAura;
         this.attackTriggerGrantedByEquipment = source.attackTriggerGrantedByEquipment;
         this.multiTargetConstraint = source.multiTargetConstraint;
@@ -795,9 +799,9 @@ public class Card {
         assertMutable();
         this.opponentChosenSpellTargetIndices = indices == null ? List.of() : List.copyOf(indices);
     }
-    public void setAttackTriggerTargetChosenByDefendingPlayer(boolean chosenByDefendingPlayer) {
+    public void setCombatTriggerTargetChosenByDefendingPlayer(boolean chosenByDefendingPlayer) {
         assertMutable();
-        this.attackTriggerTargetChosenByDefendingPlayer = chosenByDefendingPlayer;
+        this.combatTriggerTargetChosenByDefendingPlayer = chosenByDefendingPlayer;
     }
     public void setAttackTriggerOwnedByAura(boolean ownedByAura) {
         assertMutable();
@@ -852,7 +856,7 @@ public class Card {
         setAdditionalLifeCostPerTarget(0);
         setAllowSharedTargets(false);
         setOpponentChosenSpellTargetIndices(List.of());
-        setAttackTriggerTargetChosenByDefendingPlayer(false);
+        setCombatTriggerTargetChosenByDefendingPlayer(false);
         setAttackTriggerOwnedByAura(false);
         setAttackTriggerGrantedByEquipment(false);
         setMultiTargetConstraint(null);

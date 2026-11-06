@@ -1,24 +1,20 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate;
 
-import java.util.UUID;
 
 /**
- * Deals a dynamic amount of damage to a creature chosen from the player damaged by the source.
- * Binds the damaged player before selecting the creature target when the trigger is put on
- * the stack. The optional second constructor argument makes that player choose; otherwise
- * the ability controller chooses.
+ * Flaming Gambit's "that player or that planeswalker's controller may have this spell deal that damage to a creature
+ * of their choice that player controls instead": deals {@code damage} to a creature the spell's target player (or the
+ * target planeswalker's controller) controls, chosen as the spell resolves, by that player when
+ * {@code targetPlayerChooses}, else by the spell's controller. A triggered ability's "deals damage to target creature
+ * that player controls" is {@link DealDamageToTargetCreatureEffect} with a
+ * {@code PermanentControlledByTriggeringPlayerPredicate}.
  */
 public record DealDamageToTargetCreatureDamagedPlayerControlsEffect(DynamicAmount damage,
                                                                     boolean targetPlayerChooses)
-        implements DamageDealingEffect, CombatDamageTriggerContextEffect,
-        DamagedPlayerControlsTargetEffect {
+        implements DamageDealingEffect {
 
     public DealDamageToTargetCreatureDamagedPlayerControlsEffect(DynamicAmount damage) {
         this(damage, false);
@@ -28,48 +24,13 @@ public record DealDamageToTargetCreatureDamagedPlayerControlsEffect(DynamicAmoun
         this(new Fixed(damage), false);
     }
 
-    public DealDamageToTargetCreatureDamagedPlayerControlsEffect(DynamicAmount damage,
-                                                                 boolean targetPlayerChooses) {
-        this.damage = damage;
-        this.targetPlayerChooses = targetPlayerChooses;
-    }
-
-    public DealDamageToTargetCreatureDamagedPlayerControlsEffect(int damage,
-                                                                 boolean targetPlayerChooses) {
+    public DealDamageToTargetCreatureDamagedPlayerControlsEffect(int damage, boolean targetPlayerChooses) {
         this(new Fixed(damage), targetPlayerChooses);
-    }
-
-    @Override
-    public PermanentPredicate predicate() {
-        return new PermanentIsCreaturePredicate();
-    }
-
-    @Override
-    public UUID targetChooserId(UUID damagedPlayerId, UUID sourceControllerId) {
-        return targetPlayerChooses ? damagedPlayerId : sourceControllerId;
-    }
-
-    @Override
-    public CardEffect forDamagedPlayer(UUID playerId) {
-        return new DealDamageToTargetCreatureEffect(damage, false,
-                new PermanentControlledByPlayerPredicate(playerId));
-    }
-
-    @Override
-    public CardEffect forDamagedPlayer(UUID playerId, int damageDealt) {
-        return new DealDamageToTargetCreatureEffect(
-                damage instanceof EventValue ? new Fixed(damageDealt) : damage, false,
-                new PermanentControlledByPlayerPredicate(playerId));
     }
 
     @Override
     public DynamicAmount damageAmount() {
         return damage;
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 
     @Override

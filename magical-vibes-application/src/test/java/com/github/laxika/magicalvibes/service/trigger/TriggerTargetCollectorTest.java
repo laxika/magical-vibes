@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
@@ -173,6 +174,25 @@ class TriggerTargetCollectorTest {
                 gd, effects, null, player1Id, sourceCard, TriggerTargetCollector.Options.DEATH);
         assertThat(withoutUnwrap.canTargetPlayers()).isTrue();
         assertThat(withoutUnwrap.validTargets()).containsExactly(player1Id, player2Id);
+    }
+
+    @Test
+    @DisplayName("\"That player controls\" narrows the targets to the triggering player's permanents")
+    void triggeringPlayerNarrowsThatPlayerControlsTargets() {
+        Permanent controllers = new Permanent(new Card());
+        Permanent damagedPlayers = new Permanent(new Card());
+        gd.playerBattlefields.get(player1Id).add(controllers);
+        gd.playerBattlefields.get(player2Id).add(damagedPlayers);
+        List<CardEffect> effects = List.of(new DestroyTargetPermanentEffect(
+                new PermanentControlledByTriggeringPlayerPredicate()));
+
+        TriggerTargetCollector.Result withPlayer = collector.collect(gd, effects, null, player1Id, sourceCard,
+                TriggerTargetCollector.Options.ATTACK, null, player2Id, null, null, player2Id);
+        TriggerTargetCollector.Result withoutPlayer = collector.collect(gd, effects, null, player1Id, sourceCard,
+                TriggerTargetCollector.Options.ATTACK, null, player2Id, null, null);
+
+        assertThat(withPlayer.validTargets()).containsExactly(damagedPlayers.getId());
+        assertThat(withoutPlayer.validTargets()).isEmpty();
     }
 
     @Test

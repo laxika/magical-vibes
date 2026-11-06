@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnb
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageToDefendingCreatureWhenUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
@@ -68,13 +69,11 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DefendingPlayerAssignsCombatDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DamagedPlayerControlsTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ExilePermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstestStrikeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToControlledCreatureCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
@@ -85,15 +84,10 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCombatDamageWithMillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndTargetDiscardsPerPoisonCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TakeInitiativeEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformSelfAndAttachToCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
@@ -2130,7 +2124,7 @@ public class CombatDamageService {
             // CR 603.4 — only an ability's intervening "if" (and its event condition, CR 603.2) gates whether it
             // triggers; an "if" of an effect is judged as it resolves.
             TriggerJudge damageJudge = conditionEvaluationService.judge(gameData,
-                    ConditionContext.forPermanent(creature, attackerId).withTargetId(defenderId));
+                    ConditionContext.forPermanent(creature, attackerId).withTargetId(defenderId), damageDealt);
             // A creature that has lost all abilities also loses the abilities it was permanently granted
             // earlier (e.g. an encoded cipher spell's trigger).
             boolean lostAllAbilities = creature.isLosesAllAbilitiesUntilEndOfTurn()
@@ -2209,28 +2203,10 @@ public class CombatDamageService {
                 if (rawEffect instanceof com.github.laxika.magicalvibes.model.effect.RenownEffect
                         && creature.isRenowned()) continue;
                 CardEffect effect = rawEffect;
-                // One ability whose steps include a target chosen from the damaged player's permanents ("destroy
-                // up to one target artifact that player controls and put a +1/+1 counter on this creature"):
-                // the damaged player is bound into those steps before the target is chosen, and the whole
-                // sequence stays a single triggered ability.
-                if (effect instanceof SequenceEffect boundSequence
-                        && boundSequence.steps().stream().anyMatch(DamagedPlayerControlsTargetEffect.class::isInstance)) {
-                    DamagedPlayerControlsTargetEffect damagedPlayerStep = (DamagedPlayerControlsTargetEffect)
-                            boundSequence.steps().stream()
-                                    .filter(DamagedPlayerControlsTargetEffect.class::isInstance)
-                                    .findFirst().orElseThrow();
-                    if (damageDealt >= damagedPlayerStep.minimumDamage()) {
-                        CardEffect targeted = boundSequence.withSteps(boundSequence.steps().stream()
-                                .map(step -> step instanceof DamagedPlayerControlsTargetEffect damagedPlayerControls
-                                        ? damagedPlayerControls.forDamagedPlayer(defenderId, damageDealt)
-                                        : step)
-                                .toList());
-                        gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                                creature.getCard(), attackerId, List.of(targeted), creature.getId(),
-                                damagedPlayerStep.targetChooserId(defenderId, attackerId), defenderId).withEventValue(damageDealt));
-                    }
-                    continue;
-                }
+                // "That player" is the player dealt damage: a target "that player controls" is judged against the
+                // choice's triggering player, and "of that player's choice" has them choose it.
+                UUID targetChooserId = creature.getCard().isCombatTriggerTargetChosenByDefendingPlayer()
+                        ? defenderId : attackerId;
 
                 if (effect instanceof ConditionalEffect metalcraft && metalcraft.condition() instanceof Metalcraft) {
                     StackEntry se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
@@ -2339,60 +2315,11 @@ public class CombatDamageService {
                         } else {
                             gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                                     creature.getCard(), attackerId, List.of(effect), creature.getId(),
-                                    attackerId, defenderId).withEventValue(damageDealt));
+                                    targetChooserId, defenderId).withEventValue(damageDealt)
+                                    .withTriggeringPlayer(defenderId));
                         }
                         gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
                                 "'s combat damage trigger goes on the stack — choose a target."));
-                        continue;
-                    }
-                    MayEffect queuedMay = may;
-                    if (may.wrapped() instanceof SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect
-                            || may.wrapped() instanceof TransformSelfAndAttachToCreatureDamagedPlayerControlsEffect) {
-                        List<Permanent> defenderBf = gameData.playerBattlefields.get(defenderId);
-                        List<UUID> creatureTargetIds = defenderBf == null ? List.of() : defenderBf.stream()
-                                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
-                                .filter(permanent -> !gameQueryService.hasProtectionFromSource(
-                                        gameData, permanent, creature.getCard(), attackerId))
-                                .map(Permanent::getId)
-                                .toList();
-                        if (creatureTargetIds.isEmpty()) {
-                            gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
-                                    "'s ability does not trigger — " + gameData.playerIdToName.get(defenderId) + " has no creatures."));
-                            continue;
-                        }
-                        if (may.wrapped() instanceof SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect sacrifice) {
-                            queuedMay = new MayEffect(
-                                    new SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect(
-                                            sacrifice.cannotBeRegenerated(), creatureTargetIds),
-                                    may.prompt(), may.elseEffect(), may.choicePlayer());
-                        }
-                    }
-                    if (may.wrapped() instanceof ExilePermanentDamagedPlayerControlsEffect exileEffect) {
-                        List<Permanent> defenderBf = gameData.playerBattlefields.get(defenderId);
-                        boolean hasValidTargets = false;
-                        if (defenderBf != null) {
-                            for (Permanent p : defenderBf) {
-                                if (exileEffect.predicate() == null
-                                        || predicateEvaluationService.matchesPermanentPredicate(gameData, p, exileEffect.predicate())) {
-                                    hasValidTargets = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (!hasValidTargets) {
-                            gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
-                                    "'s ability does not trigger — " + gameData.playerIdToName.get(defenderId) + " has no valid targets."));
-                            continue;
-                        }
-                    }
-                    if (may.wrapped() instanceof DamagedPlayerControlsTargetEffect damageEffect) {
-                        if (damageDealt >= damageEffect.minimumDamage()) {
-                            gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                                    creature.getCard(), attackerId,
-                                    List.of(new MayEffect(damageEffect.forDamagedPlayer(defenderId, damageDealt),
-                                            may.prompt(), may.elseEffect(), may.choicePlayer())),
-                                    creature.getId(), damageEffect.targetChooserId(defenderId, attackerId), defenderId).withEventValue(damageDealt));
-                        }
                         continue;
                     }
                     // A "target creature" (any) may-ability — e.g. Hapatra's "you may put a -1/-1 counter
@@ -2401,88 +2328,9 @@ public class CombatDamageService {
                     // a NONE target spec and keep the baked-in defender context.
                     UUID mayTargetId = may.wrapped().targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                             ? null : defenderId;
-                    gameData.queueMayAbility(creature.getCard(), attackerId, queuedMay, mayTargetId, creature.getId(),
+                    gameData.queueMayAbility(creature.getCard(), attackerId, may, mayTargetId, creature.getId(),
                             damageDealt, false, null, grantingPermanents.get(candidateEffect));
                     gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), "'s combat damage trigger fires."));
-                    continue;
-                }
-
-                CardEffect specialEffect = effect instanceof ConditionalEffect conditional
-                        ? conditional.wrapped() : effect;
-                if (specialEffect instanceof TapChosenPermanentEffect tap
-                        && tap.chooseFromDamagedPlayer()) {
-                    CardEffect targeted = tap.forDamagedPlayer(defenderId);
-                    if (effect instanceof ConditionalEffect conditional) {
-                        targeted = new ConditionalEffect(conditional.condition(), targeted);
-                    }
-                    gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                            creature.getCard(), attackerId, List.of(targeted),
-                            creature.getId(), attackerId, defenderId).withEventValue(damageDealt));
-                    continue;
-                }
-                if (specialEffect instanceof DamagedPlayerControlsTargetEffect damageEffect) {
-                    if (damageDealt >= damageEffect.minimumDamage()) {
-                        CardEffect targeted = damageEffect.forDamagedPlayer(defenderId, damageDealt);
-                        if (effect instanceof ConditionalEffect conditional) {
-                            targeted = new ConditionalEffect(conditional.condition(), targeted);
-                        }
-                        gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                                creature.getCard(), attackerId, List.of(targeted), creature.getId(),
-                                damageEffect.targetChooserId(defenderId, attackerId), defenderId).withEventValue(damageDealt));
-                    }
-                    continue;
-                }
-                if (specialEffect instanceof ExilePermanentDamagedPlayerControlsEffect exileEffect) {
-                    List<Permanent> defenderBf = gameData.playerBattlefields.get(defenderId);
-                    boolean hasValidTargets = defenderBf != null && defenderBf.stream()
-                            .anyMatch(permanent -> exileEffect.predicate() == null
-                                    || predicateEvaluationService.matchesPermanentPredicate(
-                                    gameData, permanent, exileEffect.predicate()));
-                    if (!hasValidTargets) {
-                        gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
-                                "'s ability does not trigger \u2014 " + gameData.playerIdToName.get(defenderId)
-                                        + " has no valid targets."));
-                        continue;
-                    }
-                    StackEntry exileEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(),
-                            attackerId, creature.getCard().getName() + "'s triggered ability", List.of(effect),
-                            defenderId, creature.getId());
-                    exileEntry.setNonTargeting(true);
-                    gameData.stack.add(exileEntry);
-                    gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
-                            "'s combat damage trigger goes on the stack."));
-                    continue;
-                }
-
-                if (effect instanceof SacrificePermanentDamagedPlayerControlsEffect sacrificeEffect) {
-                    if (damageDealt < sacrificeEffect.minimumDamage()) {
-                        gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
-                                "'s ability does not trigger — less than " + sacrificeEffect.minimumDamage()
-                                + " damage dealt."));
-                        continue;
-                    }
-                    List<Permanent> defenderBf = gameData.playerBattlefields.get(defenderId);
-                    boolean hasValidTargets = false;
-                    if (defenderBf != null) {
-                        for (Permanent p : defenderBf) {
-                            if (sacrificeEffect.predicate() == null
-                                    || predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacrificeEffect.predicate())) {
-                                hasValidTargets = true;
-                                break;
-                            }
-                        }
-                    }
-                    if (!hasValidTargets) {
-                        gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
-                                "'s ability does not trigger — " + gameData.playerIdToName.get(defenderId)
-                                + " has no valid targets."));
-                        continue;
-                    }
-                    StackEntry sacrificeSe = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
-                            creature.getCard().getName() + "'s triggered ability", List.of(effect), defenderId, creature.getId());
-                    sacrificeSe.setNonTargeting(true);
-                    gameData.stack.add(sacrificeSe);
-                    gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), "'s combat damage trigger goes on the stack."));
                     continue;
                 }
 
@@ -2518,20 +2366,27 @@ public class CombatDamageService {
                 }
 
                 boolean targetsExiledCard = effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD);
+                // A sequence's stack-entry context and combat-opponent references describe its other steps; a
+                // permanent target one of its steps declares ("destroy up to one target artifact that player controls
+                // and put a +1/+1 counter on this creature") is still chosen as the ability goes on the stack.
+                boolean sequenceTargetsPermanent = effect instanceof SequenceEffect
+                        && effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
                 if ((effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                         || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                         || targetsExiledCard)
-                        && (targetsExiledCard
+                        && (targetsExiledCard || sequenceTargetsPermanent
                         || !(effect instanceof CombatDamageTriggerContextEffect contextEffect)
                         || contextEffect.combatDamageTriggerContext() == null
                         || creature.getCard().hasEffectTargetIndex(effect))
-                        && !(effect instanceof CombatOpponentReferencingEffect c && c.referencesCombatOpponent())) {
+                        && (sequenceTargetsPermanent
+                        || !(effect instanceof CombatOpponentReferencingEffect c && c.referencesCombatOpponent()))) {
                     if (triggerCollectionService.needsSlotBySlotTargetSelection(creature.getCard())) {
                         gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                                 creature.getCard(), attackerId, List.of(effect), creature.getId(), List.of(), 0, 0).withEventValue(damageDealt));
                     } else {
                         gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                                creature.getCard(), attackerId, List.of(effect), creature.getId(), attackerId, defenderId).withEventValue(damageDealt));
+                                creature.getCard(), attackerId, List.of(effect), creature.getId(), targetChooserId,
+                                defenderId).withEventValue(damageDealt).withTriggeringPlayer(defenderId));
                     }
                     gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
                             "'s combat damage trigger goes on the stack — choose a target."));
@@ -2722,14 +2577,6 @@ public class CombatDamageService {
                         if (active != null) {
                             effects.add(active);
                         }
-                    } else if ((effect instanceof MayEffect may ? may.wrapped() : effect)
-                            instanceof DamagedPlayerControlsTargetEffect damagedPlayerEffect) {
-                        if (damageDealt >= damagedPlayerEffect.minimumDamage()) {
-                            CardEffect targeted = damagedPlayerEffect.forDamagedPlayer(defenderId);
-                            effects.add(effect instanceof MayEffect may
-                                    ? new MayEffect(targeted, may.prompt(), may.elseEffect(), may.choicePlayer())
-                                    : targeted);
-                        }
                     } else {
                         effects.add(effect);
                     }
@@ -2767,7 +2614,8 @@ public class CombatDamageService {
                                     perm.getCard(), ownerId, effects, perm.getId(), List.of(), 0, 0).withEventValue(damageDealt));
                         } else {
                             gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                                    perm.getCard(), ownerId, effects, perm.getId(), ownerId, defenderId).withEventValue(damageDealt));
+                                    perm.getCard(), ownerId, effects, perm.getId(), ownerId, defenderId)
+                                    .withEventValue(damageDealt).withTriggeringPlayer(defenderId));
                         }
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
                                 "'s combat damage trigger goes on the stack — choose a target."));
@@ -3051,7 +2899,8 @@ public class CombatDamageService {
                             && (perm.getCard().hasEffectTargetIndex(read.effect())
                             || perm.getCard().hasEffectTargetIndex(firedEffect))))) {
                         gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                                perm.getCard(), attackerId, List.of(firedEffect), perm.getId(), attackerId, defenderId).withEventValue(triggerDamage));
+                                perm.getCard(), attackerId, List.of(firedEffect), perm.getId(), attackerId, defenderId)
+                                .withEventValue(triggerDamage).withTriggeringPlayer(defenderId));
                         read.markLimit(gameData, perm.getId());
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
                                 "'s combat damage trigger goes on the stack — choose a target."));
@@ -3080,7 +2929,8 @@ public class CombatDamageService {
                             && c.referencesCombatOpponent())) {
                         gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                                 perm.getCard(), attackerId, List.of(firedEffect), perm.getId(), attackerId,
-                                defenderId, creature.getId()).withEventValue(triggerDamage));
+                                defenderId, creature.getId()).withEventValue(triggerDamage)
+                                .withTriggeringPlayer(defenderId));
                         read.markLimit(gameData, perm.getId());
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
                                 "'s combat damage trigger goes on the stack — choose a target."));

@@ -19,8 +19,26 @@ public record TargetValidationContext(
         UUID sourcePermanentId,
         Integer sourcePowerAtTrigger,
         UUID defendingPlayerId,
-        UUID triggeringPermanentId
+        UUID triggeringPermanentId,
+        UUID triggeringPlayerId
 ) {
+    public TargetValidationContext(GameData gameData, UUID targetId, Zone targetZone, Card sourceCard,
+                                   int xValue, UUID sourceControllerId, Permanent sourcePermanentSnapshot,
+                                   boolean deferCostDerivedXValueChecks, UUID sourcePermanentId,
+                                   Integer sourcePowerAtTrigger, UUID defendingPlayerId,
+                                   UUID triggeringPermanentId) {
+        this(gameData, targetId, targetZone, sourceCard, xValue, sourceControllerId, sourcePermanentSnapshot,
+                deferCostDerivedXValueChecks, sourcePermanentId, sourcePowerAtTrigger, defendingPlayerId,
+                triggeringPermanentId, null);
+    }
+
+    /** This context with the player the triggered ability's event was about ("that player controls"). */
+    public TargetValidationContext withTriggeringPlayerId(UUID triggeringPlayerId) {
+        return new TargetValidationContext(gameData, targetId, targetZone, sourceCard, xValue, sourceControllerId,
+                sourcePermanentSnapshot, deferCostDerivedXValueChecks, sourcePermanentId, sourcePowerAtTrigger,
+                defendingPlayerId, triggeringPermanentId, triggeringPlayerId);
+    }
+
     public TargetValidationContext(GameData gameData, UUID targetId, Zone targetZone, Card sourceCard) {
         this(gameData, targetId, targetZone, sourceCard, 0, null, null, false, null, null, null, null);
     }

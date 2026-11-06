@@ -72,7 +72,6 @@ import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveTargetFromCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -1682,25 +1681,6 @@ public class CombatBlockService {
                 abilityInstances.add(List.of(granted));
             }
             for (List<CardEffect> effects : abilityInstances) {
-                List<UUID> defendingCreatureIds = defenderBattlefield == null ? List.of() : defenderBattlefield.stream()
-                        .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
-                        .filter(permanent -> targetLegalityService.checkTriggeredPermanentTargetableReason(
-                                gameData, permanent, attacker.getCard(), activeId).isEmpty())
-                        .map(Permanent::getId)
-                        .toList();
-                effects = effects.stream().map(effect -> {
-                    if (!(effect instanceof MayEffect may)
-                            || !(may.wrapped() instanceof SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect sacrifice)) {
-                        return effect;
-                    }
-                    if (defendingCreatureIds.isEmpty()) {
-                        return null;
-                    }
-                    return new MayEffect(
-                            new SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect(
-                                    sacrifice.cannotBeRegenerated(), defendingCreatureIds),
-                            may.prompt(), may.elseEffect(), may.choicePlayer());
-                }).filter(java.util.Objects::nonNull).toList();
                 GraveyardCardChoosingEffect graveyardChoice = effects.stream()
                         .map(effect -> effect instanceof MayEffect may ? may.wrapped() : effect)
                         .filter(GraveyardCardChoosingEffect.class::isInstance)

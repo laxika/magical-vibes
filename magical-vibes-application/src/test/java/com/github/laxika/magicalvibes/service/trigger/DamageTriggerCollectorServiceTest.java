@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect;
@@ -22,7 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureDamagedPlayerControlsEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
@@ -1113,29 +1114,25 @@ class DamageTriggerCollectorServiceTest {
     class AllySourceDealtNoncombatDamageToOpponentCreatureDamage {
 
         @Test
-        @DisplayName("queues conditional creature damage and preserves the damaged player")
-        void queuesConditionalCreatureDamage() {
+        @DisplayName("queues the conditional creature damage's target choice with the damaged player and the damage")
+        void queuesConditionalCreatureDamageTargetChoice() {
             Permanent watcher = createPermanent("Fear of Burning Alive");
-            Permanent damagedCreature = createPermanent("Primordial Wurm");
-            gd.playerBattlefields.put(player2Id, List.of(damagedCreature));
             var effect = new ConditionalEffect(new Delirium(),
-                    new DealDamageToTargetCreatureDamagedPlayerControlsEffect(new EventValue()));
+                    new DealDamageToTargetCreatureEffect(new EventValue(), false,
+                            new PermanentControlledByTriggeringPlayerPredicate()));
             var ctx = new TriggerContext.NoncombatDamageToOpponent(player2Id, player1Id, 3);
-
-            when(gameQueryService.isCreature(gd, damagedCreature)).thenReturn(true);
-            when(conditionEvaluationService.isMet(eq(gd), eq(effect.condition()),
-                    any(ConditionContext.class), eq(3))).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(watcher, player1Id, effect),
                     DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, effect, ctx);
 
             assertThat(result).isTrue();
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2Id);
-            assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(3);
-            assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
-            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+            assertThat(gd.stack).isEmpty();
+            var choice = gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
+            assertThat(choice.effects()).containsExactly(effect);
+            assertThat(choice.triggeringPlayerId()).isEqualTo(player2Id);
+            assertThat(choice.eventValue()).isEqualTo(3);
+            assertThat(choice.choosingPlayerId()).isEqualTo(player1Id);
         }
     }
 

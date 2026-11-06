@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroyPermanentDamagedPlayerControlsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,12 +27,11 @@ public class TrygonPredator extends Card {
 
     public TrygonPredator() {
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new MayEffect(
-                        new DestroyPermanentDamagedPlayerControlsEffect(
-                                new PermanentAnyOfPredicate(List.of(
-                                        new PermanentIsArtifactPredicate(),
-                                        new PermanentIsEnchantmentPredicate())),
-                                0),
+                new MayEffect(new DestroyTargetPermanentEffect(new PermanentAllOfPredicate(List.of(
+                        new PermanentAnyOfPredicate(List.of(
+                                new PermanentIsArtifactPredicate(),
+                                new PermanentIsEnchantmentPredicate())),
+                        new PermanentControlledByTriggeringPlayerPredicate()))),
                         "Destroy target artifact or enchantment that player controls?"));
     }
 }

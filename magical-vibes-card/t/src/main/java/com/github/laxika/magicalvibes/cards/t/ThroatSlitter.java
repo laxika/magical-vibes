@@ -3,9 +3,10 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.DestroyPermanentDamagedPlayerControlsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,10 +28,11 @@ public class ThroatSlitter extends Card {
         // Whenever this creature deals combat damage to a player, destroy target nonblack creature
         // that player controls.
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new DestroyPermanentDamagedPlayerControlsEffect(
+                new DestroyTargetPermanentEffect(new PermanentAllOfPredicate(List.of(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK)))
-                        )), 0));
+                        )),
+                        new PermanentControlledByTriggeringPlayerPredicate()))));
     }
 }

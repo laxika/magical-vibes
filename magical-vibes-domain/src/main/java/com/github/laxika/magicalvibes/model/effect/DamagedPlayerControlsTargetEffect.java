@@ -5,33 +5,16 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.UUID;
 
 /**
- * A damage trigger whose permanent target is chosen from the player dealt damage.
- * The damaged player's identity is bound before target selection.
+ * A reflexive "when you do" ability whose permanent target is one "that player controls", the player a combat damage
+ * trigger was about: Dokuchi Silencer's "you may discard a creature card. When you do, destroy target creature or
+ * planeswalker that player controls". {@code DiscardCardThenEffectHandler} binds the player before the reflexive
+ * target is chosen. Every other "that player controls" target reads the stack entry's triggering player through
+ * {@code PermanentControlledByTriggeringPlayerPredicate}; this binding is left until the discard follow-up carries the
+ * triggering player too.
  */
 public interface DamagedPlayerControlsTargetEffect extends CardEffect {
 
     PermanentPredicate predicate();
 
-    default int minimumDamage() {
-        return 0;
-    }
-
-    /**
-     * Returns the player who chooses the permanent target when the damage trigger is put on the
-     * stack. Existing effects use the ability controller; effects worded "of that player's choice"
-     * can return the damaged player instead.
-     */
-    default UUID targetChooserId(UUID damagedPlayerId, UUID sourceControllerId) {
-        return sourceControllerId;
-    }
-
     CardEffect forDamagedPlayer(UUID playerId);
-
-    /**
-     * Binds the damaged player and the amount of damage that caused the trigger, for effects
-     * whose own amount is "that much damage". Defaults to ignoring the damage amount.
-     */
-    default CardEffect forDamagedPlayer(UUID playerId, int damageDealt) {
-        return forDamagedPlayer(playerId);
-    }
 }

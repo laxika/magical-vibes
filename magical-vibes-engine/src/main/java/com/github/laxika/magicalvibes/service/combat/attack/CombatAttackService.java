@@ -42,8 +42,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnAttackingCreatureOnAttacksYouEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
@@ -170,8 +168,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanOnlyAttackAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherAttackingCreatureReferenceEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherCreaturesMustAttackIfSourceAttacksEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnAttackingCreatureOnAttacksYouEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedVehicleAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
@@ -1570,7 +1566,7 @@ public class CombatAttackService {
                                                     attackCard, playerId, abilityEffects, attacker.getId(),
                                                     List.of(), 0, 0));
                                 } else {
-                                    UUID targetChooserId = attacker.getCard().isAttackTriggerTargetChosenByDefendingPlayer()
+                                    UUID targetChooserId = attacker.getCard().isCombatTriggerTargetChosenByDefendingPlayer()
                                             ? defendingPlayerId : playerId;
                                     gameData.queueInteraction(
                                             new PermanentChoiceContext.AttackTriggerTarget(
@@ -3069,7 +3065,6 @@ public class CombatAttackService {
                     for (CombatAbilityReader.CombatEffect read : anyAttackEffects) {
                         CombatAbilityReader.requireNoLimitOrMultiplicity(read, CombatWatch.ON_ANY_CREATURE_ATTACKS.trigger());
                         CardEffect effect = read.effect();
-                        CardEffect matchingEffect = effect;
                         FilterContext sourceContext = FilterContext.of(gameData)
                                 .withSourceCardId(perm.getOriginalCard().getId())
                                 .withSourceControllerId(permController)
@@ -3077,29 +3072,16 @@ public class CombatAttackService {
                         // The trigger's filter on the attacking creature (Windreader Sphinx).
                         boolean matches = read.filter() == null || predicateEvaluationService.matchesPermanentPredicate(
                                 attacker, read.filter(), sourceContext);
-                        while (matches) {
-                            if (matchingEffect instanceof PutCounterOnAttackingCreatureOnAttacksYouEffect counterEffect) {
-                                if (!perm.isAttached()
-                                        || !gameData.playerIds.contains(attackedTargetId)
-                                        || !attackedTargetId.equals(perm.getAttachedTo())) {
-                                    matches = false;
-                                } else {
-                                    matchingEffect = new PutCounterOnTargetPermanentEffect(counterEffect.counterType());
-                                }
-                            } else if (matchingEffect instanceof ConditionalEffect attackedTargetConditional
-                                    && attackedTargetConditional.condition() instanceof AttackedTargetIsMonarch) {
-                                // Kept on the stack entry so it is checked again on resolution (CR 603.4).
-                                ConditionContext attackedTargetContext = ConditionContext
-                                        .forPermanent(perm, permController)
-                                        .withTargetId(attackedTargetId);
-                                matches = conditionEvaluationService.isMet(gameData,
-                                        attackedTargetConditional.condition(), attackedTargetContext);
-                                break;
-                            } else {
-                                break;
-                            }
+                        if (matches && effect instanceof ConditionalEffect attackedTargetConditional
+                                && attackedTargetConditional.condition() instanceof AttackedTargetIsMonarch) {
+                            // Kept on the stack entry so it is checked again on resolution (CR 603.4).
+                            ConditionContext attackedTargetContext = ConditionContext
+                                    .forPermanent(perm, permController)
+                                    .withTargetId(attackedTargetId);
+                            matches = conditionEvaluationService.isMet(gameData,
+                                    attackedTargetConditional.condition(), attackedTargetContext);
                         }
-                        if (matches) matchingAnyAttackEffects.add(matchingEffect);
+                        if (matches) matchingAnyAttackEffects.add(effect);
                     }
                     if (matchingAnyAttackEffects.isEmpty()) continue;
 

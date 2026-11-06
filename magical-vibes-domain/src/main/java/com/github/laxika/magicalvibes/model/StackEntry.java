@@ -443,6 +443,12 @@ public class StackEntry {
      * when the limit, if any, is evaluated as the ability resolves.
      */
     @Setter private Integer graveyardTargetMaxManaValue;
+    /**
+     * The card the source's linked exiling ability exiled (CR 607.2a), as it was when this ability triggered: Hoarding
+     * Dragon's "the exiled card". Set by the collector that puts the ability on the stack, so the source returning and
+     * exiling another card can't redirect it. {@code null} when the source had exiled none.
+     */
+    @Setter private UUID linkedExiledCardId;
     /** Permanent ids that received counters during the current effect resolution. */
     private final List<UUID> counteredPermanentIdsThisResolution = new ArrayList<>();
     /** Controller of the spell targeted by a counter effect, retained after that spell leaves the stack. */
@@ -1193,6 +1199,7 @@ public class StackEntry {
         this.grantingPermanentId = source.grantingPermanentId;
         this.dyingPermanentManaValue = source.dyingPermanentManaValue;
         this.graveyardTargetMaxManaValue = source.graveyardTargetMaxManaValue;
+        this.linkedExiledCardId = source.linkedExiledCardId;
         this.counteredPermanentIdsThisResolution.addAll(source.counteredPermanentIdsThisResolution);
         this.counteredSpellControllerId = source.counteredSpellControllerId;
         this.eventPlayerIds = source.eventPlayerIds.isEmpty() ? List.of() : new ArrayList<>(source.eventPlayerIds);

@@ -86,6 +86,9 @@ public enum DamageWatch implements TriggerWatch {
     ON_ANY_SOURCE_DEALS_DAMAGE(Triggers.sourceDealsDamage(), Zone.BATTLEFIELD),
     /** "Whenever an instant or sorcery spell you control deals damage". */
     ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE(Triggers.instantOrSorceryYouControlDealsDamage(), Zone.BATTLEFIELD),
+    /** "Whenever an instant or sorcery spell you control deals damage to an opponent", once for each opponent. */
+    ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_OPPONENT(Triggers.instantOrSorceryYouControlDealsDamageToOpponent(),
+            Zone.BATTLEFIELD),
     /** "Whenever this deals damage". */
     ON_SELF_DEALS_DAMAGE(Triggers.dealsDamage(), Zone.BATTLEFIELD),
     /** "Whenever a creature you control deals damage to a planeswalker". */
