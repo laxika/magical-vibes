@@ -52,7 +52,6 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIdSetPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -952,16 +951,8 @@ public class LegacyTriggerBindings {
 
         Permanent dyingPermanent = c.dyingPermanent() != null
                 ? c.dyingPermanent() : c.permanent();
-        int maxManaValue = amountEvaluationService.evaluateAtDeath(
-                c.gameData(), returnEffect.dynamicMaxManaValue(), c.controllerId(), dyingPermanent);
-        CardPredicate manaValueFilter = new CardMaxManaValuePredicate(maxManaValue);
-        CardPredicate filter = returnEffect.filter() == null
-                ? manaValueFilter
-                : new CardAllOfPredicate(List.of(returnEffect.filter(), manaValueFilter));
-        return returnEffect.toBuilder()
-                .filter(filter)
-                .dynamicMaxManaValue(null)
-                .build();
+        return returnEffect.withMaxManaValue(amountEvaluationService.evaluateAtDeath(
+                c.gameData(), returnEffect.dynamicMaxManaValue(), c.controllerId(), dyingPermanent));
     }
 
 

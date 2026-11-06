@@ -553,25 +553,27 @@ public class GraveyardTargetingService {
             List<CardEffect> effects, UUID sourcePermanentId, UUID defendingPlayerId,
             GraveyardCardChoosingEffect choosingEffect) {
         handleSinglePlayerGraveyardChoiceTargeting(gameData, controllerId, card, effects, sourcePermanentId,
-                defendingPlayerId, choosingEffect, "unblocked-attack", "defending player's graveyard");
+                defendingPlayerId, choosingEffect, choosingEffect.graveyardChoiceMaxTargets(),
+                "unblocked-attack", "defending player's graveyard");
     }
 
     /**
      * Combat-damage-trigger targeting for "Whenever this creature deals combat damage to a player,
      * exile up to N target cards from that player's graveyard" (Skullsnatcher). Same trigger-time
      * up-to-N selection as the unblocked-attack flow (CR 603.3d), narrowed to the damaged player's
-     * graveyard.
+     * graveyard. {@code damageDealt} is the event's amount, the N of "up to that many" (Froghemoth).
      */
     public void handleCombatDamageGraveyardChoiceTargeting(GameData gameData, UUID controllerId, Card card,
             List<CardEffect> effects, UUID sourcePermanentId, UUID damagedPlayerId,
-            GraveyardCardChoosingEffect choosingEffect) {
+            GraveyardCardChoosingEffect choosingEffect, int damageDealt) {
         handleSinglePlayerGraveyardChoiceTargeting(gameData, controllerId, card, effects, sourcePermanentId,
-                damagedPlayerId, choosingEffect, "combat damage", "that player's graveyard");
+                damagedPlayerId, choosingEffect, choosingEffect.graveyardChoiceMaxTargets(damageDealt),
+                "combat damage", "that player's graveyard");
     }
 
     private void handleSinglePlayerGraveyardChoiceTargeting(GameData gameData, UUID controllerId, Card card,
             List<CardEffect> effects, UUID sourcePermanentId, UUID defendingPlayerId,
-            GraveyardCardChoosingEffect choosingEffect, String triggerLabel, String zoneLabel) {
+            GraveyardCardChoosingEffect choosingEffect, int choiceMaxTargets, String triggerLabel, String zoneLabel) {
         CardPredicate filter = choosingEffect.graveyardChoiceFilter();
 
         List<Card> matchingCards = new ArrayList<>();
@@ -603,7 +605,7 @@ public class GraveyardTargetingService {
             return;
         }
 
-        int maxTargets = Math.min(choosingEffect.graveyardChoiceMaxTargets(), matchingCards.size());
+        int maxTargets = Math.min(choiceMaxTargets, matchingCards.size());
         gameData.graveyardTargetOperation.card = card;
         gameData.graveyardTargetOperation.controllerId = controllerId;
         gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);

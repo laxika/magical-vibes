@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CombatDamageAmountAwareEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
@@ -127,7 +127,7 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
         if (effect instanceof GainLifeEffect gainLife) {
             return amountEvaluationService.referencesEventValue(gainLife.amount());
         }
-        return effect instanceof CombatDamageAmountAwareEffect amountAware
-                && amountEvaluationService.referencesEventValue(amountAware.combatDamageAmount());
+        return effect instanceof CreateTokenEffect createToken
+                && amountEvaluationService.referencesEventValue(createToken.amount());
     }
 }

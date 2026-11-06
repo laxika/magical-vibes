@@ -32,7 +32,7 @@ public record ExileTopCardsAndMayCastSpellsEffect(
         Integer totalManaValueLimit,
         boolean normalCost,
         boolean playLands
-) implements CombatDamageTriggerContextEffect, CombatDamageAmountAwareEffect {
+) implements CombatDamageTriggerContextEffect {
 
     public ExileTopCardsAndMayCastSpellsEffect(int count, DynamicAmount dynamicCount, LibraryScope scope,
                                                boolean trackWithSource, boolean faceDown,
@@ -153,10 +153,5 @@ public record ExileTopCardsAndMayCastSpellsEffect(
         }
         return scope == LibraryScope.TARGET_OPPONENT
                 ? TriggerContext.DAMAGED_PLAYER : TriggerContext.SOURCE_SELF;
-    }
-
-    @Override
-    public DynamicAmount combatDamageAmount() {
-        return dynamicCount != null ? dynamicCount : manaValueLimit;
     }
 }

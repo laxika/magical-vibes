@@ -122,7 +122,7 @@ public record LookAtTopCardsEffect(
         boolean gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard, boolean exileBeforeChoosing,
         boolean returnToHandAtNextEndStep,
         boolean recordGraveyardCount,
-        boolean orderedBottomViaRevealChoice) implements CombatDamageAmountAwareEffect {
+        boolean orderedBottomViaRevealChoice) implements CardEffect {
 
     public LookAtTopCardsEffect(
             DynamicAmount lookCount, DynamicAmount chooseCount, CardPredicate choosePredicate,
@@ -500,11 +500,6 @@ public record LookAtTopCardsEffect(
             CardPredicate choosePredicate, LookDestination restDestination, boolean reveal) {
         this(lookCount, chooseCount, choosePredicate, restDestination, reveal,
                 LibrarySearchDestination.HAND, false, false, null);
-    }
-
-    @Override
-    public DynamicAmount combatDamageAmount() {
-        return lookCount;
     }
 
     /** Canonical form without the optional chosen-card life-gain rider. */

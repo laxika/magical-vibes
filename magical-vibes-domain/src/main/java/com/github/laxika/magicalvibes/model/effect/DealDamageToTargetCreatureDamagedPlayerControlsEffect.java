@@ -17,7 +17,7 @@ import java.util.UUID;
  */
 public record DealDamageToTargetCreatureDamagedPlayerControlsEffect(DynamicAmount damage,
                                                                     boolean targetPlayerChooses)
-        implements DamageDealingEffect, CombatDamageAmountAwareEffect, CombatDamageTriggerContextEffect,
+        implements DamageDealingEffect, CombatDamageTriggerContextEffect,
         DamagedPlayerControlsTargetEffect {
 
     public DealDamageToTargetCreatureDamagedPlayerControlsEffect(DynamicAmount damage) {
@@ -64,11 +64,6 @@ public record DealDamageToTargetCreatureDamagedPlayerControlsEffect(DynamicAmoun
 
     @Override
     public DynamicAmount damageAmount() {
-        return damage;
-    }
-
-    @Override
-    public DynamicAmount combatDamageAmount() {
         return damage;
     }
 

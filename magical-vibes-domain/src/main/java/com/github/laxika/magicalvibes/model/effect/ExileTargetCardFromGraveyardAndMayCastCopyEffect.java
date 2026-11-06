@@ -1,9 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
@@ -21,7 +18,7 @@ public record ExileTargetCardFromGraveyardAndMayCastCopyEffect(
         boolean withoutPayingManaCost,
         boolean matchManaValueToCombatDamage,
         CardEffect afterSuccessfulCastEffect
-) implements CombatDamageAmountAwareEffect {
+) implements CardEffect {
     public ExileTargetCardFromGraveyardAndMayCastCopyEffect(CardPredicate filter, GraveyardSearchScope scope, boolean withoutPayingManaCost) {
         this(filter, scope, 0, false, withoutPayingManaCost, false, null);
     }
@@ -55,13 +52,12 @@ public record ExileTargetCardFromGraveyardAndMayCastCopyEffect(
         this(filter, scope, 0, false, true, matchManaValueToCombatDamage, afterSuccessfulCastEffect);
     }
 
-    @Override
-    public DynamicAmount combatDamageAmount() {
-        return matchManaValueToCombatDamage ? new EventValue() : new Fixed(0);
-    }
-
-    @Override
-    public CardEffect snapshotCombatDamage(int damageDealt) {
+    /**
+     * This effect with "mana value equal to the damage dealt" fixed at {@code damageDealt} and moved into its card
+     * filter, for a graveyard target chosen as the trigger goes on the stack (CR 603.3d), before the stack entry
+     * exists. An effect that doesn't match the damage is returned as is.
+     */
+    public ExileTargetCardFromGraveyardAndMayCastCopyEffect withManaValueEqualToDamage(int damageDealt) {
         if (!matchManaValueToCombatDamage) {
             return this;
         }

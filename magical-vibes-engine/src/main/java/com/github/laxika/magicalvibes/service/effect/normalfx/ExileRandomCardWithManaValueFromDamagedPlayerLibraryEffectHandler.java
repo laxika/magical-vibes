@@ -7,8 +7,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileRandomCardWithManaValueFromDamagedPlayerLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.effect.AmountContext;
-import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +23,6 @@ import java.util.concurrent.ThreadLocalRandom;
 public class ExileRandomCardWithManaValueFromDamagedPlayerLibraryEffectHandler
         implements NormalEffectHandlerBean {
 
-    private final AmountEvaluationService amountEvaluationService;
     private final ExileService exileService;
     private final GameLogService gameLogService;
 
@@ -42,10 +39,7 @@ public class ExileRandomCardWithManaValueFromDamagedPlayerLibraryEffectHandler
             return;
         }
 
-        int damageDealt = amountEvaluationService.evaluate(
-                gameData,
-                ((ExileRandomCardWithManaValueFromDamagedPlayerLibraryEffect) effect).combatDamageAmount(),
-                AmountContext.forStackEntry(entry, null));
+        int damageDealt = entry.getEventValue();
         List<Card> library = gameData.playerDecks.get(damagedPlayerId);
         if (library == null || library.isEmpty()) {
             return;

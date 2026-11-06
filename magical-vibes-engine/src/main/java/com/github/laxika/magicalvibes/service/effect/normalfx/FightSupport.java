@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CombatDamageAmountAwareEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardPersistentManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -127,7 +127,7 @@ public class FightSupport {
                 && conditional.condition() instanceof EventValueAtLeast) {
             return true;
         }
-        return effect instanceof CombatDamageAmountAwareEffect amountAware
-                && amountEvaluationService.referencesEventValue(amountAware.combatDamageAmount());
+        return effect instanceof AwardPersistentManaEffect mana
+                && amountEvaluationService.referencesEventValue(mana.amount());
     }
 }

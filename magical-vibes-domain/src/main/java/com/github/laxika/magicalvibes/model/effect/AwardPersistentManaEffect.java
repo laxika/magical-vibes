@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * the end of the turn. This is a triggered effect rather than a mana ability.
  */
 public record AwardPersistentManaEffect(ManaColor color, DynamicAmount amount, Recipient recipient)
-        implements CombatDamageAmountAwareEffect, CombatDamageTriggerContextEffect {
+        implements CombatDamageTriggerContextEffect {
 
     public AwardPersistentManaEffect(ManaColor color, DynamicAmount amount) {
         this(color, amount, Recipient.CONTROLLER);
@@ -18,11 +18,6 @@ public record AwardPersistentManaEffect(ManaColor color, DynamicAmount amount, R
         CONTROLLER,
         TARGET_PLAYER,
         ENCHANTED_PERMANENT_CONTROLLER
-    }
-
-    @Override
-    public DynamicAmount combatDamageAmount() {
-        return amount;
     }
 
     @Override

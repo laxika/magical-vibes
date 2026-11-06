@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * pay energy. The effect is intended to be composed with {@link ConditionalEffect} when payment
  * is optional.
  */
-public record EnergyCountersEffect(DynamicAmount amount) implements CombatDamageAmountAwareEffect {
+public record EnergyCountersEffect(DynamicAmount amount) implements CardEffect {
 
     public EnergyCountersEffect {
         if (amount == null) {
@@ -21,10 +21,5 @@ public record EnergyCountersEffect(DynamicAmount amount) implements CombatDamage
 
     public EnergyCountersEffect(int amount) {
         this(new Fixed(amount));
-    }
-
-    @Override
-    public DynamicAmount combatDamageAmount() {
-        return amount;
     }
 }

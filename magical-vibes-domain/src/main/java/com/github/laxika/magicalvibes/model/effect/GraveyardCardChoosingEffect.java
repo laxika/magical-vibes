@@ -21,6 +21,15 @@ public interface GraveyardCardChoosingEffect extends CardEffect {
     /** The maximum number of graveyard cards the controller may choose ("up to N target cards"). */
     int graveyardChoiceMaxTargets();
 
+    /**
+     * The maximum number of graveyard cards for an ability whose trigger event had the amount {@code eventValue}
+     * ("exile up to that many target cards", where "that many" is the damage dealt). Defaults to the fixed
+     * {@link #graveyardChoiceMaxTargets()}.
+     */
+    default int graveyardChoiceMaxTargets(int eventValue) {
+        return graveyardChoiceMaxTargets();
+    }
+
     /** An optional restriction on the chosen cards ("creature cards"); {@code null} = any card. */
     default CardPredicate graveyardChoiceFilter() {
         return null;

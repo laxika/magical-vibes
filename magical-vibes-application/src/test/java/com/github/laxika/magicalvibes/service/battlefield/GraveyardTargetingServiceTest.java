@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileUpToCombatDamageCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
@@ -197,6 +198,30 @@ class GraveyardTargetingServiceTest {
         // Only one matching card, so the cap is min(2, 1) = 1
         verify(playerInputService).beginMultiGraveyardChoice(eq(gd), eq(player1Id), org.mockito.ArgumentMatchers.anyList(),
                 eq(1), eq(0), anyString());
+    }
+
+    @Test
+    @DisplayName("combat damage graveyard targeting caps \"up to that many\" at the damage dealt")
+    void handleCombatDamageGraveyardChoiceTargeting_capsAtTheDamageDealt() {
+        Card froghemoth = new Card();
+        froghemoth.setName("Froghemoth");
+        ExileUpToCombatDamageCardsFromGraveyardEffect effect = new ExileUpToCombatDamageCardsFromGraveyardEffect();
+        UUID damagedPlayerId = UUID.randomUUID();
+        List<Card> damagedGraveyard = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            Card card = new Card();
+            card.setName("Card " + i);
+            damagedGraveyard.add(card);
+        }
+        gd.playerGraveyards.put(damagedPlayerId, damagedGraveyard);
+
+        service.handleCombatDamageGraveyardChoiceTargeting(gd, player1Id, froghemoth, List.of(effect),
+                UUID.randomUUID(), damagedPlayerId, effect, 2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.graveyardTargetOperation.targetPlayerId).isEqualTo(damagedPlayerId);
+        verify(playerInputService).beginMultiGraveyardChoice(eq(gd), eq(player1Id),
+                argThat(cards -> cards.size() == 3), eq(2), anyString());
     }
 
     @Test

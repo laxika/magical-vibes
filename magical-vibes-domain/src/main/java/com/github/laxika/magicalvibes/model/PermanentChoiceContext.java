@@ -1517,10 +1517,26 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             implements PermanentChoiceContext {}
 
     /** A targeted attack trigger. {@code choosingPlayerId} defaults to the ability controller and
-     *  differs only for text such as Erithizon's "of defending player's choice". */
+     *  differs only for text such as Erithizon's "of defending player's choice". {@code eventValue} is
+     *  the amount of the event the ability triggered on (a combat damage trigger's damage dealt), which
+     *  the stack entry built from this choice carries for its {@code EventValue} amounts. */
     record AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                UUID sourcePermanentId, UUID choosingPlayerId,
-                               UUID attackedTargetId, UUID triggeringPermanentId, Integer xValue) implements PermanentChoiceContext {
+                               UUID attackedTargetId, UUID triggeringPermanentId, Integer xValue,
+                               int eventValue) implements PermanentChoiceContext {
+
+        public AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                   UUID sourcePermanentId, UUID choosingPlayerId,
+                                   UUID attackedTargetId, UUID triggeringPermanentId, Integer xValue) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, choosingPlayerId,
+                    attackedTargetId, triggeringPermanentId, xValue, 0);
+        }
+
+        /** This choice with {@code eventValue} as the amount of the event the ability triggered on. */
+        public AttackTriggerTarget withEventValue(int eventValue) {
+            return new AttackTriggerTarget(sourceCard, controllerId, effects, sourcePermanentId, choosingPlayerId,
+                    attackedTargetId, triggeringPermanentId, xValue, eventValue);
+        }
 
         public AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                    UUID sourcePermanentId, UUID choosingPlayerId,
@@ -2888,6 +2904,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
                     repeatedAdditionalCosts, resumePendingMayResolution, triggeringCardId,
                     triggeringPermanentId, eventValue, planarSource, index);
+        }
+
+        /** This choice with {@code eventValue} as the amount of the event the ability triggered on. */
+        public ETBTokenMultiTargetTrigger withEventValue(int eventValue) {
+            return new ETBTokenMultiTargetTrigger(
+                    sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
+                    currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
+                    repeatedAdditionalCosts, resumePendingMayResolution, triggeringCardId,
+                    triggeringPermanentId, eventValue, planarSource, stateTriggerEffectIndex);
         }
 
         public ETBTokenMultiTargetTrigger copyPlanarSnapshot() {

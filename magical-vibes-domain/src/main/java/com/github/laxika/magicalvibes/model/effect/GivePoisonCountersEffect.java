@@ -28,7 +28,7 @@ import java.util.UUID;
  */
 public record GivePoisonCountersEffect(DynamicAmount amount, PoisonRecipient recipient,
         CardPredicate spellFilter, UUID affectedPlayerId)
-        implements CardEffect, CombatDamageTriggerContextEffect, CombatDamageAmountAwareEffect {
+        implements CardEffect, CombatDamageTriggerContextEffect {
 
     public GivePoisonCountersEffect(int amount, PoisonRecipient recipient) {
         this(new Fixed(amount), recipient, null, null);
@@ -55,10 +55,5 @@ public record GivePoisonCountersEffect(DynamicAmount amount, PoisonRecipient rec
         // On an Triggers.dealsCombatDamageToPlayer() trigger (Pit Scorpion) the TARGET_PLAYER recipient must
         // bind to the damaged player so the poison counter lands on them.
         return recipient == PoisonRecipient.TARGET_PLAYER ? TriggerContext.DAMAGED_PLAYER : null;
-    }
-
-    @Override
-    public DynamicAmount combatDamageAmount() {
-        return amount;
     }
 }

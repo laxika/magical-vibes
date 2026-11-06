@@ -9,14 +9,9 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * option is taken, the card is put into its controller's hand.
  */
 public record LookAtTopCardMayPlayLandOrCastFreeEffect(DynamicAmount maxManaValue)
-        implements CombatDamageAmountAwareEffect {
+        implements CardEffect {
 
     public LookAtTopCardMayPlayLandOrCastFreeEffect(int maxManaValue) {
         this(new Fixed(maxManaValue));
-    }
-
-    @Override
-    public DynamicAmount combatDamageAmount() {
-        return maxManaValue;
     }
 }

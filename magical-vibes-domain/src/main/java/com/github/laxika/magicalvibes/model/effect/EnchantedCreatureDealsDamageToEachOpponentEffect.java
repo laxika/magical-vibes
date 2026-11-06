@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 
 /** The creature enchanted by the source Aura deals the event amount of damage to each opponent. */
 public record EnchantedCreatureDealsDamageToEachOpponentEffect(DynamicAmount amount)
-        implements DamageDealingEffect, CombatDamageAmountAwareEffect, CombatDamageTriggerContextEffect {
+        implements DamageDealingEffect, CombatDamageTriggerContextEffect {
 
     public EnchantedCreatureDealsDamageToEachOpponentEffect() {
         this(new EventValue());
@@ -13,11 +13,6 @@ public record EnchantedCreatureDealsDamageToEachOpponentEffect(DynamicAmount amo
 
     @Override
     public DynamicAmount damageAmount() {
-        return amount;
-    }
-
-    @Override
-    public DynamicAmount combatDamageAmount() {
         return amount;
     }
 

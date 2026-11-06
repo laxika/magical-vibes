@@ -1,11 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
-
-import java.util.List;
 
 /**
  * "You may cast a [filter] spell from your hand without paying its mana cost."
@@ -24,7 +20,7 @@ public record MayCastAnySpellFromHandWithoutPayingManaCostEffect(CardPredicate s
                                                                   DynamicAmount maxManaValue,
                                                                   CardEffect afterSuccessfulCastEffect,
                                                                   boolean drawnCardsOnly, boolean revealDrawnCards)
-        implements CardEffect, CombatDamageAmountAwareEffect {
+        implements CardEffect {
 
     public MayCastAnySpellFromHandWithoutPayingManaCostEffect(CardPredicate spellFilter,
                                                                DynamicAmount maxManaValue) {
@@ -50,23 +46,5 @@ public record MayCastAnySpellFromHandWithoutPayingManaCostEffect(CardPredicate s
     /** A matching nonland spell with no mana-value cap. */
     public MayCastAnySpellFromHandWithoutPayingManaCostEffect(CardPredicate spellFilter) {
         this(spellFilter, null, null);
-    }
-
-    @Override
-    public DynamicAmount combatDamageAmount() {
-        return maxManaValue;
-    }
-
-    @Override
-    public CardEffect snapshotCombatDamage(int damageDealt) {
-        if (maxManaValue == null) {
-            return this;
-        }
-        CardPredicate manaValueFilter = new CardMaxManaValuePredicate(damageDealt);
-        CardPredicate combinedFilter = spellFilter == null
-                ? manaValueFilter
-                : new CardAllOfPredicate(List.of(spellFilter, manaValueFilter));
-        return new MayCastAnySpellFromHandWithoutPayingManaCostEffect(
-                combinedFilter, null, afterSuccessfulCastEffect, drawnCardsOnly, revealDrawnCards);
     }
 }

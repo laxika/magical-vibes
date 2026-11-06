@@ -1,9 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
@@ -67,7 +64,7 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                                          Set<com.github.laxika.magicalvibes.model.CardSubtype> untapSourceIfEnteredCardHasAnySubtype,
                                          boolean suppressesTriggeringPermanentEntry,
                                          boolean hasteUntilEndOfTurn)
-        implements CardEffect, CombatDamageAmountAwareEffect, CombatOpponentReferencingEffect,
+        implements CardEffect, CombatOpponentReferencingEffect,
         TriggeringPermanentManaValueEffect, TriggeringPermanentEntryExclusionEffect {
 
     public PutCardToBattlefieldEffect {
@@ -270,11 +267,6 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                 cloaked, returnExiledSourceIfSacrificed, returnToHandAtEndStep, predicate, enterBlocking,
                 maxManaValueBoundedByEventValue, untapSourceIfEnteredCardHasAnySubtype,
                 suppressesTriggeringPermanentEntry, hasteUntilEndOfTurn);
-    }
-
-    @Override
-    public DynamicAmount combatDamageAmount() {
-        return maxManaValueBoundedByEventValue ? new EventValue() : new Fixed(0);
     }
 
     @Override

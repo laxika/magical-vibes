@@ -55,7 +55,6 @@ import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.CombatDamageAmountAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageAssignmentToDefendingPlayerAndCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageDealerReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageResolutionEffect;
@@ -76,6 +75,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstestStrikeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToControlledCreatureCombatDamageEffect;
@@ -2203,9 +2203,7 @@ public class CombatDamageService {
                         ? onlyDamagedPlayer.wrapped() : candidateEffect;
                 if (rawEffect instanceof com.github.laxika.magicalvibes.model.effect.RenownEffect
                         && creature.isRenowned()) continue;
-                CardEffect effect = rawEffect instanceof CombatDamageAmountAwareEffect amountAware
-                        ? amountAware.snapshotCombatDamage(damageDealt)
-                        : rawEffect;
+                CardEffect effect = rawEffect;
                 // One ability whose steps include a target chosen from the damaged player's permanents ("destroy
                 // up to one target artifact that player controls and put a +1/+1 counter on this creature"):
                 // the damaged player is bound into those steps before the target is chosen, and the whole
@@ -2224,7 +2222,7 @@ public class CombatDamageService {
                                 .toList());
                         gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                                 creature.getCard(), attackerId, List.of(targeted), creature.getId(),
-                                damagedPlayerStep.targetChooserId(defenderId, attackerId), defenderId));
+                                damagedPlayerStep.targetChooserId(defenderId, attackerId), defenderId).withEventValue(damageDealt));
                     }
                     continue;
                 }
@@ -2295,7 +2293,7 @@ public class CombatDamageService {
                         && bounce.fixedCount() == 0) {
                     gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                             creature.getCard(), attackerId, List.of(bounce.withTriggerTimeTargets()),
-                            creature.getId(), attackerId, defenderId, null, damageDealt));
+                            creature.getId(), attackerId, defenderId, null, damageDealt).withEventValue(damageDealt));
                     gameLogService.append(gameData, GameLog.abilityTriggers(creature.getCard()));
                     continue;
                 }
@@ -2321,14 +2319,9 @@ public class CombatDamageService {
                         UUID mayGraveyardOwnerId =
                                 may.targetSpec().graveyardScope().orElse(null) == GraveyardSearchScope.OPPONENT_GRAVEYARD
                                         ? defenderId : attackerId;
-                        // A graveyard return whose mana value limit is the damage dealt (Venerable Warsinger)
-                        // fixes that limit now, so only creature cards up to the damage are offered.
-                        CardEffect graveyardMay = may.wrapped() instanceof ReturnCardFromGraveyardEffect returnEffect
-                                ? new MayEffect(returnEffect.snapshotCombatDamage(damageDealt), may.prompt(),
-                                        may.elseEffect(), may.choicePlayer(), may.choicePlayerId())
-                                : effect;
                         gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                                creature.getCard(), attackerId, List.of(graveyardMay), mayGraveyardOwnerId,
+                                creature.getCard(), attackerId,
+                                List.of(withGraveyardTargetFixedToDamage(effect, damageDealt)), mayGraveyardOwnerId,
                                 1, 0, 1, null, false, null, creature.getId()));
                         gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
                                 "'s combat damage trigger goes on the stack — choose a graveyard target."));
@@ -2338,11 +2331,11 @@ public class CombatDamageService {
                             || may.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                         if (triggerCollectionService.needsSlotBySlotTargetSelection(creature.getCard())) {
                             gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                                    creature.getCard(), attackerId, List.of(effect), creature.getId(), List.of(), 0, 0));
+                                    creature.getCard(), attackerId, List.of(effect), creature.getId(), List.of(), 0, 0).withEventValue(damageDealt));
                         } else {
                             gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                                     creature.getCard(), attackerId, List.of(effect), creature.getId(),
-                                    attackerId, defenderId));
+                                    attackerId, defenderId).withEventValue(damageDealt));
                         }
                         gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
                                 "'s combat damage trigger goes on the stack — choose a target."));
@@ -2394,20 +2387,17 @@ public class CombatDamageService {
                                     creature.getCard(), attackerId,
                                     List.of(new MayEffect(damageEffect.forDamagedPlayer(defenderId, damageDealt),
                                             may.prompt(), may.elseEffect(), may.choicePlayer())),
-                                    creature.getId(), damageEffect.targetChooserId(defenderId, attackerId), defenderId));
+                                    creature.getId(), damageEffect.targetChooserId(defenderId, attackerId), defenderId).withEventValue(damageDealt));
                         }
                         continue;
                     }
-                    // Wire the combat damage dealt as the event value for dynamic combat-damage
-                    // amounts, such as "draw that many cards" or "deal that much damage".
-                    int mayEventValue = readsCombatDamage(may.wrapped()) ? damageDealt : 0;
                     // A "target creature" (any) may-ability — e.g. Hapatra's "you may put a -1/-1 counter
                     // on target creature" — is queued with a null target so its target is chosen at
                     // resolution. Effects that instead act on a creature the damaged player controls have
                     // a NONE target spec and keep the baked-in defender context.
                     UUID mayTargetId = may.wrapped().targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                             ? null : defenderId;
-                    gameData.queueMayAbility(creature.getCard(), attackerId, queuedMay, mayTargetId, creature.getId(), mayEventValue);
+                    gameData.queueMayAbility(creature.getCard(), attackerId, queuedMay, mayTargetId, creature.getId(), damageDealt);
                     gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), "'s combat damage trigger fires."));
                     continue;
                 }
@@ -2422,7 +2412,7 @@ public class CombatDamageService {
                     }
                     gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                             creature.getCard(), attackerId, List.of(targeted),
-                            creature.getId(), attackerId, defenderId));
+                            creature.getId(), attackerId, defenderId).withEventValue(damageDealt));
                     continue;
                 }
                 if (specialEffect instanceof DamagedPlayerControlsTargetEffect damageEffect) {
@@ -2433,7 +2423,7 @@ public class CombatDamageService {
                         }
                         gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                                 creature.getCard(), attackerId, List.of(targeted), creature.getId(),
-                                damageEffect.targetChooserId(defenderId, attackerId), defenderId));
+                                damageEffect.targetChooserId(defenderId, attackerId), defenderId).withEventValue(damageDealt));
                     }
                     continue;
                 }
@@ -2497,7 +2487,8 @@ public class CombatDamageService {
                 if (effect instanceof GraveyardCardChoosingEffect graveyardChoice
                         && graveyardChoice.choosesGraveyardCards()) {
                     graveyardTargetingService.handleCombatDamageGraveyardChoiceTargeting(gameData, attackerId,
-                            creature.getCard(), List.of(effect), creature.getId(), defenderId, graveyardChoice);
+                            creature.getCard(), List.of(effect), creature.getId(), defenderId, graveyardChoice,
+                            damageDealt);
                     continue;
                 }
 
@@ -2514,7 +2505,9 @@ public class CombatDamageService {
                             effect.targetSpec().graveyardScope().orElse(null) == GraveyardSearchScope.OPPONENT_GRAVEYARD
                                     ? defenderId : null;
                     gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                            creature.getCard(), attackerId, new ArrayList<>(List.of(effect)), graveyardOwnerId, 0, 0,
+                            creature.getCard(), attackerId,
+                            new ArrayList<>(List.of(withGraveyardTargetFixedToDamage(effect, damageDealt))),
+                            graveyardOwnerId, 0, 0,
                             creature.isAlternateCost()));
                     gameLogService.append(gameData, GameLog.text(creature.getCard().getName() + "'s combat damage trigger fires."));
                     continue;
@@ -2531,10 +2524,10 @@ public class CombatDamageService {
                         && !(effect instanceof CombatOpponentReferencingEffect c && c.referencesCombatOpponent())) {
                     if (triggerCollectionService.needsSlotBySlotTargetSelection(creature.getCard())) {
                         gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                                creature.getCard(), attackerId, List.of(effect), creature.getId(), List.of(), 0, 0));
+                                creature.getCard(), attackerId, List.of(effect), creature.getId(), List.of(), 0, 0).withEventValue(damageDealt));
                     } else {
                         gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                                creature.getCard(), attackerId, List.of(effect), creature.getId(), attackerId, defenderId));
+                                creature.getCard(), attackerId, List.of(effect), creature.getId(), attackerId, defenderId).withEventValue(damageDealt));
                     }
                     gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
                             "'s combat damage trigger goes on the stack — choose a target."));
@@ -2573,12 +2566,9 @@ public class CombatDamageService {
                     se.setSourcePermanentSnapshot(new Permanent(creature));
                     se.setAlternateCost(creature.isAlternateCost());
                 }
-                // Wire the combat damage dealt as the event value so "discards that many cards"
-                // (DiscardEffect with an EventValue amount, e.g. Needle Specter) or "draw that many
-                // cards" (DrawCardEffect with an EventValue amount, e.g. Hunter's Insight) or "mills
-                // that many cards" (MillEffect with an EventValue amount, e.g. Crosstown Courier)
-                // reads it.
-                setCombatDamageEventValue(se, effect, damageDealt);
+                // The combat damage dealt is the event value: "discards that many cards" (Needle Specter),
+                // "draw that many cards" (Hunter's Insight) and the like read it as the ability resolves.
+                se.setEventValue(damageDealt);
                 se.setNonTargeting(true);
                 gameData.stack.add(se);
                 gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), "'s combat damage trigger goes on the stack."));
@@ -2652,8 +2642,7 @@ public class CombatDamageService {
                     continue;
                 }
 
-                CardEffect firedEffect = trigger.effect() instanceof CombatDamageAmountAwareEffect amountAware
-                        ? amountAware.snapshotCombatDamage(damageDealt) : trigger.effect();
+                CardEffect firedEffect = trigger.effect();
                 StackEntry stackEntry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         watcher.getCard(),
@@ -2662,7 +2651,7 @@ public class CombatDamageService {
                         List.of(firedEffect),
                         defenderId,
                         watcher.getId());
-                setCombatDamageEventValue(stackEntry, firedEffect, damageDealt);
+                stackEntry.setEventValue(damageDealt);
                 stackEntry.setNonTargeting(true);
                 int previousCopies = beginCombatDamageTriggerCopies(
                         gameData, watcherControllerId, watcher, creature,
@@ -2770,10 +2759,10 @@ public class CombatDamageService {
                     if (needsTarget) {
                         if (triggerCollectionService.needsSlotBySlotTargetSelection(perm.getCard())) {
                             gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                                    perm.getCard(), ownerId, effects, perm.getId(), List.of(), 0, 0));
+                                    perm.getCard(), ownerId, effects, perm.getId(), List.of(), 0, 0).withEventValue(damageDealt));
                         } else {
                             gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                                    perm.getCard(), ownerId, effects, perm.getId(), ownerId, defenderId));
+                                    perm.getCard(), ownerId, effects, perm.getId(), ownerId, defenderId).withEventValue(damageDealt));
                         }
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
                                 "'s combat damage trigger goes on the stack — choose a target."));
@@ -2806,9 +2795,7 @@ public class CombatDamageService {
                         } else if (perm.getId().equals(sourcePermanentId)) {
                             se.setSourcePermanentSnapshot(new Permanent(perm));
                         }
-                        for (CardEffect effect : effects) {
-                            setCombatDamageEventValue(se, effect, damageDealt);
-                        }
+                        se.setEventValue(damageDealt);
                         se.setNonTargeting(true);
                         gameData.stack.add(se);
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s combat damage trigger goes on the stack."));
@@ -2835,44 +2822,25 @@ public class CombatDamageService {
                 gameData, abilityControllerId, abilitySource, false, context));
     }
 
-    private void setCombatDamageEventValue(StackEntry entry, CardEffect effect, int damageDealt) {
-        if (effect instanceof SequenceEffect sequence) {
-            for (CardEffect step : sequence.steps()) {
-                setCombatDamageEventValue(entry, step, damageDealt);
-            }
-            return;
-        }
-        if (effect instanceof ConditionalEffect conditional) {
-            setCombatDamageEventValue(entry, conditional.wrapped(), damageDealt);
-            return;
-        }
+    /**
+     * A combat damage trigger's graveyard-target restriction that depends on the damage dealt, fixed at
+     * {@code damageDealt}: Venerable Warsinger's "mana value X or less" and Soundwave's "mana value equal to the
+     * damage dealt". The target is chosen as the ability goes on the stack (CR 603.3d), before the stack entry that
+     * carries the damage exists, so the restriction can't read the entry's event value yet.
+     */
+    private static CardEffect withGraveyardTargetFixedToDamage(CardEffect effect, int damageDealt) {
         if (effect instanceof MayEffect may) {
-            setCombatDamageEventValue(entry, may.wrapped(), damageDealt);
-            if (may.elseEffect() != null) {
-                setCombatDamageEventValue(entry, may.elseEffect(), damageDealt);
-            }
-            return;
+            CardEffect fixed = withGraveyardTargetFixedToDamage(may.wrapped(), damageDealt);
+            return fixed == may.wrapped() ? may
+                    : new MayEffect(fixed, may.prompt(), may.elseEffect(), may.choicePlayer(), may.choicePlayerId());
         }
-        if (readsCombatDamage(effect)) {
-            entry.setEventValue(damageDealt);
+        if (effect instanceof ReturnCardFromGraveyardEffect returnEffect) {
+            return returnEffect.withMaxManaValue(damageDealt);
         }
-    }
-
-    private boolean readsCombatDamage(CardEffect effect) {
-        if (effect instanceof SequenceEffect sequence) {
-            return sequence.steps().stream().anyMatch(this::readsCombatDamage);
+        if (effect instanceof ExileTargetCardFromGraveyardAndMayCastCopyEffect exileAndCast) {
+            return exileAndCast.withManaValueEqualToDamage(damageDealt);
         }
-        return effect instanceof DiscardEffect
-                || (effect instanceof com.github.laxika.magicalvibes.model.effect.DiscoverEffect discover
-                        && discover.discoverValue() instanceof EventValue)
-                || (effect instanceof DrawCardEffect draw && draw.amount() instanceof EventValue)
-                || (effect instanceof com.github.laxika.magicalvibes.model.effect.DrawCardForYouAndDamagedPlayerEffect both
-                        && both.amount() instanceof EventValue)
-                || (effect instanceof MillEffect mill && mill.count() instanceof EventValue)
-                || (effect instanceof CreateTokenForTargetPlayerEffect create
-                && create.tokenEffect().amount() instanceof EventValue)
-                || (effect instanceof CombatDamageAmountAwareEffect amountAware
-                && amountEvaluationService.referencesEventValue(amountAware.combatDamageAmount()));
+        return effect;
     }
 
     /**
@@ -2913,7 +2881,7 @@ public class CombatDamageService {
                         );
                         se.setTriggeringPermanentId(creature.getId());
                         se.setTriggeringPermanentControllerId(attackerId);
-                        setCombatDamageEventValue(se, effect, damageDealt);
+                        se.setEventValue(damageDealt);
                         se.setNonTargeting(true);
                         gameData.stack.add(se);
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
@@ -3082,9 +3050,6 @@ public class CombatDamageService {
                             .mapToInt(Map.Entry::getValue)
                             .sum()
                             : damageDealt;
-                    if (firedEffect instanceof CombatDamageAmountAwareEffect amountAware) {
-                        firedEffect = amountAware.snapshotCombatDamage(triggerDamage);
-                    }
                     if (firedEffect instanceof ChooseModeNotYetChosenThisTurnEffect modal) {
                         gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
                                 perm.getCard(), attackerId, new ChooseOneEffect(modal.options()),
@@ -3102,7 +3067,7 @@ public class CombatDamageService {
                             && (perm.getCard().hasEffectTargetIndex(read.effect())
                             || perm.getCard().hasEffectTargetIndex(firedEffect))))) {
                         gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                                perm.getCard(), attackerId, List.of(firedEffect), perm.getId(), attackerId, defenderId));
+                                perm.getCard(), attackerId, List.of(firedEffect), perm.getId(), attackerId, defenderId).withEventValue(triggerDamage));
                         read.markLimit(gameData, perm.getId());
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
                                 "'s combat damage trigger goes on the stack — choose a target."));
@@ -3112,7 +3077,9 @@ public class CombatDamageService {
                         UUID graveyardOwnerId = firedEffect.targetSpec().graveyardScope().orElse(null)
                                 == GraveyardSearchScope.OPPONENT_GRAVEYARD ? defenderId : null;
                         gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                                perm.getCard(), attackerId, new ArrayList<>(List.of(firedEffect)), graveyardOwnerId,
+                                perm.getCard(), attackerId,
+                                new ArrayList<>(List.of(withGraveyardTargetFixedToDamage(firedEffect, triggerDamage))),
+                                graveyardOwnerId,
                                 0, triggerDamage, 0, null, false, perm.getId()));
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
                                 "'s combat damage trigger goes on the stack — choose a graveyard target."));
@@ -3129,7 +3096,7 @@ public class CombatDamageService {
                             && c.referencesCombatOpponent())) {
                         gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                                 perm.getCard(), attackerId, List.of(firedEffect), perm.getId(), attackerId,
-                                defenderId, creature.getId()));
+                                defenderId, creature.getId()).withEventValue(triggerDamage));
                         read.markLimit(gameData, perm.getId());
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
                                 "'s combat damage trigger goes on the stack — choose a target."));

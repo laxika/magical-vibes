@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 public record MillControllerAndMayReturnMilledPermanentToHandEffect(
         DynamicAmount count, CardPredicate filter, int maxCount,
         CardPredicate bonusFilter, int bonusLife)
-        implements CombatDamageAmountAwareEffect, CombatDamageTriggerContextEffect {
+        implements CombatDamageTriggerContextEffect {
 
     public MillControllerAndMayReturnMilledPermanentToHandEffect(int count, CardPredicate filter) {
         this(new Fixed(count), filter, 1, null, 0);
@@ -64,11 +64,6 @@ public record MillControllerAndMayReturnMilledPermanentToHandEffect(
         if (maxCount < 1) {
             throw new IllegalArgumentException("maxCount must be positive");
         }
-    }
-
-    @Override
-    public DynamicAmount combatDamageAmount() {
-        return count;
     }
 
     @Override

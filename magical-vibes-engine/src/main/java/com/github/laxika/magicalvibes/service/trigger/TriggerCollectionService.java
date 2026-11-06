@@ -263,7 +263,6 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -13511,16 +13510,8 @@ public class TriggerCollectionService {
                 || dyingPermanent == null) {
             return effect;
         }
-        int maxManaValue = amountEvaluationService.evaluateAtDeath(
-                gameData, returnEffect.dynamicMaxManaValue(), controllerId, dyingPermanent);
-        CardPredicate manaValueFilter = new CardMaxManaValuePredicate(maxManaValue);
-        CardPredicate filter = returnEffect.filter() == null
-                ? manaValueFilter
-                : new CardAllOfPredicate(List.of(returnEffect.filter(), manaValueFilter));
-        return returnEffect.toBuilder()
-                .filter(filter)
-                .dynamicMaxManaValue(null)
-                .build();
+        return returnEffect.withMaxManaValue(amountEvaluationService.evaluateAtDeath(
+                gameData, returnEffect.dynamicMaxManaValue(), controllerId, dyingPermanent));
     }
 
     private void collectAllyCreatureOrCreatureSpellBecomesTargetOfOpponentTriggers(

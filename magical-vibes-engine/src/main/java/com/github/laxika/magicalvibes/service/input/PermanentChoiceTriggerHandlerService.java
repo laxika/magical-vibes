@@ -1150,6 +1150,7 @@ public class PermanentChoiceTriggerHandlerService {
             if (att.xValue() != null) {
                 entry.setXValue(att.xValue());
             }
+            entry.setEventValue(att.eventValue());
             Permanent source = gameQueryService.findPermanentById(gameData, att.sourcePermanentId());
             if (source != null) {
                 entry.setSourcePermanentSnapshot(new Permanent(source));
@@ -1186,6 +1187,7 @@ public class PermanentChoiceTriggerHandlerService {
                     new ArrayList<>(att.effects()),
                     null,
                     att.sourcePermanentId());
+            entry.setEventValue(att.eventValue());
             Permanent source = gameQueryService.findPermanentById(gameData, att.sourcePermanentId());
             if (source != null) {
                 entry.setSourcePermanentSnapshot(new Permanent(source));
@@ -1237,6 +1239,7 @@ public class PermanentChoiceTriggerHandlerService {
         if (att.xValue() != null) {
             entry.setXValue(att.xValue());
         }
+        entry.setEventValue(att.eventValue());
         Permanent source = gameQueryService.findPermanentById(gameData, att.sourcePermanentId());
         if (source != null) {
             entry.setSourcePermanentSnapshot(new Permanent(source));

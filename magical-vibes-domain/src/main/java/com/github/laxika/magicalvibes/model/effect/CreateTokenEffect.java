@@ -47,7 +47,7 @@ public record CreateTokenEffect(
         List<CreateTokenEffect> simultaneousTokens,
         boolean attackingUntapped,
         String manaCost
-) implements TokenCreatingEffect, CombatDamageAmountAwareEffect, CombatDamageTriggerContextEffect {
+) implements TokenCreatingEffect, CombatDamageTriggerContextEffect {
 
     public CreateTokenEffect {
         simultaneousTokens = List.copyOf(simultaneousTokens);
@@ -145,11 +145,6 @@ public record CreateTokenEffect(
 
     @Override
     public DynamicAmount tokenAmount() {
-        return amount;
-    }
-
-    @Override
-    public DynamicAmount combatDamageAmount() {
         return amount;
     }
 

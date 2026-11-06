@@ -1,9 +1,5 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-
 /**
  * Gives control of the source permanent to the player carried on the stack entry. The normal form
  * targets that player; {@link #triggeringPlayer()} uses a non-targeting player supplied by the
@@ -12,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  */
 public record TargetPlayerGainsControlOfSourceCreatureEffect(boolean targetsPlayer, CardEffect thenEffect,
                                                               ControlDuration duration)
-        implements ControlStealingEffect, CombatDamageTriggerContextEffect, CombatDamageAmountAwareEffect {
+        implements ControlStealingEffect, CombatDamageTriggerContextEffect {
 
     public TargetPlayerGainsControlOfSourceCreatureEffect() {
         this(true, null, ControlDuration.PERMANENT);
@@ -51,13 +47,6 @@ public record TargetPlayerGainsControlOfSourceCreatureEffect(boolean targetsPlay
     @Override
     public TriggerContext combatDamageTriggerContext() {
         return thenEffect == null ? null : TriggerContext.DAMAGED_PLAYER;
-    }
-
-    @Override
-    public DynamicAmount combatDamageAmount() {
-        return thenEffect == null
-                ? new Fixed(0)
-                : new EventValue();
     }
 
     @Override

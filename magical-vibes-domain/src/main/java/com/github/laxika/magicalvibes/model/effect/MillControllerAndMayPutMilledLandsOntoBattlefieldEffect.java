@@ -5,12 +5,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 
 /** Mills the controller's library, then may put any number of milled lands onto the battlefield tapped. */
 public record MillControllerAndMayPutMilledLandsOntoBattlefieldEffect(DynamicAmount count)
-        implements CombatDamageAmountAwareEffect, CombatDamageTriggerContextEffect {
-
-    @Override
-    public DynamicAmount combatDamageAmount() {
-        return count;
-    }
+        implements CombatDamageTriggerContextEffect {
 
     @Override
     public TriggerContext combatDamageTriggerContext() {

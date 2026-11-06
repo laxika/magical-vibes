@@ -28,7 +28,7 @@ public record ExileTopCardsMayCastMatchingThisTurnEffect(
         DynamicAmount count,
         CardPredicate filter,
         boolean withoutPayingManaCost
-) implements CardEffect, CombatDamageAmountAwareEffect {
+) implements CardEffect {
 
     public ExileTopCardsMayCastMatchingThisTurnEffect(int count, CardPredicate filter) {
         this(new Fixed(count), filter, false);
@@ -41,10 +41,5 @@ public record ExileTopCardsMayCastMatchingThisTurnEffect(
 
     public ExileTopCardsMayCastMatchingThisTurnEffect(DynamicAmount count, CardPredicate filter) {
         this(count, filter, false);
-    }
-
-    @Override
-    public DynamicAmount combatDamageAmount() {
-        return count;
     }
 }

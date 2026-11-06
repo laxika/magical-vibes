@@ -995,6 +995,7 @@ public class TriggeredAbilityQueueService {
                     entry.setNonTargeting(true);
                     entry.setAttackedTargetId(pending.attackedTargetId());
                     if (pending.xValue() != null) entry.setXValue(pending.xValue());
+                    entry.setEventValue(pending.eventValue());
                     gameData.stack.add(entry);
                     gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                             " has no permanents to return."));
@@ -1052,6 +1053,7 @@ public class TriggeredAbilityQueueService {
                             pending.sourcePermanentId());
                     entry.setAttackedTargetId(pending.attackedTargetId());
                     entry.setTriggeringPermanentId(pending.triggeringPermanentId());
+                    entry.setEventValue(pending.eventValue());
                     gameData.stack.add(entry);
                     gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                             "'s triggered ability triggers without a target."));

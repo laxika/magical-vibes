@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * @param applyAdditionalChoices whether static additional-surveil abilities should be offered
  */
 public record SurveilEffect(DynamicAmount count, boolean applyAdditionalChoices)
-        implements CardEffect, CombatDamageAmountAwareEffect {
+        implements CardEffect {
 
     public SurveilEffect(int count, boolean applyAdditionalChoices) {
         this(new Fixed(count), applyAdditionalChoices);
@@ -30,10 +30,5 @@ public record SurveilEffect(DynamicAmount count, boolean applyAdditionalChoices)
 
     public SurveilEffect(DynamicAmount count) {
         this(count, true);
-    }
-
-    @Override
-    public DynamicAmount combatDamageAmount() {
-        return count;
     }
 }

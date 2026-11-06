@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  *                       ("it deals that much damage"); otherwise the trigger's source deals it
  */
 public record DealDamageToEachOtherOpponentEffect(DynamicAmount amount, boolean dealerIsSource)
-        implements DamageDealingEffect, CombatDamageAmountAwareEffect, CombatDamageTriggerContextEffect,
+        implements DamageDealingEffect, CombatDamageTriggerContextEffect,
         CombatDamageDealerReferencingEffect {
 
     public DealDamageToEachOtherOpponentEffect() {
@@ -35,11 +35,6 @@ public record DealDamageToEachOtherOpponentEffect(DynamicAmount amount, boolean 
     @Override
     public boolean canDamagePlayers() {
         return true;
-    }
-
-    @Override
-    public DynamicAmount combatDamageAmount() {
-        return amount;
     }
 
     @Override

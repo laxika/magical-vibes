@@ -385,7 +385,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean requiresPowerAtMostSacrificedPower,
         boolean hasteUntilEndOfTurn,
         boolean returnToHandAtYourNextEndStep,
-        boolean attachToSourceOptional) implements CombatDamageAmountAwareEffect, TargetCardGroupEffect,
+        boolean attachToSourceOptional) implements TargetCardGroupEffect,
         TriggeringSpellManaValueEffect {
         public ReturnCardFromGraveyardEffect(
         GraveyardChoiceDestination destination,
@@ -505,11 +505,6 @@ public record ReturnCardFromGraveyardEffect(
     }
 
     @Override
-    public DynamicAmount combatDamageAmount() {
-        return dynamicMaxManaValue;
-    }
-
-    @Override
     public List<Integer> targetGroups() {
         return targetGroup < 0 ? List.of() : List.of(targetGroup);
     }
@@ -554,12 +549,16 @@ public record ReturnCardFromGraveyardEffect(
         return toBuilder().filter(combinedFilter).build();
     }
 
-    @Override
-    public ReturnCardFromGraveyardEffect snapshotCombatDamage(int damageDealt) {
+    /**
+     * This effect with its dynamic mana value limit fixed at {@code maxManaValue} (the damage dealt, the dying
+     * permanent's last-known value) and moved into its card filter, for a graveyard target chosen as the trigger goes
+     * on the stack (CR 603.3d), before the stack entry exists. An effect without a dynamic limit is returned as is.
+     */
+    public ReturnCardFromGraveyardEffect withMaxManaValue(int maxManaValue) {
         if (dynamicMaxManaValue == null) {
             return this;
         }
-        CardPredicate manaValueFilter = new CardMaxManaValuePredicate(damageDealt);
+        CardPredicate manaValueFilter = new CardMaxManaValuePredicate(maxManaValue);
         CardPredicate combinedFilter = filter == null
                 ? manaValueFilter
                 : new CardAllOfPredicate(List.of(filter, manaValueFilter));

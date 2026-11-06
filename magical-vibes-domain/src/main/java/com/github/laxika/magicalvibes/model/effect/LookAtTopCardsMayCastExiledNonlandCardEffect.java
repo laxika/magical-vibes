@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  */
 public record LookAtTopCardsMayCastExiledNonlandCardEffect(DynamicAmount count,
                                                            CardPredicate castPredicate)
-        implements CombatDamageAmountAwareEffect {
+        implements CardEffect {
 
     public LookAtTopCardsMayCastExiledNonlandCardEffect(int count) {
         this(new Fixed(count), null);
@@ -19,10 +19,5 @@ public record LookAtTopCardsMayCastExiledNonlandCardEffect(DynamicAmount count,
 
     public LookAtTopCardsMayCastExiledNonlandCardEffect(DynamicAmount count) {
         this(count, null);
-    }
-
-    @Override
-    public DynamicAmount combatDamageAmount() {
-        return count;
     }
 }

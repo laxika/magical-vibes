@@ -5,14 +5,9 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import java.util.Objects;
 
 /** Queues additional upkeep steps after the current combat phase. */
-public record AdditionalUpkeepStepsEffect(DynamicAmount count) implements CombatDamageAmountAwareEffect {
+public record AdditionalUpkeepStepsEffect(DynamicAmount count) implements CardEffect {
 
     public AdditionalUpkeepStepsEffect {
         Objects.requireNonNull(count, "count");
-    }
-
-    @Override
-    public DynamicAmount combatDamageAmount() {
-        return count;
     }
 }

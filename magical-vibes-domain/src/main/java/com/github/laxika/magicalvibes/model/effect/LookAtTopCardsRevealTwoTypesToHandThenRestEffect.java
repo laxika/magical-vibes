@@ -54,12 +54,7 @@ public record LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
         UUID playerId,
         LibrarySearchDestination firstChosenDestination,
         boolean mustChooseOne,
-        boolean chooseZoneAfterPicks) implements CombatDamageAmountAwareEffect {
-
-    @Override
-    public DynamicAmount combatDamageAmount() {
-        return count;
-    }
+        boolean chooseZoneAfterPicks) implements CardEffect {
 
     public LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
             DynamicAmount count, CardType firstType, CardType secondType,
