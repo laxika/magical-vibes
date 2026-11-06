@@ -17,7 +17,7 @@ import java.util.UUID;
  *                            the player attacked by an attack trigger
  */
 public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect, MayChoicePlayer choicePlayer, UUID choicePlayerId)
-        implements GrantingPermanentAwareEffect, CombatDamageTriggerContextEffect,
+        implements CardEffect, CombatDamageTriggerContextEffect,
         TriggeringPermanentSourceEffect, CombatOpponentReferencingEffect,
         TriggeringPermanentManaValueEffect, TriggeringPermanentEntryExclusionEffect {
 
@@ -83,17 +83,6 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
         return wrapped instanceof CombatDamageTriggerContextEffect contextEffect
                 ? contextEffect.combatDamageTriggerContext()
                 : null;
-    }
-
-    @Override
-    public CardEffect withGrantingPermanentId(UUID permanentId) {
-        CardEffect boundWrapped = wrapped instanceof GrantingPermanentAwareEffect aware
-                ? aware.withGrantingPermanentId(permanentId)
-                : wrapped;
-        CardEffect boundElse = elseEffect instanceof GrantingPermanentAwareEffect aware
-                ? aware.withGrantingPermanentId(permanentId)
-                : elseEffect;
-        return new MayEffect(boundWrapped, prompt, boundElse, choicePlayer, choicePlayerId);
     }
 
     @Override

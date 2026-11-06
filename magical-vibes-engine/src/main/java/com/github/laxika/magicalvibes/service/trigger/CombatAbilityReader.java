@@ -17,7 +17,9 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Predicate;
@@ -176,6 +178,63 @@ public final class CombatAbilityReader {
         return effects(abilities, watched, filter -> {
             throw new IllegalStateException("The collector of " + watched + " judges no filter: " + filter);
         });
+    }
+
+    /**
+     * {@link #effects(List, Trigger)}, recording in {@code grantingPermanents} the granting permanent of each effect
+     * whose ability names one ({@link TriggeredAbility#grantingPermanentId()}), for a collector that builds its stack
+     * entries from the effects ({@link #grantingPermanentOf}).
+     */
+    public static List<CardEffect> effects(List<TriggeredAbility> abilities, Trigger watched,
+                                           Map<CardEffect, UUID> grantingPermanents) {
+        List<CombatEffect> reads = read(abilities, watched);
+        for (CombatEffect effect : reads) {
+            requireNoLimitOrMultiplicity(effect, watched);
+            if (effect.filter() != null) {
+                throw new IllegalStateException("The collector of " + watched + " judges no filter: "
+                        + effect.ability());
+            }
+        }
+        grantingPermanents.putAll(grantingPermanents(reads));
+        return effectsOf(reads);
+    }
+
+    /**
+     * The granting permanent of each of {@code effects} whose ability names one
+     * ({@link TriggeredAbility#grantingPermanentId()}), by effect identity: two Equipment that grant equal abilities give
+     * equal effects, each with its own granting permanent.
+     */
+    public static Map<CardEffect, UUID> grantingPermanents(List<CombatEffect> effects) {
+        Map<CardEffect, UUID> grantingPermanents = new IdentityHashMap<>();
+        for (CombatEffect effect : effects) {
+            if (effect.ability().grantingPermanentId() != null) {
+                grantingPermanents.put(effect.effect(), effect.ability().grantingPermanentId());
+            }
+        }
+        return grantingPermanents;
+    }
+
+    /**
+     * The granting permanent of the triggered ability whose effects {@code effects} are, from {@code grantingPermanents}
+     * ({@link #grantingPermanents}), or {@code null} when none of them was granted by a permanent that names it.
+     *
+     * @throws IllegalStateException when the effects come from abilities two permanents granted, which are two objects on
+     *                               the stack (CR 603.3), not one
+     */
+    public static UUID grantingPermanentOf(List<CardEffect> effects, Map<CardEffect, UUID> grantingPermanents) {
+        UUID grantingPermanentId = null;
+        for (CardEffect effect : effects) {
+            UUID granting = grantingPermanents.get(effect);
+            if (granting == null) {
+                continue;
+            }
+            if (grantingPermanentId != null && !grantingPermanentId.equals(granting)) {
+                throw new IllegalStateException("One stack entry holds the abilities of two granting permanents: "
+                        + effects);
+            }
+            grantingPermanentId = granting;
+        }
+        return grantingPermanentId;
     }
 
     /**

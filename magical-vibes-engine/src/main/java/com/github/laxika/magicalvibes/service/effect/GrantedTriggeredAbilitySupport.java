@@ -1,23 +1,18 @@
 package com.github.laxika.magicalvibes.service.effect;
 
-import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantingPermanentAwareEffect;
 import com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
@@ -34,9 +29,6 @@ import org.springframework.stereotype.Component;
 public class GrantedTriggeredAbilitySupport {
 
     private final GameQueryService gameQueryService;
-
-    private static final Set<GrantScope> ATTACHMENT_SCOPES = EnumSet.of(
-            GrantScope.ENCHANTED_CREATURE, GrantScope.ENCHANTED_PERMANENT, GrantScope.EQUIPPED_CREATURE);
 
     public List<CardEffect> grantedTriggeredEffects(GameData gameData, Permanent permanent, EffectSlot slot) {
         return grantedTriggeredEffects(gameData, permanent, (UUID) null, slot);
@@ -119,7 +111,9 @@ public class GrantedTriggeredAbilitySupport {
     /**
      * The triggered abilities other permanents' static abilities grant {@code permanent} that {@code wanted} accepts,
      * as {@code staticBonus} (the permanent's static bonus for the current game state, or {@code null} to compute it)
-     * leaves them: for a collector that reads granted abilities themselves rather than their effects.
+     * leaves them: for a collector that reads granted abilities themselves rather than their effects. An ability an
+     * Aura or Equipment grants names it ({@link TriggeredAbility#grantingPermanentId()}); a collector that puts it on
+     * the stack copies that to the entry.
      */
     public List<TriggeredAbility> grantedTriggeredAbilities(GameData gameData, Permanent permanent,
                                                             GameQueryService.StaticBonus staticBonus,
@@ -134,34 +128,6 @@ public class GrantedTriggeredAbilitySupport {
                 result.add(ability);
             }
         }
-        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
-            for (Permanent source : battlefield) {
-                if (!source.isAttached() || !permanent.getId().equals(source.getAttachedTo())) continue;
-                for (CardEffect effect : source.getCard().getStaticEffects()) {
-                    if (!(effect instanceof GrantTriggeredAbilityEffect grant)
-                            || !(grant.grantedAbility() instanceof TriggeredAbility ability)
-                            || !wanted.test(ability)
-                            || !ATTACHMENT_SCOPES.contains(grant.scope())
-                            || !(grant.grantedEffect() instanceof GrantingPermanentAwareEffect)) {
-                        continue;
-                    }
-                    TriggeredAbility bound = ability.withEffects(List.of(new EffectRegistration(
-                            bindGrantingPermanent(grant.grantedEffect(), source.getId()))));
-                    int unboundIndex = result.indexOf(ability);
-                    if (unboundIndex >= 0) {
-                        result.set(unboundIndex, bound);
-                    } else {
-                        result.add(bound);
-                    }
-                }
-            }
-        }
         return result;
-    }
-
-    private CardEffect bindGrantingPermanent(CardEffect effect, UUID permanentId) {
-        return effect instanceof GrantingPermanentAwareEffect aware
-                ? aware.withGrantingPermanentId(permanentId)
-                : effect;
     }
 }

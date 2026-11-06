@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.UUID;
-
 /**
  * Secrets of Strixhaven "Prepared": the source permanent becomes prepared.
  * <p>
@@ -12,18 +10,21 @@ import java.util.UUID;
  * prepared again, so this is a no-op in that case (CR-style: never more than one prepare copy at once).
  * <p>
  * This is normally a self-targeting effect so the trigger framework stamps the source permanent id
- * onto the resolving stack entry (see {@code SpellCastTriggerCollectorService}). When granted to
- * another permanent, the granting permanent id is retained on the effect instead.
+ * onto the resolving stack entry (see {@code SpellCastTriggerCollectorService}).
+ *
+ * @param asTriggeredAbility        "when this creature enters, it becomes prepared": a triggered ability that goes on
+ *                                  the stack, not applied as the permanent enters
+ * @param preparesGrantingPermanent the permanent that becomes prepared is the one that granted the triggered ability
+ *                                  this effect is part of, the stack entry's granting permanent
+ *                                  ({@code StackEntry.getGrantingPermanentId()}), not the ability's source: Stensian
+ *                                  Sanguinist's "whenever that creature deals combat damage to a player this combat,
+ *                                  this creature becomes prepared"
  */
-public record BecomePreparedEffect(UUID grantingPermanentId, boolean asTriggeredAbility)
-        implements GrantingPermanentAwareEffect {
+public record BecomePreparedEffect(boolean asTriggeredAbility, boolean preparesGrantingPermanent)
+        implements CardEffect {
 
     public BecomePreparedEffect() {
-        this(null, false);
-    }
-
-    public BecomePreparedEffect(UUID grantingPermanentId) {
-        this(grantingPermanentId, false);
+        this(false, false);
     }
 
     /**
@@ -31,12 +32,12 @@ public record BecomePreparedEffect(UUID grantingPermanentId, boolean asTriggered
      * unlike "this creature enters prepared", which is applied as the permanent enters.
      */
     public static BecomePreparedEffect triggerOnly() {
-        return new BecomePreparedEffect(null, true);
+        return new BecomePreparedEffect(true, false);
     }
 
-    @Override
-    public CardEffect withGrantingPermanentId(UUID permanentId) {
-        return new BecomePreparedEffect(permanentId, asTriggeredAbility);
+    /** "This creature becomes prepared" in an ability this creature grants another permanent. */
+    public static BecomePreparedEffect ofGrantingPermanent() {
+        return new BecomePreparedEffect(false, true);
     }
 
     @Override

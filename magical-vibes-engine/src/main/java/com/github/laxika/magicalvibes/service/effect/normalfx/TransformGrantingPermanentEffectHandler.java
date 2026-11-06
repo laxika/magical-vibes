@@ -23,13 +23,8 @@ public class TransformGrantingPermanentEffectHandler implements NormalEffectHand
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        TransformGrantingPermanentEffect transform = (TransformGrantingPermanentEffect) effect;
-        if (transform.grantingPermanentId() == null) {
-            return;
-        }
-
         Permanent grantingPermanent = gameQueryService.findPermanentById(
-                gameData, transform.grantingPermanentId());
+                gameData, entry.requireGrantingPermanentId());
         if (grantingPermanent == null || gameQueryService.isTransformPrevented(gameData, grantingPermanent)) {
             return;
         }

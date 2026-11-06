@@ -57,10 +57,16 @@ public class SacrificePermanentThenEffectHandler implements NormalEffectHandlerB
                 .withTargetCardId(targetCardId(entry))
                 .withTriggeringPermanentId(entry.getTriggeringPermanentId());
 
+        UUID grantingPermanentId = e.onlyGrantingPermanent() || e.excludeGrantingPermanent()
+                ? entry.requireGrantingPermanentId() : null;
         List<UUID> validIds = new ArrayList<>();
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield != null) {
             for (Permanent p : battlefield) {
+                if (e.onlyGrantingPermanent() && !p.getId().equals(grantingPermanentId)
+                        || e.excludeGrantingPermanent() && p.getId().equals(grantingPermanentId)) {
+                    continue;
+                }
                 if (!gameQueryService.cantBeChosenToSacrifice(gameData, p, e.filter())
                         && predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) {
                     validIds.add(p.getId());

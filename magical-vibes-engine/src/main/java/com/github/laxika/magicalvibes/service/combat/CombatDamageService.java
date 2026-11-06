@@ -2167,12 +2167,17 @@ public class CombatDamageService {
             }
             // Combat-damage-to-player triggers granted until end of turn by one-shot effects
             // (e.g. Open into Wonder grants "deals combat damage to a player, draw a card").
+            // The granting permanent of each granted ability's effects ("sacrifice this Equipment", "transform Optimus
+            // Prime"), which the entries built from them carry.
+            Map<CardEffect, UUID> grantingPermanents = new IdentityHashMap<>();
             Trigger damageToPlayer = CombatWatch.ON_COMBAT_DAMAGE_TO_PLAYER.trigger();
             allDamageEffects.addAll(CombatAbilityReader.effects(
-                    damageJudge.filter(WatchedAbilities.temporary(creature, damageToPlayer)), damageToPlayer));
+                    damageJudge.filter(WatchedAbilities.temporary(creature, damageToPlayer)), damageToPlayer,
+                    grantingPermanents));
             if (!lostAllAbilities) {
                 allDamageEffects.addAll(CombatAbilityReader.effects(
-                        damageJudge.filter(WatchedAbilities.persistent(creature, damageToPlayer)), damageToPlayer));
+                        damageJudge.filter(WatchedAbilities.persistent(creature, damageToPlayer)), damageToPlayer,
+                        grantingPermanents));
                 allDamageEffects.addAll(DamageAbilityReader.persistentEffects(creature, DamageWatch.ON_DAMAGE_TO_PLAYER,
                         damageJudge));
             }
@@ -2180,7 +2185,7 @@ public class CombatDamageService {
             // (e.g. Tandem Lookout's soulbond grant), recomputed by the layer system.
             allDamageEffects.addAll(CombatAbilityReader.effects(damageJudge.filter(
                     grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, creature, attackerId,
-                            damageToPlayer)), damageToPlayer));
+                            damageToPlayer)), damageToPlayer, grantingPermanents));
             allDamageEffects.addAll(DamageAbilityReader.effects(damageJudge.filter(
                     grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, creature, attackerId,
                             DamageWatch.ON_DAMAGE_TO_PLAYER.trigger())), DamageWatch.ON_DAMAGE_TO_PLAYER.trigger()));
@@ -2399,7 +2404,8 @@ public class CombatDamageService {
                     // a NONE target spec and keep the baked-in defender context.
                     UUID mayTargetId = may.wrapped().targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                             ? null : defenderId;
-                    gameData.queueMayAbility(creature.getCard(), attackerId, queuedMay, mayTargetId, creature.getId(), damageDealt);
+                    gameData.queueMayAbility(creature.getCard(), attackerId, queuedMay, mayTargetId, creature.getId(),
+                            damageDealt, false, null, grantingPermanents.get(candidateEffect));
                     gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), "'s combat damage trigger fires."));
                     continue;
                 }
@@ -2571,6 +2577,7 @@ public class CombatDamageService {
                 // The combat damage dealt is the event value: "discards that many cards" (Needle Specter),
                 // "draw that many cards" (Hunter's Insight) and the like read it as the ability resolves.
                 se.setEventValue(damageDealt);
+                se.setGrantingPermanentId(grantingPermanents.get(candidateEffect));
                 se.setNonTargeting(true);
                 gameData.stack.add(se);
                 gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), "'s combat damage trigger goes on the stack."));

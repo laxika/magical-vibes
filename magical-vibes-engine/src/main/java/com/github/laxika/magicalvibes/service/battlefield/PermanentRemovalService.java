@@ -2544,11 +2544,11 @@ public class PermanentRemovalService {
                         sourceSnapshot.setCard(lastKnownCard);
                         entry.setSourcePermanentSnapshot(sourceSnapshot);
                         for (CardEffect resolvingEffect : entry.getEffectsToResolve()) {
-                            if (resolvingEffect instanceof com.github.laxika.magicalvibes.model.effect.CreateTokenWithAttachedCountCountersEffect attachmentCount) {
+                            if (resolvingEffect instanceof com.github.laxika.magicalvibes.model.effect.CreateTokenWithAttachedCountCountersEffect) {
                                 int[] attached = {0};
                                 gameData.forEachPermanent((attachedController, attachedPermanent) -> {
                                     if (target.getId().equals(attachedPermanent.getAttachedTo())
-                                            && !attachedPermanent.getId().equals(attachmentCount.excludedAttachedPermanentId())
+                                            && !attachedPermanent.getId().equals(entry.getGrantingPermanentId())
                                             && (attachedPermanent.getCard().getSubtypes().contains(CardSubtype.AURA)
                                             || attachedPermanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT))) {
                                         attached[0]++;

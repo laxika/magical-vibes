@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantingPermanentAwareEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -53,12 +54,8 @@ public class GrantEffectToTargetUntilEndOfCombatEffectHandler implements NormalE
 
     private void grantTo(GameData gameData, StackEntry entry,
                          GrantEffectToTargetUntilEndOfCombatEffect grant, Permanent target) {
-        CardEffect grantedEffect = grant.grantedEffect();
-        if (grantedEffect instanceof GrantingPermanentAwareEffect aware
-                && entry.getSourcePermanentId() != null) {
-            grantedEffect = aware.withGrantingPermanentId(entry.getSourcePermanentId());
-        }
-        target.addCombatAbility(LegacySlots.withEffect(grant.grantedAbility(), grantedEffect));
+        target.addCombatAbility(grantedBySource(entry,
+                LegacySlots.withEffect(grant.grantedAbility(), grant.grantedEffect())));
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
@@ -68,5 +65,16 @@ public class GrantEffectToTargetUntilEndOfCombatEffectHandler implements NormalE
                 .build());
         log.info("Game {} - {} grants temporary {} effect to {} for this combat",
                 gameData.id, entry.getCard().getName(), LegacySlots.label(grant.grantedAbility()), target.getCard().getName());
+    }
+
+    /**
+     * Names the source of the resolving ability as the granted triggered ability's granting permanent
+     * ({@link TriggeredAbility#grantingPermanentId()}): "transform Optimus Prime" in the ability Optimus Prime gives the
+     * chosen creature.
+     */
+    private static Ability grantedBySource(StackEntry entry, Ability granted) {
+        return granted instanceof TriggeredAbility triggered && entry.getSourcePermanentId() != null
+                ? triggered.withGrantingPermanentId(entry.getSourcePermanentId())
+                : granted;
     }
 }

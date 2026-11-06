@@ -447,6 +447,7 @@ public class MayAbilityHandlerService {
             entry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
             entry.setEventValue(ability.eventValue());
             entry.setTriggeringPermanentId(ability.triggeringPermanentId());
+            entry.setGrantingPermanentId(ability.grantingPermanentId());
             if (ability.sourceControllerId() != null) {
                 entry.setTriggeringPermanentControllerId(ability.sourceControllerId());
             }
@@ -519,6 +520,7 @@ public class MayAbilityHandlerService {
             entry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
             entry.setEventValue(ability.eventValue());
             entry.setTriggeringPermanentId(ability.triggeringPermanentId());
+            entry.setGrantingPermanentId(ability.grantingPermanentId());
             if (ability.sourceControllerId() != null) {
                 entry.setTriggeringPermanentControllerId(ability.sourceControllerId());
             }

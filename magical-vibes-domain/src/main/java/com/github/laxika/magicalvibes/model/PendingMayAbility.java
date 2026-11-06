@@ -29,8 +29,29 @@ public record PendingMayAbility(
         Integer xValue,
         Integer triggeringPermanentToughnessAtTrigger,
         long triggeringCardGraveyardEntryVersion,
-        Card heldCard
+        Card heldCard,
+        UUID grantingPermanentId
 ) {
+
+    /**
+     * Constructor for a question no granted triggered ability asked. {@code grantingPermanentId} is the permanent that
+     * granted the triggered ability that asked it (the Equipment of "you may sacrifice this Equipment"), which the
+     * stack entry the accepted ability resolves as carries ({@code StackEntry.getGrantingPermanentId()}).
+     */
+    public PendingMayAbility(Card sourceCard, UUID controllerId, List<CardEffect> effects, String description,
+                             UUID targetCardId, String manaCost, UUID sourcePermanentId,
+                             TapMultiplePermanentsCost tapPermanentsCost, int lifeCost, int additionalLifeCost,
+                             UUID attackedTargetId, UUID activePlayerId, UUID choicePlayerId,
+                             Permanent sourcePermanentSnapshot, UUID sourceControllerId, UUID triggeringCardId,
+                             int eventValue, UUID triggeringPermanentId, Integer sourcePowerAtTrigger,
+                             Integer xValue, Integer triggeringPermanentToughnessAtTrigger,
+                             long triggeringCardGraveyardEntryVersion, Card heldCard) {
+        this(sourceCard, controllerId, effects, description, targetCardId, manaCost, sourcePermanentId,
+                tapPermanentsCost, lifeCost, additionalLifeCost, attackedTargetId, activePlayerId,
+                choicePlayerId, sourcePermanentSnapshot, sourceControllerId, triggeringCardId, eventValue,
+                triggeringPermanentId, sourcePowerAtTrigger, xValue, triggeringPermanentToughnessAtTrigger,
+                triggeringCardGraveyardEntryVersion, heldCard, null);
+    }
 
     /**
      * Constructor without a held card: the card, in no zone, that a resolving ability held out of its destination
@@ -216,7 +237,7 @@ public record PendingMayAbility(
                 attackedTargetId, activePlayerId, choicePlayerId, sourcePermanentSnapshot,
                 sourceControllerId, triggeringCardId, eventValue, triggeringPermanentId,
                 sourcePowerAtTrigger, xValue, triggeringPermanentToughnessAtTrigger, triggeringCardGraveyardEntryVersion,
-                heldCard);
+                heldCard, grantingPermanentId);
     }
 
     public PendingMayAbility withSourceControllerId(UUID updatedSourceControllerId) {
@@ -225,7 +246,7 @@ public record PendingMayAbility(
                 activePlayerId, choicePlayerId, sourcePermanentSnapshot, updatedSourceControllerId, triggeringCardId,
                 eventValue, triggeringPermanentId, sourcePowerAtTrigger, xValue,
                 triggeringPermanentToughnessAtTrigger, triggeringCardGraveyardEntryVersion,
-                heldCard);
+                heldCard, grantingPermanentId);
     }
 
     /**
@@ -238,7 +259,7 @@ public record PendingMayAbility(
                 activePlayerId, choicePlayerId, sourcePermanentSnapshot, sourceControllerId, cardId,
                 eventValue, triggeringPermanentId, sourcePowerAtTrigger, xValue,
                 triggeringPermanentToughnessAtTrigger, graveyardEntryVersion,
-                heldCard);
+                heldCard, grantingPermanentId);
     }
 
     /** This ability holding {@code card}, which the resolving ability held out of its destination. */
@@ -247,7 +268,17 @@ public record PendingMayAbility(
                 sourcePermanentId, tapPermanentsCost, lifeCost, additionalLifeCost, attackedTargetId,
                 activePlayerId, choicePlayerId, sourcePermanentSnapshot, sourceControllerId, triggeringCardId,
                 eventValue, triggeringPermanentId, sourcePowerAtTrigger, xValue,
-                triggeringPermanentToughnessAtTrigger, triggeringCardGraveyardEntryVersion, card);
+                triggeringPermanentToughnessAtTrigger, triggeringCardGraveyardEntryVersion, card,
+                grantingPermanentId);
+    }
+
+    /** This ability as asked by a triggered ability that {@code permanentId} granted. */
+    public PendingMayAbility withGrantingPermanentId(UUID permanentId) {
+        return new PendingMayAbility(sourceCard, controllerId, effects, description, targetCardId, manaCost,
+                sourcePermanentId, tapPermanentsCost, lifeCost, additionalLifeCost, attackedTargetId,
+                activePlayerId, choicePlayerId, sourcePermanentSnapshot, sourceControllerId, triggeringCardId,
+                eventValue, triggeringPermanentId, sourcePowerAtTrigger, xValue,
+                triggeringPermanentToughnessAtTrigger, triggeringCardGraveyardEntryVersion, heldCard, permanentId);
     }
 
     public PendingMayAbility withEventValue(int updatedEventValue) {
@@ -256,7 +287,7 @@ public record PendingMayAbility(
                 activePlayerId, choicePlayerId, sourcePermanentSnapshot, sourceControllerId, triggeringCardId,
                 updatedEventValue, triggeringPermanentId, sourcePowerAtTrigger, xValue,
                 triggeringPermanentToughnessAtTrigger, triggeringCardGraveyardEntryVersion,
-                heldCard);
+                heldCard, grantingPermanentId);
     }
 
     public PendingMayAbility withXValue(Integer updatedXValue) {
@@ -265,7 +296,7 @@ public record PendingMayAbility(
                 activePlayerId, choicePlayerId, sourcePermanentSnapshot, sourceControllerId, triggeringCardId,
                 eventValue, triggeringPermanentId, sourcePowerAtTrigger, updatedXValue,
                 triggeringPermanentToughnessAtTrigger, triggeringCardGraveyardEntryVersion,
-                heldCard);
+                heldCard, grantingPermanentId);
     }
 
     /** Copies pending entry requests whose permanent has not entered the battlefield yet. */
@@ -284,6 +315,6 @@ public record PendingMayAbility(
                 attackedTargetId, activePlayerId, choicePlayerId, sourcePermanentSnapshot,
                 sourceControllerId, triggeringCardId, eventValue, triggeringPermanentId,
                 sourcePowerAtTrigger, xValue, triggeringPermanentToughnessAtTrigger, triggeringCardGraveyardEntryVersion,
-                heldCard);
+                heldCard, grantingPermanentId);
     }
 }

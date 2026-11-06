@@ -27,7 +27,7 @@ public class StensianSanguinistExsanguinate extends Card {
                         new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET),
                         new GrantEffectToTargetUntilEndOfCombatEffect(
                                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
-                                new BecomePreparedEffect())));
+                                BecomePreparedEffect.ofGrantingPermanent())));
     }
 
     @Override

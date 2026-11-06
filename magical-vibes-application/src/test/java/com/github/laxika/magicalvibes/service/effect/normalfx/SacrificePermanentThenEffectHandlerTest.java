@@ -13,6 +13,7 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -79,4 +80,59 @@ class SacrificePermanentThenEffectHandlerTest extends AbstractPlayerInteractionH
                         argThat(context -> card.getId().equals(context.sourceCardId())
                                 && player1Id.equals(context.sourceControllerId())));
             }
+
+    @Test
+    @DisplayName("Offers only the stack entry's granting permanent when the sacrifice is of the granting permanent")
+    void sacrificingGrantingPermanentOffersOnlyTheEntrysGrantingPermanent() {
+        Card card = createCard("Sunfire Torch");
+        PermanentPredicate filter = new PermanentTruePredicate();
+        SacrificePermanentThenEffect effect = new SacrificePermanentThenEffect(filter, new DrawCardEffect(1),
+                "Sunfire Torch").sacrificingGrantingPermanent();
+        Permanent granting = new Permanent(createCard("Sunfire Torch"));
+        Permanent otherCopy = new Permanent(createCard("Sunfire Torch"));
+        gd.playerBattlefields.get(player1Id).addAll(List.of(granting, otherCopy));
+        StackEntry entry = createEntry(card, player1Id, List.of(effect));
+        entry.setGrantingPermanentId(granting.getId());
+        when(predicateEvaluationService.matchesPermanentPredicate(any(Permanent.class), eq(filter), any()))
+                .thenReturn(true);
+
+        resolveEffect(gd, entry, effect);
+
+        verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id),
+                eq(List.of(granting.getId())), any());
+    }
+
+    @Test
+    @DisplayName("Never offers the stack entry's granting permanent when the sacrifice excludes it")
+    void excludingGrantingPermanentNeverOffersTheEntrysGrantingPermanent() {
+        Card card = createCard("Dire Blunderbuss");
+        PermanentPredicate filter = new PermanentTruePredicate();
+        SacrificePermanentThenEffect effect = new SacrificePermanentThenEffect(filter, new DrawCardEffect(1),
+                "an artifact other than Dire Blunderbuss").excludingGrantingPermanent();
+        Permanent granting = new Permanent(createCard("Dire Blunderbuss"));
+        Permanent otherArtifact = new Permanent(createCard("Ornithopter"));
+        gd.playerBattlefields.get(player1Id).addAll(List.of(granting, otherArtifact));
+        StackEntry entry = createEntry(card, player1Id, List.of(effect));
+        entry.setGrantingPermanentId(granting.getId());
+        when(predicateEvaluationService.matchesPermanentPredicate(any(Permanent.class), eq(filter), any()))
+                .thenReturn(true);
+
+        resolveEffect(gd, entry, effect);
+
+        verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id),
+                eq(List.of(otherArtifact.getId())), any());
+    }
+
+    @Test
+    @DisplayName("A sacrifice of the granting permanent fails loudly on an entry without one")
+    void grantingPermanentSacrificeWithoutGrantingPermanentThrows() {
+        Card card = createCard("Sunfire Torch");
+        SacrificePermanentThenEffect effect = new SacrificePermanentThenEffect(new PermanentTruePredicate(),
+                new DrawCardEffect(1), "Sunfire Torch").sacrificingGrantingPermanent();
+        StackEntry entry = createEntry(card, player1Id, List.of(effect));
+
+        assertThatThrownBy(() -> resolveEffect(gd, entry, effect))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("granted");
+    }
 }

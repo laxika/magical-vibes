@@ -277,6 +277,27 @@ class MayAbilityHandlerServiceTest {
                 .isEqualTo(triggeringCardId);
     }
 
+    @Test
+    @DisplayName("An accepted may ability a granted triggered ability asked keeps its granting permanent")
+    void acceptedGrantedMayAbilityKeepsGrantingPermanent() {
+        Card sourceCard = new Card();
+        sourceCard.setName("Test Source");
+        sourceCard.setType(CardType.CREATURE);
+        UUID grantingPermanentId = UUID.randomUUID();
+        CardEffect effect = new CardEffect() { };
+
+        gd.pendingMayAbilities.add(new PendingMayAbility(sourceCard, PLAYER1_ID, List.of(effect),
+                "Test Source — effect?", null, null, UUID.randomUUID()).withGrantingPermanentId(grantingPermanentId));
+        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(
+                PLAYER1_ID, "Test Source — effect?", null));
+
+        svc.handleMayAbilityChosen(gd, player1, true);
+
+        assertThat(gd.stack).singleElement()
+                .extracting(StackEntry::getGrantingPermanentId)
+                .isEqualTo(grantingPermanentId);
+    }
+
     private void acceptMayAbility(CardEffect effect) {
         Card sourceCard = new Card();
         sourceCard.setName("Test Source");

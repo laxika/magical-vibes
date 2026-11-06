@@ -42,7 +42,7 @@ public class CreateTokenWithAttachedCountCountersEffectHandler implements Normal
         }
 
         int counterAmount = sourceHasLeft ? entry.getEventValue()
-                : countAttachedAurasAndEquipment(gameData, source.getId(), e.excludedAttachedPermanentId());
+                : countAttachedAurasAndEquipment(gameData, source.getId(), entry.requireGrantingPermanentId());
         List<UUID> createdIds = permanentControlSupport.applyCreateToken(
                 gameData, entry.getControllerId(), e.tokenTemplate(), entry.getCard().getSetCode());
         entry.getCreatedPermanentIds().addAll(createdIds);

@@ -38,14 +38,14 @@ public class BecomePreparedEffectHandler implements NormalEffectHandlerBean,
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         BecomePreparedEffect preparedEffect = (BecomePreparedEffect) effect;
-        var preparedPermanentId = preparedEffect.grantingPermanentId() != null
-                ? preparedEffect.grantingPermanentId()
+        var preparedPermanentId = preparedEffect.preparesGrantingPermanent()
+                ? entry.requireGrantingPermanentId()
                 : entry.getSourcePermanentId();
         if (preparedPermanentId == null) {
             return;
         }
         Permanent source = gameQueryService.findPermanentById(gameData, preparedPermanentId);
-        UUID controllerId = preparedEffect.grantingPermanentId() != null
+        UUID controllerId = preparedEffect.preparesGrantingPermanent()
                 ? gameQueryService.findPermanentController(gameData, preparedPermanentId)
                 : entry.getControllerId();
         preparedSupport.preparePermanent(gameData, source, controllerId);

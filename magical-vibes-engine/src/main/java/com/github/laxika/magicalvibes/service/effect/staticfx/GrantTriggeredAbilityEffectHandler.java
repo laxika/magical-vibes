@@ -2,11 +2,14 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -19,6 +22,9 @@ import org.springframework.stereotype.Component;
 @Component("staticGrantTriggeredAbilityEffectHandler")
 @RequiredArgsConstructor
 public class GrantTriggeredAbilityEffectHandler implements StaticEffectHandlerBean {
+
+    private static final Set<GrantScope> ATTACHMENT_SCOPES = EnumSet.of(
+            GrantScope.ENCHANTED_CREATURE, GrantScope.ENCHANTED_PERMANENT, GrantScope.EQUIPPED_CREATURE);
 
     private final StaticEffectSupport support;
 
@@ -46,8 +52,25 @@ public class GrantTriggeredAbilityEffectHandler implements StaticEffectHandlerBe
             default -> support.matchesCreatureScope(context, grant.scope(), grant.filter());
         };
         if (scopeMatch) {
-            accumulator.addGrantedEffect(asGrantedInstance(grant, context.sourceId()));
+            accumulator.addGrantedEffect(asGrantedByAttachment(asGrantedInstance(grant, context.sourceId()),
+                    context.sourceId()));
         }
+    }
+
+    /**
+     * Names the Aura or Equipment that grants an "enchanted / equipped creature has '…'" triggered ability as the
+     * ability's granting permanent ({@link TriggeredAbility#grantingPermanentId()}), so "sacrifice this Equipment" and
+     * "other than Animal Friend" in it mean that permanent, and two Equipment that grant the creature equal abilities
+     * give it one instance from each.
+     */
+    private static GrantTriggeredAbilityEffect asGrantedByAttachment(GrantTriggeredAbilityEffect grant,
+                                                                     UUID grantingPermanentId) {
+        if (!ATTACHMENT_SCOPES.contains(grant.scope())
+                || !(grant.grantedAbility() instanceof TriggeredAbility ability)) {
+            return grant;
+        }
+        return new GrantTriggeredAbilityEffect(ability.withGrantingPermanentId(grantingPermanentId), grant.scope(),
+                grant.filter());
     }
 
     /**

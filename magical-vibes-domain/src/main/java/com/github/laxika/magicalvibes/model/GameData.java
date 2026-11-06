@@ -9214,6 +9214,15 @@ public class GameData {
      */
     public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
                                 UUID sourcePermanentId, UUID attackedTargetId) {
+        queueGrantedMayAbility(sourceCard, controllerId, may, targetCardId, sourcePermanentId, attackedTargetId, null);
+    }
+
+    /**
+     * {@link #queueMayAbility(Card, UUID, MayEffect, UUID, UUID, UUID)} for a triggered ability {@code
+     * grantingPermanentId} granted ({@link StackEntry#getGrantingPermanentId()}), or {@code null}.
+     */
+    public void queueGrantedMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
+                                       UUID sourcePermanentId, UUID attackedTargetId, UUID grantingPermanentId) {
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
@@ -9224,6 +9233,7 @@ public class GameData {
                 sourcePermanentId
         );
         entry.setAttackedTargetId(attackedTargetId);
+        entry.setGrantingPermanentId(grantingPermanentId);
         if (may.wrapped() instanceof OtherAttackingCreatureReferenceEffect) {
             entry.setNonTargeting(true);
         }
@@ -9252,6 +9262,19 @@ public class GameData {
                                 UUID sourcePermanentId, int eventValue,
                                 boolean markSourceOncePerTurnOnAcceptance,
                                 Integer triggeringPermanentToughnessAtTrigger) {
+        queueMayAbility(sourceCard, controllerId, may, targetCardId, sourcePermanentId, eventValue,
+                markSourceOncePerTurnOnAcceptance, triggeringPermanentToughnessAtTrigger, null);
+    }
+
+    /**
+     * Queues a may ability that {@code grantingPermanentId} granted ({@link StackEntry#getGrantingPermanentId()}), or
+     * {@code null}, with the event value and last-known toughness of
+     * {@link #queueMayAbility(Card, UUID, MayEffect, UUID, UUID, int, boolean, Integer)}.
+     */
+    public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
+                                UUID sourcePermanentId, int eventValue,
+                                boolean markSourceOncePerTurnOnAcceptance,
+                                Integer triggeringPermanentToughnessAtTrigger, UUID grantingPermanentId) {
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
@@ -9264,6 +9287,7 @@ public class GameData {
         entry.setEventValue(eventValue);
         entry.setMarkSourceOncePerTurnOnAcceptance(markSourceOncePerTurnOnAcceptance);
         entry.setTriggeringPermanentToughnessAtTrigger(triggeringPermanentToughnessAtTrigger);
+        entry.setGrantingPermanentId(grantingPermanentId);
         if (may.targetSpec().declaredTarget() == null) {
             entry.setNonTargeting(true);
         }

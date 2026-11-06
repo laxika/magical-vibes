@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.DireWolfProwler;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SpareDagger.class, DireWolfProwler.class})
+@CardUsed({SpareDagger.class, DireWolfProwler.class, TurnToFrog.class})
 class SpareDaggerTest extends BaseCardTest {
 
     @Test
@@ -194,6 +195,48 @@ class SpareDaggerTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Spare Dagger");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("With two Spare Daggers attached, each attack trigger sacrifices the Dagger that granted it")
+    void eachAttackTriggerSacrificesTheDaggerThatGrantedIt() {
+        Permanent creature = addCreatureReady(player1, new DireWolfProwler());
+        attachDagger(player1, creature);
+        attachDagger(player1, creature);
+
+        declareAttackers(player1, List.of(0));
+        for (int step = 0; step < 20
+                && (!gd.stack.isEmpty() || gd.interaction.activeInteraction() != null); step++) {
+            if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+                harness.handleMayAbilityChosen(player1, true);
+            } else if (gd.interaction.permanentChoiceContext()
+                    instanceof PermanentChoiceContext.MayAbilityTriggerTarget) {
+                harness.handlePermanentChosen(player1, player2.getId());
+            } else {
+                harness.passBothPriorities();
+            }
+        }
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getName().equals("Spare Dagger"));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Spare Dagger")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("An equipped creature that later loses all abilities doesn't have the Dagger's attack trigger")
+    void creatureThatLostAllAbilitiesAfterTheDaggerHasNoAttackTrigger() {
+        Permanent creature = addCreatureReady(player1, new DireWolfProwler());
+        attachDagger(player1, creature);
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice).isFalse();
+        harness.assertOnBattlefield(player1, "Spare Dagger");
     }
 
     private Permanent attachDagger(Player player, Permanent host) {

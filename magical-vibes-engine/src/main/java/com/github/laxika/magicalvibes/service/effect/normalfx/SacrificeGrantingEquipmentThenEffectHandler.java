@@ -43,11 +43,7 @@ public class SacrificeGrantingEquipmentThenEffectHandler implements NormalEffect
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var sacrificeThen = (SacrificeGrantingEquipmentThenEffect) effect;
-        UUID equipmentId = sacrificeThen.grantingEquipmentId();
-        if (equipmentId == null) {
-            return;
-        }
+        UUID equipmentId = entry.requireGrantingPermanentId();
 
         Permanent equipment = gameQueryService.findPermanentById(gameData, equipmentId);
         if (equipment == null

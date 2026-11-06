@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * A triggered ability (CR 113.3c): its trigger conditions, the options that apply to them and its
@@ -53,10 +54,15 @@ import java.util.Objects;
  *                   functions independently), or {@code null}: the granting permanent of an ability with a limit
  *                   that several permanents grant one permanent, so each instance keeps its own limit
  *                   ({@link #limitKey()}). A printed ability has none.
+ * @param grantingPermanentId the permanent that granted this ability to the object that has it, or {@code null}: the
+ *                   Aura or Equipment of an "enchanted / equipped creature has '…'" grant, or the source of a one-shot
+ *                   grant ("target creature gains '…' until end of turn"). Effects that name that permanent ("sacrifice
+ *                   this Equipment", "other than Animal Friend") read it from the stack entry the ability's collector
+ *                   builds ({@code StackEntry.getGrantingPermanentId()}). A printed ability has none.
  */
 public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions options,
                                List<EffectRegistration> effects, SagaChapterTargets chapterTargets,
-                               String instance)
+                               String instance, UUID grantingPermanentId)
         implements Ability {
 
     public TriggeredAbility {
@@ -239,6 +245,13 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
             case YOU_TAP -> trigger.relation() == ObjectRelation.OPPONENT_CONTROLS;
             default -> false;
         };
+    }
+
+    /** An ability that wasn't granted, as the instance {@code instance} of it. */
+    public TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions options,
+                            List<EffectRegistration> effects, SagaChapterTargets chapterTargets,
+                            String instance) {
+        this(conditions, options, effects, chapterTargets, instance, null);
     }
 
     /** An ability that is one instance of its kind on its object. */
@@ -435,16 +448,21 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
 
     /** This ability with {@code effects} in place of its effects. */
     public TriggeredAbility withEffects(List<EffectRegistration> effects) {
-        return new TriggeredAbility(conditions, options, effects, chapterTargets, instance);
+        return new TriggeredAbility(conditions, options, effects, chapterTargets, instance, grantingPermanentId);
     }
 
     /** This ability with {@code chapterTargets} in place of its Saga chapter targets. */
     public TriggeredAbility withChapterTargets(SagaChapterTargets chapterTargets) {
-        return new TriggeredAbility(conditions, options, effects, chapterTargets, instance);
+        return new TriggeredAbility(conditions, options, effects, chapterTargets, instance, grantingPermanentId);
+    }
+
+    /** This ability as granted by {@code grantingPermanentId} ({@link #grantingPermanentId()}). */
+    public TriggeredAbility withGrantingPermanentId(UUID grantingPermanentId) {
+        return new TriggeredAbility(conditions, options, effects, chapterTargets, instance, grantingPermanentId);
     }
 
     /** This ability as the instance {@code instance} of it ({@link #instance()}). */
     public TriggeredAbility withInstance(String instance) {
-        return new TriggeredAbility(conditions, options, effects, chapterTargets, instance);
+        return new TriggeredAbility(conditions, options, effects, chapterTargets, instance, grantingPermanentId);
     }
 }

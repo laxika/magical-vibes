@@ -426,6 +426,14 @@ public class StackEntry {
      * hand this way"), set by that choice before its follow-up resolves.
      */
     private List<UUID> acceptedPlayerIds = List.of();
+    /**
+     * The permanent that granted the triggered ability this entry is ({@link TriggeredAbility#grantingPermanentId()}):
+     * "sacrifice this Equipment", "transform Optimus Prime", "other than Animal Friend" in an ability an Aura,
+     * Equipment or one-shot grant gave another permanent. Set by the collector that puts the ability on the stack;
+     * {@code null} for an ability that wasn't granted. An effect that names the granting permanent fails loudly when it
+     * resolves without one, so a collector that drops it is found rather than resolving against the wrong object.
+     */
+    @Setter private UUID grantingPermanentId;
     @Setter private Integer dyingPermanentManaValue;
     /** Permanent ids that received counters during the current effect resolution. */
     private final List<UUID> counteredPermanentIdsThisResolution = new ArrayList<>();
@@ -461,6 +469,19 @@ public class StackEntry {
 
     public void setAcceptedPlayerIds(List<UUID> playerIds) {
         acceptedPlayerIds = List.copyOf(playerIds);
+    }
+
+    /**
+     * The permanent that granted this triggered ability ({@link #getGrantingPermanentId()}), for an effect that names it.
+     *
+     * @throws IllegalStateException when the ability reached the stack without its granting permanent
+     */
+    public UUID requireGrantingPermanentId() {
+        if (grantingPermanentId == null) {
+            throw new IllegalStateException(description + " names the permanent that granted it, but reached the "
+                    + "stack without one: its collector must copy TriggeredAbility.grantingPermanentId() to the entry");
+        }
+        return grantingPermanentId;
     }
 
     public void setResolutionExiledCardIds(List<UUID> cardIds) {
@@ -1143,6 +1164,7 @@ public class StackEntry {
         this.producedManaColors = source.producedManaColors;
         this.awaitingProducedManaColor = source.awaitingProducedManaColor;
         this.acceptedPlayerIds = source.acceptedPlayerIds;
+        this.grantingPermanentId = source.grantingPermanentId;
         this.dyingPermanentManaValue = source.dyingPermanentManaValue;
         this.counteredPermanentIdsThisResolution.addAll(source.counteredPermanentIdsThisResolution);
         this.counteredSpellControllerId = source.counteredSpellControllerId;

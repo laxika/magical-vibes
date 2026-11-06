@@ -65,6 +65,20 @@ class MayEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
             }
 
             @Test
+            @DisplayName("Carries the entry's granting permanent into the pending may ability")
+            void carriesGrantingPermanent() {
+                MayEffect mayEffect = new MayEffect(new DrawCardEffect(1), "Draw a card?");
+                StackEntry entry = createEntryWithTarget(createCard("Spare Dagger"), player1Id, List.of(mayEffect),
+                        player2Id);
+                UUID grantingPermanentId = UUID.randomUUID();
+                entry.setGrantingPermanentId(grantingPermanentId);
+
+                resolveEffect(gd, entry, mayEffect);
+
+                assertThat(gd.pendingMayAbilities.getFirst().grantingPermanentId()).isEqualTo(grantingPermanentId);
+            }
+
+            @Test
             @DisplayName("Offers a MayEffect with a decline branch to the target permanent's controller")
             void offersChoiceToTargetPermanentController() {
                 Card card = createCard("Blazing Salvo");

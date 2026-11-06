@@ -1,17 +1,9 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.UUID;
-
-/** Transforms the permanent that granted this temporary effect. */
-public record TransformGrantingPermanentEffect(UUID grantingPermanentId)
-        implements CardEffect, GrantingPermanentAwareEffect {
-
-    public TransformGrantingPermanentEffect() {
-        this(null);
-    }
-
-    @Override
-    public CardEffect withGrantingPermanentId(UUID permanentId) {
-        return new TransformGrantingPermanentEffect(permanentId);
-    }
+/**
+ * Transforms the permanent that granted the triggered ability this effect is part of ("transform Optimus Prime" in the
+ * ability Optimus Prime gives the chosen creature), the stack entry's granting permanent
+ * ({@code StackEntry.getGrantingPermanentId()}).
+ */
+public record TransformGrantingPermanentEffect() implements CardEffect {
 }

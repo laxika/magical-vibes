@@ -1228,6 +1228,8 @@ public class CombatAttackService {
             List<CardEffect> nativeAttackEffects = CombatAbilityReader.effectsOf(nativeAttack);
             List<CardEffect> temporaryAttackEffects = new ArrayList<>(CombatAbilityReader.effectsOf(temporaryAttack));
             List<CardEffect> grantedAttackEffects = CombatAbilityReader.effectsOf(grantedAttack);
+            Map<CardEffect, UUID> grantingPermanents = CombatAbilityReader.grantingPermanents(grantedAttack);
+            grantingPermanents.putAll(CombatAbilityReader.grantingPermanents(temporaryAttack));
             // Decayed's "sacrifice it at end of combat" is its own triggered ability (CR 702.147a),
             // so it goes on the stack as a separate object from any printed attack ability.
             boolean decayedTrigger = gameQueryService.hasKeyword(gameData, attacker, Keyword.DECAYED);
@@ -1396,8 +1398,9 @@ public class CombatAttackService {
                             gameData.queueMayAbilityForPlayer(attacker.getCard(), playerId, may, otherAttackerId,
                                     attacker.getId(), playerId, new Permanent(attacker));
                         } else {
-                            gameData.queueMayAbility(attacker.getCard(), playerId, may, otherAttackerId, attacker.getId(),
-                                    attackedTargetForPendingMay(gameData, attacker, may));
+                            gameData.queueGrantedMayAbility(attacker.getCard(), playerId, may, otherAttackerId,
+                                    attacker.getId(), attackedTargetForPendingMay(gameData, attacker, may),
+                                    grantingPermanents.get(may));
                         }
                     }
 
@@ -1527,6 +1530,8 @@ public class CombatAttackService {
                                     attackTrigger.setAttackedTargetId(attacker.getAttackTarget());
                                     attackTrigger.setDefendingPlayerId(defendingPlayerId);
                                     attackTrigger.setSourcePermanentSnapshot(snapshotAttackingSource(gameData, attacker));
+                                    attackTrigger.setGrantingPermanentId(
+                                            CombatAbilityReader.grantingPermanentOf(abilityEffects, grantingPermanents));
                                     gameData.stack.add(attackTrigger);
                                     triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
                                             gameData, attacker, attackTrigger);
@@ -1602,6 +1607,8 @@ public class CombatAttackService {
                                 attackTrigger.setAttackedTargetId(attacker.getAttackTarget());
                                 attackTrigger.setDefendingPlayerId(defendingPlayerId);
                                 attackTrigger.setSourcePermanentSnapshot(snapshotAttackingSource(gameData, attacker));
+                                attackTrigger.setGrantingPermanentId(
+                                        CombatAbilityReader.grantingPermanentOf(abilityEffects, grantingPermanents));
                                 gameData.stack.add(attackTrigger);
                                 triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
                                         gameData, attacker, attackTrigger);
