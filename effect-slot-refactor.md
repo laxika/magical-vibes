@@ -9766,8 +9766,9 @@ classes:
     skips;
   - `MoveDyingSourceCountersToTargetCreatureEffect.requiresCounters`;
   - `CreateTokenWithDyingSourcePowerEffect` and `CreateTokenWithDyingSourceCounterPTEffect`'s event values.
-- Found, not changed (outside this run): Nazgûl Battle-Mace's Oracle grants "whenever an opponent sacrifices a nontoken
-  permanent…" to the equipped creature, but the card class has the trigger on the Equipment itself.
+- Found after this run and fixed in its own commit: Nazgûl Battle-Mace's Oracle grants "whenever an opponent sacrifices a
+  nontoken permanent…" to the equipped creature, but the card class had the trigger on the Equipment itself. It is now a
+  `GrantTriggeredAbilityEffect` to `EQUIPPED_CREATURE` (`NazgLBattleMaceTest#unattachedMaceDoesNotTrigger`).
 
 **For later runs.** The rebuilds under "Kept" can read `getTriggeringPermanentSnapshot()` / `CountersOnTriggeringPermanent`,
 and their skips can become trigger filters. Then come the damage and combat interfaces, the bindings that aren't trigger

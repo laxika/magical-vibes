@@ -41,7 +41,7 @@ class NazgLBattleMaceTest extends BaseCardTest {
     @Test
     @DisplayName("An opponent may pay 3 life to keep a sacrificed nontoken permanent")
     void opponentMayPayToKeepSacrificedPermanent() {
-        harness.addToBattlefield(player1, new NazgLBattleMace());
+        equipMaceToCreature();
         Permanent spellbook = harness.addToBattlefieldAndReturn(player2, new Spellbook());
         preparePlayerTwoSorcery();
         harness.setHand(player2, List.of(new KuldothaRebirth()));
@@ -60,9 +60,9 @@ class NazgLBattleMaceTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An opponent declining to pay gives the sacrificed permanent to the mace's controller")
+    @DisplayName("An opponent declining to pay gives the sacrificed permanent to the equipped creature's controller")
     void opponentDecliningPaymentStealsSacrificedPermanent() {
-        harness.addToBattlefield(player1, new NazgLBattleMace());
+        equipMaceToCreature();
         Permanent spellbook = harness.addToBattlefieldAndReturn(player2, new Spellbook());
         preparePlayerTwoSorcery();
         harness.setHand(player2, List.of(new KuldothaRebirth()));
@@ -75,6 +75,30 @@ class NazgLBattleMaceTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Spellbook");
         harness.assertNotInGraveyard(player2, "Spellbook");
+    }
+
+    @Test
+    @DisplayName("An unattached mace grants nothing, so an opponent's sacrifice does not trigger")
+    void unattachedMaceDoesNotTrigger() {
+        harness.addToBattlefield(player1, new NazgLBattleMace());
+        Permanent spellbook = harness.addToBattlefieldAndReturn(player2, new Spellbook());
+        preparePlayerTwoSorcery();
+        harness.setHand(player2, List.of(new KuldothaRebirth()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castSorceryWithSacrifice(player2, 0, spellbook.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player2, "Spellbook");
+    }
+
+    private void equipMaceToCreature() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent mace = harness.addToBattlefieldAndReturn(player1, new NazgLBattleMace());
+        mace.setAttachedTo(creature.getId());
     }
 
     private void preparePlayerTwoSorcery() {

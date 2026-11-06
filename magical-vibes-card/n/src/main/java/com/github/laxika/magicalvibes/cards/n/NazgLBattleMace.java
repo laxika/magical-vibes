@@ -30,8 +30,10 @@ public class NazgLBattleMace extends Card {
                         1, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER)),
                 GrantScope.EQUIPPED_CREATURE));
 
-        addTrigger(Triggers.sacrificed(Triggers.NONTOKEN, ObjectRelation.OPPONENT_CONTROLS),
-                new StealDyingOpponentPermanentUnlessPaysLifeEffect(3));
+        addStaticEffect(new GrantTriggeredAbilityEffect(
+                new TriggeredAbility(Triggers.sacrificed(Triggers.NONTOKEN, ObjectRelation.OPPONENT_CONTROLS),
+                new StealDyingOpponentPermanentUnlessPaysLifeEffect(3)),
+                GrantScope.EQUIPPED_CREATURE));
 
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
