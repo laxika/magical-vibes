@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.ai.interaction;
 import com.github.laxika.magicalvibes.ai.AiGameActions;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -110,6 +111,38 @@ class MultiPermanentChoiceAiStrategyTest {
                 List.of(weak.getId(), mid.getId(), strong.getId()), 2), context());
 
         assertChosen(List.of(strong.getId(), mid.getId()));
+    }
+
+    @Test
+    @DisplayName("A stacked +1/+1 counter distribution picks the AI's own strongest creatures")
+    void plusOneCounterDistributionPrefersOwnCreatures() throws Exception {
+        Permanent ownWeak = creature("Own Weak", 1);
+        Permanent ownStrong = creature("Own Strong", 4);
+        Permanent opposing = creature("Opposing", 6);
+        gameData.playerBattlefields.get(aiPlayerId).addAll(List.of(ownWeak, ownStrong));
+        gameData.playerBattlefields.get(opponentId).add(opposing);
+
+        when(gameQueryService.getEffectivePower(gameData, ownWeak)).thenReturn(1);
+        when(gameQueryService.getEffectivePower(gameData, ownStrong)).thenReturn(4);
+
+        strategy.answer(stackedDivisionChoice(
+                List.of(ownWeak.getId(), ownStrong.getId(), opposing.getId()), 1, CounterType.PLUS_ONE_PLUS_ONE),
+                context());
+
+        assertChosen(List.of(ownStrong.getId()));
+    }
+
+    @Test
+    @DisplayName("A stacked damage division still picks the opponent's strongest creatures")
+    void damageDivisionPrefersOpponentCreatures() throws Exception {
+        Permanent own = creature("Own", 4);
+        Permanent opposing = creature("Opposing", 2);
+        gameData.playerBattlefields.get(aiPlayerId).add(own);
+        gameData.playerBattlefields.get(opponentId).add(opposing);
+
+        strategy.answer(stackedDivisionChoice(List.of(own.getId(), opposing.getId()), 1, null), context());
+
+        assertChosen(List.of(opposing.getId()));
     }
 
     @Test
@@ -248,6 +281,15 @@ class MultiPermanentChoiceAiStrategyTest {
                 playerId, validIds, validPlayerIds, maxCount,
                 new MultiPermanentChoiceContext.ExileDamagedPlayerControls(),
                 "Choose permanents.");
+    }
+
+    private PendingInteraction.MultiPermanentChoice stackedDivisionChoice(
+            List<UUID> validIds, int maxCount, CounterType counterType) {
+        return new PendingInteraction.MultiPermanentChoice(
+                aiPlayerId, validIds, List.of(), maxCount,
+                new MultiPermanentChoiceContext.StackedDividedDamageTargets(
+                        UUID.randomUUID(), new Card(), aiPlayerId, 3, false, counterType),
+                "Choose targets.");
     }
 
     private PendingInteraction.MultiPermanentChoice untapExactChoice(List<UUID> validIds, int requiredCount) {

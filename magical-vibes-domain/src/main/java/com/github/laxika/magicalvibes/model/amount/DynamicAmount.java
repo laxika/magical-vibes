@@ -269,6 +269,7 @@ public sealed interface DynamicAmount permits
         TriggeringSpellXValue,
         TriggeringSpellTargetCount,
         TriggeringPermanentToughness,
+        TriggeringPermanentPower,
         CardTypesAmongCardsDiscardedThisResolution,
         LastDiscardedCardTypeCount {
 

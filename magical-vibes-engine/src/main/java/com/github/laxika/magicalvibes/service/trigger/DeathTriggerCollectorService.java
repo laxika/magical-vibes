@@ -33,8 +33,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongControlledCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreaturesOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForEachAuraAttachedToDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemCreatureDeathTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerDiscardsCardEffect;
@@ -149,7 +147,6 @@ public class DeathTriggerCollectorService {
     private final AmountEvaluationService amountEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport graveyardTargetingSupport;
-    private final com.github.laxika.magicalvibes.service.target.TargetLegalityService targetLegalityService;
     @Autowired @Lazy private GraveyardTargetingService graveyardTargetingService;
 
     /**
@@ -200,9 +197,6 @@ public class DeathTriggerCollectorService {
     }
 
     private void registerCreatureDeathHandlers() {
-        registerCreatureDeath(CreatureDeathWatch.ANY, DistributeCountersAmongCreaturesOnDeathEffect.class,
-                (match, effect, context) -> handleDistributeCountersAmongCreaturesOnDeath(match,
-                        (DistributeCountersAmongCreaturesOnDeathEffect) effect, context));
         registerCreatureDeath(CreatureDeathWatch.ALLY, MayPayManaEffect.class,
                 (match, effect, context) -> handleAllyCreatureMayPay(match, (MayPayManaEffect) effect, context));
         registerCreatureDeath(CreatureDeathWatch.ALLY, MayPayLifeEffect.class,
@@ -344,82 +338,6 @@ public class DeathTriggerCollectorService {
         registerCreatureDeath(CreatureDeathWatch.ANY, PutCountersOnSourceCardEffect.class,
                 (match, effect, context) -> handleAnyCreatureDeathPutCountersOnSourceCard(match,
                         (PutCountersOnSourceCardEffect) effect, context));
-    }
-
-    boolean handleDistributeCountersAmongCreaturesOnDeath(TriggerMatchContext match,
-            DistributeCountersAmongCreaturesOnDeathEffect effect, TriggerContext ctx) {
-        if (!(ctx instanceof TriggerContext.CreatureDeath cd) || !effect.countFromSourcePower()) {
-            return false;
-        }
-        Card dyingCard = cd.dyingCard();
-        UUID controllerId = cd.dyingCreatureControllerId();
-        int counters = Math.max(0, cd.dyingCreaturePower());
-        // The dying-source form snapshots at death — the permanent is gone by resolution. The "you
-        // may" and the division (pendingETBDamageAssignments) both happen when the trigger resolves.
-        CardEffect baked = effect.anyCreature() || effect.targeted()
-                ? new DistributeCountersAmongCreaturesOnDeathEffect(effect.counterType(), counters,
-                        effect.countFromSourceCounters(), effect.anyCreature(), false, effect.optional(),
-                        effect.targeted())
-                : new DistributeCountersAmongControlledCreaturesEffect(effect.counterType(), counters);
-        CardEffect queued = effect.optional()
-                ? new MayEffect(baked, "distribute " + counters + " counter(s) among "
-                        + (effect.anyCreature() ? "any number of creatures?" : "creatures you control?"))
-                : baked;
-        Map<UUID, Integer> announced = effect.anyCreature() || effect.targeted()
-                ? announceStagedDistribution(match.gameData(), dyingCard, controllerId, effect, counters)
-                : Map.of();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                dyingCard,
-                controllerId,
-                dyingCard.getName() + "'s ability",
-                new ArrayList<>(List.of(queued))
-        );
-        if (!announced.isEmpty()) {
-            entry.announceDamageAssignments(announced);
-        }
-        match.gameData().stack.add(entry);
-        return true;
-    }
-
-    /**
-     * Takes the division staged in {@code pendingETBDamageAssignments} as the division announced for
-     * a targeted distribution trigger going on the stack (CR 601.2d, CR 603.3d), so it is fixed before
-     * any player receives priority and cannot be changed at resolution. Every recipient must be a
-     * legal target when announced and the amounts must total {@code total}; otherwise the
-     * announcement is rejected.
-     *
-     * @return the announced division, or an empty map when nothing was staged
-     */
-    private Map<UUID, Integer> announceStagedDistribution(GameData gameData, Card source, UUID controllerId,
-            DistributeCountersAmongCreaturesOnDeathEffect effect, int total) {
-        Map<UUID, Integer> staged = gameData.pendingETBDamageAssignments;
-        gameData.pendingETBDamageAssignments = Map.of();
-        if (staged.isEmpty()) {
-            return Map.of();
-        }
-        int announcedTotal = 0;
-        for (Map.Entry<UUID, Integer> assignment : staged.entrySet()) {
-            Integer amount = assignment.getValue();
-            if (amount == null || amount <= 0) {
-                throw new IllegalStateException("Each target must receive at least 1 counter");
-            }
-            Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
-            if (target == null || !gameQueryService.isCreature(gameData, target)
-                    || (!effect.anyCreature()
-                            && !controllerId.equals(gameQueryService.findPermanentController(gameData, target.getId())))) {
-                throw new IllegalStateException("Counters can only be distributed among legal creature targets");
-            }
-            if (targetLegalityService.checkTriggeredPermanentTargetableReason(
-                    gameData, target, source, controllerId).isPresent()) {
-                throw new IllegalStateException("Illegal target for distributed counters");
-            }
-            announcedTotal += amount;
-        }
-        if (announcedTotal != total) {
-            throw new IllegalStateException("Counters must be distributed in a total of " + total);
-        }
-        return staged;
     }
 
     private CardEffect snapshotArtifactManaValue(CardEffect effect, int artifactManaValue) {
@@ -1848,32 +1766,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    /**
-     * A source-relative sacrifice filter on an ally-death trigger compares against the permanent
-     * that died, using its last-known card types rather than the watching permanent's types.
-     */
-    @CollectsWatchTrigger(value = SacrificePermanentsEffect.class,
-            watch = ZoneChangeWatch.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
-    boolean handleAllyPermanentGraveyardSacrifice(TriggerMatchContext match,
-            SacrificePermanentsEffect effect, TriggerContext ctx) {
-        TriggerContext.AnyPermanentGraveyard apg = (TriggerContext.AnyPermanentGraveyard) ctx;
-        if (apg.dyingPermanent() == null) {
-            return false;
-        }
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)));
-        entry.setSourcePermanentSnapshot(new Permanent(apg.dyingPermanent()));
-        match.gameData().stack.add(entry);
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers (ally permanent put into a graveyard from the battlefield)",
-                match.gameData().id, match.permanent().getCard().getName());
-        return true;
-    }
-
     @CollectsWatchTrigger(value = RegisterDelayedReturnCurseAttachedToPlayerEffect.class,
             watch = ZoneChangeWatch.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     @CollectsWatchTrigger(value = RegisterDelayedReturnCurseAttachedToPlayerEffect.class,
@@ -1902,7 +1794,7 @@ public class DeathTriggerCollectorService {
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
             return true;
         }
-        match.gameData().stack.add(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
@@ -1910,7 +1802,12 @@ public class DeathTriggerCollectorService {
                 new ArrayList<>(List.of(effect)),
                 null,
                 match.permanent().getId()
-        ));
+        );
+        if (ctx instanceof TriggerContext.AnyPermanentGraveyard death && death.dyingPermanent() != null) {
+            // "It": the permanent put into the graveyard, as it last existed (Martyr's Bond).
+            entry.setTriggeringPermanent(death.dyingPermanent());
+        }
+        match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (permanent put into controller's graveyard)",
                 match.gameData().id, match.permanent().getCard().getName());

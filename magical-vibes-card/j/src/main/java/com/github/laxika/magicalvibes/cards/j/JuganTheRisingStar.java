@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreaturesOnDeathEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,10 +16,11 @@ public class JuganTheRisingStar extends Card {
 
     public JuganTheRisingStar() {
         // When Jugan dies, you may distribute five +1/+1 counters among any number of target creatures.
-        // The division is announced as the trigger goes on the stack; any creature on the battlefield
-        // may receive counters, not just ones you control.
+        // The targets and division are announced as the trigger goes on the stack, the "you may" is
+        // chosen as it resolves; any creature on the battlefield may receive counters.
         addTrigger(Triggers.dies(ObjectRelation.THIS),
-                DistributeCountersAmongCreaturesOnDeathEffect.fixedAmongAnyCreatures(
-                        CounterType.PLUS_ONE_PLUS_ONE, 5));
+                new MayEffect(DistributeCountersAmongCreaturesOnDeathEffect.amongAnyTargetCreatures(
+                        CounterType.PLUS_ONE_PLUS_ONE, new Fixed(5)),
+                        "Distribute five +1/+1 counters among the target creatures?"));
     }
 }

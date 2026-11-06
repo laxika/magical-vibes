@@ -25,8 +25,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyMerfolkTappedForSourceAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTokensCreatedWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongControlledCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreaturesOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTokensCreatedWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastCardsExiledWithSourceEffect;
@@ -74,7 +72,6 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -198,7 +195,6 @@ public class LegacyTriggerBindings {
     private final AmountEvaluationService amountEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final GraveyardTargetingSupport graveyardTargetingSupport;
-    private final TargetLegalityService targetLegalityService;
     private final GraveyardTargetingService graveyardTargetingService;
     private final TriggerCollectionService triggerCollectionService;
 
@@ -211,7 +207,6 @@ public class LegacyTriggerBindings {
                                  @Lazy AmountEvaluationService amountEvaluationService,
                                  @Lazy ConditionEvaluationService conditionEvaluationService,
                                  @Lazy GraveyardTargetingSupport graveyardTargetingSupport,
-                                 @Lazy TargetLegalityService targetLegalityService,
                                  @Lazy GraveyardTargetingService graveyardTargetingService,
                                  @Lazy TriggerCollectionService triggerCollectionService) {
         this.gameQueryService = gameQueryService;
@@ -220,7 +215,6 @@ public class LegacyTriggerBindings {
         this.amountEvaluationService = amountEvaluationService;
         this.conditionEvaluationService = conditionEvaluationService;
         this.graveyardTargetingSupport = graveyardTargetingSupport;
-        this.targetLegalityService = targetLegalityService;
         this.graveyardTargetingService = graveyardTargetingService;
         this.triggerCollectionService = triggerCollectionService;
         registerDeathHandlers();
@@ -355,8 +349,6 @@ public class LegacyTriggerBindings {
 
     private void registerDeathHandlers() {
         Map<Class<? extends CardEffect>, Handler> h = deathHandlers;
-        register(h, DistributeCountersAmongCreaturesOnDeathEffect.class,
-                this::handleDistributeCountersAmongCreaturesOnDeath);
         register(h, MayPayManaEffect.class, this::handleDeathMayPayMana);
         register(h, MayPayLifeEffect.class, this::handleDeathMayPayLife);
         register(h, ChooseOneAtTriggerTimeEffect.class, this::handleDeathModalAtTriggerTime);
@@ -395,45 +387,6 @@ public class LegacyTriggerBindings {
         register(h, TargetPlayerGainsLifeEffect.class, this::handleSelfLeavesTargetPlayerGainsLife);
     }
 
-    private boolean handleDistributeCountersAmongCreaturesOnDeath(Ctx c, DistributeCountersAmongCreaturesOnDeathEffect effect) {
-        Permanent dyingPermanent = c.dyingPermanent();
-        if (dyingPermanent == null) {
-            return false;
-        }
-        Card dyingCard = c.dyingCard();
-        UUID controllerId = c.controllerId();
-        int counters = effect.countFromSourcePower()
-                ? Math.max(0, dyingPermanent.getEffectivePower())
-                : effect.countFromSourceCounters()
-                        ? dyingPermanent.getCounterCount(effect.counterType())
-                        : effect.count();
-        // The dying-source form snapshots at death — the permanent is gone by resolution. The "you
-        // may" and the division (pendingETBDamageAssignments) both happen when the trigger resolves.
-        CardEffect baked = effect.anyCreature() || effect.targeted()
-                ? new DistributeCountersAmongCreaturesOnDeathEffect(effect.counterType(), counters,
-                        effect.countFromSourceCounters(), effect.anyCreature(), false, effect.optional(),
-                        effect.targeted())
-                : new DistributeCountersAmongControlledCreaturesEffect(effect.counterType(), counters);
-        CardEffect queued = effect.optional()
-                ? new MayEffect(baked, "distribute " + counters + " counter(s) among "
-                        + (effect.anyCreature() ? "any number of creatures?" : "creatures you control?"))
-                : baked;
-        Map<UUID, Integer> announced = effect.anyCreature() || effect.targeted()
-                ? announceStagedDistribution(c.gameData(), dyingCard, controllerId, effect, counters)
-                : Map.of();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                dyingCard,
-                controllerId,
-                dyingCard.getName() + "'s ability",
-                new ArrayList<>(List.of(queued))
-        );
-        if (!announced.isEmpty()) {
-            entry.announceDamageAssignments(announced);
-        }
-        c.gameData().stack.add(entry);
-        return true;
-    }
     private boolean handleDeathMayPayMana(Ctx c, MayPayManaEffect mayPay) {
         // CR 603.3d: the ability's target is chosen as the trigger goes on the stack even though
         // the "you may pay" happens on resolution (Drainpipe Vermin). Untargeted may-pay death
@@ -965,46 +918,6 @@ public class LegacyTriggerBindings {
         return withPermanent.withTriggeringCard(cardId, c.gameData().graveyardEntryVersion(cardId));
     }
 
-
-    /**
-     * Takes the division staged in {@code pendingETBDamageAssignments} as the division announced for
-     * a targeted distribution trigger going on the stack (CR 601.2d, CR 603.3d), so it is fixed before
-     * any player receives priority and cannot be changed at resolution. Every recipient must be a
-     * legal target when announced and the amounts must total {@code total}; otherwise the
-     * announcement is rejected.
-     *
-     * @return the announced division, or an empty map when nothing was staged
-     */
-    private Map<UUID, Integer> announceStagedDistribution(GameData gameData, Card source, UUID controllerId,
-            DistributeCountersAmongCreaturesOnDeathEffect effect, int total) {
-        Map<UUID, Integer> staged = gameData.pendingETBDamageAssignments;
-        gameData.pendingETBDamageAssignments = Map.of();
-        if (staged.isEmpty()) {
-            return Map.of();
-        }
-        int announcedTotal = 0;
-        for (Map.Entry<UUID, Integer> assignment : staged.entrySet()) {
-            Integer amount = assignment.getValue();
-            if (amount == null || amount <= 0) {
-                throw new IllegalStateException("Each target must receive at least 1 counter");
-            }
-            Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
-            if (target == null || !gameQueryService.isCreature(gameData, target)
-                    || (!effect.anyCreature()
-                            && !controllerId.equals(gameQueryService.findPermanentController(gameData, target.getId())))) {
-                throw new IllegalStateException("Counters can only be distributed among legal creature targets");
-            }
-            if (targetLegalityService.checkTriggeredPermanentTargetableReason(
-                    gameData, target, source, controllerId).isPresent()) {
-                throw new IllegalStateException("Illegal target for distributed counters");
-            }
-            announcedTotal += amount;
-        }
-        if (announcedTotal != total) {
-            throw new IllegalStateException("Counters must be distributed in a total of " + total);
-        }
-        return staged;
-    }
 
     private static CardPredicate bindSelfToCard(CardPredicate predicate, UUID cardId) {
         return switch (predicate) {

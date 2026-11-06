@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -70,19 +71,38 @@ class QuirionBeastcallerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Death distribution can choose zero targets")
-    void deathDistributionCanChooseZeroTargets() {
+    @DisplayName("The controller chooses among creatures they control as the ability goes on the stack")
+    void controllerChoosesAmongOwnCreaturesAsTheAbilityGoesOnTheStack() {
         Permanent beastcaller = addCreatureReady(player1, new QuirionBeastcaller());
         beastcaller.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         beastcaller.tap();
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-
-        gd.pendingETBDamageAssignments = Map.of();
+        Permanent opponentGiant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
 
         killBeastcaller(beastcaller);
 
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.validIds()).containsExactly(bears.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
         harness.passBothPriorities();
 
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(opponentGiant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("With no +1/+1 counters on it, its death distributes nothing and asks for no targets")
+    void deathWithNoCountersAsksForNoTargets() {
+        Permanent beastcaller = addCreatureReady(player1, new QuirionBeastcaller());
+        beastcaller.tap();
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        killBeastcaller(beastcaller);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 

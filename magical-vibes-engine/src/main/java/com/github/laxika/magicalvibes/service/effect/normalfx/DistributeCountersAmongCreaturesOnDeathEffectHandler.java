@@ -16,9 +16,10 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link DistributeCountersAmongCreaturesOnDeathEffect} from the division announced on the
- * stack entry, falling back to the {@code pendingETBDamageAssignments} buffer. Skips player ids and permanents that are no longer
- * creatures; when the effect is controller-scoped, also skips permanents the trigger's controller
- * does not control.
+ * stack entry as the ability went on the stack; nothing is placed when none was announced. A
+ * recipient that is no longer a legal target isn't affected (CR 608.2b): it must still be a creature,
+ * be targetable by the ability, and, when the effect is controller-scoped, be controlled by the
+ * distributing player ({@link #distributingPlayerId}).
  */
 @Component
 @RequiredArgsConstructor
@@ -36,19 +37,13 @@ public class DistributeCountersAmongCreaturesOnDeathEffectHandler implements Nor
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DistributeCountersAmongCreaturesOnDeathEffect) effect;
-        Map<UUID, Integer> assignments = entry.getDamageAssignments().isEmpty()
-                ? gameData.pendingETBDamageAssignments
-                : entry.getDamageAssignments();
-        gameData.pendingETBDamageAssignments = Map.of();
-        int total = e.countFromSourcePower() ? Math.max(0, entry.getEventValue()) : e.count();
-        if (total <= 0 || assignments.isEmpty()) {
+        Map<UUID, Integer> assignments = entry.getDamageAssignments();
+        if (assignments.isEmpty()) {
             return;
         }
 
-        UUID controllerId = entry.getTriggeringPermanentControllerId() != null
-                ? entry.getTriggeringPermanentControllerId()
-                : entry.getControllerId();
-        List<Permanent> eligible = eligiblePermanents(gameData, controllerId, e.anyCreature());
+        UUID distributorId = distributingPlayerId(e, entry);
+        List<Permanent> eligible = eligiblePermanents(gameData, distributorId, !e.controlledCreaturesOnly());
         for (Map.Entry<UUID, Integer> assignment : assignments.entrySet()) {
             Integer amount = assignment.getValue();
             if (amount == null || amount <= 0) {
@@ -67,13 +62,26 @@ public class DistributeCountersAmongCreaturesOnDeathEffectHandler implements Nor
             if (!gameQueryService.isCreature(gameData, target)) {
                 continue;
             }
-            if ((e.anyCreature() || e.targeted()) && targetLegalityService.checkTriggeredPermanentTargetableReason(
-                    gameData, target, entry.getCard(), entry.getControllerId()).isPresent()) {
+            if (targetLegalityService.checkTriggeredPermanentTargetableReason(
+                    gameData, target, entry.getCard(), distributorId).isPresent()) {
                 continue;
             }
             permanentCounterSupport.placeCounterOnPermanent(
                     gameData, entry, target, e.counterType(), amount);
         }
+    }
+
+    /**
+     * The player who chooses the targets and the division and whose creatures "you control" means:
+     * the ability's controller, or for {@code CREATURES_ITS_CONTROLLER_CONTROLS} the controller of the
+     * creature that died (Grand Ossuary, whose ability stays under the planar controller, CR 901.6).
+     */
+    public static UUID distributingPlayerId(DistributeCountersAmongCreaturesOnDeathEffect effect, StackEntry entry) {
+        if (effect.recipients() == DistributeCountersAmongCreaturesOnDeathEffect.Recipients.CREATURES_ITS_CONTROLLER_CONTROLS
+                && entry.getTriggeringPermanentControllerId() != null) {
+            return entry.getTriggeringPermanentControllerId();
+        }
+        return entry.getControllerId();
     }
 
     private List<Permanent> eligiblePermanents(GameData gameData, UUID controllerId, boolean anyCreature) {

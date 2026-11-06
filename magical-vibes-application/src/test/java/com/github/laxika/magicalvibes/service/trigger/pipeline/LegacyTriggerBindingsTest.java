@@ -26,7 +26,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourcePow
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongControlledCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreaturesOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -56,7 +55,6 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.List;
@@ -96,8 +94,6 @@ class LegacyTriggerBindingsTest {
     @Mock
     private GraveyardTargetingSupport graveyardTargetingSupport;
     @Mock
-    private TargetLegalityService targetLegalityService;
-    @Mock
     private GraveyardTargetingService graveyardTargetingService;
     @Mock
     private TriggerCollectionService triggerCollectionService;
@@ -117,7 +113,7 @@ class LegacyTriggerBindingsTest {
     void setUp() {
         bindings = new LegacyTriggerBindings(gameQueryService, predicateEvaluationService, gameLogService,
                 amountEvaluationService, conditionEvaluationService, graveyardTargetingSupport,
-                targetLegalityService, graveyardTargetingService, triggerCollectionService);
+                graveyardTargetingService, triggerCollectionService);
         lenient().when(triggerCollectionService.bindSelfDeathEffect(any(), any(), any(), any()))
                 .thenAnswer(invocation -> invocation.getArgument(3));
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
@@ -224,20 +220,21 @@ class LegacyTriggerBindingsTest {
     }
 
     @Test
-    @DisplayName("Snapshots counter count and stacks a MayEffect")
-    void snapshotsAndStacksMay() {
+    @DisplayName("A \"you may\" counter distribution goes on the stack unchanged, with the dying creature as its triggering permanent")
+    void mayDistributionGoesOnTheStackWithTheDyingCreature() {
         Card card = createCreature("Hydra", 0, 0);
-        var effect = DistributeCountersAmongCreaturesOnDeathEffect
-                .fromDyingSourceCountersAmongControlledCreatures(CounterType.PLUS_ONE_PLUS_ONE);
+        var effect = new MayEffect(new DistributeCountersAmongControlledCreaturesEffect(CounterType.PLUS_ONE_PLUS_ONE,
+                new CountersOnTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE)), "Distribute the counters?");
         Permanent perm = new Permanent(card);
         perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         var ctx = dies(card, PLAYER1_ID, perm);
 
         assertThat(trigger(ctx, effect)).isTrue();
+
         assertThat(gd.stack).hasSize(1);
-        MayEffect may = (MayEffect) gd.stack.get(0).getEffectsToResolve().get(0);
-        assertThat(may.wrapped())
-                .isEqualTo(new DistributeCountersAmongControlledCreaturesEffect(CounterType.PLUS_ONE_PLUS_ONE, 3));
+        StackEntry entry = gd.stack.getFirst();
+        assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+        assertThat(entry.triggeringPermanentCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
     @Test

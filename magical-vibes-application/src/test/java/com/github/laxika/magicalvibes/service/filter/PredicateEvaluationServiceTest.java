@@ -146,6 +146,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourceP
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourceControllerHandSizePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerToughnessTotalAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithTriggeringPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherControlledPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithControlledCreatureOrGraveyardCreaturePredicate;
@@ -1027,6 +1028,21 @@ class PredicateEvaluationServiceTest {
             gd.monarchPlayerId = player1Id;
             assertThat(evaluator.matchesPermanentPredicate(gd, permanent, predicate)).isFalse();
             assertThat(evaluator.matchesPermanentPredicate(gd, otherPermanent, predicate)).isTrue();
+        }
+
+        @Test
+        @DisplayName("PermanentSharesCardTypeWithTriggeringPermanentPredicate compares with the triggering permanent's last-known types")
+        void sharesCardTypeWithTriggeringPermanentPredicateComparesWithTheTriggeringPermanent() {
+            Permanent creature = addPermanent(player2Id, createCreature("Creature", 2, 2, CardColor.GREEN));
+            Permanent enchantment = addPermanent(player2Id, createEnchantment("Enchantment"));
+            Permanent departedArtifactCreature = new Permanent(
+                    createArtifactCreature("Departed", 1, 1, List.of()));
+            var predicate = new PermanentSharesCardTypeWithTriggeringPermanentPredicate();
+            FilterContext context = FilterContext.of(gd).withTriggeringPermanentSnapshot(departedArtifactCreature);
+
+            assertThat(evaluator.matchesPermanentPredicate(creature, predicate, context)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(enchantment, predicate, context)).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(creature, predicate, FilterContext.of(gd))).isFalse();
         }
 
         @Test

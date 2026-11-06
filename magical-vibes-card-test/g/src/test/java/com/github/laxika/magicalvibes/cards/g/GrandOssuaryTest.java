@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.p.Panopticon;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -90,6 +91,34 @@ class GrandOssuaryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void dyingCreaturesControllerChoosesAmongTheirOwnCreatures() {
+        Permanent dying = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        dying.tap();
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent firstRecipient = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent secondRecipient = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Assassinate()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, dying.getId());
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(firstRecipient.getId(), secondRecipient.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(firstRecipient.getId(), secondRecipient.getId()));
+        harness.handleListChoice(player2, "2");
+        harness.handleListChoice(player2, "1");
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(firstRecipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(secondRecipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 

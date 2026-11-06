@@ -270,6 +270,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `PermanentNameInPredicate` | `(Set<String> cardNames)` | permanents whose name is one of a fixed roster of names (exact `Card.getName()` equality). For "a name originally printed in the Homelands expansion" (Apocalypse Chime) — the card class owns the name list, so a later reprint of a listed name still matches | none |
 
 | `PermanentSharesCardTypeWithSourcePermanentPredicate` | `()` | permanents that share a permanent card type with the source permanent snapshot; used for source-relative type comparisons | `FilterContext.sourcePermanentSnapshot` |
+| `PermanentSharesCardTypeWithTriggeringPermanentPredicate` | `()` | permanents that share a card type with the stack entry's triggering permanent as it last existed; "shares a card type with it" (Martyr's Bond) | `FilterContext.triggeringPermanentSnapshot` |
 | `PermanentSharesCardTypeWithTargetCardPredicate` | `()` | permanents that share a permanent card type with the selected graveyard card; used when a sacrifice filter depends on a card targeted by the same ability | `FilterContext.gameData` + `targetCardId` |
 | `PermanentIsTargetCardPredicate` | `()` | the permanent whose card is the card targeted by the same ability ("another" relative to a surviving target; Feast of Worms sacrifices another land) | `FilterContext.targetCardId`; `SacrificePermanentsEffectHandler` and the destroy-then handler set it from the then-entry's `targetCardIds` |
 

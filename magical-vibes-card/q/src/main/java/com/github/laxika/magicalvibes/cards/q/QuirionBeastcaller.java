@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.CountersOnTriggeringPermanent;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreaturesOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -21,7 +22,7 @@ public class QuirionBeastcaller extends Card {
         // When this creature dies, distribute X +1/+1 counters among any number of target
         // creatures you control, where X is the number of +1/+1 counters on this creature.
         addTrigger(Triggers.dies(ObjectRelation.THIS),
-                DistributeCountersAmongCreaturesOnDeathEffect
-                        .fromDyingSourceCountersAmongTargetControlledCreatures(CounterType.PLUS_ONE_PLUS_ONE));
+                DistributeCountersAmongCreaturesOnDeathEffect.amongTargetCreaturesYouControl(
+                        CounterType.PLUS_ONE_PLUS_ONE, new CountersOnTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE)));
     }
 }

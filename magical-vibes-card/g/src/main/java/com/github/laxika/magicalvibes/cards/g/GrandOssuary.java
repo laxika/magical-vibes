@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentPower;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreaturesOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllCreaturesAndCreateTokensEqualToTotalPowerEffect;
@@ -26,8 +27,8 @@ public class GrandOssuary extends Card {
     public GrandOssuary() {
         addTrigger(new TriggerCondition(Triggers.creatureDies(ObjectRelation.ANY), AbilityZones.COMMAND),
                 TriggerOptions.DEFAULT,
-                DistributeCountersAmongCreaturesOnDeathEffect
-                        .fromDyingSourcePowerAmongControlledCreatures(CounterType.PLUS_ONE_PLUS_ONE));
+                DistributeCountersAmongCreaturesOnDeathEffect.amongTargetCreaturesItsControllerControls(
+                        CounterType.PLUS_ONE_PLUS_ONE, new TriggeringPermanentPower()));
         addTrigger(Triggers.chaosEnsues(), SequenceEffect.of(
                 new ExileAllCreaturesAndCreateTokensEqualToTotalPowerEffect(
                         new CreateTokenEffect("Saproling", 1, 1, CardColor.GREEN,

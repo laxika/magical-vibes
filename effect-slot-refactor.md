@@ -30,7 +30,7 @@ re-check them with a grep before acting on them.
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
 | 14 | Trigger options replace trigger-only wrapper effects | done (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; run 16l, family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader`; run 16m, family 10 (sagas): no chapter or final-chapter ability has a legacy view, and the final-chapter collectors read the abilities through `SagaAbilityReader`; run 16n, family 11's player and keyword actions: every `ActionWatch` collector reads the abilities through `ActionAbilityReader`; run 16o, family 11's rest: every `MiscWatch` collector and the planar reader read the abilities through `MiscAbilityReader`; run 16p, the zone changes but "when this enters" and the permanent changes: no such ability has a legacy view, and the readers outside the trigger pipeline read them through `ZoneChangeAbilityReader`; run 16q, "when this enters": no ability has a legacy view; the own enters collector reads the abilities and judges their limit, the other readers read `Card.getOwnEntryEffects()`, and `OnceOnlyTriggerEffect` is gone; run 16r, every triggered ability is one object on the stack: the abilities of one Oracle ability are merged by script, the own enters and combat collectors group effects by ability, and `TriggerMode` is gone; run 16s, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags are gone: a `ConditionalEffect` is an effect's "if", and every collector judges the intervening "if" and event condition from the ability; run 16t, the trigger-only wrapper classes: the `Triggering…ConditionalEffect` filters, `SelfExiledFromBattlefieldEffect`, `OncePerTurnPerCreatureTriggerEffect` and `OncePerTurnTriggerEffect`'s keyed, per-grant, mark-on-acceptance and first-time forms are gone, their cards written with trigger filters, `TriggerLimit`s and `TriggeringCardMatches`; Bill Potts' `OncePerTurnTriggerEffect` and the may-unwrapping moved to step 15, with the user) |
-| 15 | Effects read the trigger event (repeatable) | open (run 1, with the user: the dying card, `DyingCreatureCardAwareEffect` gone; effects read the stack entry's triggering card; run 2, with the user: the departed permanent's last-known information, its 13 `…AwareEffect` interfaces gone; effects read the stack entry's triggering permanent; run 3: the rest of the departed object, the last-known rebuilds and baked dying-card ids run 2 kept, 4 classes gone and 5 lose their bound ids; run 4: the departed permanent's trigger-time rebuilds and skips run 3 kept, 6 classes gone, their skips trigger filters; run 5: the last departed-permanent rebuilds of `LegacyTriggerBindings` but the counter distribution, 3 classes gone, modular's "you may" and flag on the card) |
+| 15 | Effects read the trigger event (repeatable) | open (run 1, with the user: the dying card, `DyingCreatureCardAwareEffect` gone; effects read the stack entry's triggering card; run 2, with the user: the departed permanent's last-known information, its 13 `…AwareEffect` interfaces gone; effects read the stack entry's triggering permanent; run 3: the rest of the departed object, the last-known rebuilds and baked dying-card ids run 2 kept, 4 classes gone and 5 lose their bound ids; run 4: the departed permanent's trigger-time rebuilds and skips run 3 kept, 6 classes gone, their skips trigger filters; run 5: the last departed-permanent rebuilds of `LegacyTriggerBindings` but the counter distribution, 3 classes gone, modular's "you may" and flag on the card; run 6, with the user: the death counter distribution reads its total from the entry and announces its targets and division as it goes on the stack (a rules fix), Martyr's Bond's "it" is the triggering permanent) |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
 ## Why
@@ -10040,6 +10040,160 @@ bindings that aren't trigger events, Bill Potts, the may-unwrapping and the `…
   "May prompt includes dying card name", is run 4's known HEAD failure.
 - Engine: the whole module. The one failure is the known HEAD one, `GameMutationBoundaryRatchetTest`.
 - AI: compiles (`compileTestJava`). Its tests weren't run, since no AI code changed.
+- The full suite was not run here.
+
+#### Run 6: the death counter distribution and Martyr's Bond
+
+Run 5's "for later runs" listed this group first: `DistributeCountersAmongCreaturesOnDeathEffect`'s two rebuilds and
+Martyr's Bond's source rebinding. Both are gone. The distributions read their total from the stack entry, and "it" in
+Martyr's Bond is the triggering permanent. The scan found a rules bug, and the user chose to fix it here: nothing in a
+real game ever chose the targeted division. The 11 `…AwareEffect` interfaces are untouched.
+
+**What the scan found.**
+
+- `DistributeCountersAmongCreaturesOnDeathEffect` was rebuilt in two places:
+  - `LegacyTriggerBindings` (self death: Vastwood Hydra, Quirion Beastcaller, Jugan) baked the count, wrapped the
+    "you may" in a `MayEffect`, and pushed the entry itself.
+  - `DeathTriggerCollectorService` (any creature dies) did the same for Grand Ossuary, but that handler was dead: a
+    plane's "whenever a creature dies" goes through `TriggerCollectionService.collectPlanarCreatureDeathTriggers`,
+    not the any-creature collector. Grand Ossuary got its "they control" from the resolution handler, which fell back
+    to the entry's triggering permanent controller.
+- The targeted forms (Jugan, Quirion, Grand Ossuary) announced only a division already staged in
+  `pendingETBDamageAssignments`, and only tests stage one. In a real game no player was asked for targets or a
+  division, so these abilities placed no counters (resolution fell back to the same empty buffer).
+- Martyr's Bond's "another nonland permanent" trigger reached `handleAllyPermanentGraveyardSacrifice`, which set the
+  entry's source snapshot to the dying permanent so that `PermanentSharesCardTypeWithSourcePermanentPredicate`
+  compared with "it". No other card reached that handler.
+
+**The model.**
+
+- `DistributeCountersAmongCreaturesOnDeathEffect(CounterType, DynamicAmount total, Recipients)`, where `Recipients` is
+  `ANY_CREATURE`, `CREATURES_YOU_CONTROL` or `CREATURES_ITS_CONTROLLER_CONTROLS`. The factories are
+  `amongAnyTargetCreatures`, `amongTargetCreaturesYouControl` and `amongTargetCreaturesItsControllerControls`. Its
+  target spec is `NONE`; the targets travel with the division on the entry. The `count`, `countFromSourceCounters`,
+  `countFromSourcePower`, `optional` and `targeted` components are gone. A "you may" is a `MayEffect` on the card
+  (**CR 603.5**, checked).
+- `TriggeringPermanentPower` (new `DynamicAmount`) reads the entry's `triggeringPermanentPowerAtTrigger`, at least 0.
+  It is the power sibling of `TriggeringPermanentToughness`.
+- `StackedDividedDamageTriggerService` announces this effect's division too, also inside a `MayEffect`, as the
+  ability goes on the stack (**CR 601.2c**, **CR 601.2d**, **CR 603.3d**, checked):
+  - It evaluates `total` against the entry and collects targets through the cast-time
+    `DistributeCountersAmongTargetsEffect.chosenAmongTargetCreatures(type, total, [PermanentControlledBySourceControllerPredicate])`.
+  - It asks for one or more targets, then the amount on each when there are several.
+  - A staged division is checked before it is taken over, as the old announcement checked it: every recipient must be
+    a legal target receiving at least 1, and the amounts must add up to the total. Divided damage and prevention still
+    take a staged division unchecked, as before.
+  - The `Division` record carries the counter type, which makes the prompts say "counters", not "damage". It also
+    carries the choosing player.
+- `MultiPermanentChoiceContext.StackedDividedDamageTargets` gains a nullable `counterType`, which it passes to the
+  per-target `CounterDistributionAssignment`. Before, the existing `DistributeCountersAmongTargetsEffect` case asked
+  "how much damage to deal".
+- `FilterContext` gains `triggeringPermanentSnapshot` (`withTriggeringPermanentSnapshot`). The new
+  `PermanentSharesCardTypeWithTriggeringPermanentPredicate` compares with it. `SacrificePermanentsEffectHandler` fills
+  it from the entry's triggering permanent. `PredicateEvaluationService.sharesCardTypeWith` serves both "shares a card
+  type" predicates.
+
+**The engine.**
+
+- Gone:
+  - `LegacyTriggerBindings.handleDistributeCountersAmongCreaturesOnDeath` and its `announceStagedDistribution`, with
+    the class's now unused `TargetLegalityService`.
+  - `DeathTriggerCollectorService.handleDistributeCountersAmongCreaturesOnDeath` and its `announceStagedDistribution`
+    (dead), with the unused `targetLegalityService` field.
+  - `DeathTriggerCollectorService.handleAllyPermanentGraveyardSacrifice` (Martyr's Bond).
+- The self-death defaults (`handleDeathDefault`, `handleDeathMayEffect`) put the distributions on the stack with the
+  dying creature as the triggering permanent.
+- The ally-permanent graveyard default (`handleAllyPermanentGraveyardDefault`) now gives its stack entry the
+  permanent that was put into the graveyard as its triggering permanent.
+- `DistributeCountersAmongCreaturesOnDeathEffectHandler` resolves only the announced division; the fallback to
+  `pendingETBDamageAssignments` at resolution is gone. Its `distributingPlayerId` is the ability's controller, or for
+  `CREATURES_ITS_CONTROLLER_CONTROLS` the entry's triggering permanent controller. The announcement uses it for "you
+  control", the prompt and targetability, and resolution uses it to recheck the recipients (**CR 608.2b**, checked).
+- AI: `MultiPermanentChoiceAiStrategy` puts a beneficial stacked counter distribution (any counter but -1/-1 and
+  -2/-1) on its own strongest creatures. It used to pick the opponent's, as for damage.
+
+**Cards (by script).**
+
+- `scripts/step15-distribution-cards.py` (idempotent, per letter module) changed 4 classes:
+  - Vastwood Hydra: `new MayEffect(new DistributeCountersAmongControlledCreaturesEffect(PLUS_ONE_PLUS_ONE, new
+    CountersOnTriggeringPermanent(PLUS_ONE_PLUS_ONE)), prompt)`. It reuses the untargeted "distribute among creatures
+    you control" effect, which was what the rebuild turned it into.
+  - Quirion Beastcaller: `amongTargetCreaturesYouControl(PLUS_ONE_PLUS_ONE, new CountersOnTriggeringPermanent(PLUS_ONE_PLUS_ONE))`.
+  - Jugan: `new MayEffect(amongAnyTargetCreatures(PLUS_ONE_PLUS_ONE, new Fixed(5)), prompt)`.
+  - Grand Ossuary: `amongTargetCreaturesItsControllerControls(PLUS_ONE_PLUS_ONE, new TriggeringPermanentPower())`.
+- `scripts/step15-martyrs-bond-card.py`: Martyr's Bond's predicate became `PermanentSharesCardTypeWithTriggeringPermanentPredicate`.
+
+**Behaviour changes.**
+
+- Rules fix, **CR 601.2c-d** and **CR 603.3d** (checked): Jugan's, Quirion Beastcaller's and Grand Ossuary's
+  controller is now asked for the targets and the division as the ability goes on the stack. Before, no player was
+  asked, and the abilities placed no counters outside tests that staged a division. New card tests:
+  `JuganTheRisingStarTest#controllerChoosesTargetsAndDivisionAsTheAbilityGoesOnTheStack`,
+  `QuirionBeastcallerTest#controllerChoosesAmongOwnCreaturesAsTheAbilityGoesOnTheStack` and
+  `GrandOssuaryTest#dyingCreaturesControllerChoosesAmongTheirOwnCreatures`.
+- Each chosen target must receive at least one counter (CR 601.2d). With zero counters to distribute (Quirion with no
+  +1/+1 counters), or no legal target, the ability is removed from the stack (CR 603.3d), as the other stacked
+  divisions are. New card test `QuirionBeastcallerTest#deathWithNoCountersAsksForNoTargets`.
+- Grand Ossuary: the ability stays under the planar controller (**CR 901.6**, checked). The dying creature's
+  controller chooses the targets among their creatures and the division; that player's choosing is the old behaviour
+  the user chose to keep. No official ruling says who chooses (searched). Targetability is judged for the distributing
+  player.
+- The "you may" prompts are the cards' own text. Before, the collector's text named the baked count.
+- A division staged after Jugan's ability is on the stack is ignored at resolution, as `deathDistributionIsLockedBeforeResolution`
+  already expected; the resolution-time buffer fallback is gone.
+
+**Kept, with their reason.**
+
+- The three `snapshot…ManaValue` helpers, for run 3's reason (a graveyard target is chosen before a stack entry
+  exists).
+- Confusion in the Ranks and Fatal Grudge still compare "it" through `PermanentSharesCardTypeWithSourcePermanentPredicate`,
+  with an `EnterTriggerCollectorService` path that sets the source snapshot to the entering permanent. That rebinding is
+  of the same kind as Martyr's Bond's and can move to the new predicate once the enters entry carries its triggering
+  permanent in `FilterContext`.
+- `checkStagedDivision` applies only to the death counter distribution. Divided damage and prevention take a staged
+  division unchecked, as before.
+
+**For later runs.** The enters-side "shares a card type with it" rebinding above, then the damage and combat
+interfaces, the bindings that aren't trigger events, Bill Potts, the may-unwrapping and the `…Triggering…` classes, as
+run 1 listed.
+
+**Scripts.** `scripts/step15-distribution-cards.py`, `scripts/step15-martyrs-bond-card.py` (card classes),
+`scripts/step15-distribution-tests.py` (card tests, per letter test module), `scripts/step15-distribution-docs.py`
+(exact line edits in `ORACLE_TEXT_EFFECT_MAP.md`, with new Quirion and Grand Ossuary rows, `EFFECTS_INDEX.md`, with the
+new amount, `EFFECTS_QUICK_REFERENCE.md`, `CARD_PATTERNS_CREATURES_TRIGGERED.md` and `PREDICATES_REFERENCE.md`, with
+the new predicate). The effect, amount, predicate, services, handlers, collectors and AI were edited by hand.
+`ARCHITECTURE.md`'s stacked-division and triggering-permanent paragraphs were updated. The skills didn't name these
+classes.
+
+**Tests changed.**
+
+- `LegacyTriggerBindingsTest`: "Snapshots counter count and stacks a MayEffect" became "A \"you may\" counter
+  distribution goes on the stack unchanged, with the dying creature as its triggering permanent"; the binding no
+  longer takes a `TargetLegalityService`.
+- `JuganTheRisingStarTest`: "Accepting with no targets places no counters" (by script) staged nothing and accepted the
+  "you may". Nothing is staged now, so the controller is asked for targets first, and the test became the targets-and-division
+  test above.
+- `QuirionBeastcallerTest`: "Death distribution can choose zero targets" (by script) passed only because nothing
+  resolved while the choice waited. It became the own-creatures test and the no-counters test above.
+- `GrandOssuaryTest`: the new test above (by script).
+- New unit tests: `PredicateEvaluationServiceTest` ("PermanentSharesCardTypeWithTriggeringPermanentPredicate compares
+  with the triggering permanent's last-known types") and `MultiPermanentChoiceAiStrategyTest` ("A stacked +1/+1
+  counter distribution picks the AI's own strongest creatures", "A stacked damage division still picks the opponent's
+  strongest creatures").
+
+**Test runs.**
+
+- Card: the test class of every card naming a changed effect, amount or predicate, every divided-damage, divided-prevention
+  and counter-distribution card, every `SacrificePermanentsEffect` card, and every card with a "put into a graveyard
+  from the battlefield" or an "another permanent you control dies" / "a permanent you own dies" trigger: 506 test
+  classes (516 result files with the nested ones), 4,522 test cases, all passing.
+- Application: `LegacyTriggerBindingsTest`, `DeathTriggerCollectorServiceTest`, `PredicateEvaluationServiceTest`,
+  `SacrificePermanentsEffectHandlerTest` and `CardFreezeTest`. There are 7 failures, and HEAD `8c30cbeea4` has the same 7
+  (checked in a worktree with main's card-data cache): "May prompt includes dying card name" (run 4's) and 6
+  `SacrificePermanentsEffectHandlerTest` cases (`TargetPlayerPermanents` 4, `TargetPlayerOrPermanentController` 2,
+  Mockito wiring). Those 6 also fail with HEAD's handler in this tree.
+- Engine: the whole module. The one failure is the known HEAD one, `GameMutationBoundaryRatchetTest`.
+- AI: `MultiPermanentChoiceAiStrategyTest` and `GameDataDeepCopyTest`, all passing.
 - The full suite was not run here.
 
 ## Prompt

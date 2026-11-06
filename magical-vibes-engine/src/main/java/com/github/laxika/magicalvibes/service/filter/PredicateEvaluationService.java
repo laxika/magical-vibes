@@ -343,6 +343,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentProtectedByDefending
 import com.github.laxika.magicalvibes.model.filter.PermanentProtectedByOpponentOfSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentReceivedPlusOnePlusOneCounterThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithTriggeringPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithTargetCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesColorWithEquippedCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCreatureTypeWithEnchantedCreaturePredicate;
@@ -1709,7 +1710,11 @@ public class PredicateEvaluationService {
                 yield source != null && gameQueryService.shareCreatureType(gameData, permanent, source);
             }
             case PermanentSharesCardTypeWithSourcePermanentPredicate ignored ->
-                    sharesCardTypeWithSourcePermanent(permanent, filterContext);
+                    sharesCardTypeWith(permanent, filterContext,
+                            filterContext == null ? null : filterContext.sourcePermanentSnapshot());
+            case PermanentSharesCardTypeWithTriggeringPermanentPredicate ignored ->
+                    sharesCardTypeWith(permanent, filterContext,
+                            filterContext == null ? null : filterContext.triggeringPermanentSnapshot());
             case PermanentSharesCardTypeWithTargetCardPredicate ignored ->
                     sharesCardTypeWithTargetCard(permanent, filterContext);
             case com.github.laxika.magicalvibes.model.filter.PermanentChosenColorStrictlyMostCommonPredicate ignored ->
@@ -3307,17 +3312,17 @@ public class PredicateEvaluationService {
         return gameData != null && permanent != null && gameQueryService.isGoaded(gameData, permanent);
     }
 
-    private boolean sharesCardTypeWithSourcePermanent(Permanent permanent, FilterContext filterContext) {
-        if (filterContext == null || filterContext.sourcePermanentSnapshot() == null) {
+    /** Whether {@code permanent} shares a card type with {@code other}, a snapshot judged by its own types. */
+    private boolean sharesCardTypeWith(Permanent permanent, FilterContext filterContext, Permanent other) {
+        if (other == null) {
             return false;
         }
-        Permanent source = filterContext.sourcePermanentSnapshot();
         GameData gameData = filterContext.gameData();
         Set<CardType> permanentTypes = gameData == null
                 ? cardTypesWithoutGameData(permanent)
                 : gameQueryService.getEffectiveCardTypes(gameData, permanent);
-        Set<CardType> sourceTypes = cardTypesWithoutGameData(source);
-        return sourceTypes.stream()
+        Set<CardType> otherTypes = cardTypesWithoutGameData(other);
+        return otherTypes.stream()
                 .anyMatch(permanentTypes::contains);
     }
 

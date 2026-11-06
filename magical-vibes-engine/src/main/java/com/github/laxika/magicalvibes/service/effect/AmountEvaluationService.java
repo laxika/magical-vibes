@@ -268,6 +268,7 @@ import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorCount;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellChosenColorCount;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorManaSymbols;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellTargetCount;
+import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentToughness;
 import com.github.laxika.magicalvibes.model.amount.CountersOnTriggeringPermanent;
 import com.github.laxika.magicalvibes.model.amount.LifeLostWhenTriggeringPermanentEntered;
@@ -1013,6 +1014,9 @@ public class AmountEvaluationService {
                     targetEffectiveToughness(gameData, ctx);
             case TriggeringPermanentToughness ignored ->
                     triggeringPermanentToughness(gameData, ctx);
+            case TriggeringPermanentPower ignored ->
+                    ctx.stackEntry() == null || ctx.stackEntry().getTriggeringPermanentPowerAtTrigger() == null
+                            ? 0 : Math.max(0, ctx.stackEntry().getTriggeringPermanentPowerAtTrigger());
             case TargetPower power ->
                     targetEffectivePower(gameData, ctx, power.allowNegative());
             case TargetPowerPlusToughness ignored ->

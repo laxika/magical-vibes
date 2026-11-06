@@ -105,6 +105,7 @@ public sealed interface PermanentPredicate permits
         PermanentSharesNameWithControlledTokenPredicate,
         PermanentSharesColorWithEquippedCreaturePredicate,
         PermanentSharesCardTypeWithSourcePermanentPredicate,
+        PermanentSharesCardTypeWithTriggeringPermanentPredicate,
         PermanentSharesCardTypeWithTargetCardPredicate,
         PermanentSharesCreatureTypeWithEquippedCreaturePredicate,
         PermanentSharesCreatureTypeWithEnchantedCreaturePredicate,

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
 import com.github.laxika.magicalvibes.cards.r.RendSpirit;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -78,20 +79,30 @@ class JuganTheRisingStarTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting with no targets places no counters")
-    void deathDistributeCanChooseNoTargets() {
+    @DisplayName("The controller chooses the targets and the division as the ability goes on the stack")
+    void controllerChoosesTargetsAndDivisionAsTheAbilityGoesOnTheStack() {
         Permanent jugan = addCreatureReady(player1, new JuganTheRisingStar());
         jugan.tap();
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new DeathcurseOgre());
-
-        gd.pendingETBDamageAssignments = Map.of();
+        Permanent ownOgre = harness.addToBattlefieldAndReturn(player1, new DeathcurseOgre());
+        Permanent oppOgre = harness.addToBattlefieldAndReturn(player2, new DeathcurseOgre());
 
         killJugan(jugan);
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.validIds()).contains(ownOgre.getId(), oppOgre.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownOgre.getId(), oppOgre.getId()));
+        harness.handleListChoice(player1, "3");
+        harness.handleListChoice(player1, "2");
+        assertThat(gd.stack.getFirst().getDamageAssignments())
+                .containsEntry(ownOgre.getId(), 3).containsEntry(oppOgre.getId(), 2);
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(ownOgre.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(oppOgre.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test

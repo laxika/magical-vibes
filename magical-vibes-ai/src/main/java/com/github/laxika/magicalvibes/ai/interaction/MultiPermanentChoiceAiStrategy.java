@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai.interaction;
 
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -51,6 +52,19 @@ class MultiPermanentChoiceAiStrategy implements AiInteractionStrategy<PendingInt
                     : validPermanentIds == null || validPermanentIds.isEmpty()
                             ? List.of(validPlayerIds.getFirst())
                             : List.of(validPermanentIds.getFirst());
+        } else if (interaction.context() instanceof MultiPermanentChoiceContext.StackedDividedDamageTargets divided
+                && isBeneficialCounter(divided.counterType())) {
+            // +1/+1 counters go on the AI's own biggest creatures.
+            chosen = gameData.playerBattlefields.getOrDefault(ctx.aiPlayerId(), List.of()).stream()
+                    .filter(p -> validPermanentIds != null && validPermanentIds.contains(p.getId()))
+                    .sorted(Comparator.comparingInt(
+                            (Permanent p) -> ctx.gameQueryService().getEffectivePower(gameData, p)).reversed())
+                    .limit(interaction.maxCount())
+                    .map(Permanent::getId)
+                    .toList();
+            if (chosen.isEmpty() && validPermanentIds != null && !validPermanentIds.isEmpty()) {
+                chosen = List.of(validPermanentIds.getFirst());
+            }
         } else if (interaction.context()
                 instanceof MultiPermanentChoiceContext.EachPlayerChoosesCreaturesWithTotalPowerAtMostChoice powerChoice) {
             chosen = chooseCreaturesWithinPowerLimit(interaction, ctx, powerChoice.maxPower());
@@ -147,5 +161,11 @@ class MultiPermanentChoiceAiStrategy implements AiInteractionStrategy<PendingInt
     }
 
     private record PoweredPermanent(UUID id, int power) {
+    }
+
+    private static boolean isBeneficialCounter(CounterType counterType) {
+        return counterType != null
+                && counterType != CounterType.MINUS_ONE_MINUS_ONE
+                && counterType != CounterType.MINUS_TWO_MINUS_ONE;
     }
 }
