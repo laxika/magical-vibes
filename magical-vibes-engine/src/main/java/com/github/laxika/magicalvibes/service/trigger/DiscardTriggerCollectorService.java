@@ -414,15 +414,15 @@ public class DiscardTriggerCollectorService {
             return false;
         }
         Card sourceCard = match.permanent().getCard();
-        CardEffect boundTrigger = trigger.withTriggeringCards(discardEvent.discardedCards());
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(boundTrigger)),
+                new ArrayList<>(List.of(trigger)),
                 null,
                 match.permanent().getId());
+        entry.setTriggeringCards(discardEvent.discardedCards());
         match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on discard event (seek shared card type)",

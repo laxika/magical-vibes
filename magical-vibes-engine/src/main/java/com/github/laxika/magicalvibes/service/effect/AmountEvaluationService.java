@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlled
 import com.github.laxika.magicalvibes.model.amount.BeheldPower;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsDiscardedThisResolution;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsInGraveyard;
+import com.github.laxika.magicalvibes.model.amount.CardTypesAmongTriggeringCards;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongPermanentsSacrificedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongSpellsCastThisTurn;
@@ -644,6 +645,8 @@ public class AmountEvaluationService {
                     countCountersOnStackEntryCard(gameData, c, ctx);
             case CountersOnTriggeringPermanent c ->
                     ctx.stackEntry() == null ? 0 : ctx.stackEntry().triggeringPermanentCounterCount(c.counterType());
+            case CardTypesAmongTriggeringCards ignored ->
+                    ctx.stackEntry() == null ? 0 : countCardTypesAmongCards(ctx.stackEntry().getTriggeringCards());
             case LifeLostWhenTriggeringPermanentEntered ignored -> {
                 Permanent entered = ctx.stackEntry() == null ? null : ctx.stackEntry().getTriggeringPermanentSnapshot();
                 yield entered != null && ctx.controllerId() != null
@@ -1811,6 +1814,19 @@ public class AmountEvaluationService {
                     found.add(card.getType());
                 }
                 found.addAll(card.getAdditionalTypes());
+            }
+        }
+        return found.size();
+    }
+
+    /** Distinct card types among {@code cards}; a multi-type card contributes each of its types. */
+    private int countCardTypesAmongCards(List<Card> cards) {
+        Set<CardType> found = EnumSet.noneOf(CardType.class);
+        for (Card card : cards) {
+            for (CardType cardType : CardType.values()) {
+                if (card.hasType(cardType)) {
+                    found.add(cardType);
+                }
             }
         }
         return found.size();

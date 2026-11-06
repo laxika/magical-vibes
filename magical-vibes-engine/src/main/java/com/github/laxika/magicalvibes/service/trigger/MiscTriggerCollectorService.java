@@ -22,7 +22,6 @@ import com.github.laxika.magicalvibes.model.effect.SourcePermanentSnapshotRequir
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardsAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.CradleOfVitalityLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -1750,21 +1749,16 @@ public class MiscTriggerCollectorService {
             CardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
-        CardEffect triggerEffect = effect;
         Card triggeringCard = ctx instanceof TriggerContext.CardPutIntoGraveyard cardPut
                 ? cardPut.card()
                 : ctx instanceof TriggerContext.PermanentCardPutIntoGraveyard permanentPut
                 ? permanentPut.permanentCard() : null;
-        if (ctx instanceof TriggerContext.CardsPutIntoGraveyardFromLibrary cardsPut
-                && effect instanceof TriggeringCardsAwareEffect aware) {
-            triggerEffect = aware.withTriggeringCards(cardsPut.cards());
-        }
 
-        if (triggerEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || triggerEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                || triggerEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(triggerEffect)),
+                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect)),
                     "card put into the graveyard", match.permanent().getId()));
         } else {
             StackEntry entry = new StackEntry(
@@ -1772,12 +1766,15 @@ public class MiscTriggerCollectorService {
                     match.permanent().getCard(),
                     match.controllerId(),
                     cardName + "'s ability",
-                    new ArrayList<>(List.of(triggerEffect)),
+                    new ArrayList<>(List.of(effect)),
                     null,
                     match.permanent().getId()
             );
             if (triggeringCard != null) {
                 entry.setTriggeringCardId(triggeringCard.getId());
+            }
+            if (ctx instanceof TriggerContext.CardsPutIntoGraveyardFromLibrary cardsPut) {
+                entry.setTriggeringCards(cardsPut.cards());
             }
             gameData.enqueueTrigger(entry);
         }
@@ -3588,23 +3585,23 @@ public class MiscTriggerCollectorService {
             return false;
         }
 
-        CardEffect triggerEffect = effect instanceof TriggeringCardsAwareEffect aware
-                ? aware.withTriggeringCards(cardsLeft.cards()) : effect;
-        if (triggerEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || triggerEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
             match.gameData().queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(triggerEffect)),
+                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect)),
                     "leaves-the-graveyard", match.permanent().getId()));
         } else {
-            match.gameData().enqueueTrigger(new StackEntry(
+            StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     match.permanent().getCard(),
                     match.controllerId(),
                     match.permanent().getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(triggerEffect)),
+                    new ArrayList<>(List.of(effect)),
                     null,
                     match.permanent().getId()
-            ));
+            );
+            entry.setTriggeringCards(cardsLeft.cards());
+            match.gameData().enqueueTrigger(entry);
         }
         return true;
     }

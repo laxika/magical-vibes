@@ -40,11 +40,10 @@ public class SeekCardSharingCardTypeWithDiscardedCardsEffectHandler implements N
             return;
         }
 
-        SeekCardSharingCardTypeWithDiscardedCardsEffect seek =
-                (SeekCardSharingCardTypeWithDiscardedCardsEffect) effect;
+        List<Card> discardedCards = entry.getTriggeringCards();
         List<Card> matching = new ArrayList<>();
         for (Card card : library) {
-            if (seek.discardedCards().stream()
+            if (discardedCards.stream()
                     .anyMatch(discarded -> sharesCardType(card, discarded, gameData, playerId))) {
                 matching.add(card);
             }

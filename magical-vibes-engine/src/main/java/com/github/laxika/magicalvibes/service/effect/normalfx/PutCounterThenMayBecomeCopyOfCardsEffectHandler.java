@@ -38,7 +38,7 @@ public class PutCounterThenMayBecomeCopyOfCardsEffectHandler implements NormalEf
         putCountersOnSourceEffectHandler.resolve(
                 gameData, entry, new PutCountersOnSourceEffect(1, 1, 1));
 
-        List<Card> cards = ((PutCounterThenMayBecomeCopyOfCardsEffect) effect).triggeringCards().stream()
+        List<Card> cards = entry.getTriggeringCards().stream()
                 .filter(card -> !card.isToken()
                         && (card.hasType(CardType.ARTIFACT) || card.hasType(CardType.CREATURE)))
                 .toList();

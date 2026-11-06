@@ -7,12 +7,14 @@ import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.amount.CardTypesAmongTriggeringCards;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeEqualToCardTypeCountOfTriggeringCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -43,7 +45,8 @@ public class PollutedCisternDimOubliette extends Card {
                         new TriggeredAbility(Triggers.putIntoGraveyardFrom(Zone.LIBRARY, Triggers.NONTOKEN,
                                 ObjectRelation.YOU_OWN),
                                 TriggerOptions.ONE_OR_MORE, List.of(new EffectRegistration(
-                                        new EachOpponentLosesLifeEqualToCardTypeCountOfTriggeringCardsEffect()))),
+                                        new LoseLifeEffect(new CardTypesAmongTriggeringCards(),
+                                                LoseLifeRecipient.EACH_OPPONENT)))),
                         GrantScope.SELF)));
         addTrigger(Triggers.doorUnlocked(1),
                 SequenceEffect.of(

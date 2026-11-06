@@ -548,6 +548,12 @@ public class StackEntry {
     /** Graveyard entry chosen as this spell's primary target when it was cast. */
     @Setter private long targetGraveyardEntryVersion = -1;
     @Setter private List<UUID> triggeringCardIds = List.of();
+    /**
+     * The cards a "one or more cards" trigger event was about ("those cards", "the discarded cards"), as they were in
+     * the event: the cards discarded, put into a graveyard from a library or that left a graveyard. Empty when the
+     * event was about no cards. Set through {@link #setTriggeringCards}; immutable, so copies share it.
+     */
+    private List<Card> triggeringCards = List.of();
     /** Card id of the permanent sacrificed as an additional cost to cast this spell, when one was paid. */
     @Setter private UUID sacrificedCardId;
     /** Card ids of permanents sacrificed as an activated-ability cost, retained for later effects. */
@@ -1155,6 +1161,7 @@ public class StackEntry {
         this.targetGraveyardEntryVersion = source.targetGraveyardEntryVersion;
         this.triggeringCardIds = source.triggeringCardIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.triggeringCardIds);
+        this.triggeringCards = source.triggeringCards;
         this.sacrificedCardId = source.sacrificedCardId;
         this.sacrificedCardGraveyardVersions = source.sacrificedCardGraveyardVersions;
         this.sacrificedCardIds = source.sacrificedCardIds.isEmpty()
@@ -2017,6 +2024,11 @@ public class StackEntry {
     public void setTriggeringCard(UUID cardId, long graveyardEntryVersion) {
         this.triggeringCardId = cardId;
         this.triggeringCardGraveyardEntryVersion = graveyardEntryVersion;
+    }
+
+    /** Records {@code cards} as the cards the trigger event was about, for the effects that read them as they resolve. */
+    public void setTriggeringCards(List<Card> cards) {
+        this.triggeringCards = cards == null ? List.of() : List.copyOf(cards);
     }
 
     /**

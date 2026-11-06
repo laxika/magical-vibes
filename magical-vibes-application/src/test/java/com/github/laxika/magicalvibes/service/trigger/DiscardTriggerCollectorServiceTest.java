@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.effect.SeekCardSharingCardTypeWithDiscardedCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedWatchedCreaturesCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -166,6 +167,25 @@ class DiscardTriggerCollectorServiceTest {
         assertThat(collected).isTrue();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.hasPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A discard-event seek trigger has the discarded cards as its triggering cards")
+    void discardEventSeekHasTheDiscardedCardsAsItsTriggeringCards() {
+        Permanent source = createPermanent("Diviner of Fates");
+        var effect = new SeekCardSharingCardTypeWithDiscardedCardsEffect();
+        Card first = createCard("First discarded card");
+        Card second = createCard("Second discarded card");
+        var ctx = new TriggerContext.DiscardEvent(player1Id, 2, List.of(first, second));
+
+        boolean collected = registry.dispatch(
+                match(source, player1Id, effect), LibraryWatch.ON_CONTROLLER_DISCARD_EVENT, effect, ctx);
+
+        assertThat(collected).isTrue();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+            assertThat(entry.getTriggeringCards()).containsExactly(first, second);
+        });
     }
 
     private static Card createCard(String name) {

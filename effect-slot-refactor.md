@@ -30,7 +30,7 @@ re-check them with a grep before acting on them.
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
 | 14 | Trigger options replace trigger-only wrapper effects | done (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; run 16l, family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader`; run 16m, family 10 (sagas): no chapter or final-chapter ability has a legacy view, and the final-chapter collectors read the abilities through `SagaAbilityReader`; run 16n, family 11's player and keyword actions: every `ActionWatch` collector reads the abilities through `ActionAbilityReader`; run 16o, family 11's rest: every `MiscWatch` collector and the planar reader read the abilities through `MiscAbilityReader`; run 16p, the zone changes but "when this enters" and the permanent changes: no such ability has a legacy view, and the readers outside the trigger pipeline read them through `ZoneChangeAbilityReader`; run 16q, "when this enters": no ability has a legacy view; the own enters collector reads the abilities and judges their limit, the other readers read `Card.getOwnEntryEffects()`, and `OnceOnlyTriggerEffect` is gone; run 16r, every triggered ability is one object on the stack: the abilities of one Oracle ability are merged by script, the own enters and combat collectors group effects by ability, and `TriggerMode` is gone; run 16s, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags are gone: a `ConditionalEffect` is an effect's "if", and every collector judges the intervening "if" and event condition from the ability; run 16t, the trigger-only wrapper classes: the `Triggering…ConditionalEffect` filters, `SelfExiledFromBattlefieldEffect`, `OncePerTurnPerCreatureTriggerEffect` and `OncePerTurnTriggerEffect`'s keyed, per-grant, mark-on-acceptance and first-time forms are gone, their cards written with trigger filters, `TriggerLimit`s and `TriggeringCardMatches`; Bill Potts' `OncePerTurnTriggerEffect` and the may-unwrapping moved to step 15, with the user) |
-| 15 | Effects read the trigger event (repeatable) | open (run 1, with the user: the dying card, `DyingCreatureCardAwareEffect` gone; effects read the stack entry's triggering card; run 2, with the user: the departed permanent's last-known information, its 13 `…AwareEffect` interfaces gone; effects read the stack entry's triggering permanent; run 3: the rest of the departed object, the last-known rebuilds and baked dying-card ids run 2 kept, 4 classes gone and 5 lose their bound ids; run 4: the departed permanent's trigger-time rebuilds and skips run 3 kept, 6 classes gone, their skips trigger filters; run 5: the last departed-permanent rebuilds of `LegacyTriggerBindings` but the counter distribution, 3 classes gone, modular's "you may" and flag on the card; run 6, with the user: the death counter distribution reads its total from the entry and announces its targets and division as it goes on the stack (a rules fix), Martyr's Bond's "it" is the triggering permanent; run 7: the enters-side rebindings of the source to the entering permanent, Confusion in the Ranks' "another player" and "it" and Lucy MacLean's exclusion read the triggering permanent, its current types a rules fix; run 8: the damage source, `DamageSourceAwareEffect` and `DamageSourceControllerAwareEffect` gone, "that source" is the stack entry's triggering permanent and "that source's controller" its controller as the ability resolves (a rules fix for five cards), 4 effects replaced by existing ones with `TRIGGERING_PERMANENT_CONTROLLER` recipients, "each source" a trigger option on the cards; run 9: the event's permanents, `CombatDamageDealerAwareEffect` and `AttackingCreaturesAwareEffect` gone, "them" / "each of them" are the stack entry's triggering permanents and attacking snapshots, "whenever you attack with one or more [filter]" a trigger filter, 6 effects replaced by existing ones, one dead effect gone; run 10: the event's amount, `CombatDamageAmountAwareEffect` gone, every combat damage to a player entry carries the damage as its event value and the targeted choices carry it into theirs, Froghemoth's "up to that many" an event-aware target count, the graveyard targets restricted by the damage still fixed as they are chosen; `CombatExcessDamageAwareEffect` left for its own run; run 11: the excess damage, `CombatExcessDamageAwareEffect` gone, every "deals combat damage to a creature" entry carries the excess damage dealt to that creature as its event value and the collector judges the abilities' intervening "if" against it, Overclocked Electromancer an `EventValueAtLeast(1)` intervening "if" and `EnergyCountersEffect(new EventValue())`) |
+| 15 | Effects read the trigger event (repeatable) | open (run 1, with the user: the dying card, `DyingCreatureCardAwareEffect` gone; effects read the stack entry's triggering card; run 2, with the user: the departed permanent's last-known information, its 13 `…AwareEffect` interfaces gone; effects read the stack entry's triggering permanent; run 3: the rest of the departed object, the last-known rebuilds and baked dying-card ids run 2 kept, 4 classes gone and 5 lose their bound ids; run 4: the departed permanent's trigger-time rebuilds and skips run 3 kept, 6 classes gone, their skips trigger filters; run 5: the last departed-permanent rebuilds of `LegacyTriggerBindings` but the counter distribution, 3 classes gone, modular's "you may" and flag on the card; run 6, with the user: the death counter distribution reads its total from the entry and announces its targets and division as it goes on the stack (a rules fix), Martyr's Bond's "it" is the triggering permanent; run 7: the enters-side rebindings of the source to the entering permanent, Confusion in the Ranks' "another player" and "it" and Lucy MacLean's exclusion read the triggering permanent, its current types a rules fix; run 8: the damage source, `DamageSourceAwareEffect` and `DamageSourceControllerAwareEffect` gone, "that source" is the stack entry's triggering permanent and "that source's controller" its controller as the ability resolves (a rules fix for five cards), 4 effects replaced by existing ones with `TRIGGERING_PERMANENT_CONTROLLER` recipients, "each source" a trigger option on the cards; run 9: the event's permanents, `CombatDamageDealerAwareEffect` and `AttackingCreaturesAwareEffect` gone, "them" / "each of them" are the stack entry's triggering permanents and attacking snapshots, "whenever you attack with one or more [filter]" a trigger filter, 6 effects replaced by existing ones, one dead effect gone; run 10: the event's amount, `CombatDamageAmountAwareEffect` gone, every combat damage to a player entry carries the damage as its event value and the targeted choices carry it into theirs, Froghemoth's "up to that many" an event-aware target count, the graveyard targets restricted by the damage still fixed as they are chosen; `CombatExcessDamageAwareEffect` left for its own run; run 11: the excess damage, `CombatExcessDamageAwareEffect` gone, every "deals combat damage to a creature" entry carries the excess damage dealt to that creature as its event value and the collector judges the abilities' intervening "if" against it, Overclocked Electromancer an `EventValueAtLeast(1)` intervening "if" and `EnergyCountersEffect(new EventValue())`); run 12: the event's cards, `TriggeringCardsAwareEffect` gone, "those cards" / "the discarded cards" are the stack entry's triggering cards, Polluted Cistern's drain the existing `LoseLifeEffect` with a `CardTypesAmongTriggeringCards` amount) |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
 ## Why
@@ -10788,6 +10788,95 @@ The skills didn't name these classes.
   one null key), and `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest`,
   `CardEffectTargetingConsistencyTest` and `CostEffectClassificationTest` 1 each; their messages name none of the
   changed classes.
+- Engine: the whole module. The one failure is the known HEAD one, `GameMutationBoundaryRatchetTest`.
+- AI: compiles (`compileTestJava`).
+- The full suite was not run here.
+
+#### Run 12: the event's cards
+
+Run 11 left 5 `…AwareEffect` interfaces. Four bind something that isn't a trigger event (a hand choice, a multi-player
+choice, the granting permanent, a mana ability's color); the fifth, `TriggeringCardsAwareEffect`, bound the cards of a
+"one or more cards" event ("those cards", "the discarded cards") into the effect. It is gone: the stack entry carries
+the cards, set by the collector whatever the effect. 4 `…AwareEffect` interfaces are left, none of them a trigger
+event's: `ChosenCard`, `AcceptedPlayers`, `GrantingPermanent` and `ProducedManaColor`.
+
+**What the scan found.** Three implementers, one card each, and three binding sites:
+
+- `SeekCardSharingCardTypeWithDiscardedCardsEffect` (Diviner of Fates), bound by its own discard-event collector in
+  `DiscardTriggerCollectorService`;
+- `PutCounterThenMayBecomeCopyOfCardsEffect` (Spirit of Resilience), bound by
+  `MiscTriggerCollectorService.handleControllerArtifactOrCreatureCardsLeaveGraveyard` (the default of both
+  leaves-the-graveyard watches);
+- `EachOpponentLosesLifeEqualToCardTypeCountOfTriggeringCardsEffect` (Polluted Cistern's granted ability), bound by
+  `handleCardPutIntoGraveyardDefault` for a library-to-graveyard batch.
+
+The rulings of Spirit of Resilience (it "copies exactly what was printed on the original card") confirm the effect
+wants the `Card`s as they were in the event, not ids looked up again.
+
+**The model.**
+
+- `StackEntry.setTriggeringCards(List<Card>)` / `getTriggeringCards()` (new): the cards a "one or more cards" event was
+  about, an immutable list the copy constructor shares (the cards are frozen), so the simulation copy has it.
+- The three collectors set it on the entry they build: the discard-event seek collector; the leaves-the-graveyard
+  default for every non-targeted entry; the card-put-into-graveyard default for every non-targeted entry of a
+  library-to-graveyard batch.
+- `CardTypesAmongTriggeringCards` (new `DynamicAmount`): "for each card type among those cards", counted as the old
+  effect did (each `CardType` the card has, once).
+- Polluted Cistern (by script): `LoseLifeEffect(new CardTypesAmongTriggeringCards(), LoseLifeRecipient.EACH_OPPONENT)`.
+  The two other effects lost their component and read the entry; their cards already used the no-argument
+  constructors.
+
+**Gone.** `TriggeringCardsAwareEffect`, `EachOpponentLosesLifeEqualToCardTypeCountOfTriggeringCardsEffect` and its
+handler, the two records' card lists and `withTriggeringCards`, and the three bindings.
+
+**Kept, with their reason.**
+
+- The targeted paths of the two `MiscTriggerCollectorService` defaults (`SelfTriggeredAbilityTarget`) don't carry the
+  cards: no targeted effect reads them, and none was bound before (a bound effect in a targeted ability was only ever
+  one of the three, none targeted).
+- `StackEntry.triggeringCardIds` (ids, set by two discard collectors, one exile collector and two discard
+  follow-ups, read by five effect handlers) is a sibling of the new list. A later run can merge them; most of its
+  readers look for the cards in the graveyard, and `CreateTokensForDistinctDiscardedCardTypesEffectHandler` finds them
+  by id (`GameQueryService.findCardById`), which misses a card that ceased to exist.
+- `BecomeCopyOfOneOfCardsUntilEndOfTurnEffect(cards)`, which Spirit of Resilience's handler builds for its may
+  question, is a resolution-built effect, not a trigger binding.
+
+**Behaviour changes.** None. A library-to-graveyard or leaves-the-graveyard entry now carries the event's cards
+whatever its effect; only the three effects read them.
+
+**For later runs.** The bindings that aren't trigger events (`ChosenCard`, `AcceptedPlayers`, `GrantingPermanent`,
+`ProducedManaColor`), merging `triggeringCardIds` into the triggering cards, the graveyard-target rebuilds kept since
+run 3 (with Warsinger's and Soundwave's), `DamagedPlayerControlsTargetEffect`'s binding, Bill Potts, the may-unwrapping
+and the `…Triggering…` classes.
+
+**Scripts.**
+
+- `scripts/step15-triggering-cards-cards.py` (idempotent, per letter module): Polluted Cistern.
+- `scripts/step15-triggering-cards-docs.py` (idempotent): exact edits in `ORACLE_TEXT_EFFECT_MAP.md` (Spirit of
+  Resilience, Polluted Cistern), `EFFECTS_INDEX.md` (the seek row, the drain row gone, the new amount),
+  `EFFECTS_QUICK_REFERENCE.md` (Spirit of Resilience, Polluted Cistern) and `CARD_PATTERNS_CREATURES_TRIGGERED.md`
+  (Spirit of Resilience).
+
+The records, handlers, collectors, `StackEntry`, `AmountEvaluationService` and a sentence in `ARCHITECTURE.md` were
+edited by hand. The skills didn't name these classes.
+
+**Tests changed.**
+
+- New unit tests: `MiscTriggerCollectorServiceTest#cardsLeavingGraveyardAreTheEntrysTriggeringCards`,
+  `MiscTriggerCollectorServiceTest#cardsPutIntoGraveyardFromLibraryAreTheEntrysTriggeringCards` and
+  `DiscardTriggerCollectorServiceTest#discardEventSeekHasTheDiscardedCardsAsItsTriggeringCards`.
+- No existing test changed; no test named the removed classes.
+
+**Test runs.**
+
+- Card: the test class of every card with a `Triggers.leavesGraveyard`, `Triggers.putIntoGraveyardFrom`,
+  `Triggers.putIntoGraveyardFromAnywhere[ButBattlefield]` or `Triggers.youDiscardOneOrMoreCards` trigger or naming one
+  of the changed effects or the new amount: 164 test classes, 1,386 test cases, all passing.
+- Application: `MiscTriggerCollectorServiceTest`, `DiscardTriggerCollectorServiceTest` (the three new cases pass),
+  `CardFreezeTest`, `TriggerCollectorRegistryTest`, `CardEffectTargetingConsistencyTest`, every `…RatchetTest` and the
+  architecture tests: 138 cases. The 4 failures are HEAD's, 1 each in `SimulationCopyCompletenessTest`,
+  `CardImmutabilityArchTest` (ArchUnit imported no class), `CardEffectTargetingConsistencyTest` and
+  `CostEffectClassificationTest`; their messages name none of the changed classes.
 - Engine: the whole module. The one failure is the known HEAD one, `GameMutationBoundaryRatchetTest`.
 - AI: compiles (`compileTestJava`).
 - The full suite was not run here.

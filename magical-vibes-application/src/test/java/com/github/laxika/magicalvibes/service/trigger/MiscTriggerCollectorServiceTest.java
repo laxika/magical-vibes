@@ -57,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.amount.CardTypesAmongTriggeringCards;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -69,6 +70,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.PutCounterThenMayBecomeCopyOfCardsEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -159,6 +161,44 @@ class MiscTriggerCollectorServiceTest {
         assertThat(choice).isNotNull();
         assertThat(choice.controllerId()).isEqualTo(player1Id);
         assertThat(choice.sourcePermanentId()).isEqualTo(source.getId());
+    }
+
+    @Test
+    @DisplayName("Cards leaving the graveyard are the entry's triggering cards")
+    void cardsLeavingGraveyardAreTheEntrysTriggeringCards() {
+        Permanent source = createPermanent("Spirit of Resilience");
+        var effect = new PutCounterThenMayBecomeCopyOfCardsEffect();
+        Card first = createCard("First departed card");
+        Card second = createCard("Second departed card");
+
+        boolean collected = registry.dispatch(match(source, player1Id, effect),
+                ZoneChangeWatch.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD, effect,
+                new TriggerContext.ControllerCardsLeaveGraveyard(player1Id, List.of(first, second)));
+
+        assertThat(collected).isTrue();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+            assertThat(entry.getTriggeringCards()).containsExactly(first, second);
+        });
+    }
+
+    @Test
+    @DisplayName("Cards put into the graveyard from the library are the entry's triggering cards")
+    void cardsPutIntoGraveyardFromLibraryAreTheEntrysTriggeringCards() {
+        Permanent source = createPermanent("Polluted Cistern");
+        var effect = new LoseLifeEffect(new CardTypesAmongTriggeringCards(), LoseLifeRecipient.EACH_OPPONENT);
+        Card first = createCard("First milled card");
+        Card second = createCard("Second milled card");
+
+        boolean collected = registry.dispatch(match(source, player1Id, effect),
+                ZoneChangeWatch.ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY, effect,
+                new TriggerContext.CardsPutIntoGraveyardFromLibrary(player1Id, 2, List.of(first, second)));
+
+        assertThat(collected).isTrue();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+            assertThat(entry.getTriggeringCards()).containsExactly(first, second);
+        });
     }
 
     @Test

@@ -1,23 +1,9 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.Card;
-
-import java.util.List;
-
-/** Spirit of Resilience's graveyard-departure trigger. */
-public record PutCounterThenMayBecomeCopyOfCardsEffect(List<Card> triggeringCards)
-        implements CardEffect, TriggeringCardsAwareEffect {
-
-    public PutCounterThenMayBecomeCopyOfCardsEffect() {
-        this(List.of());
-    }
-
-    public PutCounterThenMayBecomeCopyOfCardsEffect {
-        triggeringCards = List.copyOf(triggeringCards);
-    }
-
-    @Override
-    public CardEffect withTriggeringCards(List<Card> cards) {
-        return new PutCounterThenMayBecomeCopyOfCardsEffect(cards);
-    }
+/**
+ * Spirit of Resilience's graveyard-departure trigger: a +1/+1 counter on the source, then it may become a copy of an
+ * artifact or creature card from among the cards that left the graveyard until end of turn. Those cards are the stack
+ * entry's triggering cards, set by the leaves-the-graveyard collector.
+ */
+public record PutCounterThenMayBecomeCopyOfCardsEffect() implements CardEffect {
 }
