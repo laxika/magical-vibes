@@ -147,6 +147,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourceC
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerToughnessTotalAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithTriggeringPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPermanentControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherControlledPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithControlledCreatureOrGraveyardCreaturePredicate;
@@ -1043,6 +1044,39 @@ class PredicateEvaluationServiceTest {
             assertThat(evaluator.matchesPermanentPredicate(creature, predicate, context)).isTrue();
             assertThat(evaluator.matchesPermanentPredicate(enchantment, predicate, context)).isFalse();
             assertThat(evaluator.matchesPermanentPredicate(creature, predicate, FilterContext.of(gd))).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentSharesCardTypeWithTriggeringPermanentPredicate compares with the triggering permanent on the battlefield first")
+        void sharesCardTypeWithTriggeringPermanentPredicatePrefersThePermanentOnTheBattlefield() {
+            Permanent creature = addPermanent(player2Id, createCreature("Creature", 2, 2, CardColor.GREEN));
+            Permanent artifact = addPermanent(player2Id, createArtifact("Artifact"));
+            Permanent enteredArtifact = addPermanent(player1Id, createArtifact("Entered"));
+            Permanent staleCreatureSnapshot = new Permanent(createCreature("Stale", 1, 1, CardColor.GREEN));
+            var predicate = new PermanentSharesCardTypeWithTriggeringPermanentPredicate();
+            FilterContext context = FilterContext.of(gd)
+                    .withTriggeringPermanentId(enteredArtifact.getId())
+                    .withTriggeringPermanentSnapshot(staleCreatureSnapshot);
+
+            assertThat(evaluator.matchesPermanentPredicate(artifact, predicate, context)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(creature, predicate, context)).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentControlledByTriggeringPermanentControllerPredicate follows the triggering permanent's controller")
+        void controlledByTriggeringPermanentControllerPredicateFollowsItsController() {
+            Permanent entered = addPermanent(player2Id, createCreature("Entered", 2, 2, CardColor.GREEN));
+            Permanent sameController = addPermanent(player2Id, createArtifact("Same Controller"));
+            Permanent otherController = addPermanent(player1Id, createArtifact("Other Controller"));
+            var predicate = new PermanentControlledByTriggeringPermanentControllerPredicate();
+            FilterContext context = FilterContext.of(gd)
+                    .withSourceControllerId(player1Id)
+                    .withTriggeringPermanentId(entered.getId());
+
+            assertThat(evaluator.matchesPermanentPredicate(sameController, predicate, context)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(otherController, predicate, context)).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(sameController, predicate,
+                    FilterContext.of(gd).withTriggeringPermanentId(UUID.randomUUID()))).isFalse();
         }
 
         @Test

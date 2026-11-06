@@ -353,20 +353,10 @@ public class EnterTriggerCollectorService {
                 return true;
             }
             for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-                CardEffect targetingEffect = effect;
-                if (effect instanceof com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect exchange
-                        && exchange.triggeringPermanentIsFirstTarget()) {
-                    targetingEffect = com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect
-                            .forTriggeringPermanent(new com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate(List.of(
-                                    new com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate(
-                                            new com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate(
-                                                    pe.enteringControllerId())),
-                                    new com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithSourcePermanentPredicate())));
-                }
                 match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
                         match.permanent().getCard(), match.controllerId(),
-                        new ArrayList<>(List.of(targetingEffect)), match.permanent().getId(),
-                        enteringPermanentId, enteringPermanentId, null, false, null, null,
+                        new ArrayList<>(List.of(effect)), match.permanent().getId(),
+                        enteringPermanentId, match.permanent().getId(), null, false, null, null,
                         pe.enteringControllerId()));
             }
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
@@ -822,7 +812,7 @@ public class EnterTriggerCollectorService {
         MayEffect may = new MayEffect(effect, "Have target player create a token copy?");
         match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
                 match.permanent().getCard(), match.controllerId(), List.of(may),
-                match.permanent().getId(), enteringTokenId, enteringTokenId));
+                match.permanent().getId(), enteringTokenId, match.permanent().getId()));
         logTriggered(match);
         return true;
     }

@@ -344,6 +344,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentProtectedByOpponentO
 import com.github.laxika.magicalvibes.model.filter.PermanentReceivedPlusOnePlusOneCounterThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithTriggeringPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPermanentControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithTargetCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesColorWithEquippedCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCreatureTypeWithEnchantedCreaturePredicate;
@@ -1713,8 +1714,13 @@ public class PredicateEvaluationService {
                     sharesCardTypeWith(permanent, filterContext,
                             filterContext == null ? null : filterContext.sourcePermanentSnapshot());
             case PermanentSharesCardTypeWithTriggeringPermanentPredicate ignored ->
-                    sharesCardTypeWith(permanent, filterContext,
-                            filterContext == null ? null : filterContext.triggeringPermanentSnapshot());
+                    sharesCardTypeWithTriggeringPermanent(permanent, filterContext);
+            case PermanentControlledByTriggeringPermanentControllerPredicate ignored -> {
+                Permanent triggering = liveTriggeringPermanent(filterContext);
+                UUID triggeringControllerId = triggering == null ? null : gameData.findControllerOf(triggering);
+                yield triggeringControllerId != null
+                        && triggeringControllerId.equals(gameData.findControllerOf(permanent));
+            }
             case PermanentSharesCardTypeWithTargetCardPredicate ignored ->
                     sharesCardTypeWithTargetCard(permanent, filterContext);
             case com.github.laxika.magicalvibes.model.filter.PermanentChosenColorStrictlyMostCommonPredicate ignored ->
@@ -3324,6 +3330,29 @@ public class PredicateEvaluationService {
         Set<CardType> otherTypes = cardTypesWithoutGameData(other);
         return otherTypes.stream()
                 .anyMatch(permanentTypes::contains);
+    }
+
+    /**
+     * Whether {@code permanent} shares a card type with the triggering permanent: the one on the battlefield with its
+     * current types, otherwise the context's snapshot as it last existed (CR 608.2h).
+     */
+    private boolean sharesCardTypeWithTriggeringPermanent(Permanent permanent, FilterContext filterContext) {
+        Permanent triggering = liveTriggeringPermanent(filterContext);
+        if (triggering == null) {
+            return sharesCardTypeWith(permanent, filterContext,
+                    filterContext == null ? null : filterContext.triggeringPermanentSnapshot());
+        }
+        Set<CardType> triggeringTypes = gameQueryService.getEffectiveCardTypes(filterContext.gameData(), triggering);
+        return gameQueryService.getEffectiveCardTypes(filterContext.gameData(), permanent).stream()
+                .anyMatch(triggeringTypes::contains);
+    }
+
+    /** The permanent {@link FilterContext#triggeringPermanentId()} names, while it is on the battlefield. */
+    private Permanent liveTriggeringPermanent(FilterContext filterContext) {
+        if (filterContext == null || filterContext.gameData() == null || filterContext.triggeringPermanentId() == null) {
+            return null;
+        }
+        return gameQueryService.findPermanentById(filterContext.gameData(), filterContext.triggeringPermanentId());
     }
 
     private boolean sharesCardTypeWithTargetCard(Permanent permanent, FilterContext filterContext) {

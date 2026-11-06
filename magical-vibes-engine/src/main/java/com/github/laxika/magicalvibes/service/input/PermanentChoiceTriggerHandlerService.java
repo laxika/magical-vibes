@@ -1423,13 +1423,6 @@ public class PermanentChoiceTriggerHandlerService {
                     entry.setDamageSourceCard(enteringPermanent.getCard());
                 }
             }
-            boolean targetsRelativeToEnteringPermanent = ett.effects().stream()
-                    .anyMatch(effect -> effect instanceof ExchangeControlOfTargetPermanentsEffect exchange
-                            && exchange.triggeringPermanentIsFirstTarget());
-            if (targetsRelativeToEnteringPermanent && ett.enteringPermanentId() != null) {
-                entry.setSourcePermanentSnapshot(
-                        gameQueryService.findPermanentById(gameData, ett.enteringPermanentId()));
-            }
             Permanent kickedSource = sourcePermanentId == null ? null
                     : gameQueryService.findPermanentById(gameData, sourcePermanentId);
             if (kickedSource != null && kickedSource.isKicked()) {

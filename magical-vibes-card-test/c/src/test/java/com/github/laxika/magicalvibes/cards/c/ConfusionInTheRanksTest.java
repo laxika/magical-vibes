@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AetherSpellbomb;
 import com.github.laxika.magicalvibes.cards.a.Atog;
 import com.github.laxika.magicalvibes.cards.a.AuriokTransfixer;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
 import com.github.laxika.magicalvibes.cards.s.SphereOfPurity;
 import com.github.laxika.magicalvibes.cards.s.SeatOfTheSynod;
 import com.github.laxika.magicalvibes.cards.t.TrollAscetic;
@@ -22,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ConfusionInTheRanks.class, Atog.class, AuriokTransfixer.class,
         SphereOfPurity.class, AetherSpellbomb.class, ChromaticSphere.class,
-        SeatOfTheSynod.class, TrollAscetic.class, Island.class})
+        SeatOfTheSynod.class, TrollAscetic.class, Island.class, MarchOfTheMachines.class})
 class ConfusionInTheRanksTest extends BaseCardTest {
 
     @Test
@@ -248,5 +249,26 @@ class ConfusionInTheRanksTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Aether Spellbomb");
         harness.assertOnBattlefield(player1, "Chromatic Sphere");
         harness.assertNotOnBattlefield(player2, "Chromatic Sphere");
+    }
+
+    @Test
+    @DisplayName("The entering permanent's current types count: under March of the Machines an artifact shares creature")
+    void enteringPermanentIsJudgedByItsCurrentTypes() {
+        harness.addToBattlefield(player1, new ConfusionInTheRanks());
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Atog());
+        harness.setHand(player1, List.of(new AetherSpellbomb()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.permanentChoiceContext())
+                .isInstanceOf(PermanentChoiceContext.EntersTriggerTarget.class);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Atog");
+        harness.assertOnBattlefield(player2, "Aether Spellbomb");
     }
 }

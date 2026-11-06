@@ -102,7 +102,7 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
         UUID exchangeControllerId = exchange.triggeringPermanentIsFirstTarget() ? ownController : controllerId;
         FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(exchangeControllerId);
         if (exchange.triggeringPermanentIsFirstTarget()) {
-            filterContext = filterContext.withSourcePermanentSnapshot(ownTarget);
+            filterContext = filterContext.withTriggeringPermanentId(ownTarget.getId());
         } else {
             Permanent sourcePermanent = entry.getSourcePermanentId() == null
                     ? entry.getSourcePermanentSnapshot()

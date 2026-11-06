@@ -267,8 +267,8 @@ public class TriggerTargetCollector {
                 .allMatch(e -> e.targetPlayerRelation() == PlayerRelation.OPPONENT);
         boolean excludesTriggeringPermanentController = unwrappedEffects.stream()
                 .anyMatch(TargetPlayerOtherThanTriggeringPermanentControllerEffect.class::isInstance);
-        UUID excludedPlayerId = excludesTriggeringPermanentController && sourcePermanentSnapshot != null
-                ? gameQueryService.findPermanentController(gameData, sourcePermanentSnapshot.getId())
+        UUID excludedPlayerId = excludesTriggeringPermanentController && triggeringPermanentId != null
+                ? gameQueryService.findPermanentController(gameData, triggeringPermanentId)
                 : null;
 
         boolean opponentOnly = isOpponentRestricted(targetFilter) || effectsAreOpponentOnly;

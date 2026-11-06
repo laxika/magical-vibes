@@ -30,7 +30,7 @@ re-check them with a grep before acting on them.
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
 | 14 | Trigger options replace trigger-only wrapper effects | done (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; run 16l, family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader`; run 16m, family 10 (sagas): no chapter or final-chapter ability has a legacy view, and the final-chapter collectors read the abilities through `SagaAbilityReader`; run 16n, family 11's player and keyword actions: every `ActionWatch` collector reads the abilities through `ActionAbilityReader`; run 16o, family 11's rest: every `MiscWatch` collector and the planar reader read the abilities through `MiscAbilityReader`; run 16p, the zone changes but "when this enters" and the permanent changes: no such ability has a legacy view, and the readers outside the trigger pipeline read them through `ZoneChangeAbilityReader`; run 16q, "when this enters": no ability has a legacy view; the own enters collector reads the abilities and judges their limit, the other readers read `Card.getOwnEntryEffects()`, and `OnceOnlyTriggerEffect` is gone; run 16r, every triggered ability is one object on the stack: the abilities of one Oracle ability are merged by script, the own enters and combat collectors group effects by ability, and `TriggerMode` is gone; run 16s, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags are gone: a `ConditionalEffect` is an effect's "if", and every collector judges the intervening "if" and event condition from the ability; run 16t, the trigger-only wrapper classes: the `Triggering…ConditionalEffect` filters, `SelfExiledFromBattlefieldEffect`, `OncePerTurnPerCreatureTriggerEffect` and `OncePerTurnTriggerEffect`'s keyed, per-grant, mark-on-acceptance and first-time forms are gone, their cards written with trigger filters, `TriggerLimit`s and `TriggeringCardMatches`; Bill Potts' `OncePerTurnTriggerEffect` and the may-unwrapping moved to step 15, with the user) |
-| 15 | Effects read the trigger event (repeatable) | open (run 1, with the user: the dying card, `DyingCreatureCardAwareEffect` gone; effects read the stack entry's triggering card; run 2, with the user: the departed permanent's last-known information, its 13 `…AwareEffect` interfaces gone; effects read the stack entry's triggering permanent; run 3: the rest of the departed object, the last-known rebuilds and baked dying-card ids run 2 kept, 4 classes gone and 5 lose their bound ids; run 4: the departed permanent's trigger-time rebuilds and skips run 3 kept, 6 classes gone, their skips trigger filters; run 5: the last departed-permanent rebuilds of `LegacyTriggerBindings` but the counter distribution, 3 classes gone, modular's "you may" and flag on the card; run 6, with the user: the death counter distribution reads its total from the entry and announces its targets and division as it goes on the stack (a rules fix), Martyr's Bond's "it" is the triggering permanent) |
+| 15 | Effects read the trigger event (repeatable) | open (run 1, with the user: the dying card, `DyingCreatureCardAwareEffect` gone; effects read the stack entry's triggering card; run 2, with the user: the departed permanent's last-known information, its 13 `…AwareEffect` interfaces gone; effects read the stack entry's triggering permanent; run 3: the rest of the departed object, the last-known rebuilds and baked dying-card ids run 2 kept, 4 classes gone and 5 lose their bound ids; run 4: the departed permanent's trigger-time rebuilds and skips run 3 kept, 6 classes gone, their skips trigger filters; run 5: the last departed-permanent rebuilds of `LegacyTriggerBindings` but the counter distribution, 3 classes gone, modular's "you may" and flag on the card; run 6, with the user: the death counter distribution reads its total from the entry and announces its targets and division as it goes on the stack (a rules fix), Martyr's Bond's "it" is the triggering permanent; run 7: the enters-side rebindings of the source to the entering permanent, Confusion in the Ranks' "another player" and "it" and Lucy MacLean's exclusion read the triggering permanent, its current types a rules fix) |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
 ## Why
@@ -10194,6 +10194,108 @@ classes.
   Mockito wiring). Those 6 also fail with HEAD's handler in this tree.
 - Engine: the whole module. The one failure is the known HEAD one, `GameMutationBoundaryRatchetTest`.
 - AI: `MultiPermanentChoiceAiStrategyTest` and `GameDataDeepCopyTest`, all passing.
+- The full suite was not run here.
+
+#### Run 7: the enters-side rebindings of the source
+
+Run 6's "for later runs" listed this group first: the enters paths that made the entering permanent stand in for the
+ability's source, so that a source-relative predicate compared with "it". They are gone; the predicates read the
+triggering permanent. The 11 `…AwareEffect` interfaces are untouched.
+
+**What the scan found.**
+
+- Confusion in the Ranks ("its controller chooses target permanent another player controls that shares a card type with
+  it") was written with `PermanentNotPredicate(PermanentControlledBySourceControllerPredicate)` and
+  `PermanentSharesCardTypeWithSourcePermanentPredicate`, and three engine paths made that mean the entering permanent:
+  - `EnterTriggerCollectorService.enqueueAnyPermanentEnter` rebuilt the exchange at trigger time with
+    `PermanentControlledByPlayerPredicate(enteringControllerId)` baked in;
+  - the same default passed the entering permanent as the target choice's `targetSourcePermanentId`, so
+    `TriggerTargetCollector`'s filter context had it as the source snapshot;
+  - `PermanentChoiceTriggerHandlerService.handleEntersTrigger` set the stack entry's **source** snapshot to the entering
+    permanent for any `triggeringPermanentIsFirstTarget` exchange, and `ExchangeControlOfTargetPermanentsEffectHandler`
+    put the entering permanent in its filter context as the source.
+- Lucy MacLean's "target player other than that token's controller" (`TargetPlayerOtherThanTriggeringPermanentControllerEffect`):
+  `handleTokenEnterCopyForTargetPlayer` passed the entering token as the target source, and `TriggerTargetCollector`
+  excluded the controller of its source snapshot.
+- Fatal Grudge, named in run 6's Findings, isn't a trigger: its "the sacrificed permanent" is the spell's cost snapshot,
+  which `SacrificePermanentsEffectHandler` falls back to as the source. Braids, Arisen Nightmare's handler does the same
+  with the permanent sacrificed as it resolves. Neither is a trigger event; both are kept.
+
+**The model.**
+
+- `PermanentControlledByTriggeringPermanentControllerPredicate` (new): permanents controlled by the controller of the
+  permanent `FilterContext.triggeringPermanentId` names; nothing while it is off the battlefield.
+- `PermanentSharesCardTypeWithTriggeringPermanentPredicate` reads the permanent `triggeringPermanentId` names while it
+  is on the battlefield, by its current (layered) types, and otherwise `triggeringPermanentSnapshot` as before (Martyr's
+  Bond) (**CR 608.2h**, checked).
+- `TargetLegalityService`'s battlefield resolution recheck gives its filter context and `TargetValidationContext` the
+  entry's triggering permanent id and snapshot, as `TriggerTargetCollector` already gave them when the target was
+  chosen.
+
+**The engine.**
+
+- Gone: the exchange rebuild in `enqueueAnyPermanentEnter` and the entry's source rebinding in
+  `handleEntersTrigger`.
+- `enqueueAnyPermanentEnter` and `handleTokenEnterCopyForTargetPlayer` pass the watching permanent as the target choice's
+  target source.
+- `ExchangeControlOfTargetPermanentsEffectHandler`'s triggering-permanent form gives its filter context the triggering
+  permanent's id, not a source snapshot.
+- `TriggerTargetCollector` excludes the controller of the `triggeringPermanentId` it is given.
+
+**Cards (by script).** `scripts/step15-enters-rebinding-card.py`: Confusion in the Ranks' target became
+`PermanentAllOfPredicate(PermanentNotPredicate(PermanentControlledByTriggeringPermanentControllerPredicate()),
+PermanentSharesCardTypeWithTriggeringPermanentPredicate())`.
+
+**Behaviour changes.**
+
+- Rules fix, **CR 608.2h** (checked): Confusion in the Ranks judged "shares a card type with it" by the entering
+  permanent's printed and granted types. It now uses its current characteristics: under March of the Machines an
+  entering noncreature artifact is an artifact creature, so another player's creature is a legal target. New card test
+  `ConfusionInTheRanksTest#enteringPermanentIsJudgedByItsCurrentTypes` (fails with the old comparison).
+- The "any permanent enters" default's targeted choices (Confusion in the Ranks, Nakia) and Lucy MacLean's target
+  choice have the ability's source as their source; Nakia's target filter doesn't read the source.
+- The resolution recheck of a battlefield target now sees the entry's triggering permanent. Before, a target restriction
+  that read it (`PermanentIsTriggeringPermanentPredicate`, `PermanentManaValueEqualsTriggeringPermanentPredicate`, …)
+  had no triggering permanent there. The test classes of every card using such a predicate pass unchanged.
+
+**Kept, with their reason.**
+
+- Fatal Grudge and Braids, Arisen Nightmare (above): not trigger events.
+- The `sourceIsEnteringPermanent` paths (Pandemonium's "have it deal damage"): the entering creature is the damage
+  source by its Oracle text, so it is the entry's source on purpose.
+- The enters "you may pay" path that queues its target choice with the entering permanent as `sourcePermanentId`
+  (`EnterTriggerCollectorService`, the `MayPayManaEffect` branch). It is part of the may-unwrapping, which a later run
+  removes.
+- `handleTokenEnterCopyForTargetPlayer` still wraps Lucy MacLean's effect in a `MayEffect` (the may-unwrapping).
+
+**For later runs.** The damage and combat interfaces, the bindings that aren't trigger events, Bill Potts, the
+may-unwrapping and the `…Triggering…` classes, as run 1 listed.
+
+**Scripts.** `scripts/step15-enters-rebinding-card.py` (the card class), `scripts/step15-enters-rebinding-tests.py`
+(the card test, on `magical-vibes-card-test/c`), `scripts/step15-enters-rebinding-docs.py` (exact line edits in
+`ORACLE_TEXT_EFFECT_MAP.md`, `EFFECTS_QUICK_REFERENCE.md` and `PREDICATES_REFERENCE.md`, with the new predicate). The
+predicates, services, handlers and collectors were edited by hand, and so was `ARCHITECTURE.md`'s triggering-permanent
+paragraph. The skills didn't name these classes.
+
+**Tests changed.**
+
+- New card test `ConfusionInTheRanksTest#enteringPermanentIsJudgedByItsCurrentTypes` (by script).
+- New unit tests in `PredicateEvaluationServiceTest`: "PermanentSharesCardTypeWithTriggeringPermanentPredicate compares
+  with the triggering permanent on the battlefield first" and "PermanentControlledByTriggeringPermanentControllerPredicate
+  follows the triggering permanent's controller".
+- No existing test changed.
+
+**Test runs.**
+
+- Card: the test class of every card using an exchange of control, a predicate or effect that reads the triggering
+  permanent, `TargetPlayerOtherThanTriggeringPermanentControllerEffect` or `CreateTokenCopyOfEnteringTokenForTargetPlayerEffect`,
+  plus Nakia, Fatal Grudge, Gilded Drake and Lucy MacLean: 164 test classes, 1,510 test cases, all passing. Then
+  `ConfusionInTheRanksTest` (12) and `MarchOfTheMachinesTest` with the new test, passing.
+- Application: `PredicateEvaluationServiceTest`, `EnterTriggerCollectorServiceTest` and `TriggerTargetCollectorTest`
+  (258 tests), all passing. `TargetLegalityServiceTest` has 14 failures, the same 14 at HEAD `d3c9c6d5b2` (checked by
+  stashing; stack, graveyard and colour cases outside the changed path).
+- Engine: the whole module. The one failure is the known HEAD one, `GameMutationBoundaryRatchetTest`.
+- AI: compiles. Its tests weren't run, since no AI code changed.
 - The full suite was not run here.
 
 ## Prompt

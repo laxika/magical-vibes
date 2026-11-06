@@ -4454,7 +4454,9 @@ public class TargetLegalityService {
                                 entry.getControllerId(), defendingPlayerId(gameData, entry)).withXValue(entry.getXValue())
                                 .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
                                 .withActivatedAbilitySource(entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY)
-                                .withMadness(entry.isMadness()));
+                                .withMadness(entry.isMadness())
+                                .withTriggeringPermanentId(entry.getTriggeringPermanentId())
+                                .withTriggeringPermanentSnapshot(entry.getTriggeringPermanentSnapshot()));
             } catch (IllegalStateException e) {
                 return false;
             }
@@ -4462,8 +4464,9 @@ public class TargetLegalityService {
         if (entry.getTargetIds().isEmpty() && entry.getTargetCardIds().isEmpty()
                 && targetValidationService.checkEffectTargets(entry.getEffectsToResolve(),
                 new TargetValidationContext(gameData, targetId, entry.getTargetZone(), entry.getCard(), entry.getXValue(),
-                        entry.getControllerId(), entry.getSourcePermanentSnapshot(), entry.getSourcePermanentId(),
-                        entry.getTriggeringPermanentPowerAtTrigger(), defendingPlayerId(gameData, entry)),
+                        entry.getControllerId(), entry.getSourcePermanentSnapshot(), false, entry.getSourcePermanentId(),
+                        entry.getTriggeringPermanentPowerAtTrigger(), defendingPlayerId(gameData, entry),
+                        entry.getTriggeringPermanentId()),
                         entry.isTeamworkCostPaid())
                 .isPresent()) {
             return false;
