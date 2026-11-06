@@ -29,7 +29,7 @@ public class HedgeShredder extends Card {
         addTrigger(new TriggerCondition(Triggers.putIntoGraveyardFrom(Zone.LIBRARY, Triggers.NONTOKEN,
                 ObjectRelation.YOU_OWN)),
                 TriggerOptions.ONE_OR_MORE,
-                new ReturnTriggeringLandFromGraveyardToBattlefieldEffect(null, true));
+                new ReturnTriggeringLandFromGraveyardToBattlefieldEffect(true));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

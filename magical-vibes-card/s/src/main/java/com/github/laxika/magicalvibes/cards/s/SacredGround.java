@@ -15,9 +15,9 @@ public class SacredGround extends Card {
 
     public SacredGround() {
         // Whenever a spell or ability an opponent controls causes a land to be put into your
-        // graveyard from the battlefield, return that card to the battlefield. The trigger collector
-        // stamps the concrete land card id at collection time.
+        // graveyard from the battlefield, return that card to the battlefield. "That card" is the stack entry's
+        // triggering card.
         addTrigger(Triggers.dies(Triggers.LAND, ObjectRelation.YOU_OWN).causedBy(PlayerRelation.OPPONENT),
-                new ReturnTriggeringLandFromGraveyardToBattlefieldEffect(null));
+                new ReturnTriggeringLandFromGraveyardToBattlefieldEffect());
     }
 }

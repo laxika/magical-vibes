@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 /**
  * Non-targeted mass version of {@link MustBlockSourceEffect} (Magnetic Web): every creature on the
  * battlefield with a {@code counterType} counter on it must block the triggering attacker this turn
- * if able. The attacker is the stack entry's non-targeting {@code targetId}, baked in by
- * {@code CombatAttackService} when the {@code Triggers.creatureAttacks()} trigger is put on the stack.
+ * if able. The attacker is the stack entry's triggering permanent, set by {@code CombatAttackService} when the
+ * {@code Triggers.creatureAttacks()} trigger is put on the stack.
  * <p>
  * Adds the attacker's id to each matching creature's {@code Permanent.mustBlockIds}, so enforcement
  * (and the vacuous satisfaction when a creature can't legally block that attacker) is the shared

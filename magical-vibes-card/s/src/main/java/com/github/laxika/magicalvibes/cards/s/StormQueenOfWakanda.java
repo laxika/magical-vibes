@@ -37,8 +37,7 @@ public class StormQueenOfWakanda extends Card {
                         new BoostTargetCreatureEffect(new SourcePower(), new Fixed(0), anotherAttackingCreature),
                         new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET, anotherAttackingCreature));
 
-        addTrigger(Triggers.creatureAttacksYou(),
-                new DealDamageToTriggeringAttackerEffect(new SourcePower(),
-                        new PermanentHasKeywordPredicate(Keyword.FLYING)));
+        addTrigger(Triggers.creatureAttacksYou().withFilter(new PermanentHasKeywordPredicate(Keyword.FLYING)),
+                new DealDamageToTriggeringAttackerEffect(new SourcePower()));
     }
 }

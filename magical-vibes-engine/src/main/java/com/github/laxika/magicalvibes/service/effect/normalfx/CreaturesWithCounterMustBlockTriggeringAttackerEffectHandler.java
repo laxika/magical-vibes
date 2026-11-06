@@ -32,7 +32,7 @@ public class CreaturesWithCounterMustBlockTriggeringAttackerEffectHandler implem
         CreaturesWithCounterMustBlockTriggeringAttackerEffect blockEffect =
                 (CreaturesWithCounterMustBlockTriggeringAttackerEffect) effect;
 
-        UUID attackerId = entry.getTargetId();
+        UUID attackerId = entry.getTriggeringPermanentId();
         if (attackerId == null) {
             return;
         }

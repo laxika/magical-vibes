@@ -59,7 +59,6 @@ import com.github.laxika.magicalvibes.model.effect.EvolveTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTrackedTokensAndCreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureUntilSourceLeavesEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureUntilSourceLeavesAndReturnOthersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToPowerEffect;
@@ -81,7 +80,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToEnt
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.IntensifySourceByEnteringPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.IntensifySourceCardByAmountEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyGainKeywordsOfTriggeringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenCreateTokensEqualToEnteringManaValueEffect;
@@ -526,50 +524,6 @@ public class EnterTriggerCollectorService {
         }
         return gameData.playerGraveyards.getOrDefault(controllerId, List.of()).stream()
                 .anyMatch(card -> card.hasType(CardType.CREATURE) && enteringName.equals(card.getName()));
-    }
-
-    @CollectsWatchTrigger(value = PerpetuallyGainKeywordsOfTriggeringCreatureEffect.class,
-            watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
-    private boolean handlePerpetuallyGainKeywordsOfEnteringCreature(
-            TriggerMatchContext match, PerpetuallyGainKeywordsOfTriggeringCreatureEffect effect,
-            TriggerContext ctx) {
-        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
-        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
-        if (enteringPermanentId == null) {
-            return true;
-        }
-
-        Permanent enteringPermanent = gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
-        if (enteringPermanent == null) {
-            return true;
-        }
-
-        Set<Keyword> keywordsAtTrigger = new HashSet<>();
-        for (Keyword keyword : PerpetuallyGainKeywordsOfTriggeringCreatureEffect.SUPPORTED_KEYWORDS) {
-            if (gameQueryService.hasKeyword(match.gameData(), enteringPermanent, keyword)) {
-                keywordsAtTrigger.add(keyword);
-            }
-        }
-
-        Card sourceCard = match.permanent().getCard();
-        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    match.controllerId(),
-                    sourceCard.getName() + "'s ability",
-                    new ArrayList<>(List.of(new PerpetuallyGainKeywordsOfTriggeringCreatureEffect(
-                            keywordsAtTrigger))),
-                    null,
-                    match.permanent().getId());
-            entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
-            entry.setTriggeringPermanentId(enteringPermanentId);
-            entry.setTriggeringCardId(pe.enteringCard().getId());
-            entry.setNonTargeting(true);
-            match.gameData().stack.add(entry);
-        }
-        logTriggered(match);
-        return true;
     }
 
     @CollectsWatchTrigger(value = ChooseModeNotYetChosenEffect.class,
@@ -1862,41 +1816,6 @@ public class EnterTriggerCollectorService {
         }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (exile until source leaves)",
-                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
-        return true;
-    }
-
-    @CollectsWatchTrigger(value = ExileTriggeringCreatureUntilSourceLeavesAndReturnOthersEffect.class,
-            watch = ZoneChangeWatch.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
-    private boolean handleAnyCastCreatureExileUntilSourceLeavesAndReturnOthers(
-            TriggerMatchContext match,
-            ExileTriggeringCreatureUntilSourceLeavesAndReturnOthersEffect effect,
-            TriggerContext ctx) {
-        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
-        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
-        Permanent enteringPermanent = enteringPermanentId == null
-                ? null : gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
-        if (enteringPermanent == null || !enteringPermanent.isCast()) {
-            return false;
-        }
-
-        Card sourceCard = match.permanent().getCard();
-        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    match.controllerId(),
-                    sourceCard.getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
-                    null,
-                    match.permanent().getId());
-            entry.setTriggeringPermanentId(enteringPermanentId);
-            entry.setTriggeringCardId(pe.enteringCard().getId());
-            entry.setNonTargeting(true);
-            match.gameData().enqueueTrigger(entry);
-        }
-        logTriggered(match);
-        log.info("Game {} - {} triggers for cast {} entering (exile and return others)",
                 match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
         return true;
     }

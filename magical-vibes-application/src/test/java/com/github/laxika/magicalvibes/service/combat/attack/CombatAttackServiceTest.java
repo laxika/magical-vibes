@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.cards.m.MetallicSliver;
 import com.github.laxika.magicalvibes.cards.n.NornsAnnex;
 import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
+import com.github.laxika.magicalvibes.cards.r.RakingCanopy;
 import com.github.laxika.magicalvibes.cards.r.RhysticCave;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -137,6 +138,21 @@ class CombatAttackServiceTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed({RakingCanopy.class, WindDrake.class, GrizzlyBears.class})
+    @DisplayName("An \"attacks you\" trigger fires only for an attacker its filter accepts, which is its triggering permanent")
+    void attacksYouTriggerJudgesItsFilterOnTheAttacker() {
+        harness.addToBattlefield(player2, new RakingCanopy());
+        Permanent flyer = addCreatureReady(player1, new WindDrake());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        enterDeclareAttackers();
+
+        gs.declareAttackers(gd, player1, List.of(index(flyer), index(bears)));
+
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getTriggeringPermanentId()).isEqualTo(flyer.getId()));
     }
 
     @Test

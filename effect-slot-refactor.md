@@ -30,7 +30,7 @@ re-check them with a grep before acting on them.
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
 | 14 | Trigger options replace trigger-only wrapper effects | done (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters"; run 3b, "another object enters"; run 4a, the own enters abilities' options read, and the "this or another" enters merges; run 4b, the own enters abilities' intervening "if"s as options; run 4c, every own enters intervening "if" checked as it triggers; run 5, steps and phases; run 6a, the spell, land-play and activation abilities' generic wrappers; run 6b, `SpellCastTriggerEffect` as the cast trigger's filter, options and effects; run 6c, the other spell, copy and land-play condition-as-effect classes as filters; run 7, combat; run 8, damage; run 9, counters; run 10, becomes the target; run 11, library, draw and discard; run 12, tap and untap; run 13, life; run 14, sagas; run 15, everything else; run 16a, the leftovers that need no collector rewritten: the `onlyIfSacrificed` flags, event conditions, the CR 603.5 may fixes, the Eerie merges; run 16b, the spell-cast and spell-copy collectors read the ability and their legacy records go; run 16c, the land-play and activation collectors read the ability and their wrappers go; run 16d, family 2's rest: no spell, land-play or activation ability has a legacy view, every reader judges their options, and the cards' last family 2 wrappers go; run 16e, family 1 (steps and phases): every step reader reads the abilities and judges their options; run 16f, family 3 (combat): every attack, block and combat damage collector reads the abilities through `CombatAbilityReader`; run 16g, family 4 (damage): every damage collector reads the abilities through `DamageAbilityReader`; run 16h, family 5 (counters): every counter collector reads the abilities through `CounterAbilityReader`; run 16i, family 6 (becomes the target): every becomes-the-target collector reads the abilities through `TargetAbilityReader`; run 16j, family 7 (library, draw and discard): every library collector reads the abilities through `LibraryAbilityReader`; run 16k, family 8 (tap and untap): every tap collector reads the abilities through `TapAbilityReader`; run 16l, family 9 (life): every life gain, loss and payment collector reads the abilities through `LifeAbilityReader`; run 16m, family 10 (sagas): no chapter or final-chapter ability has a legacy view, and the final-chapter collectors read the abilities through `SagaAbilityReader`; run 16n, family 11's player and keyword actions: every `ActionWatch` collector reads the abilities through `ActionAbilityReader`; run 16o, family 11's rest: every `MiscWatch` collector and the planar reader read the abilities through `MiscAbilityReader`; run 16p, the zone changes but "when this enters" and the permanent changes: no such ability has a legacy view, and the readers outside the trigger pipeline read them through `ZoneChangeAbilityReader`; run 16q, "when this enters": no ability has a legacy view; the own enters collector reads the abilities and judges their limit, the other readers read `Card.getOwnEntryEffects()`, and `OnceOnlyTriggerEffect` is gone; run 16r, every triggered ability is one object on the stack: the abilities of one Oracle ability are merged by script, the own enters and combat collectors group effects by ability, and `TriggerMode` is gone; run 16s, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags are gone: a `ConditionalEffect` is an effect's "if", and every collector judges the intervening "if" and event condition from the ability; run 16t, the trigger-only wrapper classes: the `Triggering…ConditionalEffect` filters, `SelfExiledFromBattlefieldEffect`, `OncePerTurnPerCreatureTriggerEffect` and `OncePerTurnTriggerEffect`'s keyed, per-grant, mark-on-acceptance and first-time forms are gone, their cards written with trigger filters, `TriggerLimit`s and `TriggeringCardMatches`; Bill Potts' `OncePerTurnTriggerEffect` and the may-unwrapping moved to step 15, with the user) |
-| 15 | Effects read the trigger event (repeatable) | open (run 1, with the user: the dying card, `DyingCreatureCardAwareEffect` gone; effects read the stack entry's triggering card; run 2, with the user: the departed permanent's last-known information, its 13 `…AwareEffect` interfaces gone; effects read the stack entry's triggering permanent; run 3: the rest of the departed object, the last-known rebuilds and baked dying-card ids run 2 kept, 4 classes gone and 5 lose their bound ids; run 4: the departed permanent's trigger-time rebuilds and skips run 3 kept, 6 classes gone, their skips trigger filters; run 5: the last departed-permanent rebuilds of `LegacyTriggerBindings` but the counter distribution, 3 classes gone, modular's "you may" and flag on the card; run 6, with the user: the death counter distribution reads its total from the entry and announces its targets and division as it goes on the stack (a rules fix), Martyr's Bond's "it" is the triggering permanent; run 7: the enters-side rebindings of the source to the entering permanent, Confusion in the Ranks' "another player" and "it" and Lucy MacLean's exclusion read the triggering permanent, its current types a rules fix; run 8: the damage source, `DamageSourceAwareEffect` and `DamageSourceControllerAwareEffect` gone, "that source" is the stack entry's triggering permanent and "that source's controller" its controller as the ability resolves (a rules fix for five cards), 4 effects replaced by existing ones with `TRIGGERING_PERMANENT_CONTROLLER` recipients, "each source" a trigger option on the cards; run 9: the event's permanents, `CombatDamageDealerAwareEffect` and `AttackingCreaturesAwareEffect` gone, "them" / "each of them" are the stack entry's triggering permanents and attacking snapshots, "whenever you attack with one or more [filter]" a trigger filter, 6 effects replaced by existing ones, one dead effect gone; run 10: the event's amount, `CombatDamageAmountAwareEffect` gone, every combat damage to a player entry carries the damage as its event value and the targeted choices carry it into theirs, Froghemoth's "up to that many" an event-aware target count, the graveyard targets restricted by the damage still fixed as they are chosen; `CombatExcessDamageAwareEffect` left for its own run; run 11: the excess damage, `CombatExcessDamageAwareEffect` gone, every "deals combat damage to a creature" entry carries the excess damage dealt to that creature as its event value and the collector judges the abilities' intervening "if" against it, Overclocked Electromancer an `EventValueAtLeast(1)` intervening "if" and `EnergyCountersEffect(new EventValue())`); run 12: the event's cards, `TriggeringCardsAwareEffect` gone, "those cards" / "the discarded cards" are the stack entry's triggering cards, Polluted Cistern's drain the existing `LoseLifeEffect` with a `CardTypesAmongTriggeringCards` amount; run 13a: the chosen card, the accepted players and the produced mana colors, `ChosenCardAwareEffect`, `AcceptedPlayersAwareEffect` and `ProducedManaColorAwareEffect` gone, the choices set the stack entry's chosen card, accepted players and produced mana colors and insert their follow-ups unchanged, a held-out card rides in the may ability, Hinterland Chef the existing `PerpetuallyGrantChosenCardCharacteristicsEffect`; `GrantingPermanentAwareEffect` split off as run 13b; run 13b: the granting permanent, `GrantingPermanentAwareEffect` gone, a granted `TriggeredAbility` names the permanent that granted it and the stack entry carries it, the effects read `StackEntry.requireGrantingPermanentId()`, which fails loudly, an Equipment's or Aura's granted trigger no longer added back after the layers removed it (a rules fix), Stensian Sanguinist's "this creature becomes prepared" `BecomePreparedEffect.ofGrantingPermanent()`; no `…AwareEffect` interface is left; run 14: the triggering spell and Bill Potts, every effect rebuilt with "that spell" bound in reads the stack entry's triggering spell (`StackEntry.setTriggeringSpell`, carried through a "you may" and a counter-removal reflexive entry), a copy of a spell that left the stack uses its last-known information (a rules fix for Verazol and Ominous Lockbox), `TargetSpellManaValue` falls back to it, three classes gone for existing effects, a graveyard target's mana-value restriction is the choice's X, Bill Potts one ability of two conditions with `CopyTriggeringSpellOrAbilityEffect` and `ONCE_EACH_TURN`, `OncePerTurnTriggerEffect` gone; only the two "that many" target counts are still bound, left for run 17; runs 15 to 17 are planned in the step's run table) |
+| 15 | Effects read the trigger event (repeatable) | open (run 1, with the user: the dying card, `DyingCreatureCardAwareEffect` gone; effects read the stack entry's triggering card; run 2, with the user: the departed permanent's last-known information, its 13 `…AwareEffect` interfaces gone; effects read the stack entry's triggering permanent; run 3: the rest of the departed object, the last-known rebuilds and baked dying-card ids run 2 kept, 4 classes gone and 5 lose their bound ids; run 4: the departed permanent's trigger-time rebuilds and skips run 3 kept, 6 classes gone, their skips trigger filters; run 5: the last departed-permanent rebuilds of `LegacyTriggerBindings` but the counter distribution, 3 classes gone, modular's "you may" and flag on the card; run 6, with the user: the death counter distribution reads its total from the entry and announces its targets and division as it goes on the stack (a rules fix), Martyr's Bond's "it" is the triggering permanent; run 7: the enters-side rebindings of the source to the entering permanent, Confusion in the Ranks' "another player" and "it" and Lucy MacLean's exclusion read the triggering permanent, its current types a rules fix; run 8: the damage source, `DamageSourceAwareEffect` and `DamageSourceControllerAwareEffect` gone, "that source" is the stack entry's triggering permanent and "that source's controller" its controller as the ability resolves (a rules fix for five cards), 4 effects replaced by existing ones with `TRIGGERING_PERMANENT_CONTROLLER` recipients, "each source" a trigger option on the cards; run 9: the event's permanents, `CombatDamageDealerAwareEffect` and `AttackingCreaturesAwareEffect` gone, "them" / "each of them" are the stack entry's triggering permanents and attacking snapshots, "whenever you attack with one or more [filter]" a trigger filter, 6 effects replaced by existing ones, one dead effect gone; run 10: the event's amount, `CombatDamageAmountAwareEffect` gone, every combat damage to a player entry carries the damage as its event value and the targeted choices carry it into theirs, Froghemoth's "up to that many" an event-aware target count, the graveyard targets restricted by the damage still fixed as they are chosen; `CombatExcessDamageAwareEffect` left for its own run; run 11: the excess damage, `CombatExcessDamageAwareEffect` gone, every "deals combat damage to a creature" entry carries the excess damage dealt to that creature as its event value and the collector judges the abilities' intervening "if" against it, Overclocked Electromancer an `EventValueAtLeast(1)` intervening "if" and `EnergyCountersEffect(new EventValue())`); run 12: the event's cards, `TriggeringCardsAwareEffect` gone, "those cards" / "the discarded cards" are the stack entry's triggering cards, Polluted Cistern's drain the existing `LoseLifeEffect` with a `CardTypesAmongTriggeringCards` amount; run 13a: the chosen card, the accepted players and the produced mana colors, `ChosenCardAwareEffect`, `AcceptedPlayersAwareEffect` and `ProducedManaColorAwareEffect` gone, the choices set the stack entry's chosen card, accepted players and produced mana colors and insert their follow-ups unchanged, a held-out card rides in the may ability, Hinterland Chef the existing `PerpetuallyGrantChosenCardCharacteristicsEffect`; `GrantingPermanentAwareEffect` split off as run 13b; run 13b: the granting permanent, `GrantingPermanentAwareEffect` gone, a granted `TriggeredAbility` names the permanent that granted it and the stack entry carries it, the effects read `StackEntry.requireGrantingPermanentId()`, which fails loudly, an Equipment's or Aura's granted trigger no longer added back after the layers removed it (a rules fix), Stensian Sanguinist's "this creature becomes prepared" `BecomePreparedEffect.ofGrantingPermanent()`; no `…AwareEffect` interface is left; run 14: the triggering spell and Bill Potts, every effect rebuilt with "that spell" bound in reads the stack entry's triggering spell (`StackEntry.setTriggeringSpell`, carried through a "you may" and a counter-removal reflexive entry), a copy of a spell that left the stack uses its last-known information (a rules fix for Verazol and Ominous Lockbox), `TargetSpellManaValue` falls back to it, three classes gone for existing effects, a graveyard target's mana-value restriction is the choice's X, Bill Potts one ability of two conditions with `CopyTriggeringSpellOrAbilityEffect` and `ONCE_EACH_TURN`, `OncePerTurnTriggerEffect` gone; only the two "that many" target counts are still bound, left for run 17; run 15: the triggering permanent, no effect rebuilt with the permanent, land or artifact an event was about: Mutable Pupa's keywords, Pia's Revolution's artifact and Sacred Ground's and Hedge Shredder's lands read the stack entry (triggering card or event cards with their graveyard incarnations), Haunted One's "it" the triggering-permanent snapshot, Ace Flockbringer the triggering spell, Fractured Loyalty's branch no longer keyed by class, `DealDamageToTriggeringAttackerEffect`'s attacker condition a trigger filter the "attacks you" collector judges, Mirror of Life Trapping's "if it was cast" a filter, `UntapTriggeringPermanentEffect` gone for `UntapPermanentsEffect(TapUntapScope.TRIGGERING)`; runs 16 and 17 are planned in the step's run table) |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
 ## Why
@@ -670,7 +670,7 @@ first row that isn't done, without asking for a scope. Counts were taken at `57d
 | 13a | done: three of the four `…AwareEffect` interfaces left, none of them a trigger event's: `ChosenCardAwareEffect`, `AcceptedPlayersAwareEffect`, `ProducedManaColorAwareEffect`. Each binding moves to the stack entry, or to the pending choice or may ability that carries it, so no choice handler or collector rebuilds an effect | 13 implementers |
 | 13b | done: `GrantingPermanentAwareEffect` (split from 13, see run 13a's Findings): the granting permanent reaches the stack entry from the granted ability, so `GrantedTriggeredAbilitySupport` and the two grant-until handlers stop rebuilding effects | 6 implementers, 7 cards |
 | 14 | done: the `…TriggeringSpell…` classes, and Bill Potts' `OncePerTurnTriggerEffect` (its effects copy "that spell or ability" from the trigger event): each becomes an existing effect reading the stack entry's triggering spell where one fits, otherwise it keeps its class but loses its bound data. `OncePerTurnTriggerEffect` and `OncePerTurnTriggerSupport` go | 31 classes, 39 cards |
-| 15 | The classes that read the triggering permanent, creature, land, attacker, Aura, Equipment or artifact (`…TriggeringPermanent…`, `…TriggeringCreature…`, `…TriggeringLand…`, `…TriggeringAttacker…`, `TriggeringObjectController…` and the like), onto the triggering-permanent fields of runs 2 to 9 | 42 classes, 72 cards |
+| 15 | done: the classes that read the triggering permanent, creature, land, attacker, Aura, Equipment or artifact (`…TriggeringPermanent…`, `…TriggeringCreature…`, `…TriggeringLand…`, `…TriggeringAttacker…`, `TriggeringObjectController…` and the like), onto the triggering-permanent fields of runs 2 to 9 | 42 classes, 72 cards |
 | 16 | The classes that read the triggering card or player (`…TriggeringCard…`, `…TriggeringPlayer…`, the triggering scheme, the Aura card in a graveyard), and `StackEntry.triggeringCardIds` merged into the triggering cards of run 12 | 20 classes, 72 cards |
 | 17 | The pipeline cleanup: the two "that many" counts of the triggering spell's targets run 14 left bound (`bindTriggeringSpellTargetCount`: Arcee, Acrobatic Coupe; Voracious Bibliophile), the may-unwrapping (asking on resolution, CR 603.5, and listing each card whose question moves), the graveyard-target rebuilds kept since run 3 (with Venerable Warsinger's and Soundwave's), `DamagedPlayerControlsTargetEffect`'s binding, and the event bindings and "instead" effects step 14 found among the wrappers (the list above). After it, the step's "done" condition is checked | 44 `unwrap` mentions in `service/trigger` |
 
@@ -11257,6 +11257,149 @@ none of the changed classes.
 - Application: the whole module, 613 failures of 5,029; the same module at HEAD in a worktree, 613 of 5,024, the
   identical set (the 5 extra cases are this run's, passing).
 - Engine: the whole module, 28 cases; the one failure is the known HEAD one, `GameMutationBoundaryRatchetTest`.
+- AI: compiles (`compileJava`, `compileTestJava`).
+- The full suite was not run here.
+
+#### Run 15: the triggering permanent
+
+The classes that read the permanent, creature, land, attacker, Aura, Equipment or artifact a trigger event was about.
+No effect is rebuilt with that object bound in any more, no collector keys the event data it gives an entry on an
+effect's class, and two trigger conditions that were effect components are trigger filters.
+
+**What the scan found.** 42 classes (`…TriggeringPermanent…`, `…TriggeringCreature…`, `…TriggeringLand…`,
+`…TriggeringAttacker…`, `…TriggeringArtifact…`, `…TriggeringAura…`, `…TriggeringEquipment…`,
+`TriggeringObjectController…` and the three `…TriggeringCreatureSpell…`), 72 card classes. Most already read the
+stack entry (`getTriggeringPermanentId()`, its controller, its snapshot, or the triggering card for a card in a
+graveyard). What was left:
+
+- Bound data: `PerpetuallyGainKeywordsOfTriggeringCreatureEffect.keywordsAtTrigger` (Mutable Pupa, rebuilt by a
+  class-keyed enters handler), `ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffect.triggeringArtifactId`
+  (Pia's Revolution) and `ReturnTriggeringLandFromGraveyardToBattlefieldEffect.landCardId` / `graveyardEntryVersion`
+  (Sacred Ground; Hedge Shredder got one rebuilt effect per land).
+- Event data keyed on an effect's class: Haunted One's tapped creature as the entry's *attached* snapshot (only for
+  `BoostAndGrantKeyword…`), Ace Flockbringer's spell as the triggering card snapshot (only for
+  `ConjureDuplicateOfTriggeringCreatureToHandEffect`), Fractured Loyalty's enchanted creature as the triggering
+  permanent (only for `TriggeringObjectControllerGains…`).
+- A trigger condition as an effect component: `DealDamageToTriggeringAttackerEffect.attackerCondition` ("a creature
+  with flying attacks you"), judged by an `instanceof` in the "attacks you" collector, which judged no trigger filter.
+  Mirror of Life Trapping's "if it was cast", judged by a class-keyed enters handler.
+- Reads of the attacker through the non-targeting `targetId`: `DealDamageToTriggeringAttackerEffect` and
+  `CreaturesWithCounterMustBlockTriggeringAttackerEffect` (Magnetic Web); both collectors also set the triggering
+  permanent.
+- An existing effect fits: `UntapTriggeringPermanentEffect` resolves exactly as `UntapPermanentsEffect(TapUntapScope.TRIGGERING)`.
+
+**The model.**
+
+- "That card" / "them" of a graveyard event is the entry's triggering card with its graveyard incarnation
+  (`StackEntry.setTriggeringCard(id, version)`, `isTriggeringCardIncarnation`) or, for a batch, its event cards with
+  theirs (`eventCardIds`, `eventCardGraveyardEntryVersions`, as `ReturnCardFromGraveyardEffect` already used them):
+  `ReturnTriggeringLandFromGraveyardToBattlefieldEffect(boolean enterTapped)` reads the event cards when there are any,
+  else the triggering card, and returns each only if it is still that graveyard object (**CR 400.7**, checked). Pia's
+  Revolution's target choice carries the artifact as `SpellTargetTriggerAnyTarget.triggeringCardId`, which the choice
+  already hands to the entry; the effect handler and the may handler (`PendingMayAbility.triggeringCardId`) read it.
+- The ally-tap collector gives every non-targeted entry the tapped permanent's snapshot (`setTriggeringPermanent`);
+  Haunted One's effect reads `getTriggeringPermanentSnapshot()` once the creature has left (**CR 608.2h**, checked).
+- `ConjureDuplicateOfTriggeringCreatureToHandEffect` reads the live spell, else the entry's triggering spell snapshot
+  (run 14), which the cast collector sets on every non-targeted entry.
+- The becomes-the-target branch for "that spell or ability" effects (`TriggeringSpellReferencingEffect`) gives every
+  entry the permanent that became the target as its triggering permanent (the enchanted or equipped creature for an
+  attachment's ability) and makes it non-targeting. The three cards that reach it (Fractured Loyalty, Lava Runner,
+  Retromancer) each had that set by a class check.
+- The "attacks you" collector (`ON_CREATURE_ATTACKS_YOU`, `…_DIRECTLY`, `…_DEFENDING_PLAYER`) judges an ability's
+  filter on the attacker as it is declared (**CR 603.2**, checked), with the source in the filter context, through
+  `CombatAbilityReader.effects(…, filterMatches)`. `DealDamageToTriggeringAttackerEffect(DynamicAmount)` reads the
+  triggering permanent. The temporary global "attacks you" path also sets the triggering permanent.
+- Mirror of Life Trapping's "if it was cast" (an intervening "if", **CR 603.4**, checked, whose condition can't change
+  between the two checks) is its trigger's `PermanentWasCastPredicate` filter, as Rapid Augmenter writes "if it wasn't
+  cast"; the "any creature enters" default puts it on the stack with the entering creature as its triggering permanent.
+
+**Gone.** `UntapTriggeringPermanentEffect` and its handler; the bound components above; the class-keyed enters
+handlers of Mutable Pupa and Mirror of Life Trapping; the `instanceof` checks in the ally-tap, cast, becomes-the-target
+and "attacks you" collectors.
+
+**Cards (by script).** `scripts/step15-triggering-permanent-cards.py` (idempotent, per letter module), 10 card classes:
+Raggadragga, Goreguts Boss and Tiller Engine (`UntapPermanentsEffect(TapUntapScope.TRIGGERING)`), Sacred Ground and
+Hedge Shredder (the effect's new constructors), Raking Canopy, Barbed Foliage, Circle of Flame, Palazzo Archers and
+Storm, Queen of Wakanda (the attacker condition as `withFilter`), Mirror of Life Trapping (the filter). Mutable Pupa,
+Pia's Revolution, Haunted One, Ace Flockbringer, Magnetic Web and Fractured Loyalty didn't change.
+
+**Behaviour changes.** None intended, and no card test changed.
+
+- Mutable Pupa's fallback to the keywords the entering creature had as the ability triggered is gone. If the creature
+  has left by resolution, the keywords it had as it left are used (`triggeringPermanentKeywordsAtLeave`, recorded for
+  every entry on the stack), which is its last-known information (CR 608.2h); a creature that left while the trigger
+  waited off the stack (a suspended subgame or mana-ability queue) gives no keywords. No test covers that case.
+- Every non-targeted ally-tap entry carries the tapped permanent's snapshot; every spell-referencing becomes-the-target
+  entry the targeted permanent; every temporary "attacks you" entry the attacker. No other effect on those paths reads
+  them (checked by grep).
+- Hedge Shredder returns its lands from one effect in event order instead of one effect per land; Mirror of Life
+  Trapping goes on the stack through the default (`stack.add`) instead of `enqueueTrigger`, as Mutable Pupa did and
+  every other "any creature enters" ability does.
+
+**Kept, with their reason.**
+
+- The classes that already read the entry and have no existing equivalent: `AttachTargetEquipmentToTriggeringPermanentEffect`,
+  `AttachTriggeringEquipmentToTargetCreatureEffect`, `ConjureCardOntoBattlefieldForTriggeringPermanentControllerEffect`,
+  `ConjureDuplicateOfTriggeringPermanentOntoBattlefieldEffect`, `CreateTokenAndAttachTriggeringAuraEffect`,
+  `CreateTokenAttachedToTriggeringPermanentEffect`, `DrawCardForTriggeringPermanentControllerEffect` (`DrawCardEffect`
+  has no recipient), `ExileTriggeringCreatureMayPlayThisTurnEffect`, `GoadTriggeringCreatureUntilNextTurnEffect` (no
+  goad effect takes a reference), `GrantSubtypeToTriggeringPermanentEffect`, `LoseLifeToOwnerOfTriggeringPermanentEffect`
+  (no owner recipient), `MustBlockTriggeringAttackerEffect`, `PutCreatureFromHandWithManaValueLessThanTriggeringPermanentEffect`,
+  `SacrificeTriggeringPermanentEffect` and `…ThenConjureDuplicateEffect`, `TargetLandDealsDamageToTriggeringCreatureEffect`,
+  the three `…TriggeringCreatureSpell…` grants (they read the triggering card), and the engine-built
+  `RegisterDelayedCountersOnTriggeringPermanentEffect` (its component is the counter effect, not event data).
+- The markers `TriggeringPermanentManaValueEffect` (the collector sets the event value, as for
+  `TriggeringSpellManaValueEffect`), `TriggeringPermanentSourceEffect` (run 7: the entering creature is the source by
+  its Oracle text) and `TargetPlayerOtherThanTriggeringPermanentControllerEffect` (run 7); `TriggeringPermanentEntryExclusionEffect`
+  is run 17's.
+- Class-keyed collector handlers that judge a trigger condition no filter or condition expresses yet: Portcullis'
+  "if there are two or more other creatures on the battlefield" (no condition counts creatures other than the
+  triggering one), Diabolic Servitude's "the creature put onto the battlefield with this" (the source's chosen
+  permanent), `ExileTriggeringCreatureAndTrackWithSourceEffect`'s graveyard check, Pia's Revolution's "nontoken" and
+  "your graveyard", Hedge Shredder's "land cards", Grolnok's graveyard check, and Athreos' death and exile handlers.
+  They set only the entry's triggering card, permanent and versions now; step 16 removes the handlers.
+- The target-choice routing checks of `AttachTargetEquipmentToTriggeringPermanentEffect` (`MayEffectHandler`,
+  `CombatAttackService`): no event data.
+- `PutCounterOnAttackingCreatureOnAttacksYouEffect`, rebuilt by the "any creature attacks" collector into a counter
+  effect on the attacker for "a creature attacks enchanted player": for run 17, with the other event bindings.
+- The "dying card" readers among the classes (`ExileTriggeringCreature…FromGraveyard`, `…AndReturnSourceToHand`,
+  `…WithHitCounter`, `ReturnTriggeringCreatureToBattlefieldEffect`, `ReturnTriggeringPermanentToBattlefieldEffect`,
+  Grolnok's croak) read the triggering card, run 16's field.
+
+**Scripts.**
+
+- `scripts/step15-triggering-permanent-cards.py`: the card classes.
+- `scripts/step15-triggering-permanent-docs.py` (idempotent): exact edits in `EFFECTS_INDEX.md`,
+  `EFFECTS_QUICK_REFERENCE.md`, `ORACLE_TEXT_EFFECT_MAP.md` (with Tadeas, Juniper Ascendant's stale row corrected to
+  what the card writes) and `TRIGGER_SLOT_TARGETING.md`; it fails if a removed form is still named.
+
+The records, handlers, collectors and the triggering-permanent paragraph of `ARCHITECTURE.md` were edited by hand. The
+skills and `EFFECT_MERGE_PLAN.md` name none of the changed classes.
+
+**Tests changed.**
+
+- New unit tests: `DeathTriggerCollectorServiceTest$GraveyardReturnOfTheTriggeringCard` (a land's entry has the land
+  as its triggering card with its graveyard incarnation; Pia's Revolution's target choice carries the artifact as its
+  triggering card) and `CombatAttackServiceTest#attacksYouTriggerJudgesItsFilterOnTheAttacker` (Raking Canopy triggers
+  for the Wind Drake only, with it as the triggering permanent).
+- No existing test changed. The converted cards' tests already cover the filters' negative cases and the last-known
+  cases (Raking Canopy `nonFlyerDoesNotTrigger`, Mutable Pupa `usesLastKnownKeywordsIfTheEnteringCreatureLeavesBeforeResolution`,
+  Ace Flockbringer `stillConjuresTheDuplicateWhenTheCreatureSpellIsCountered`, Sacred Ground
+  `landLeavingAndReenteringGraveyardIsNotReturned`, Hedge Shredder `externalMillReturnsOnlyNewLands`).
+
+**Test runs.**
+
+- Card: the test class of every card with an "attacks you", becomes-the-target-of-a-spell-or-ability or becomes-tapped
+  trigger, or using `TapUntapScope.TRIGGERING` or any changed class: 151 test classes (251 result files), 2,075 cases,
+  all passing.
+- Application: `DeathTriggerCollectorServiceTest`, `MiscTriggerCollectorServiceTest`, `EnterTriggerCollectorServiceTest`,
+  `SpellCastTriggerCollectorServiceTest`, `CombatAttackServiceTest`, `TriggerCollectorRegistryTest`,
+  `TargetSpecRatchetTest`, `CardFreezeTest`, the target polarity tests and the architecture tests: 338 cases, 7
+  failures, each failing the same way at HEAD (checked by stashing): `SpellCastTriggerCollectorServiceTest`'s
+  `AnyPlayerColorCounter` may case and `AnyPlayerChosenColorLifeLoss`, `DeathTriggerCollectorServiceTest$RegisterDelayedReturn`'s
+  prompt case, and `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest`, `CardEffectTargetingConsistencyTest`,
+  `CostEffectClassificationTest`.
+- Engine: the whole module; the one failure is the known HEAD one, `GameMutationBoundaryRatchetTest`.
 - AI: compiles (`compileJava`, `compileTestJava`).
 - The full suite was not run here.
 

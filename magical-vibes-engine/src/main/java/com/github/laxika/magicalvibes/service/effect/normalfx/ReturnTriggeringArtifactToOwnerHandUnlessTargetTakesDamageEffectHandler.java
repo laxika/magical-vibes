@@ -38,7 +38,7 @@ public class ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffectHan
             return;
         }
 
-        Card artifact = gameQueryService.findCardInGraveyardById(gameData, e.triggeringArtifactId());
+        Card artifact = gameQueryService.findCardInGraveyardById(gameData, entry.getTriggeringCardId());
         String artifactName = artifact != null ? artifact.getName() : "the artifact";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), entry.getControllerId(), List.of(e),
@@ -46,7 +46,7 @@ public class ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffectHan
                         + " damage to you to keep " + artifactName + " in its owner's graveyard?",
                 targetPlayerId, null, entry.getSourcePermanentId(), null,
                 0, 0, null, null, targetPlayerId, entry.getSourcePermanentSnapshot(),
-                entry.getControllerId(), e.triggeringArtifactId(), 0));
+                entry.getControllerId(), entry.getTriggeringCardId(), 0));
     }
 
     public void returnArtifactToOwnerHand(GameData gameData, UUID artifactId) {

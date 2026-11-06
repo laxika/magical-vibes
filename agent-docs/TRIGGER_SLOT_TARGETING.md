@@ -294,8 +294,8 @@ can filter the triggering land card and preserve its controller for resolution),
 `Triggers.dies(Triggers.ARTIFACT, ObjectRelation.OPPONENT_OWNS)` (Viridian Revel "into an opponent's graveyard" — keyed on the graveyard owner, so it fires for your stolen-back opponent-owned artifact and not for your own artifact an opponent controls),
 `Triggers.dies(Triggers.LAND, ObjectRelation.YOU_OWN).causedBy(PlayerRelation.OPPONENT)` (Sacred Ground; fires only on permanents the
 graveyard owner controls, and only when `GameData.currentlyResolvingControllerId` — the controller of
-the resolving spell/ability — is an opponent of the graveyard owner; the collector stamps the dying
-land card id onto a fresh `ReturnTriggeringLandFromGraveyardToBattlefieldEffect`),
+the resolving spell/ability — is an opponent of the graveyard owner; the collector gives the stack
+entry the dying land as its triggering card, which `ReturnTriggeringLandFromGraveyardToBattlefieldEffect` reads),
 `Triggers.putIntoGraveyardFromAnywhere(Triggers.LAND_CARD, ObjectRelation.YOU_OWN)` (Countryside Crusher; fires on every permanent the
 graveyard owner controls whenever a non-token land card enters their graveyard from any zone — checked in
 `GraveyardService.addCardToGraveyard`, the single zone→graveyard choke point; wrap the effect in

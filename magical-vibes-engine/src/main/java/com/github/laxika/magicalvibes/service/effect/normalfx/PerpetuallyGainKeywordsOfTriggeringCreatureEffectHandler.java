@@ -35,7 +35,6 @@ public class PerpetuallyGainKeywordsOfTriggeringCreatureEffectHandler implements
             return;
         }
 
-        var e = (PerpetuallyGainKeywordsOfTriggeringCreatureEffect) effect;
         Permanent triggeringCreature = gameQueryService.findPermanentById(
                 gameData, entry.getTriggeringPermanentId());
         Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
@@ -51,8 +50,6 @@ public class PerpetuallyGainKeywordsOfTriggeringCreatureEffectHandler implements
                     keywords.add(keyword);
                 }
             }
-        } else {
-            keywords.addAll(e.keywordsAtTrigger());
         }
 
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());

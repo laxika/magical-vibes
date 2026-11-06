@@ -1626,27 +1626,29 @@ public class MiscTriggerCollectorService {
             return false;
         }
 
-        List<CardEffect> returnEffects = new ArrayList<>();
-        for (Card card : cardsPut.cards()) {
-            if (!card.isToken() && card.hasType(CardType.LAND)) {
-                returnEffects.add(new ReturnTriggeringLandFromGraveyardToBattlefieldEffect(
-                        card.getId(), effect.enterTapped(),
-                        match.gameData().graveyardEntryVersion(card.getId())));
-            }
-        }
-        if (returnEffects.isEmpty()) {
+        List<Card> lands = cardsPut.cards().stream()
+                .filter(card -> !card.isToken() && card.hasType(CardType.LAND))
+                .toList();
+        if (lands.isEmpty()) {
             return false;
         }
 
         Card sourceCard = match.permanent().getCard();
-        match.gameData().enqueueTrigger(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                returnEffects,
+                new ArrayList<>(List.of(effect)),
                 null,
-                match.permanent().getId()));
+                match.permanent().getId());
+        // "Them" are the entry's event cards, as the graveyard objects the event put there (CR 400.7).
+        entry.setEventCardIds(lands.stream().map(Card::getId).toList());
+        for (Card land : lands) {
+            entry.getEventCardGraveyardEntryVersions().put(land.getId(),
+                    match.gameData().graveyardEntryVersion(land.getId()));
+        }
+        match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers for lands put into the graveyard from the library",
                 match.gameData().id, sourceCard.getName());

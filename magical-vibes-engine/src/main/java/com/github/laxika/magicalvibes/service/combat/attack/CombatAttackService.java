@@ -149,7 +149,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensAttackingEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithCounterAttackTogetherEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanOnlyAttackAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
@@ -167,7 +166,6 @@ import com.github.laxika.magicalvibes.model.effect.OpponentCreaturesAttackTogeth
 import com.github.laxika.magicalvibes.model.effect.OpponentsMustAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherCreaturesMustAttackIfSourceAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanOnlyAttackAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherAttackingCreatureReferenceEffect;
@@ -279,6 +277,15 @@ public class CombatAttackService {
      */
     private static List<CardEffect> printedCombatEffects(Card card, CombatWatch watch) {
         return CombatAbilityReader.effects(WatchedAbilities.printed(card, watch), watch.trigger());
+    }
+
+    /**
+     * The effects of {@code card}'s printed abilities watching {@code watch} whose filter on the creature
+     * {@code filterMatches} accepts (an ability without one always triggers).
+     */
+    private static List<CardEffect> printedCombatEffects(Card card, CombatWatch watch,
+                                                         Predicate<PermanentPredicate> filterMatches) {
+        return CombatAbilityReader.effects(WatchedAbilities.printed(card, watch), watch.trigger(), filterMatches);
     }
 
     /** {@link #printedCombatEffects(Card, CombatWatch)} of the abilities {@code judge} lets trigger. */
@@ -2815,23 +2822,25 @@ public class CombatAttackService {
                 }
                 List<CardEffect> attackedTriggerEffects = new ArrayList<>();
                 List<CardEffect> candidateEffects = new ArrayList<>();
+                // The trigger's filter on the attacking creature ("a creature with flying", Raking Canopy), judged
+                // as the creature is declared an attacker (CR 603.2).
+                FilterContext attackedSourceContext = FilterContext.of(gameData)
+                        .withSourceCardId(perm.getOriginalCard().getId())
+                        .withSourceControllerId(attackedPlayerId)
+                        .withSourcePermanentId(perm.getId());
+                Predicate<PermanentPredicate> attackerMatches = filter -> predicateEvaluationService
+                        .matchesPermanentPredicate(attacker, filter, attackedSourceContext);
                 if (!battleAttacked) {
-                    candidateEffects.addAll(printedCombatEffects(perm.getCard(), CombatWatch.ON_CREATURE_ATTACKS_YOU));
+                    candidateEffects.addAll(printedCombatEffects(
+                            perm.getCard(), CombatWatch.ON_CREATURE_ATTACKS_YOU, attackerMatches));
                 }
-                candidateEffects.addAll(
-                        printedCombatEffects(perm.getCard(), CombatWatch.ON_CREATURE_ATTACKS_DEFENDING_PLAYER));
+                candidateEffects.addAll(printedCombatEffects(
+                        perm.getCard(), CombatWatch.ON_CREATURE_ATTACKS_DEFENDING_PLAYER, attackerMatches));
                 if (gameData.playerIds.contains(attackedTargetId)) {
-                    candidateEffects.addAll(
-                            printedCombatEffects(perm.getCard(), CombatWatch.ON_CREATURE_ATTACKS_YOU_DIRECTLY));
+                    candidateEffects.addAll(printedCombatEffects(
+                            perm.getCard(), CombatWatch.ON_CREATURE_ATTACKS_YOU_DIRECTLY, attackerMatches));
                 }
                 for (CardEffect attackedEffect : candidateEffects) {
-                    // Some triggers only fire for attackers matching a condition (e.g. Raking Canopy:
-                    // "a creature with flying"). The condition is checked here at declaration time.
-                    if (attackedEffect instanceof DealDamageToTriggeringAttackerEffect damageEffect
-                            && !predicateEvaluationService.matchesPermanentPredicate(
-                                    gameData, attacker, damageEffect.attackerCondition())) {
-                        continue;
-                    }
                     // Intervening "if" (e.g. Guardian of the Ages — "if this creature has defender"):
                     // only triggers when the condition is met at declaration; re-checked on resolution.
                     if (attackedEffect instanceof ConditionalEffect conditional

@@ -2,27 +2,18 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
- * Deals {@code damage} to the attacking creature that caused this attack trigger (the permanent
- * referenced by the stack entry's non-targeting {@code targetId}, populated by the engine for
- * {@code Triggers.creatureAttacksYouOrYourPlaneswalker()} triggers).
+ * Deals {@code damage} to the attacking creature that caused this attack trigger: the stack entry's triggering
+ * permanent, referenced, not targeted. Which attackers trigger the ability is the trigger's filter
+ * ({@code Triggers.creatureAttacksYou().withFilter(...)}), judged as the creature is declared an attacker.
  *
- * <p>The {@code attackerCondition} restricts <em>which</em> attackers cause the trigger to fire:
- * {@code CombatAttackService} evaluates it against the attacker when attackers are declared and
- * only pushes the trigger for matching attackers. The condition is therefore checked at
- * declaration time (rules-correct), and this effect deals the damage unconditionally on
- * resolution.
- *
- * <p>Used by Raking Canopy ("Whenever a creature with flying attacks you, this enchantment deals
- * 4 damage to it.") with a {@code PermanentHasKeywordPredicate(FLYING)} condition.
+ * <p>Used by Raking Canopy ("Whenever a creature with flying attacks you, this enchantment deals 4 damage to it.").
  */
-public record DealDamageToTriggeringAttackerEffect(DynamicAmount damage, PermanentPredicate attackerCondition)
-        implements DamageDealingEffect {
+public record DealDamageToTriggeringAttackerEffect(DynamicAmount damage) implements DamageDealingEffect {
 
-    public DealDamageToTriggeringAttackerEffect(int damage, PermanentPredicate attackerCondition) {
-        this(new Fixed(damage), attackerCondition);
+    public DealDamageToTriggeringAttackerEffect(int damage) {
+        this(new Fixed(damage));
     }
 
     @Override

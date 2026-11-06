@@ -23,7 +23,7 @@ public class BarbedFoliage extends Card {
 
         // Whenever a creature without flying attacks you, this enchantment deals 1 damage to it.
         PermanentPredicate withoutFlying = new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING));
-        addTrigger(Triggers.creatureAttacksYou(),
-                new DealDamageToTriggeringAttackerEffect(1, withoutFlying));
+        addTrigger(Triggers.creatureAttacksYou().withFilter(withoutFlying),
+                new DealDamageToTriggeringAttackerEffect(1));
     }
 }

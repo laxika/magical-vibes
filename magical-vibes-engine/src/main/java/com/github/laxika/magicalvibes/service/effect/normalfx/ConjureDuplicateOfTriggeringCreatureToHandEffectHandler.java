@@ -36,7 +36,11 @@ public class ConjureDuplicateOfTriggeringCreatureToHandEffectHandler implements 
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID triggeringCardId = entry.getTriggeringCardId();
         StackEntry triggeringSpell = gameQueryService.findStackEntryByCardId(gameData, triggeringCardId);
-        Card triggeringCard = triggeringSpell == null ? entry.getTriggeringCardSnapshot() : triggeringSpell.getCard();
+        // The spell as it last existed on the stack once it has left (CR 608.2h).
+        if (triggeringSpell == null) {
+            triggeringSpell = entry.getTriggeringSpellSnapshot();
+        }
+        Card triggeringCard = triggeringSpell == null ? null : triggeringSpell.getCard();
         if (triggeringCard == null || !triggeringCard.hasType(CardType.CREATURE)) {
             return;
         }

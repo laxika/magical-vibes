@@ -38,7 +38,7 @@ public class DealDamageToTriggeringAttackerEffectHandler implements NormalEffect
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         DealDamageToTriggeringAttackerEffect e = (DealDamageToTriggeringAttackerEffect) effect;
 
-        Permanent attacker = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        Permanent attacker = gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
         if (attacker == null) {
             return;
         }

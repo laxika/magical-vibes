@@ -15,8 +15,8 @@ public class CircleOfFlame extends Card {
     public CircleOfFlame() {
         // Whenever a creature without flying attacks you or a planeswalker you control,
         // this enchantment deals 1 damage to that creature.
-        addTrigger(Triggers.creatureAttacksYouOrYourPlaneswalker(),
-                new DealDamageToTriggeringAttackerEffect(1,
-                        new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
+        addTrigger(Triggers.creatureAttacksYouOrYourPlaneswalker()
+                        .withFilter(new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))),
+                new DealDamageToTriggeringAttackerEffect(1));
     }
 }

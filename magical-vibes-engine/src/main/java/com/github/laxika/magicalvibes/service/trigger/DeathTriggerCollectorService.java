@@ -1173,13 +1173,12 @@ public class DeathTriggerCollectorService {
             return false;
         }
 
-        ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffect baked =
-                new ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffect(
-                        effect.damage(), artifactCard.getId());
+        // "That card" is the entry's triggering card.
         match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(baked)),
+                match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect)),
                 true, match.permanent().getCard().getTargetFilter(), 0, match.permanent().getId(),
-                new Permanent(match.permanent())));
+                new Permanent(match.permanent()), false, null, null, match.controllerId(), null, null, false,
+                artifactCard.getId()));
         logArtifactGraveyard(match);
         return true;
     }
@@ -1480,18 +1479,18 @@ public class DeathTriggerCollectorService {
             ReturnTriggeringLandFromGraveyardToBattlefieldEffect effect, TriggerContext ctx) {
         TriggerContext.LandPutIntoGraveyard lpg = (TriggerContext.LandPutIntoGraveyard) ctx;
         Card landCard = lpg.landCard();
-        ReturnTriggeringLandFromGraveyardToBattlefieldEffect concrete =
-                new ReturnTriggeringLandFromGraveyardToBattlefieldEffect(
-                        landCard.getId(), false, match.gameData().graveyardEntryVersion(landCard.getId()));
-        match.gameData().stack.add(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(concrete)),
+                new ArrayList<>(List.of(effect)),
                 null,
                 match.permanent().getId()
-        ));
+        );
+        // "That card" is the entry's triggering card, as the graveyard object the event put there (CR 400.7).
+        entry.setTriggeringCard(landCard.getId(), match.gameData().graveyardEntryVersion(landCard.getId()));
+        match.gameData().stack.add(entry);
 
         gameLogService.append(match.gameData(), GameLog.cardTextCard(match.permanent().getCard(),
                 "'s ability triggers (", landCard, " was put into a graveyard from the battlefield by an opponent)."));

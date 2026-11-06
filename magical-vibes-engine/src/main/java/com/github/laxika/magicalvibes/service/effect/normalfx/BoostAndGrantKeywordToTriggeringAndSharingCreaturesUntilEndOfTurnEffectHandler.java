@@ -38,9 +38,7 @@ public class BoostAndGrantKeywordToTriggeringAndSharingCreaturesUntilEndOfTurnEf
         Permanent livePermanent = entry.getTriggeringPermanentId() == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
-        Permanent lastKnownPermanent = entry.getAttachedPermanentSnapshot() != null
-                && entry.getAttachedPermanentSnapshot().getId().equals(entry.getTriggeringPermanentId())
-                ? entry.getAttachedPermanentSnapshot() : null;
+        Permanent lastKnownPermanent = entry.getTriggeringPermanentSnapshot();
         Permanent triggeringPermanent = livePermanent != null ? livePermanent : lastKnownPermanent;
         if (triggeringPermanent == null
                 || (livePermanent != null && !gameQueryService.isCreature(gameData, livePermanent))) {

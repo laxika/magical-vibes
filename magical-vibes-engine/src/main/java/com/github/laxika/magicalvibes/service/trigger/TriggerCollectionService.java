@@ -7589,23 +7589,13 @@ public class TriggerCollectionService {
             );
             entry.setTriggeringCardId(triggeringEntry.getCard().getId());
             entry.setTriggeringPermanentControllerId(triggeringEntry.getControllerId());
-            if (resolvedEffects.stream().anyMatch(
-                    com.github.laxika.magicalvibes.model.effect.TriggeringObjectControllerGainsControlOfEnchantedPermanentEffect.class::isInstance)) {
-                entry.setTriggeringPermanentId(source.getAttachedTo());
-                entry.setNonTargeting(true);
-            }
-            if (resolvedEffects.stream().anyMatch(
-                    com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringSpellControllerEffect.class::isInstance)) {
-                // The triggering spell or ability is only referenced for its controller, so it leaving
-                // the stack (countered, or the Herder ability resolved) does not fizzle the damage.
-                entry.setNonTargeting(true);
-            }
-            if (resolvedEffects.stream().anyMatch(
-                    com.github.laxika.magicalvibes.model.effect.TriggeringSpellControllerSacrificesPermanentsEffect.class::isInstance)) {
-                // The spell or ability is only referenced, so it leaving the stack does not stop
-                // its controller (remembered above) from sacrificing.
-                entry.setNonTargeting(true);
-            }
+            // The permanent that became the target: the enchanted or equipped creature for an attachment's
+            // ability ("that creature", Fractured Loyalty), else the source itself.
+            entry.setTriggeringPermanentId(source.isAttached() && !source.isBestow()
+                    ? source.getAttachedTo() : source.getId());
+            // "That spell or ability" is only referenced, never targeted: it leaving the stack (countered, or the
+            // Herder ability resolved) doesn't stop the ability, which uses the controller remembered above.
+            entry.setNonTargeting(true);
             enqueueTargetTriggeredAbility(gameData, source, controllerId, source, entry);
             limited.forEach(limit -> limit.markLimit(gameData, source.getId()));
 
@@ -9546,6 +9536,7 @@ public class TriggerCollectionService {
                     null,
                     attacker.getId());
             entry.setTargetId(attacker.getId());
+            entry.setTriggeringPermanentId(attacker.getId());
             entry.setSourcePermanentSnapshot(new Permanent(attacker));
             entry.setNonTargeting(true);
             gameData.enqueueTrigger(entry);
@@ -9951,10 +9942,8 @@ public class TriggerCollectionService {
                         perm.getId()
                 );
                 entry.setTriggeringPermanentId(tappedPermanent.getId());
-                if (resolved instanceof com.github.laxika.magicalvibes.model.effect
-                        .BoostAndGrantKeywordToTriggeringAndSharingCreaturesUntilEndOfTurnEffect) {
-                    entry.setAttachedPermanentSnapshot(new Permanent(tappedPermanent));
-                }
+                // "It" as it last existed on the battlefield, should it leave before the ability resolves (CR 608.2h).
+                entry.setTriggeringPermanent(tappedPermanent);
                 gameData.enqueueTrigger(entry);
                 markTapTriggered(gameData, perm, read);
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));

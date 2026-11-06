@@ -1,32 +1,21 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.UUID;
-
 /**
- * When resolved, returns the specified land card from its owner's graveyard to the battlefield under
- * the ability controller's control (if it is still there). The controller of the triggered ability is
- * the graveyard owner, so the land returns under its owner's control.
+ * When resolved, returns the land cards the trigger event was about from their owner's graveyard to the battlefield
+ * under the ability controller's control, each only if it is still the graveyard object the event named (CR 400.7).
+ * The controller of the triggered ability is the graveyard owner, so a land returns under its owner's control.
  *
- * <p>Used by Sacred Ground: "Whenever a spell or ability an opponent controls causes a land to be put
- * into your graveyard from the battlefield, return that card to the battlefield." It is also used by
- * Hedge Shredder for lands put into the graveyard from its controller's library. The trigger collector
- * stamps the concrete {@code landCardId}; the registered template effect carries {@code null}.
+ * <p>The lands are the stack entry's event cards (with their graveyard entry versions) when it has any, otherwise its
+ * triggering card (with {@link com.github.laxika.magicalvibes.model.StackEntry#isTriggeringCardIncarnation}). Used by
+ * Sacred Ground ("Whenever a spell or ability an opponent controls causes a land to be put into your graveyard from
+ * the battlefield, return that card to the battlefield") and Hedge Shredder ("Whenever one or more land cards are put
+ * into your graveyard from your library, put them onto the battlefield tapped").
  *
- * @param landCardId the UUID of the land card to return from the graveyard
- * @param enterTapped whether the land enters the battlefield tapped
- * @param graveyardEntryVersion the graveyard entry the trigger event happened to, or {@code null} to accept
- *                              any entry; a land that left the graveyard and re-entered it is a new object
- *                              and is not returned
+ * @param enterTapped whether the lands enter the battlefield tapped
  */
-public record ReturnTriggeringLandFromGraveyardToBattlefieldEffect(UUID landCardId, boolean enterTapped,
-                                                                   Long graveyardEntryVersion)
-        implements CardEffect {
+public record ReturnTriggeringLandFromGraveyardToBattlefieldEffect(boolean enterTapped) implements CardEffect {
 
-    public ReturnTriggeringLandFromGraveyardToBattlefieldEffect(UUID landCardId) {
-        this(landCardId, false, null);
-    }
-
-    public ReturnTriggeringLandFromGraveyardToBattlefieldEffect(UUID landCardId, boolean enterTapped) {
-        this(landCardId, enterTapped, null);
+    public ReturnTriggeringLandFromGraveyardToBattlefieldEffect() {
+        this(false);
     }
 }

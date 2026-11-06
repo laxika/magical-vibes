@@ -43,6 +43,8 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFrom
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringLandFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -1209,6 +1211,55 @@ class DeathTriggerCollectorServiceTest {
             svc.handleRegisterDelayedReturn(match(perm, PLAYER1_ID, effect), effect, ctx);
 
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("Tiana Ship's Caretaker") && logEntry.plainText().contains("Fallen Aura")));
+        }
+    }
+
+    @Nested
+    @DisplayName("Graveyard returns of the card the event was about")
+    class GraveyardReturnOfTheTriggeringCard {
+
+        @Test
+        @DisplayName("A land's entry has the land as its triggering card, with its graveyard incarnation, and the effect unchanged")
+        void landReturnCarriesTheLandAsTriggeringCard() {
+            Card land = new Card();
+            land.setName("Forest");
+            land.setType(CardType.LAND);
+            gd.playerGraveyards.get(PLAYER1_ID).add(land);
+            gd.graveyardEntryVersions.put(land.getId(), 7L);
+            Permanent perm = new Permanent(createEnchantment("Sacred Ground"));
+            var effect = new ReturnTriggeringLandFromGraveyardToBattlefieldEffect();
+            var ctx = new TriggerContext.LandPutIntoGraveyard(land, PLAYER1_ID, PLAYER2_ID);
+
+            assertThat(svc.handleLandGraveyardReturn(match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
+
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+            assertThat(entry.getTriggeringCardId()).isEqualTo(land.getId());
+            assertThat(entry.isTriggeringCardIncarnation(7L)).isTrue();
+            assertThat(entry.isTriggeringCardIncarnation(8L)).isFalse();
+        }
+
+        @Test
+        @DisplayName("An artifact's target choice carries the artifact as its triggering card and the effect unchanged")
+        void artifactReturnCarriesTheArtifactAsTriggeringCard() {
+            Card artifact = createArtifact("Ornithopter");
+            Permanent perm = new Permanent(createEnchantment("Pia's Revolution"));
+            var effect = new ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffect(3);
+            var ctx = new TriggerContext.ArtifactGraveyard(PLAYER1_ID, PLAYER1_ID, artifact, 0,
+                    new Permanent(artifact), false);
+
+            assertThat(svc.handleArtifactGraveyardReturnUnlessDamage(match(perm, PLAYER1_ID, effect), effect, ctx))
+                    .isTrue();
+
+            assertThat(gd.pendingInteractions)
+                    .filteredOn(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class::isInstance)
+                    .singleElement()
+                    .satisfies(choice -> {
+                        var targetChoice = (PermanentChoiceContext.SpellTargetTriggerAnyTarget) choice;
+                        assertThat(targetChoice.triggeringCardId()).isEqualTo(artifact.getId());
+                        assertThat(targetChoice.effects()).containsExactly(effect);
+                    });
         }
     }
 }

@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class PalazzoArchers extends Card {
 
     public PalazzoArchers() {
-        addTrigger(Triggers.creatureAttacksYouOrYourPlaneswalker(),
-                new DealDamageToTriggeringAttackerEffect(
-                        new SourcePower(), new PermanentHasKeywordPredicate(Keyword.FLYING)));
+        addTrigger(Triggers.creatureAttacksYouOrYourPlaneswalker()
+                        .withFilter(new PermanentHasKeywordPredicate(Keyword.FLYING)),
+                new DealDamageToTriggeringAttackerEffect(new SourcePower()));
     }
 }

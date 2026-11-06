@@ -4,9 +4,11 @@ import com.github.laxika.magicalvibes.model.Keyword;
 
 import java.util.Set;
 
-/** Perpetually gives the source card the supported keywords of the creature that caused its trigger. */
-public record PerpetuallyGainKeywordsOfTriggeringCreatureEffect(Set<Keyword> keywordsAtTrigger)
-        implements CardEffect {
+/**
+ * Perpetually gives the source card the supported keywords the triggering creature has as the ability resolves, or had
+ * as it last existed on the battlefield (the stack entry's triggering permanent).
+ */
+public record PerpetuallyGainKeywordsOfTriggeringCreatureEffect() implements CardEffect {
 
     public static final Set<Keyword> SUPPORTED_KEYWORDS = Set.of(
             Keyword.FLYING,
@@ -22,12 +24,4 @@ public record PerpetuallyGainKeywordsOfTriggeringCreatureEffect(Set<Keyword> key
             Keyword.TRAMPLE,
             Keyword.VIGILANCE
     );
-
-    public PerpetuallyGainKeywordsOfTriggeringCreatureEffect() {
-        this(Set.of());
-    }
-
-    public PerpetuallyGainKeywordsOfTriggeringCreatureEffect {
-        keywordsAtTrigger = keywordsAtTrigger == null ? Set.of() : Set.copyOf(keywordsAtTrigger);
-    }
 }
