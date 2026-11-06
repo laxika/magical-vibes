@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -18,6 +17,9 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsFirstSpellOfKindThisTurnPredicate;
 
 @CardRegistration(set = "BLB", collectorNumber = "204")
 public class AlaniaDivergentStorm extends Card {
@@ -26,18 +28,15 @@ public class AlaniaDivergentStorm extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addTrigger(Triggers.youCastSpell(), new MayEffect(
-                CopyControllerCastSpellOnSpellCastEffect.firstMatchingCopy(
-                        List.of(
+        )).addTrigger(Triggers.youCastSpell().withStackEntryFilter(
+                        new StackEntryIsFirstSpellOfKindThisTurnPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),
                                 new CardTypePredicate(CardType.SORCERY),
                                 new CardAllOfPredicate(List.of(
                                         new CardSubtypePredicate(CardSubtype.OTTER),
-                                        new CardNotPredicate(new CardIsSelfPredicate())
-                                ))
-                        ),
-                        new DrawCardForTargetPlayerEffect(1, false, true)
-                ),
-                "Have target opponent draw a card?"));
+                                        new CardNotPredicate(new CardIsSelfPredicate())))))),
+                new MayEffect(
+                        SequenceEffect.of(new DrawCardForTargetPlayerEffect(1, false, true), new CopyTriggeringSpellEffect()),
+                        "Have target opponent draw a card?"));
     }
 }

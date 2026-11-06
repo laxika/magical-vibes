@@ -25,6 +25,7 @@ public sealed interface StackEntryPredicate permits
         StackEntryHasSourceChosenSubtypePredicate,
         StackEntryHasTargetPredicate,
         StackEntryHasXInManaCostPredicate,
+        StackEntryIsFirstSpellOfKindThisTurnPredicate,
         StackEntryIsNthSpellCastThisTurnPredicate,
         StackEntryKickedPredicate,
         StackEntryIsSingleTargetPredicate,

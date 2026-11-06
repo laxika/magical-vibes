@@ -1727,9 +1727,12 @@ public class TriggeredAbilityQueueService {
                     validPermanentTargets = restrictToEffectPermanentRestriction(
                             gameData, pending.effects(), validPermanentTargets);
                 } else {
+                    // The X a target filter reads is the X the ability goes on the stack with, as its targets
+                    // are checked again as it resolves (Skyfire Kirin's "creature with that spell's mana value").
                     FilterContext filterContext = FilterContext.of(gameData)
                             .withSourceControllerId(pending.controllerId())
-                            .withSourceCardId(pending.sourceCard().getId());
+                            .withSourceCardId(pending.sourceCard().getId())
+                            .withXValue(pending.spellManaSpentX());
                     if (pending.sourcePermanentId() != null) {
                         filterContext = filterContext.withSourcePermanentId(pending.sourcePermanentId());
                     }

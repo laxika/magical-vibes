@@ -3,8 +3,6 @@ package com.github.laxika.magicalvibes.service.trigger;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -40,9 +38,11 @@ public class TriggerCollectorRegistry {
      * Resolution order:
      * <ol>
      *   <li>Exact match on the raw effect's class</li>
-     *   <li>If the raw effect is a {@link MayEffect}, try the wrapped effect's class</li>
      *   <li>Fallback handler registered for {@code CardEffect.class} (default handler)</li>
      * </ol>
+     * A "you may" ({@link com.github.laxika.magicalvibes.model.effect.MayEffect} and the may-pay effects) is the
+     * effect itself, never unwrapped: an optional triggered ability goes on the stack with its option, chosen as it
+     * resolves (CR 603.5).
      *
      * @return {@code true} if a handler was found and the trigger fired
      */
@@ -53,34 +53,7 @@ public class TriggerCollectorRegistry {
             return handler.handle(match, effect, context);
         }
 
-        // 2. MayEffect unwrap
-        if (effect instanceof MayEffect may) {
-            CardEffect inner = may.wrapped();
-            handler = handlers.get(new TriggerKey(slot, inner.getClass()));
-            if (handler != null) {
-                return handler.handle(match, inner, context);
-            }
-        }
-
-        // 3. MayPayManaEffect unwrap
-        if (effect instanceof MayPayManaEffect mayPay) {
-            CardEffect inner = mayPay.wrapped();
-            handler = handlers.get(new TriggerKey(slot, inner.getClass()));
-            if (handler != null) {
-                return handler.handle(match, inner, context);
-            }
-        }
-
-        // 4. MayPayTapPermanentsEffect unwrap
-        if (effect instanceof MayPayTapPermanentsEffect mayPayTap) {
-            CardEffect inner = mayPayTap.wrapped();
-            handler = handlers.get(new TriggerKey(slot, inner.getClass()));
-            if (handler != null) {
-                return handler.handle(match, inner, context);
-            }
-        }
-
-        // 5. Default handler (CardEffect.class)
+        // 2. Default handler (CardEffect.class)
         handler = handlers.get(new TriggerKey(slot, CardEffect.class));
         if (handler != null) {
             return handler.handle(match, effect, context);

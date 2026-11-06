@@ -6,10 +6,9 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +21,7 @@ public class CopyTriggeringSpellEffectHandler implements NormalEffectHandlerBean
 
     private final GameLogService gameLogService;
     private final CopySupport copySupport;
-    private final PsychicBattleSupport psychicBattleSupport;
+    private final CopyControllerCastSpellEffectHandler copyControllerCastSpellEffectHandler;
     private final TargetRedirectionSupport targetRedirectionSupport;
 
     @Override
@@ -61,38 +60,32 @@ public class CopyTriggeringSpellEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
+        if (!triggeringSpellEffect.retargetToSource()) {
+            // The copy's controller is the spell's: the shared copy machinery makes the copies, with the effect's
+            // modifications, and offers the new-target choice.
+            copyControllerCastSpellEffectHandler.resolve(gameData, entry, new CopyControllerCastSpellEffect(
+                    spell, spell.getControllerId(), triggeringSpellEffect.grantedKeywords(),
+                    triggeringSpellEffect.additionalTypes(), triggeringSpellEffect.removedSupertypes(),
+                    triggeringSpellEffect.tokenCopy(), triggeringSpellEffect.mayChooseNewTargets(),
+                    triggeringSpellEffect.grantHasteToPermanentSpell(), false, false,
+                    triggeringSpellEffect.permanentSpellToken(), triggeringSpellEffect.sacrificeAtEndStep(),
+                    triggeringSpellEffect.additionalSubtypes(), triggeringSpellEffect.powerOverride(),
+                    triggeringSpellEffect.toughnessOverride(), triggeringSpellEffect.copies()));
+            return;
+        }
+
         var copyCard = triggeringSpellEffect.tokenCopy()
                 ? copySupport.createTokenCopyCard(spellCard)
                 : copySupport.createCopyCard(spellCard);
-        UUID copyControllerId = triggeringSpellEffect.retargetToSource()
-                ? entry.getControllerId() : spell.getControllerId();
         StackEntry copyEntry = copySupport.createCopyStackEntry(
-                spell, copyCard, copyControllerId, spell.getTargetId());
-        if (triggeringSpellEffect.retargetToSource()) {
-            if (copyEntry.getTargetId() != null) {
-                copyEntry.setTargetId(sourcePermanentId);
-            }
-            for (int i = 0; i < copyEntry.getDeclaredTargetIds().size(); i++) {
-                copyEntry.replaceTargetIdAt(i, sourcePermanentId);
-            }
+                spell, copyCard, entry.getControllerId(), spell.getTargetId());
+        if (copyEntry.getTargetId() != null) {
+            copyEntry.setTargetId(sourcePermanentId);
         }
-        PendingMayAbility retargetAbility = null;
-        if (triggeringSpellEffect.mayChooseNewTargets() && !triggeringSpellEffect.retargetToSource()) {
-            if (psychicBattleSupport.targetIds(copyEntry).size() > 1) {
-                retargetAbility = psychicBattleSupport.nextChoicePrompt(gameData, entry.getCard(),
-                        spell.getControllerId(), copyEntry, 0);
-            } else if (copyEntry.getTargetId() != null || !copyEntry.getTargetIds().isEmpty()
-                    || !copyEntry.getTargetCardIds().isEmpty()) {
-                retargetAbility = new PendingMayAbility(
-                        entry.getCard(),
-                        spell.getControllerId(),
-                        List.of(new CopySpellEffect()),
-                        "Choose new targets for the copy of " + spellCard.getName() + "?",
-                        copyCard.getId()
-                );
-            }
+        for (int i = 0; i < copyEntry.getDeclaredTargetIds().size(); i++) {
+            copyEntry.replaceTargetIdAt(i, sourcePermanentId);
         }
-        copySupport.addCopyToStack(gameData, copyEntry, retargetAbility);
+        copySupport.addCopyToStack(gameData, copyEntry, (PendingMayAbility) null);
 
         gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
         log.info("Game {} - copy of {} created", gameData.id, spellCard.getName());

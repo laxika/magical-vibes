@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsFirstSpellOfKindThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -2246,6 +2248,38 @@ class TargetLegalityServiceTest {
             assertThat(sut.matchesStackEntryPredicate(gd, opponentEntry,
                     new StackEntryControlledByEnchantedPlayerPredicate(), player1Id, source))
                     .isFalse();
+        }
+
+        @Test
+        @DisplayName("matches StackEntryIsFirstSpellOfKindThisTurnPredicate only for its caster's first spell of a kind")
+        void matchesFirstSpellOfKindPredicate() {
+            var instant = new CardTypePredicate(CardType.INSTANT);
+            var sorcery = new CardTypePredicate(CardType.SORCERY);
+            var firstOfKind = new StackEntryIsFirstSpellOfKindThisTurnPredicate(List.of(instant, sorcery));
+            lenient().when(predicateEvaluationService.matchesCardPredicate(
+                            any(Card.class), any(CardTypePredicate.class), any(), eq(gd), eq(player1Id)))
+                    .thenAnswer(invocation -> ((Card) invocation.getArgument(0))
+                            .hasType(((CardTypePredicate) invocation.getArgument(1)).cardType()));
+            Card firstInstant = createTargetingSpell("Shock", CardColor.RED);
+            Card secondInstant = createTargetingSpell("Spark", CardColor.RED);
+            Card firstSorcery = createTargetingSpell("Lava Axe", CardColor.RED);
+            firstSorcery.setType(CardType.SORCERY);
+            Card creature = createCreature("Bear", CardColor.GREEN);
+
+            gd.recordSpellCast(player1Id, firstInstant);
+            assertThat(sut.matchesStackEntryPredicate(gd, new StackEntry(firstInstant, player1Id), firstOfKind,
+                    player1Id, null)).isTrue();
+            gd.recordSpellCast(player1Id, secondInstant);
+            assertThat(sut.matchesStackEntryPredicate(gd, new StackEntry(secondInstant, player1Id), firstOfKind,
+                    player1Id, null)).isFalse();
+            // The first sorcery is a first spell of a kind after two instants.
+            gd.recordSpellCast(player1Id, firstSorcery);
+            assertThat(sut.matchesStackEntryPredicate(gd, new StackEntry(firstSorcery, player1Id), firstOfKind,
+                    player1Id, null)).isTrue();
+            // A spell of none of the kinds never matches.
+            gd.recordSpellCast(player1Id, creature);
+            assertThat(sut.matchesStackEntryPredicate(gd, new StackEntry(creature, player1Id), firstOfKind,
+                    player1Id, null)).isFalse();
         }
 
         @Test

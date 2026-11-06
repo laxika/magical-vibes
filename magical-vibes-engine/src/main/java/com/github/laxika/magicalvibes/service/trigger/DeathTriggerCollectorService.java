@@ -57,7 +57,6 @@ import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeAndDrawEqualToDyingPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityToSourceCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
@@ -161,9 +160,8 @@ public class DeathTriggerCollectorService {
 
     /**
      * Dispatches {@code effect}, an effect of a "whenever [an object] dies" ability that {@code watch}'s collector
-     * binds, to its handler, in the order the trigger registry picks one: the effect's class, then the class of the
-     * effect a {@link MayEffect}, {@link MayPayManaEffect} or {@link MayPayTapPermanentsEffect} wraps, then the
-     * watch's default. Returns whether it triggered.
+     * binds, to its handler, in the order the trigger registry picks one: the effect's class, then the watch's
+     * default. A "you may" is the effect itself, never unwrapped (CR 603.5). Returns whether it triggered.
      */
     public boolean dispatchCreatureDeath(CreatureDeathWatch watch, TriggerMatchContext match, CardEffect effect,
                                          TriggerContext context) {
@@ -172,18 +170,6 @@ public class DeathTriggerCollectorService {
         TriggerCollectorHandler handler = handlers.get(effect.getClass());
         if (handler != null) {
             return handler.handle(match, effect, context);
-        }
-        CardEffect inner = switch (effect) {
-            case MayEffect may -> may.wrapped();
-            case MayPayManaEffect mayPay -> mayPay.wrapped();
-            case MayPayTapPermanentsEffect mayPayTap -> mayPayTap.wrapped();
-            default -> null;
-        };
-        if (inner != null) {
-            handler = handlers.get(inner.getClass());
-            if (handler != null) {
-                return handler.handle(match, inner, context);
-            }
         }
         handler = handlers.get(CardEffect.class);
         return handler != null && handler.handle(match, effect, context);

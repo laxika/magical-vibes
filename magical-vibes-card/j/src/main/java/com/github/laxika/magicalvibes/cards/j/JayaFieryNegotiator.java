@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsChooseOneMayPlayThisTurnEffect;
@@ -20,6 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 
 @CardRegistration(set = "DMU", collectorNumber = "133")
 public class JayaFieryNegotiator extends Card {
@@ -61,8 +62,8 @@ public class JayaFieryNegotiator extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -8,
                 List.of(new CreateEmblemEffect(
-                        List.of(new CopyControllerCastSpellOnSpellCastEffect(redInstantOrSorcery, null, null)
-                                .withCopies(2)),
+                        List.of(new SpellCastTriggerEffect(redInstantOrSorcery,
+                                List.of(new CopyTriggeringSpellEffect().withCopies(2)))),
                         "Whenever you cast a red instant or sorcery spell, copy it twice. You may choose new targets for the copies.")),
                 "−8: You get an emblem with \"Whenever you cast a red instant or sorcery spell, copy it twice. You may choose new targets for the copies.\""
         ));

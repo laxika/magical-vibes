@@ -108,6 +108,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryHasSourceChosenSubt
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsLoyaltyAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsMulticoloredPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsFirstSpellOfKindThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsNthSpellCastThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryKickedPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
@@ -5657,6 +5658,18 @@ public class TargetLegalityService {
         if (predicate instanceof StackEntryHasXInManaCostPredicate) {
             return stackEntry.getCard().getParsedManaCost() != null
                     && stackEntry.getCard().getParsedManaCost().hasX();
+        }
+        if (predicate instanceof StackEntryIsFirstSpellOfKindThisTurnPredicate firstOfKind) {
+            UUID casterId = stackEntry.getControllerId();
+            UUID sourceCardId = source == null ? null : source.getOriginalCard().getId();
+            if (stackEntry.isCopy() || casterId == null) {
+                return false;
+            }
+            List<Card> spellsCastThisTurn = gameData.getSpellsCastThisTurn(casterId);
+            return firstOfKind.kinds().stream().anyMatch(kind -> predicateEvaluationService.matchesCardPredicate(
+                            stackEntry.getCard(), kind, sourceCardId, gameData, casterId)
+                    && spellsCastThisTurn.stream().filter(spell -> predicateEvaluationService.matchesCardPredicate(
+                            spell, kind, sourceCardId, gameData, casterId)).count() == 1);
         }
         if (predicate instanceof StackEntryIsNthSpellCastThisTurnPredicate nthSpell) {
             return gameData.getSpellCastOrdinalThisTurn(stackEntry.getTargetableId()) == nthSpell.spellNumber();

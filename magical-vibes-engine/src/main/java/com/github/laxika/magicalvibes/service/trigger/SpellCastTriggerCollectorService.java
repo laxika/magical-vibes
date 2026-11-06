@@ -37,18 +37,15 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.GainLifeForEachChosenColorSpellCastEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureByCastSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureWhenSingleTargetSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEqualToTriggeringSpellManaValueDifferenceEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyEnchantedHandCardOnCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.FlurryCopyOrDrawTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachPriorInstantOrSorceryEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringSpellManaValueEffect;
@@ -61,7 +58,6 @@ import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.SourcePermanentSnapshotRequiredEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForAnotherOpponentPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherCreatureEffect;
@@ -161,7 +157,6 @@ import com.github.laxika.magicalvibes.model.trigger.SpellFilter;
 import com.github.laxika.magicalvibes.model.effect.SpellweaverHelixTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellweaverVoluteTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyEnchantedInstantAndMayCastCopyEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchZonesForCardNamedToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.StormCopyEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
@@ -186,7 +181,8 @@ import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMinManaValuePredicate;
@@ -195,7 +191,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PlayerOtherThanPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -283,7 +278,7 @@ public class SpellCastTriggerCollectorService {
                 new PlayerOtherThanPredicate(sc.castingPlayerId()),
                 "Target must be another player");
         return handleGenericSpellCastTrigger(match, new CastAbility(SpellFilter.ANY, trigger.resolvedEffects(), null,
-                null, promptOf(optionalMayEffect(match.rawEffect())), targetFilter), sc);
+                null, null, targetFilter), sc);
     }
 
 
@@ -1236,13 +1231,9 @@ public class SpellCastTriggerCollectorService {
         return collected;
     }
 
-    /** An authored {@link SpellCastTriggerEffect} as the generic collector judges it, with the "you may" around it. */
+    /** An authored {@link SpellCastTriggerEffect} as the generic collector judges it. */
     private CastAbility authored(TriggerMatchContext match, SpellCastTriggerEffect trigger) {
-        return CastAbility.of(trigger, optionalMayEffect(match.rawEffect()));
-    }
-
-    private static String promptOf(MayEffect may) {
-        return may == null ? null : may.prompt();
+        return CastAbility.of(trigger, null);
     }
 
     @CollectsSpellAbilityTrigger(value = SpellCastTriggerEffect.class,
@@ -1468,185 +1459,6 @@ public class SpellCastTriggerCollectorService {
         triggerEntry.setNonTargeting(true);
         match.gameData().stack.add(triggerEntry);
         return true;
-    }
-
-    @CollectsSpellAbilityTrigger(value = CopyControllerCastSpellOnSpellCastEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
-    private boolean handleCopyControllerCastSpellOnSpellCast(TriggerMatchContext match,
-            CopyControllerCastSpellOnSpellCastEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-
-        if (trigger.requiredCastZone() != null && sc.castZone() != trigger.requiredCastZone()) {
-            return false;
-        }
-        if (trigger.excludeHandCast() && sc.castZone() == Zone.HAND) {
-            return false;
-        }
-
-        UUID sourceCardId = match.permanent().getOriginalCard().getId();
-        if (!predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), sourceCardId,
-                match.gameData(), sc.castingPlayerId())) {
-            return false;
-        }
-        if (!trigger.firstSpellFilters().isEmpty()
-                && trigger.firstSpellFilters().stream().noneMatch(filter ->
-                isFirstMatchingSpell(match.gameData(), sc, filter, sourceCardId, trigger.requiredCastZone()))) {
-            return false;
-        }
-
-        StackEntry spellEntry = null;
-        for (StackEntry se : match.gameData().stack) {
-            if (se.getTargetableId().equals(sc.spellCard().getId())) {
-                spellEntry = se;
-                break;
-            }
-        }
-        if (spellEntry == null) return false;
-
-        if (trigger.requiredCastWithAdventure()
-                && (!spellEntry.isCastWithAdventure()
-                || (spellEntry.getEntryType() != StackEntryType.INSTANT_SPELL
-                && spellEntry.getEntryType() != StackEntryType.SORCERY_SPELL))) {
-            return false;
-        }
-
-        if (trigger.triggerCondition() != null && !conditionEvaluationService.isMet(match.gameData(),
-                trigger.triggerCondition(), ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
-            return false;
-        }
-
-        if (trigger.intervening() != null && !conditionEvaluationService.isMet(match.gameData(),
-                trigger.intervening(), ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
-            return false;
-        }
-
-        if (trigger.castSpellTargetCondition() != null
-                && !targetLegalityService.matchesStackEntryPredicate(match.gameData(), spellEntry,
-                trigger.castSpellTargetCondition(), match.controllerId(), match.permanent())) {
-            return false;
-        }
-
-        StackEntry snapshot = new StackEntry(spellEntry);
-        // "Do this only once each turn" (CR 603.2h): copying is the action, so accepting the copy uses it up.
-        boolean markOnAcceptance = match.markSourceOncePerTurnOnAcceptance();
-        CardEffect copyEffect =
-                new CopyControllerCastSpellEffect(snapshot, sc.castingPlayerId(), trigger.grantedKeywords(),
-                        trigger.additionalTypes(), trigger.removedSupertypes(), trigger.tokenCopy(),
-                        trigger.mayChooseNewTargets(), trigger.grantHasteToPermanentSpell(),
-                        markOnAcceptance, false, trigger.permanentSpellToken(),
-                        trigger.sacrificeAtEndStep(), trigger.additionalSubtypes(),
-                        trigger.powerOverride(), trigger.toughnessOverride(), trigger.copies());
-        if (trigger.beforeCopyEffect() != null) {
-            copyEffect = SequenceEffect.of(trigger.beforeCopyEffect(), copyEffect);
-        }
-        if (trigger.intervening() != null) {
-            copyEffect = new ConditionalEffect(trigger.intervening(), copyEffect);
-        }
-
-        if (trigger.sacrificeFilter() != null) {
-            // "If you do, copy that spell" is part of the same resolution, not a reflexive trigger.
-            CardEffect sacrificeAndCopy = new SacrificePermanentThenEffect(
-                    trigger.sacrificeFilter(), copyEffect, trigger.sacrificeDescription(), false, false);
-            if (match.rawEffect() instanceof MayEffect may) {
-                // The sacrifice is optional, but it is chosen as the triggered ability resolves.
-                sacrificeAndCopy = new MayEffect(sacrificeAndCopy,
-                        match.permanent().getCard().getName() + " — " + may.prompt());
-            }
-            match.gameData().stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    match.permanent().getCard(),
-                    match.controllerId(),
-                    match.permanent().getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(sacrificeAndCopy)),
-                    null,
-                    match.permanent().getId()));
-            return true;
-        }
-
-        // "you may copy that spell" with no cost (Swarm Intelligence) — offer an immediate optional
-        // prompt; accepting puts the copy-creating ability on the stack.
-        MayEffect optionalMay = optionalMayEffect(match.rawEffect());
-        if (trigger.tapCost() == null && trigger.manaCost() == null && optionalMay != null) {
-            // CR 603.5: a plain "you may" trigger goes on the stack and asks on resolution.
-            if (trigger.requiredCastWithAdventure() || trigger.permanentSpellToken()
-                    || trigger.beforeCopyEffect() == null) {
-                // The intervening "if" (Pyromancer Ascension's "if it has two or more quest counters") goes around the
-                // "you may", so the choice isn't asked once it is false as the ability resolves (CR 603.4).
-                CardEffect mayCopy = copyEffect instanceof ConditionalEffect intervening
-                        ? new ConditionalEffect(intervening.condition(),
-                        new MayEffect(intervening.wrapped(), optionalMay.prompt()))
-                        : new MayEffect(copyEffect, optionalMay.prompt());
-                match.gameData().stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(),
-                        match.controllerId(), match.permanent().getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(mayCopy)),
-                        null, match.permanent().getId()));
-                return true;
-            }
-            if (trigger.beforeCopyEffect() != null) {
-                TargetSpec targetSpec = copyEffect.targetSpec();
-                boolean playerTargetOnly = targetSpec.admits(TargetPredicate.Kind.PLAYER)
-                        && !targetSpec.admits(TargetPredicate.Kind.PERMANENT);
-                match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                        match.permanent().getCard(),
-                        match.controllerId(),
-                        new ArrayList<>(List.of(new MayEffect(copyEffect, optionalMay.prompt()))),
-                        playerTargetOnly,
-                        match.permanent().getCard().getTargetFilter(),
-                        0,
-                        match.permanent().getId()));
-            }
-            return true;
-        }
-
-        CardEffect resolutionEffect;
-        if (trigger.tapCost() != null) {
-            resolutionEffect = new MayPayTapPermanentsEffect(
-                    trigger.tapCost(),
-                    copyEffect,
-                    "Tap " + trigger.tapCost().count() + " untapped creatures you control to copy "
-                            + sc.spellCard().getName() + "?");
-        } else if (trigger.manaCost() != null) {
-            resolutionEffect = new MayPayManaEffect(
-                    trigger.manaCost(),
-                    copyEffect,
-                    "Pay " + trigger.manaCost() + " to copy " + sc.spellCard().getName() + "?");
-        } else {
-            resolutionEffect = copyEffect;
-        }
-
-        match.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(resolutionEffect)),
-                null,
-                match.permanent().getId()
-        ));
-        return true;
-    }
-
-    private boolean isFirstMatchingSpell(GameData gameData, TriggerContext.SpellCast spellCast,
-                                         CardPredicate filter, UUID sourceCardId, Zone requiredCastZone) {
-        if (!predicateEvaluationService.matchesCardPredicate(spellCast.spellCard(), filter, sourceCardId,
-                gameData, spellCast.castingPlayerId())) {
-            return false;
-        }
-        List<Card> candidateSpells = requiredCastZone == null
-                ? gameData.getSpellsCastThisTurn(spellCast.castingPlayerId())
-                : gameData.getSpellsCastThisTurn(spellCast.castingPlayerId(), requiredCastZone);
-        long matchingSpells = candidateSpells.stream()
-                .filter(spell -> predicateEvaluationService.matchesCardPredicate(
-                        spell, filter, sourceCardId, gameData, spellCast.castingPlayerId()))
-                .count();
-        return matchingSpells == 1;
-    }
-
-    private MayEffect optionalMayEffect(CardEffect rawEffect) {
-        if (rawEffect instanceof MayEffect may) {
-            return may;
-        }
-        return null;
     }
 
     @CollectsSpellAbilityTrigger(value = CreateTokenCopyOfTargetedSpellPermanentEffect.class,
@@ -1945,37 +1757,6 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsSpellAbilityTrigger(value = GainControlOfTargetCreatureByCastSpellManaValueEffect.class,
-            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
-    private boolean handleGainControlByCastSpellManaValue(
-            TriggerMatchContext match, GainControlOfTargetCreatureByCastSpellManaValueEffect trigger,
-            TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (!predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
-                match.gameData(), sc.castingPlayerId())) return false;
-
-        int manaValue = spellManaValue(match.gameData(), sc.spellCard());
-        var targetPredicate = new PermanentAllOfPredicate(List.of(
-                new PermanentIsCreaturePredicate(),
-                new PermanentMinManaValuePredicate(manaValue),
-                new PermanentMaxManaValuePredicate(manaValue)));
-        CardEffect gainControl = GainControlOfTargetEffect.withTargetPredicate(
-                ControlDuration.END_OF_TURN, targetPredicate);
-        // CR 603.3d / 603.5: the target is chosen as the trigger goes on the stack, and the "may" choice
-        // is made on resolution, so a "you may" wrapper goes around the targeted effect.
-        CardEffect resolvedEffect = match.rawEffect() instanceof MayEffect may
-                ? new MayEffect(gainControl, may.prompt())
-                : gainControl;
-        TargetFilter targetFilter = new PermanentPredicateTargetFilter(targetPredicate,
-                "Target must be a creature with mana value " + manaValue);
-        match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(resolvedEffect)),
-                false, targetFilter, 0, match.permanent().getId()));
-        gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
-                "'s triggered ability triggers - choose a creature with mana value " + manaValue + "."));
-        return true;
-    }
-
     @CollectsSpellAbilityTrigger(value = ReturnTargetPermanentByCastSpellManaValueEffect.class,
             watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleReturnTargetPermanentByCastSpellManaValue(
@@ -2032,23 +1813,11 @@ public class SpellCastTriggerCollectorService {
                 new CardMaxManaValuePredicate(manaValue)));
         List<CardEffect> resolvedEffects = List.of(
                 new RevealHandAndDiscardMatchingCardsEffect(matchingManaValue));
-        if (match.rawEffect() instanceof MayEffect may) {
-            match.gameData().pendingMayAbilities.add(PendingMayAbility.forSpellCastTrigger(
-                    match.permanent().getCard(),
-                    match.controllerId(),
-                    resolvedEffects,
-                    match.permanent().getCard().getName() + " - " + may.prompt(),
-                    null,
-                    match.permanent().getId(),
-                    sc.spellCard().getId()));
-            gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        } else {
-            match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(resolvedEffects), true));
-            gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
-                    "'s triggered ability triggers - choose a player to reveal their hand and discard cards with mana value "
-                            + manaValue + "."));
-        }
+        match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                match.permanent().getCard(), match.controllerId(), new ArrayList<>(resolvedEffects), true));
+        gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+                "'s triggered ability triggers - choose a player to reveal their hand and discard cards with mana value "
+                        + manaValue + "."));
         return true;
     }
 
@@ -2782,6 +2551,13 @@ public class SpellCastTriggerCollectorService {
         if (interveningSpellManaValueCondition) {
             interveningContext = interveningContext.withEventValue(interveningSpellManaValue);
         }
+        // "Whenever you cast a spell while …" (CR 603.2): the cast event itself requires the condition, so it is
+        // checked only now, never again as the ability resolves.
+        if (trigger.eventCondition() != null
+                && !conditionEvaluationService.isMet(match.gameData(), trigger.eventCondition(),
+                interveningContext)) {
+            return false;
+        }
         if (trigger.interveningIf() != null
                 && !conditionEvaluationService.isMet(match.gameData(), trigger.interveningIf(),
                 interveningContext)) {
@@ -2825,7 +2601,12 @@ public class SpellCastTriggerCollectorService {
                         || effect instanceof com.github.laxika.magicalvibes.model.effect.RevealTopCardAndCounterTriggeringSpellIfManaValueMatchesEffect);
         boolean needsSpellManaSpentX = resolved.stream().anyMatch(this::effectNeedsSpellManaSpentX)
                 || trigger.interveningIf() instanceof SpellCreatureManaSpentAtLeast;
-        int spellManaSpentX = trigger.interveningIf() instanceof SpellCreatureManaSpentAtLeast
+        // A permanent target restricted by "that spell's mana value" (Skyfire Kirin) is chosen now, as the ability goes
+        // on the stack (CR 603.3d), against the spell's mana value as the ability's X.
+        boolean targetRestrictedBySpellManaValue = needsPermanentTarget && readsManaValueX(
+                trigger.targetFilter() != null ? trigger.targetFilter() : boundTargetFilter(sourceCard, trigger.effects()));
+        int spellManaSpentX = targetRestrictedBySpellManaValue ? spellManaValue(match.gameData(), spellCard)
+                : trigger.interveningIf() instanceof SpellCreatureManaSpentAtLeast
                 ? match.gameData().getSpellCastCreatureManaSpent(spellCard.getId())
                 : needsSpellManaSpentX ? match.gameData().getSpellCastManaSpent(spellCard.getId())
                 : triggeringSpell != null ? triggeringSpell.getXValue() : 0;
@@ -3058,6 +2839,24 @@ public class SpellCastTriggerCollectorService {
             }
         }
         return true;
+    }
+
+    /** Whether {@code filter} restricts a permanent target by the X the ability goes on the stack with. */
+    private static boolean readsManaValueX(TargetFilter filter) {
+        return filter instanceof PermanentPredicateTargetFilter permanentFilter
+                && readsManaValueX(permanentFilter.predicate());
+    }
+
+    private static boolean readsManaValueX(PermanentPredicate predicate) {
+        return switch (predicate) {
+            case PermanentManaValueEqualsXPredicate ignored -> true;
+            case PermanentAllOfPredicate allOf -> allOf.predicates().stream()
+                    .anyMatch(SpellCastTriggerCollectorService::readsManaValueX);
+            case PermanentAnyOfPredicate anyOf -> anyOf.predicates().stream()
+                    .anyMatch(SpellCastTriggerCollectorService::readsManaValueX);
+            case PermanentNotPredicate not -> readsManaValueX(not.predicate());
+            case null, default -> false;
+        };
     }
 
     /**
@@ -3346,27 +3145,15 @@ public class SpellCastTriggerCollectorService {
     private boolean addColorCounterTrigger(TriggerMatchContext match, int amount) {
         List<CardEffect> resolvedEffects = List.of(new PutCountersOnSourceEffect(1, 1, amount));
 
-        if (match.rawEffect() instanceof MayEffect may) {
-            match.gameData().stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    match.permanent().getCard(),
-                    match.controllerId(),
-                    match.permanent().getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(new MayEffect(resolvedEffects.getFirst(), may.prompt()))),
-                    null,
-                    match.permanent().getId()
-            ));
-        } else {
-            match.gameData().stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    match.permanent().getCard(),
-                    match.controllerId(),
-                    match.permanent().getCard().getName() + "'s ability",
-                    new ArrayList<>(resolvedEffects),
-                    null,
-                    match.permanent().getId()
-            ));
-        }
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(resolvedEffects),
+                null,
+                match.permanent().getId()
+        ));
         return true;
     }
 

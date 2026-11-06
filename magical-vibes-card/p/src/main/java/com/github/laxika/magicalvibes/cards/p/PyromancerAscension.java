@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -15,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 
 @CardRegistration(set = "ZEN", collectorNumber = "143")
 @CardRegistration(set = "MM3", collectorNumber = "108")
@@ -34,10 +35,8 @@ public class PyromancerAscension extends Card {
 
         addTrigger(Triggers.youCastSpell().withFilter(matchingSpell),
                 new MayEffect(new PutCountersOnSelfEffect(CounterType.QUEST), "Put a quest counter on Pyromancer Ascension?"));
-        addTrigger(Triggers.youCastSpell(), new MayEffect(
-                CopyControllerCastSpellOnSpellCastEffect.withIntervening(
-                        instantOrSorcery,
-                        new SourceCounterThreshold(2, CounterType.QUEST)),
-                "Copy that spell?"));
+        addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceCounterThreshold(2, CounterType.QUEST)),
+                new MayEffect(new CopyTriggeringSpellEffect(), "Copy that spell?"));
     }
 }

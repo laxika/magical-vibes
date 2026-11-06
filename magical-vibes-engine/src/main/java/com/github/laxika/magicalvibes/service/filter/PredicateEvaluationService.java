@@ -389,6 +389,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryHasXInManaCostPredi
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsCopyPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsLoyaltyAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsMulticoloredPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsFirstSpellOfKindThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsNthSpellCastThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryKickedPredicate;
@@ -5241,6 +5242,7 @@ public class PredicateEvaluationService {
             case StackEntryHasSourceChosenSubtypePredicate ignored -> false;
             case StackEntryHasXInManaCostPredicate ignored ->
                     entry.getCard().getParsedManaCost() != null && entry.getCard().getParsedManaCost().hasX();
+            case StackEntryIsFirstSpellOfKindThisTurnPredicate ignored -> false;
             case StackEntryIsNthSpellCastThisTurnPredicate ignored -> false;
             case StackEntryManaValuePredicate manaValue ->
                     entry.getSpellManaValue() == manaValue.manaValue();

@@ -205,6 +205,26 @@ class AlaniaDivergentStormTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
+    @Test
+    @DisplayName("The copy is made even if the spell left the stack before the ability resolved")
+    void copiesSpellThatLeftTheStack() {
+        harness.addToBattlefield(player1, new AlaniaDivergentStorm());
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        gd.stack.removeIf(entry -> !entry.isCopy() && entry.getCard().getName().equals("Shock"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(8);
+        assertThat(gd.stack).filteredOn(StackEntry::isCopy).singleElement()
+                .satisfies(copy -> assertThat(copy.getCard().getName()).isEqualTo("Shock"));
+    }
+
     private void acceptTriggerAndCreateCopy() {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();

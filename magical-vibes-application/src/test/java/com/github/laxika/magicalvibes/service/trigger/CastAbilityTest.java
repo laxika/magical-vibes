@@ -48,6 +48,18 @@ class CastAbilityTest {
     }
 
     @Test
+    void anEventConditionIsCarriedApartFromTheInterveningIf() {
+        SpellTrigger anySpell = Triggers.youCastSpell().anySpell();
+
+        CastAbility cast = castAbility(anySpell,
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsEnchantment()), true, DRAW);
+
+        assertThat(cast).isEqualTo(new CastAbility(SpellFilter.ANY, List.of(DRAW), null, null, null, null,
+                new SourceIsEnchantment()));
+        assertThat(cast.interveningIf()).isNull();
+    }
+
+    @Test
     void aLonePlainYouMayIsTheOptionalPartOnTheStackPathOnly() {
         SpellTrigger anySpell = Triggers.youCastSpell().anySpell();
         CardEffect drawAndGain = SequenceEffect.of(DRAW, GAIN);

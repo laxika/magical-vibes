@@ -71,8 +71,8 @@ class PyromancerAscensionTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Removing the counters after casting makes the intervening-if fail on resolution (CR 603.4)")
-    void removingCountersAfterCastingPreventsCopy() {
+    @DisplayName("Removing the counters after casting doesn't stop the copy: \"while\" is checked only as the spell is cast")
+    void removingCountersAfterCastingStillCopies() {
         var ascension = addAscension(2);
         harness.setHand(player1, List.of(new BurstLightning()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -80,10 +80,13 @@ class PyromancerAscensionTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         ascension.setCounterCount(CounterType.QUEST, 0);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        assertThat(gd.stagedSpellCopies).isEmpty();
-        assertThat(gd.stack.stream().filter(entry -> entry.isCopy())).isEmpty();
+        assertThat(gd.stagedSpellCopies).hasSize(1);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.stack.stream().filter(entry -> entry.getCard().getName().equals("Burst Lightning")).count())
+                .isGreaterThanOrEqualTo(2);
     }
 
     @Test

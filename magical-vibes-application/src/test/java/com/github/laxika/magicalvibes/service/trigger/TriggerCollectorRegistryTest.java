@@ -56,11 +56,14 @@ class TriggerCollectorRegistryTest {
         }
 
         @Test
-        @DisplayName("Unwraps MayEffect and dispatches to inner effect handler")
-        void unwrapsMayEffect() {
-            boolean[] called = {false};
+        @DisplayName("Never unwraps a MayEffect: it goes to the default handler, not its inner effect's (CR 603.5)")
+        void doesNotUnwrapMayEffect() {
+            boolean[] innerCalled = {false};
+            CardEffect[] defaultHandled = {null};
             registry.register(SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, SpellCastTriggerEffect.class,
-                    (match, inner, context) -> { called[0] = true; return true; });
+                    (match, inner, context) -> { innerCalled[0] = true; return true; });
+            registry.register(SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, CardEffect.class,
+                    (match, effect, context) -> { defaultHandled[0] = effect; return true; });
 
             var innerEffect = new SpellCastTriggerEffect(null, java.util.List.of());
             var mayEffect = new MayEffect(innerEffect, "Do you want to?");
@@ -70,11 +73,12 @@ class TriggerCollectorRegistryTest {
             boolean result = registry.dispatch(match, SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, mayEffect, ctx);
 
             assertThat(result).isTrue();
-            assertThat(called[0]).isTrue();
+            assertThat(innerCalled[0]).isFalse();
+            assertThat(defaultHandled[0]).isSameAs(mayEffect);
         }
 
         @Test
-        @DisplayName("Prefers exact MayEffect handler over unwrapped inner")
+        @DisplayName("Dispatches a MayEffect to a handler registered for MayEffect itself")
         void prefersExactMayEffectHandler() {
             boolean[] exactCalled = {false};
             boolean[] innerCalled = {false};

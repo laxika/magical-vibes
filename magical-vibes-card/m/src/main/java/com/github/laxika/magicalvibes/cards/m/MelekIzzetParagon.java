@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 
 @CardRegistration(set = "DGM", collectorNumber = "84")
 @CardRegistration(set = "C15", collectorNumber = "227")
@@ -26,11 +26,9 @@ public class MelekIzzetParagon extends Card {
 
         // The copy is mandatory (no cost, no MayEffect wrapper); only the "new targets for the copy"
         // choice is optional, and CopyControllerCastSpellEffect already offers it.
-        addTrigger(Triggers.youCastSpell(), new CopyControllerCastSpellOnSpellCastEffect(
-                new CardAnyOfPredicate(List.of(
+        addTrigger(Triggers.youCastSpell().withFilter(new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY)
-                )),
-                Zone.LIBRARY));
+                        new CardTypePredicate(CardType.SORCERY)))).castFrom(Zone.LIBRARY),
+                new CopyTriggeringSpellEffect());
     }
 }

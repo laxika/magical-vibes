@@ -142,7 +142,6 @@ import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilit
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfConditionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
@@ -280,7 +279,6 @@ import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -1208,46 +1206,6 @@ public class TriggerCollectionService {
                             new ArrayList<>(List.of(new StormCopyEffect(
                                     new StackEntry(spellEntry), castingPlayerId, copies,
                                     storm.tokenCopy(), storm.removeLegendary())))));
-                } else if (effect instanceof CopyControllerCastSpellOnSpellCastEffect copyTrigger) {
-                    if (!emblem.controllerId().equals(castingPlayerId)) continue;
-                    if (copyTrigger.spellFilter() != null
-                            && !predicateEvaluationService.matchesCardPredicate(
-                            spellCard, copyTrigger.spellFilter(), null)) {
-                        continue;
-                    }
-                    StackEntry spellEntry = gameData.stack.stream()
-                            .filter(entry -> entry.getTargetableId().equals(spellCard.getId()))
-                            .findFirst().orElse(null);
-                    if (spellEntry == null) continue;
-                    if (copyTrigger.requiredCastWithAdventure()
-                            && (!spellEntry.isCastWithAdventure()
-                            || (spellEntry.getEntryType() != StackEntryType.INSTANT_SPELL
-                            && spellEntry.getEntryType() != StackEntryType.SORCERY_SPELL))) {
-                        continue;
-                    }
-                    Card source = emblem.sourceCard();
-                    Card sourceCard = source != null ? source : spellCard;
-                    CardEffect copyEffect = new CopyControllerCastSpellEffect(
-                            new StackEntry(spellEntry), castingPlayerId,
-                            copyTrigger.grantedKeywords(), copyTrigger.additionalTypes(),
-                            copyTrigger.tokenCopy(), copyTrigger.mayChooseNewTargets());
-                    if (copyTrigger.copies() > 1) {
-                        copyEffect = new CopyControllerCastSpellEffect(
-                                new StackEntry(spellEntry), castingPlayerId,
-                                copyTrigger.grantedKeywords(), copyTrigger.additionalTypes(), Set.of(),
-                                copyTrigger.tokenCopy(), copyTrigger.mayChooseNewTargets(), false, false,
-                                false, false, false, List.of(), null, null, copyTrigger.copies());
-                    }
-                    CardEffect resolutionEffect = copyTrigger.manaCost() == null
-                            ? copyEffect
-                            : new MayPayManaEffect(copyTrigger.manaCost(), copyEffect,
-                            "Pay " + copyTrigger.manaCost() + " to copy " + spellCard.getName() + "?");
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            sourceCard,
-                            emblem.controllerId(),
-                            sourceCard.getName() + "'s emblem",
-                            new ArrayList<>(List.of(resolutionEffect))));
                 } else if (effect instanceof SpellCastTriggerEffect trigger
                         && trigger.castSpellTargetCondition() instanceof StackEntryTargetsPermanentPredicate
                         && trigger.resolvedEffects().size() == 1
@@ -1315,6 +1273,10 @@ public class TriggerCollectionService {
                             new ArrayList<>(trigger.resolvedEffects())
                     );
                     entry.setTriggeringCardId(spellCard.getId());
+                    // "That spell" as it was when the ability triggered, once it has left the stack (CR 608.2h).
+                    entry.setTriggeringSpell(gameData.stack.stream()
+                            .filter(candidate -> candidate.getTargetableId().equals(spellCard.getId()))
+                            .findFirst().orElse(null));
                     entry.setNonTargeting(true);
                     gameData.stack.add(entry);
                     gameLogService.append(gameData, GameLog.text(desc + " triggers."));
@@ -15269,8 +15231,24 @@ public class TriggerCollectionService {
                                                                UUID castingPlayerId, Zone castZone,
                                                                UUID exiledSourcePermanentId) {
         for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (!watcher.ability().hasTrigger(SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL.trigger())
-                    || !watcher.controllerId().equals(castingPlayerId)) {
+            if (!watcher.controllerId().equals(castingPlayerId)) {
+                continue;
+            }
+            // A cast trigger with a spell filter ("until end of turn, whenever you cast an instant or sorcery spell")
+            // is judged and put on the stack by the generic cast collector, which gives it the spell as "that spell".
+            SpellFilter filter = watchedSpellFilter(watcher.ability(), SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL,
+                    true);
+            if (filter != null) {
+                requireNoLimit(watcher.ability(), watcher.sourceCard());
+                spellCastTriggerCollectorService.collectCastAbility(
+                        new TriggerMatchContext(gameData, null, watcher.controllerId(), watcher.effect(),
+                                watcher.sourceCard(), null),
+                        CastAbility.of(watcher.ability(), filter, true),
+                        new TriggerContext.SpellCast(spellCard, castingPlayerId, castZone, exiledSourcePermanentId),
+                        false);
+                continue;
+            }
+            if (!watcher.ability().hasTrigger(SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL.trigger())) {
                 continue;
             }
 
@@ -15282,52 +15260,18 @@ public class TriggerCollectionService {
                 continue;
             }
 
-            if (!(watcher.effect() instanceof CopyControllerCastSpellOnSpellCastEffect trigger)) {
-                if (watcher.targetFilter() != null) {
-                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                            watcher.sourceCard(), watcher.controllerId(), List.of(watcher.effect()),
-                            false, watcher.targetFilter(), 0, null, true));
-                } else {
-                    StackEntry triggerEntry = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY, watcher.sourceCard(), watcher.controllerId(),
-                            watcher.sourceCard().getName() + "'s ability",
-                            new ArrayList<>(List.of(watcher.effect())));
-                    triggerEntry.setNonTargeting(true);
-                    gameData.stack.add(triggerEntry);
-                }
-                gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
-                continue;
+            if (watcher.targetFilter() != null) {
+                gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                        watcher.sourceCard(), watcher.controllerId(), List.of(watcher.effect()),
+                        false, watcher.targetFilter(), 0, null, true));
+            } else {
+                StackEntry triggerEntry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY, watcher.sourceCard(), watcher.controllerId(),
+                        watcher.sourceCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(watcher.effect())));
+                triggerEntry.setNonTargeting(true);
+                gameData.stack.add(triggerEntry);
             }
-            if (!predicateEvaluationService.matchesCardPredicate(
-                    spellCard, trigger.spellFilter(), null, gameData, castingPlayerId)) {
-                continue;
-            }
-
-            StackEntry spellEntry = gameData.stack.stream()
-                    .filter(entry -> entry.getTargetableId().equals(spellCard.getId()))
-                    .findFirst()
-                    .orElse(null);
-            if (spellEntry == null) {
-                continue;
-            }
-
-            CardEffect copyEffect = new CopyControllerCastSpellEffect(
-                    new StackEntry(spellEntry), castingPlayerId,
-                    trigger.grantedKeywords(), trigger.additionalTypes(),
-                    trigger.tokenCopy(), trigger.mayChooseNewTargets(), trigger.grantHasteToPermanentSpell(),
-                    false, trigger.permanentSpellToken(), trigger.sacrificeAtEndStep());
-            CardEffect resolutionEffect = trigger.manaCost() == null
-                    ? copyEffect
-                    : new MayPayManaEffect(trigger.manaCost(), copyEffect,
-                    "Pay " + trigger.manaCost() + " to copy " + spellCard.getName() + "?");
-            StackEntry triggerEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    watcher.sourceCard(),
-                    watcher.controllerId(),
-                    watcher.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(resolutionEffect)));
-            triggerEntry.setNonTargeting(true);
-            gameData.stack.add(triggerEntry);
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
         }
     }

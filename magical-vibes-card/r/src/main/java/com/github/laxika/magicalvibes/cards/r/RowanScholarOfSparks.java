@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.ControllerDrewAtLeastCardsThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -18,6 +17,9 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 
 @CardRegistration(set = "STX", collectorNumber = "156")
 public class RowanScholarOfSparks extends Card {
@@ -45,7 +47,8 @@ public class RowanScholarOfSparks extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -4,
                 List.of(new CreateEmblemEffect(
-                        List.of(new CopyControllerCastSpellOnSpellCastEffect(instantOrSorcery, "{2}")),
+                        List.of(new SpellCastTriggerEffect(instantOrSorcery, List.of(
+                                new MayPayManaEffect("{2}", new CopyTriggeringSpellEffect(), "Pay {2} to copy that spell?")))),
                         EMBLEM_TEXT)),
                 "-4: You get an emblem with \"" + EMBLEM_TEXT + "\""));
 

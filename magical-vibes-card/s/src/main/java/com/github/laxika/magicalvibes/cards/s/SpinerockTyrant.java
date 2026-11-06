@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 
 @CardRegistration(set = "ECL", collectorNumber = "159")
 @CardRegistration(set = "ECL", collectorNumber = "322")
@@ -20,13 +20,11 @@ import java.util.Set;
 public class SpinerockTyrant extends Card {
 
     public SpinerockTyrant() {
-        addTrigger(Triggers.youCastSpell(), new MayEffect(
-                CopyControllerCastSpellOnSpellCastEffect.withCastTargetCondition(
-                        new CardAnyOfPredicate(List.of(
-                                new CardTypePredicate(CardType.INSTANT),
-                                new CardTypePredicate(CardType.SORCERY))),
-                        new StackEntryIsSingleTargetPredicate(),
-                        Set.of(Keyword.WITHER)),
-                "Copy that spell?"));
+        addTrigger(Triggers.youCastSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                        new CardTypePredicate(CardType.INSTANT),
+                        new CardTypePredicate(CardType.SORCERY))))
+                        .withStackEntryFilter(new StackEntryIsSingleTargetPredicate()),
+                new MayEffect(new CopyTriggeringSpellEffect().withGrantedKeywords(Set.of(Keyword.WITHER)), "Copy that spell?"));
     }
 }

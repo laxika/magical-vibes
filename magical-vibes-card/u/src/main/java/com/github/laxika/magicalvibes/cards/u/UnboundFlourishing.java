@@ -4,16 +4,15 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleXValueOfTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 
 @CardRegistration(set = "SLD", collectorNumber = "1331")
 @CardRegistration(set = "MH1", collectorNumber = "189")
@@ -27,13 +26,12 @@ public class UnboundFlourishing extends Card {
                                 new CardHasXInManaCostPredicate()))),
                 new DoubleXValueOfTriggeringSpellEffect());
 
-        addTrigger(Triggers.youCastSpell(), new CopyControllerCastSpellOnSpellCastEffect(
-                new CardAllOfPredicate(List.of(
+        addTrigger(Triggers.youCastSpell().withFilter(new CardAllOfPredicate(List.of(
                         new CardHasXInManaCostPredicate(),
                         new CardAnyOfPredicate(List.of(
-                                new CardTypePredicate(CardType.INSTANT),
-                                new CardTypePredicate(CardType.SORCERY))))),
-                null, null));
+                        new CardTypePredicate(CardType.INSTANT),
+                        new CardTypePredicate(CardType.SORCERY)))))),
+                new CopyTriggeringSpellEffect());
 
         addTrigger(Triggers.youActivateAbility(),
                 new CopyControllerActivatedAbilityTriggerEffect(null, null, false, false, null, true));

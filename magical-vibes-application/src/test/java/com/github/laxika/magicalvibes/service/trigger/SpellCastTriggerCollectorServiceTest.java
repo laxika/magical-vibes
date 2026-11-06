@@ -46,7 +46,6 @@ import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEf
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachPriorInstantOrSorceryEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
@@ -65,7 +64,10 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.FirstSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeForSameNameCardsInGraveyardsOnSpellCastEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureByCastSpellManaValueEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureWhenSingleTargetSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
@@ -412,50 +414,49 @@ class SpellCastTriggerCollectorServiceTest {
     }
 
     @Nested
-    class ControllerCastSpellCopyTrigger {
+    @DisplayName("ON_CONTROLLER_CASTS_SPELL — a cast trigger's event condition")
+    class CastEventCondition {
 
-        @Test
-        @DisplayName("checks a trigger-only source condition when the spell is cast")
-        void checksTriggerConditionAtCastTime() {
-            Permanent perm = createPermanent("Fire Lord Azula");
-            var effect = CopyControllerCastSpellOnSpellCastEffect.withTriggerCondition(
-                    null, new SourceIsAttacking());
-            Card spellCard = createInstant("Life Gain");
-            StackEntry spellOnStack = new StackEntry(spellCard, player1Id);
-            gd.stack.add(spellOnStack);
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
-
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
-                    eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(true);
-            when(conditionEvaluationService.isMet(eq(gd), any(), any())).thenReturn(true);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(gd.stack).hasSize(2);
-            assertThat(gd.stack.getLast().getEffectsToResolve().getFirst())
-                    .isInstanceOf(CopyControllerCastSpellEffect.class);
+        private CastAbility whileAttacking() {
+            return CastAbility.of(new TriggeredAbility(Triggers.youCastSpell().anySpell(),
+                    TriggerOptions.DEFAULT.withEventCondition(new SourceIsAttacking()),
+                    new CopyTriggeringSpellEffect()), SpellFilter.ANY, true);
         }
 
         @Test
-        @DisplayName("does not trigger when a trigger-only source condition is false")
-        void doesNotTriggerWhenTriggerConditionFails() {
+        @DisplayName("triggers when the event condition holds as the spell is cast, and doesn't check it again")
+        void triggersWhileEventConditionHolds() {
             Permanent perm = createPermanent("Fire Lord Azula");
-            var effect = CopyControllerCastSpellOnSpellCastEffect.withTriggerCondition(
-                    null, new SourceIsAttacking());
+            Card spellCard = createInstant("Life Gain");
+            StackEntry spellOnStack = new StackEntry(spellCard, player1Id);
+            gd.stack.add(spellOnStack);
+            everySpellMatches();
+            when(conditionEvaluationService.isMet(eq(gd), eq(new SourceIsAttacking()), any())).thenReturn(true);
+            CastAbility ability = whileAttacking();
+
+            boolean result = sut.collectCastAbility(match(perm, player1Id, ability.effects().getFirst()), ability,
+                    new TriggerContext.SpellCast(spellCard, player1Id, true), true);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(2);
+            StackEntry trigger = gd.stack.getLast();
+            assertThat(trigger.getEffectsToResolve()).containsExactly(new CopyTriggeringSpellEffect());
+            assertThat(trigger.getTriggeringCardId()).isEqualTo(spellCard.getId());
+            assertThat(trigger.getTriggeringSpellSnapshot().getCard()).isSameAs(spellCard);
+        }
+
+        @Test
+        @DisplayName("does not trigger when the event condition is false as the spell is cast")
+        void doesNotTriggerWhenEventConditionFails() {
+            Permanent perm = createPermanent("Fire Lord Azula");
             Card spellCard = createInstant("Life Gain");
             gd.stack.add(new StackEntry(spellCard, player1Id));
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+            everySpellMatches();
+            when(conditionEvaluationService.isMet(eq(gd), eq(new SourceIsAttacking()), any())).thenReturn(false);
+            CastAbility ability = whileAttacking();
 
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
-                    eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(true);
-            when(conditionEvaluationService.isMet(eq(gd), any(), any())).thenReturn(false);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+            boolean result = sut.collectCastAbility(match(perm, player1Id, ability.effects().getFirst()), ability,
+                    new TriggerContext.SpellCast(spellCard, player1Id, true), true);
 
             assertThat(result).isFalse();
             assertThat(gd.stack).hasSize(1);
@@ -684,17 +685,13 @@ class SpellCastTriggerCollectorServiceTest {
         void putsOptionalTriggerOnStackWhenMayEffect() {
             Permanent perm = createPermanent("Angel's Feather");
             var innerEffect = new PutCountersOnSourceEffect(0, 0, 1);
-            var spellCastTrigger = new SpellCastTriggerEffect(null, List.of(innerEffect));
-            var mayEffect = new MayEffect(spellCastTrigger, "Gain 1 life?");
+            var mayEffect = new MayEffect(innerEffect, "Gain 1 life?");
             Card spellCard = createCard("Lightning Bolt", CardColor.RED);
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+            everySpellMatches();
+            CastAbility ability = castAbility(Triggers.playerCastsSpell().anySpell(), mayEffect);
 
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
-                    eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, mayEffect),
-                    SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, mayEffect, ctx);
+            boolean result = sut.collectCastAbility(match(perm, player1Id, mayEffect), ability, ctx, false);
 
             assertThat(result).isTrue();
             assertThat(gd.pendingMayAbilities).isEmpty();
@@ -707,18 +704,15 @@ class SpellCastTriggerCollectorServiceTest {
         void optionalManaSpentTriggerGoesOnStack() {
             Permanent perm = createPermanent("Uncover the Moon-Letters");
             var draw = new DrawCardEffect(new XValue());
-            var mayEffect = new MayEffect(new SpellCastTriggerEffect(null, List.of(draw)), "Draw cards?");
+            var mayEffect = new MayEffect(draw, "Draw cards?");
             Card spellCard = createInstant("Dark Ritual");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
             gd.addSpellCastManaSpent(spellCard.getId(), 3);
-
+            everySpellMatches();
             when(amountEvaluationService.referencesXValue(new XValue())).thenReturn(true);
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
-                    eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
+            CastAbility ability = castAbility(Triggers.playerCastsSpell().anySpell(), mayEffect);
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, mayEffect),
-                    SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, mayEffect, ctx);
+            boolean result = sut.collectCastAbility(match(perm, player1Id, mayEffect), ability, ctx, false);
 
             assertThat(result).isTrue();
             assertThat(gd.pendingMayAbilities).isEmpty();
@@ -993,26 +987,6 @@ class SpellCastTriggerCollectorServiceTest {
 
             assertThat(result).isFalse();
             assertThat(gd.stack).isEmpty();
-        }
-
-        @Test
-        @DisplayName("adds to pending may abilities when wrapped in MayEffect")
-        void addsToMayAbilitiesWhenMayEffect() {
-            Permanent perm = createPermanent("Wurm's Tooth");
-            var inner = new PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect(
-                    Set.of(CardColor.GREEN), 1, false);
-            var mayEffect = new MayEffect(inner, "Gain 1 life?");
-            Card spellCard = createCard("Grizzly Bears", CardColor.GREEN);
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, mayEffect),
-                    SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, mayEffect, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(gd.stack).isEmpty();
-            assertThat(gd.pendingMayAbilities).hasSize(1);
-            assertThat(gd.pendingMayAbilities.getFirst().sourcePermanentId()).isEqualTo(perm.getId());
         }
     }
 
@@ -2220,37 +2194,33 @@ class SpellCastTriggerCollectorServiceTest {
     }
 
     @Nested
-    @DisplayName("ON_CONTROLLER_CASTS_SPELL — GainControlOfTargetCreatureByCastSpellManaValueEffect")
-    class ControllerManaValueGainControl {
+    @DisplayName("ON_CONTROLLER_CASTS_SPELL — a target restricted by the spell's mana value")
+    class TargetRestrictedBySpellManaValue {
 
         @Test
-        @DisplayName("queues a creature target using the triggering spell's full mana value")
-        void queuesExactManaValueCreatureTarget() {
+        @DisplayName("queues the target choice with the triggering spell's full mana value as its X")
+        void queuesTheSpellsManaValueAsX() {
             Permanent perm = createPermanent("Skyfire Kirin");
-            CardPredicate filter = new CardNamedPredicate("Test Filter");
-            var effect = new GainControlOfTargetCreatureByCastSpellManaValueEffect(filter);
             Card spellCard = createCard("Test Spell");
             spellCard.setManaCost("{X}{1}{R}");
             gd.stack.add(new StackEntry(
-                    StackEntryType.CREATURE_SPELL, spellCard, player2Id, spellCard.getName(), List.of(), 2));
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+                    StackEntryType.CREATURE_SPELL, spellCard, player1Id, spellCard.getName(), List.of(), 2));
+            everySpellMatches();
+            var targetFilter = new PermanentPredicateTargetFilter(new PermanentAllOfPredicate(List.of(
+                    new PermanentIsCreaturePredicate(), new PermanentManaValueEqualsXPredicate())),
+                    "Target must be a creature with that spell's mana value");
+            var gainControl = new GainControlOfTargetEffect(ControlDuration.END_OF_TURN);
+            var ability = new CastAbility(SpellFilter.ANY, List.of(gainControl), null, null, "Gain control?",
+                    targetFilter);
 
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any()))
-                    .thenReturn(true);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+            boolean result = sut.collectCastAbility(match(perm, player1Id, gainControl), ability,
+                    new TriggerContext.SpellCast(spellCard, player1Id, true), true);
 
             assertThat(result).isTrue();
             var queued = gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
-            assertThat(queued.targetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-            assertThat(((PermanentPredicateTargetFilter) queued.targetFilter()).errorMessage())
-                    .isEqualTo("Target must be a creature with mana value 4");
-            assertThat(queued.effects()).singleElement()
-                    .isEqualTo(GainControlOfTargetEffect.withTargetPredicate(
-                            ControlDuration.END_OF_TURN,
-                            ((GainControlOfTargetEffect) queued.effects().getFirst()).targetPredicate()));
+            assertThat(queued.targetFilter()).isEqualTo(targetFilter);
+            assertThat(queued.spellManaSpentX()).isEqualTo(4);
+            assertThat(queued.effects()).containsExactly(new MayEffect(gainControl, "Gain control?"));
         }
     }
 

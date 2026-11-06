@@ -189,6 +189,14 @@ public class PermanentChoiceTriggerHandlerService {
         }
         if (stt.triggeringCardId() != null) {
             entry.setTriggeringCardId(stt.triggeringCardId());
+            // A spell-cast trigger's "that spell", as it is while its targets are chosen, for the effects that read it
+            // once it has left the stack (CR 608.2h).
+            gameData.stack.stream()
+                    .filter(candidate -> candidate.getEntryType() != StackEntryType.TRIGGERED_ABILITY
+                            && candidate.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                            && stt.triggeringCardId().equals(candidate.getCard().getId()))
+                    .findFirst()
+                    .ifPresent(entry::setTriggeringSpell);
         }
         entry.setMarkSourceOncePerTurnOnAcceptance(markOnAcceptance);
         entry.setTriggeringPermanentId(stt.triggeringPermanentId());

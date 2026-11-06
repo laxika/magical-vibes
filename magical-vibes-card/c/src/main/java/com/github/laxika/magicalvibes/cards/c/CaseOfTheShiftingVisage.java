@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSolved;
-import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.SolveSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -20,7 +19,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
-import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 
 @CardRegistration(set = "MKC", collectorNumber = "19")
 public class CaseOfTheShiftingVisage extends Card {
@@ -40,22 +39,8 @@ public class CaseOfTheShiftingVisage extends Card {
                 new CardTypePredicate(CardType.CREATURE),
                 new CardNotPredicate(new CardSupertypePredicate(CardSupertype.LEGENDARY))
         ));
-        addTrigger(Triggers.youCastSpell(),
-                new CopyControllerCastSpellOnSpellCastEffect(
-                        nonlegendaryCreatureSpell,
-                        null,
-                        null,
-                        null,
-                        null,
-                        Set.of(),
-                        new SourceIsSolved(),
-                        false,
-                        Set.of(),
-                        true,
-                        false,
-                        false,
-                        false,
-                        null
-                ));
+        addTrigger(Triggers.youCastSpell().withFilter(nonlegendaryCreatureSpell),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSolved()),
+                new CopyTriggeringSpellEffect(true).withoutNewTargetChoice());
     }
 }

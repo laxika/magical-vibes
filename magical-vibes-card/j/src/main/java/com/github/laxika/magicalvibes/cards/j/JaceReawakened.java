@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.ControllerOwnTurnCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -17,11 +16,11 @@ import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilit
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 
 @CardRegistration(set = "OTJ", collectorNumber = "271")
 public class JaceReawakened extends Card {
@@ -50,8 +49,8 @@ public class JaceReawakened extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -6,
                 List.of(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
-                        new TriggeredAbility(Triggers.youCastSpell(),
-                        new CopyControllerCastSpellOnSpellCastEffect(new CardTruePredicate(), null, null)))),
+                        new TriggeredAbility(Triggers.youCastSpell().anySpell(),
+                        new CopyTriggeringSpellEffect()))),
                 "-6: Until end of turn, whenever you cast a spell, copy it. You may choose new targets for the copy."
         ));
     }

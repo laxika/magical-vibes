@@ -3,13 +3,13 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "159")
 @CardRegistration(set = "WHO", collectorNumber = "443")
@@ -23,9 +23,9 @@ public class TheSixthDoctor extends Card {
         // Time Lord's Prerogative — Whenever you cast a historic spell, copy it, except the copy
         // isn't legendary. This ability triggers only once each turn. Permanent spell copies are
         // tokens; the ability does not offer new targets for instant or sorcery copies.
-        addTrigger(Triggers.youCastSpell(),
+        addTrigger(Triggers.youCastSpell().withFilter(new CardIsHistoricPredicate()),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
-                CopyControllerCastSpellOnSpellCastEffect.tokenCopyWithExceptions(
-                        new CardIsHistoricPredicate(), Set.of(CardSupertype.LEGENDARY), false));
+                new CopyTriggeringSpellEffect(true).withoutNewTargetChoice()
+                        .withoutSupertypes(Set.of(CardSupertype.LEGENDARY)));
     }
 }

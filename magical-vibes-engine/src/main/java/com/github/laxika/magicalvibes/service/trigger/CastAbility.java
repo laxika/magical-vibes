@@ -28,6 +28,8 @@ import java.util.Objects;
  * @param effects        the effects the ability puts on the stack, the optional part taken off
  * @param interveningIf  the intervening "if", or {@code null}; checked as the spell is cast and wrapped around the
  *                       effects for the check as the ability resolves
+ * @param eventCondition a condition the cast event itself requires ("whenever you cast a spell <b>while</b> this
+ *                       creature is attacking"), or {@code null}; checked only as the spell is cast (CR 603.2)
  * @param manaCost       the mana a "you may pay" asks for, or {@code null}
  * @param optionalPrompt the prompt of the "you may [pay]", or {@code null} for an ability that isn't optional (a mana
  *                       cost without a prompt is asked with "Pay {N}?")
@@ -35,11 +37,17 @@ import java.util.Objects;
  *                       bound to; only an authored {@link SpellCastTriggerEffect} names one
  */
 public record CastAbility(SpellFilter filter, List<CardEffect> effects, Condition interveningIf, String manaCost,
-                          String optionalPrompt, TargetFilter targetFilter) {
+                          String optionalPrompt, TargetFilter targetFilter, Condition eventCondition) {
 
     public CastAbility {
         Objects.requireNonNull(filter, "filter");
         effects = List.copyOf(effects);
+    }
+
+    /** An ability without an event condition. */
+    public CastAbility(SpellFilter filter, List<CardEffect> effects, Condition interveningIf, String manaCost,
+                       String optionalPrompt, TargetFilter targetFilter) {
+        this(filter, effects, interveningIf, manaCost, optionalPrompt, targetFilter, null);
     }
 
     /**
@@ -63,7 +71,8 @@ public record CastAbility(SpellFilter filter, List<CardEffect> effects, Conditio
                 optionalPrompt = may.prompt();
             }
         }
-        return new CastAbility(filter, effects, ability.options().interveningIf(), manaCost, optionalPrompt, null);
+        return new CastAbility(filter, effects, ability.options().interveningIf(), manaCost, optionalPrompt, null,
+                ability.options().eventCondition());
     }
 
     /**
@@ -88,12 +97,12 @@ public record CastAbility(SpellFilter filter, List<CardEffect> effects, Conditio
 
     /** This ability with {@code effects} in place of its effects. */
     public CastAbility withEffects(List<CardEffect> effects) {
-        return new CastAbility(filter, effects, interveningIf, manaCost, optionalPrompt, targetFilter);
+        return new CastAbility(filter, effects, interveningIf, manaCost, optionalPrompt, targetFilter, eventCondition);
     }
 
     /** This ability with {@code filter} in place of its spell filter (a text change, CR 612). */
     public CastAbility withFilter(SpellFilter filter) {
-        return new CastAbility(filter, effects, interveningIf, manaCost, optionalPrompt, targetFilter);
+        return new CastAbility(filter, effects, interveningIf, manaCost, optionalPrompt, targetFilter, eventCondition);
     }
 
     private static boolean isPlainManaPayment(MayPayManaEffect pay) {

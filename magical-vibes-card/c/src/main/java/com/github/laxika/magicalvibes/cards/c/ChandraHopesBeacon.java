@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayCastMatchingUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -17,21 +16,18 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 
 @CardRegistration(set = "MOM", collectorNumber = "134")
 @CardRegistration(set = "MOM", collectorNumber = "321")
 public class ChandraHopesBeacon extends Card {
 
     public ChandraHopesBeacon() {
-        addTrigger(Triggers.youCastSpell(),
+        addTrigger(Triggers.youCastSpell().withFilter(new CardAnyOfPredicate(List.of(
+                        new CardTypePredicate(CardType.INSTANT),
+                        new CardTypePredicate(CardType.SORCERY)))),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
-                new CopyControllerCastSpellOnSpellCastEffect(
-                        new CardAnyOfPredicate(List.of(
-                                new CardTypePredicate(CardType.INSTANT),
-                                new CardTypePredicate(CardType.SORCERY)
-                        )),
-                        null,
-                        null));
+                new CopyTriggeringSpellEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 +2,

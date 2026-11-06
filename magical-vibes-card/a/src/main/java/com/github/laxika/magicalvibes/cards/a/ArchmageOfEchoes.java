@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
@@ -11,7 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
-import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 
 @CardRegistration(set = "WOC", collectorNumber = "9")
 @CardRegistration(set = "WOC", collectorNumber = "45")
@@ -26,26 +25,7 @@ public class ArchmageOfEchoes extends Card {
                 ))
         ));
 
-        addTrigger(Triggers.youCastSpell(),
-                new CopyControllerCastSpellOnSpellCastEffect(
-                        qualifyingPermanentSpell,
-                        null,
-                        null,
-                        null,
-                        null,
-                        Set.of(),
-                        null,
-                        false,
-                        Set.of(),
-                        false,
-                        false,
-                        false,
-                        false,
-                        null,
-                        List.of(),
-                        null,
-                        true,
-                        false
-                ));
+        addTrigger(Triggers.youCastSpell().withFilter(qualifyingPermanentSpell),
+                new CopyTriggeringSpellEffect().withoutNewTargetChoice().permanentSpellCopiesAreTokens());
     }
 }

@@ -318,24 +318,15 @@ public class LegacyTriggerBindings {
         return true;
     }
 
-    /** Picks the handler for {@code effect} as the collectors' registry did. */
+    /**
+     * Picks the handler for {@code effect} by its class, else {@code fallback}. A "you may" is the effect itself,
+     * never unwrapped (CR 603.5).
+     */
     private static boolean dispatch(Map<Class<? extends CardEffect>, Handler> handlers, Ctx c, CardEffect effect,
                                     Handler fallback) {
         Handler handler = handlers.get(effect.getClass());
         if (handler != null) {
             return handler.handle(c, effect);
-        }
-        CardEffect inner = switch (effect) {
-            case MayEffect may -> may.wrapped();
-            case MayPayManaEffect mayPay -> mayPay.wrapped();
-            case MayPayTapPermanentsEffect mayPayTap -> mayPayTap.wrapped();
-            default -> null;
-        };
-        if (inner != null) {
-            handler = handlers.get(inner.getClass());
-            if (handler != null) {
-                return handler.handle(c, inner);
-            }
         }
         return fallback.handle(c, effect);
     }
