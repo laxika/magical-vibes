@@ -174,6 +174,7 @@ public sealed interface PermanentPredicate permits
         PermanentIsSourcePermanentPredicate,
         PermanentPutOntoBattlefieldBySourcePredicate,
         PermanentIsTriggeringPermanentPredicate,
+        PermanentIsTargetOfTriggeringSpellPredicate,
         PermanentIsSpecificPermanentPredicate,
         PermanentIsTappedPredicate,
         PermanentIsTokenPredicate,

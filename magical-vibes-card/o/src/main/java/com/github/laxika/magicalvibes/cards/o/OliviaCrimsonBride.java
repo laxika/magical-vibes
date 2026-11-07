@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -10,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
@@ -35,14 +36,13 @@ public class OliviaCrimsonBride extends Card {
                         .enterAttacking(true)
                         .battlefieldEffectGrants(List.of(
                                 new GrantEffectEffect(
-                                        new StateTriggerEffect(
-                                                new PermanentNotPredicate(
+                                        new GrantTriggeredAbilityEffect(new TriggeredAbility(
+                                                Triggers.sourceState(new PermanentNotPredicate(
                                                         new PermanentControllerControlsPermanentPredicate(
                                                                 new PermanentAllOfPredicate(List.of(
                                                                         new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE),
-                                                                        new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))))),
-                                                List.of(new ExileSelfEffect()),
-                                                "When you don't control a legendary Vampire, exile this creature."),
+                                                                        new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)))))),
+                                                new ExileSelfEffect()), GrantScope.TARGET),
                                         GrantScope.TARGET)))
                         .build());
     }

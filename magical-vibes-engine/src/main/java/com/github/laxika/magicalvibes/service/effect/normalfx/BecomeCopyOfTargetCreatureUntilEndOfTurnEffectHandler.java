@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -174,8 +173,6 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
             return true;
         }
         return candidate instanceof SequenceEffect sequence
-                && sequence.steps().stream().anyMatch(step -> containsEffect(step, target))
-                || candidate instanceof SpellCastTriggerEffect spellCastTrigger
-                && spellCastTrigger.resolvedEffects().stream().anyMatch(step -> containsEffect(step, target));
+                && sequence.steps().stream().anyMatch(step -> containsEffect(step, target));
     }
 }

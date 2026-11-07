@@ -71,8 +71,6 @@ import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
-import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
-import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyTargetWhenSourceLeaves;
 import com.github.laxika.magicalvibes.model.action.DelayedExileReturnCounterTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeSourceWhenTargetLeaves;
@@ -176,8 +174,6 @@ import com.github.laxika.magicalvibes.model.effect.EmblemLifeGainTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardOnAllyLandEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.ReselectTargetAtRandomEffect;
@@ -189,7 +185,6 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfWhenChosenPerman
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -247,7 +242,6 @@ import com.github.laxika.magicalvibes.model.effect.SearchBlueOrBlackCreatureToBa
 import com.github.laxika.magicalvibes.model.effect.SearchCreatureToBattlefieldOnControllerCastsCreatureSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.TemporaryGlobalTriggerEffect;
@@ -1093,6 +1087,7 @@ public class TriggerCollectionService {
         // Emblem spell cast triggers (e.g. Venser's emblem, Jace Unraveler of Secrets' emblem,
         // Chandra Dressed to Kill's emblem). Mana-spent readers must run before clearSpellCastManaSpent.
         for (Emblem emblem : gameData.emblems) {
+            collectEmblemCastAbilities(gameData, emblem, ctx);
             for (CardEffect effect : emblem.staticEffects()) {
                 if (effect instanceof ExileTargetOnControllerSpellCastEffect) {
                     if (!emblem.controllerId().equals(castingPlayerId)) continue;
@@ -1204,81 +1199,6 @@ public class TriggerCollectionService {
                             new ArrayList<>(List.of(new StormCopyEffect(
                                     new StackEntry(spellEntry), castingPlayerId, copies,
                                     storm.tokenCopy(), storm.removeLegendary())))));
-                } else if (effect instanceof SpellCastTriggerEffect trigger
-                        && trigger.castSpellTargetCondition() instanceof StackEntryTargetsPermanentPredicate
-                        && trigger.resolvedEffects().size() == 1
-                        && trigger.resolvedEffects().getFirst() instanceof GainControlOfTargetEffect controlEffect
-                        && controlEffect.duration() == ControlDuration.PERMANENT) {
-                    if (!emblem.controllerId().equals(castingPlayerId)) continue;
-                    StackEntry spellEntry = gameData.stack.stream()
-                            .filter(entry -> entry.getTargetableId().equals(spellCard.getId()))
-                            .findFirst().orElse(null);
-                    if (spellEntry == null) continue;
-                    List<UUID> targetIds = new ArrayList<>();
-                    if (spellEntry.getTargetId() != null) {
-                        targetIds.add(spellEntry.getTargetId());
-                    }
-                    targetIds.addAll(spellEntry.getDeclaredTargetIds());
-                    targetIds = targetIds.stream()
-                            .distinct()
-                            .filter(targetId -> gameQueryService.findPermanentById(gameData, targetId) != null)
-                            .toList();
-                    if (targetIds.isEmpty()) continue;
-                    Card source = emblem.sourceCard();
-                    Card sourceCard = source != null ? source : spellCard;
-                    String desc = (source != null ? source.getName() : "Emblem") + "'s emblem";
-                    StackEntry entry = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            sourceCard,
-                            emblem.controllerId(),
-                            desc,
-                            new ArrayList<>(List.of(controlEffect)),
-                            null,
-                            targetIds
-                    );
-                    entry.setTriggeringCardId(spellCard.getId());
-                    entry.setNonTargeting(true);
-                    gameData.stack.add(entry);
-                    gameLogService.append(gameData, GameLog.text(desc + " triggers."));
-                    log.info("Game {} - {} captured {} permanent spell targets for control",
-                            gameData.id, desc, targetIds.size());
-                } else if (effect instanceof SpellCastTriggerEffect trigger
-                        && trigger.resolvedEffects().stream().anyMatch(resolved ->
-                        resolved instanceof GivePoisonCountersEffect poison
-                                && poison.recipient() == PoisonRecipient.TARGET_PLAYER)) {
-                    if (!emblem.controllerId().equals(castingPlayerId)) continue;
-                    if (trigger.spellFilter() != null && !predicateEvaluationService.matchesCardPredicate(
-                            spellCard, trigger.spellFilter(), null, gameData, castingPlayerId)) continue;
-                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                            emblem.sourceCard(), emblem.controllerId(), trigger.resolvedEffects(), true,
-                            trigger.targetFilter()));
-                } else if (effect instanceof SpellCastTriggerEffect trigger
-                        && isNonTargetingEmblemSpellCastTrigger(trigger)) {
-                    if (!trigger.triggersOnAnyPlayer()
-                            && !emblem.controllerId().equals(castingPlayerId)) continue;
-                    if (trigger.spellFilter() != null
-                            && !predicateEvaluationService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)) {
-                        continue;
-                    }
-                    Card source = emblem.sourceCard();
-                    Card sourceCard = source != null ? source : spellCard;
-                    String desc = (source != null ? source.getName() : "Emblem") + "'s emblem";
-                    StackEntry entry = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            sourceCard,
-                            emblem.controllerId(),
-                            desc,
-                            new ArrayList<>(trigger.resolvedEffects())
-                    );
-                    entry.setTriggeringCardId(spellCard.getId());
-                    // "That spell" as it was when the ability triggered, once it has left the stack (CR 608.2h).
-                    entry.setTriggeringSpell(gameData.stack.stream()
-                            .filter(candidate -> candidate.getTargetableId().equals(spellCard.getId()))
-                            .findFirst().orElse(null));
-                    entry.setNonTargeting(true);
-                    gameData.stack.add(entry);
-                    gameLogService.append(gameData, GameLog.text(desc + " triggers."));
-                    log.info("Game {} - {} generic emblem spell-cast trigger queued", gameData.id, desc);
                 } else if (effect instanceof DealDamageToAnyTargetOnControllerSpellCastEffect damageTrigger) {
                     if (!emblem.controllerId().equals(castingPlayerId)) continue;
                     if (damageTrigger.spellFilter() != null
@@ -2549,6 +2469,43 @@ public class TriggerCollectionService {
      * countered" abilities, a suspended card's) judge no limit, which is kept on a permanent; a card with one there
      * fails loudly instead of triggering wrongly.
      */
+    /**
+     * Collects {@code emblem}'s cast abilities ("whenever you cast a creature or planeswalker spell, …", "whenever a
+     * player casts a spell, …") for the spell {@code spellCast} names. Abilities of emblems function in the command
+     * zone (CR 114.4), whatever zones their trigger conditions name. The emblem has no permanent, so the generic cast
+     * collector judges each ability's spell filter, intervening "if" and target filter with the emblem as its source,
+     * and puts it on the stack once: nothing makes an emblem's ability trigger additional times. An ability takes no
+     * limit here.
+     */
+    private void collectEmblemCastAbilities(GameData gameData, Emblem emblem, TriggerContext.SpellCast spellCast) {
+        for (TriggeredAbility ability : emblem.triggeredAbilities()) {
+            for (TriggerCondition condition : ability.conditions()) {
+                if (!(condition.trigger() instanceof SpellTrigger spell)
+                        || spell.event() != SpellTrigger.SpellEvent.CAST
+                        || !castByRelatedPlayer(spell.player(), emblem.controllerId(), spellCast.castingPlayerId())) {
+                    continue;
+                }
+                requireNoLimit(ability, emblem.sourceCard());
+                spellCastTriggerCollectorService.collectCastAbility(
+                        new TriggerMatchContext(gameData, null, emblem.controllerId(), null, emblem.sourceCard(),
+                                (PlanarObject) null),
+                        CastAbility.of(ability, spell.filter() == null ? SpellFilter.ANY : spell.filter(), true),
+                        spellCast, false);
+                break;
+            }
+        }
+    }
+
+    /** Whether {@code castingPlayerId} is the player {@code relation} names, relative to {@code controllerId}. */
+    private static boolean castByRelatedPlayer(com.github.laxika.magicalvibes.model.trigger.PlayerRelation relation,
+                                               UUID controllerId, UUID castingPlayerId) {
+        return switch (relation) {
+            case ANY -> true;
+            case YOU -> controllerId.equals(castingPlayerId);
+            case OPPONENT -> !controllerId.equals(castingPlayerId);
+        };
+    }
+
     private static void requireNoLimit(TriggeredAbility ability, Card card) {
         if (ability.options().limit() != TriggerLimit.NONE) {
             throw new IllegalStateException(card.getName() + "'s triggered ability has a limit its reader doesn't "
@@ -2564,33 +2521,6 @@ public class TriggerCollectionService {
             throw new IllegalStateException(card.getName() + "'s cast ability has options the graveyard reader "
                     + "doesn't judge: " + options);
         }
-    }
-
-    private boolean isUnconditionalNonTargetingEmblemTrigger(SpellCastTriggerEffect trigger) {
-        return trigger.spellFilter() == null
-                && trigger.manaCost() == null
-                && trigger.targetFilter() == null
-                && trigger.castSpellTargetCondition() == null
-                && !trigger.onlyDuringOpponentTurn()
-                && !trigger.onlyDuringControllerTurn()
-                && trigger.intervening() == null
-                && trigger.nthSpellNumber() == 0
-                && !trigger.resolvedEffects().isEmpty()
-                && trigger.resolvedEffects().stream()
-                .allMatch(effect -> effect.targetSpec().equals(TargetSpec.NONE));
-    }
-
-    /** Fires effects that care when the given player controls an effect that counters a spell. */
-    private boolean isNonTargetingEmblemSpellCastTrigger(SpellCastTriggerEffect trigger) {
-        return trigger.manaCost() == null
-                && trigger.targetFilter() == null
-                && trigger.castSpellTargetCondition() == null
-                && !trigger.onlyDuringOpponentTurn()
-                && !trigger.onlyDuringControllerTurn()
-                && trigger.intervening() == null
-                && !trigger.resolvedEffects().isEmpty()
-                && trigger.resolvedEffects().stream()
-                .allMatch(effect -> effect.targetSpec().equals(TargetSpec.NONE));
     }
 
     public void checkControllerCountersSpellTriggers(GameData gameData, UUID counteringPlayerId) {
@@ -16171,11 +16101,7 @@ public class TriggerCollectionService {
                 match.gameData(), match.controllerId())) {
             return false;
         }
-        List<CardEffect> grantedSpellEffects = effect instanceof SpellCastTriggerEffect spellCastTrigger
-                ? spellCastTrigger.resolvedEffects()
-                : List.of();
-        boolean grantedSpellCascade = singleCopy || !grantedSpellEffects.isEmpty()
-                && grantedSpellEffects.stream().allMatch(CascadeEffect.class::isInstance);
+        boolean grantedSpellCascade = singleCopy;
         // "This ability triggers only once each turn" caps the ability at one trigger a turn, so an
         // effect that makes it trigger additional times (Clara Oswald) cannot add a second copy.
         boolean triggersOnlyOnceEachTurn = match.triggersOnlyOnceEachTurn();

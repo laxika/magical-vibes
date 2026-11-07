@@ -150,6 +150,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithTr
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPermanentControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPutOntoBattlefieldBySourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTargetOfTriggeringSpellPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherControlledPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithControlledCreatureOrGraveyardCreaturePredicate;
@@ -1111,6 +1112,19 @@ class PredicateEvaluationServiceTest {
             assertThat(evaluator.matchesPermanentPredicate(cast, predicate, context)).isFalse();
             assertThat(evaluator.matchesPermanentPredicate(putBySource, predicate,
                     FilterContext.of(gd).withSourcePermanentId(cast.getId()))).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentIsTargetOfTriggeringSpellPredicate matches what the triggering spell targets")
+        void targetOfTriggeringSpellPredicateMatchesTheSpellsTargets() {
+            Permanent targeted = addPermanent(player2Id, createArtifact("Targeted"));
+            Permanent other = addPermanent(player2Id, createArtifact("Other"));
+            var predicate = new PermanentIsTargetOfTriggeringSpellPredicate();
+            FilterContext context = FilterContext.of(gd).withTriggeringSpellTargetIds(List.of(targeted.getId()));
+
+            assertThat(evaluator.matchesPermanentPredicate(targeted, predicate, context)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(other, predicate, context)).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(targeted, predicate, FilterContext.of(gd))).isFalse();
         }
 
         @Test

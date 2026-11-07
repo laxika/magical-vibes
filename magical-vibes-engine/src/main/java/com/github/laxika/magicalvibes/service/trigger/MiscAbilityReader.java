@@ -174,15 +174,31 @@ public final class MiscAbilityReader {
     public static List<StateTriggerEffect> stateTriggers(Card card) {
         List<StateTriggerEffect> triggers = new ArrayList<>();
         for (TriggeredAbility ability : printed(card, MiscWatch.STATE_TRIGGERED)) {
-            StateTrigger state = (StateTrigger) watchedCondition(ability, MiscWatch.STATE_TRIGGERED.trigger());
-            Condition interveningIf = ability.options().interveningIf();
-            List<CardEffect> effects = new ArrayList<>(ability.effects().size());
-            for (EffectRegistration registration : ability.effects()) {
-                effects.add(wrapped(registration.effect(), interveningIf));
-            }
-            triggers.add(StateTriggerEffect.of(state, effects));
+            triggers.add(stateTrigger(ability));
         }
         return triggers;
+    }
+
+    /**
+     * {@code ability}, a state-triggered ability (CR 603.8), as the state-trigger reader reads it: one
+     * {@link StateTriggerEffect} of its game state and all its effects, as {@link #stateTriggers(Card)} reads a printed
+     * one. A static ability that grants a permanent a state trigger (Olivia, Crimson Bride) grants this ability.
+     */
+    public static StateTriggerEffect stateTrigger(TriggeredAbility ability) {
+        StateTrigger state = (StateTrigger) watchedCondition(ability, MiscWatch.STATE_TRIGGERED.trigger());
+        Condition interveningIf = ability.options().interveningIf();
+        List<CardEffect> effects = new ArrayList<>(ability.effects().size());
+        for (EffectRegistration registration : ability.effects()) {
+            effects.add(wrapped(registration.effect(), interveningIf));
+        }
+        return StateTriggerEffect.of(state, effects);
+    }
+
+    /** Whether {@code ability} has a state trigger (CR 603.8), which the state-trigger reader reads. */
+    public static boolean hasStateTrigger(TriggeredAbility ability) {
+        return ability.conditions().stream().map(TriggerCondition::trigger)
+                .anyMatch(trigger -> isMiscTrigger(trigger)
+                        && trigger.watchKey().equals(MiscWatch.STATE_TRIGGERED.trigger()));
     }
 
     /**

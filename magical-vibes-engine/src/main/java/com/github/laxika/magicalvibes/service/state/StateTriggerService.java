@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -266,16 +268,20 @@ public class StateTriggerService {
     }
 
     /**
-     * The state triggers of {@code permanent}: its printed ones, read from its abilities, then those a static ability
-     * grants it as a {@link StateTriggerEffect} (Olivia, Crimson Bride).
+     * The state triggers of {@code permanent}: its printed ones, read from its abilities, then the state-triggered
+     * abilities a static ability grants it (Olivia, Crimson Bride's "it gains 'When you don't control a legendary
+     * Vampire, exile this creature'"), as abilities layer 6 leaves it (CR 613.1f).
      */
     private List<StateTriggerEffect> stateTriggeredEffects(GameData gameData, Permanent permanent) {
         List<StateTriggerEffect> effects = new ArrayList<>(MiscAbilityReader.stateTriggers(permanent.getCard()));
         if (gameQueryService != null) {
-            gameQueryService.getGrantedEffects(gameData, permanent).stream()
-                    .filter(StateTriggerEffect.class::isInstance)
-                    .map(StateTriggerEffect.class::cast)
-                    .forEach(effects::add);
+            for (CardEffect granted : gameQueryService.getGrantedEffects(gameData, permanent)) {
+                if (granted instanceof GrantTriggeredAbilityEffect grant
+                        && grant.grantedAbility() instanceof TriggeredAbility ability
+                        && MiscAbilityReader.hasStateTrigger(ability)) {
+                    effects.add(MiscAbilityReader.stateTrigger(ability));
+                }
+            }
         }
         return effects;
     }

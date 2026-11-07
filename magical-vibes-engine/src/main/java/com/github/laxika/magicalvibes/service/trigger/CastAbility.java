@@ -34,7 +34,8 @@ import java.util.Objects;
  * @param optionalPrompt the prompt of the "you may [pay]", or {@code null} for an ability that isn't optional (a mana
  *                       cost without a prompt is asked with "Pay {N}?")
  * @param targetFilter   what the ability may target, or {@code null} to read it from the target group its effects are
- *                       bound to; only an authored {@link SpellCastTriggerEffect} names one
+ *                       bound to: the ability's own ({@link TriggeredAbility#targetFilter()}, an emblem's or a granted
+ *                       ability's), or an authored {@link SpellCastTriggerEffect}'s
  */
 public record CastAbility(SpellFilter filter, List<CardEffect> effects, Condition interveningIf, String manaCost,
                           String optionalPrompt, TargetFilter targetFilter, Condition eventCondition) {
@@ -53,8 +54,8 @@ public record CastAbility(SpellFilter filter, List<CardEffect> effects, Conditio
     /**
      * {@code ability}, whose cast trigger has {@code filter}, as the collector judges it. {@code onStackPath} says
      * whether a lone plain "you may" is the optional part: on the battlefield and in exile it is; the graveyard, hand
-     * and command-zone readers take it as an effect of the ability. The ability's limit is judged by whoever collects
-     * it, not here.
+     * and command-zone readers take it as an effect of the ability. The ability's own target filter, if it has one,
+     * is the target filter. The ability's limit is judged by whoever collects it, not here.
      */
     public static CastAbility of(TriggeredAbility ability, SpellFilter filter, boolean onStackPath) {
         List<CardEffect> effects = ability.effects().stream().map(EffectRegistration::effect).toList();
@@ -71,12 +72,12 @@ public record CastAbility(SpellFilter filter, List<CardEffect> effects, Conditio
                 optionalPrompt = may.prompt();
             }
         }
-        return new CastAbility(filter, effects, ability.options().interveningIf(), manaCost, optionalPrompt, null,
-                ability.options().eventCondition());
+        return new CastAbility(filter, effects, ability.options().interveningIf(), manaCost, optionalPrompt,
+                ability.targetFilter(), ability.options().eventCondition());
     }
 
     /**
-     * An authored {@link SpellCastTriggerEffect} (a kept granted ability, an emblem's) as the collector judges it,
+     * An authored {@link SpellCastTriggerEffect} (Leshrac's Sigil's) as the collector judges it,
      * with the prompt of the "you may" {@code optional} around it, or {@code null}.
      */
     public static CastAbility of(SpellCastTriggerEffect trigger, MayEffect optional) {

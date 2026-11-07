@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -14,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMatchingToHandElseMayBottomEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -60,15 +64,11 @@ public class AjaniSleeperAgent extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -6,
                 List.of(new CreateEmblemEffect(
-                        List.of(new SpellCastTriggerEffect(
-                                creatureOrPlaneswalker,
-                                List.of(new GivePoisonCountersEffect(2, PoisonRecipient.TARGET_PLAYER)),
-                                null,
-                                new com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter(
-                                        new com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate(
-                                                com.github.laxika.magicalvibes.model.filter.PlayerRelation.OPPONENT),
-                                        "Target must be an opponent")
-                        )),
+                        new TriggeredAbility(Triggers.youCastSpell().withFilter(creatureOrPlaneswalker),
+                                new GivePoisonCountersEffect(2, PoisonRecipient.TARGET_PLAYER))
+                                .withTargetFilter(new PlayerPredicateTargetFilter(
+                                        new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                                        "Target must be an opponent")),
                         EMBLEM_TEXT
                 )),
                 "\u22126: You get an emblem with \"" + EMBLEM_TEXT + "\""

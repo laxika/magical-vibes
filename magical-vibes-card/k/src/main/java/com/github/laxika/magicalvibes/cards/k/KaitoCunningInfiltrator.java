@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -13,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -58,10 +58,10 @@ public class KaitoCunningInfiltrator extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -9,
                 List.of(new CreateEmblemEffect(
-                        List.of(SpellCastTriggerEffect.anyPlayer(null, List.of(new CreateTokenEffect(
+                        new TriggeredAbility(Triggers.playerCastsSpell().anySpell(), new CreateTokenEffect(
                                 "Ninja", 2, 1, CardColor.BLUE,
                                 List.of(CardSubtype.NINJA), Set.of(), Set.of()
-                        )))),
+                        )),
                         "Whenever a player casts a spell, you create a 2/1 blue Ninja creature token."
                 )),
                 "\u22129: You get an emblem with \"Whenever a player casts a spell, you create a 2/1 blue Ninja creature token.\""

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeGaleEffect;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -86,8 +85,7 @@ public class SpecializeGaleEffectHandler implements NormalEffectHandlerBean {
                     + specialize.color());
         }
 
-        specialized.addTrigger(Triggers.youCastSpell(),
-                GaleConduitOfTheArcane.specializedSpellCastTrigger(specialize.color()));
+        GaleConduitOfTheArcane.addSpecializedSpellCastTrigger(specialized, specialize.color());
         source.exchangeCard(specialized);
     }
 }

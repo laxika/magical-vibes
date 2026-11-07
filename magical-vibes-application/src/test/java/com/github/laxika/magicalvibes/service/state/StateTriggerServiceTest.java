@@ -6,6 +6,11 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
+import static org.mockito.Mockito.mock;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -99,6 +104,31 @@ class StateTriggerServiceTest {
     @Nested
     @DisplayName("checkStateTriggers")
     class CheckStateTriggers {
+
+        @Test
+        @DisplayName("Fires a state-triggered ability a static ability grants the permanent")
+        void firesGrantedStateTriggeredAbility() {
+            GameQueryService gameQueryService = mock(GameQueryService.class);
+            StateTriggerService service = new StateTriggerService(gameLogService, predicateEvaluationService,
+                    gameQueryService);
+            Card card = new Card();
+            card.setName("Returned Creature");
+            card.setType(CardType.CREATURE);
+            Permanent perm = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(perm);
+            TriggeredAbility granted = new TriggeredAbility(Triggers.state((gameData, p, controllerId) -> true),
+                    new GainLifeEffect(1));
+            when(gameQueryService.getGrantedEffects(gd, perm))
+                    .thenReturn(List.of(new GrantTriggeredAbilityEffect(granted, GrantScope.TARGET)));
+
+            service.checkStateTriggers(gd);
+
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getEffectsToResolve()).containsExactly(new GainLifeEffect(1));
+                assertThat(entry.getSourcePermanentId()).isEqualTo(perm.getId());
+                assertThat(entry.getDescription()).isEqualTo("Returned Creature's state-triggered ability");
+            });
+        }
 
         @Test
         @DisplayName("Fires trigger when predicate is satisfied and not already on stack")

@@ -291,6 +291,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTargetCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTransformedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTriggeringPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTargetOfTriggeringSpellPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostControllerGraveyardCountPredicate;
@@ -2516,6 +2517,8 @@ public class PredicateEvaluationService {
                         ? null : filterContext.triggeringPermanentId();
                 yield triggeringPermanentId != null && triggeringPermanentId.equals(permanent.getId());
             }
+            case PermanentIsTargetOfTriggeringSpellPredicate ignored -> filterContext != null
+                    && filterContext.triggeringSpellTargetIds().contains(permanent.getId());
             case PermanentIsChosenPermanentPredicate ignored -> {
                 Permanent sourcePermanent = filterContext == null ? null : filterContext.sourcePermanentSnapshot();
                 if (gameData != null && filterContext != null && filterContext.sourcePermanentId() != null) {
@@ -3821,6 +3824,8 @@ public class PredicateEvaluationService {
                 UUID triggeringPermanentId = context == null ? null : context.triggeringPermanentId();
                 yield triggeringPermanentId != null && triggeringPermanentId.equals(permanent.getId());
             }
+            case PermanentIsTargetOfTriggeringSpellPredicate ignored -> context != null
+                    && context.triggeringSpellTargetIds().contains(permanent.getId());
             case PermanentIsChosenPermanentPredicate ignored -> {
                 Permanent source = context == null ? null : context.sourcePermanentSnapshot();
                 if (context != null && context.gameData() != null && context.sourcePermanentId() != null) {

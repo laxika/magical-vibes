@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.AttachTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
 import com.github.laxika.magicalvibes.model.trigger.CombatTrigger;
@@ -19,6 +20,7 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.PlanarTrigger;
 import com.github.laxika.magicalvibes.model.trigger.PlayerActionTrigger;
+import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
 import com.github.laxika.magicalvibes.model.trigger.StateTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TapTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TargetTrigger;
@@ -59,10 +61,14 @@ import java.util.UUID;
  *                   grant ("target creature gains '…' until end of turn"). Effects that name that permanent ("sacrifice
  *                   this Equipment", "other than Animal Friend") read it from the stack entry the ability's collector
  *                   builds ({@code StackEntry.getGrantingPermanentId()}). A printed ability has none.
+ * @param targetFilter the restriction on the ability's target when no card's target groups hold it, or {@code null}:
+ *                   an emblem's ability ("target opponent gets two poison counters") or a granted one has no card that
+ *                   binds its effects to a target group, so it names its target filter itself. Only the spell-cast
+ *                   collector reads it, so only an ability whose every trigger condition is a cast trigger has one.
  */
 public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions options,
                                List<EffectRegistration> effects, SagaChapterTargets chapterTargets,
-                               String instance, UUID grantingPermanentId)
+                               String instance, UUID grantingPermanentId, TargetFilter targetFilter)
         implements Ability {
 
     public TriggeredAbility {
@@ -102,6 +108,26 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         requireZoneChangeOptions(conditions, options);
         requireFirstTimeReader(conditions, options);
         requireOwnEntryOptions(conditions, options);
+        requireTargetFilterReader(conditions, targetFilter);
+    }
+
+    /**
+     * Rejects a {@link #targetFilter} on an ability with a trigger condition other than a cast trigger: only the
+     * spell-cast collector reads the ability's own target filter.
+     */
+    private static void requireTargetFilterReader(List<TriggerCondition> conditions, TargetFilter targetFilter) {
+        if (targetFilter != null && conditions.stream().map(TriggerCondition::trigger).anyMatch(trigger
+                -> !(trigger instanceof SpellTrigger spell) || spell.event() != SpellTrigger.SpellEvent.CAST)) {
+            throw new IllegalArgumentException("Only the spell-cast collector reads an ability's own target filter: "
+                    + conditions);
+        }
+    }
+
+    /** An ability without a target filter of its own, as {@code grantingPermanentId} granted it. */
+    public TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions options,
+                            List<EffectRegistration> effects, SagaChapterTargets chapterTargets,
+                            String instance, UUID grantingPermanentId) {
+        this(conditions, options, effects, chapterTargets, instance, grantingPermanentId, null);
     }
 
     /**
@@ -448,21 +474,27 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
 
     /** This ability with {@code effects} in place of its effects. */
     public TriggeredAbility withEffects(List<EffectRegistration> effects) {
-        return new TriggeredAbility(conditions, options, effects, chapterTargets, instance, grantingPermanentId);
+        return new TriggeredAbility(conditions, options, effects, chapterTargets, instance, grantingPermanentId, targetFilter);
     }
 
     /** This ability with {@code chapterTargets} in place of its Saga chapter targets. */
     public TriggeredAbility withChapterTargets(SagaChapterTargets chapterTargets) {
-        return new TriggeredAbility(conditions, options, effects, chapterTargets, instance, grantingPermanentId);
+        return new TriggeredAbility(conditions, options, effects, chapterTargets, instance, grantingPermanentId, targetFilter);
     }
 
     /** This ability as granted by {@code grantingPermanentId} ({@link #grantingPermanentId()}). */
     public TriggeredAbility withGrantingPermanentId(UUID grantingPermanentId) {
-        return new TriggeredAbility(conditions, options, effects, chapterTargets, instance, grantingPermanentId);
+        return new TriggeredAbility(conditions, options, effects, chapterTargets, instance, grantingPermanentId, targetFilter);
+    }
+
+    /** This ability with {@code targetFilter} as its own target filter ({@link #targetFilter()}). */
+    public TriggeredAbility withTargetFilter(TargetFilter targetFilter) {
+        return new TriggeredAbility(conditions, options, effects, chapterTargets, instance, grantingPermanentId,
+                targetFilter);
     }
 
     /** This ability as the instance {@code instance} of it ({@link #instance()}). */
     public TriggeredAbility withInstance(String instance) {
-        return new TriggeredAbility(conditions, options, effects, chapterTargets, instance, grantingPermanentId);
+        return new TriggeredAbility(conditions, options, effects, chapterTargets, instance, grantingPermanentId, targetFilter);
     }
 }

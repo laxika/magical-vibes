@@ -260,11 +260,6 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsSpellAbilityTrigger(value = SpellCastTriggerEffect.class, watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
-    private boolean handleAnyPlayerSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, TriggerContext ctx) {
-        return handleGenericSpellCastTrigger(match, authored(match, trigger), (TriggerContext.SpellCast) ctx);
-    }
-
 
     @CollectsSpellAbilityTrigger(value = FirstSpellCastTriggerEffect.class,
             watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
@@ -1202,15 +1197,6 @@ public class SpellCastTriggerCollectorService {
     }
 
     /**
-     * A "when you spend this mana to cast ..." rider on a mana ability is a separate delayed trigger for
-     * each mana produced by its source that was spent on the spell (CR 106.6), so it fires once per such mana.
-     */
-    @CollectsSpellAbilityTrigger(value = SpellCastTriggerEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
-    private boolean handleControllerSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, TriggerContext ctx) {
-        return collectCastAbility(match, authored(match, trigger), (TriggerContext.SpellCast) ctx, true);
-    }
-
-    /**
      * Collects a "whenever [a player] casts a [quality] spell" ability: judges its spell filter and intervening "if"
      * and puts it on the stack, its targets chosen as it does (CR 603.3d). {@code perManaFromSource} says whether a
      * "when you spend this mana to cast …" rider is collected once for each mana its source produced that was spent
@@ -1231,16 +1217,9 @@ public class SpellCastTriggerCollectorService {
         return collected;
     }
 
-    /** An authored {@link SpellCastTriggerEffect} as the generic collector judges it. */
+    /** An authored {@link SpellCastTriggerEffect} (Leshrac's Sigil's) as the generic collector judges it. */
     private CastAbility authored(TriggerMatchContext match, SpellCastTriggerEffect trigger) {
         return CastAbility.of(trigger, null);
-    }
-
-    @CollectsSpellAbilityTrigger(value = SpellCastTriggerEffect.class,
-            watch = SpellAbilityWatch.EXILE_ON_CONTROLLER_CASTS_SPELL)
-    private boolean handleExileResidentSpellCastTrigger(TriggerMatchContext match,
-            SpellCastTriggerEffect trigger, TriggerContext ctx) {
-        return handleGenericSpellCastTrigger(match, authored(match, trigger), (TriggerContext.SpellCast) ctx);
     }
 
     @CollectsSpellAbilityTrigger(value = GainControlOfTargetCreatureWhenSingleTargetSpellCastEffect.class,
@@ -2689,7 +2668,7 @@ public class SpellCastTriggerCollectorService {
                     StackEntryType.TRIGGERED_ABILITY,
                     sourceCard,
                     match.controllerId(),
-                    sourceCard.getName() + "'s ability",
+                    abilityDescription(sourceCard),
                     resolved,
                     0,
                     spellCard.getId(),
@@ -2754,7 +2733,7 @@ public class SpellCastTriggerCollectorService {
                         StackEntryType.TRIGGERED_ABILITY,
                         sourceCard,
                         match.controllerId(),
-                        sourceCard.getName() + "'s ability",
+                        abilityDescription(sourceCard),
                         resolved,
                         spellManaSpentX,
                         spellCard.getId(),
@@ -2778,19 +2757,19 @@ public class SpellCastTriggerCollectorService {
                         : castingPlayerId;
                 entry = spellManaSpentX > 0
                         ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, match.controllerId(),
-                            sourceCard.getName() + "'s ability", resolved, spellManaSpentX,
+                            abilityDescription(sourceCard), resolved, spellManaSpentX,
                             selfTargetId, sourcePermanentId, null, null, null, null)
                         : new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, match.controllerId(),
-                            sourceCard.getName() + "'s ability", resolved, selfTargetId,
+                            abilityDescription(sourceCard), resolved, selfTargetId,
                             sourcePermanentId);
                 entry.setNonTargeting(true);
             } else {
                 entry = spellManaSpentX > 0
                         ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, match.controllerId(),
-                            sourceCard.getName() + "'s ability", resolved, spellManaSpentX,
+                            abilityDescription(sourceCard), resolved, spellManaSpentX,
                             null, sourcePermanentId, null, null, null, null)
                         : new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, match.controllerId(),
-                            sourceCard.getName() + "'s ability", resolved, null,
+                            abilityDescription(sourceCard), resolved, null,
                             sourcePermanentId);
                 // Contextual "that player" = the caster (Leshrac's Sigil may-pay look-at-hand).
                 // Non-targeting: oracle does not use the word "target".
@@ -2839,6 +2818,14 @@ public class SpellCastTriggerCollectorService {
             }
         }
         return true;
+    }
+
+    /**
+     * The stack description of an ability of {@code sourceCard}: an emblem's ability (its source is the emblem's card,
+     * {@link CardType#EMBLEM}) is the emblem's, any other the card's.
+     */
+    private static String abilityDescription(Card sourceCard) {
+        return sourceCard.getName() + (sourceCard.hasType(CardType.EMBLEM) ? "'s emblem" : "'s ability");
     }
 
     /** Whether {@code filter} restricts a permanent target by the X the ability goes on the stack with. */

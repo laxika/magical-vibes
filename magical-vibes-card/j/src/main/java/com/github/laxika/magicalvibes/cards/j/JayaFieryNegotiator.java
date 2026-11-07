@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -20,7 +22,6 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 import java.util.Set;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 
 @CardRegistration(set = "DMU", collectorNumber = "133")
 public class JayaFieryNegotiator extends Card {
@@ -62,8 +63,8 @@ public class JayaFieryNegotiator extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -8,
                 List.of(new CreateEmblemEffect(
-                        List.of(new SpellCastTriggerEffect(redInstantOrSorcery,
-                                List.of(new CopyTriggeringSpellEffect().withCopies(2)))),
+                        new TriggeredAbility(Triggers.youCastSpell().withFilter(redInstantOrSorcery),
+                                new CopyTriggeringSpellEffect().withCopies(2)),
                         "Whenever you cast a red instant or sorcery spell, copy it twice. You may choose new targets for the copies.")),
                 "−8: You get an emblem with \"Whenever you cast a red instant or sorcery spell, copy it twice. You may choose new targets for the copies.\""
         ));

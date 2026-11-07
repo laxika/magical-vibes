@@ -48,6 +48,17 @@ class CastAbilityTest {
     }
 
     @Test
+    void theAbilitysOwnTargetFilterIsItsTargetFilter() {
+        SpellTrigger anySpell = Triggers.youCastSpell().anySpell();
+        TriggeredAbility emblem = new TriggeredAbility(anySpell, DRAW).withTargetFilter(TargetFilters.creature());
+
+        CastAbility cast = CastAbility.of(emblem, anySpell.filter(), true);
+
+        assertThat(cast.targetFilter()).isEqualTo(TargetFilters.creature());
+        assertThat(castAbility(anySpell, TriggerOptions.DEFAULT, true, DRAW).targetFilter()).isNull();
+    }
+
+    @Test
     void anEventConditionIsCarriedApartFromTheInterveningIf() {
         SpellTrigger anySpell = Triggers.youCastSpell().anySpell();
 

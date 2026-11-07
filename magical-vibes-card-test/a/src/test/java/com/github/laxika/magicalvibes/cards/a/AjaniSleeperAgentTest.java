@@ -114,6 +114,21 @@ class AjaniSleeperAgentTest extends BaseCardTest {
     }
 
     @Test
+    void emblemCanTargetOnlyAnOpponent() {
+        addReadyAjani(6);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(player2.getId());
+    }
+
+    @Test
     void emblemDoesNotTriggerForNoncreatureSpell() {
         addReadyAjani(6);
 

@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTargetOfTriggeringSpellPredicate;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -9,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -51,11 +54,11 @@ public class DackFayden extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -6,
                 List.of(new CreateEmblemEffect(
-                        List.of(new SpellCastTriggerEffect(
-                                null,
-                                List.of(new GainControlOfTargetEffect(ControlDuration.PERMANENT)),
-                                new StackEntryTargetsPermanentPredicate(new PermanentTruePredicate())
-                        )),
+                        new TriggeredAbility(
+                                Triggers.youCastSpell().withStackEntryFilter(
+                                        new StackEntryTargetsPermanentPredicate(new PermanentTruePredicate())),
+                                new GainControlOfAllPermanentsMatchingEffect(
+                                        new PermanentIsTargetOfTriggeringSpellPredicate())),
                         "Whenever you cast a spell that targets one or more permanents, gain control of those permanents.")),
                 "−6: You get an emblem with \"Whenever you cast a spell that targets one or more permanents, "
                         + "gain control of those permanents.\""

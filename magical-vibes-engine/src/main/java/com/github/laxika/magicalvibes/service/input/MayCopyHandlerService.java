@@ -26,7 +26,6 @@ import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInExileOnEnte
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -795,16 +794,12 @@ public class MayCopyHandlerService {
         TriggeredAbility retainedTrigger = retainedEffectSlot != null ? null
                 : sourcePermanent.getCard().getTriggeredAbilities().stream()
                 .filter(candidate -> candidate.effects().stream()
-                        .anyMatch(registration -> registration.effect().equals(copyEffect)
-                                || registration.effect() instanceof SpellCastTriggerEffect trigger
-                                && trigger.resolvedEffects().contains(copyEffect)))
+                        .anyMatch(registration -> registration.effect().equals(copyEffect)))
                 .findFirst()
                 .orElse(null);
         CardEffect retainedAbility = retainedEffectSlot == null ? copyEffect
                 : sourcePermanent.getCard().getEffects(retainedEffectSlot).stream()
-                .filter(candidate -> candidate.equals(copyEffect)
-                        || candidate instanceof SpellCastTriggerEffect trigger
-                        && trigger.resolvedEffects().contains(copyEffect))
+                .filter(candidate -> candidate.equals(copyEffect))
                 .findFirst()
                 .orElse(copyEffect);
         // Apply the copy

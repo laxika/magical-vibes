@@ -8,8 +8,8 @@ import java.util.List;
 /**
  * A state-triggered ability (CR 603.8) in the form the state-trigger reader takes it: a card's state trigger is
  * authored as a {@link StateTrigger} game state and the ability's effects ({@code Triggers.state(predicate)}, …), and
- * the state-trigger reader ({@code MiscAbilityReader}) reads the ability as one of these, with no description; a
- * static ability that grants a state trigger (Olivia, Crimson Bride) still writes one. When the condition is met and the ability is not
+ * the state-trigger reader ({@code MiscAbilityReader}) reads the ability as one of these, with no description, a
+ * printed one and one a static ability grants (Olivia, Crimson Bride) alike. When the condition is met and the ability is not
  * already on the stack, the {@code effects} are put onto the stack as a triggered ability. The
  * trigger won't fire again while it's on the stack; once resolved, countered, or otherwise
  * removed, it can fire again.

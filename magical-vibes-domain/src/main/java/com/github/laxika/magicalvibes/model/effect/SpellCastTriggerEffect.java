@@ -9,14 +9,16 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import java.util.List;
 
 /**
- * Generic trigger descriptor for "whenever [someone] casts a spell [matching filter]" abilities, as emblems and the few
- * abilities effect-slot-refactor.md lists as kept still write them.
+ * Generic trigger descriptor for "whenever an opponent casts a spell [matching filter]", as Leshrac's Sigil alone still
+ * writes it: its "look at that player's hand" is a hand-choice effect that declares a player target, which only this
+ * record's "you may pay" keeps from being chosen as a target (effect-slot-refactor.md, step 15, run 17h).
  * <p>
  * Cards don't author it (step 14, run 6b): such an ability is a cast trigger with a
  * {@link com.github.laxika.magicalvibes.model.trigger.SpellFilter}
  * ({@code Triggers.youCastSpell().withFilter(spellFilter).duringYourTurn()}), its options and its effects, which the
- * spell-cast collector reads itself (step 14, run 16b). Emblems ({@code CreateEmblemEffect}) still hold this record,
- * and the collector judges a kept ability's record as the filter its fields say.
+ * spell-cast collector reads itself (step 14, run 16b). An emblem's or a granted ability is a {@code TriggeredAbility}
+ * with its own target filter (step 15, run 17h). Only the "an opponent casts" collector reads this record, and judges
+ * it as the filter its fields say.
  * <p>
  * When wrapped in {@link MayEffect}, the player is prompted before the effects resolve.
  * If {@code manaCost} is non-null, a "may pay" prompt is shown and the cost must be paid.

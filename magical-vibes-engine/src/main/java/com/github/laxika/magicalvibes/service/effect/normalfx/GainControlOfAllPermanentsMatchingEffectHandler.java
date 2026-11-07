@@ -51,7 +51,8 @@ public class GainControlOfAllPermanentsMatchingEffectHandler implements NormalEf
         FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(controllerId)
                 .withSourceCardId(entry.getCard().getId())
                 .withSourcePermanentId(entry.getSourcePermanentId())
-                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
+                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
+                .withTriggeringSpellTargetIds(triggeringSpellTargetIds(gameData, entry));
 
         List<Permanent> toSeize = new ArrayList<>();
         gameData.forEachPermanent((playerId, permanent) -> {
@@ -93,5 +94,29 @@ public class GainControlOfAllPermanentsMatchingEffectHandler implements NormalEf
                 }
             }
         }
+    }
+
+    /**
+     * What the spell that triggered {@code entry} targets: its target and declared targets on the stack, else as it was
+     * when the ability triggered, once it has left the stack (CR 608.2h). Empty for an entry no spell triggered.
+     */
+    private static List<UUID> triggeringSpellTargetIds(GameData gameData, StackEntry entry) {
+        if (entry.getTriggeringCardId() == null) {
+            return List.of();
+        }
+        StackEntry spell = gameData.stack.stream()
+                .filter(candidate -> candidate != entry
+                        && entry.getTriggeringCardId().equals(candidate.getTargetableId()))
+                .findFirst()
+                .orElse(entry.getTriggeringSpellSnapshot());
+        if (spell == null) {
+            return List.of();
+        }
+        List<UUID> targetIds = new ArrayList<>();
+        if (spell.getTargetId() != null) {
+            targetIds.add(spell.getTargetId());
+        }
+        targetIds.addAll(spell.getDeclaredTargetIds());
+        return targetIds;
     }
 }

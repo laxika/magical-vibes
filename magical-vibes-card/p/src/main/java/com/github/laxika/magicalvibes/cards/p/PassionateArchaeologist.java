@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -33,14 +32,12 @@ public class PassionateArchaeologist extends Card {
                 new PermanentOwnedBySourceControllerPredicate()));
 
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                new TriggeredAbility(Triggers.youCastSpell(),
-                new SpellCastTriggerEffect(
-                        null,
-                        List.of(new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.TARGET_PLAYER)),
-                        new PlayerPredicateTargetFilter(
+                new TriggeredAbility(
+                        Triggers.youCastSpell().withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.EXILE)),
+                        new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.TARGET_PLAYER))
+                        .withTargetFilter(new PlayerPredicateTargetFilter(
                                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
-                                "Target must be an opponent"),
-                        new StackEntryCastFromZonePredicate(Zone.EXILE))),
+                                "Target must be an opponent")),
                 GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 commanderCreatureYouOwn));
     }

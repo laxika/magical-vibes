@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordsToCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -69,13 +70,10 @@ public class TyvarKell extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -6,
                 List.of(new CreateEmblemEffect(
-                        List.of(new SpellCastTriggerEffect(
-                                new CardSubtypePredicate(CardSubtype.ELF),
-                                List.of(
-                                        new GrantKeywordsToCastSpellEffect(Set.of(Keyword.HASTE)),
-                                        new DrawCardEffect(2)
-                                )
-                        )),
+                        new TriggeredAbility(
+                                Triggers.youCastSpell().withFilter(new CardSubtypePredicate(CardSubtype.ELF)),
+                                new GrantKeywordsToCastSpellEffect(Set.of(Keyword.HASTE)),
+                                new DrawCardEffect(2)),
                         EMBLEM_TEXT
                 )),
                 "−6: You get an emblem with \"" + EMBLEM_TEXT + "\"."

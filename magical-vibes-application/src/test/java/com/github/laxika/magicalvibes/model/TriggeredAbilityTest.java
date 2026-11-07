@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
@@ -19,6 +21,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TriggeredAbilityTest {
+
+    @Test
+    void onlyACastTriggeredAbilityNamesItsOwnTargetFilter() {
+        TargetFilter creature = TargetFilters.creature();
+        TriggeredAbility cast = new TriggeredAbility(Triggers.youCastSpell().anySpell(), new DrawCardEffect(1))
+                .withTargetFilter(creature);
+
+        assertThat(cast.targetFilter()).isSameAs(creature);
+        assertThat(cast.withEffects(cast.effects()).targetFilter()).isSameAs(creature);
+        assertThatThrownBy(() -> new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), new DrawCardEffect(1))
+                .withTargetFilter(creature))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("own target filter");
+    }
 
     private static final List<EffectRegistration> ZOMBIE =
             List.of(new EffectRegistration(CreateTokenEffect.blackZombie(1)));

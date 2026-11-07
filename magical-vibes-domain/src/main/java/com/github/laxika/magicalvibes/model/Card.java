@@ -46,7 +46,6 @@ import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
@@ -1052,8 +1051,6 @@ public class Card {
                     bindEffectToTargetGroup(e.thenEffect(), targetIndex);
             case SacrificePermanentThenEffect e -> bindEffectToTargetGroup(e.thenEffect(), targetIndex);
             case SacrificeSelfThenEffect e -> bindEffectToTargetGroup(e.thenEffect(), targetIndex);
-            case StateTriggerEffect e -> e.effects().forEach(innerEffect ->
-                    bindEffectToTargetGroup(innerEffect, targetIndex));
             case MayPayManaEffect e -> {
                 if (e.wrapped() != null) bindEffectToTargetGroup(e.wrapped(), targetIndex);
                 if (e.elseEffect() != null) bindEffectToTargetGroup(e.elseEffect(), targetIndex);
@@ -1087,11 +1084,6 @@ public class Card {
             case SequenceEffect e -> {
                 for (CardEffect step : e.steps()) {
                     bindEffectToTargetGroup(step, targetIndex);
-                }
-            }
-            case SpellCastTriggerEffect e -> {
-                for (CardEffect resolvedEffect : e.resolvedEffects()) {
-                    bindEffectToTargetGroup(resolvedEffect, targetIndex);
                 }
             }
             case ChooseOneForTargetPermanentEffect e -> {

@@ -40,6 +40,24 @@ class PassionateArchaeologistTest extends BaseCardTest {
     }
 
     @Test
+    void grantedAbilityCanTargetOnlyAnOpponent() {
+        harness.addToBattlefield(player1, new PassionateArchaeologist());
+        Permanent commander = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
+        gd.makeCommander(player1.getId(), commander.getOriginalCard());
+
+        GrizzlyBears spell = new GrizzlyBears();
+        harness.setExile(player1, List.of(spell));
+        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        prepareMainPhase();
+
+        harness.castFromExile(player1, spell.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(player2.getId());
+    }
+
+    @Test
     void doesNotTriggerForHandCastOrNonCommanderCreature() {
         harness.addToBattlefield(player1, new PassionateArchaeologist());
         harness.addToBattlefield(player1, new WalkingCorpse());

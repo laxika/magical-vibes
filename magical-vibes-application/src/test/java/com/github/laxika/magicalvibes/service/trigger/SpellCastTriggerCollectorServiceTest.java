@@ -368,8 +368,7 @@ class SpellCastTriggerCollectorServiceTest {
         when(predicateEvaluationService.matchesCardPredicate(eq(spell), eq(null),
                 eq(source.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
 
-        registry.dispatch(match(source, player1Id, effect),
-                SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, context);
+        sut.collectCastAbility(match(source, player1Id, effect), CastAbility.of(effect, null), context, true);
 
         assertThat(gd.stack).hasSize(1);
         StackEntry triggeredAbility = gd.stack.getLast();
@@ -388,8 +387,8 @@ class SpellCastTriggerCollectorServiceTest {
         when(predicateEvaluationService.matchesCardPredicate(spell, null,
                 source.getOriginalCard().getId(), gd, player1Id, null, null, 3)).thenReturn(true);
 
-        registry.dispatch(match(source, player1Id, effect), SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL,
-                effect, new TriggerContext.SpellCast(spell, player1Id, true));
+        sut.collectCastAbility(match(source, player1Id, effect), CastAbility.of(effect, null),
+                new TriggerContext.SpellCast(spell, player1Id, true), true);
 
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getLast().getXValue()).isEqualTo(3);
@@ -481,9 +480,8 @@ class SpellCastTriggerCollectorServiceTest {
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+                    ctx, false);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -505,16 +503,14 @@ class SpellCastTriggerCollectorServiceTest {
                     .thenReturn(true);
 
             gd.activePlayerId = player1Id;
-            boolean activeCasterResult = registry.dispatch(
-                    match(perm, player1Id, effect), SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL,
-                    effect, new TriggerContext.SpellCast(spellCard, player1Id, true));
+            boolean activeCasterResult = sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+                    new TriggerContext.SpellCast(spellCard, player1Id, true), false);
 
             assertThat(activeCasterResult).isFalse();
             assertThat(gd.stack).isEmpty();
 
-            boolean nonActiveCasterResult = registry.dispatch(
-                    match(perm, player1Id, effect), SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL,
-                    effect, new TriggerContext.SpellCast(spellCard, player2Id, true));
+            boolean nonActiveCasterResult = sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+                    new TriggerContext.SpellCast(spellCard, player2Id, true), false);
 
             assertThat(nonActiveCasterResult).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -533,9 +529,8 @@ class SpellCastTriggerCollectorServiceTest {
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(false);
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+                    ctx, false);
 
             assertThat(result).isFalse();
             assertThat(gd.stack).isEmpty();
@@ -555,9 +550,8 @@ class SpellCastTriggerCollectorServiceTest {
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any()))
                     .thenReturn(true);
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+                    ctx, false);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(2);
@@ -578,9 +572,7 @@ class SpellCastTriggerCollectorServiceTest {
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
 
-            registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+            sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null), ctx, false);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
@@ -602,9 +594,7 @@ class SpellCastTriggerCollectorServiceTest {
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(aura.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
 
-            registry.dispatch(
-                    match(aura, player1Id, effect),
-                    SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+            sut.collectCastAbility(match(aura, player1Id, effect), CastAbility.of(effect, null), ctx, false);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getTargetId()).isEqualTo(host.getId());
@@ -625,9 +615,7 @@ class SpellCastTriggerCollectorServiceTest {
             when(amountEvaluationService.referencesXValue(new XValue())).thenReturn(true);
             gd.addSpellCastManaSpent(spellCard.getId(), 3);
 
-            registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+            sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null), ctx, false);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getXValue()).isEqualTo(3);
@@ -651,9 +639,7 @@ class SpellCastTriggerCollectorServiceTest {
             when(amountEvaluationService.referencesXValue(new XValue())).thenReturn(true);
             gd.addSpellCastManaSpent(spellCard.getId(), 3);
 
-            registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+            sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null), ctx, false);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getXValue()).isEqualTo(3);
@@ -672,9 +658,7 @@ class SpellCastTriggerCollectorServiceTest {
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
-            registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+            sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null), ctx, true);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getEventValue()).isEqualTo(3);
@@ -761,9 +745,8 @@ class SpellCastTriggerCollectorServiceTest {
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+                    ctx, false);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).isEmpty();
@@ -1606,9 +1589,8 @@ class SpellCastTriggerCollectorServiceTest {
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+                    ctx, true);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1639,9 +1621,8 @@ class SpellCastTriggerCollectorServiceTest {
                     any(Card.class), eq(filter), isNull(), eq(gd), eq(player1Id)))
                     .thenAnswer(invocation -> invocation.getArgument(0, Card.class).hasType(CardType.CREATURE));
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+                    ctx, true);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1665,19 +1646,16 @@ class SpellCastTriggerCollectorServiceTest {
                     eq(gd), eq(player1Id))).thenReturn(true);
 
             gd.recordSpellCast(player1Id, firstSpell);
-            assertThat(registry.dispatch(match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect,
-                    new TriggerContext.SpellCast(firstSpell, player1Id, true))).isFalse();
+            assertThat(sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+                    new TriggerContext.SpellCast(firstSpell, player1Id, true), true)).isFalse();
 
             gd.recordSpellCast(player1Id, secondSpell);
-            assertThat(registry.dispatch(match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect,
-                    new TriggerContext.SpellCast(secondSpell, player1Id, true))).isTrue();
+            assertThat(sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+                    new TriggerContext.SpellCast(secondSpell, player1Id, true), true)).isTrue();
 
             gd.recordSpellCast(player1Id, thirdSpell);
-            assertThat(registry.dispatch(match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect,
-                    new TriggerContext.SpellCast(thirdSpell, player1Id, true))).isTrue();
+            assertThat(sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+                    new TriggerContext.SpellCast(thirdSpell, player1Id, true), true)).isTrue();
             assertThat(gd.stack).hasSize(2);
         }
 
@@ -1693,9 +1671,8 @@ class SpellCastTriggerCollectorServiceTest {
             gd.recordSpellCast(player1Id, firstSpell);
             gd.recordSpellCast(player1Id, secondSpell);
 
-            assertThat(registry.dispatch(match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect,
-                    new TriggerContext.SpellCast(secondSpell, player1Id, true))).isFalse();
+            assertThat(sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+                    new TriggerContext.SpellCast(secondSpell, player1Id, true), true)).isFalse();
             assertThat(gd.stack).isEmpty();
         }
 
@@ -1711,9 +1688,8 @@ class SpellCastTriggerCollectorServiceTest {
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+                    ctx, true);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).isEmpty();
@@ -1737,9 +1713,8 @@ class SpellCastTriggerCollectorServiceTest {
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any()))
                     .thenReturn(true);
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+                    ctx, true);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).isEmpty();
@@ -1797,9 +1772,8 @@ class SpellCastTriggerCollectorServiceTest {
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(false);
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+                    ctx, true);
 
             assertThat(result).isFalse();
         }
