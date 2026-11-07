@@ -14,7 +14,7 @@ public class WojekHalberdiers extends Card {
 
     public WojekHalberdiers() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF));
     }
 }

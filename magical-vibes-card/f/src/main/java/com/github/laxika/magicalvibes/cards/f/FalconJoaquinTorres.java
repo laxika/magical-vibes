@@ -15,7 +15,7 @@ public class FalconJoaquinTorres extends Card {
 
     public FalconJoaquinTorres() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 SequenceEffect.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE), new ScryEffect(1)));
     }
 }

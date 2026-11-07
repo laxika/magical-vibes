@@ -15,7 +15,7 @@ public class DaringSkyjek extends Card {
 
     public DaringSkyjek() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF));
     }
 }

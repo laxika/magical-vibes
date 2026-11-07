@@ -25,7 +25,7 @@ public class AutarchMammoth extends Card {
         CreateTokenEffect elephant = new CreateTokenEffect(
                 "Elephant", 3, 3, CardColor.GREEN, List.of(CardSubtype.ELEPHANT), Set.of(), Set.of());
         addTrigger(Triggers.enters(ObjectRelation.THIS), elephant);
-        addTrigger(Triggers.attacks(), TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()), elephant);
+        addTrigger(Triggers.attacks(), TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()), elephant);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

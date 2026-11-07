@@ -15,7 +15,7 @@ public class NavSquadCommandos extends Card {
 
     public NavSquadCommandos() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 SequenceEffect.of(new BoostSelfEffect(1, 1), new UntapPermanentsEffect(TapUntapScope.SELF)));
     }
 }

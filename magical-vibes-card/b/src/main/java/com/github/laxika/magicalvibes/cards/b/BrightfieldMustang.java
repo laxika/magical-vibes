@@ -23,7 +23,7 @@ public class BrightfieldMustang extends Card {
 
     public BrightfieldMustang() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
                 SequenceEffect.of(
                         new UntapPermanentsEffect(TapUntapScope.SELF),
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));

@@ -12,7 +12,7 @@ public class SokkaLateralStrategist extends Card {
 
     public SokkaLateralStrategist() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(2)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(2)),
                 new DrawCardEffect());
     }
 }

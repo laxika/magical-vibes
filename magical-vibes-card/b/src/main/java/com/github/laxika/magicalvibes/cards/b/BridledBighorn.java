@@ -22,7 +22,7 @@ public class BridledBighorn extends Card {
 
     public BridledBighorn() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
                 new CreateTokenEffect("Sheep", 1, 1, CardColor.WHITE, List.of(CardSubtype.SHEEP), Set.of(), Set.of()));
 
         addActivatedAbility(new ActivatedAbility(

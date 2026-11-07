@@ -15,7 +15,7 @@ public class WarTrainedSlasher extends Card {
 
     public WarTrainedSlasher() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttackedTargetMatches(new PermanentIsBattlePredicate())),
+                TriggerOptions.DEFAULT.withEventCondition(new AttackedTargetMatches(new PermanentIsBattlePredicate())),
                 new BoostSelfEffect(new SourcePower(true), new Fixed(0)));
     }
 }

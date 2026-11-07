@@ -25,7 +25,7 @@ public class CongregationGryff extends Card {
         PermanentCount mounts = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.MOUNT), CountScope.CONTROLLER);
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
                 new BoostSelfEffect(mounts, mounts));
 
         addActivatedAbility(new ActivatedAbility(

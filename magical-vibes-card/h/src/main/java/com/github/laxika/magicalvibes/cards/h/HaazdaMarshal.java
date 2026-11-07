@@ -18,7 +18,7 @@ public class HaazdaMarshal extends Card {
 
     public HaazdaMarshal() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 new CreateTokenEffect("Soldier", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.SOLDIER), Set.of(Keyword.LIFELINK), Set.of()));
     }

@@ -27,7 +27,7 @@ public class LagorinSoulOfAlacria extends Card {
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.MOUNT, CardSubtype.VEHICLE)),
                 "Target must be a Mount or Vehicle"), 0, 2)
                 .addTrigger(Triggers.attacks(),
-                        TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                        TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
 
         addActivatedAbility(new ActivatedAbility(

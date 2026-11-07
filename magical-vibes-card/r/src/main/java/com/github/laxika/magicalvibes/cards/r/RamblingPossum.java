@@ -22,7 +22,7 @@ public class RamblingPossum extends Card {
 
     public RamblingPossum() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
                 SequenceEffect.of(
                         new BoostSelfEffect(1, 2),
                         new MayEffect(

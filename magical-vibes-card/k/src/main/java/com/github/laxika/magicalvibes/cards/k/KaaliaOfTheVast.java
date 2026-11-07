@@ -25,7 +25,7 @@ public class KaaliaOfTheVast extends Card {
 
     public KaaliaOfTheVast() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttackedTargetIsOpponent()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttackedTargetIsOpponent()),
                 PutCardToBattlefieldEffect.tappedAndAttacking(
                         new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),

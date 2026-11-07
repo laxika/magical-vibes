@@ -23,7 +23,7 @@ public class FrontlineMedic extends Card {
 
     public FrontlineMedic() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ALL_OWN_CREATURES));
 
         addActivatedAbility(new ActivatedAbility(

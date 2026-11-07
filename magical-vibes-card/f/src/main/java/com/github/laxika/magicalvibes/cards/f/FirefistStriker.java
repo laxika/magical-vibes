@@ -15,7 +15,7 @@ public class FirefistStriker extends Card {
         // Battalion — Whenever this creature and at least two other creatures attack,
         // target creature can't block this turn.
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 new CantBlockThisTurnEffect(TapUntapScope.TARGET));
     }
 }

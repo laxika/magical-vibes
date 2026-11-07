@@ -17,7 +17,7 @@ public class FiremaneAvenger extends Card {
         // Battalion — Whenever this creature and at least two other creatures attack,
         // this creature deals 3 damage to any target and you gain 3 life.
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 SequenceEffect.of(new DealDamageToAnyTargetEffect(3, false), new GainLifeEffect(3)));
     }
 }

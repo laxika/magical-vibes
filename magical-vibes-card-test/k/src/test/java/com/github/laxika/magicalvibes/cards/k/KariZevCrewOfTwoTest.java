@@ -62,15 +62,18 @@ class KariZevCrewOfTwoTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The legendary Monkey condition is checked again when the trigger resolves")
-    void conditionIsCheckedAtResolution() {
+    @DisplayName("A legendary Monkey that arrives before the trigger resolves doesn't stop the conjuring")
+    void conditionIsOnlyCheckedAsTheAbilityTriggers() {
         addCreatureReady(player1, new KariZevCrewOfTwo());
 
         declareAttackers(List.of(0));
         addCreatureReady(player1, new RagavanNimblePilferer());
         harness.passBothPriorities();
 
-        assertThat(findPermanents(player1, "Ragavan, Nimble Pilferer")).hasSize(1);
+        // "Attacks while you don't control a legendary Monkey" is the trigger event (CR 603.4 checks only an "if"
+        // that follows the trigger condition), so the conjured Ragavan joins the one that arrived.
+        assertThat(findPermanents(player1, "Ragavan, Nimble Pilferer")).hasSize(2)
+                .anySatisfy(ragavan -> assertThat(ragavan.isAttacking()).isTrue());
     }
 
     @Test

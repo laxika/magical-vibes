@@ -28,7 +28,7 @@ public class BoundingFelidar extends Card {
 
     public BoundingFelidar() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
                 SequenceEffect.of(
                         new PutCounterOnEachControlledPermanentEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE,

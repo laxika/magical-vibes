@@ -20,7 +20,7 @@ public class DroverGrizzly extends Card {
 
     public DroverGrizzly() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES));
 
         addActivatedAbility(new ActivatedAbility(

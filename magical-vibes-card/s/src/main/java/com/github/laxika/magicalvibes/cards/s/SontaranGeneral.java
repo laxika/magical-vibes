@@ -23,7 +23,7 @@ public class SontaranGeneral extends Card {
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
         target(TargetFilters.creatureAnOpponentControls(), 0, 99)
                 .addTrigger(Triggers.attacks(),
-                        TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                        TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                         SequenceEffect.of(
                                 new GoadTargetCreatureUntilNextTurnEffect(),
                                 new CantBlockThisTurnEffect(TapUntapScope.TARGET)));

@@ -24,7 +24,7 @@ public class GloryheathLynx extends Card {
 
     public GloryheathLynx() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
                 new SearchLibraryEffect(new CardAllOfPredicate(List.of(
                         new CardSupertypePredicate(CardSupertype.BASIC),
                         new CardSubtypePredicate(CardSubtype.PLAINS)))));

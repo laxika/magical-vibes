@@ -14,7 +14,7 @@ public class BorosElite extends Card {
 
     public BorosElite() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 new BoostSelfEffect(2, 2));
     }
 }

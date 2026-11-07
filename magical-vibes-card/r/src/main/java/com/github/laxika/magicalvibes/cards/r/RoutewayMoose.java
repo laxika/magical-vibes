@@ -21,7 +21,7 @@ public class RoutewayMoose extends Card {
 
     public RoutewayMoose() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
                 new SeekLibraryEffect(new CardTypePredicate(CardType.LAND), Integer.MAX_VALUE, true));
 
         addActivatedAbility(new ActivatedAbility(

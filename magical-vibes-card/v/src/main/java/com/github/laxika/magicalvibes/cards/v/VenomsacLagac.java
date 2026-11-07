@@ -19,7 +19,7 @@ public class VenomsacLagac extends Card {
 
     public VenomsacLagac() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
                 new BoostSelfEffect(0, 3));
 
         addActivatedAbility(new ActivatedAbility(

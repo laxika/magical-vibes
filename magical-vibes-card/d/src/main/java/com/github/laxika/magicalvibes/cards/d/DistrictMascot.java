@@ -42,7 +42,7 @@ public class DistrictMascot extends Card {
         ));
 
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
                 new PutCountersOnSourceEffect(1, 1, 1));
 
         addActivatedAbility(new ActivatedAbility(

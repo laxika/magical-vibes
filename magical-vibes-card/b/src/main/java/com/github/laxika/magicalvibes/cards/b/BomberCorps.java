@@ -16,7 +16,7 @@ public class BomberCorps extends Card {
         // Battalion — Whenever this creature and at least two other creatures attack,
         // this creature deals 1 damage to any target.
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 new DealDamageToAnyTargetEffect(1, false));
     }
 }

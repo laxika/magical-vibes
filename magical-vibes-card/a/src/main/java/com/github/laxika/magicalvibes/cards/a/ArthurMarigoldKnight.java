@@ -65,6 +65,6 @@ public class ArthurMarigoldKnight extends Card {
                 false,
                 0,
                 CREATURE_ATTACK_AND_RETURN_FOLLOW_UP);
-        addTrigger(Triggers.attacks(), TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(2)), ability);
+        addTrigger(Triggers.attacks(), TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(2)), ability);
     }
 }

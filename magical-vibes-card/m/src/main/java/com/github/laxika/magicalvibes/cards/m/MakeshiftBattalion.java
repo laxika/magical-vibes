@@ -17,7 +17,7 @@ public class MakeshiftBattalion extends Card {
         // Battalion — Whenever this creature and at least two other creatures attack,
         // put a +1/+1 counter on this creature.
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

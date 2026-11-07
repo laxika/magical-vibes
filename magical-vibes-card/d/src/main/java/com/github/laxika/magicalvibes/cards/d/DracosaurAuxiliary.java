@@ -19,7 +19,7 @@ public class DracosaurAuxiliary extends Card {
 
     public DracosaurAuxiliary() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
                 new DealDamageToAnyTargetEffect(2));
         addActivatedAbility(new ActivatedAbility(false, null,
                 List.of(new SaddleCost(3), new BecomeSaddledUntilEndOfTurnEffect(GrantScope.SELF)),

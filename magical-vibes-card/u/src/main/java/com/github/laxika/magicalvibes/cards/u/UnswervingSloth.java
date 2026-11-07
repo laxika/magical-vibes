@@ -24,7 +24,7 @@ public class UnswervingSloth extends Card {
 
     public UnswervingSloth() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
                 SequenceEffect.of(
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF),
                         new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate())));

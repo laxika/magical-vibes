@@ -34,7 +34,7 @@ public class SentinelSarahLyons extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player")).addTrigger(Triggers.attacks(),
-                        TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                        TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                         new DealDamageToPlayersEffect(
                                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER),
                                 DamageRecipient.TARGET_PLAYER));

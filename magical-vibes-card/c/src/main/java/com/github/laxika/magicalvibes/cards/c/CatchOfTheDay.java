@@ -52,15 +52,15 @@ public class CatchOfTheDay extends Card {
                 new CounterUnlessPaysEffect(3));
 
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(SCRY)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(SCRY)),
                 new ScryEffect(2));
 
         var opponentCreature = TargetFilters.creatureAnOpponentControls();
         target(opponentCreature).addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(GOAD)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(GOAD)),
                 new GoadTargetCreatureUntilNextTurnEffect(opponentCreature.predicate()))
                 .addTrigger(Triggers.attacks(),
-                        TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(TAP)),
+                        TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(TAP)),
                         new TapPermanentsEffect(TapUntapScope.TARGET, opponentCreature.predicate()));
 
         addStaticEffect(new ConditionalEffect(new SourceHasChosenMode(SIX_TWO),

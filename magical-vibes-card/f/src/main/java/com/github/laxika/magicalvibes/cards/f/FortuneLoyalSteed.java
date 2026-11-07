@@ -23,7 +23,7 @@ public class FortuneLoyalSteed extends Card {
     public FortuneLoyalSteed() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(2));
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
                 new DelayedEndOfCombatEffect(new ExileSelfAndSaddledCreatureEffect()));
         addActivatedAbility(new ActivatedAbility(
                 false,

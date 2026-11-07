@@ -26,7 +26,7 @@ public class BulwarkOx extends Card {
 
     public BulwarkOx() {
         target(TargetFilters.creature()).addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
 
         addActivatedAbility(new ActivatedAbility(

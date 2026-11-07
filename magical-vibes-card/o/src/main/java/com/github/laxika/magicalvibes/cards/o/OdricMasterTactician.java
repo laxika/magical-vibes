@@ -23,7 +23,7 @@ public class OdricMasterTactician extends Card {
         // First strike is loaded from Scryfall keywords.
         // Odric + 3 others = 4 attackers total; Triggers.attacks() ensures Odric himself is attacking.
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(4)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(4)),
                 new ChooseBlockersThisCombatEffect());
     }
 }

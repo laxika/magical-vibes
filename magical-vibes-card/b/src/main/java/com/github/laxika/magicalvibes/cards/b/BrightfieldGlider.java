@@ -22,7 +22,7 @@ public class BrightfieldGlider extends Card {
 
     public BrightfieldGlider() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
                 SequenceEffect.of(new BoostSelfEffect(1, 2), new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
 
         addActivatedAbility(new ActivatedAbility(

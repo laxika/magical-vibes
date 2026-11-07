@@ -30,7 +30,7 @@ public class GiantBeaver extends Card {
                 saddler,
                 "Target must be a creature that saddled this creature this turn"
         )).addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
                 PutCounterOnTargetPermanentEffect.withTargetRestriction(CounterType.PLUS_ONE_PLUS_ONE, 1, saddler));
 
         addActivatedAbility(new ActivatedAbility(

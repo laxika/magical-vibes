@@ -44,7 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
-import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
+import com.github.laxika.magicalvibes.model.condition.DeclaredAttackCondition;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsMonarch;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackDamage;
@@ -66,7 +66,6 @@ import com.github.laxika.magicalvibes.model.condition.AllMatchingCreaturesAttack
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
-import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesGreaterThanSourceCounters;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
@@ -74,19 +73,8 @@ import com.github.laxika.magicalvibes.model.condition.AttacksEnchantedPlayer;
 import com.github.laxika.magicalvibes.model.condition.AttackedOpponentHasMoreLifeThanAnotherOpponent;
 import com.github.laxika.magicalvibes.model.condition.AttacksPlayerAlone;
 import com.github.laxika.magicalvibes.model.condition.Condition;
-import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerAndEnchantedPlayerAttackEachOther;
-import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
-import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
-import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
-import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
-import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsMoreLandsThanController;
-import com.github.laxika.magicalvibes.model.condition.DefendingPlayerHandAtMost;
-import com.github.laxika.magicalvibes.model.condition.DefendingPlayerHasMoreCardsInHandThanController;
-import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
-import com.github.laxika.magicalvibes.model.condition.Equipped;
 import com.github.laxika.magicalvibes.model.condition.ExactlyAttackers;
-import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackingCreaturesOfSubtype;
@@ -103,9 +91,6 @@ import com.github.laxika.magicalvibes.model.condition.PlayerAttacksNotController
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisCombat;
 import com.github.laxika.magicalvibes.model.condition.SourceClassLevelAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
-import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
-import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
-import com.github.laxika.magicalvibes.model.condition.VoidCondition;
 import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToHandEffect;
@@ -1215,13 +1200,13 @@ public class CombatAttackService {
             nativeAttack = nativeAttack.stream().filter(failsConditions.negate()).toList();
             grantedAttack.removeIf(failsConditions);
             temporaryAttack.removeIf(failsConditions);
-            // Pack tactics' "if you attacked with creatures with total power 6 or greater this combat" is about the
-            // attackers as they were declared: once judged, its wrapper comes off, so the attackers that leave combat
-            // before the ability resolves don't undo it.
+            // An intervening "if" about the attack as it was declared (pack tactics' total power, Creepy Puppeteer's
+            // "exactly one other creature", DeclaredAttackCondition) has the same answer as the ability resolves: once
+            // judged, its wrapper comes off, so the attackers that leave combat before then don't undo it.
             Set<CardEffect> declaredAttackWrappers = Collections.newSetFromMap(new IdentityHashMap<>());
             for (List<CombatAbilityReader.CombatEffect> reads : List.of(nativeAttack, grantedAttack, temporaryAttack)) {
                 for (CombatAbilityReader.CombatEffect read : reads) {
-                    if (read.options().interveningIf() instanceof AttackingCreaturesTotalPowerAtLeast
+                    if (read.options().interveningIf() instanceof DeclaredAttackCondition
                             && read.effect() instanceof ConditionalEffect ce
                             && ce.condition() == read.options().interveningIf()) {
                         declaredAttackWrappers.add(ce);
@@ -1260,114 +1245,10 @@ public class CombatAttackService {
                 });
 
 
-                // Filter out attacks-alone conditionals when not attacking alone (CR 506.5)
-                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
-                        && ce.condition() instanceof AttacksAlone
-                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
-                                ConditionContext.forPermanent(attacker, playerId)));
-
-                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
-                        && ce.condition() instanceof ControlsPermanentCountAtMost
-                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
-                                ConditionContext.forPermanent(attacker, playerId)));
-
-                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
-                        && ce.condition() instanceof Equipped
-                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
-                                ConditionContext.forPermanent(attacker, playerId)));
-
-                // Filter out controls-another-permanent conditionals when condition not met (intervening-if, CR 603.4)
-                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
-                        && ce.condition() instanceof ControlsAnotherPermanent
-                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
-                                ConditionContext.forPermanent(attacker, playerId)));
-
-                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
-                        && ce.condition() instanceof ControllerCastSpellThisTurn
-                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
-                                ConditionContext.forPermanent(attacker, playerId)));
-
-                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
-                        && ce.condition() instanceof VoidCondition
-                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
-                                ConditionContext.forPermanent(attacker, playerId)));
-                allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
-                        && ce.condition() instanceof VoidCondition ? ce.wrapped() : e);
-
-                // Filter out renown conditionals when the attacker isn't renowned (intervening-if, CR 603.4)
-                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
-                        && ce.condition() instanceof SourceIsRenowned
-                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
-                                ConditionContext.forPermanent(attacker, playerId)));
-
-                // Filter out saddled attack conditionals when the attacker wasn't saddled when
-                // it was declared.
-                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
-                        && ce.condition() instanceof SourceIsSaddled
-                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
-                                ConditionContext.forPermanent(attacker, playerId)));
-                allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
-                        && ce.condition() instanceof SourceIsSaddled ? ce.wrapped() : e);
-
-                // Filter out defending-player conditionals when condition not met (intervening-if, CR 603.4)
-                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
-                        && isDefendingPlayerCondition(ce.condition())
-                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
-                                ConditionContext.forPermanent(attacker, playerId)));
-
-                // Filter out empty-hand conditionals when controller has cards in hand (intervening-if, CR 603.4)
-                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
-                        && ce.condition() instanceof ControllerHandEmpty
-                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
-                                ConditionContext.forPermanent(attacker, playerId)));
-
-                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
-                        && ce.condition() instanceof GraveyardCardThreshold
-                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
-                                ConditionContext.forPermanent(attacker, playerId)));
-
-                // Filter out minimum-attackers conditionals (e.g. Odric, Master Tactician's
-                // "whenever this and at least three other creatures attack") when attacker count
-                // is below the threshold. Attacker count is snapshotted for resolution via xValue.
-                ConditionContext attackCountCtx = ConditionContext.forPermanent(attacker, playerId)
-                        .withXValue(attackerIndices.size());
-                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
-                        && ce.condition() instanceof MinimumAttackers
-                        && !conditionEvaluationService.isMet(gameData, ce.condition(), attackCountCtx));
-
-                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
-                        && ce.condition() instanceof ExactlyAttackers
-                        && !conditionEvaluationService.isMet(gameData, ce.condition(), attackCountCtx));
-
-                // Battalion-style attacker counts are part of the trigger event, not an intervening-if
-                // clause, so the surviving wrapper is unwrapped here: paths that route the trigger
-                // through a target-selection interaction (AttackTriggerTarget) build the stack entry
-                // later and would otherwise re-evaluate the condition without the attacker count.
-                allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
-                        && ce.condition() instanceof MinimumAttackers
-                        ? ce.wrapped() : e);
-                allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
-                        && ce.condition() instanceof ExactlyAttackers
-                        ? ce.wrapped() : e);
+                // Each ability's event condition and intervening "if" were judged above from the ability; the
+                // intervening "if" stays wrapped around each effect for the check as it resolves (CR 603.4), but for
+                // pack tactics' declared attackers, whose wrapper comes off once judged.
                 allEffects.replaceAll(e -> declaredAttackWrappers.contains(e) ? ((ConditionalEffect) e).wrapped() : e);
-
-                ConditionContext attackedTargetContext = ConditionContext.forPermanent(attacker, playerId)
-                        .withTargetId(attacker.getAttackTarget());
-                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
-                        && ce.condition() instanceof AttackedTargetMatches
-                        && !conditionEvaluationService.isMet(gameData, ce.condition(), attackedTargetContext));
-                allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
-                        && ce.condition() instanceof AttackedTargetMatches ? ce.wrapped() : e);
-                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
-                        && ce.condition() instanceof AttackedTargetIsOpponent
-                        && !conditionEvaluationService.isMet(gameData, ce.condition(), attackedTargetContext));
-                allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
-                        && ce.condition() instanceof AttackedTargetIsOpponent ? ce.wrapped() : e);
-                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
-                        && ce.condition() instanceof AttackedTargetIsMonarch
-                        && !conditionEvaluationService.isMet(gameData, ce.condition(), attackedTargetContext));
-                allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
-                        && ce.condition() instanceof AttackedTargetIsMonarch ? ce.wrapped() : e);
 
                 // Granted abilities can bundle the opponent/otherwise branches in a SequenceEffect
                 // (e.g. Scriv's Contract). Resolve those event conditions now, while the declared
@@ -3928,17 +3809,6 @@ public class CombatAttackService {
      * attack-trigger time. Recurses through {@link NotCondition} so negated wordings such as
      * Spectral Bears' "if defending player controls no black nontoken permanents" are covered.
      */
-    private boolean isDefendingPlayerCondition(Condition condition) {
-        return switch (condition) {
-            case DefendingPlayerControlsPermanent ignored -> true;
-            case DefendingPlayerControlsMoreLandsThanController ignored -> true;
-            case DefendingPlayerHasMoreCardsInHandThanController ignored -> true;
-            case DefendingPlayerHandAtMost ignored -> true;
-            case DefendingPlayerPoisoned ignored -> true;
-            case NotCondition not -> isDefendingPlayerCondition(not.inner());
-            default -> false;
-        };
-    }
 
     private CardEffect resolveAttackedTargetConditions(GameData gameData, Permanent attacker,
                                                        UUID attackerControllerId, CardEffect effect) {

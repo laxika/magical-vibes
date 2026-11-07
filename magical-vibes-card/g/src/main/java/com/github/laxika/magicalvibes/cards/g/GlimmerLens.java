@@ -26,7 +26,7 @@ public class GlimmerLens extends Card {
                 new LivingWeaponEffect(new CreateTokenEffect("Rebel", 2, 2, CardColor.RED,
                         List.of(CardSubtype.REBEL), Set.of(), Set.of())));
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new MinimumMatchingAttackers(2, new PermanentIsCreaturePredicate())),
                 new DrawCardEffect());
         addActivatedAbility(new EquipActivatedAbility("{1}{W}"));

@@ -42,7 +42,7 @@ public class TheSpearOfBashenga extends Card {
                         new PermanentControlledByDefendingPlayerPredicate())),
                 "Target must be a tapped nonland permanent the monarch controls"))
                 .addTrigger(Triggers.attacks(),
-                        TriggerOptions.DEFAULT.withInterveningIf(new AttackedTargetIsMonarch()),
+                        TriggerOptions.DEFAULT.withEventCondition(new AttackedTargetIsMonarch()),
                         new DestroyTargetPermanentEffect(false));
 
         addActivatedAbility(new EquipActivatedAbility("{2}"));

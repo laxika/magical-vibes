@@ -19,7 +19,7 @@ public class ShredderShadowMaster extends Card {
     public ShredderShadowMaster() {
         // One ability (CR 603.3): the end-of-combat sacrifice is of the tokens this ability creates.
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttackedTargetIsOpponent()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttackedTargetIsOpponent()),
                 CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect.mandatoryNonLegendary(),
                 new SacrificeCreatedPermanentsAtEndOfCombatEffect());
         addTrigger(Triggers.dealsCombatDamageToPlayer(),

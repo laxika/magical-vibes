@@ -14,7 +14,7 @@ public class OrdruunVeteran extends Card {
 
     public OrdruunVeteran() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF));
     }
 }

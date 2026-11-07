@@ -14,7 +14,7 @@ public class BorosMastiff extends Card {
 
     public BorosMastiff() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF));
     }
 }

@@ -23,7 +23,7 @@ public class SeraphicSteed extends Card {
 
     public SeraphicSteed() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
                 new CreateTokenEffect(
                         "Angel", 3, 3, CardColor.WHITE,
                         List.of(CardSubtype.ANGEL), Set.of(Keyword.FLYING), Set.of()));

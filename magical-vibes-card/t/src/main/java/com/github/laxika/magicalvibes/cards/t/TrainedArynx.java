@@ -22,7 +22,7 @@ public class TrainedArynx extends Card {
 
     public TrainedArynx() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
                 SequenceEffect.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF), new ScryEffect(1)));
 
         addActivatedAbility(new ActivatedAbility(

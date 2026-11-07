@@ -13,7 +13,7 @@ public class TajicBladeOfTheLegion extends Card {
 
     public TajicBladeOfTheLegion() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 new BoostSelfEffect(5, 5));
     }
 }

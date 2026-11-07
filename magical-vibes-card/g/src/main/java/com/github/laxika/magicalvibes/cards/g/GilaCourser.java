@@ -19,7 +19,7 @@ public class GilaCourser extends Card {
 
     public GilaCourser() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
                 new ExileTopCardsMayPlayUntilNextTurnEffect(1));
 
         addActivatedAbility(new ActivatedAbility(

@@ -22,7 +22,7 @@ public class LegionLoyalist extends Card {
 
     public LegionLoyalist() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 SequenceEffect.of(
                         new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.TRAMPLE), GrantScope.ALL_OWN_CREATURES),
                         new GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect(

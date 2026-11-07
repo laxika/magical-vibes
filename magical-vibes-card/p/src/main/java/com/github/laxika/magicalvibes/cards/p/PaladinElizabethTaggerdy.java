@@ -30,7 +30,7 @@ public class PaladinElizabethTaggerdy extends Card {
                 new CardTypePredicate(CardType.CREATURE),
                 new CardManaValueAtMostSourcePowerPredicate()));
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 SequenceEffect.of(
                         new DrawCardEffect(),
                         new MayEffect(

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.condition;
 
 /** Exactly {@code attackerCount} creatures are attacking. */
-public record ExactlyAttackers(int attackerCount) implements Condition {
+public record ExactlyAttackers(int attackerCount) implements Condition, DeclaredAttackCondition {
 
     @Override
     public String conditionName() {

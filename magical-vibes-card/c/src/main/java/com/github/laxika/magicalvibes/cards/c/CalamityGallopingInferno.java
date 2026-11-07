@@ -18,7 +18,7 @@ public class CalamityGallopingInferno extends Card {
 
     public CalamityGallopingInferno() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
                 new CreateTokenCopiesOfSaddledCreatureEffect(2));
 
         addActivatedAbility(new ActivatedAbility(

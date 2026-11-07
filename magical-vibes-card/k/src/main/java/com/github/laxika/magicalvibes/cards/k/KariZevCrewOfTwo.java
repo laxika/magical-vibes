@@ -23,7 +23,7 @@ public class KariZevCrewOfTwo extends Card {
 
     public KariZevCrewOfTwo() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new ControlsPermanentCountAtMost(0, new PermanentAllOfPredicate(List.of(
                                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
                                 new PermanentHasSubtypePredicate(CardSubtype.MONKEY))))),

@@ -13,7 +13,7 @@ public class GeneralThunderboltRoss extends Card {
 
     public GeneralThunderboltRoss() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 new BoostAllCreaturesEffect(1, 0, new PermanentIsAttackingPredicate()));
     }
 }

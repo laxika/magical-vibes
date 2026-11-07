@@ -13,7 +13,7 @@ public class ThrashingFrontliner extends Card {
 
     public ThrashingFrontliner() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttackedTargetMatches(new PermanentIsBattlePredicate())),
+                TriggerOptions.DEFAULT.withEventCondition(new AttackedTargetMatches(new PermanentIsBattlePredicate())),
                 new BoostSelfEffect(1, 1));
     }
 }

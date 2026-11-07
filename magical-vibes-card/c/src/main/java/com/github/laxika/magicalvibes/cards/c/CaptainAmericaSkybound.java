@@ -28,7 +28,7 @@ public class CaptainAmericaSkybound extends Card {
                 new PermanentIsAttackingPredicate()));
 
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 SequenceEffect.of(
                         new PutCounterOnEachMatchingPermanentEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE, 1, attackingCreature,

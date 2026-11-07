@@ -19,7 +19,7 @@ public class GildedGhoda extends Card {
 
     public GildedGhoda() {
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
                 CreateTokenEffect.ofTreasureToken(1));
 
         addActivatedAbility(new ActivatedAbility(

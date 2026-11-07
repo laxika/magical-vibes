@@ -26,7 +26,7 @@ public class OrneryTumblewagg extends Card {
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         target(TargetFilters.creature()).addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
                 new DoubleCountersOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         addActivatedAbility(new ActivatedAbility(
