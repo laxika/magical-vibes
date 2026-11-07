@@ -17,7 +17,7 @@ public class RubyCollector extends Card {
 
     public RubyCollector() {
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)).withLimit(TriggerLimit.ONCE),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)).withLimit(TriggerLimit.ONCE),
                 new ConjureCardNamedIntoHandEffect("LEA", "264", false));
 
         addActivatedAbility(new ActivatedAbility(

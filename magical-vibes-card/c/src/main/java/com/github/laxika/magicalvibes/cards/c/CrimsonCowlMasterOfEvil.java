@@ -22,7 +22,7 @@ public class CrimsonCowlMasterOfEvil extends Card {
 
     public CrimsonCowlMasterOfEvil() {
         addTrigger(Triggers.youAttackPlayer(),
-                TriggerOptions.DEFAULT.withInterveningIf(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new MinimumMatchingAttackers(1, new PermanentAllOfPredicate(List.of(
                                 new PermanentHasSubtypePredicate(CardSubtype.VILLAIN),
                                 new PermanentNotPredicate(new PermanentIsTokenPredicate()))))),

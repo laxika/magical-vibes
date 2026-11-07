@@ -31,7 +31,7 @@ public class GlassCastHeart extends Card {
     public GlassCastHeart() {
         // Whenever one or more Vampires you control attack, create a Blood token.
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE))),
                 CreateTokenEffect.ofBloodToken(1));
 

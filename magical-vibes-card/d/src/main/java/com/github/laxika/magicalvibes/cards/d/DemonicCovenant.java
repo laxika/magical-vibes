@@ -25,7 +25,7 @@ public class DemonicCovenant extends Card {
 
     public DemonicCovenant() {
         addTrigger(Triggers.youAttackPlayer(),
-                TriggerOptions.DEFAULT.withInterveningIf(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.DEMON))),
                 SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1)));
 

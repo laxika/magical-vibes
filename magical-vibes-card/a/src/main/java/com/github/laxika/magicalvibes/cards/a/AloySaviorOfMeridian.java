@@ -23,7 +23,7 @@ public class AloySaviorOfMeridian extends Card {
                 new PermanentIsArtifactPredicate(),
                 new PermanentIsAttackingPredicate()));
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new HasAttacker(new PermanentIsArtifactPredicate())),
+                TriggerOptions.DEFAULT.withEventCondition(new HasAttacker(new PermanentIsArtifactPredicate())),
                 new DiscoverEffect(new GreatestPowerAmongControlled(artifactAttacker, true, true)));
     }
 }

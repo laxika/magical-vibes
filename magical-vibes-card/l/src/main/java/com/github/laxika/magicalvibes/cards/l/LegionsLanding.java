@@ -29,7 +29,7 @@ public class LegionsLanding extends Card {
 
         // When you attack with three or more creatures, transform Legion's Landing.
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 new TransformSelfEffect());
     }
 

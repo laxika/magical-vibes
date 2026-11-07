@@ -17,7 +17,7 @@ public class EiganjoDynastorianReplenish extends Card {
         setBackFaceCard(new Replenish());
 
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(2)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(2)),
                 new BecomePreparedEffect());
     }
 

@@ -23,7 +23,7 @@ public class FiremaneCommando extends Card {
 
     public FiremaneCommando() {
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(2)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(2)),
                 new DrawCardEffect());
         addTrigger(Triggers.playerAttacks(),
                 TriggerOptions.DEFAULT.withInterveningIf(

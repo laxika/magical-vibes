@@ -27,7 +27,7 @@ public class WhirlwindKillerCyclone extends Card {
                         new PermanentControlledByDefendingPlayerPredicate())),
                 "Target must be a creature the defending player controls"))
                 .addTrigger(Triggers.youAttackPlayer(),
-                        TriggerOptions.DEFAULT.withInterveningIf(
+                        TriggerOptions.DEFAULT.withEventCondition(
                                 new MinimumMatchingAttackers(1, new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentEnteredBattlefieldThisTurnPredicate())))),

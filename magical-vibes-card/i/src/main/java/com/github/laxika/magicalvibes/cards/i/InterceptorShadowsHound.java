@@ -30,7 +30,7 @@ public class InterceptorShadowsHound extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.ASSASSIN)));
 
         addTrigger(new TriggerCondition(Triggers.youAttack(), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT.withInterveningIf(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new HasAttacker(new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))),
                 new MayPayManaEffect("{2}{B}",
                         ReturnCardFromGraveyardEffect.builder()

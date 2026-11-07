@@ -20,7 +20,7 @@ public class BitterWork extends Card {
 
     public BitterWork() {
         addTrigger(Triggers.youAttackPlayer(),
-                TriggerOptions.DEFAULT.withInterveningIf(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new MinimumMatchingAttackers(1, new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentPowerAtLeastPredicate(4)

@@ -16,7 +16,7 @@ public class AlluringSuitor extends Card {
         setBackFaceCard(new DeadlyDancer());
 
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new ExactlyAttackers(2)),
+                TriggerOptions.DEFAULT.withEventCondition(new ExactlyAttackers(2)),
                 new TransformSelfEffect());
     }
 

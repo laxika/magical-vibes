@@ -20,7 +20,7 @@ public class ValorsReach extends Card {
 
     public ValorsReach() {
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new ExactlyAttackers(2)),
+                TriggerOptions.DEFAULT.withEventCondition(new ExactlyAttackers(2)),
                 new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGETS));
         target(TargetFilters.creatureYouControl(), 0, 2)
                 .addTrigger(Triggers.chaosEnsues(),

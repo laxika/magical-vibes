@@ -200,7 +200,6 @@ import com.github.laxika.magicalvibes.model.effect.DamagedPlayerOnlyEffect;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
-import com.github.laxika.magicalvibes.model.condition.ExactlyAttackers;
 import com.github.laxika.magicalvibes.model.condition.ImprintedCardNameMatchesEnteringPermanent;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
@@ -15676,22 +15675,19 @@ public class TriggerCollectionService {
             List<CardEffect> matchingEffects = new ArrayList<>();
             ConditionContext planarContext = ConditionContext.forCard(object.getCard(), planarControllerId)
                     .withXValue(attackerCount);
-            for (CardEffect effect : printedCombatEffects(object.getCard(), CombatWatch.ON_ALLY_CREATURES_ATTACK,
-                    conditionEvaluationService.judge(gameData, planarContext))) {
-                if (effect instanceof ConditionalEffect conditional) {
-                    // "Whenever you attack with exactly N creatures" (the plane's ExactlyAttackers) is judged against
-                    // the number of attackers as the ability triggers.
-                    if (!conditionEvaluationService.isMet(gameData, conditional.condition(), planarContext)) {
-                        continue;
-                    }
-                    if (conditional.condition() instanceof ExactlyAttackers) {
-                        matchingEffects.add(conditional.wrapped());
-                    } else {
-                        matchingEffects.add(effect);
-                    }
-                } else {
-                    matchingEffects.add(effect);
+            // Each ability's event condition ("whenever you attack with exactly two creatures", Valor's Reach;
+            // CR 603.2) and intervening "if" (CR 603.4), with the number of attackers.
+            Trigger youAttack = CombatWatch.ON_ALLY_CREATURES_ATTACK.trigger();
+            for (CombatAbilityReader.CombatEffect read : CombatAbilityReader.read(
+                    conditionEvaluationService.judge(gameData, planarContext).filter(
+                            WatchedAbilities.printed(object.getCard(), CombatWatch.ON_ALLY_CREATURES_ATTACK)),
+                    youAttack)) {
+                CombatAbilityReader.requireNoLimitOrMultiplicity(read, youAttack);
+                if (read.filter() != null) {
+                    throw new IllegalStateException("The planar collector of " + youAttack + " judges no filter: "
+                            + read.ability());
                 }
+                matchingEffects.add(read.effectAsJudged());
             }
             if (matchingEffects.isEmpty()) continue;
 

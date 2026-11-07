@@ -17,7 +17,7 @@ public class WarcryPhoenix extends Card {
 
     public WarcryPhoenix() {
         addTrigger(new TriggerCondition(Triggers.youAttack(), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 new MayPayManaEffect("{2}{R}",
                                 ReturnCardFromGraveyardEffect.builder()
                                         .destination(GraveyardChoiceDestination.BATTLEFIELD)

@@ -40,7 +40,7 @@ public class AlibouAncientWitness extends Card {
                 CountScope.CONTROLLER);
 
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new HasAttacker(artifactCreature)),
+                TriggerOptions.DEFAULT.withEventCondition(new HasAttacker(artifactCreature)),
                 SequenceEffect.of(new DealDamageToAnyTargetEffect(tappedArtifacts), new ScryEffect(tappedArtifacts)));
     }
 }

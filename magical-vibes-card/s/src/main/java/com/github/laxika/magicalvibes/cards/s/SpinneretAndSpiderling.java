@@ -18,7 +18,7 @@ public class SpinneretAndSpiderling extends Card {
 
     public SpinneretAndSpiderling() {
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackingCreaturesOfSubtype(2, CardSubtype.SPIDER)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackingCreaturesOfSubtype(2, CardSubtype.SPIDER)),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
         addTrigger(Triggers.dealsDamage(),
                 TriggerOptions.DEFAULT.withInterveningIf(new EventValueAtLeast(4)),

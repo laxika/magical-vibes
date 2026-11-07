@@ -14,7 +14,7 @@ public class ArmasaurGuide extends Card {
 
     public ArmasaurGuide() {
         target(TargetFilters.creatureYouControl()).addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

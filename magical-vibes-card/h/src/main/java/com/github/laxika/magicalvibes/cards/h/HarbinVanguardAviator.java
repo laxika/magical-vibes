@@ -17,7 +17,7 @@ public class HarbinVanguardAviator extends Card {
 
     public HarbinVanguardAviator() {
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new MinimumAttackingCreaturesOfSubtype(5, CardSubtype.SOLDIER)),
                 SequenceEffect.of(
                         new BoostAllOwnCreaturesEffect(1, 1),

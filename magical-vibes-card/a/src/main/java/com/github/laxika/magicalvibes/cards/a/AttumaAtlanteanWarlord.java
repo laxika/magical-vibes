@@ -20,7 +20,7 @@ public class AttumaAtlanteanWarlord extends Card {
         addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.MERFOLK))));
         addTrigger(Triggers.youAttackPlayer(),
-                TriggerOptions.DEFAULT.withInterveningIf(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new MinimumMatchingAttackers(1, new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.MERFOLK)))),
                 new DrawCardEffect(1));
     }

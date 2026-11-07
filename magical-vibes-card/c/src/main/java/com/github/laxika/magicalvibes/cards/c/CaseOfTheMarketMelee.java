@@ -54,7 +54,7 @@ public class CaseOfTheMarketMelee extends Card {
                 TargetPredicates.anyTarget().permanentRestriction().orElseThrow(),
                 new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be any target"),
                 0, Integer.MAX_VALUE).addTrigger(Triggers.youAttack(),
-                        TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSolved()),
+                        TriggerOptions.DEFAULT.withEventCondition(new SourceIsSolved()),
                         DealDividedDamageEffect.chosenAmongAnyTargetsAtResolution(new XValue()));
     }
 }

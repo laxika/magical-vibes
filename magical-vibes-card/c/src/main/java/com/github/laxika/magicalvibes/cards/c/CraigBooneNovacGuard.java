@@ -22,7 +22,7 @@ public class CraigBooneNovacGuard extends Card {
     public CraigBooneNovacGuard() {
         addStaticEffect(new GrantKeywordEffect(Set.of(Keyword.LIFELINK, Keyword.REACH), GrantScope.SELF));
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(2)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(2)),
                 new PutCountersOnSelfThenReflexiveEffect(
                         CounterType.QUEST,
                         2,

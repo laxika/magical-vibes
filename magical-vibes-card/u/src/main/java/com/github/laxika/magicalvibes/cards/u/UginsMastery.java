@@ -27,7 +27,7 @@ public class UginsMastery extends Card {
                                 new CardTypePredicate(CardType.CREATURE)))),
                 new ManifestTopCardEffect());
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttackingCreaturesTotalPowerAtLeast(6)),
+                TriggerOptions.DEFAULT.withEventCondition(new AttackingCreaturesTotalPowerAtLeast(6)),
                 new MayEffect(new TurnOwnCreatureFaceUpEffect(), "Turn a face-down creature you control face up?"));
     }
 }

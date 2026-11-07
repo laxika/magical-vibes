@@ -18,7 +18,7 @@ public class AkiriFearlessVoyager extends Card {
 
     public AkiriFearlessVoyager() {
         addTrigger(Triggers.youAttackPlayer(),
-                TriggerOptions.DEFAULT.withInterveningIf(new HasAttacker(new PermanentIsEquippedPredicate())),
+                TriggerOptions.DEFAULT.withEventCondition(new HasAttacker(new PermanentIsEquippedPredicate())),
                 new DrawCardEffect());
 
         addActivatedAbility(new ActivatedAbility(

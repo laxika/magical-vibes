@@ -41,7 +41,7 @@ public class CaseOfTheTrampledGarden extends Card {
 
         target(TargetFilters.attackingCreature())
                 .addTrigger(Triggers.youAttack(),
-                        TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSolved()),
+                        TriggerOptions.DEFAULT.withEventCondition(new SourceIsSolved()),
                         SequenceEffect.of(
                                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
                                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)));

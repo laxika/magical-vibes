@@ -49,7 +49,7 @@ public class DollmakersShopPorcelainGallery extends Card {
                 new SourceRoomDoorUnlocked(0),
                 new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.youAttackPlayer(),
-                                TriggerOptions.DEFAULT.withInterveningIf(
+                                TriggerOptions.DEFAULT.withEventCondition(
                                         new MinimumMatchingAttackers(1, nonToyCreature)),
                                 toyToken),
                         GrantScope.SELF)));

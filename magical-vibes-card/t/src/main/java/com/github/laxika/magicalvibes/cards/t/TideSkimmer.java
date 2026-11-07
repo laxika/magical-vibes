@@ -15,7 +15,7 @@ public class TideSkimmer extends Card {
 
     public TideSkimmer() {
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new MinimumMatchingAttackers(2, new PermanentHasKeywordPredicate(Keyword.FLYING))),
                 new DrawCardEffect());
     }

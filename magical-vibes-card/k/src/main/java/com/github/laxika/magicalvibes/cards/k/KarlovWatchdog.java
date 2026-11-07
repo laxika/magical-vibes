@@ -14,7 +14,7 @@ public class KarlovWatchdog extends Card {
     public KarlovWatchdog() {
         addStaticEffect(new OpponentsPermanentsCantBeTurnedFaceUpEffect());
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 new BoostAllOwnCreaturesEffect(1, 1));
     }
 }

@@ -29,7 +29,7 @@ public class Archnemesis extends Card {
                 "Target must be an opponent"
         ));
         addTrigger(Triggers.youAttackPlayer(),
-                TriggerOptions.DEFAULT.withInterveningIf(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new HasAttacker(new PermanentIsAttackingEnchantedPlayerPredicate())),
                 SequenceEffect.of(
                                 new LoseLifeEffect(2, LoseLifeRecipient.DEFENDING_PLAYER),

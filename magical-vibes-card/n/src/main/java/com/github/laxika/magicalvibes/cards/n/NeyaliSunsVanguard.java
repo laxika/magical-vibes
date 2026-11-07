@@ -28,7 +28,7 @@ public class NeyaliSunsVanguard extends Card {
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.DOUBLE_STRIKE, GrantScope.ALL_OWN_CREATURES, attackingToken));
         addTrigger(Triggers.youAttackPlayer(),
-                TriggerOptions.DEFAULT.withInterveningIf(new HasAttacker(new PermanentIsTokenPredicate())),
+                TriggerOptions.DEFAULT.withEventCondition(new HasAttacker(new PermanentIsTokenPredicate())),
                 new ExileTopCardMayPlayWhileExiledEffect(new AttackedWithTokenThisTurn()));
     }
 }

@@ -56,7 +56,7 @@ public class GossipsTalent extends Card {
                         new PermanentIsAttackingPredicate(),
                         new PermanentPowerAtMostPredicate(3))),
                 "Target must be an attacking creature with power 3 or less")).addTrigger(Triggers.youAttack(),
-                        TriggerOptions.DEFAULT.withInterveningIf(new SourceClassLevelAtLeast(2)),
+                        TriggerOptions.DEFAULT.withEventCondition(new SourceClassLevelAtLeast(2)),
                         new MakeCreatureUnblockableEffect());
 
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),

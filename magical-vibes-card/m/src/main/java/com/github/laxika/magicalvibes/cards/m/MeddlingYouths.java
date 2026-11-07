@@ -13,7 +13,7 @@ public class MeddlingYouths extends Card {
 
     public MeddlingYouths() {
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 CreateTokenEffect.ofClueToken(1));
     }
 }

@@ -35,7 +35,7 @@ public class IronsoulEnforcer extends Card {
         // card from your graveyard to the battlefield. The Enforcer itself is the ability's source,
         // so each Enforcer you control triggers separately when a commander attacks alone.
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new AllOf(List.of(new AttacksAlone(), new HasAttacker(thisCreatureOrCommander)))),
                 returnArtifact);
     }

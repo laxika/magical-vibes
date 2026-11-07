@@ -25,7 +25,7 @@ public class MavrenFeinDuskApostle extends Card {
         // Whenever one or more nontoken Vampires you control attack,
         // create a 1/1 white Vampire creature token with lifelink.
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new HasAttacker(new PermanentAllOfPredicate(List.of(
                                         new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE),
                                         new PermanentNotPredicate(new PermanentIsTokenPredicate())

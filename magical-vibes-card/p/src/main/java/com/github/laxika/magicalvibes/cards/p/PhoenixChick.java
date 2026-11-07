@@ -21,7 +21,7 @@ public class PhoenixChick extends Card {
         addStaticEffect(new CantBlockEffect());
 
         addTrigger(new TriggerCondition(Triggers.youAttack(), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 new MayPayManaEffect("{R}{R}",
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)

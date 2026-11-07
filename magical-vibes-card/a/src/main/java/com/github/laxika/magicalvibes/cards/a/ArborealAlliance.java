@@ -25,7 +25,7 @@ public class ArborealAlliance extends Card {
                 "Treefolk", new XValue(), new XValue(), CardColor.GREEN,
                 List.of(CardSubtype.TREEFOLK), Set.of(), Set.of()));
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.ELF))),
                 new PopulateEffect());
     }

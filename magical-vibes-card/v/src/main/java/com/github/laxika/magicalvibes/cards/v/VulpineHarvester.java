@@ -20,7 +20,7 @@ public class VulpineHarvester extends Card {
 
     public VulpineHarvester() {
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.PHYREXIAN))),
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)

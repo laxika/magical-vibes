@@ -26,7 +26,7 @@ public class TeoSpiritedGlider extends Card {
 
     public TeoSpiritedGlider() {
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new HasAttacker(new PermanentHasKeywordPredicate(Keyword.FLYING))),
                 SequenceEffect.of(
                         new DrawCardEffect(1),

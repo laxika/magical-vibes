@@ -23,7 +23,7 @@ public class TalionsMessenger extends Card {
 
     public TalionsMessenger() {
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.FAERIE))),
                 SequenceEffect.of(
                         new DrawCardEffect(1),

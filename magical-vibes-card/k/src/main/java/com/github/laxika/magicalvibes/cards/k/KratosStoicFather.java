@@ -20,7 +20,7 @@ public class KratosStoicFather extends Card {
 
     public KratosStoicFather() {
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.GOD))),
                 new ExperienceCountersEffect(1));
 

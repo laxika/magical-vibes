@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -19,7 +18,6 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -40,9 +38,7 @@ public class TheUrDragon extends Card {
         // Eminence: one static ability that functions in the command zone and on the battlefield.
         addStaticEffect(AbilityZones.of(Zone.BATTLEFIELD, Zone.COMMAND), dragonSpellReduction);
 
-        addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(
-                        new MinimumMatchingAttackers(1, new PermanentHasSubtypePredicate(CardSubtype.DRAGON))),
+        addTrigger(Triggers.youAttack().withFilter(new PermanentHasSubtypePredicate(CardSubtype.DRAGON)),
                 SequenceEffect.of(
                         new DrawCardEffect(new EventValue()),
                         new MayEffect(

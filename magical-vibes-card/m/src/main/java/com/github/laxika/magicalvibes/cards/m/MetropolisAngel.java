@@ -14,7 +14,7 @@ public class MetropolisAngel extends Card {
 
     public MetropolisAngel() {
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new HasAttacker(new PermanentHasCountersPredicate(CounterType.ANY))),
                 new DrawCardEffect());
     }

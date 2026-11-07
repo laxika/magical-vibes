@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -25,13 +24,11 @@ public class WKabiShieldOfTheNation extends Card {
 
     public WKabiShieldOfTheNation() {
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(
-                        new AllConditions(List.of(
-                                        new HasAttacker(new PermanentIsCommanderPredicate(true)),
-                                        new ControlsPermanent(new PermanentAllOfPredicate(List.of(
-                                                new PermanentIsArtifactPredicate(),
-                                                new PermanentMinManaValuePredicate(4))))
-                                ))),
+                TriggerOptions.DEFAULT
+                        .withEventCondition(new HasAttacker(new PermanentIsCommanderPredicate(true)))
+                        .withInterveningIf(new ControlsPermanent(new PermanentAllOfPredicate(List.of(
+                                new PermanentIsArtifactPredicate(),
+                                new PermanentMinManaValuePredicate(4))))),
                 new CreateTokenEffect("Rhino", 4, 4, CardColor.GREEN,
                         List.of(CardSubtype.RHINO), Set.of(Keyword.TRAMPLE), Set.of()));
     }

@@ -14,7 +14,7 @@ public class MilitaryIntelligence extends Card {
     public MilitaryIntelligence() {
         // Whenever you attack with two or more creatures, draw a card.
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(2)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(2)),
                 new DrawCardEffect());
     }
 }

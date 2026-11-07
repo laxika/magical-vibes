@@ -23,7 +23,7 @@ public class SoaringThoughtThief extends Card {
                 new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES,
                         new PermanentHasSubtypePredicate(CardSubtype.ROGUE))));
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.ROGUE))),
                 new MillEffect(2, MillRecipient.EACH_OPPONENT));
     }

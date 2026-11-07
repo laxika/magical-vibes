@@ -17,7 +17,7 @@ public class RigoStreetwiseMentor extends Card {
     public RigoStreetwiseMentor() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.SHIELD, new Fixed(1)));
         addTrigger(Triggers.youAttackPlayerOrPlaneswalker(),
-                TriggerOptions.DEFAULT.withInterveningIf(new HasAttacker(new PermanentPowerAtMostPredicate(1))),
+                TriggerOptions.DEFAULT.withEventCondition(new HasAttacker(new PermanentPowerAtMostPredicate(1))),
                 new DrawCardEffect(1));
     }
 }

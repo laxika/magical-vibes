@@ -39,7 +39,7 @@ public class MobMentality extends Card {
         PermanentCount attackingCreatures = new PermanentCount(
                 new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER);
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AllMatchingCreaturesAttack(nonWallCreature)),
+                TriggerOptions.DEFAULT.withEventCondition(new AllMatchingCreaturesAttack(nonWallCreature)),
                 new BoostEquippedCreatureUntilEndOfTurnEffect(attackingCreatures, new Fixed(0)));
     }
 }

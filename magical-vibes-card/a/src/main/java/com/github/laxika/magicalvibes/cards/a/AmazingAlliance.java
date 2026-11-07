@@ -27,7 +27,7 @@ public class AmazingAlliance extends Card {
                 new PermanentIsAttackingPredicate(),
                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)));
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new HasAttacker(new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))),
                 new GainLifeEffect(new PermanentCount(attackingLegendary, CountScope.CONTROLLER, false, true)));
     }

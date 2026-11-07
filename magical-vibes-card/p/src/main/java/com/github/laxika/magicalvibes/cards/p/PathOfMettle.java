@@ -49,7 +49,7 @@ public class PathOfMettle extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new DealDamageToEachMatchingPermanentEffect(1, CREATURE_WITHOUT_SPEED, EachPermanentScope.ALL_PLAYERS));
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumMatchingAttackers(2, FAST_CREATURE)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumMatchingAttackers(2, FAST_CREATURE)),
                 new TransformSelfEffect());
     }
 

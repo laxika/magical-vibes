@@ -12,7 +12,7 @@ public class SeasonedConsultant extends Card {
 
     public SeasonedConsultant() {
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 new BoostSelfEffect(2, 0));
     }
 }

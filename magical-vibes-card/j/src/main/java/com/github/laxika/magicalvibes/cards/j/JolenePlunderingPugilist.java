@@ -20,7 +20,7 @@ public class JolenePlunderingPugilist extends Card {
 
     public JolenePlunderingPugilist() {
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new HasAttacker(new PermanentPowerAtLeastPredicate(4))),
+                TriggerOptions.DEFAULT.withEventCondition(new HasAttacker(new PermanentPowerAtLeastPredicate(4))),
                 CreateTokenEffect.ofTreasureToken(1));
 
         addActivatedAbility(new ActivatedAbility(

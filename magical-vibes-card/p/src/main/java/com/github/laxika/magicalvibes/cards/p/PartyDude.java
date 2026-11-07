@@ -58,7 +58,7 @@ public class PartyDude extends Card {
 
         target(TargetFilters.attackingCreature(), 0, 1)
                 .addTrigger(Triggers.youAttackPlayer(),
-                        TriggerOptions.DEFAULT.withInterveningIf(new SourceClassLevelAtLeast(3)),
+                        TriggerOptions.DEFAULT.withEventCondition(new SourceClassLevelAtLeast(3)),
                         new BoostTargetCreatureEffect(
                                 new CardsInHand(CountScope.CONTROLLER),
                                 new CardsInHand(CountScope.CONTROLLER)));

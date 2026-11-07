@@ -25,7 +25,7 @@ public class JocastaAutomatonAvenger extends Card {
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         addTrigger(new TriggerCondition(Triggers.youAttack(), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT.withInterveningIf(new HasAttacker(new PermanentIsCommanderPredicate(true))),
+                TriggerOptions.DEFAULT.withEventCondition(new HasAttacker(new PermanentIsCommanderPredicate(true))),
                 new MayEffect(
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)

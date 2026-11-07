@@ -39,7 +39,7 @@ public class GideonTheOathsworn extends Card {
                 new PermanentControlledBySourceControllerPredicate()));
 
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumMatchingAttackers(2, nonGideonCreature)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumMatchingAttackers(2, nonGideonCreature)),
                 new PutCounterOnEachMatchingPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, nonGideonAttacker,
                         EachPermanentScope.ALL_PLAYERS));

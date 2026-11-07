@@ -45,7 +45,7 @@ public class AnimPakalThousandthMoon extends Card {
                 Set.of()
         );
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new HasAttacker(new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.GNOME)))),
                 SequenceEffect.of(new PutCountersOnSourceEffect(1, 1, 1), gnome));
     }

@@ -33,7 +33,7 @@ public class ClandestineMeddler extends Card {
                 new SuspectEffect(GrantScope.TARGET));
 
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new HasAttacker(new PermanentIsSuspectedPredicate())),
+                TriggerOptions.DEFAULT.withEventCondition(new HasAttacker(new PermanentIsSuspectedPredicate())),
                 new SurveilEffect(1));
     }
 }

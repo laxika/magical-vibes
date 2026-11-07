@@ -27,7 +27,7 @@ public class PaintersStudioDefacedGallery extends Card {
 
         addTrigger(Triggers.doorUnlocked(0), new ExileTopCardsMayPlayUntilNextTurnEffect(2));
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceRoomDoorUnlocked(1)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceRoomDoorUnlocked(1)),
                 new BoostAllOwnCreaturesEffect(1, 0, new PermanentIsAttackingPredicate()));
     }
 }

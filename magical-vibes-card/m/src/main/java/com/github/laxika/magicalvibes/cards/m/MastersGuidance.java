@@ -31,7 +31,7 @@ public class MastersGuidance extends Card {
 
         target(TargetFilters.attackingCreature(), 0, 2)
                 .addTrigger(Triggers.youAttack(),
-                        TriggerOptions.DEFAULT.withInterveningIf(new MinimumMatchingAttackers(2, legendaryCreature)),
+                        TriggerOptions.DEFAULT.withEventCondition(new MinimumMatchingAttackers(2, legendaryCreature)),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),

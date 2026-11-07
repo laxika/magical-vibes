@@ -27,7 +27,7 @@ public class HiredClaw extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.LIZARD))),
                 new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));
 

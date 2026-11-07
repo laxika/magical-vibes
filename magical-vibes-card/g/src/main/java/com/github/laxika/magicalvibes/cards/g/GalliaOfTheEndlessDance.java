@@ -23,7 +23,7 @@ public class GalliaOfTheEndlessDance extends Card {
         addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.HASTE), GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SATYR))));
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 new MayEffect(new DiscardAndDrawCardEffect(1, 2, true), "Discard a card at random to draw two cards?"));
     }
 }

@@ -14,7 +14,7 @@ public class OverwhelmingInstinct extends Card {
     public OverwhelmingInstinct() {
         // Whenever you attack with three or more creatures, draw a card.
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 new DrawCardEffect());
     }
 }

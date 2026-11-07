@@ -38,7 +38,7 @@ public class ZurzothChaosRider extends Card {
                 devilToken);
 
         addTrigger(Triggers.youAttackPlayer(),
-                TriggerOptions.DEFAULT.withInterveningIf(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new MinimumMatchingAttackers(1, new PermanentHasSubtypePredicate(CardSubtype.DEVIL))),
                 SequenceEffect.of(
                         new DrawCardEffect(),

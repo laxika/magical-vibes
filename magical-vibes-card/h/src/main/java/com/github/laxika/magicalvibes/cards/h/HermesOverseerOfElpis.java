@@ -27,7 +27,7 @@ public class HermesOverseerOfElpis extends Card {
                         List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING, Keyword.VIGILANCE), Set.of()));
 
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackingCreaturesOfSubtype(1, CardSubtype.BIRD)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackingCreaturesOfSubtype(1, CardSubtype.BIRD)),
                 new ScryEffect(2));
     }
 }

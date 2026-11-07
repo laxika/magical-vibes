@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.condition.DeclaredAttackCondition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -80,6 +81,21 @@ public final class CombatAbilityReader {
         /** "Becomes blocked by a creature": once for each creature blocking it (CR 509.3d). */
         public boolean eachBlocker() {
             return multiplicity() == TriggerMultiplicity.EACH_BLOCKER;
+        }
+
+        /**
+         * The effect as a collector that judged the ability's options puts it on the stack: wrapped in the intervening
+         * "if" for the check as the ability resolves (CR 603.4), but for one about the attack as declared
+         * ({@link DeclaredAttackCondition#isDeclaredAttackFact}), whose answer then is the one judged as the ability
+         * triggered, so its wrapper comes off rather than recount attackers that may have left combat since.
+         */
+        public CardEffect effectAsJudged() {
+            Condition interveningIf = ability.options().interveningIf();
+            if (interveningIf != null && DeclaredAttackCondition.isDeclaredAttackFact(interveningIf)
+                    && effect instanceof ConditionalEffect conditional && conditional.condition() == interveningIf) {
+                return conditional.wrapped();
+            }
+            return effect;
         }
 
         /** This effect read as {@code effect} instead, as a collector snapshots or binds it. */

@@ -25,7 +25,7 @@ public class AkkiBattleSquad extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentIsModifiedPredicate()));
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new HasAttacker(modifiedCreature)).withLimit(TriggerLimit.ONCE_EACH_TURN),
                 SequenceEffect.of(
                         new UntapPermanentsEffect(TapUntapScope.CONTROLLED, modifiedCreature),

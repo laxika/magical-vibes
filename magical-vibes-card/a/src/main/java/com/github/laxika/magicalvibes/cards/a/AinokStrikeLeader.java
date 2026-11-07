@@ -29,7 +29,7 @@ public class AinokStrikeLeader extends Card {
 
     public AinokStrikeLeader() {
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new AnyOf(List.of(
                                         new HasAttacker(new PermanentIsSourcePermanentPredicate()),
                                         new HasAttacker(new PermanentAllOfPredicate(List.of(

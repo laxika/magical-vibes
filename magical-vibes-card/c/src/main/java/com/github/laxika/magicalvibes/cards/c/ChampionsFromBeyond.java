@@ -27,11 +27,11 @@ public class ChampionsFromBeyond extends Card {
                 List.of(CardSubtype.HERO), Set.of(), Set.of()));
 
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(4)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(4)),
                 SequenceEffect.of(new ScryEffect(2), new DrawCardEffect(1)));
 
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(8)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(8)),
                 new BoostAllOwnCreaturesEffect(4, 4).forDeclaredAttackers());
     }
 }

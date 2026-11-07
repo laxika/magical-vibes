@@ -34,7 +34,7 @@ public class RangerClass extends Card {
                         List.of(CardSubtype.WOLF), Set.of(), Set.of()));
 
         target(TargetFilters.attackingCreature()).addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, CounterType.LEVEL)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceCounterThreshold(1, CounterType.LEVEL)),
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
 
         addActivatedAbility(new ActivatedAbility(

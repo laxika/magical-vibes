@@ -32,7 +32,7 @@ public class RaddicTalZealot extends Card {
 
     public RaddicTalZealot() {
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackingCreaturesOfSubtype(1, CardSubtype.KNIGHT)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackingCreaturesOfSubtype(1, CardSubtype.KNIGHT)),
                 new DraftCardFromSpellbookToHandEffect(SPELLBOOK));
     }
 }

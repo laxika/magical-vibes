@@ -22,7 +22,7 @@ public class LoveOnTheBattlefield extends Card {
         // The two attackers are fixed when the trigger fires: GrantScope.TARGETS carries the declared
         // attackers, so a creature that left combat before resolution still gains first strike.
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new ExactlyAttackers(2)),
+                TriggerOptions.DEFAULT.withEventCondition(new ExactlyAttackers(2)),
                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGETS),
                 new DrawCardEffect(1),
                 new GrantEffectToOwnCreaturesUntilEndOfCombatEffect(

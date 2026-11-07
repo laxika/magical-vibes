@@ -7,14 +7,12 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCounterSum;
-import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -41,9 +39,7 @@ public class ChongAndLilyNomads extends Card {
                         BOOST_CREATURES,
                         new BoostAllOwnCreaturesEffect(loreCountersOnSagas, new Fixed(0)))));
 
-        addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(
-                        new MinimumMatchingAttackers(1, new PermanentHasSubtypePredicate(CardSubtype.BARD))),
+        addTrigger(Triggers.youAttack().withFilter(new PermanentHasSubtypePredicate(CardSubtype.BARD)),
                 new ChooseOneAtTriggerTimeEffect(choice));
     }
 }

@@ -29,7 +29,7 @@ public class LandrovalHorizonWitness extends Card {
                 )),
                 "Target must be an attacking creature without flying"
         )).addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(2)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(2)),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
     }
 }

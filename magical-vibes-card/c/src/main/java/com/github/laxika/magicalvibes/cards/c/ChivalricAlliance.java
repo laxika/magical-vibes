@@ -22,7 +22,7 @@ public class ChivalricAlliance extends Card {
 
     public ChivalricAlliance() {
         addTrigger(Triggers.youAttack(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(2)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(2)),
                 new DrawCardEffect());
 
         addActivatedAbility(new ActivatedAbility(
