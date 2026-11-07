@@ -23,7 +23,7 @@ public class JoleneThePlunderQueen extends Card {
 
     public JoleneThePlunderQueen() {
         addTrigger(Triggers.playerAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new PlayerAttacksOneOrMoreOfYourOpponents()),
+                TriggerOptions.DEFAULT.withEventCondition(new PlayerAttacksOneOrMoreOfYourOpponents()),
                 new CreateTokenForTriggeringPlayerEffect(CreateTokenEffect.ofTreasureToken(1)));
         addStaticEffect(new AddTokenCreationEffect(1, CardSubtype.TREASURE));
 

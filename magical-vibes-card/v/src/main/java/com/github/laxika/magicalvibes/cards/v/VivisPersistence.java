@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -53,8 +52,10 @@ public class VivisPersistence extends Card {
                         AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT,
                 returnToHand);
-        addTrigger(new TriggerCondition(Triggers.youAttack(), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT.withInterveningIf(new HasAttacker(new PermanentIsCommanderPredicate(true))),
+        addTrigger(new TriggerCondition(Triggers.creatureAttacks()
+                                .withFilter(new PermanentIsCommanderPredicate(true)),
+                        AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT,
                 returnToHand);
     }
 }

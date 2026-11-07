@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.model.condition;
 
 /**
  * Whether the attacking player attacked one or more of this condition's controller's opponents.
- * Unlike {@link PlayerAttacksOneOfYourOpponents}, a trigger gated on this condition fires once per
- * attacking player per combat, regardless of how many distinct opponents were attacked.
+ * As the event condition of {@code Triggers.playerAttacks()} ("whenever a player attacks one or more of your
+ * opponents") it triggers once per attacking player per combat, however many of the opponents were attacked, where
+ * {@code Triggers.playerAttacksOneOfYourOpponents()} triggers once for each one.
  */
 public record PlayerAttacksOneOrMoreOfYourOpponents() implements Condition {
 

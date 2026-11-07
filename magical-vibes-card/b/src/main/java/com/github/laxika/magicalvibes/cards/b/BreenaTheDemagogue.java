@@ -25,7 +25,7 @@ public class BreenaTheDemagogue extends Card {
         // Whenever a player attacks one of your opponents, if that opponent has more life than
         // another of your opponents, that attacking player draws a card and you put two +1/+1
         // counters on a creature you control.
-        addTrigger(Triggers.playerAttacks(),
+        addTrigger(Triggers.playerAttacksOneOfYourOpponents(),
                 TriggerOptions.DEFAULT.withInterveningIf(new AttackedOpponentHasMoreLifeThanAnotherOpponent()),
                 SequenceEffect.of(
                         new DrawCardForTriggeringPlayerEffect(),

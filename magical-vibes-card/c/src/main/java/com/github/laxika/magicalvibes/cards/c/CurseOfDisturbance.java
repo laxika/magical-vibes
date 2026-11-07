@@ -20,7 +20,7 @@ public class CurseOfDisturbance extends Card {
     public CurseOfDisturbance() {
         CreateTokenEffect zombie = CreateTokenEffect.blackZombie(1);
         addTrigger(Triggers.playerAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksEnchantedPlayer()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksEnchantedPlayer()),
                 SequenceEffect.of(
                         zombie,
                         new ConditionalEffect(new AllOf(java.util.List.of(new AttackingPlayerIsOpponent(), new AttacksEnchantedPlayer())), new CreateTokenForTriggeringPlayerEffect(zombie))));

@@ -322,7 +322,6 @@ import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
 import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OilCounterEventThisTurn;
-import com.github.laxika.magicalvibes.model.condition.OpponentAttacksAnotherOpponent;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksPlaneswalker;
 import com.github.laxika.magicalvibes.model.condition.PlaneswalkedToPlaneThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
@@ -359,9 +358,8 @@ import com.github.laxika.magicalvibes.model.condition.PermanentPutIntoGraveyardF
 import com.github.laxika.magicalvibes.model.condition.PermanentPutIntoYourHandFromBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PermanentTurnedFaceUpThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PermanentTypesInGraveyardAtLeast;
-import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOfYourOpponents;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOrMoreOfYourOpponents;
-import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOfYourOpponentsWithPowerOrToughnessEqualToSourceChosenNumber;
+import com.github.laxika.magicalvibes.model.condition.AttackersHavePowerOrToughnessEqualToSourceChosenNumber;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksNotController;
 import com.github.laxika.magicalvibes.model.condition.PlusOnePlusOneCounterPutOnControlledPermanentThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PlusOnePlusOneCounterPutOnCreatureThisTurn;
@@ -1246,17 +1244,21 @@ public class ConditionEvaluationService {
                 yield attackedId != null && gameData.playerIds.contains(attackedId)
                         && ctx.controllerId() != null && !ctx.controllerId().equals(attackedId);
             }
-            case AttackedOpponentHasMoreLifeThanAnotherOpponent ignored ->
-                    ctx.targetId() != null && ctx.controllerId() != null
-                            && gameData.playerIds.contains(ctx.targetId())
-                            && !ctx.targetId().equals(ctx.controllerId())
-                            && gameData.orderedPlayerIds.stream()
-                                    .filter(playerId -> !playerId.equals(ctx.controllerId())
-                                            && !playerId.equals(ctx.targetId()))
-                                    .anyMatch(playerId -> gameData.getLife(ctx.targetId()) > gameData.getLife(playerId));
-            case AttackedTargetIsMonarch ignored ->
-                    ctx.targetId() != null && gameData.playerIds.contains(ctx.targetId())
-                            && ctx.targetId().equals(gameData.monarchPlayerId);
+            case AttackedOpponentHasMoreLifeThanAnotherOpponent ignored -> {
+                UUID attackedId = attackedTarget(ctx);
+                yield attackedId != null && ctx.controllerId() != null
+                        && gameData.playerIds.contains(attackedId)
+                        && !attackedId.equals(ctx.controllerId())
+                        && gameData.orderedPlayerIds.stream()
+                                .filter(playerId -> !playerId.equals(ctx.controllerId())
+                                        && !playerId.equals(attackedId))
+                                .anyMatch(playerId -> gameData.getLife(attackedId) > gameData.getLife(playerId));
+            }
+            case AttackedTargetIsMonarch ignored -> {
+                UUID attackedId = attackedTarget(ctx);
+                yield attackedId != null && gameData.playerIds.contains(attackedId)
+                        && attackedId.equals(gameData.monarchPlayerId);
+            }
             case AttackedPlayerPoisoned ignored ->
                     attackedPlayerPoisoned(gameData, ctx);
             case AttacksEnchantedPlayer ignored -> attacksEnchantedPlayer(gameData, ctx);
@@ -1302,16 +1304,12 @@ public class ConditionEvaluationService {
                     countOpponentAttackingCreatures(gameData, ctx) >= c.minimum();
             case OpponentAttacksPlaneswalker ignored ->
                     opponentAttacksPlaneswalker(gameData, ctx);
-            case OpponentAttacksAnotherOpponent ignored ->
-                    opponentAttacksAnotherOpponent(gameData, ctx);
-              case PlayerAttacksOneOfYourOpponents ignored ->
-                      playerAttacksOneOfYourOpponents(gameData, ctx);
-              case PlayerAttacksOneOrMoreOfYourOpponents ignored ->
-                      playerAttacksOneOfYourOpponents(gameData, ctx);
-              case PlayerAttacksOneOfYourOpponentsWithPowerOrToughnessEqualToSourceChosenNumber ignored ->
-                      playerAttacksOneOfYourOpponentsWithMatchingStats(gameData, ctx);
-              case PlayerAttacksNotController ignored ->
-                      playerAttacksNotController(gameData, ctx);
+            case PlayerAttacksOneOrMoreOfYourOpponents ignored ->
+                    playerAttacksOneOrMoreOfYourOpponents(gameData, ctx);
+            case AttackersHavePowerOrToughnessEqualToSourceChosenNumber ignored ->
+                    attackersHaveSourceChosenNumber(gameData, ctx);
+            case PlayerAttacksNotController ignored ->
+                    playerAttacksNotController(gameData, ctx);
             case MinimumAttackingCreaturesOfSubtype c ->
                     countAttackingCreaturesOfSubtype(gameData, ctx.controllerId(), c.subtype()) >= c.minimum();
             case HasAttacker c ->
@@ -4211,25 +4209,7 @@ public class ConditionEvaluationService {
                 .anyMatch(attacker -> controlledPlaneswalkerIds.contains(attacker.getAttackTarget()));
     }
 
-    private boolean opponentAttacksAnotherOpponent(GameData gameData, ConditionContext ctx) {
-        UUID controllerId = ctx.controllerId();
-        UUID attackingPlayerId = ctx.targetId();
-        if (controllerId == null || attackingPlayerId == null || controllerId.equals(attackingPlayerId)) {
-            return false;
-        }
-
-        List<Permanent> attackers = gameData.playerBattlefields.get(attackingPlayerId);
-        if (attackers == null) return false;
-
-        return attackers.stream()
-                .filter(Permanent::isAttacking)
-                .map(Permanent::getAttackTarget)
-                .filter(gameData.playerIds::contains)
-                .anyMatch(targetId -> !controllerId.equals(targetId)
-                        && !attackingPlayerId.equals(targetId));
-    }
-
-    private boolean playerAttacksOneOfYourOpponents(GameData gameData, ConditionContext ctx) {
+    private boolean playerAttacksOneOrMoreOfYourOpponents(GameData gameData, ConditionContext ctx) {
         UUID controllerId = ctx.controllerId();
         UUID attackingPlayerId = ctx.targetId();
         if (controllerId == null || attackingPlayerId == null) {
@@ -4243,22 +4223,34 @@ public class ConditionEvaluationService {
                 .anyMatch(targetId -> !controllerId.equals(targetId));
     }
 
-    private boolean playerAttacksOneOfYourOpponentsWithMatchingStats(GameData gameData,
-                                                                      ConditionContext ctx) {
-        UUID controllerId = ctx.controllerId();
-        UUID attackingPlayerId = ctx.targetId();
+    /**
+     * Whether a creature attacking the attack trigger's attacked target ({@link #attackedTarget}) has power or toughness
+     * equal to the source's chosen number: "if any of those creatures have power or toughness equal to the chosen
+     * number" (Squall, Gunblade Duelist), as the ability triggers and again as it resolves (CR 603.4).
+     */
+    private boolean attackersHaveSourceChosenNumber(GameData gameData, ConditionContext ctx) {
+        UUID attackedTargetId = attackedTarget(ctx);
         Permanent source = ctx.sourcePermanent();
-        if (controllerId == null || attackingPlayerId == null || source == null) {
+        if (attackedTargetId == null || source == null) {
             return false;
         }
-
         int chosenNumber = source.getChosenNumber();
-        return gameData.playerBattlefields.getOrDefault(attackingPlayerId, List.of()).stream()
+        return gameData.playerBattlefields.values().stream()
+                .filter(java.util.Objects::nonNull)
+                .flatMap(List::stream)
                 .filter(Permanent::isAttacking)
-                .filter(attacker -> gameData.playerIds.contains(attacker.getAttackTarget()))
-                .filter(attacker -> !controllerId.equals(attacker.getAttackTarget()))
+                .filter(attacker -> attackedTargetId.equals(attacker.getAttackTarget()))
                 .anyMatch(attacker -> gameQueryService.getEffectivePower(gameData, attacker) == chosenNumber
                         || gameQueryService.getEffectiveToughness(gameData, attacker) == chosenNumber);
+    }
+
+    /**
+     * The player, planeswalker or battle an attack trigger's event was aimed at: the context's attacked target where the
+     * collector or the resolving entry gives one ({@link ConditionContext#withAttackedTargetId}), else its target, which
+     * the attack collectors set to the attack target as the ability triggers.
+     */
+    private static UUID attackedTarget(ConditionContext ctx) {
+        return ctx.attackedTargetId() != null ? ctx.attackedTargetId() : ctx.targetId();
     }
 
     private boolean attackedPlayerPoisoned(GameData gameData, ConditionContext ctx) {

@@ -558,6 +558,25 @@ public final class Triggers {
         return new CombatTrigger(CombatTrigger.CombatEvent.ONE_OR_MORE_ATTACK, ObjectRelation.ANY);
     }
 
+    /**
+     * "Whenever a player attacks one of your opponents" / "whenever one or more creatures attack one of your opponents":
+     * once for each opponent attacked. The stack entry's attacked target is that opponent ("that opponent", "defending
+     * player"), its non-targeting target the attacking player ("that attacking player"); an intervening "if" about the
+     * attacked opponent reads it as the attacked target (Breena, the Demagogue).
+     */
+    public static CombatTrigger playerAttacksOneOfYourOpponents() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.ONE_OR_MORE_ATTACK_YOUR_OPPONENT, ObjectRelation.ANY);
+    }
+
+    /**
+     * "Whenever an opponent attacks another one of your opponents": {@link #playerAttacksOneOfYourOpponents()} where the
+     * attacking player is an opponent, once for each other opponent attacked.
+     */
+    public static CombatTrigger opponentAttacksAnotherOpponent() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.ONE_OR_MORE_ATTACK_YOUR_OPPONENT,
+                ObjectRelation.OPPONENT_CONTROLS);
+    }
+
     /** "Whenever one or more creatures attack you". */
     public static CombatTrigger creaturesAttackYou() {
         return new CombatTrigger(CombatTrigger.CombatEvent.ONE_OR_MORE_ATTACK_YOU, ObjectRelation.ANY);

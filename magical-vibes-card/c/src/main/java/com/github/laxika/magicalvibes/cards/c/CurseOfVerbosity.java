@@ -18,7 +18,7 @@ public class CurseOfVerbosity extends Card {
 
     public CurseOfVerbosity() {
         addTrigger(Triggers.playerAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksEnchantedPlayer()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksEnchantedPlayer()),
                 SequenceEffect.of(
                         new DrawCardEffect(),
                         new ConditionalEffect(new AllOf(java.util.List.of(new AttackingPlayerIsOpponent(), new AttacksEnchantedPlayer())), new DrawCardForTriggeringPlayerEffect())));

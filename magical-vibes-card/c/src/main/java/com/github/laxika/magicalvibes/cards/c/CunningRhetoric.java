@@ -13,7 +13,7 @@ public class CunningRhetoric extends Card {
 
     public CunningRhetoric() {
         addTrigger(Triggers.playerAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new OpponentAttacksWithAtLeastCreatures(1)),
+                TriggerOptions.DEFAULT.withEventCondition(new OpponentAttacksWithAtLeastCreatures(1)),
                 new ExileTopCardOfAttackingPlayerLibraryAndGrantControllerPlayPermissionEffect());
     }
 }

@@ -21,7 +21,7 @@ public class CurseOfBounty extends Card {
     public CurseOfBounty() {
         PermanentNotPredicate nonland = new PermanentNotPredicate(new PermanentIsLandPredicate());
         addTrigger(Triggers.playerAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksEnchantedPlayer()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksEnchantedPlayer()),
                 SequenceEffect.of(
                         new UntapPermanentsEffect(TapUntapScope.CONTROLLED, nonland),
                         new ConditionalEffect(

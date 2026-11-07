@@ -12,6 +12,8 @@ import java.util.UUID;
 /**
  * Evaluation context for a {@link com.github.laxika.magicalvibes.model.condition.Condition}.
  * Carries source-of-truth values shared by stack, trigger, entry, and static evaluations.
+ * {@code attackedTargetId} is the player, planeswalker or battle an attack trigger's event was aimed at, where it isn't
+ * the {@code targetId} ({@link #withAttackedTargetId}).
  */
 public record ConditionContext(
         UUID controllerId,
@@ -47,6 +49,7 @@ public record ConditionContext(
         boolean revealCardFromHandCostPaid,
         boolean controlledDragonAsCast
 , boolean treasureManaSpentToActivate, boolean teamworkCostPaid, boolean controlledModifiedCreatureAsCast, boolean copiedSpell,
+        UUID attackedTargetId,
         ResolutionResults resolutionResults) {
     /** A context with an empty resolution scratchpad, for evaluations outside a resolving stack entry. */
     public ConditionContext(
@@ -83,7 +86,7 @@ public record ConditionContext(
         boolean revealCardFromHandCostPaid,
         boolean controlledDragonAsCast
 , boolean treasureManaSpentToActivate, boolean teamworkCostPaid, boolean controlledModifiedCreatureAsCast, boolean copiedSpell) {
-        this(controllerId, sourcePermanentId, sourcePermanent, sourceCard, kicked, buyback, prowl, madness, castForForetell, overloaded, sourceZone, xValue, targetId, triggeringCard, staticEvaluation, putCounterCostPaid, beholdCostPaid, triggeringPermanentId, triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts, alternateCost, spectacle, controlledMountAsCast, controlledFaerieAsCast, collectEvidenceCostPaid, castDuringMainPhase, eventValue, waterbendCostPaid, giftPromised, revealCardFromHandCostPaid, controlledDragonAsCast, treasureManaSpentToActivate, teamworkCostPaid, controlledModifiedCreatureAsCast, copiedSpell, ResolutionResults.EMPTY);
+        this(controllerId, sourcePermanentId, sourcePermanent, sourceCard, kicked, buyback, prowl, madness, castForForetell, overloaded, sourceZone, xValue, targetId, triggeringCard, staticEvaluation, putCounterCostPaid, beholdCostPaid, triggeringPermanentId, triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts, alternateCost, spectacle, controlledMountAsCast, controlledFaerieAsCast, collectEvidenceCostPaid, castDuringMainPhase, eventValue, waterbendCostPaid, giftPromised, revealCardFromHandCostPaid, controlledDragonAsCast, treasureManaSpentToActivate, teamworkCostPaid, controlledModifiedCreatureAsCast, copiedSpell, null, ResolutionResults.EMPTY);
     }
 
     public ConditionContext(
@@ -444,7 +447,7 @@ public record ConditionContext(
                 entry.isCastDuringMainPhase(), entry.getEventValue(), entry.isWaterbendCostPaid(),
                 entry.isGiftPromised(), entry.isRevealCardFromHandCostPaid(),
                 entry.isControlledDragonAsCast(), entry.getActivationTreasureManaSpent() > 0 || entry.isActivationUsedTreasureMana(), entry.isTeamworkCostPaid(), entry.isControlledModifiedCreatureAsCast(), entry.isCopy(),
-                entry.getResolutionResults());
+                entry.getAttackedTargetId(), entry.getResolutionResults());
     }
 
     public static ConditionContext forPermanent(Permanent permanent, UUID controllerId) {
@@ -531,7 +534,7 @@ public record ConditionContext(
                 spectacle, controlledMountAsCast, controlledFaerieAsCast, collectEvidenceCostPaid,
                 castDuringMainPhase, copiedEventValue, waterbendCostPaid, giftPromised,
                 revealCardFromHandCostPaid, controlledDragonAsCast, treasureManaSpentToActivate, teamworkCostPaid, controlledModifiedCreatureAsCast, copiedSpell,
-                resolutionResults);
+                attackedTargetId, resolutionResults);
     }
 
     public ConditionContext withTeamworkCostPaid(boolean paid) {
@@ -543,7 +546,7 @@ public record ConditionContext(
                 controlledFaerieAsCast, collectEvidenceCostPaid, castDuringMainPhase, eventValue,
                 waterbendCostPaid, giftPromised, revealCardFromHandCostPaid, controlledDragonAsCast,
                 treasureManaSpentToActivate, paid, controlledModifiedCreatureAsCast, copiedSpell,
-                resolutionResults);
+                attackedTargetId, resolutionResults);
     }
 
     /** The same context reading {@code results} as the resolving entry's scratchpad. */
@@ -556,7 +559,24 @@ public record ConditionContext(
                 controlledFaerieAsCast, collectEvidenceCostPaid, castDuringMainPhase, eventValue,
                 waterbendCostPaid, giftPromised, revealCardFromHandCostPaid, controlledDragonAsCast,
                 treasureManaSpentToActivate, teamworkCostPaid, controlledModifiedCreatureAsCast, copiedSpell,
-                results);
+                attackedTargetId, results);
+    }
+
+    /**
+     * The same context judging against {@code newAttackedTargetId}, the player, planeswalker or battle an attack trigger's
+     * event was aimed at ("that opponent" of "whenever a player attacks one of your opponents"), which
+     * {@link #forStackEntry} reads from the entry's attacked target as the ability resolves.
+     */
+    public ConditionContext withAttackedTargetId(UUID newAttackedTargetId) {
+        return new ConditionContext(controllerId, sourcePermanentId, sourcePermanent, sourceCard,
+                kicked, buyback, prowl, madness, castForForetell, overloaded, sourceZone, xValue,
+                targetId, triggeringCard, staticEvaluation, putCounterCostPaid, beholdCostPaid,
+                triggeringPermanentId, triggeringPermanentPowerAtTrigger, sacrificedCard,
+                repeatedAdditionalCosts, alternateCost, spectacle, controlledMountAsCast,
+                controlledFaerieAsCast, collectEvidenceCostPaid, castDuringMainPhase, eventValue,
+                waterbendCostPaid, giftPromised, revealCardFromHandCostPaid, controlledDragonAsCast,
+                treasureManaSpentToActivate, teamworkCostPaid, controlledModifiedCreatureAsCast, copiedSpell,
+                newAttackedTargetId, resolutionResults);
     }
 
     public ConditionContext withEventValue(int newEventValue) {

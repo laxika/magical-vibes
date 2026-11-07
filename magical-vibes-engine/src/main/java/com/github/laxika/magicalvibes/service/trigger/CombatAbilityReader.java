@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.DeclaredAttackCondition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeredModalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.CombatTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
@@ -87,12 +88,17 @@ public final class CombatAbilityReader {
          * The effect as a collector that judged the ability's options puts it on the stack: wrapped in the intervening
          * "if" for the check as the ability resolves (CR 603.4), but for one about the attack as declared
          * ({@link DeclaredAttackCondition#isDeclaredAttackFact}), whose answer then is the one judged as the ability
-         * triggered, so its wrapper comes off rather than recount attackers that may have left combat since.
+         * triggered, so its wrapper comes off rather than recount attackers that may have left combat since. A modal
+         * ability whose mode is chosen as it goes on the stack (CR 603.3c, {@link TriggeredModalEffect}) loses the
+         * wrapper too: the chosen mode is what resolves, and the card writes the intervening "if" into each mode for
+         * that check (Jin Sakai, Ghost of Tsushima).
          */
         public CardEffect effectAsJudged() {
             Condition interveningIf = ability.options().interveningIf();
-            if (interveningIf != null && DeclaredAttackCondition.isDeclaredAttackFact(interveningIf)
-                    && effect instanceof ConditionalEffect conditional && conditional.condition() == interveningIf) {
+            if (interveningIf != null && effect instanceof ConditionalEffect conditional
+                    && conditional.condition() == interveningIf
+                    && (DeclaredAttackCondition.isDeclaredAttackFact(interveningIf)
+                    || conditional.wrapped() instanceof TriggeredModalEffect)) {
                 return conditional.wrapped();
             }
             return effect;
@@ -101,6 +107,11 @@ public final class CombatAbilityReader {
         /** This effect read as {@code effect} instead, as a collector snapshots or binds it. */
         public CombatEffect withEffect(CardEffect effect) {
             return new CombatEffect(effect, ability, filter, simultaneousWithPrevious);
+        }
+
+        /** This effect in the form {@link #effectAsJudged()} gives, for a collector that judged the ability's options. */
+        public CombatEffect asJudged() {
+            return withEffect(effectAsJudged());
         }
 
         /**

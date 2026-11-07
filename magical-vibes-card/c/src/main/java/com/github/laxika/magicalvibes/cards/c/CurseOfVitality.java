@@ -18,7 +18,7 @@ public class CurseOfVitality extends Card {
 
     public CurseOfVitality() {
         addTrigger(Triggers.playerAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksEnchantedPlayer()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksEnchantedPlayer()),
                 SequenceEffect.of(
                         new GainLifeEffect(2),
                         new ConditionalEffect(

@@ -28,6 +28,8 @@ public enum CombatWatch implements TriggerWatch {
     ON_ALLY_CREATURE_ATTACKS(Triggers.creatureYouControlAttacks(), Zone.BATTLEFIELD),
     /** "Whenever a creature attacks". */
     ON_ANY_CREATURE_ATTACKS(Triggers.creatureAttacks(), Zone.BATTLEFIELD),
+    /** "Whenever a creature attacks", from the graveyard: "whenever your commander attacks" (Vivi's Persistence). */
+    GRAVEYARD_ON_ANY_CREATURE_ATTACKS(Triggers.creatureAttacks(), Zone.GRAVEYARD),
     /** "Whenever a creature attacks you or a planeswalker you control". */
     ON_CREATURE_ATTACKS_YOU(Triggers.creatureAttacksYouOrYourPlaneswalker(), Zone.BATTLEFIELD),
     /** "Whenever a creature attacks you". */
@@ -48,6 +50,10 @@ public enum CombatWatch implements TriggerWatch {
     ON_ALLY_CREATURES_ATTACK_PLAYER_OR_PLANESWALKER(Triggers.youAttackPlayerOrPlaneswalker(), Zone.BATTLEFIELD),
     /** "Whenever a player attacks": one or more creatures attack. */
     ON_ANY_PLAYER_ATTACKS(Triggers.playerAttacks(), Zone.BATTLEFIELD),
+    /** "Whenever a player attacks one of your opponents", once for each opponent attacked. */
+    ON_ANY_PLAYER_ATTACKS_YOUR_OPPONENT(Triggers.playerAttacksOneOfYourOpponents(), Zone.BATTLEFIELD),
+    /** "Whenever an opponent attacks another one of your opponents", once for each other opponent attacked. */
+    ON_OPPONENT_ATTACKS_ANOTHER_OPPONENT(Triggers.opponentAttacksAnotherOpponent(), Zone.BATTLEFIELD),
     /** "Whenever one or more creatures attack you". */
     ON_CREATURES_ATTACK_YOU(Triggers.creaturesAttackYou(), Zone.BATTLEFIELD),
     /** "Whenever an opponent attacks a planeswalker you control with one or more creatures". */

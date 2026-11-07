@@ -24,7 +24,7 @@ public class MilaCraftyCompanion extends Card {
         setModalDoubleFaced(true);
 
         addTrigger(Triggers.playerAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new OpponentAttacksPlaneswalker()),
+                TriggerOptions.DEFAULT.withEventCondition(new OpponentAttacksPlaneswalker()),
                 new PutCounterOnEachControlledPermanentEffect(
                         CounterType.LOYALTY, 1, new PermanentIsPlaneswalkerPredicate()));
         addTrigger(Triggers.permanentYouControlBecomesTargetOfOpponentSpellOrAbility(),

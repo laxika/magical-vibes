@@ -26,7 +26,7 @@ public class FiremaneCommando extends Card {
                 TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(2)),
                 new DrawCardEffect());
         addTrigger(Triggers.playerAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(
+                TriggerOptions.DEFAULT.withEventCondition(
                         new AllOf(List.of(new MinimumAttackers(2), new AttackedTargetIsOpponent()))),
                 new ConditionalEffect(new NotCondition(new OpponentAttacksWithAtLeastCreatures(1, false)), new DrawCardForTargetPlayerEffect(1)));
     }

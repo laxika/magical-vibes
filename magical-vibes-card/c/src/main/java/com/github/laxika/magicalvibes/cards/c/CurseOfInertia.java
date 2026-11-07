@@ -15,7 +15,7 @@ public class CurseOfInertia extends Card {
 
     public CurseOfInertia() {
         addTrigger(Triggers.playerAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksEnchantedPlayer()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksEnchantedPlayer()),
                 new MayEffect(
                         new TapOrUntapTargetPermanentEffect(),
                         "Tap or untap target permanent?",

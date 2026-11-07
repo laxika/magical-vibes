@@ -22,7 +22,7 @@ public class EverettKRossHaplessAttache extends Card {
                 1, 1, Set.of(Keyword.LIFELINK), GrantScope.ALL_OWN_CREATURES,
                 new PermanentIsCommanderPredicate()));
         addTrigger(Triggers.playerAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new OpponentAttacksWithAtLeastCreatures(2, false)),
+                TriggerOptions.DEFAULT.withEventCondition(new OpponentAttacksWithAtLeastCreatures(2, false)),
                 new DrawCardEffect());
     }
 }

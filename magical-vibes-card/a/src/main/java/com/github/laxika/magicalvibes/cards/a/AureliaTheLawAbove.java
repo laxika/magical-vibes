@@ -18,10 +18,10 @@ public class AureliaTheLawAbove extends Card {
 
     public AureliaTheLawAbove() {
         addTrigger(Triggers.playerAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                 new DrawCardEffect());
         addTrigger(Triggers.playerAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MinimumAttackers(5)),
+                TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(5)),
                 SequenceEffect.of(
                         new DealDamageToPlayersEffect(3, DamageRecipient.EACH_OPPONENT),
                         new GainLifeEffect(3)));

@@ -16,7 +16,7 @@ public class CurseOfChaos extends Card {
 
     public CurseOfChaos() {
         addTrigger(Triggers.playerAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksEnchantedPlayer()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksEnchantedPlayer()),
                 new MayEffect(
                         new DiscardCardThenEffect(
                                 null, new DrawCardForTriggeringPlayerEffect(), "a card", null, false, null, null,

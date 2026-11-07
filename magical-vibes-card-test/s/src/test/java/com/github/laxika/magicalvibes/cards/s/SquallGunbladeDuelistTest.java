@@ -38,4 +38,21 @@ class SquallGunbladeDuelistTest extends BaseCardTest {
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
     }
+
+    @Test
+    void conditionIsCheckedAgainAsTheAbilityResolves() {
+        Permanent squall = addCreatureReady(player1, new SquallGunbladeDuelist());
+        squall.setChosenNumber(2);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        int lifeBefore = gd.getLife(player2.getId());
+        declareAttackers(player1, List.of(1));
+        assertThat(gd.stack).hasSize(1);
+        bears.setPowerModifier(1);
+        bears.setToughnessModifier(1);
+        resolveAllTriggers();
+
+        // No creature attacking player2 has power or toughness 2 as the ability resolves: only the Bears' combat damage.
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 3);
+    }
 }

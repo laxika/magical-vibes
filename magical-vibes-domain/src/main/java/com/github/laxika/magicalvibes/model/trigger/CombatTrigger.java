@@ -89,6 +89,12 @@ public record CombatTrigger(CombatEvent event, ObjectRelation relation, Permanen
         ONE_OR_MORE_ATTACK_A_PLAYER,
         /** One or more creatures attack a player or planeswalker, once for each one attacked. */
         ONE_OR_MORE_ATTACK_A_PLAYER_OR_PLANESWALKER,
+        /**
+         * One or more creatures attack one of your opponents, once for each opponent attacked: "whenever a player attacks
+         * one of your opponents". The relation is the attacking player's: {@link ObjectRelation#ANY} for "a player",
+         * {@link ObjectRelation#OPPONENT_CONTROLS} for "an opponent attacks another one of your opponents".
+         */
+        ONE_OR_MORE_ATTACK_YOUR_OPPONENT,
         /** One or more creatures attack you. */
         ONE_OR_MORE_ATTACK_YOU,
         /** An opponent attacks a planeswalker you control with one or more creatures, once for each planeswalker. */

@@ -12,7 +12,7 @@ public class FlummoxedCyclops extends Card {
 
     public FlummoxedCyclops() {
         addTrigger(Triggers.playerAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new OpponentsAttackWithAtLeastCreatures(2)),
+                TriggerOptions.DEFAULT.withEventCondition(new OpponentsAttackWithAtLeastCreatures(2)),
                 CantBlockThisCombatEffect.self());
     }
 }

@@ -28,7 +28,7 @@ public class TenuousTruce extends Card {
         addTrigger(Triggers.endStep(ActivePlayer.ENCHANTED_PLAYER),
                 SequenceEffect.of(new DrawCardEffect(), new DrawCardForTargetPlayerEffect(1)));
         addTrigger(Triggers.playerAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new ControllerAndEnchantedPlayerAttackEachOther()),
+                TriggerOptions.DEFAULT.withEventCondition(new ControllerAndEnchantedPlayerAttackEachOther()),
                 new SacrificeSelfEffect());
     }
 }

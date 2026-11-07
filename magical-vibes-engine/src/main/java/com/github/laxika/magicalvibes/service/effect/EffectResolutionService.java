@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
-import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.TriggeringCardMatches;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasSubtype;
@@ -683,10 +682,6 @@ public class EffectResolutionService {
 
     private boolean isConditionMet(GameData gameData, StackEntry entry, Condition condition,
                                    ConditionContext context) {
-        if (condition instanceof com.github.laxika.magicalvibes.model.condition.AttackedOpponentHasMoreLifeThanAnotherOpponent) {
-            return conditionEvaluationService.isMet(gameData, condition,
-                    context.withTargetId(entry.getAttackedTargetId()), entry.getEventValue());
-        }
         if (condition instanceof NotCondition not) {
             return !isConditionMet(gameData, entry, not.inner(), context);
         }
@@ -700,10 +695,6 @@ public class EffectResolutionService {
             return conditionEvaluationService.isMet(gameData, new OpponentAttacksWithAtLeastCreatures(
                     Math.max(0, attacks.minimum() - (int) departedAtController), attacks.includePlaneswalkers(),
                     attacks.countsRemovedAttackers()), context, entry.getEventValue());
-        }
-        if (condition instanceof AttackedTargetIsMonarch && entry.getAttackedTargetId() != null) {
-            return conditionEvaluationService.isMet(gameData, condition,
-                    context.withTargetId(entry.getAttackedTargetId()), entry.getEventValue());
         }
         // "...if its power is less than or equal to the revealed card's power": the revealed card is
         // still in hand, so its (possibly characteristic-defined) power is read as the spell resolves.

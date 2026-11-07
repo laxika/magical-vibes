@@ -23,7 +23,7 @@ public class CurseOfShallowGraves extends Card {
                 1, "Zombie", 2, 2, CardColor.BLACK, List.of(CardSubtype.ZOMBIE),
                 Set.of(), Set.of(), true);
         addTrigger(Triggers.playerAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksEnchantedPlayer()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksEnchantedPlayer()),
                 new MayEffect(
                         new CreateTokenForTriggeringPlayerEffect(zombie),
                         "Create a tapped 2/2 black Zombie creature token?",

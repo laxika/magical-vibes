@@ -27,7 +27,7 @@ public class CurseOfOpulence extends Card {
     public CurseOfOpulence() {
         CreateTokenEffect gold = goldToken();
         addTrigger(Triggers.playerAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttacksEnchantedPlayer()),
+                TriggerOptions.DEFAULT.withEventCondition(new AttacksEnchantedPlayer()),
                 SequenceEffect.of(
                         gold,
                         new ConditionalEffect(

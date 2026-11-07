@@ -2,9 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AttackingPlayerIsOpponent;
-import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
@@ -14,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSou
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
 
 @CardRegistration(set = "C19", collectorNumber = "50")
 public class TahngarthFirstMate extends Card {
@@ -22,12 +19,8 @@ public class TahngarthFirstMate extends Card {
     public TahngarthFirstMate() {
         addStaticEffect(new CanBeBlockedByAtMostNCreaturesEffect(1));
         addTrigger(Triggers.playerAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(
-                        new AllOf(List.of(
-                                        new AttackingPlayerIsOpponent(),
-                                        new MinimumAttackers(1),
-                                        new SourceIsTapped()
-                                ))),
+                TriggerOptions.DEFAULT.withEventCondition(new AttackingPlayerIsOpponent())
+                        .withInterveningIf(new SourceIsTapped()),
                 new MayEffect(
                         TargetPlayerGainsControlOfSourceCreatureEffect.triggeringPlayer(
                                 ControlDuration.END_OF_COMBAT,

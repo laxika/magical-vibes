@@ -37,7 +37,7 @@ public class Archnemesis extends Card {
                                 new GainLifeEffect(2)
                         ));
         addTrigger(Triggers.playerAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new OpponentAttacksWithAtLeastCreatures(1, false)),
+                TriggerOptions.DEFAULT.withEventCondition(new OpponentAttacksWithAtLeastCreatures(1, false)),
                 new MayEffect(new AttachSourceAuraToTargetPlayerEffect(), "Attach Archnemesis to that player?"));
     }
 }
