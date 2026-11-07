@@ -2328,8 +2328,11 @@ public class CombatDamageService {
                     // a NONE target spec and keep the baked-in defender context.
                     UUID mayTargetId = may.wrapped().targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                             ? null : defenderId;
+                    // The player dealt damage is the event's player: a reflexive "when you do, destroy target
+                    // creature that player controls" (Dokuchi Silencer) is targeted against it.
                     gameData.queueMayAbility(creature.getCard(), attackerId, may, mayTargetId, creature.getId(),
-                            damageDealt, false, null, grantingPermanents.get(candidateEffect));
+                            damageDealt, false, null, grantingPermanents.get(candidateEffect))
+                            .setTriggeringPlayerId(defenderId);
                     gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), "'s combat damage trigger fires."));
                     continue;
                 }

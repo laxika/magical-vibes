@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.amount.NoncombatDamageDealtToOpponen
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -23,9 +25,11 @@ public class ChandrasIncinerator extends Card {
                 new NoncombatDamageDealtToOpponentsThisTurn()));
 
         target(new PermanentPredicateTargetFilter(
-                new PermanentAnyOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentIsPlaneswalkerPredicate())),
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentAnyOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentIsPlaneswalkerPredicate())),
+                        new PermanentControlledByTriggeringPlayerPredicate())),
                 "Target must be a creature or planeswalker that player controls"))
                 .addTrigger(Triggers.opponentDealtNoncombatDamage(),
                         new DealDamageToTargetCreatureOrPlaneswalkerEffect(new XValue()));

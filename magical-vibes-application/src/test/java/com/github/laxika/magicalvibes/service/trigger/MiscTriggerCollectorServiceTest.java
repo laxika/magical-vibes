@@ -68,6 +68,12 @@ import com.github.laxika.magicalvibes.model.amount.CardTypesAmongTriggeringCards
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -1616,6 +1622,37 @@ class MiscTriggerCollectorServiceTest {
 
             assertThat(result).isFalse();
             assertThat(gd.stack).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE — DealDamageToTargetCreatureOrPlaneswalkerEffect")
+    class NoncombatDamageToThatPlayersPermanent {
+
+        @Test
+        @DisplayName("queues the target choice with the damaged opponent as triggering player and the card's filter unchanged")
+        void queuesTargetChoiceWithTheDamagedOpponent() {
+            Card card = createCard("Chandra's Incinerator");
+            var filter = new PermanentPredicateTargetFilter(new PermanentAllOfPredicate(List.of(
+                    new PermanentIsCreaturePredicate(), new PermanentControlledByTriggeringPlayerPredicate())),
+                    "Target must be a creature that player controls");
+            var effect = new DealDamageToTargetCreatureOrPlaneswalkerEffect(new XValue());
+            card.target(filter).addTrigger(Triggers.opponentDealtNoncombatDamage(), effect);
+            Permanent perm = new Permanent(card);
+            var ctx = new TriggerContext.NoncombatDamageToOpponent(player2Id, player1Id, 3);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    DamageWatch.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).isEmpty();
+            var pending = gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
+            assertThat(pending.effects()).containsExactly(effect);
+            assertThat(pending.targetFilter()).isEqualTo(filter);
+            assertThat(pending.spellManaSpentX()).isEqualTo(3);
+            assertThat(pending.triggeringPlayerId()).isEqualTo(player2Id);
+            assertThat(pending.permanentTargetControllerId()).isNull();
         }
     }
 

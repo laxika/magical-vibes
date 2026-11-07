@@ -8,9 +8,11 @@ import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -104,5 +106,30 @@ class DiscardCardThenEffectHandlerTest extends AbstractPlayerInteractionHandlerT
                 anyString(), eq(1),
                 argThat((DiscardFollowUp f) -> f.thenEffect() == copy
                         && targetId.equals(f.thenEffectTargetId())));
+    }
+
+    @Test
+    @DisplayName("The follow-up carries the entry's triggering player for a reflexive \"that player controls\" target")
+    void followUpCarriesTheTriggeringPlayer() {
+        Card card = createCard("Dokuchi Silencer");
+        Card creature = createCard("Bear");
+        gd.playerHands.get(player1Id).add(creature);
+        when(predicateEvaluationService.matchesCardPredicate(eq(creature), any(), any())).thenReturn(true);
+
+        DestroyTargetPermanentEffect destroy = new DestroyTargetPermanentEffect(
+                new PermanentControlledByTriggeringPlayerPredicate());
+        DiscardCardThenEffect effect = new DiscardCardThenEffect(
+                new CardTypePredicate(CardType.CREATURE), destroy, "a creature card");
+        StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
+        entry.setTriggeringPlayerId(player2Id);
+
+        resolveEffect(gd, entry, effect);
+
+        verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id),
+                argThat((List<Integer> indices) -> indices.equals(List.of(0))),
+                anyString(), eq(1),
+                argThat((DiscardFollowUp f) -> f.thenEffect() == destroy
+                        && f.thenEffectTargetId() == null
+                        && player2Id.equals(f.thenEffectTriggeringPlayerId())));
     }
 }

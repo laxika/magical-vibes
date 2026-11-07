@@ -2669,14 +2669,8 @@ public class MiscTriggerCollectorService {
         TargetFilter targetFilter = targetGroupIndex >= 0
                 ? sourceCard.getTargetGroups().get(targetGroupIndex).getFilter()
                 : sourceCard.getTargetFilter();
-        var damagedPlayerRestriction = new com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate(
-                damage.damagedPlayerId());
-        if (targetFilter instanceof com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter permanentFilter) {
-            targetFilter = new com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter(
-                    new com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate(
-                            List.of(permanentFilter.predicate(), damagedPlayerRestriction)),
-                    permanentFilter.errorMessage());
-        }
+        // "That player controls" is the card's own PermanentControlledByTriggeringPlayerPredicate, judged against
+        // the opponent dealt damage as the choice's triggering player and again from the entry as it resolves.
         match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 sourceCard,
                 match.controllerId(),
@@ -2684,10 +2678,8 @@ public class MiscTriggerCollectorService {
                 false,
                 targetFilter,
                 damage.damageAmount(),
-                match.permanent().getId(),
-                false,
-                damage.damagedPlayerId()
-        ));
+                match.permanent().getId()
+        ).withTriggeringPlayer(damage.damagedPlayerId()));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on noncombat damage to opponent and awaits a target",
                 match.gameData().id, sourceCard.getName());

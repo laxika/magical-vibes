@@ -176,10 +176,6 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
-    /** Exile a permanent the damaged player controls (combat damage trigger). */
-    record ExileDamagedPlayerControls() implements MultiPermanentChoiceContext {
-    }
-
     /** The defending player chooses the required number of permanents they control to exile. */
     record DefendingPlayerChoosesPermanentsToExile(UUID defendingPlayerId, int requiredCount,
                                                    String sourceCardName)
@@ -200,10 +196,6 @@ public sealed interface MultiPermanentChoiceContext {
                                            String sourceCardName) implements MultiPermanentChoiceContext {
     }
 
-    /** Destroy a permanent the damaged player controls (mandatory combat damage trigger, e.g. Deus of Calamity). */
-    record DestroyDamagedPlayerControls(String sourceName) implements MultiPermanentChoiceContext {
-    }
-
     /**
      * Untap the single chosen permanent (any battlefield), for a triggered ability with no cast-time
      * target — e.g. Initiate's Companion's "untap target creature or land". The choosable permanents
@@ -217,30 +209,9 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
-    /**
-     * Tap the single chosen permanent (any battlefield), for a triggered ability with no cast-time
-     * target — e.g. Thalakos Dreamsower's "tap target creature". When
-     * {@code preventUntapWhileSourceTapped} is set, the chosen permanent is also untap-locked for as
-     * long as {@code sourcePermanentId} remains tapped.
-     */
-    record TapChosenPermanent(String sourceName, UUID sourcePermanentId,
-                              boolean preventUntapWhileSourceTapped,
-                              boolean preventUntapWhileSourceOnBattlefield,
-                              boolean skipNextUntap) implements MultiPermanentChoiceContext {
-
-        public TapChosenPermanent(String sourceName, UUID sourcePermanentId,
-                                  boolean preventUntapWhileSourceTapped) {
-            this(sourceName, sourcePermanentId, preventUntapWhileSourceTapped, false, false);
-        }
-    }
-
     /** Goad the chosen creature controlled by the damaged player until the controller's next turn. */
     record GoadDamagedPlayerControls(String sourceName, UUID controllerId)
             implements MultiPermanentChoiceContext {
-    }
-
-    /** Sacrifice a permanent the damaged player controls (mandatory combat damage trigger, e.g. Ashling, the Extinguisher). */
-    record SacrificeDamagedPlayerControls(String sourceName) implements MultiPermanentChoiceContext {
     }
 
     /**

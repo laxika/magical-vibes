@@ -279,7 +279,7 @@ class MultiPermanentChoiceAiStrategyTest {
             UUID playerId, List<UUID> validIds, List<UUID> validPlayerIds, int maxCount) {
         return new PendingInteraction.MultiPermanentChoice(
                 playerId, validIds, validPlayerIds, maxCount,
-                new MultiPermanentChoiceContext.ExileDamagedPlayerControls(),
+                new MultiPermanentChoiceContext.DestroyCreaturesOpponentControls("Test source", false),
                 "Choose permanents.");
     }
 

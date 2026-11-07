@@ -8,6 +8,11 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
+import java.util.ArrayList;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +23,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ChandrasIncinerator.class, AlpineWatchdog.class, Shock.class, ChandraHeartOfFire.class})
 class ChandrasIncineratorTest extends BaseCardTest {
+
+    private Player player3;
 
     @Test
     @DisplayName("Costs less by the noncombat damage dealt to opponents this turn")
@@ -181,5 +188,45 @@ class ChandrasIncineratorTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Targets only permanents the opponent dealt noncombat damage controls, not another opponent's")
+    void targetsOnlyTheDamagedOpponentsPermanents() {
+        addThirdPlayer();
+        harness.addToBattlefield(player1, new ChandrasIncinerator());
+        Permanent damagedOpponentsCreature = harness.addToBattlefieldAndReturn(player2, new AlpineWatchdog());
+        Permanent otherOpponentsCreature = harness.addToBattlefieldAndReturn(player3, new AlpineWatchdog());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).containsExactly(damagedOpponentsCreature.getId());
+        harness.handlePermanentChosen(player1, damagedOpponentsCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(damagedOpponentsCreature);
+        assertThat(otherOpponentsCreature.getMarkedDamage()).isZero();
+    }
+
+    private void addThirdPlayer() {
+        UUID thirdPlayerId = UUID.randomUUID();
+        player3 = new Player(thirdPlayerId, "Charlie");
+        gd.playerIds.add(thirdPlayerId);
+        gd.orderedPlayerIds.add(thirdPlayerId);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(thirdPlayerId, "Charlie");
+        gd.playerDecks.put(thirdPlayerId, new ArrayList<>());
+        gd.playerHands.put(thirdPlayerId, new ArrayList<>());
+        gd.playerBattlefields.put(thirdPlayerId, new ArrayList<>());
+        gd.playerGraveyards.put(thirdPlayerId, new ArrayList<>());
+        gd.playerCommandZones.put(thirdPlayerId, new ArrayList<>());
+        gd.playerManaPools.put(thirdPlayerId, new ManaPool());
+        gd.playerLifeTotals.put(thirdPlayerId, 20);
+        harness.getSessionManager().registerPlayer(
+                new FakeConnection("conn-3"), thirdPlayerId, "Charlie");
     }
 }

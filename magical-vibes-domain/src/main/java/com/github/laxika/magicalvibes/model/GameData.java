@@ -9271,7 +9271,7 @@ public class GameData {
      * {@code null}, with the event value and last-known toughness of
      * {@link #queueMayAbility(Card, UUID, MayEffect, UUID, UUID, int, boolean, Integer)}.
      */
-    public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
+    public StackEntry queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
                                 UUID sourcePermanentId, int eventValue,
                                 boolean markSourceOncePerTurnOnAcceptance,
                                 Integer triggeringPermanentToughnessAtTrigger, UUID grantingPermanentId) {
@@ -9295,6 +9295,7 @@ public class GameData {
             entry.setTriggeringPermanentId(targetCardId);
         }
         stack.add(entry);
+        return entry;
     }
 
     /**

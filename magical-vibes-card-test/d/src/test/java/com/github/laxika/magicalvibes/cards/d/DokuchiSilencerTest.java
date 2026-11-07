@@ -12,6 +12,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
+import java.util.ArrayList;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -22,6 +27,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({DokuchiSilencer.class, BearerOfMemory.class, LeylineOfSanctity.class, TezzeretBetrayerOfFlesh.class,
         Mountain.class, WalkingSkyscraper.class})
 class DokuchiSilencerTest extends BaseCardTest {
+
+    private Player player3;
 
     @Test
     @DisplayName("Combat damage may discard a creature card to destroy a creature or planeswalker the damaged player controls")
@@ -217,5 +224,70 @@ class DokuchiSilencerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Bearer of Memory");
+    }
+
+    @Test
+    @DisplayName("The reflexive ability targets only permanents the player dealt combat damage controls, not another opponent's")
+    void targetsOnlyTheDamagedPlayersPermanents() {
+        addThirdPlayer();
+        Permanent silencer = addCreatureReady(player1, new DokuchiSilencer());
+        silencer.setAttacking(true);
+        silencer.setAttackTarget(player2.getId());
+        Permanent damagedPlayersCreature = addCreatureReady(player2, new BearerOfMemory());
+        Permanent otherOpponentsCreature = addCreatureReady(player3, new BearerOfMemory());
+        harness.setHand(player1, List.of(new BearerOfMemory()));
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        PendingInteraction.PermanentChoice targetChoice = gd.interaction.activeInteraction(
+                PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice.validPermanentIds()).containsExactly(damagedPlayersCreature.getId());
+        harness.handlePermanentChosen(player1, damagedPlayersCreature.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Bearer of Memory");
+        assertThat(gd.playerBattlefields.get(player3.getId())).contains(otherOpponentsCreature);
+    }
+
+    @Test
+    @DisplayName("The reflexive ability does nothing if its target is controlled by another player as it resolves")
+    void targetChangingControllerIsIllegalOnResolution() {
+        Permanent silencer = addCreatureReady(player1, new DokuchiSilencer());
+        silencer.setAttacking(true);
+        Permanent target = addCreatureReady(player2, new BearerOfMemory());
+        harness.setHand(player1, List.of(new BearerOfMemory()));
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        harness.handlePermanentChosen(player1, target.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerBattlefields.get(player1.getId()).add(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+    }
+
+    private void addThirdPlayer() {
+        UUID thirdPlayerId = UUID.randomUUID();
+        player3 = new Player(thirdPlayerId, "Charlie");
+        gd.playerIds.add(thirdPlayerId);
+        gd.orderedPlayerIds.add(thirdPlayerId);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(thirdPlayerId, "Charlie");
+        gd.playerDecks.put(thirdPlayerId, new ArrayList<>());
+        gd.playerHands.put(thirdPlayerId, new ArrayList<>());
+        gd.playerBattlefields.put(thirdPlayerId, new ArrayList<>());
+        gd.playerGraveyards.put(thirdPlayerId, new ArrayList<>());
+        gd.playerCommandZones.put(thirdPlayerId, new ArrayList<>());
+        gd.playerManaPools.put(thirdPlayerId, new ManaPool());
+        gd.playerLifeTotals.put(thirdPlayerId, 20);
+        harness.getSessionManager().registerPlayer(
+                new FakeConnection("conn-3"), thirdPlayerId, "Charlie");
     }
 }

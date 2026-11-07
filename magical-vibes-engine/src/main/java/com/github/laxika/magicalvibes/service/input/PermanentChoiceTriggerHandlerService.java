@@ -971,6 +971,7 @@ public class PermanentChoiceTriggerHandlerService {
                     new ArrayList<>(mat.effects()));
             entry.setAttackedTargetId(mat.attackedTargetId());
             entry.setEventValue(mat.eventValue());
+            entry.setTriggeringPlayerId(mat.triggeringPlayerId());
             pushTriggeredEntry(gameData, entry);
             gameLogService.append(gameData, GameLog.builder().card(mat.sourceCard())
                     .text("'s ability targets nothing.").build());
@@ -1028,6 +1029,8 @@ public class PermanentChoiceTriggerHandlerService {
             }
             entry.setAttackedTargetId(mat.attackedTargetId());
             entry.setEventValue(mat.eventValue());
+            // "That player controls" is rechecked as the ability resolves against the player its trigger event was about.
+            entry.setTriggeringPlayerId(mat.triggeringPlayerId());
             entry.setSacrificedPermanentSnapshot(mat.sacrificedPermanentSnapshot());
             if (mat.sacrificedPermanentSnapshot() != null) {
                 entry.setSacrificedCardSnapshot(mat.sacrificedPermanentSnapshot().getCard());

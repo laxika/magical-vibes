@@ -1163,6 +1163,24 @@ public class TargetLegalityService {
                 sourceCard, xValue, hasCostDerivedManaValueTarget(abilityEffects));
     }
 
+    /**
+     * Validates a reflexive or may ability's target whose trigger event was about {@code triggeringPlayerId} ("target
+     * creature that player controls"), which the ability's target restrictions read as the filter context's
+     * triggering player.
+     */
+    public void validateActivatedAbilityTargeting(GameData gameData,
+                                                  UUID playerId,
+                                                  ActivatedAbility ability,
+                                                  List<CardEffect> abilityEffects,
+                                                  UUID targetId,
+                                                  Zone targetZone,
+                                                  Card sourceCard,
+                                                  int xValue,
+                                                  UUID triggeringPlayerId) {
+        validateActivatedAbilityTargeting(gameData, playerId, ability, abilityEffects, targetId, targetZone,
+                sourceCard, xValue, hasCostDerivedManaValueTarget(abilityEffects), triggeringPlayerId);
+    }
+
     public void validateActivatedAbilityTargetingAfterCostSelection(GameData gameData,
                                                                      UUID playerId,
                                                                      ActivatedAbility ability,
@@ -1184,6 +1202,20 @@ public class TargetLegalityService {
                                                    Card sourceCard,
                                                    int xValue,
                                                    boolean deferCostDerivedXValueChecks) {
+        validateActivatedAbilityTargeting(gameData, playerId, ability, abilityEffects, targetId, targetZone,
+                sourceCard, xValue, deferCostDerivedXValueChecks, null);
+    }
+
+    private void validateActivatedAbilityTargeting(GameData gameData,
+                                                   UUID playerId,
+                                                   ActivatedAbility ability,
+                                                   List<CardEffect> abilityEffects,
+                                                   UUID targetId,
+                                                   Zone targetZone,
+                                                   Card sourceCard,
+                                                   int xValue,
+                                                   boolean deferCostDerivedXValueChecks,
+                                                   UUID triggeringPlayerId) {
         // "Up to N" abilities (minTargets=0) allow choosing zero targets (CR 115.1d)
         if (ability.getMinTargets() == 0 && targetId == null) {
             return;
@@ -1213,7 +1245,8 @@ public class TargetLegalityService {
                                 abilitySourceTextReplacements(gameData,
                                         findSourcePermanentIdByCardId(gameData, sourceCard.getId()))),
                         target,
-                        filterContext(gameData, sourceCard.getId(), playerId).withXValue(xValue));
+                        filterContext(gameData, sourceCard.getId(), playerId).withXValue(xValue)
+                                .withTriggeringPlayerId(triggeringPlayerId));
             } else if (gameData.playerIds.contains(targetId)
                     && ability.getTargetFilter() instanceof PlayerPredicateTargetFilter playerFilter) {
                 validatePlayerPredicate(gameData, playerId, targetId, playerFilter.predicate(), playerFilter.errorMessage(),
@@ -1228,7 +1261,8 @@ public class TargetLegalityService {
             if (target != null) {
                 predicateEvaluationService.validateTargetFilter(ability.getMultiTargetFilters().getFirst(),
                         target,
-                        filterContext(gameData, sourceCard.getId(), playerId).withXValue(xValue));
+                        filterContext(gameData, sourceCard.getId(), playerId).withXValue(xValue)
+                                .withTriggeringPlayerId(triggeringPlayerId));
             }
         }
 
@@ -1237,7 +1271,8 @@ public class TargetLegalityService {
         targetValidationService.validateEffectTargets(abilityEffects,
                 new TargetValidationContext(gameData, targetId, targetZone, sourceCard, xValue,
                         playerId, null, deferCostDerivedXValueChecks,
-                        findSourcePermanentIdByCardId(gameData, sourceCard.getId()), null));
+                        findSourcePermanentIdByCardId(gameData, sourceCard.getId()), null)
+                        .withTriggeringPlayerId(triggeringPlayerId));
 
         if (targetId != null && gameData.playerIds.contains(targetId)) {
             validatePlayerTargetable(gameData, targetId, playerId, sourceCard);

@@ -1360,11 +1360,34 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Resolution-time choice of the randomly selected opponent or one of their planeswalkers. */
     record RandomOpponentDamageChoice(Card sourceCard, UUID controllerId) implements PermanentChoiceContext {}
 
+    /**
+     * The target choice of a "you may" or reflexive ("when you do") triggered ability. {@code triggeringPlayerId} is
+     * the player its trigger event was about ("that player controls", Dokuchi Silencer's reflexive destroy), which
+     * the stack entry made from the choice keeps as its triggering player; it restricts no target by itself.
+     */
     record MayAbilityTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                    UUID sourcePermanentId, Permanent sourcePermanentSnapshot,
                                    int eventValue, int xValue, boolean optionalTarget, UUID attackedTargetId,
                                    Permanent sacrificedPermanentSnapshot, int sacrificedPower,
-                                   int sacrificedColorCount, int sacrificedToughness) implements PermanentChoiceContext {
+                                   int sacrificedColorCount, int sacrificedToughness, UUID triggeringPlayerId)
+            implements PermanentChoiceContext {
+
+        public MayAbilityTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                       UUID sourcePermanentId, Permanent sourcePermanentSnapshot,
+                                       int eventValue, int xValue, boolean optionalTarget, UUID attackedTargetId,
+                                       Permanent sacrificedPermanentSnapshot, int sacrificedPower,
+                                       int sacrificedColorCount, int sacrificedToughness) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, sourcePermanentSnapshot, eventValue, xValue,
+                    optionalTarget, attackedTargetId, sacrificedPermanentSnapshot, sacrificedPower,
+                    sacrificedColorCount, sacrificedToughness, null);
+        }
+
+        /** This choice for an ability whose trigger event was about {@code playerId}. */
+        public MayAbilityTriggerTarget withTriggeringPlayer(UUID playerId) {
+            return new MayAbilityTriggerTarget(sourceCard, controllerId, effects, sourcePermanentId,
+                    sourcePermanentSnapshot, eventValue, xValue, optionalTarget, attackedTargetId,
+                    sacrificedPermanentSnapshot, sacrificedPower, sacrificedColorCount, sacrificedToughness, playerId);
+        }
 
         public MayAbilityTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                        UUID sourcePermanentId, Permanent sourcePermanentSnapshot,

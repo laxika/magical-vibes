@@ -1818,6 +1818,7 @@ public class CardChoiceHandlerService {
                     if (followUp.thenEffectUsesDiscardedManaValue() && discardedCard != null) {
                         filterContext = filterContext.withXValue(thenEffectXValue);
                     }
+                    filterContext = filterContext.withTriggeringPlayerId(followUp.thenEffectTriggeringPlayerId());
                     TargetPredicate targetPredicate = targetSpec.targetPredicate();
                     for (UUID targetPlayerId : gameData.orderedPlayerIds) {
                         List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
@@ -1832,7 +1833,7 @@ public class CardChoiceHandlerService {
                                             false, null, List.of(thenEffect), "");
                                     targetLegalityService.validateActivatedAbilityTargeting(gameData, playerId,
                                             targeting, List.of(thenEffect), permanent.getId(), null,
-                                            sourceCard, thenEffectXValue);
+                                            sourceCard, thenEffectXValue, followUp.thenEffectTriggeringPlayerId());
                                 } catch (IllegalStateException invalidTarget) {
                                     continue;
                                 }
@@ -1855,7 +1856,8 @@ public class CardChoiceHandlerService {
                             sourceCard, playerId, List.of(thenEffect),
                             followUp.thenEffectSourcePermanentId(),
                             followUp.thenEffectSourcePermanentSnapshot(),
-                            followUp.thenEffectEventValue(), thenEffectXValue);
+                            followUp.thenEffectEventValue(), thenEffectXValue)
+                            .withTriggeringPlayer(followUp.thenEffectTriggeringPlayerId());
                     var targetChoice = new PendingInteraction.PermanentChoice(playerId,
                             validPermanentTargets, validPlayerTargets, context,
                             sourceCard.getName() + " ? Choose a target for the reflexive trigger.");

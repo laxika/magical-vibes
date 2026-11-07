@@ -1744,7 +1744,8 @@ public class TriggeredAbilityQueueService {
                     FilterContext filterContext = FilterContext.of(gameData)
                             .withSourceControllerId(pending.controllerId())
                             .withSourceCardId(pending.sourceCard().getId())
-                            .withXValue(pending.spellManaSpentX());
+                            .withXValue(pending.spellManaSpentX())
+                            .withTriggeringPlayerId(pending.triggeringPlayerId());
                     if (pending.sourcePermanentId() != null) {
                         filterContext = filterContext.withSourcePermanentId(pending.sourcePermanentId());
                     }
