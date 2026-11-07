@@ -132,4 +132,17 @@ class OranRiefHydraTest extends BaseCardTest {
 
         assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
+
+    @Test
+    @DisplayName("A Forest that stops being a Forest before the ability resolves gives one counter")
+    void forestThatStopsBeingAForestBeforeResolutionGivesOneCounter() {
+        Permanent hydra = harness.addToBattlefieldAndReturn(player1, new OranRiefHydra());
+        harness.setHand(player1, List.of(new CanopyVista()));
+
+        harness.playLand(player1, 0);
+        harness.addToBattlefield(player1, new BloodMoon());
+        harness.passBothPriorities();
+
+        assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
 }

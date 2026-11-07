@@ -103,4 +103,23 @@ class ChampionOfTheHareishTest extends BaseCardTest {
         harness.handleListChoice(player1, "ELF");
         assertThat(gd.getBuddyList(player1.getId())).containsExactly(CardSubtype.ELF);
     }
+
+    @Test
+    void readsACreatureThatLeftBeforeResolutionAsItLastExisted() {
+        Permanent champion = harness.enterBattlefieldAndReturn(player1, new ChampionOfTheHareish());
+        harness.handleListChoice(player1, "RABBIT");
+
+        Permanent firstBears = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .sacrificePermanentToGraveyard(gd, firstBears));
+        harness.passBothPriorities();
+        assertThat(gd.getBuddyList(player1.getId())).containsExactlyInAnyOrder(
+                CardSubtype.RABBIT, CardSubtype.BEAR);
+
+        Permanent secondBears = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .sacrificePermanentToGraveyard(gd, secondBears));
+        harness.passBothPriorities();
+        assertThat(champion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
 }

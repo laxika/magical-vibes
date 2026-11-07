@@ -94,7 +94,7 @@
 | creature that names a legendary Dog token on ETB and upkeep, then scales on attack with legendary creatures you control | `a/AGirlAndHerDogs.java` + `CreateTokenWithChosenNameEffect` + `BoostSelfEffect(PermanentCount(...))` |
 | spell card that resolves into its owner's command zone and creates a controller-cast life-gain trigger | `e/EssenceOfAjani.java` + `PutResolvingSpellIntoCommandZoneEffect` + `Triggers.youCastSpell() from the command zone` |
 | creature whose adjacent battlefield neighbors receive a static boost and vigilance | `d/DefenderOfTheQueue.java` + `StaticBoostEffect` + `PermanentAdjacentToSourcePredicate` |
-| playtest creature with an as-enters game-long buddy-list choice and a creature-type enter trigger | `c/ChampionOfTheHareish.java` + `BuddyListOnEnterEffect` + `ChampionOfTheHareishTriggerEffect` |
+| playtest creature with an as-enters game-long buddy-list choice and a creature-type enter trigger | `c/ChampionOfTheHareish.java` + `BuddyListOnEnterEffect` + `BuddyListGrowOrWriteEffect` |
 | playtest daybound creature with an optional hand-or-graveyard creature card as a dynamic nightbound back face | `w/Werewhat.java` + `WerewhatOnEnterEffect` + `WerewhatSupport` |
 
 | activated two-card library search with one card to the battlefield tapped and one to hand | `n/NavigationOrb.java` + `SacrificeSelfCost` + `SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect.forCardsMatching(...)` |

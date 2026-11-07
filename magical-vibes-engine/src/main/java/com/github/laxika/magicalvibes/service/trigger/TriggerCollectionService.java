@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGreaterThanSourcePower;
+import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasGreaterPowerOrToughnessThanSource;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
@@ -226,7 +227,7 @@ import com.github.laxika.magicalvibes.model.effect.EmblemArtifactEntersTriggerEf
 import com.github.laxika.magicalvibes.model.effect.EmblemArtifactTapTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.EvolveTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.EvolveEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncrementTriggerEffect;
@@ -16225,15 +16226,20 @@ public class TriggerCollectionService {
         };
     }
 
+    /**
+     * Evolve (CR 702.100a): "whenever a creature you control enters, if that creature's power is greater than this
+     * creature's power and/or that creature's toughness is greater than this creature's toughness, put a +1/+1 counter
+     * on this creature". The intervening "if" is judged as the ability triggers and wraps its effect, so it is checked
+     * again as it resolves (CR 603.4).
+     */
     private void collectEvolveTrigger(GameData gameData, UUID controllerId, Permanent source,
                                       Permanent enteringPermanent, int triggerCount) {
         if (gameQueryService.areOpponentPermanentETBTriggersSuppressed(gameData, controllerId)) {
             return;
         }
-        int enteringPower = gameQueryService.getEffectivePower(gameData, enteringPermanent);
-        int enteringToughness = gameQueryService.getEffectiveToughness(gameData, enteringPermanent);
-        if (enteringPower <= gameQueryService.getEffectivePower(gameData, source)
-                && enteringToughness <= gameQueryService.getEffectiveToughness(gameData, source)) {
+        if (!conditionEvaluationService.isMet(gameData, EVOLVE_COMPARISON,
+                ConditionContext.forPermanent(source, controllerId)
+                        .withTriggeringPermanentId(enteringPermanent.getId()))) {
             return;
         }
 
@@ -16243,12 +16249,10 @@ public class TriggerCollectionService {
                     source.getCard(),
                     controllerId,
                     source.getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(new EvolveTriggerEffect())),
+                    new ArrayList<>(List.of(new ConditionalEffect(EVOLVE_COMPARISON, new EvolveEffect()))),
                     0,
                     source.getId());
             entry.setTriggeringPermanentId(enteringPermanent.getId());
-            entry.setTriggeringPermanentPowerAtTrigger(enteringPower);
-            entry.setTriggeringPermanentToughnessAtTrigger(enteringToughness);
             entry.setNonTargeting(true);
             gameData.enqueueTrigger(entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
@@ -16870,6 +16874,9 @@ public class TriggerCollectionService {
         gameData.enqueueTrigger(entry);
         return true;
     }
+
+    /** Evolve's intervening "if" (CR 702.100a): the entering creature is bigger in power or toughness. */
+    private static final Condition EVOLVE_COMPARISON = new TriggeringPermanentHasGreaterPowerOrToughnessThanSource();
 
     /** "A nonland card", the discarded card the "first nonland discard each turn" ability counts. */
     private static final CardPredicate NONLAND_CARD = new CardNotPredicate(new CardTypePredicate(CardType.LAND));

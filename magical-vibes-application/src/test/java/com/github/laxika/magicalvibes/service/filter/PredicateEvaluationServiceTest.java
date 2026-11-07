@@ -149,6 +149,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithTriggeringPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPermanentControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPutOntoBattlefieldBySourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherControlledPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithControlledCreatureOrGraveyardCreaturePredicate;
@@ -1094,6 +1095,22 @@ class PredicateEvaluationServiceTest {
             assertThat(evaluator.matchesPermanentPredicate(controllers, predicate, context)).isFalse();
             assertThat(evaluator.matchesPermanentPredicate(damagedPlayers, predicate,
                     FilterContext.of(gd).withSourceControllerId(player1Id))).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentPutOntoBattlefieldBySourcePredicate matches what the source's ability put onto the battlefield")
+        void putOntoBattlefieldBySourcePredicateMatchesWhatTheSourcePut() {
+            Permanent source = addPermanent(player1Id, createArtifact("Source"));
+            Permanent putBySource = addPermanent(player1Id, createArtifact("Put By Source"));
+            putBySource.setPutOntoBattlefieldWithAbilitySourcePermanentId(source.getId());
+            Permanent cast = addPermanent(player1Id, createArtifact("Cast"));
+            var predicate = new PermanentPutOntoBattlefieldBySourcePredicate();
+            FilterContext context = FilterContext.of(gd).withSourcePermanentId(source.getId());
+
+            assertThat(evaluator.matchesPermanentPredicate(putBySource, predicate, context)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(cast, predicate, context)).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(putBySource, predicate,
+                    FilterContext.of(gd).withSourcePermanentId(cast.getId()))).isFalse();
         }
 
         @Test

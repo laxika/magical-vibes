@@ -476,6 +476,7 @@ import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerAt
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentSharesCreatureTypeWithSource;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGreaterThanEachOtherCreature;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGreaterThanSourcePower;
+import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasGreaterPowerOrToughnessThanSource;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreCreaturesDiedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PreviousActivePlayerCastTwoOrMoreSpellsLastTurn;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
@@ -1901,6 +1902,8 @@ public class ConditionEvaluationService {
                         : gameQueryService.getEffectivePower(gameData, triggeringPermanent);
                 yield triggeringPower > gameQueryService.getEffectivePower(gameData, source);
             }
+            case TriggeringPermanentHasGreaterPowerOrToughnessThanSource ignored ->
+                    triggeringPermanentHasGreaterPowerOrToughnessThanSource(gameData, ctx);
             case TriggeringPermanentHasUniqueGreatestPowerAmongAllCreatures ignored -> {
                 Permanent triggeringPermanent = ctx.triggeringPermanentId() == null
                         ? null : gameQueryService.findPermanentById(gameData, ctx.triggeringPermanentId());
@@ -2714,6 +2717,44 @@ public class ConditionEvaluationService {
         if (playerId == null) return false;
         if (card.getOwnerId() != null) return playerId.equals(card.getOwnerId());
         return gameData.startingDeckCardIds.getOrDefault(playerId, java.util.Set.of()).contains(card.getId());
+    }
+
+    /**
+     * Evolve's comparison (CR 702.100a): the triggering permanent and the source, each as it is on the battlefield or
+     * as it last existed there (CR 608.2h); a permanent on the battlefield that isn't a creature never compares
+     * (CR 702.100c).
+     */
+    private boolean triggeringPermanentHasGreaterPowerOrToughnessThanSource(GameData gameData, ConditionContext ctx) {
+        int[] triggering = creatureStats(gameData, ctx.triggeringPermanentId(), null);
+        int[] source = creatureStats(gameData, ctx.sourcePermanentId(), ctx.sourcePermanent());
+        return triggering != null && source != null
+                && (triggering[0] > source[0] || triggering[1] > source[1]);
+    }
+
+    /**
+     * The power and toughness of the permanent {@code permanentId}: its current ones while it is on the battlefield
+     * ({@code null} if it isn't a creature), else its last-known ones, from its departure snapshot or else
+     * {@code fallback}; {@code null} when nothing is known.
+     */
+    private int[] creatureStats(GameData gameData, UUID permanentId, Permanent fallback) {
+        Permanent live = permanentId == null ? null : gameQueryService.findPermanentById(gameData, permanentId);
+        if (live != null) {
+            return gameQueryService.isCreature(gameData, live)
+                    ? new int[]{gameQueryService.getEffectivePower(gameData, live),
+                    gameQueryService.getEffectiveToughness(gameData, live)}
+                    : null;
+        }
+        Permanent lastKnown = permanentId == null ? null : gameData.departedPermanentSnapshots.values().stream()
+                .filter(snapshot -> snapshot.getId().equals(permanentId))
+                .findFirst().orElse(fallback);
+        if (lastKnown == null) {
+            return null;
+        }
+        return new int[]{
+                lastKnown.getLastKnownPower() != null ? lastKnown.getLastKnownPower()
+                        : gameQueryService.getEffectivePower(gameData, lastKnown),
+                lastKnown.getLastKnownToughness() != null ? lastKnown.getLastKnownToughness()
+                        : gameQueryService.getEffectiveToughness(gameData, lastKnown)};
     }
 
     private Permanent sourcePermanent(GameData gameData, ConditionContext ctx) {

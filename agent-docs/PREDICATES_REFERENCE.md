@@ -280,6 +280,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 |-----------|-------------|---------|---------------------|
 | `PermanentIsSourceCardPredicate` | `()` | the source card itself | `sourceCardId` |
 | `PermanentIsSourcePermanentPredicate` | `()` | the source **permanent** itself, matched by permanent id (so a second copy of the same card is not matched). Wrap in `PermanentNotPredicate` for "each **other** …" wording (Renegade Krasis) | `sourcePermanentSnapshot` |
+| `PermanentPutOntoBattlefieldBySourcePredicate` | `()` | a permanent put onto the battlefield with an ability of the source permanent (`PutCardToBattlefieldEffect` records it). Wrap in `PermanentNotPredicate` for "if it wasn't put onto the battlefield with this ability" as an enters trigger's filter (Kodama of the East Tree) | `sourcePermanentId` |
 | `PermanentIsSourceOrPairedPredicate` | `()` | the source permanent itself or its soulbond partner | `sourcePermanentId` / `sourcePermanentSnapshot` |
 | `PermanentIsCommanderPredicate` | `()` | a permanent whose original card is designated as a commander | `gameData` |
 | `PermanentIsTriggeringPermanentPredicate` | `()` | the permanent whose event caused the resolving ability to trigger, matched by the trigger's captured permanent id | `triggeringPermanentId` |

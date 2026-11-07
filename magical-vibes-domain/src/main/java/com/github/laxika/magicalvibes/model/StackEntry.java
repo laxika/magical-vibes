@@ -449,6 +449,12 @@ public class StackEntry {
      * exiling another card can't redirect it. {@code null} when the source had exiled none.
      */
     @Setter private UUID linkedExiledCardId;
+    /**
+     * The triggering permanent's characteristics as it last existed on the battlefield (its types, subtypes and colors
+     * as the layers left them, CR 608.2h), recorded as it leaves before this ability resolves: "if that land is a
+     * Forest". {@code null} while it is on the battlefield, or when this entry has no triggering permanent.
+     */
+    @Setter private Card triggeringPermanentLastKnownCard;
     /** Permanent ids that received counters during the current effect resolution. */
     private final List<UUID> counteredPermanentIdsThisResolution = new ArrayList<>();
     /** Controller of the spell targeted by a counter effect, retained after that spell leaves the stack. */
@@ -1200,6 +1206,7 @@ public class StackEntry {
         this.dyingPermanentManaValue = source.dyingPermanentManaValue;
         this.graveyardTargetMaxManaValue = source.graveyardTargetMaxManaValue;
         this.linkedExiledCardId = source.linkedExiledCardId;
+        this.triggeringPermanentLastKnownCard = source.triggeringPermanentLastKnownCard;
         this.counteredPermanentIdsThisResolution.addAll(source.counteredPermanentIdsThisResolution);
         this.counteredSpellControllerId = source.counteredSpellControllerId;
         this.eventPlayerIds = source.eventPlayerIds.isEmpty() ? List.of() : new ArrayList<>(source.eventPlayerIds);

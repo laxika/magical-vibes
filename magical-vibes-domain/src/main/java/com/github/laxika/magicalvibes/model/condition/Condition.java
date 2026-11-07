@@ -429,6 +429,7 @@ public sealed interface Condition permits
         TargetPermanentManaValueAtMostColorsSpent,
         TargetPermanentMatches,
         TriggeringPermanentPowerGreaterThanSourcePower,
+        TriggeringPermanentHasGreaterPowerOrToughnessThanSource,
         TriggeringPermanentHasUniqueGreatestPowerAmongAllCreatures,
         TriggeringPermanentPowerGreaterThanEachOtherCreature,
         TriggeringPermanentPowerAtLeast,

@@ -1039,6 +1039,16 @@ public class PermanentRemovalService {
         });
     }
 
+    /**
+     * "That land", "that creature": a permanent an ability triggered on that leaves the battlefield before the ability
+     * resolves is read as it last existed there (CR 608.2h), its types and subtypes included.
+     */
+    private static void rememberLastKnownTriggeringPermanent(StackEntry entry, Permanent target, Card lastKnownCard) {
+        if (target.getId().equals(entry.getTriggeringPermanentId())) {
+            entry.setTriggeringPermanentLastKnownCard(lastKnownCard);
+        }
+    }
+
     void snapshotEffectiveSubtypes(GameData gameData, Permanent permanent) {
         Set<CardSubtype> subtypes = gameQueryService.withQueryScope(gameData, () -> {
             Set<CardSubtype> effective = java.util.EnumSet.noneOf(CardSubtype.class);
@@ -2473,6 +2483,7 @@ public class PermanentRemovalService {
                             attacker.setLastKnownPower(target.getLastKnownPower());
                         }
                     }
+                    rememberLastKnownTriggeringPermanent(entry, target, lastKnownCard);
                     if (target.getId().equals(entry.getSourcePermanentId())) {
                         Permanent sourceSnapshot = new Permanent(target);
                         sourceSnapshot.setCard(lastKnownCard);
@@ -2539,6 +2550,7 @@ public class PermanentRemovalService {
                     }
                     entry.getLastKnownPermanentCounters().put(target.getId(),
                             new java.util.EnumMap<>(target.getCounters()));
+                    rememberLastKnownTriggeringPermanent(entry, target, lastKnownCard);
                     if (target.getId().equals(entry.getSourcePermanentId())) {
                         Permanent sourceSnapshot = new Permanent(target);
                         sourceSnapshot.setCard(lastKnownCard);

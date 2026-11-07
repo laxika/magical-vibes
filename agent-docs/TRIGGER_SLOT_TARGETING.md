@@ -458,7 +458,7 @@ the controller controls, including counters the creature enters with; its once-e
 is marked only after its intervening "if" (the chosen mode) is met. `TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE`
 is the first-time-per-creature wording and keys the marker to the watcher and triggering creature;
 `Triggers.youPutCountersOnCreatureYouControl()` counts only the controller's placements),
-`Triggers.evolves()` (Renegade Krasis; fired by `EvolveTriggerEffectHandler` only when the evolve trigger
+`Triggers.evolves()` (Renegade Krasis; fired by `EvolveEffectHandler` only when the evolve keyword's ability
 actually places the +1/+1 counter),
 `Triggers.minusOneCounterPutOnCreature()` (Flourishing Defenses; global watcher — fires on
 every permanent with this slot, under that permanent's controller, once per individual -1/-1 counter put

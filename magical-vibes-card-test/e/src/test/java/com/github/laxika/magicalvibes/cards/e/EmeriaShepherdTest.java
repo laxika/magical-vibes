@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.b.BloodMoon;
+import com.github.laxika.magicalvibes.cards.c.CanopyVista;
 import com.github.laxika.magicalvibes.cards.c.CoralhelmGuide;
 import com.github.laxika.magicalvibes.cards.d.Dispel;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -7,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.g.GoblinWarPaint;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -16,7 +19,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EmeriaShepherd.class, Forest.class, CoralhelmGuide.class, Plains.class, Dispel.class, GoblinWarPaint.class})
+@CardUsed({EmeriaShepherd.class, Forest.class, CoralhelmGuide.class, Plains.class, Dispel.class, GoblinWarPaint.class,
+        BloodMoon.class, CanopyVista.class})
 class EmeriaShepherdTest extends BaseCardTest {
 
     @Test
@@ -183,9 +187,11 @@ class EmeriaShepherdTest extends BaseCardTest {
 
         harness.playLand(player1, 0);
         chooseLandfallTarget(returned);
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(permanent -> permanent.getCard().getId().equals(plains.getId()));
-        harness.setHand(player1, List.of(plains));
+        Permanent plainsPermanent = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(plains.getId()))
+                .findFirst().orElseThrow();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .sacrificePermanentToGraveyard(gd, plainsPermanent));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -217,5 +223,22 @@ class EmeriaShepherdTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class))
                 .isNotNull();
         harness.handleMultipleCardsChosen(player1, List.of(returned.getId()));
+    }
+
+    @Test
+    void plainsThatStopsBeingAPlainsBeforeResolutionOnlyReturnsToHand() {
+        harness.addToBattlefield(player1, new EmeriaShepherd());
+        Card returned = new CoralhelmGuide();
+        harness.setGraveyard(player1, List.of(returned));
+        harness.setHand(player1, List.of(new CanopyVista()));
+
+        harness.playLand(player1, 0);
+        chooseLandfallTarget(returned);
+        harness.addToBattlefield(player1, new BloodMoon());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(returned);
+        harness.assertNotOnBattlefield(player1, "Coralhelm Guide");
     }
 }

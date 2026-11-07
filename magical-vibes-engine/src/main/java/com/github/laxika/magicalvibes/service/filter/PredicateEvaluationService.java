@@ -283,6 +283,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsRenownedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceOrPairedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPutOntoBattlefieldBySourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSuspectedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
@@ -2479,6 +2480,13 @@ public class PredicateEvaluationService {
                     !matchesPermanentPredicate(permanent, notPredicate.predicate(), filterContext);
             case PermanentAdjacentToSourcePredicate ignored ->
                     isAdjacentToSource(permanent, filterContext);
+            case PermanentPutOntoBattlefieldBySourcePredicate ignored -> {
+                UUID sourceId = filterContext == null ? null : filterContext.sourcePermanentId() != null
+                        ? filterContext.sourcePermanentId()
+                        : filterContext.sourcePermanentSnapshot() == null
+                        ? null : filterContext.sourcePermanentSnapshot().getId();
+                yield sourceId != null && sourceId.equals(permanent.getPutOntoBattlefieldWithAbilitySourcePermanentId());
+            }
             case PermanentIsSourcePermanentPredicate ignored -> {
                 if (filterContext == null) {
                     yield false;
@@ -3786,6 +3794,12 @@ public class PredicateEvaluationService {
                 }
                 yield sourcePermanent != null
                         && permanent.getHostedByRealmIds().contains(sourcePermanent.getId());
+            }
+            case PermanentPutOntoBattlefieldBySourcePredicate ignored -> {
+                UUID sourceId = context == null ? null : context.sourcePermanentId() != null
+                        ? context.sourcePermanentId()
+                        : context.sourcePermanentSnapshot() == null ? null : context.sourcePermanentSnapshot().getId();
+                yield sourceId != null && sourceId.equals(permanent.getPutOntoBattlefieldWithAbilitySourcePermanentId());
             }
             case PermanentIsSourcePermanentPredicate ignored -> {
                 UUID sourcePermanentId = context == null ? null : context.sourcePermanentId();

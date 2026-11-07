@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.TriggeringCardMatches;
+import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasSubtype;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
@@ -209,6 +210,14 @@ public class EffectResolutionService {
                     && readsTriggeringCard(effect)) {
                 conditionContext = conditionContext.withTriggeringCard(
                         gameQueryService.findCardById(gameData, entry.getTriggeringCardId()));
+            }
+
+            // "If that land is a Forest": a triggering permanent that has left the battlefield is read as it last
+            // existed there (CR 608.2h).
+            if (conditionContext.triggeringCard() == null && entry.getTriggeringPermanentId() != null
+                    && readsTriggeringPermanentSubtype(effect)
+                    && gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId()) == null) {
+                conditionContext = conditionContext.withTriggeringCard(entry.getTriggeringPermanentLastKnownCard());
             }
 
             // Conditional wrapper: its condition is judged as the effect resolves (an intervening "if" again, CR 603.4)
@@ -653,6 +662,21 @@ public class EffectResolutionService {
             case ConditionalEffect conditional -> conditional.condition() instanceof TriggeringCardMatches
                     || readsTriggeringCard(conditional.wrapped());
             case MayEffect may -> readsTriggeringCard(may.wrapped());
+            default -> false;
+        };
+    }
+
+    /**
+     * Whether {@code effect} is an "if" or an "instead" on the triggering permanent's subtype
+     * ({@link TriggeringPermanentHasSubtype}), or a "you may" around one.
+     */
+    private static boolean readsTriggeringPermanentSubtype(CardEffect effect) {
+        return switch (effect) {
+            case ConditionalEffect conditional -> conditional.condition() instanceof TriggeringPermanentHasSubtype
+                    || readsTriggeringPermanentSubtype(conditional.wrapped());
+            case ConditionalReplacementEffect replacement ->
+                    replacement.condition() instanceof TriggeringPermanentHasSubtype;
+            case MayEffect may -> readsTriggeringPermanentSubtype(may.wrapped());
             default -> false;
         };
     }

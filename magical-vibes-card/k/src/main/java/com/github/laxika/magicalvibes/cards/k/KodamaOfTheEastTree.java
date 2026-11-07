@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPutOntoBattlefieldBySourcePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -12,11 +14,12 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class KodamaOfTheEastTree extends Card {
 
     public KodamaOfTheEastTree() {
-        addTrigger(Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL),
+        // "If it wasn't put onto the battlefield with this ability" can't change once it entered: the filter.
+        addTrigger(Triggers.enters(new PermanentNotPredicate(new PermanentPutOntoBattlefieldBySourcePredicate()),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
                 new MayEffect(
                         new PutCardToBattlefieldEffect(new CardIsPermanentPredicate(), "permanent")
-                                .boundedByEventValue()
-                                .withTriggeringPermanentEntrySuppressed(),
+                                .boundedByEventValue(),
                         "Put a permanent card with equal or lesser mana value from your hand onto the battlefield?"));
     }
 }

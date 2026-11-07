@@ -227,7 +227,9 @@ public class PlayerInteractionSupport {
                 returnExiledSourceCardId, effect.returnToHandAtEndStep(), effect.cloaked(),
                 thenEffect, thenCondition, effect.enterTappedAndAttackingIf(), blockingAttackerId,
                 sourcePermanentId, effect.untapSourceIfEnteredCardHasAnySubtype(),
-                effect.suppressesTriggeringPermanentEntry(),
+                // The entered permanent remembers the permanent whose ability put it there ("if it wasn't put onto
+                // the battlefield with this ability").
+                sourcePermanentId != null,
                 // "Put this card from your hand onto the battlefield" is an instruction, not a "you may" choice.
                 effect.predicate() instanceof CardIsSelfPredicate);
 

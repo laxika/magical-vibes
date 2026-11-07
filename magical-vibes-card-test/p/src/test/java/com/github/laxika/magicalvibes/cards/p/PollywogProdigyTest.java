@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.c.CentaurCourser;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Memnite;
@@ -17,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PollywogProdigy.class, GrizzlyBears.class, Forest.class, Shock.class, Memnite.class})
+@CardUsed({PollywogProdigy.class, GrizzlyBears.class, Forest.class, Shock.class, Memnite.class,
+        CentaurCourser.class})
 class PollywogProdigyTest extends BaseCardTest {
 
     @Test
@@ -96,5 +98,18 @@ class PollywogProdigyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
         resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("Its one evolve ability triggers once, so a 3/3 entering gives one counter")
+    void evolvesOnceForACreatureBiggerInBothPowerAndToughness() {
+        Permanent prodigy = harness.addToBattlefieldAndReturn(player1, new PollywogProdigy());
+
+        harness.enterBattlefieldAndReturn(player1, new CentaurCourser());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(prodigy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 }

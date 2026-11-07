@@ -2,12 +2,10 @@ package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -32,7 +30,6 @@ import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEf
 import com.github.laxika.magicalvibes.model.effect.BoostEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ChampionOfTheHareishTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
@@ -55,7 +52,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardIfEnteringCreatureHas
 import com.github.laxika.magicalvibes.model.effect.EndureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreaturePowerBranchEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureSourcePowerBranchEffect;
-import com.github.laxika.magicalvibes.model.effect.EvolveTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTrackedTokensAndCreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureUntilSourceLeavesEffect;
@@ -92,7 +88,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentLosesLifeEqualToPowerToughnessDifferenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentEntryExclusionEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapEnteringPermanentEffect;
@@ -111,7 +106,6 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -150,54 +144,6 @@ public class EnterTriggerCollectorService {
         this.graveyardTargetingService = graveyardTargetingService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.conditionEvaluationService = conditionEvaluationService;
-    }
-
-    @CollectsWatchTrigger(value = ChampionOfTheHareishTriggerEffect.class,
-            watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
-    private boolean handleChampionOfTheHareishEnter(TriggerMatchContext match,
-                                                     ChampionOfTheHareishTriggerEffect effect,
-                                                     TriggerContext ctx) {
-        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
-        Permanent enteringPermanent = findEnteringPermanent(match.gameData(), pe);
-        if (enteringPermanent == null || !gameQueryService.isCreature(match.gameData(), enteringPermanent)) {
-            return true;
-        }
-
-        Set<CardSubtype> enteringTypes = new HashSet<>(
-                gameQueryService.effectiveCreatureSubtypes(match.gameData(), enteringPermanent));
-        if (gameQueryService.hasKeyword(match.gameData(), enteringPermanent, Keyword.CHANGELING)) {
-            for (CardSubtype subtype : CardSubtype.values()) {
-                if (gameQueryService.isCreatureSubtype(subtype)) {
-                    enteringTypes.add(subtype);
-                }
-            }
-        }
-        if (enteringTypes.isEmpty()) {
-            return true;
-        }
-
-        ChampionOfTheHareishTriggerEffect queuedEffect =
-                new ChampionOfTheHareishTriggerEffect(new ArrayList<>(enteringTypes));
-        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
-        if (enteringPermanentId == null) {
-            return true;
-        }
-        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    match.permanent().getCard(),
-                    match.controllerId(),
-                    match.permanent().getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(queuedEffect)),
-                    enteringPermanentId,
-                    match.permanent().getId());
-            entry.setNonTargeting(true);
-            entry.setTriggeringPermanentId(enteringPermanentId);
-            entry.setTriggeringCardId(pe.enteringCard().getId());
-            match.gameData().stack.add(entry);
-        }
-        logTriggered(match);
-        return true;
     }
 
     // ── Default "put it on the stack" fallbacks (one per registry-backed slot) ─────────
@@ -333,19 +279,6 @@ public class EnterTriggerCollectorService {
         log.info("Game {} - {} any-permanent-enters trigger queued", match.gameData().id,
                 match.permanent().getCard().getName());
         return true;
-    }
-
-    private boolean suppressesTriggerForEnteringPermanent(TriggerMatchContext match, CardEffect effect,
-                                                           TriggerContext.PermanentEnters pe) {
-        if (!(effect instanceof TriggeringPermanentEntryExclusionEffect exclusion)
-                || !exclusion.suppressesTriggeringPermanentEntry()
-                || match.permanent() == null) {
-            return false;
-        }
-        Permanent enteringPermanent = findEnteringPermanent(match.gameData(), pe);
-        return enteringPermanent != null
-                && match.permanent().getId().equals(
-                enteringPermanent.getPutOntoBattlefieldWithAbilitySourcePermanentId());
     }
 
     private boolean usesTriggeringPermanentManaValue(CardEffect effect) {
@@ -858,9 +791,6 @@ public class EnterTriggerCollectorService {
     @CollectsWatchTrigger(value = MayEffect.class, watch = ZoneChangeWatch.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleEnterMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
-        if (suppressesTriggerForEnteringPermanent(match, may, pe)) {
-            return true;
-        }
         Card sourceCard = match.sourceCard();
         boolean gainLifeEqualToEnteringPower = may.wrapped() instanceof GainLifeEqualToPowerEffect;
         int eventValue = may.usesTriggeringPermanentManaValue()
@@ -1934,52 +1864,6 @@ public class EnterTriggerCollectorService {
         log.info("Game {} - {} triggers for {} entering ({} transform it)",
                 match.gameData().id, sourceCard.getName(), pe.enteringCard().getName(),
                 effect.optional() ? "may" : "mandatory");
-        return true;
-    }
-
-    @CollectsWatchTrigger(value = EvolveTriggerEffect.class,
-            watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
-    private boolean handleAllyEvolve(TriggerMatchContext match,
-            EvolveTriggerEffect effect, TriggerContext ctx) {
-        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
-        UUID enteringPermanentId = pe.mayPayTargetCardId();
-        if (enteringPermanentId == null) {
-            enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
-        }
-        if (enteringPermanentId == null) {
-            return true;
-        }
-
-        Permanent entering = gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
-        if (entering == null
-                || (gameQueryService.getEffectivePower(match.gameData(), entering)
-                <= gameQueryService.getEffectivePower(match.gameData(), match.permanent())
-                && gameQueryService.getEffectiveToughness(match.gameData(), entering)
-                <= gameQueryService.getEffectiveToughness(match.gameData(), match.permanent()))) {
-            return false;
-        }
-
-        int enteringPower = gameQueryService.getEffectivePower(match.gameData(), entering);
-        int enteringToughness = gameQueryService.getEffectiveToughness(match.gameData(), entering);
-        Card sourceCard = match.permanent().getCard();
-        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    match.controllerId(),
-                    sourceCard.getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
-                    null,
-                    match.permanent().getId());
-            entry.setTriggeringPermanentId(enteringPermanentId);
-            entry.setTriggeringPermanentPowerAtTrigger(enteringPower);
-            entry.setTriggeringPermanentToughnessAtTrigger(enteringToughness);
-            entry.setNonTargeting(true);
-            match.gameData().enqueueTrigger(entry);
-        }
-        logTriggered(match);
-        log.info("Game {} - {} triggers for {} entering (counter-based evolve)",
-                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
         return true;
     }
 
