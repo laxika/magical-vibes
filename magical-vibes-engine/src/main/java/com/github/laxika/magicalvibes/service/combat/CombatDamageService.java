@@ -96,6 +96,7 @@ import com.github.laxika.magicalvibes.service.effect.replacement.damage.Redirect
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -137,6 +138,9 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class CombatDamageService {
+
+    private static final PermanentHasSameNameAsSourcePredicate SAME_NAME_AS_SOURCE =
+            new PermanentHasSameNameAsSourcePredicate();
 
     private enum DamagePhase {
         FIRSTEST_STRIKE,
@@ -970,11 +974,14 @@ public class CombatDamageService {
                                 recipientId, ignored -> new LinkedHashMap<>()).computeIfAbsent(
                                 state.combatDamageDealerControllers.getOrDefault(source, activeId),
                                 ignored -> new LinkedHashMap<>()).merge(source, damage, Integer::sum)));
+        // Sources of "whenever your opponents are dealt combat damage" (one or more creatures, any opponents) that
+        // already triggered in this combat damage step: once for the step however many players were dealt damage.
+        Set<UUID> firedOncePerStepSources = new HashSet<>();
         playerDamageByRecipientAndController.forEach((recipientId, damageByController) ->
                 damageByController.forEach((controllerId, damageBySource) -> {
                     processCombatDamageToPlayerTriggers(gameData, damageBySource, controllerId, recipientId,
                             attachedDamageSources, allyDamageWatchers.getOrDefault(controllerId, List.of()),
-                            departedWatchersByController);
+                            departedWatchersByController, firedOncePerStepSources);
                     triggerCollectionService.checkEmblemCombatDamageTriggers(
                             gameData, controllerId, recipientId, damageBySource);
                     processDelayedCombatDamageLootTriggers(gameData, damageBySource, controllerId);
@@ -2040,7 +2047,8 @@ public class CombatDamageService {
     private void processCombatDamageToPlayerTriggers(GameData gameData, Map<Permanent, Integer> combatDamageDealtToPlayer,
                                                      UUID attackerId, UUID defenderId, Map<Permanent, UUID> attachedDamageSources,
                                                      List<TriggerCollectionService.AllyDamageTriggerSnapshot> allyDamageWatchers,
-                                                     Map<UUID, List<Permanent>> departedWatchersByController) {
+                                                     Map<UUID, List<Permanent>> departedWatchersByController,
+                                                     Set<UUID> firedOncePerStepSources) {
         // Sources of batched ally triggers ("whenever one or more ... deal combat damage to a
         // player") that already fired in this damage step against this player, so they fire once
         // for the whole batch instead of once per dealer.
@@ -2472,7 +2480,7 @@ public class CombatDamageService {
             triggerCollectionService.checkPlanarAllyCreatureCombatDamageToPlayerTriggers(
                     gameData, creature, attackerId, defenderId, damageDealt, firedBatchedAllyTriggerSources);
             triggerCollectionService.checkAnyCreatureCombatDamageToOpponentTriggers(
-                    gameData, creature, attackerId, defenderId, damageDealt);
+                    gameData, creature, attackerId, defenderId, damageDealt, firedOncePerStepSources);
             triggerCollectionService.checkAnyCreatureCombatDamageToOwnerTriggers(
                     gameData, creature, attackerId, defenderId, damageDealt);
         }
@@ -2498,14 +2506,13 @@ public class CombatDamageService {
             for (CombatAbilityReader.CombatEffect read : effects) {
                 CombatAbilityReader.requireNoLimitOrMultiplicity(read,
                         CombatWatch.ON_CREATURE_WITH_SAME_NAME_COMBAT_DAMAGE_TO_PLAYER.trigger());
-                CombatAbilityReader.AllyCombatDamage trigger = CombatAbilityReader.allyCombatDamage(read);
-                if (trigger.dealerFilter() != null
-                        && !predicateEvaluationService.matchesPermanentPredicate(
-                        creature, trigger.dealerFilter(), triggerContext)) {
+                // The watched trigger's own filter, "a creature with the same name as this", which its watch key keeps.
+                if (!predicateEvaluationService.matchesPermanentPredicate(
+                        creature, SAME_NAME_AS_SOURCE, triggerContext)) {
                     continue;
                 }
 
-                CardEffect firedEffect = trigger.effect();
+                CardEffect firedEffect = read.effect();
                 StackEntry stackEntry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         watcher.getCard(),
@@ -2730,8 +2737,8 @@ public class CombatDamageService {
         });
     }
 
-    private static boolean isOwnerRelativeCommanderTrigger(CombatAbilityReader.AllyCombatDamage trigger) {
-        return trigger.dealerFilter() instanceof PermanentIsCommanderPredicate commander
+    private static boolean isOwnerRelativeCommanderTrigger(CombatAbilityReader.CombatEffect read) {
+        return read.filter() instanceof PermanentIsCommanderPredicate commander
                 && commander.ownedBySourceController();
     }
 
@@ -2756,7 +2763,7 @@ public class CombatDamageService {
                 WatchedAbilities.printed(perm.getCard(), CombatWatch.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER),
                 CombatWatch.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER.trigger())) {
             if (read.limit() == TriggerLimit.ONCE_EACH_TURN
-                    && CombatAbilityReader.allyCombatDamage(read).dealerFilter() instanceof PermanentIsSourceCardPredicate) {
+                    && read.filter() instanceof PermanentIsSourceCardPredicate) {
                 read.markLimit(gameData, perm.getId());
             }
         }
@@ -2826,26 +2833,21 @@ public class CombatDamageService {
                 if (read.limitReached(gameData, perm.getId())) {
                     continue;
                 }
-                CombatAbilityReader.AllyCombatDamage trigger = CombatAbilityReader.allyCombatDamage(read);
-                if (ownerRelativePass && !isOwnerRelativeCommanderTrigger(trigger)
-                        && !trigger.opponentDealtDamage()) {
+                if (ownerRelativePass && !isOwnerRelativeCommanderTrigger(read)) {
                     continue;
                 }
                 {
-                    if (trigger.opponentDealtDamage() && attackerId.equals(defenderId)) {
-                        continue;
-                    }
                     FilterContext triggerContext = FilterContext.of(gameData)
                             .withSourceControllerId(attackerId)
                             .withSourcePermanentId(perm.getId());
-                    if (trigger.dealerFilter() != null
+                    if (read.filter() != null
                             && !predicateEvaluationService.matchesPermanentPredicate(
-                            creature, trigger.dealerFilter(), triggerContext)) {
+                            creature, read.filter(), triggerContext)) {
                         continue;
                     }
                     // "One or more ... deal combat damage" is a single event for the whole batch,
                     // so a batched trigger only goes on the stack for the first matching dealer.
-                    if (trigger.oneOrMore() && !firedBatchedAllyTriggerSources.add(perm.getId())) {
+                    if (read.oneOrMore() && !firedBatchedAllyTriggerSources.add(perm.getId())) {
                         continue;
                     }
                     // The ability's intervening "if" ("if there is no monarch") and event condition (a Class level, a
@@ -2854,7 +2856,7 @@ public class CombatDamageService {
                             ConditionContext.forPermanent(perm, attackerId))) {
                         continue;
                     }
-                    CardEffect firedEffect = trigger.effect();
+                    CardEffect firedEffect = read.effect();
                     if (firedEffect instanceof ConditionalEffect conditional
                             && (conditional.condition() instanceof SourceCounterThreshold
                             || conditional.condition() instanceof SourceClassLevelAtLeast
@@ -2867,21 +2869,21 @@ public class CombatDamageService {
                     }
                     // "One or more creatures deal combat damage": the creatures of the batch that match the trigger,
                     // which "them" and "each of them" read from the stack entry as the ability resolves.
-                    List<UUID> dealerIds = trigger.oneOrMore()
+                    List<UUID> dealerIds = read.oneOrMore()
                             ? combatDamageDealtToPlayer.entrySet().stream()
                             .filter(dealer -> dealer.getValue() > 0
-                                    && (trigger.dealerFilter() == null
+                                    && (read.filter() == null
                                     || predicateEvaluationService.matchesPermanentPredicate(
-                                    dealer.getKey(), trigger.dealerFilter(), triggerContext)))
+                                    dealer.getKey(), read.filter(), triggerContext)))
                             .map(dealer -> dealer.getKey().getId())
                             .toList()
                             : List.of();
-                    int triggerDamage = trigger.oneOrMore()
+                    int triggerDamage = read.oneOrMore()
                             ? combatDamageDealtToPlayer.entrySet().stream()
                             .filter(dealer -> dealer.getValue() > 0
-                                    && (trigger.dealerFilter() == null
+                                    && (read.filter() == null
                                     || predicateEvaluationService.matchesPermanentPredicate(
-                                    dealer.getKey(), trigger.dealerFilter(), triggerContext)))
+                                    dealer.getKey(), read.filter(), triggerContext)))
                             .mapToInt(Map.Entry::getValue)
                             .sum()
                             : damageDealt;
@@ -2954,18 +2956,20 @@ public class CombatDamageService {
                             perm.getCard().getName() + "'s triggered ability",
                             List.of(firedEffect),
                             triggerTargetId,
-                            trigger.bindSourceToDealer() ? creature.getId() : perm.getId()
+                            perm.getId()
                     );
                     // The combat damage dealt is this trigger's event value, so "put that many
                     // +1/+1 counters on it" (Necropolis Regent) can read it back at resolution.
                     se.setEventValue(triggerDamage);
                     se.setTriggeringPermanentIds(dealerIds);
-                    se.setNonTargeting(true);
-                    if (trigger.bindSourceToDealer()) {
-                        // The dealer may have left the battlefield by resolution; keep its last known
-                        // information so the ability still sees what it was (CR 608.2h).
-                        se.setSourcePermanentSnapshot(new Permanent(creature));
+                    if (!read.oneOrMore()) {
+                        // "It" / "that creature" is the creature that dealt the damage, which the effects read from
+                        // the entry as the ability resolves.
+                        se.setTriggeringPermanentId(creature.getId());
+                        se.setTriggeringPermanentControllerId(attackerId);
+                        se.setTriggeringPermanent(creature);
                     }
+                    se.setNonTargeting(true);
                     if (read.marksLimitOnAcceptance()) {
                         se.setMarkSourceOncePerTurnOnAcceptance(true);
                     }
@@ -3001,16 +3005,15 @@ public class CombatDamageService {
         for (Card card : new ArrayList<>(graveyard)) {
             for (CombatAbilityReader.CombatEffect read : graveyardCombatReads(gameData, card,
                     CombatWatch.GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER)) {
-                CombatAbilityReader.AllyCombatDamage trigger = CombatAbilityReader.allyCombatDamage(read);
-                if (ownerRelativePass && !isOwnerRelativeCommanderTrigger(trigger)) {
+                if (ownerRelativePass && !isOwnerRelativeCommanderTrigger(read)) {
                     continue;
                 }
                 {
-                    if (trigger.dealerFilter() != null
-                            && !predicateEvaluationService.matchesPermanentPredicate(gameData, creature, trigger.dealerFilter())) {
+                    if (read.filter() != null
+                            && !predicateEvaluationService.matchesPermanentPredicate(gameData, creature, read.filter())) {
                         continue;
                     }
-                    if (trigger.oneOrMore() && !firedBatchedAllyTriggerSources.add(card.getId())) {
+                    if (read.oneOrMore() && !firedBatchedAllyTriggerSources.add(card.getId())) {
                         continue;
                     }
                     // Bind "source card in graveyard" to this graveyard incarnation (CR 400.7) so the
@@ -3021,7 +3024,7 @@ public class CombatDamageService {
                             attackerId,
                             card.getName() + "'s graveyard trigger",
                             List.of(triggerCollectionService.bindSourceCardInGraveyardVersion(
-                                    gameData, trigger.effect(), card.getId()))
+                                    gameData, read.effect(), card.getId()))
                     );
                     se.setTriggeringCardId(card.getId());
                     se.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
@@ -3733,13 +3736,12 @@ public class CombatDamageService {
         if (graveyard == null) return;
         for (Card card : new ArrayList<>(graveyard)) {
             for (CombatAbilityReader.CombatEffect read : graveyardCombatReads(gameData, card, watch)) {
-                CombatAbilityReader.AllyCombatDamage trigger = CombatAbilityReader.allyCombatDamage(read);
-                if (trigger.dealerFilter() != null
+                if (read.filter() != null
                         && !predicateEvaluationService.matchesPermanentPredicate(gameData, creature,
-                        trigger.dealerFilter())) {
+                        read.filter())) {
                     continue;
                 }
-                if (trigger.oneOrMore() && !firedBatchedAllyTriggerSources.add(card.getId())) {
+                if (read.oneOrMore() && !firedBatchedAllyTriggerSources.add(card.getId())) {
                     continue;
                 }
                 StackEntry stackEntry = new StackEntry(
@@ -3747,7 +3749,7 @@ public class CombatDamageService {
                         card,
                         attackerId,
                         card.getName() + "'s graveyard trigger",
-                        List.of(trigger.effect()));
+                        List.of(read.effect()));
                 stackEntry.setTriggeringCardId(card.getId());
                 stackEntry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
                 stackEntry.setNonTargeting(true);

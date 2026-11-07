@@ -3,12 +3,13 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MadnessCast;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,7 +28,8 @@ public class StensiaMasquerade extends Card {
         // Whenever a Vampire you control deals combat damage to a player, put a +1/+1 counter on it.
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
                         .withFilter(new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE)),
-                AllyCombatDamageTriggerEffect.boundToDealer(new PutCountersOnSourceEffect(1, 1, 1)));
+                new PutCounterOnReferencedPermanentEffect(PermanentReference.TRIGGERING,
+                        CounterType.PLUS_ONE_PLUS_ONE));
 
         // Madness {2}{R}
         addCastingOption(new MadnessCast("{2}{R}"));

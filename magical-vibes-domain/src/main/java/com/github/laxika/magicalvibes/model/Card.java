@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
@@ -1071,9 +1070,6 @@ public class Card {
                     e.elseEffects().forEach(innerEffect -> bindEffectToTargetGroup(innerEffect, targetIndex));
                 }
             }
-            // Ally combat-damage triggers resolve their wrapped effect when the trigger fires;
-            // preserve its target-group binding for deferred trigger-time target selection.
-            case AllyCombatDamageTriggerEffect e -> bindEffectToTargetGroup(e.effect(), targetIndex);
             case RollD20Effect e -> {
                 if (e.zeroOrLess() != null) bindEffectToTargetGroup(e.zeroOrLess(), targetIndex);
                 if (e.oneToNine() != null) bindEffectToTargetGroup(e.oneToNine(), targetIndex);

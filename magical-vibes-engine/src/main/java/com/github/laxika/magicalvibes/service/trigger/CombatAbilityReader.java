@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.Condition;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -38,8 +37,6 @@ import java.util.function.Predicate;
  * {@link TriggerJudge} on the abilities an effect list is read from. The reader wraps the intervening "if" around each
  * effect as the {@link ConditionalEffect} that checks it again as the ability resolves; the event condition is never
  * checked again.
- * On an authored {@link AllyCombatDamageTriggerEffect} (an event binding) the intervening "if" goes inside the
- * record, around its effect.
  */
 public final class CombatAbilityReader {
 
@@ -110,35 +107,6 @@ public final class CombatAbilityReader {
         }
     }
 
-    /**
-     * How a "whenever a creature you control deals combat damage to a player [or battle]" collector reads an effect:
-     * the creature's filter and "one or more" from the ability, and the event bindings an authored
-     * {@link AllyCombatDamageTriggerEffect} names.
-     *
-     * @param dealerFilter        what the creature that dealt the damage must be, or {@code null}
-     * @param oneOrMore           once for each combat damage step however many creatures deal damage
-     * @param bindSourceToDealer  the creature that dealt the damage is the effect's source
-     * @param opponentDealtDamage "whenever your opponents are dealt combat damage"
-     * @param effect              the effect, inside the intervening "if"
-     */
-    public record AllyCombatDamage(PermanentPredicate dealerFilter, boolean oneOrMore, boolean bindSourceToDealer,
-                                   boolean opponentDealtDamage, CardEffect effect) {
-    }
-
-    /** The {@link AllyCombatDamage} reading of {@code effect}. */
-    public static AllyCombatDamage allyCombatDamage(CombatEffect effect) {
-        if (effect.effect() instanceof AllyCombatDamageTriggerEffect authored) {
-            if (effect.filter() != null && authored.dealerPredicate() != null) {
-                throw new IllegalStateException("The dealer filter is the trigger's or the record's, not both: "
-                        + effect.ability());
-            }
-            return new AllyCombatDamage(effect.filter() != null ? effect.filter() : authored.dealerPredicate(),
-                    effect.oneOrMore() || authored.oncePerDamageStep(), authored.bindSourceToDealer(),
-                    authored.opponentDealtDamage(), authored.effect());
-        }
-        return new AllyCombatDamage(effect.filter(), effect.oneOrMore(), false, false, effect.effect());
-    }
-
     /** Every effect of {@code abilities}, as their collector reads them for the condition watched as {@code watched}. */
     public static List<CombatEffect> read(List<TriggeredAbility> abilities, Trigger watched) {
         List<CombatEffect> effects = new ArrayList<>();
@@ -156,16 +124,10 @@ public final class CombatAbilityReader {
         List<CombatEffect> effects = new ArrayList<>(ability.effects().size());
         for (EffectRegistration registration : ability.effects()) {
             CardEffect effect = registration.effect();
-            AllyCombatDamageTriggerEffect authoredAlly = effect instanceof AllyCombatDamageTriggerEffect ally
-                    ? ally : null;
-            CardEffect inner = authoredAlly != null ? authoredAlly.effect() : effect;
             if (interveningIf != null) {
-                inner = new ConditionalEffect(interveningIf, inner);
+                effect = new ConditionalEffect(interveningIf, effect);
             }
-            CardEffect read = authoredAlly == null ? inner
-                    : inner == authoredAlly.effect() ? authoredAlly : authoredAlly.withEffect(inner);
-            effects.add(new CombatEffect(read, ability, filter,
-                    registration.simultaneousWithPrevious()));
+            effects.add(new CombatEffect(effect, ability, filter, registration.simultaneousWithPrevious()));
         }
         return effects;
     }

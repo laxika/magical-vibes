@@ -101,6 +101,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         switch (e.scope()) {
             case TARGET -> resolveTargetAtStep(gameData, entry, e);
             case SELF -> resolveSelfAtStep(gameData, entry, e);
+            case TRIGGERING -> resolvePermanentAtStep(gameData, entry, e, entry.getTriggeringPermanentId());
             case SELF_OR_TARGET -> resolveSelfOrTargetAtStep(gameData, entry, e);
             case TARGET_PLAYERS_PERMANENTS -> resolvePlayersPermanentsAtStep(gameData, entry, e);
             case CONTROLLERS_PERMANENTS -> resolveControllersPermanentsAtStep(gameData, entry, e);
@@ -270,7 +271,11 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void resolveSelfAtStep(GameData gameData, StackEntry entry, FlickerEffect e) {
-        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        resolvePermanentAtStep(gameData, entry, e, entry.getSourcePermanentId());
+    }
+
+    private void resolvePermanentAtStep(GameData gameData, StackEntry entry, FlickerEffect e, UUID permanentId) {
+        Permanent source = permanentId == null ? null : gameQueryService.findPermanentById(gameData, permanentId);
         if (source == null) {
             return;
         }
@@ -572,6 +577,9 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
     private List<UUID> immediateFlickerTargets(StackEntry entry, FlickerEffect e) {
         if (e.scope() == com.github.laxika.magicalvibes.model.effect.FlickerScope.SELF) {
             return List.of(entry.getSourcePermanentId());
+        }
+        if (e.scope() == com.github.laxika.magicalvibes.model.effect.FlickerScope.TRIGGERING) {
+            return entry.getTriggeringPermanentId() == null ? List.of() : List.of(entry.getTriggeringPermanentId());
         }
         List<UUID> boundGroups = targetsOfEveryBoundGroup(entry, e);
         if (boundGroups != null) {

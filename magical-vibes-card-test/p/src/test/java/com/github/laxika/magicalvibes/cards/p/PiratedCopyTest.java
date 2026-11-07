@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mutavault;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PiratedCopy.class, GrizzlyBears.class, Mutavault.class})
+@CardUsed({PiratedCopy.class, GrizzlyBears.class, Mutavault.class, ElvishWarrior.class})
 class PiratedCopyTest extends BaseCardTest {
 
     @Test
@@ -52,6 +53,20 @@ class PiratedCopyTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("A creature with another name dealing combat damage draws nothing")
+    void differentlyNamedCreatureDoesNotDraw() {
+        castCopyOfGrizzlyBears(player1, player2);
+        Permanent warrior = addCreatureReady(player1, new ElvishWarrior());
+        warrior.setAttacking(true);
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
     }
 
     @Test

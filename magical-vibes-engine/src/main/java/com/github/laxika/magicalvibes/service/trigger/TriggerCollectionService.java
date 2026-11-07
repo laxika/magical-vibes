@@ -3405,7 +3405,8 @@ public class TriggerCollectionService {
 
     public void checkAnyCreatureCombatDamageToOpponentTriggers(GameData gameData, Permanent creature,
                                                                UUID creatureControllerId,
-                                                               UUID damagedPlayerId, int damageDealt) {
+                                                               UUID damagedPlayerId, int damageDealt,
+                                                               Set<UUID> firedOncePerStepSources) {
         if (creature == null || creatureControllerId == null || damagedPlayerId == null || damageDealt <= 0) {
             return;
         }
@@ -3428,7 +3429,10 @@ public class TriggerCollectionService {
                     !printedAbilitiesLost));
             FilterContext dealerContext = FilterContext.of(gameData).withSourceControllerId(controllerId);
             for (CombatAbilityReader.CombatEffect read : effects) {
-                CombatAbilityReader.requireNoLimitOrMultiplicity(read, read.ability().conditions().getFirst().trigger());
+                if (read.limit() != TriggerLimit.NONE || read.eachBlocker()) {
+                    throw new IllegalStateException("The \"a creature deals combat damage to a player\" collector "
+                            + "reads no " + read.options() + ": " + read.ability());
+                }
                 // "Whenever a [filter] creature deals combat damage to one of your opponents": the trigger's filter.
                 if (read.filter() != null
                         && !predicateEvaluationService.matchesPermanentPredicate(creature, read.filter(), dealerContext)) {
@@ -3439,6 +3443,11 @@ public class TriggerCollectionService {
                         ConditionContext.forPermanent(source, controllerId).withTargetId(damagedPlayerId))) {
                     continue;
                 }
+                // "Whenever your opponents are dealt combat damage, if any of that damage was dealt by a [filter]":
+                // once for the combat damage step, however many creatures dealt it to however many opponents.
+                if (read.oneOrMore() && !firedOncePerStepSources.add(source.getId())) {
+                    continue;
+                }
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         source.getCard(),
@@ -3447,8 +3456,10 @@ public class TriggerCollectionService {
                         List.of(resolvedEffect),
                         damagedPlayerId,
                         source.getId());
-                entry.setTriggeringPermanentId(creature.getId());
-                entry.setTriggeringPermanentControllerId(creatureControllerId);
+                if (!read.oneOrMore()) {
+                    entry.setTriggeringPermanentId(creature.getId());
+                    entry.setTriggeringPermanentControllerId(creatureControllerId);
+                }
                 entry.setNonTargeting(true);
                 int previousCopies = beginCombatDamageTriggerCopies(
                         gameData, controllerId, source, creature, creatureControllerId, damageDealt);
@@ -15862,10 +15873,9 @@ public class TriggerCollectionService {
                     throw new IllegalStateException("The planar combat damage collector reads no " + read.options()
                             + ": " + read.ability());
                 }
-                CombatAbilityReader.AllyCombatDamage trigger = CombatAbilityReader.allyCombatDamage(read);
-                if (trigger.dealerFilter() != null
+                if (read.filter() != null
                         && !predicateEvaluationService.matchesPermanentPredicate(
-                        creature, trigger.dealerFilter(), triggerContext)) {
+                        creature, read.filter(), triggerContext)) {
                     continue;
                 }
 
@@ -15873,20 +15883,21 @@ public class TriggerCollectionService {
                         ConditionContext.forCard(object.getCard(), planarControllerId))) {
                     continue;
                 }
-                if (trigger.oneOrMore() && !firedBatchedSources.add(object.getId())) {
+                if (read.oneOrMore() && !firedBatchedSources.add(object.getId())) {
                     continue;
                 }
-                UUID sourcePermanentId = trigger.bindSourceToDealer() ? creature.getId() : null;
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         object.getCard(),
                         planarControllerId,
                         object.getCard().getName() + "'s triggered ability",
-                        List.of(trigger.effect()),
+                        List.of(read.effect()),
                         defenderId,
-                        sourcePermanentId);
-                if (sourcePermanentId != null) {
-                    entry.setSourcePermanentSnapshot(new Permanent(creature));
+                        (UUID) null);
+                if (!read.oneOrMore()) {
+                    entry.setTriggeringPermanentId(creature.getId());
+                    entry.setTriggeringPermanentControllerId(attackerId);
+                    entry.setTriggeringPermanent(creature);
                 }
                 entry.setEventValue(damageDealt);
                 entry.setSourcePlanarObject(object.copy());

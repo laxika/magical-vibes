@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -35,6 +34,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -1453,7 +1453,7 @@ class CombatDamageServiceTest {
         void batchedAllyCreaturePlayerOrBattleTriggerFiresOnce() {
             Card watcherCard = createCard("Dragon watcher", 2, 2);
             watcherCard.addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayerOrBattle(),
-                    new AllyCombatDamageTriggerEffect(null, new DrawCardEffect(1), false, true));
+                    TriggerOptions.ONE_OR_MORE, new DrawCardEffect(1));
             Permanent watcher = new Permanent(watcherCard);
             gameData.playerBattlefields.get(player1Id).add(watcher);
             addAttacker("Dragon one", 2, 2);
@@ -1472,10 +1472,9 @@ class CombatDamageServiceTest {
         @DisplayName("Batched ally creature trigger snapshots matching damage total")
         void batchedAllyCreatureTriggerSnapshotsMatchingDamageTotal() {
             Card watcherCard = createCard("Quartzwood watcher", 2, 2);
-            watcherCard.addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                    new AllyCombatDamageTriggerEffect(null,
-                            new CreateTokenEffect("Dinosaur Beast", new EventValue(), new EventValue(), null,
-                                    List.of(), Set.of(), Set.of()), false, true));
+            watcherCard.addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(), TriggerOptions.ONE_OR_MORE,
+                    new CreateTokenEffect("Dinosaur Beast", new EventValue(), new EventValue(), null,
+                            List.of(), Set.of(), Set.of()));
             Permanent watcher = new Permanent(watcherCard);
             gameData.playerBattlefields.get(player1Id).add(watcher);
             addAttacker("Trampler one", 2, 2, Keyword.TRAMPLE);

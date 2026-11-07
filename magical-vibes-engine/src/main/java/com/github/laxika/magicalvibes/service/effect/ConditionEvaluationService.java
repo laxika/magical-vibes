@@ -470,6 +470,7 @@ import com.github.laxika.magicalvibes.model.condition.TotalPermanentCountEven;
 import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToActivate;
 import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasKeyword;
+import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.TriggeringCardMatches;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasSubtype;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerAtLeast;
@@ -1955,6 +1956,17 @@ public class ConditionEvaluationService {
                         .filter(permanent -> triggeringPermanentId == null
                                 || !triggeringPermanentId.equals(permanent.getId()))
                         .allMatch(permanent -> power > gameQueryService.getEffectivePower(gameData, permanent));
+            }
+            case TriggeringPermanentMatches c -> {
+                Permanent triggeringPermanent = ctx.triggeringPermanentId() == null
+                        ? null : gameQueryService.findPermanentById(gameData, ctx.triggeringPermanentId());
+                if (triggeringPermanent == null && ctx.triggeringPermanentId() != null) {
+                    // The permanent left the battlefield: use its last known information (CR 608.2h).
+                    triggeringPermanent = gameData.departedPermanentSnapshots.values().stream()
+                            .filter(snapshot -> snapshot.getId().equals(ctx.triggeringPermanentId()))
+                            .findFirst().orElse(null);
+                }
+                yield triggeringPermanent != null && matchesPermanent(gameData, triggeringPermanent, c.filter(), ctx);
             }
             case TriggeringPermanentHasKeyword c -> {
                 Permanent triggeringPermanent = ctx.triggeringPermanentId() == null

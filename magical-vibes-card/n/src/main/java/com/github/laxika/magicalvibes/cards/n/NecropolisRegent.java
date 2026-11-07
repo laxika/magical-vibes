@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,10 +17,10 @@ public class NecropolisRegent extends Card {
 
     public NecropolisRegent() {
         // Whenever a creature you control deals combat damage to a player, put that many
-        // +1/+1 counters on it. The trigger's event value is the damage dealt, and the
-        // dealing creature is bound as the stack entry's source so the counters land on it.
+        // +1/+1 counters on it: the damage is the entry's event value, "it" its triggering permanent.
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
                         .withFilter(new PermanentIsCreaturePredicate()),
-                AllyCombatDamageTriggerEffect.boundToDealer(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue())));
+                new PutCounterOnReferencedPermanentEffect(PermanentReference.TRIGGERING,
+                        CounterType.PLUS_ONE_PLUS_ONE, new EventValue()));
     }
 }

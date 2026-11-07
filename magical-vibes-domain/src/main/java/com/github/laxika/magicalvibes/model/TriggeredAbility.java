@@ -139,8 +139,8 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * Rejects a multiplicity none of {@code conditions}' events has: "each source" is a damage event's (CR 603.2c),
      * "each blocker" "becomes blocked"'s (CR 509.3d), and among the combat events "one or more" is that of "blocks" once
      * each combat (CR 509.3a), "becomes blocked", "a creature you control (or with the same name as this) deals combat
-     * damage to a player [or battle, or planeswalker]" and "a creature deals combat damage to you", the combat
-     * collectors that read it; no damage collector reads it (the "one or more" damage events are events of their own),
+     * damage to a player [or battle, or planeswalker]", "a creature deals combat damage to you" and "a creature deals
+     * combat damage to one of your opponents" (once for the combat damage step), the combat collectors that read it; no damage collector reads it (the "one or more" damage events are events of their own),
      * no counter collector does (a counter event is once for each permanent, or once for each counter, by its own
      * event), no becomes-the-target collector does ("one or more creatures you control become the target of an
      * activated ability" is an event of its own), and no library, draw or discard collector does ("whenever you discard
@@ -222,7 +222,7 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
     /** Whether the collectors of {@code trigger} read "one or more", as {@link #requireReadableMultiplicity} says. */
     private static boolean readsOneOrMore(CombatTrigger trigger) {
         return switch (trigger.event()) {
-            case BLOCKS, BECOMES_BLOCKED, COMBAT_DAMAGE_TO_YOU -> true;
+            case BLOCKS, BECOMES_BLOCKED, COMBAT_DAMAGE_TO_YOU, COMBAT_DAMAGE_TO_OPPONENT -> true;
             case COMBAT_DAMAGE_TO_PLAYER, COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE, COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER ->
                     trigger.relation() == ObjectRelation.YOU_CONTROL
                             || trigger.equals(Triggers.creatureWithSameNameDealsCombatDamageToPlayer());

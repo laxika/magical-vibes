@@ -365,6 +365,15 @@ public record FlickerEffect(
                 TurnStep.END_STEP, false, null, null, 0, true, false);
     }
 
+    /**
+     * Exile the permanent the trigger event was about, then return it under its owner's control
+     * (Gossip's Talent: "exile it, then return it to the battlefield under its owner's control").
+     */
+    public static FlickerEffect flickerTriggeringPermanent() {
+        return new FlickerEffect(FlickerScope.TRIGGERING, null, ReturnTiming.IMMEDIATE,
+                TurnStep.END_STEP, false, null, null, 0, false, false);
+    }
+
     /** Exile this permanent, then return it face down under its owner's control. */
     public static FlickerEffect flickerSelfFaceDown() {
         return new FlickerEffect(FlickerScope.SELF, null, ReturnTiming.IMMEDIATE,

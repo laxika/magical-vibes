@@ -6,12 +6,15 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoublePlusOneCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves a source-bound effect that doubles the source's +1/+1 counters. */
+import java.util.UUID;
+
+/** Resolves an effect that doubles the +1/+1 counters on the source or on the triggering permanent. */
 @Component
 @RequiredArgsConstructor
 public class DoublePlusOneCountersOnSourceEffectHandler implements NormalEffectHandlerBean {
@@ -26,10 +29,13 @@ public class DoublePlusOneCountersOnSourceEffectHandler implements NormalEffectH
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        if (entry.getSourcePermanentId() == null) {
+        UUID permanentId = ((DoublePlusOneCountersOnSourceEffect) effect).reference() == PermanentReference.TRIGGERING
+                ? entry.getTriggeringPermanentId()
+                : entry.getSourcePermanentId();
+        if (permanentId == null) {
             return;
         }
-        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        Permanent source = gameQueryService.findPermanentById(gameData, permanentId);
         if (source == null || gameQueryService.cantHaveCounters(gameData, source)) {
             return;
         }

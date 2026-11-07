@@ -4,17 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceClassLevelAtLeast;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
-import com.github.laxika.magicalvibes.model.effect.FlickerScope;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTiming;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -65,18 +61,7 @@ public class GossipsTalent extends Card {
 
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceClassLevelAtLeast(3)),
-                AllyCombatDamageTriggerEffect.boundToDealer(new MayEffect(
-                        new FlickerEffect(
-                                FlickerScope.SELF,
-                                null,
-                                ReturnTiming.IMMEDIATE,
-                                TurnStep.END_STEP,
-                                false,
-                                null,
-                                null,
-                                0,
-                                false,
-                                false),
-                        "Exile it, then return it to the battlefield under its owner's control?")));
+                new MayEffect(FlickerEffect.flickerTriggeringPermanent(),
+                        "Exile it, then return it to the battlefield under its owner's control?"));
     }
 }

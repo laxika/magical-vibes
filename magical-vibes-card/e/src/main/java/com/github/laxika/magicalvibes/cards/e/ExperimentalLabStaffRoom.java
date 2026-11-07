@@ -5,14 +5,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ManifestDreadEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnChosenPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TurnSourceFaceUpEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -42,13 +42,13 @@ public class ExperimentalLabStaffRoom extends Card {
                 new SourceRoomDoorUnlocked(1),
                 new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                                AllyCombatDamageTriggerEffect.boundToDealer(new ChooseOneEffect(List.of(
-                                                new ChooseOneEffect.ChooseOneOption(
-                                                        "Turn that creature face up", new TurnSourceFaceUpEffect()),
-                                                new ChooseOneEffect.ChooseOneOption(
-                                                        "Put a +1/+1 counter on it",
-                                                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))
-                                        )))),
+                                new ChooseOneEffect(List.of(
+                                        new ChooseOneEffect.ChooseOneOption("Turn that creature face up",
+                                                TurnSourceFaceUpEffect.ofTriggeringPermanent()),
+                                        new ChooseOneEffect.ChooseOneOption("Put a +1/+1 counter on it",
+                                                new PutCounterOnReferencedPermanentEffect(
+                                                        PermanentReference.TRIGGERING,
+                                                        CounterType.PLUS_ONE_PLUS_ONE))))),
                         GrantScope.SELF)));
     }
 }

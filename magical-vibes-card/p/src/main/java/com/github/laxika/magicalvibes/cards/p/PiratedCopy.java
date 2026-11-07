@@ -4,10 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,8 +22,6 @@ public class PiratedCopy extends Card {
                 Set.of(CardSubtype.PIRATE),
                 List.of(
                         new TriggeredAbility(Triggers.creatureWithSameNameDealsCombatDamageToPlayer(),
-                                new AllyCombatDamageTriggerEffect(
-                                new PermanentHasSameNameAsSourcePredicate(),
-                                new DrawCardEffect(1))))));
+                                new DrawCardEffect(1)))));
     }
 }

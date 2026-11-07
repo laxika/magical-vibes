@@ -14,6 +14,7 @@ public sealed interface Condition permits
         ActivePlayerHandEmpty,
         TargetPlayerIsActive,
         TriggeringPermanentHasKeyword,
+        TriggeringPermanentMatches,
         SourceExploitedTriggeringPermanent,
         ActivationCount,
         AllNonartifactCreaturesShareColor,

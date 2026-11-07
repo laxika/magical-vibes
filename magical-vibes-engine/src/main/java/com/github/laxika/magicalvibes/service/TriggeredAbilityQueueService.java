@@ -37,7 +37,6 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
@@ -831,9 +830,7 @@ public class TriggeredAbilityQueueService {
                                     sourceCard.getStaticEffects().stream()),
                             sourceCard.getTriggeredEffects().stream())
                     .filter(authored -> effects.stream()
-                            .anyMatch(queued -> authored.getClass().equals(queued.getClass())
-                                    || authored instanceof AllyCombatDamageTriggerEffect ally
-                                    && ally.effect().equals(queued)))
+                            .anyMatch(queued -> authored.getClass().equals(queued.getClass())))
                     .mapToInt(sourceCard::getEffectTargetIndex)
                     .filter(index -> index >= 0 && index < sourceCard.getTargetGroups().size())
                     .boxed()

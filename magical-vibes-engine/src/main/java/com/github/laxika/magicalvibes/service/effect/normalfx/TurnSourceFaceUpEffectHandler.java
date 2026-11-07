@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.TurnSourceFaceUpEffect;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -28,7 +29,9 @@ public class TurnSourceFaceUpEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID sourcePermanentId = entry.getSourcePermanentId();
+        UUID sourcePermanentId = ((TurnSourceFaceUpEffect) effect).reference() == PermanentReference.TRIGGERING
+                ? entry.getTriggeringPermanentId()
+                : entry.getSourcePermanentId();
         if (sourcePermanentId == null) {
             return;
         }

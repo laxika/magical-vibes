@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.Condition;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -139,46 +138,15 @@ class CombatTriggerTest {
         card.addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(), DRAW);
         card.addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer().withFilter(DRAGON),
                 TriggerOptions.ONE_OR_MORE.withInterveningIf(ALONE), GAIN);
-        CardEffect counter = new GainLifeEffect(3);
-        card.addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer().withFilter(DRAGON),
-                AllyCombatDamageTriggerEffect.boundToDealer(counter));
-        Card twoFilters = new Card();
-        twoFilters.addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer().withFilter(DRAGON),
-                new AllyCombatDamageTriggerEffect(DRAGON, DRAW));
 
-        List<CombatAbilityReader.AllyCombatDamage> reads = CombatAbilityReader.read(
-                        WatchedAbilities.printed(card, CombatWatch.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER),
-                        Triggers.creatureYouControlDealsCombatDamageToPlayer()).stream()
-                .map(CombatAbilityReader::allyCombatDamage).toList();
+        List<CombatAbilityReader.CombatEffect> reads = CombatAbilityReader.read(
+                WatchedAbilities.printed(card, CombatWatch.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER),
+                Triggers.creatureYouControlDealsCombatDamageToPlayer());
 
-        assertThat(reads).containsExactly(
-                new CombatAbilityReader.AllyCombatDamage(null, false, false, false, DRAW),
-                new CombatAbilityReader.AllyCombatDamage(DRAGON, true, false, false,
-                        new ConditionalEffect(ALONE, GAIN)),
-                new CombatAbilityReader.AllyCombatDamage(DRAGON, false, true, false, counter));
-        CombatAbilityReader.CombatEffect bothFilters = CombatAbilityReader.read(
-                twoFilters.getTriggeredAbilities().getFirst(),
-                Triggers.creatureYouControlDealsCombatDamageToPlayer()).getFirst();
-        assertThatThrownBy(() -> CombatAbilityReader.allyCombatDamage(bothFilters))
-                .isInstanceOf(IllegalStateException.class);
-    }
-
-    @Test
-    void anAuthoredAllyRecordKeepsItsIdentityAndTakesTheInterveningIfInside() {
-        Card card = new Card();
-        CardEffect authored = new AllyCombatDamageTriggerEffect(DRAGON, DRAW, true, true);
-        card.addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(), authored);
-        Card guarded = new Card();
-        guarded.addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                TriggerOptions.DEFAULT.withInterveningIf(ALONE), authored);
-
-        assertThat(CombatAbilityReader.effects(WatchedAbilities.printed(card,
-                        CombatWatch.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER),
-                Triggers.creatureYouControlDealsCombatDamageToPlayer()).getFirst()).isSameAs(authored);
-        assertThat(CombatAbilityReader.effects(WatchedAbilities.printed(guarded,
-                        CombatWatch.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER),
-                Triggers.creatureYouControlDealsCombatDamageToPlayer())).containsExactly(
-                new AllyCombatDamageTriggerEffect(DRAGON, new ConditionalEffect(ALONE, DRAW), true, true));
+        assertThat(reads).extracting(CombatAbilityReader.CombatEffect::filter).containsExactly(null, DRAGON);
+        assertThat(reads).extracting(CombatAbilityReader.CombatEffect::oneOrMore).containsExactly(false, true);
+        assertThat(reads).extracting(CombatAbilityReader.CombatEffect::effect)
+                .containsExactly(DRAW, new ConditionalEffect(ALONE, GAIN));
     }
 
     @Test

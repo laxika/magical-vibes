@@ -1261,9 +1261,32 @@ public class AmountEvaluationService {
                 return Math.max(0, gameQueryService.getEffectiveToughness(gameData, triggering));
             }
         }
-        return ctx.stackEntry() == null || ctx.stackEntry().getTriggeringPermanentToughnessAtTrigger() == null
-                ? 0
-                : Math.max(0, ctx.stackEntry().getTriggeringPermanentToughnessAtTrigger());
+        StackEntry entry = ctx.stackEntry();
+        if (entry == null) {
+            return 0;
+        }
+        if (entry.getTriggeringPermanentToughnessAtTrigger() != null) {
+            return Math.max(0, entry.getTriggeringPermanentToughnessAtTrigger());
+        }
+        // "That creature's toughness" as the ability resolves: the triggering permanent's current toughness, else its
+        // toughness as it last existed on the battlefield (CR 608.2h).
+        UUID triggeringId = entry.getTriggeringPermanentId();
+        if (triggeringId == null) {
+            return 0;
+        }
+        Permanent triggering = gameQueryService.findPermanentById(gameData, triggeringId);
+        if (triggering != null) {
+            return gameQueryService.isCreature(gameData, triggering)
+                    ? Math.max(0, gameQueryService.getEffectiveToughness(gameData, triggering)) : 0;
+        }
+        for (Permanent departed : gameData.departedPermanentSnapshots.values()) {
+            if (departed.getId().equals(triggeringId) && departed.getLastKnownToughness() != null) {
+                return Math.max(0, departed.getLastKnownToughness());
+            }
+        }
+        Permanent snapshot = entry.getTriggeringPermanentSnapshot();
+        return snapshot != null && snapshot.getId().equals(triggeringId) && snapshot.getLastKnownToughness() != null
+                ? Math.max(0, snapshot.getLastKnownToughness()) : 0;
     }
 
     private int attachedPermanentColorCount(GameData gameData, AmountContext ctx) {

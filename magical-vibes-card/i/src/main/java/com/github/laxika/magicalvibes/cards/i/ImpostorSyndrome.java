@@ -2,8 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnteringPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -22,6 +21,6 @@ public class ImpostorSyndrome extends Card {
                         .withFilter(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentIsTokenPredicate())))),
-                AllyCombatDamageTriggerEffect.boundToDealer(new CreateTokenCopyOfSourceEffect(true, 1)));
+                CreateTokenCopyOfEnteringPermanentEffect.nonlegendary());
     }
 }

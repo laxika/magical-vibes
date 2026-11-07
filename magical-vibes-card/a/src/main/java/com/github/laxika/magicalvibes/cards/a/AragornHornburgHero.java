@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DoublePlusOneCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -29,6 +28,6 @@ public class AragornHornburgHero extends Card {
 
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
                         .withFilter(new PermanentIsRenownedPredicate()),
-                AllyCombatDamageTriggerEffect.boundToDealer(new DoublePlusOneCountersOnSourceEffect()));
+                DoublePlusOneCountersOnSourceEffect.ofTriggeringPermanent());
     }
 }

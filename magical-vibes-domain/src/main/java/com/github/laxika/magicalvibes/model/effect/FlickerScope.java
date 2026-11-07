@@ -6,6 +6,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * <ul>
  *   <li>{@code TARGET} — the single targeted permanent (target chosen via the source card's filter).</li>
  *   <li>{@code SELF} — the source permanent itself (Argent Sphinx-style).</li>
+ *   <li>{@code TRIGGERING} — the permanent the trigger event was about ("exile it", where "it" is the
+ *       creature that dealt combat damage; Gossip's Talent), read from the stack entry's triggering
+ *       permanent as the ability resolves. Has no target.</li>
  *   <li>{@code TARGET_PLAYERS_PERMANENTS} — every permanent matching the effect's filter that the
  *       targeted player controls (Sudden Disappearance-style mass flicker).</li>
  *   <li>{@code CONTROLLERS_PERMANENTS} — every permanent matching the effect's filter that the
@@ -25,6 +28,7 @@ package com.github.laxika.magicalvibes.model.effect;
 public enum FlickerScope {
     TARGET,
     SELF,
+    TRIGGERING,
     SELF_OR_TARGET,
     TARGET_PLAYERS_PERMANENTS,
     CONTROLLERS_PERMANENTS,
