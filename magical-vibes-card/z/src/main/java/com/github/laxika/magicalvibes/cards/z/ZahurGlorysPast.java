@@ -37,7 +37,7 @@ public class ZahurGlorysPast extends Card {
         ));
 
         addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.YOU_CONTROL),
-                TriggerOptions.DEFAULT.withInterveningIf(new MaxSpeed()),
+                TriggerOptions.DEFAULT.withEventCondition(new MaxSpeed()),
                 MAX_SPEED_ZOMBIE);
     }
 }

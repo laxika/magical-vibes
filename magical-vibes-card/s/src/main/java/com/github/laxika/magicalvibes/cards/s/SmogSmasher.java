@@ -32,7 +32,7 @@ public class SmogSmasher extends Card {
                         new ConjureDuplicateOfTargetCreatureIntoExileEffect());
 
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                TriggerOptions.DEFAULT.withInterveningIf(new MaxSpeed()),
+                TriggerOptions.DEFAULT.withEventCondition(new MaxSpeed()),
                 new ReturnAllCardsExiledWithSourceEffect(true, null, false, Set.of(Keyword.HASTE),
                         null, null, null, null, false, false, true));
     }

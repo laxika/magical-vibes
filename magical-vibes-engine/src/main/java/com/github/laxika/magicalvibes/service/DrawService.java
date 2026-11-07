@@ -2899,11 +2899,6 @@ public class DrawService {
                     continue;
                 }
 
-                if (effect instanceof ConditionalEffect conditional
-                        && conditional.condition() instanceof com.github.laxika.magicalvibes.model.condition.MaxSpeed) {
-                    effect = conditional.wrapped();
-                }
-
                 // Equipment-granted draw trigger (Diviner's Wand): the ability is granted to the
                 // equipped creature, so an unattached Equipment has no such ability — no trigger.
                 if (effect instanceof BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect

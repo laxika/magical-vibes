@@ -28,7 +28,7 @@ public class RisingChicane extends Card {
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
 
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                TriggerOptions.DEFAULT.withInterveningIf(new MaxSpeed()),
+                TriggerOptions.DEFAULT.withEventCondition(new MaxSpeed()),
                 new AnimatePermanentsEffect(2, 2, List.of(CardSubtype.CONSTRUCT), Set.of()));
     }
 }

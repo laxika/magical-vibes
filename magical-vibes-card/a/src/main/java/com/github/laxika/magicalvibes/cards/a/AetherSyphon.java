@@ -17,7 +17,7 @@ public class AetherSyphon extends Card {
 
     public AetherSyphon() {
         addTrigger(Triggers.youDrawCard(),
-                TriggerOptions.DEFAULT.withInterveningIf(new MaxSpeed()),
+                TriggerOptions.DEFAULT.withEventCondition(new MaxSpeed()),
                 new MillEffect(2, MillRecipient.EACH_OPPONENT));
 
         addActivatedAbility(new ActivatedAbility(

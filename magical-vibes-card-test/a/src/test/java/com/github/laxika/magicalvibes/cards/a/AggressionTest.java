@@ -214,4 +214,23 @@ class AggressionTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
     }
+
+    @Test
+    @DisplayName("The ability goes on the stack for a creature that attacked and does nothing as it resolves")
+    void triggersForAnAttackerAndDoesNothing() {
+        Permanent bears = addCreature(player1);
+        attach(player1, bears);
+        bears.setAttackedThisTurn(true);
+
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).anySatisfy(entry -> assertThat(entry.getCard().getName()).isEqualTo("Aggression"));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
+    }
 }

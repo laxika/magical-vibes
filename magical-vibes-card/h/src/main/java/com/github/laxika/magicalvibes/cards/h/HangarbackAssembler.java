@@ -39,7 +39,7 @@ public class HangarbackAssembler extends Card {
                         new PermanentIsCreaturePredicate())),
                 new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                TriggerOptions.DEFAULT.withInterveningIf(new MaxSpeed()),
+                TriggerOptions.DEFAULT.withEventCondition(new MaxSpeed()),
                 new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, artifactCreatureOrVehicle));
     }

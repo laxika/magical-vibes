@@ -23,7 +23,7 @@ public class MendicantCoreGuidelight extends Card {
                 new PermanentIsArtifactPredicate(), CountScope.CONTROLLER);
         addStaticEffect(new SetPowerToughnessToAmountEffect(artifactsYouControl, new Fixed(3)));
         addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.ARTIFACT)),
-                TriggerOptions.DEFAULT.withInterveningIf(new MaxSpeed()),
+                TriggerOptions.DEFAULT.withEventCondition(new MaxSpeed()),
                 new MayPayManaEffect("{1}", new CopyTriggeringSpellEffect(true).withoutNewTargetChoice(),
                         "Pay {1} to copy that spell?"));
     }

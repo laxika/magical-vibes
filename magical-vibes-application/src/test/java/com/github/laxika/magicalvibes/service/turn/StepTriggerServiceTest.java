@@ -697,9 +697,8 @@ class StepTriggerServiceTest {
         @DisplayName("Unique creature-count leader lets an intervening-if upkeep ability trigger")
         void uniqueCreatureCountLeaderTriggers() {
             Card card = createCardWithName("Wild Mammoth");
-            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                    new APlayerControlsMoreCreaturesThanEachOtherPlayer(),
-                    new PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect()));
+            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), TriggerOptions.DEFAULT.withInterveningIf(new APlayerControlsMoreCreaturesThanEachOtherPlayer()),
+                    new PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect());
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             gd.playerBattlefields.get(player2Id).add(new Permanent(createCardWithName("Bear 1")));
             gd.playerBattlefields.get(player2Id).add(new Permanent(createCardWithName("Bear 2")));
@@ -738,9 +737,8 @@ class StepTriggerServiceTest {
         @DisplayName("Tied creature counts suppress an intervening-if upkeep ability")
         void tiedCreatureCountsDoNotTrigger() {
             Card card = createCardWithName("Wild Mammoth");
-            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                    new APlayerControlsMoreCreaturesThanEachOtherPlayer(),
-                    new PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect()));
+            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), TriggerOptions.DEFAULT.withInterveningIf(new APlayerControlsMoreCreaturesThanEachOtherPlayer()),
+                    new PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect());
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             gd.playerBattlefields.get(player2Id).add(new Permanent(createCardWithName("Bear")));
             when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
@@ -951,7 +949,8 @@ class StepTriggerServiceTest {
             gd.turnNumber = 2;
             Card card = createCardWithName("Tribal Card");
             card.addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                    new ConditionalEffect(new NoOtherPermanent(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)), new GainLifeEffect(1)));
+                    TriggerOptions.DEFAULT.withInterveningIf(new NoOtherPermanent(new PermanentHasSubtypePredicate(CardSubtype.HUMAN))),
+                    new GainLifeEffect(1));
             Permanent perm = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(perm);
 
@@ -976,7 +975,9 @@ class StepTriggerServiceTest {
         void winGameTriggersWhenThresholdMet() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Mortal Combat");
-            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), mortalCombatEffect());
+            ConditionalEffect mortalCombat = mortalCombatEffect();
+            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                    TriggerOptions.DEFAULT.withInterveningIf(mortalCombat.condition()), mortalCombat.wrapped());
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             // Add 20 creature cards to graveyard
@@ -995,7 +996,9 @@ class StepTriggerServiceTest {
         void winGameDoesNotTriggerWhenThresholdNotMet() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Mortal Combat");
-            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), mortalCombatEffect());
+            ConditionalEffect mortalCombat = mortalCombatEffect();
+            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                    TriggerOptions.DEFAULT.withInterveningIf(mortalCombat.condition()), mortalCombat.wrapped());
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             // Add only 5 creatures
@@ -1031,7 +1034,8 @@ class StepTriggerServiceTest {
             gd.turnNumber = 2;
             Card card = createCardWithName("Cryptolith Fragment");
             card.addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                    new ConditionalEffect(new EachPlayerLifeAtMost(10), new TransformSelfEffect()));
+                    TriggerOptions.DEFAULT.withInterveningIf(new EachPlayerLifeAtMost(10)),
+                    new TransformSelfEffect());
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             gd.playerLifeTotals.put(player1Id, 10);
             gd.playerLifeTotals.put(player2Id, 11);
@@ -1063,7 +1067,8 @@ class StepTriggerServiceTest {
             gd.turnNumber = 2;
             Card card = createCardWithName("Felidar Sovereign");
             card.addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                    new ConditionalEffect(new ControllerLifeAtLeast(40), new WinGameEffect()));
+                    TriggerOptions.DEFAULT.withInterveningIf(new ControllerLifeAtLeast(40)),
+                    new WinGameEffect());
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             gd.playerLifeTotals.put(player1Id, 39);
 
@@ -1827,11 +1832,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("Max speed intervening-if skips beginning-of-combat trigger when unmet")
+        @DisplayName("Max speed event condition skips beginning-of-combat trigger when unmet")
         void maxSpeedInterveningIfSkipsWhenUnmet() {
             Card card = createCardWithName("Max Speed Combat Card");
-            card.addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
-                    new MaxSpeed(), new GainLifeEffect(1)));
+            card.addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), TriggerOptions.DEFAULT.withEventCondition(new MaxSpeed()),
+                    new GainLifeEffect(1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             sut.handleBeginningOfCombatTriggers(gd);
@@ -2043,7 +2048,8 @@ class StepTriggerServiceTest {
         void endStepNotControllerTurnSkippedOnOwnTurn() {
             Card card = createCardWithName("Own Turn Card");
             card.addTrigger(Triggers.endStep(ActivePlayer.ANY),
-                    new ConditionalEffect(new NotControllerTurn(), new GainLifeEffect(1)));
+                    TriggerOptions.DEFAULT.withInterveningIf(new NotControllerTurn()),
+                    new GainLifeEffect(1));
             gd.playerBattlefields.get(gd.activePlayerId).add(new Permanent(card));
 
             sut.handleEndStepTriggers(gd);
@@ -2130,8 +2136,8 @@ class StepTriggerServiceTest {
         @DisplayName("Triggers.endStep(ActivePlayer.ANY) ConditionalEffect wrapping MayEffect skips when no opponent lost enough life")
         void endStepConditionalMaySkipsWhenThresholdNotMet() {
             Card card = createCardWithName("River Cutthroat");
-            card.addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(
-                    new OpponentLostLifeThisTurn(3), new MayEffect(new GainLifeEffect(1), "Draw?")));
+            card.addTrigger(Triggers.endStep(ActivePlayer.ANY), TriggerOptions.DEFAULT.withInterveningIf(new OpponentLostLifeThisTurn(3)),
+                    new MayEffect(new GainLifeEffect(1), "Draw?"));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             gd.lifeLostThisTurn.put(player2Id, 2);
 
@@ -2318,7 +2324,8 @@ class StepTriggerServiceTest {
         void notKickedSkipsWhenKicked() {
             Card card = createCardWithName("Kicked Elemental");
             card.addTrigger(Triggers.endStep(ActivePlayer.ANY),
-                    new ConditionalEffect(new NotKicked(), new SacrificeSelfEffect()));
+                    TriggerOptions.DEFAULT.withInterveningIf(new NotKicked()),
+                    new SacrificeSelfEffect());
             Permanent perm = new Permanent(card);
             perm.setKicked(true);
             gd.playerBattlefields.get(player1Id).add(perm);

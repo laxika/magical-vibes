@@ -23,7 +23,7 @@ public class EmbalmedAscendant extends Card {
                         new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
                         new GainLifeEffect(1));
         addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
-                TriggerOptions.DEFAULT.withInterveningIf(new MaxSpeed()),
+                TriggerOptions.DEFAULT.withEventCondition(new MaxSpeed()),
                 maxSpeedDrain);
     }
 }
