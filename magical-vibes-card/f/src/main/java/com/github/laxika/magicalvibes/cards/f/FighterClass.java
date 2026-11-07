@@ -41,7 +41,7 @@ public class FighterClass extends Card {
                 new ReduceEquipCostEffect(2)));
 
         target(TargetFilters.creature(), 0, 1).addTrigger(Triggers.creatureYouControlAttacks(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(2, CounterType.LEVEL)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceCounterThreshold(2, CounterType.LEVEL)),
                 new MustBlockTriggeringAttackerEffect());
 
         addActivatedAbility(new ActivatedAbility(

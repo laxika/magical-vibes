@@ -16,7 +16,7 @@ public class CreepyCrawler extends Card {
 
     public CreepyCrawler() {
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                TriggerOptions.DEFAULT.withInterveningIf(new TargetPlayerIsAfraidOfController()),
+                TriggerOptions.DEFAULT.withEventCondition(new TargetPlayerIsAfraidOfController()),
                 SequenceEffect.of(new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER), new DrawCardEffect()));
     }
 }

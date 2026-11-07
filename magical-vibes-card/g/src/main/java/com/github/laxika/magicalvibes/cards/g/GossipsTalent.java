@@ -60,7 +60,7 @@ public class GossipsTalent extends Card {
                         new MakeCreatureUnblockableEffect());
 
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceClassLevelAtLeast(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceClassLevelAtLeast(3)),
                 new MayEffect(FlickerEffect.flickerTriggeringPermanent(),
                         "Exile it, then return it to the battlefield under its owner's control?"));
     }

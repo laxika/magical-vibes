@@ -141,7 +141,8 @@ class ScreechingSilcawTest extends BaseCardTest {
         resolveCombat();
         resolveAllTriggers();
 
-        assertThat(gameLogContains("metalcraft ability triggers")).isTrue();
+        assertThat(gd.gameLog).anySatisfy(entry -> assertThat(entry.plainText())
+                .contains("Screeching Silcaw's").contains("trigger"));
         assertThat(gameLogContains("mills 4 card")).isTrue();
     }
 

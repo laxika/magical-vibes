@@ -68,7 +68,7 @@ public class CandelaAegisOfAdagia extends Card {
 
         // Station 8+ also grants the combat damage trigger
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(8, CounterType.CHARGE)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceCounterThreshold(8, CounterType.CHARGE)),
                 new PutCardToBattlefieldEffect(
                         new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),

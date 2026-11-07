@@ -92,6 +92,7 @@ import com.github.laxika.magicalvibes.service.combat.CombatTriggerService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
 import com.github.laxika.magicalvibes.service.effect.CombatTapCostService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.trigger.TriggerJudge;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
@@ -1670,14 +1671,22 @@ public class CombatBlockService {
                     || gameQueryService.hasLostAllAbilities(gameData, attacker)) {
                 continue;
             }
-            List<CardEffect> printedEffects = printedCombatEffects(attacker.getCard(), CombatWatch.ON_ATTACKS_UNBLOCKED);
+            // Each ability's event condition ("attacks a player and isn't blocked", Master of Cruelties; CR 603.2) and
+            // intervening "if" (CR 603.4), read from the attacker against its attack target as the ability triggers;
+            // the intervening "if" stays wrapped for the check as the ability resolves.
+            Trigger unblocked = CombatWatch.ON_ATTACKS_UNBLOCKED.trigger();
+            TriggerJudge unblockedJudge = conditionEvaluationService.judge(gameData,
+                    ConditionContext.forPermanent(attacker, activeId).withTargetId(attacker.getAttackTarget())
+                            .withTriggeringPermanentId(attacker.getId()));
+            List<CardEffect> printedEffects = CombatAbilityReader.effects(unblockedJudge.filter(
+                    WatchedAbilities.printed(attacker.getCard(), CombatWatch.ON_ATTACKS_UNBLOCKED)), unblocked);
             List<List<CardEffect>> abilityInstances = new ArrayList<>();
             if (!printedEffects.isEmpty()) {
                 abilityInstances.add(new ArrayList<>(printedEffects));
             }
             // Each granted instance is a separate ability (CR 702.68b for frenzy), so it gets its own trigger.
-            for (CardEffect granted : CombatAbilityReader.effects(triggerCollectionService.grantedWatchedAbilities(
-                    gameData, attacker, CombatWatch.ON_ATTACKS_UNBLOCKED.trigger()), CombatWatch.ON_ATTACKS_UNBLOCKED.trigger())) {
+            for (CardEffect granted : CombatAbilityReader.effects(unblockedJudge.filter(
+                    triggerCollectionService.grantedWatchedAbilities(gameData, attacker, unblocked)), unblocked)) {
                 abilityInstances.add(List.of(granted));
             }
             for (List<CardEffect> effects : abilityInstances) {

@@ -19,7 +19,7 @@ public class SleepersRobe extends Card {
         target(TargetFilters.creature())
                 .addStaticEffect(new GrantKeywordEffect(Keyword.FEAR, GrantScope.ENCHANTED_CREATURE))
                 .addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                        TriggerOptions.DEFAULT.withInterveningIf(new AttackedTargetIsOpponent()),
+                        TriggerOptions.DEFAULT.withEventCondition(new AttackedTargetIsOpponent()),
                         new MayEffect(new DrawCardEffect(1), "Draw a card?"));
     }
 }

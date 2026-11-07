@@ -24,7 +24,7 @@ public class TheAetherspark extends Card {
     public TheAetherspark() {
         addStaticEffect(new CantBeAttackedWhileAttachedToCreatureEffect());
         addTrigger(Triggers.equippedCreatureDealsCombatDamage(),
-                TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()),
+                TriggerOptions.DEFAULT.withEventCondition(new ControllerTurn()),
                 new PutCountersOnSelfEffect(CounterType.LOYALTY, new EventValue()));
 
         addActivatedAbility(new ActivatedAbility(

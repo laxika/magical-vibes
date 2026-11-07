@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -30,7 +31,8 @@ public class SeiferBalambRival extends Card {
                         new GoadTargetCreatureUntilNextTurnEffect());
 
         addTrigger(Triggers.creatureYouControlBecomesBlocked(),
-                TriggerOptions.DEFAULT.withInterveningIf(new AttackedTargetIsOpponent()).withEventCondition(new BlockedByMinCreatures(2)),
+                TriggerOptions.DEFAULT.withEventCondition(new AllOf(List.of(
+                        new AttackedTargetIsOpponent(), new BlockedByMinCreatures(2)))),
                 new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF));
     }
 }

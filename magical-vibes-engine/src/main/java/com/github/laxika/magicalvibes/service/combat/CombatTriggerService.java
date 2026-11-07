@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -216,10 +215,6 @@ public class CombatTriggerService {
                                 ? new EnchantedCreatureControllerLosesLifeEffect(
                                         loss.amount(), finalCreatureControllerId)
                                 : e);
-                        // "If the defending player is the monarch" was judged against the attack target as the
-                        // ability triggered; the resolving ability has no attack target to read it against.
-                        effectsForStack.replaceAll(e -> e instanceof ConditionalEffect ce
-                                && ce.condition() instanceof AttackedTargetIsMonarch ? ce.wrapped() : e);
                     }
 
                     if (effectsForStack.isEmpty()) continue;

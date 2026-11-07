@@ -43,10 +43,6 @@ import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDealing
 import com.github.laxika.magicalvibes.model.action.DelayedNamedCreatureCombatDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.condition.Metalcraft;
-import com.github.laxika.magicalvibes.model.condition.SourceClassLevelAtLeast;
-import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageToDefendingCreatureWhenUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
@@ -2216,16 +2212,6 @@ public class CombatDamageService {
                 UUID targetChooserId = creature.getCard().isCombatTriggerTargetChosenByDefendingPlayer()
                         ? defenderId : attackerId;
 
-                if (effect instanceof ConditionalEffect metalcraft && metalcraft.condition() instanceof Metalcraft) {
-                    StackEntry se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
-                            creature.getCard().getName() + "'s triggered ability",
-                            List.of(metalcraft), defenderId, creature.getId());
-                    se.setNonTargeting(true);
-                    gameData.stack.add(se);
-                    gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), "'s metalcraft ability triggers:"));
-                    continue;
-                }
-
                 if (effect instanceof LoseGameIfSourceDealtDamageToPlayerThisTurnEffect threshold
                         && gameData.damageDealtBySourceToPlayerThisTurn(
                         creature.getId(), defenderId) < threshold.minimumDamage()) {
@@ -2544,22 +2530,35 @@ public class CombatDamageService {
             if (perm.isAttached() && perm.getAttachedTo().equals(creature.getId())
                     && !gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
                 List<CardEffect> rawEffects = new ArrayList<>();
+                // Each ability's event condition ("deals combat damage to an opponent", Sleeper's Robe; CR 603.2) and
+                // intervening "if" (CR 603.4), read from the attached permanent and its controller against the player
+                // dealt damage as the ability triggers; the intervening "if" stays wrapped for the check as it resolves.
+                TriggerJudge attachedJudge = conditionEvaluationService.judge(gameData,
+                        ConditionContext.forPermanent(perm, ownerId).withTargetId(defenderId)
+                                .withTriggeringPermanentId(creature.getId()), damageDealt);
                 if (WatchedAbilities.printed(perm.getCard(),
                         CombatWatch.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER).isEmpty()) {
-                    rawEffects.addAll(printedCombatEffects(perm.getCard(), CombatWatch.ON_COMBAT_DAMAGE_TO_PLAYER));
+                    rawEffects.addAll(printedCombatEffects(perm.getCard(), CombatWatch.ON_COMBAT_DAMAGE_TO_PLAYER,
+                            attachedJudge));
                 }
-                rawEffects.addAll(DamageAbilityReader.printedEffects(perm.getCard(), DamageWatch.ON_DAMAGE_TO_PLAYER));
+                rawEffects.addAll(DamageAbilityReader.printedEffects(perm.getCard(), DamageWatch.ON_DAMAGE_TO_PLAYER,
+                        attachedJudge));
                 Trigger damageToPlayer = CombatWatch.ON_COMBAT_DAMAGE_TO_PLAYER.trigger();
                 rawEffects.addAll(CombatAbilityReader.effects(
-                        WatchedAbilities.temporary(perm, damageToPlayer), damageToPlayer));
-                rawEffects.addAll(DamageAbilityReader.temporaryEffects(perm, DamageWatch.ON_DAMAGE_TO_PLAYER));
+                        attachedJudge.filter(WatchedAbilities.temporary(perm, damageToPlayer)), damageToPlayer));
+                rawEffects.addAll(DamageAbilityReader.temporaryEffects(perm, DamageWatch.ON_DAMAGE_TO_PLAYER,
+                        attachedJudge));
                 rawEffects.addAll(CombatAbilityReader.effects(
-                        WatchedAbilities.persistent(perm, damageToPlayer), damageToPlayer));
-                rawEffects.addAll(DamageAbilityReader.persistentEffects(perm, DamageWatch.ON_DAMAGE_TO_PLAYER));
+                        attachedJudge.filter(WatchedAbilities.persistent(perm, damageToPlayer)), damageToPlayer));
+                rawEffects.addAll(DamageAbilityReader.persistentEffects(perm, DamageWatch.ON_DAMAGE_TO_PLAYER,
+                        attachedJudge));
                 if (!ownerId.equals(defenderId)) {
-                    rawEffects.addAll(DamageAbilityReader.printedEffects(perm.getCard(), DamageWatch.ON_DAMAGE_TO_OPPONENT));
-                    rawEffects.addAll(DamageAbilityReader.temporaryEffects(perm, DamageWatch.ON_DAMAGE_TO_OPPONENT));
-                    rawEffects.addAll(DamageAbilityReader.persistentEffects(perm, DamageWatch.ON_DAMAGE_TO_OPPONENT));
+                    rawEffects.addAll(DamageAbilityReader.printedEffects(perm.getCard(), DamageWatch.ON_DAMAGE_TO_OPPONENT,
+                            attachedJudge));
+                    rawEffects.addAll(DamageAbilityReader.temporaryEffects(perm, DamageWatch.ON_DAMAGE_TO_OPPONENT,
+                            attachedJudge));
+                    rawEffects.addAll(DamageAbilityReader.persistentEffects(perm, DamageWatch.ON_DAMAGE_TO_OPPONENT,
+                            attachedJudge));
                 }
 
                 // Unwrap EnchantedPermanentConditionalEffect against the enchanted creature that
@@ -2570,14 +2569,6 @@ public class CombatDamageService {
                 for (CardEffect effect : rawEffects) {
                     if (effect instanceof com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfCombatDamageSourceIntoHandEffect
                             && creature.getCard().isToken()) {
-                        continue;
-                    }
-                    // "deals combat damage to an opponent" is relative to the controller of the
-                    // attached permanent's ability: damage to that controller never triggers it.
-                    if (effect instanceof ConditionalEffect opponentOnly
-                            && opponentOnly.condition() instanceof
-                            com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent
-                            && ownerId.equals(defenderId)) {
                         continue;
                     }
                     if (effect instanceof EnchantedPermanentConditionalEffect cond) {
@@ -2857,16 +2848,6 @@ public class CombatDamageService {
                         continue;
                     }
                     CardEffect firedEffect = read.effect();
-                    if (firedEffect instanceof ConditionalEffect conditional
-                            && (conditional.condition() instanceof SourceCounterThreshold
-                            || conditional.condition() instanceof SourceClassLevelAtLeast
-                            || conditional.condition() instanceof SourceHasChosenMode)) {
-                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
-                                ConditionContext.forPermanent(perm, attackerId))) {
-                            continue;
-                        }
-                        firedEffect = conditional.wrapped();
-                    }
                     // "One or more creatures deal combat damage": the creatures of the batch that match the trigger,
                     // which "them" and "each of them" read from the stack entry as the ability resolves.
                     List<UUID> dealerIds = read.oneOrMore()

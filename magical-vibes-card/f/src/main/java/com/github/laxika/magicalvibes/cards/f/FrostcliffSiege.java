@@ -24,7 +24,7 @@ public class FrostcliffSiege extends Card {
 
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
                         .withFilter(new PermanentIsCreaturePredicate()),
-                TriggerOptions.ONE_OR_MORE.withInterveningIf(new SourceHasChosenMode("Jeskai")),
+                TriggerOptions.ONE_OR_MORE.withEventCondition(new SourceHasChosenMode("Jeskai")),
                 new DrawCardEffect(1));
 
         addStaticEffect(new ConditionalEffect(

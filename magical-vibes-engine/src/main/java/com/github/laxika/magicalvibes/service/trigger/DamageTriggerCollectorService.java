@@ -2374,18 +2374,6 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsCombatTrigger(value = ConditionalEffect.class,
-            watch = CombatWatch.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE)
-    private boolean handleConditionalEquippedCreatureDealsCombatDamage(TriggerMatchContext match,
-                                                                         ConditionalEffect conditional,
-                                                                         TriggerContext ctx) {
-        if (match.permanent() == null || !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
-                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
-            return false;
-        }
-        return handleEquippedCreatureDealsCombatDamage(match, conditional, ctx);
-    }
-
     private boolean sourceHasColor(GameData gameData, TriggerContext.SourceDealsDamage damage,
                                    CardColor color) {
         if (damage.sourceCard() == null || color == null) return false;

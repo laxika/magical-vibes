@@ -22,7 +22,7 @@ public class QuilledGreatwurm extends Card {
 
     public QuilledGreatwurm() {
         addTrigger(Triggers.creatureYouControlDealsCombatDamage(),
-                TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()),
+                TriggerOptions.DEFAULT.withEventCondition(new ControllerTurn()),
                 new PutCounterOnReferencedPermanentEffect(PermanentReference.TRIGGERING,
                         CounterType.PLUS_ONE_PLUS_ONE, new EventValue()));
         addCastingOption(new GraveyardCast(List.of(

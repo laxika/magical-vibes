@@ -4671,13 +4671,20 @@ public class TriggerCollectionService {
                     || !isEquippedBy(gameData, watcher, sourcePermanentId)) {
                 return;
             }
+            // Each ability's event condition ("during your turn", The Aetherspark; CR 603.2) and intervening "if"
+            // (CR 603.4), read from the Equipment and its controller as the ability triggers.
+            TriggerJudge equipmentJudge = conditionEvaluationService.judge(gameData,
+                    ConditionContext.forPermanent(watcher, watcherControllerId)
+                            .withTriggeringPermanentId(sourcePermanentId));
             if (damageToPlayers > 0) {
-                for (CardEffect effect : printedCombatEffects(watcher.getCard(), CombatWatch.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER)) {
+                for (CardEffect effect : printedCombatEffects(watcher.getCard(),
+                        CombatWatch.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER, equipmentJudge)) {
                     var match = new TriggerMatchContext(gameData, watcher, watcherControllerId, effect);
                     dispatch(match, CombatWatch.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER, effect, ctx);
                 }
             }
-            for (CardEffect effect : printedCombatEffects(watcher.getCard(), CombatWatch.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE)) {
+            for (CardEffect effect : printedCombatEffects(watcher.getCard(), CombatWatch.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE,
+                    equipmentJudge)) {
                 var match = new TriggerMatchContext(gameData, watcher, watcherControllerId, effect);
                 dispatch(match, CombatWatch.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE, effect, ctx);
             }

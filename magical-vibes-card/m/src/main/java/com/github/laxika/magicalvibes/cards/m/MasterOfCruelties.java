@@ -25,10 +25,10 @@ public class MasterOfCruelties extends Card {
         // becomes 1. This creature assigns no combat damage this combat. The defending player is
         // the trigger's non-targeting targetId.
         addTrigger(Triggers.attacksUnblocked(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceAttackingPlayer()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceAttackingPlayer()),
                 new SetLifeTotalEffect(1, SetLifeTotalRecipient.TARGET_PLAYER));
         addTrigger(Triggers.attacksUnblocked(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceAttackingPlayer()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceAttackingPlayer()),
                 AssignNoCombatDamageEffect.thisCombat());
     }
 }
