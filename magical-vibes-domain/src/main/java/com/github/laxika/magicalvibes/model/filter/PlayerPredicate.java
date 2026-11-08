@@ -19,7 +19,7 @@ public sealed interface PlayerPredicate permits
         PlayerLostLifeThisTurnPredicate,
         PlayerRelationPredicate,
         PlayerIdPredicate,
-        PlayerOtherThanPredicate,
+        PlayerOtherThanTriggeringPlayerPredicate,
         PlayerOtherThanSourceOwnerPredicate,
         PlayerIsActiveOpponentPredicate {
 }

@@ -846,10 +846,12 @@ class StepTriggerServiceTest {
             when(gameQueryService.findPermanentController(gd, host.getId())).thenReturn(player1Id);
             when(gameQueryService.findPermanentById(gd, host.getId())).thenReturn(host);
             when(targetLegalityService.matchesPlayerPredicate(
-                    eq(gd), eq(player1Id), eq(player2Id), any(PlayerRelationPredicate.class), eq(aura.getId())))
+                    eq(gd), eq(player1Id), eq(player2Id), any(PlayerRelationPredicate.class), eq(aura.getId()),
+                    isNull()))
                     .thenReturn(true);
             when(targetLegalityService.matchesPlayerPredicate(
-                    eq(gd), eq(player1Id), eq(player1Id), any(PlayerRelationPredicate.class), eq(aura.getId())))
+                    eq(gd), eq(player1Id), eq(player1Id), any(PlayerRelationPredicate.class), eq(aura.getId()),
+                    isNull()))
                     .thenReturn(false);
 
             sut.handleUpkeepTriggers(gd);

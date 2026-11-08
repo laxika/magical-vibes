@@ -45,7 +45,6 @@ import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect
 import com.github.laxika.magicalvibes.model.effect.CopyEnchantedHandCardOnCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.FlurryCopyOrDrawTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.CopySpellForEachPriorInstantOrSorceryEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetedSpellPermanentEffect;
@@ -69,7 +68,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUntilCardPredicateMayCastWithoutPayingManaEffect;
-import com.github.laxika.magicalvibes.model.effect.FirstSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellChosenColorCount;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
@@ -108,7 +106,6 @@ import com.github.laxika.magicalvibes.model.trigger.SpellFilter;
 import com.github.laxika.magicalvibes.model.effect.SpellweaverHelixTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellweaverVoluteTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyEnchantedInstantAndMayCastCopyEffect;
-import com.github.laxika.magicalvibes.model.effect.StormCopyEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
@@ -137,8 +134,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
-import com.github.laxika.magicalvibes.model.filter.PlayerOtherThanPredicate;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsAnyPlayerPredicate;
@@ -205,23 +200,6 @@ public class SpellCastTriggerCollectorService {
         match.gameData().stack.add(entry);
         return true;
     }
-
-
-    @CollectsSpellAbilityTrigger(value = FirstSpellCastTriggerEffect.class,
-            watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
-    private boolean handleFirstSpellCastTrigger(TriggerMatchContext match,
-            FirstSpellCastTriggerEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (match.gameData().getSpellsCastThisTurnCount(sc.castingPlayerId()) != 1) {
-            return false;
-        }
-        TargetFilter targetFilter = new PlayerPredicateTargetFilter(
-                new PlayerOtherThanPredicate(sc.castingPlayerId()),
-                "Target must be another player");
-        return handleGenericSpellCastTrigger(match, new CastAbility(SpellFilter.ANY, trigger.resolvedEffects(), null,
-                targetFilter), sc);
-    }
-
 
 
     @CollectsSpellAbilityTrigger(value = SpellweaverHelixTriggerEffect.class,
@@ -795,44 +773,6 @@ public class SpellCastTriggerCollectorService {
         match.gameData().stack.add(copyTrigger);
         return true;
     }
-
-    @CollectsSpellAbilityTrigger(value = CopySpellForEachPriorInstantOrSorceryEffect.class,
-            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
-    private boolean handleCopySpellForEachPriorInstantOrSorcery(TriggerMatchContext match,
-            CopySpellForEachPriorInstantOrSorceryEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        Card spellCard = sc.spellCard();
-        if (!spellCard.hasType(CardType.INSTANT) && !spellCard.hasType(CardType.SORCERY)) {
-            return false;
-        }
-
-        StackEntry spellEntry = findStackEntryForCard(match.gameData(), spellCard.getId());
-        if (spellEntry == null) {
-            return false;
-        }
-
-        // The spell just cast is the newest record of this turn's casts; drop only that record, so
-        // earlier casts of the same card (a returned and recast instant) still count.
-        List<Card> castThisTurn = match.gameData().getSpellsCastThisTurn(sc.castingPlayerId());
-        List<Card> priorCasts = !castThisTurn.isEmpty()
-                && castThisTurn.getLast().getId().equals(spellCard.getId())
-                ? castThisTurn.subList(0, castThisTurn.size() - 1)
-                : castThisTurn;
-        int copies = (int) priorCasts.stream()
-                .filter(card -> card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
-                .count();
-        StackEntry snapshot = new StackEntry(spellEntry);
-        match.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new StormCopyEffect(snapshot, sc.castingPlayerId(), copies)))
-        ));
-        return true;
-    }
-
-
 
     @CollectsSpellAbilityTrigger(value = CounterOpponentFirstSpellEachTurnEffect.Marker.class,
             watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
@@ -1600,6 +1540,7 @@ public class SpellCastTriggerCollectorService {
             );
             entry.setTriggeringCardId(spellCard.getId());
             entry.setTriggeringSpell(triggeringSpell);
+            entry.setTriggeringSpellCastIndex(castIndex(match.gameData(), castingPlayerId, spellCard));
             // The caster stays known if the spell leaves the stack (e.g. is countered) before this resolves.
             entry.setCounteredSpellControllerId(castingPlayerId);
             preservePlanarSource(entry, match);
@@ -1633,7 +1574,7 @@ public class SpellCastTriggerCollectorService {
                         match.controllerId(), carriesTriggeringSpellManaValue ? triggeringSpellManaValue : null,
                         match.sourcePlanarObject() == null ? null : match.sourcePlanarObject().copy(),
                         false, spellCard.getId()
-                ));
+                ).withTriggeringPlayer(castingPlayerId));
             }
             gameLogService.append(match.gameData(), GameLog.cardThen(sourceCard,
                     "'s triggered ability triggers — choose a target."));
@@ -1691,6 +1632,7 @@ public class SpellCastTriggerCollectorService {
             // ability (Bloodlord of Vaasgoth's bloodthirst grant), and as it was then once it has left (CR 608.2h).
             entry.setTriggeringCardId(spellCard.getId());
             entry.setTriggeringSpell(triggeringSpell);
+            entry.setTriggeringSpellCastIndex(castIndex(match.gameData(), castingPlayerId, spellCard));
             if (triggeringSpell != null && resolved.stream().anyMatch(effect ->
                     effect instanceof GrantKeywordEffect grant && grant.scope() == GrantScope.TARGETS)) {
                 List<UUID> spellTargets = new ArrayList<>();
@@ -1729,6 +1671,21 @@ public class SpellCastTriggerCollectorService {
             }
         }
         return true;
+    }
+
+    /**
+     * The just-cast spell's place among its caster's spells cast this turn: its latest casting, as the ability triggers
+     * right after it is cast (a card cast, returned and cast again is a new spell each time). {@code -1} when it isn't
+     * recorded.
+     */
+    private static int castIndex(GameData gameData, UUID castingPlayerId, Card spellCard) {
+        List<Card> spells = gameData.getSpellsCastThisTurn(castingPlayerId);
+        for (int i = spells.size() - 1; i >= 0; i--) {
+            if (spells.get(i).getId().equals(spellCard.getId())) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     /**

@@ -76,7 +76,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerHasMoreCardsInHandThanC
 import com.github.laxika.magicalvibes.model.filter.PlayerHasMoreLifeThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerOtherThanSourceOwnerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerIsActiveOpponentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PlayerOtherThanPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerOtherThanTriggeringPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerIdPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -4454,11 +4454,11 @@ public class TargetLegalityService {
             }
             if (targetFilter instanceof PlayerPredicateTargetFilter playerFilter) {
                 return matchesPlayerPredicateAtResolution(gameData, targetPredicateController(entry), targetId, playerFilter.predicate(),
-                        entry.getSourcePermanentId());
+                        entry.getSourcePermanentId(), entry.getTriggeringPlayerId());
             }
             if (targetFilter instanceof AnyTargetPredicateTargetFilter anyFilter) {
                 return matchesPlayerPredicateAtResolution(gameData, targetPredicateController(entry), targetId, anyFilter.playerPredicate(),
-                        entry.getSourcePermanentId());
+                        entry.getSourcePermanentId(), entry.getTriggeringPlayerId());
             }
             return true;
         }
@@ -6195,12 +6195,23 @@ public class TargetLegalityService {
      */
     public boolean matchesPlayerPredicate(GameData gameData, UUID controllerId, UUID targetPlayerId,
                                           PlayerPredicate predicate, UUID sourcePermanentId) {
+        return matchesPlayerPredicate(gameData, controllerId, targetPlayerId, predicate, sourcePermanentId, null);
+    }
+
+    /**
+     * Event-aware overload. {@code triggeringPlayerId} is the player the triggered ability's event was about (the target
+     * choice's, or the stack entry's as it resolves), which {@link PlayerOtherThanTriggeringPlayerPredicate} reads; a
+     * {@code null} one matches no player for it.
+     */
+    public boolean matchesPlayerPredicate(GameData gameData, UUID controllerId, UUID targetPlayerId,
+                                          PlayerPredicate predicate, UUID sourcePermanentId,
+                                          UUID triggeringPlayerId) {
         return switch (predicate) {
             case PlayerIdPredicate player -> player.playerId() != null
                     && player.playerId().equals(targetPlayerId);
-            case PlayerOtherThanPredicate other -> other.excludedPlayerId() != null
+            case PlayerOtherThanTriggeringPlayerPredicate ignored -> triggeringPlayerId != null
                     && targetPlayerId != null
-                    && !other.excludedPlayerId().equals(targetPlayerId);
+                    && !triggeringPlayerId.equals(targetPlayerId);
             case PlayerOtherThanSourceOwnerPredicate ignored -> {
                 if (sourcePermanentId == null || targetPlayerId == null) {
                     yield false;
@@ -6269,7 +6280,7 @@ public class TargetLegalityService {
 
     private boolean matchesPlayerPredicateAtResolution(GameData gameData, UUID controllerId,
                                                         UUID targetPlayerId, PlayerPredicate predicate,
-                                                        UUID sourcePermanentId) {
+                                                        UUID sourcePermanentId, UUID triggeringPlayerId) {
         if (predicate instanceof PlayerHasMoreLifeThanControllerPredicate lifePredicate) {
             return controllerId != null && targetPlayerId != null && !controllerId.equals(targetPlayerId)
                     && (!lifePredicate.recheckAtResolution()
@@ -6300,7 +6311,8 @@ public class TargetLegalityService {
                     >= countCreatureCardsInGraveyard(gameData, targetPlayerId)
                     + graveyardPredicate.minimumDifference();
         }
-        return matchesPlayerPredicate(gameData, controllerId, targetPlayerId, predicate, sourcePermanentId);
+        return matchesPlayerPredicate(gameData, controllerId, targetPlayerId, predicate, sourcePermanentId,
+                triggeringPlayerId);
     }
 
     private int countCreatureCardsInGraveyard(GameData gameData, UUID playerId) {

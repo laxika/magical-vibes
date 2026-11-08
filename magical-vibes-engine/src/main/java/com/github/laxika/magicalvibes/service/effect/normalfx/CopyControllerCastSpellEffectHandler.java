@@ -72,18 +72,25 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
 
         int requestedCopies = e.copies();
         if (e.dynamicCopies() != null) {
+            // Counted as the ability resolves, from its stack entry (the triggering spell it keeps, CR 608.2h).
             requestedCopies = amountEvaluationService.evaluate(
-                    gameData, e.dynamicCopies(), AmountContext.forCasting(castingPlayerId));
+                    gameData, e.dynamicCopies(), AmountContext.forStackEntry(entry, null));
             if (requestedCopies <= 0) return;
         }
-        int copyCount = requestedCopies <= 1 ? 1 : copySupport.adjustedSpellCopyCount(gameData, castingPlayerId, requestedCopies);
+        boolean singleCopy = requestedCopies <= 1;
+        int copyCount = singleCopy ? 1 : copySupport.adjustedSpellCopyCount(gameData, castingPlayerId, requestedCopies);
         for (int copyIndex = 0; copyIndex < copyCount; copyIndex++) {
-            createCopy(gameData, entry, e, spellSnapshot, castingPlayerId, spellCard);
+            createCopy(gameData, entry, e, spellSnapshot, castingPlayerId, spellCard, singleCopy);
         }
     }
 
+    /**
+     * Puts one copy on the stack. {@code singleCopy} says whether the copy event makes one copy, whose replacements
+     * ("copy it that many times plus one") {@code CopySupport.addCopyToStack} applies; a count of several already
+     * includes them.
+     */
     private void createCopy(GameData gameData, StackEntry entry, CopyControllerCastSpellEffect e,
-                            StackEntry spellSnapshot, UUID castingPlayerId, Card spellCard) {
+                            StackEntry spellSnapshot, UUID castingPlayerId, Card spellCard, boolean singleCopy) {
         Card copyCard = copySupport.createCopyCard(spellCard);
         boolean permanentSpell = isPermanentSpell(spellSnapshot.getEntryType());
         if (e.tokenCopy() || (e.permanentSpellToken() && permanentSpell)) {
@@ -149,7 +156,7 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
                     copyCard.getId()
             );
         }
-        copySupport.addCopyToStack(gameData, copyEntry, e.copies() <= 1, retargetAbility);
+        copySupport.addCopyToStack(gameData, copyEntry, singleCopy, retargetAbility);
 
         gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
         log.info("Game {} - copy of {} created for controller", gameData.id, spellCard.getName());

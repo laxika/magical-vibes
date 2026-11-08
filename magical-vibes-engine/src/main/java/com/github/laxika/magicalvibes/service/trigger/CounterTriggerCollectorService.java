@@ -4,16 +4,16 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyThisSpellWhenCounteredOrFizzlesEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/** Collects triggers caused by a spell being countered by a spell or ability a player controls. */
+/**
+ * Collects triggers caused by a spell being countered by a spell or ability a player controls, and a spell's own
+ * "whenever this spell is countered or fizzles".
+ */
 @Service
 public class CounterTriggerCollectorService {
 
@@ -31,24 +31,27 @@ public class CounterTriggerCollectorService {
         return true;
     }
 
-    @CollectsSpellAbilityTrigger(value = CopyThisSpellWhenCounteredOrFizzlesEffect.class,
-            watch = SpellAbilityWatch.ON_SELF_SPELL_COUNTERED_OR_FIZZLED)
-    private boolean handleSelfSpellCounteredOrFizzled(TriggerMatchContext match,
-            CopyThisSpellWhenCounteredOrFizzlesEffect effect, TriggerContext ctx) {
+    /**
+     * "Whenever this spell is countered or fizzles" (Trial and Error): the spell's own ability goes on the stack as the
+     * card wrote it, controlled by the spell's controller, with the spell as it last existed on the stack as its
+     * triggering spell ("copy it" copies that, CR 608.2h).
+     */
+    @CollectsSpellAbilityTrigger(value = CardEffect.class, watch = SpellAbilityWatch.ON_SELF_SPELL_COUNTERED_OR_FIZZLED)
+    private boolean handleSelfSpellCounteredOrFizzled(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.SpellCounteredOrFizzled countered = (TriggerContext.SpellCounteredOrFizzled) ctx;
-        StackEntry spellSnapshot = countered.spellEntry();
-        if (spellSnapshot == null || spellSnapshot.getCard() == null) return false;
+        StackEntry spell = countered.spellEntry();
+        if (spell == null || spell.getCard() == null) return false;
 
-        var spellCard = spellSnapshot.getCard();
-        CardEffect copyEffect = new MayEffect(
-                new CopyControllerCastSpellEffect(new StackEntry(spellSnapshot), spellSnapshot.getControllerId()),
-                "Copy " + spellCard.getName() + "?");
-        match.gameData().enqueueTrigger(new StackEntry(
+        var spellCard = spell.getCard();
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 spellCard,
-                spellSnapshot.getControllerId(),
+                match.controllerId(),
                 spellCard.getName() + "'s ability",
-                new ArrayList<>(List.of(copyEffect))));
+                new ArrayList<>(List.of(effect)));
+        entry.setTriggeringCardId(spellCard.getId());
+        entry.setTriggeringSpell(spell);
+        match.gameData().enqueueTrigger(entry);
         return true;
     }
 

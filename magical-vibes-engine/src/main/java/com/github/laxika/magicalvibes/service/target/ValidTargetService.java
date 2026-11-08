@@ -1455,9 +1455,20 @@ public class ValidTargetService {
     public List<UUID> filterValidPlayerTargets(GameData gameData, TargetFilter targetFilter,
                                                List<UUID> candidates, UUID controllerId,
                                                UUID sourcePermanentId) {
+        return filterValidPlayerTargets(gameData, targetFilter, candidates, controllerId, sourcePermanentId, null);
+    }
+
+    /**
+     * Event-aware variant for a triggered ability's target choice: {@code triggeringPlayerId} is the player its event
+     * was about, which a filter's "another target player" ({@code PlayerOtherThanTriggeringPlayerPredicate}) excludes.
+     */
+    public List<UUID> filterValidPlayerTargets(GameData gameData, TargetFilter targetFilter,
+                                               List<UUID> candidates, UUID controllerId,
+                                               UUID sourcePermanentId, UUID triggeringPlayerId) {
         List<UUID> result = new ArrayList<>();
         for (UUID playerId : candidates) {
-            if (isValidPlayerTarget(gameData, targetFilter, playerId, controllerId, sourcePermanentId)) {
+            if (isValidPlayerTarget(gameData, targetFilter, playerId, controllerId, sourcePermanentId, null,
+                    controllerId, triggeringPlayerId)) {
                 result.add(playerId);
             }
         }
@@ -1530,6 +1541,13 @@ public class ValidTargetService {
 
     private boolean isValidPlayerTarget(GameData gameData, TargetFilter targetFilter, UUID playerId, UUID controllerId,
                                         UUID sourcePermanentId, Card sourceCard, UUID abilityControllerId) {
+        return isValidPlayerTarget(gameData, targetFilter, playerId, controllerId, sourcePermanentId, sourceCard,
+                abilityControllerId, null);
+    }
+
+    private boolean isValidPlayerTarget(GameData gameData, TargetFilter targetFilter, UUID playerId, UUID controllerId,
+                                        UUID sourcePermanentId, Card sourceCard, UUID abilityControllerId,
+                                        UUID triggeringPlayerId) {
         if (targetFilter != null && !targetFilterAllowsPlayer(targetFilter)) {
             return false;
         }
@@ -1555,14 +1573,16 @@ public class ValidTargetService {
         // PlayerPredicateTargetFilter (e.g. "target opponent")
         if (targetFilter instanceof PlayerPredicateTargetFilter playerFilter
                 && !targetLegalityService.matchesPlayerPredicate(
-                        gameData, controllerId, playerId, playerFilter.predicate(), sourcePermanentId)) {
+                        gameData, controllerId, playerId, playerFilter.predicate(), sourcePermanentId,
+                        triggeringPlayerId)) {
             return false;
         }
 
         // Any-target restriction: the player side is checked against the player predicate.
         if (targetFilter instanceof AnyTargetPredicateTargetFilter anyFilter
                 && !targetLegalityService.matchesPlayerPredicate(
-                        gameData, controllerId, playerId, anyFilter.playerPredicate(), sourcePermanentId)) {
+                        gameData, controllerId, playerId, anyFilter.playerPredicate(), sourcePermanentId,
+                        triggeringPlayerId)) {
             return false;
         }
 

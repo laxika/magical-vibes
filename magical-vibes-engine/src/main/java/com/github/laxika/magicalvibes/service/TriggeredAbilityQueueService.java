@@ -1800,20 +1800,24 @@ public class TriggeredAbilityQueueService {
                 if (pending.targetFilter() instanceof AnyTargetPredicateTargetFilter anyFilter) {
                     validPlayerTargets = gameData.orderedPlayerIds.stream()
                             .filter(id -> targetLegalityService.matchesPlayerPredicate(
-                                    gameData, pending.controllerId(), id, anyFilter.playerPredicate()))
+                                    gameData, pending.controllerId(), id, anyFilter.playerPredicate(), null,
+                                    pending.triggeringPlayerId()))
                             .toList();
                 } else if (pending.targetFilter() instanceof PlayerPredicateTargetFilter playerFilter) {
                     validPlayerTargets = gameData.orderedPlayerIds.stream()
                             .filter(id -> targetLegalityService.matchesPlayerPredicate(
-                                    gameData, pending.controllerId(), id, playerFilter.predicate()))
+                                    gameData, pending.controllerId(), id, playerFilter.predicate(), null,
+                                    pending.triggeringPlayerId()))
                             .toList();
                 } else {
                     validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
                 }
             } else if (pending.playerTargetOnly()) {
-                // Player-only triggers (e.g. Abundant Maw "target opponent") honour PlayerPredicateTargetFilter.
+                // Player-only triggers (e.g. Abundant Maw "target opponent") honour PlayerPredicateTargetFilter, with
+                // the player the event was about for "another target player" (The Lord of Pain).
                 validPlayerTargets = validTargetService.filterValidPlayerTargets(
-                        gameData, pending.targetFilter(), gameData.orderedPlayerIds, pending.controllerId());
+                        gameData, pending.targetFilter(), gameData.orderedPlayerIds, pending.controllerId(), null,
+                        pending.triggeringPlayerId());
                 if (validPlayerTargets.isEmpty()) {
                     gameData.pollPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
                     log.info("Game {} - {} spell-target trigger skipped (no valid player targets)",
@@ -1826,7 +1830,8 @@ public class TriggeredAbilityQueueService {
                 }
             } else if (pending.targetFilter() instanceof AnyTargetPredicateTargetFilter) {
                 validPlayerTargets = validTargetService.filterValidPlayerTargets(
-                        gameData, pending.targetFilter(), gameData.orderedPlayerIds, pending.controllerId());
+                        gameData, pending.targetFilter(), gameData.orderedPlayerIds, pending.controllerId(), null,
+                        pending.triggeringPlayerId());
                 if (pending.optionalTarget() && !validPlayerTargets.contains(pending.controllerId())) {
                     validPlayerTargets = new ArrayList<>(validPlayerTargets);
                     validPlayerTargets.add(pending.controllerId());

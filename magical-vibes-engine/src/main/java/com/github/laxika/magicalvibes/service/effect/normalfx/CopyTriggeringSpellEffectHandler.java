@@ -44,7 +44,9 @@ public class CopyTriggeringSpellEffectHandler implements NormalEffectHandlerBean
             // The spell left the stack: it is copied as it last existed there (CR 608.2h).
             spell = entry.getTriggeringSpellSnapshot();
         }
-        if (spell == null || spell.isCopy()) return;
+        // A copy is copied too when it is the triggering spell: a countered copy of Trial and Error triggers its own
+        // "copy it" (a cast trigger's spell is never a copy).
+        if (spell == null) return;
 
         Card spellCard = spell.getCard();
         if (spellCard.isCantBeCopied()) {
@@ -70,7 +72,8 @@ public class CopyTriggeringSpellEffectHandler implements NormalEffectHandlerBean
                     triggeringSpellEffect.grantHasteToPermanentSpell(), false, false,
                     triggeringSpellEffect.permanentSpellToken(), triggeringSpellEffect.sacrificeAtEndStep(),
                     triggeringSpellEffect.additionalSubtypes(), triggeringSpellEffect.powerOverride(),
-                    triggeringSpellEffect.toughnessOverride(), triggeringSpellEffect.copies()));
+                    triggeringSpellEffect.toughnessOverride(), triggeringSpellEffect.copies(),
+                    triggeringSpellEffect.dynamicCopies()));
             return;
         }
 

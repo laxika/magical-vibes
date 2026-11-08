@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 
 import java.util.List;
 import java.util.Set;
@@ -32,13 +33,16 @@ import java.util.Set;
  * @param powerOverride              the copy's base power, or {@code null} to keep the spell's
  * @param toughnessOverride          the copy's base toughness, or {@code null} to keep the spell's
  * @param copies                     how many copies the ability creates as one copy event ("copy it twice")
+ * @param dynamicCopies              when set, how many copies, counted as the ability resolves ("copy it for each other
+ *                                   instant and sorcery spell you've cast before it this turn"); no copy is made when
+ *                                   it is zero or less, and {@code copies} is then unused
  */
 public record CopyTriggeringSpellEffect(boolean tokenCopy, boolean retargetToSource, boolean mayChooseNewTargets,
                                         boolean permanentSpellToken, boolean grantHasteToPermanentSpell,
                                         boolean sacrificeAtEndStep, Set<Keyword> grantedKeywords,
                                         Set<CardType> additionalTypes, Set<CardSupertype> removedSupertypes,
                                         List<CardSubtype> additionalSubtypes, Integer powerOverride,
-                                        Integer toughnessOverride, int copies)
+                                        Integer toughnessOverride, int copies, DynamicAmount dynamicCopies)
         implements TriggeringSpellReferencingEffect {
 
     public CopyTriggeringSpellEffect {
@@ -65,7 +69,7 @@ public record CopyTriggeringSpellEffect(boolean tokenCopy, boolean retargetToSou
 
     public CopyTriggeringSpellEffect(boolean tokenCopy, boolean retargetToSource, boolean mayChooseNewTargets) {
         this(tokenCopy, retargetToSource, mayChooseNewTargets, false, false, false, Set.of(), Set.of(), Set.of(),
-                List.of(), null, null, 1);
+                List.of(), null, null, 1, null);
     }
 
     /** Creates a copy that is controlled by the trigger's controller and targets its source. */
@@ -77,49 +81,49 @@ public record CopyTriggeringSpellEffect(boolean tokenCopy, boolean retargetToSou
     public CopyTriggeringSpellEffect withoutNewTargetChoice() {
         return new CopyTriggeringSpellEffect(tokenCopy, retargetToSource, false, permanentSpellToken,
                 grantHasteToPermanentSpell, sacrificeAtEndStep, grantedKeywords, additionalTypes, removedSupertypes,
-                additionalSubtypes, powerOverride, toughnessOverride, copies);
+                additionalSubtypes, powerOverride, toughnessOverride, copies, dynamicCopies);
     }
 
     /** The same copy effect, a copy of a permanent spell becoming a token. */
     public CopyTriggeringSpellEffect permanentSpellCopiesAreTokens() {
         return new CopyTriggeringSpellEffect(tokenCopy, retargetToSource, mayChooseNewTargets, true,
                 grantHasteToPermanentSpell, sacrificeAtEndStep, grantedKeywords, additionalTypes, removedSupertypes,
-                additionalSubtypes, powerOverride, toughnessOverride, copies);
+                additionalSubtypes, powerOverride, toughnessOverride, copies, dynamicCopies);
     }
 
     /** The same copy effect, a copy of a permanent spell gaining haste. */
     public CopyTriggeringSpellEffect permanentSpellCopiesGainHaste() {
         return new CopyTriggeringSpellEffect(tokenCopy, retargetToSource, mayChooseNewTargets, permanentSpellToken,
                 true, sacrificeAtEndStep, grantedKeywords, additionalTypes, removedSupertypes, additionalSubtypes,
-                powerOverride, toughnessOverride, copies);
+                powerOverride, toughnessOverride, copies, dynamicCopies);
     }
 
     /** The same copy effect, a token copy having "At the beginning of the end step, sacrifice this permanent". */
     public CopyTriggeringSpellEffect sacrificedAtEndStep() {
         return new CopyTriggeringSpellEffect(tokenCopy, retargetToSource, mayChooseNewTargets, permanentSpellToken,
                 grantHasteToPermanentSpell, true, grantedKeywords, additionalTypes, removedSupertypes,
-                additionalSubtypes, powerOverride, toughnessOverride, copies);
+                additionalSubtypes, powerOverride, toughnessOverride, copies, dynamicCopies);
     }
 
     /** The same copy effect, the copied spell and the copy gaining {@code keywords} ("those spells gain wither"). */
     public CopyTriggeringSpellEffect withGrantedKeywords(Set<Keyword> keywords) {
         return new CopyTriggeringSpellEffect(tokenCopy, retargetToSource, mayChooseNewTargets, permanentSpellToken,
                 grantHasteToPermanentSpell, sacrificeAtEndStep, keywords, additionalTypes, removedSupertypes,
-                additionalSubtypes, powerOverride, toughnessOverride, copies);
+                additionalSubtypes, powerOverride, toughnessOverride, copies, dynamicCopies);
     }
 
     /** The same copy effect, the copy having {@code types} in addition to its other types. */
     public CopyTriggeringSpellEffect withAdditionalTypes(Set<CardType> types) {
         return new CopyTriggeringSpellEffect(tokenCopy, retargetToSource, mayChooseNewTargets, permanentSpellToken,
                 grantHasteToPermanentSpell, sacrificeAtEndStep, grantedKeywords, types, removedSupertypes,
-                additionalSubtypes, powerOverride, toughnessOverride, copies);
+                additionalSubtypes, powerOverride, toughnessOverride, copies, dynamicCopies);
     }
 
     /** The same copy effect, the copy not having {@code supertypes} ("except the copy isn't legendary"). */
     public CopyTriggeringSpellEffect withoutSupertypes(Set<CardSupertype> supertypes) {
         return new CopyTriggeringSpellEffect(tokenCopy, retargetToSource, mayChooseNewTargets, permanentSpellToken,
                 grantHasteToPermanentSpell, sacrificeAtEndStep, grantedKeywords, additionalTypes, supertypes,
-                additionalSubtypes, powerOverride, toughnessOverride, copies);
+                additionalSubtypes, powerOverride, toughnessOverride, copies, dynamicCopies);
     }
 
     /**
@@ -129,13 +133,23 @@ public record CopyTriggeringSpellEffect(boolean tokenCopy, boolean retargetToSou
     public CopyTriggeringSpellEffect asAdditionally(List<CardSubtype> subtypes, int power, int toughness) {
         return new CopyTriggeringSpellEffect(tokenCopy, retargetToSource, mayChooseNewTargets, permanentSpellToken,
                 grantHasteToPermanentSpell, sacrificeAtEndStep, grantedKeywords, additionalTypes, removedSupertypes,
-                subtypes, power, toughness, copies);
+                subtypes, power, toughness, copies, dynamicCopies);
     }
 
     /** The same copy effect, creating {@code copies} copies as one copy event ("copy it twice"). */
     public CopyTriggeringSpellEffect withCopies(int copies) {
         return new CopyTriggeringSpellEffect(tokenCopy, retargetToSource, mayChooseNewTargets, permanentSpellToken,
                 grantHasteToPermanentSpell, sacrificeAtEndStep, grantedKeywords, additionalTypes, removedSupertypes,
-                additionalSubtypes, powerOverride, toughnessOverride, copies);
+                additionalSubtypes, powerOverride, toughnessOverride, copies, null);
+    }
+
+    /**
+     * The same copy effect, creating as many copies as {@code copies} counts as the ability resolves, as one copy event
+     * ("copy it for each other instant and sorcery spell you've cast before it this turn"); none when it counts zero.
+     */
+    public CopyTriggeringSpellEffect withCopies(DynamicAmount copies) {
+        return new CopyTriggeringSpellEffect(tokenCopy, retargetToSource, mayChooseNewTargets, permanentSpellToken,
+                grantHasteToPermanentSpell, sacrificeAtEndStep, grantedKeywords, additionalTypes, removedSupertypes,
+                additionalSubtypes, powerOverride, toughnessOverride, 1, copies);
     }
 }

@@ -235,6 +235,7 @@ import com.github.laxika.magicalvibes.model.amount.SourceIntensity;
 import com.github.laxika.magicalvibes.model.amount.SourceManaValueMinusOne;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.SourceToughness;
+import com.github.laxika.magicalvibes.model.amount.SpellsCastBeforeTriggeringSpellThisTurn;
 import com.github.laxika.magicalvibes.model.amount.SpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.amount.SpellsCastSinceBeginningOfLastTurn;
 import com.github.laxika.magicalvibes.model.amount.SpellsCastFromOutsideHandThisTurn;
@@ -861,6 +862,8 @@ public class AmountEvaluationService {
                     countLifeLostThisTurn(gameData, c, ctx);
             case SpellsCastThisTurn c ->
                     countSpellsCastThisTurn(gameData, c, ctx);
+            case SpellsCastBeforeTriggeringSpellThisTurn c ->
+                    countSpellsCastBeforeTriggeringSpell(gameData, c, ctx);
             case SpellsCastSinceBeginningOfLastTurn c ->
                     countSpellsCastSinceBeginningOfLastTurn(gameData, c, ctx);
             case SpellsCastFromOutsideHandThisTurn c ->
@@ -3341,6 +3344,31 @@ public class AmountEvaluationService {
                         spell, count.filter(), i == sourceSpellIndex ? sourceCardId : null, gameData, playerId)) {
                     total++;
                 }
+            }
+        }
+        return total;
+    }
+
+    /**
+     * The matching spells the triggering spell's caster cast this turn before it: those ahead of the place the stack
+     * entry kept for it among the caster's spells this turn as the ability triggered.
+     */
+    private int countSpellsCastBeforeTriggeringSpell(GameData gameData, SpellsCastBeforeTriggeringSpellThisTurn count,
+                                                     AmountContext ctx) {
+        StackEntry entry = ctx.stackEntry();
+        StackEntry spell = entry == null ? null : entry.getTriggeringSpellSnapshot();
+        if (spell == null || spell.getControllerId() == null || entry.getTriggeringSpellCastIndex() < 0) {
+            return 0;
+        }
+        UUID casterId = spell.getControllerId();
+        List<Card> spells = new ArrayList<>(gameData.getSpellsCastThisTurn(casterId));
+        int before = Math.min(entry.getTriggeringSpellCastIndex(), spells.size());
+        int total = 0;
+        for (Card earlier : spells.subList(0, before)) {
+            if (count.filter() == null
+                    || predicateEvaluationService.matchesCardPredicate(earlier, count.filter(), null, gameData,
+                    casterId)) {
+                total++;
             }
         }
         return total;

@@ -226,6 +226,7 @@ public sealed interface DynamicAmount permits
         SourcePower,
         SourceToughness,
         SpellsCastThisTurn,
+        SpellsCastBeforeTriggeringSpellThisTurn,
         SpellsCastSinceBeginningOfLastTurn,
         SpellsCastFromOutsideHandThisTurn,
         Sum,

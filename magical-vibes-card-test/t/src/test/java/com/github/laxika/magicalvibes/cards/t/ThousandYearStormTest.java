@@ -179,4 +179,28 @@ class ThousandYearStormTest extends BaseCardTest {
         harness.assertLife(player1, 17);
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("An instant cast in response to the ability adds no copy of the spell cast before it")
+    void spellCastInResponseIsNotCountedForAnEarlierSpell() {
+        harness.addToBattlefield(player1, new ThousandYearStorm());
+        gd.recordSpellCast(player1.getId(), new Divination());
+        harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        // The first Bolt has one instant or sorcery before it (one copy); the second, cast in response, has two.
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castInstant(player1, 0, player2.getId());
+        for (int step = 0; step < 30 && (!gd.stack.isEmpty() || gd.interaction.isAwaitingInput()); step++) {
+            if (gd.interaction.isAwaitingInput()) {
+                harness.handleMayAbilityChosen(player1, false);
+            } else {
+                harness.passBothPriorities();
+            }
+        }
+
+        // Two Bolts and three copies: 15 damage.
+        harness.assertLife(player2, 5);
+        assertThat(gd.stack).isEmpty();
+    }
 }

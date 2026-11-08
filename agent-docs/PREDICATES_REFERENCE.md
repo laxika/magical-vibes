@@ -456,7 +456,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `PlayerRelationPredicate` | `(PlayerRelation)` | player by relation. `PlayerRelation`: `OPPONENT`, `SELF` |
 | `PlayerIdPredicate` | `(UUID)` | exactly the specified player; useful after an effect has randomly selected a player |
 | `PlayerIsActiveOpponentPredicate` | `()` | opponent who is currently the active player |
-| `PlayerOtherThanPredicate` | `(UUID excludedPlayerId)` | any player other than the specified player; useful for "another target player" triggers |
+| `PlayerOtherThanTriggeringPlayerPredicate` | `()` | any player other than the one the triggered ability's event was about: the target choice's triggering player as the target is chosen, the stack entry's (`StackEntry.triggeringPlayerId`) as it resolves; a cast trigger's is the caster. "Choose another target player" (The Lord of Pain); matches nobody without one |
 | `PlayerOtherThanSourceOwnerPredicate` | `()` | any player other than the owner of the ability's source permanent; source-relative |
 | `PlayerDealtDamageThisTurnPredicate` | `()` | players dealt damage this turn (evaluated against `GameData.playersDealtDamageThisTurn`). Player-side counterpart of `PermanentDealtDamageThisTurnPredicate`; pair them in an `AnyTargetPredicateTargetFilter` for "any target that was dealt damage this turn" |
 | `PlayerCastSorceryThisTurnPredicate` | `()` | players who cast at least one sorcery spell this turn (evaluated against `GameData.getSpellsCastThisTurn`). Used by Backdraft's player target |

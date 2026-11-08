@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithTriggeringSpellPredicate;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.SpellsCastBeforeTriggeringSpellThisTurn;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
@@ -41,7 +42,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchZonesForCardNamedToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnOnSpellCastEffect;
-import com.github.laxika.magicalvibes.model.effect.CopySpellForEachPriorInstantOrSorceryEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -51,7 +51,6 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCardsFromGra
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
-import com.github.laxika.magicalvibes.model.effect.FirstSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -78,14 +77,13 @@ import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSameNameCardsFromGraveyardsToBattlefieldOnCreatureSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.StormCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceIsAttacking;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PlayerOtherThanPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerOtherThanTriggeringPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -212,32 +210,33 @@ class SpellCastTriggerCollectorServiceTest {
     }
 
     @Nested
-    @DisplayName("ON_ANY_PLAYER_CASTS_SPELL — FirstSpellCastTriggerEffect")
+    @DisplayName("a first-spell-each-turn cast trigger choosing another target player")
     class FirstSpellCastTrigger {
 
+        /** The Lord of Pain's ability: "their first spell each turn", "choose another target player". */
+        private CastAbility lordOfPainAbility() {
+            SpellTrigger trigger = Triggers.playerCastsSpell().nthThisTurn(1);
+            return new CastAbility(trigger.filter(),
+                    List.of(new DealDamageToPlayersEffect(new TargetSpellManaValue(), DamageRecipient.TARGET_PLAYER)),
+                    null, new PlayerPredicateTargetFilter(new PlayerOtherThanTriggeringPlayerPredicate(),
+                            "Target must be another player"));
+        }
+
         @Test
-        @DisplayName("tracks the first spell independently for each player and excludes its caster")
-        void tracksEachPlayerIndependentlyAndExcludesCaster() {
+        @DisplayName("tracks the first spell independently for each player, its target choice knowing the caster")
+        void tracksEachPlayerIndependentlyAndCarriesTheCaster() {
             Permanent perm = createPermanent("The Lord of Pain");
-            var effect = new FirstSpellCastTriggerEffect(List.of(
-                    new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.TARGET_PLAYER)));
+            CastAbility ability = lordOfPainAbility();
             Card player1Spell = createCard("Player 1 Spell");
-            player1Spell.setManaCost("{1}{G}");
             Card player2Spell = createCard("Player 2 Spell");
-            player2Spell.setManaCost("{2}");
-            when(predicateEvaluationService.matchesCardPredicate(
-                    any(Card.class), isNull(), any(UUID.class), eq(gd), any(UUID.class), isNull(), isNull(), any()))
-                    .thenReturn(true);
+            everySpellMatches();
 
             gd.recordSpellCast(player1Id, player1Spell);
-            boolean player1Result = registry.dispatch(
-                    match(perm, player1Id, effect), SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect,
-                    new TriggerContext.SpellCast(player1Spell, player1Id, true));
-
+            boolean player1Result = sut.collectCastAbility(match(perm, player1Id, ability), ability,
+                    new TriggerContext.SpellCast(player1Spell, player1Id, true), false);
             gd.recordSpellCast(player2Id, player2Spell);
-            boolean player2Result = registry.dispatch(
-                    match(perm, player1Id, effect), SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect,
-                    new TriggerContext.SpellCast(player2Spell, player2Id, true));
+            boolean player2Result = sut.collectCastAbility(match(perm, player1Id, ability), ability,
+                    new TriggerContext.SpellCast(player2Spell, player2Id, true), false);
 
             assertThat(player1Result).isTrue();
             assertThat(player2Result).isTrue();
@@ -245,44 +244,28 @@ class SpellCastTriggerCollectorServiceTest {
                     .filter(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class::isInstance)
                     .map(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class::cast)
                     .toList();
-            assertThat(pending).hasSize(2);
-            assertThat(pending).extracting(PermanentChoiceContext.SpellTargetTriggerAnyTarget::triggeringSpellManaValue)
-                    .containsExactly(2, 2);
-            assertThat(pending).allSatisfy(queued -> {
-                assertThat(queued.targetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-                var filter = (PlayerPredicateTargetFilter) queued.targetFilter();
-                assertThat(filter.predicate()).isInstanceOf(PlayerOtherThanPredicate.class);
-            });
-            assertThat(pending).anySatisfy(queued -> assertThat(
-                    ((PlayerOtherThanPredicate) ((PlayerPredicateTargetFilter) queued.targetFilter()).predicate())
-                            .excludedPlayerId()).isEqualTo(player1Id));
-            assertThat(pending).anySatisfy(queued -> assertThat(
-                    ((PlayerOtherThanPredicate) ((PlayerPredicateTargetFilter) queued.targetFilter()).predicate())
-                            .excludedPlayerId()).isEqualTo(player2Id));
+            assertThat(pending).extracting(PermanentChoiceContext.SpellTargetTriggerAnyTarget::triggeringPlayerId)
+                    .containsExactly(player1Id, player2Id);
+            assertThat(pending).allSatisfy(queued -> assertThat(queued.targetFilter())
+                    .isEqualTo(ability.targetFilter()));
         }
 
         @Test
         @DisplayName("does not trigger for a player's later spell")
         void ignoresLaterSpell() {
             Permanent perm = createPermanent("The Lord of Pain");
-            var effect = new FirstSpellCastTriggerEffect(List.of(
-                    new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.TARGET_PLAYER)));
+            CastAbility ability = lordOfPainAbility();
             Card firstSpell = createCard("First Spell");
-            firstSpell.setManaCost("{1}");
             Card secondSpell = createCard("Second Spell");
-            secondSpell.setManaCost("{2}");
-            when(predicateEvaluationService.matchesCardPredicate(
-                    any(Card.class), isNull(), any(UUID.class), eq(gd), any(UUID.class), isNull(), isNull(), any()))
-                    .thenReturn(true);
+            everySpellMatches();
 
             gd.recordSpellCast(player1Id, firstSpell);
-            registry.dispatch(match(perm, player1Id, effect), SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect,
-                    new TriggerContext.SpellCast(firstSpell, player1Id, true));
+            sut.collectCastAbility(match(perm, player1Id, ability), ability,
+                    new TriggerContext.SpellCast(firstSpell, player1Id, true), false);
             gd.recordSpellCast(player1Id, secondSpell);
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect), SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect,
-                    new TriggerContext.SpellCast(secondSpell, player1Id, true));
+            boolean result = sut.collectCastAbility(match(perm, player1Id, ability), ability,
+                    new TriggerContext.SpellCast(secondSpell, player1Id, true), false);
 
             assertThat(result).isFalse();
             assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class::isInstance)
@@ -1877,49 +1860,30 @@ class SpellCastTriggerCollectorServiceTest {
     }
 
     @Nested
-    @DisplayName("ON_CONTROLLER_CASTS_SPELL — CopySpellForEachPriorInstantOrSorceryEffect")
-    class ControllerCopySpellForEachPriorInstantOrSorcery {
+    @DisplayName("a cast trigger counting the spells cast before the triggering spell")
+    class CastTriggerRecordsTriggeringSpellCastIndex {
 
         @Test
-        @DisplayName("counts only prior matching spells cast by the controller")
-        void countsOnlyPriorControllerInstantsAndSorceries() {
+        @DisplayName("keeps the triggering spell's place among its caster's spells cast this turn")
+        void keepsTheTriggeringSpellsPlaceAmongItsCastersSpells() {
             Permanent perm = createPermanent("Thousand-Year Storm");
-            var effect = new CopySpellForEachPriorInstantOrSorceryEffect();
-            Card priorInstant = createInstant("Prior Instant");
+            var ability = castAbility(Triggers.youCastSpell().anySpell(), new CopyTriggeringSpellEffect()
+                    .withCopies(new SpellsCastBeforeTriggeringSpellThisTurn(null)));
             Card currentSpell = createInstant("Current Spell");
-            gd.recordSpellCast(player1Id, priorInstant);
-            gd.recordSpellCast(player1Id, createCard("Creature Spell"));
+            gd.recordSpellCast(player1Id, currentSpell);
+            gd.recordSpellCast(player1Id, createInstant("Prior Instant"));
             gd.recordSpellCast(player2Id, createInstant("Opponent Instant"));
             gd.recordSpellCast(player1Id, currentSpell);
             gd.stack.add(new StackEntry(currentSpell, player1Id));
-            var ctx = new TriggerContext.SpellCast(currentSpell, player1Id, true);
+            everySpellMatches();
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+            boolean result = sut.collectCastAbility(match(perm, player1Id, ability), ability,
+                    new TriggerContext.SpellCast(currentSpell, player1Id, true), false);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(2);
-            var copyEffect = (StormCopyEffect) gd.stack.getLast().getEffectsToResolve().getFirst();
-            assertThat(copyEffect.copies()).isEqualTo(1);
-            assertThat(copyEffect.spellSnapshot().getCard()).isSameAs(currentSpell);
-        }
-
-        @Test
-        @DisplayName("does not trigger for a creature spell")
-        void ignoresCreatureSpell() {
-            Permanent perm = createPermanent("Thousand-Year Storm");
-            var effect = new CopySpellForEachPriorInstantOrSorceryEffect();
-            Card creatureSpell = createCard("Creature Spell");
-            gd.stack.add(new StackEntry(creatureSpell, player1Id));
-            var ctx = new TriggerContext.SpellCast(creatureSpell, player1Id, true);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
-
-            assertThat(result).isFalse();
-            assertThat(gd.stack).hasSize(1);
+            // The card's latest casting, the one that triggered the ability.
+            assertThat(gd.stack.getLast().getTriggeringSpellCastIndex()).isEqualTo(2);
         }
     }
 

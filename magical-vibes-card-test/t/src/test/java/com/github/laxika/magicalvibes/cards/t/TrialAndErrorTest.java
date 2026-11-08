@@ -140,4 +140,31 @@ class TrialAndErrorTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(entry -> entry.plainText()))
                 .anyMatch(log -> log.contains("fizzles"));
     }
+
+    @Test
+    void mayCopyTheCopyWhenTheCopyFizzles() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TrialAndError()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, bears.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(bears);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        // The copy keeps the Bears as its target, so it fizzles too and its own ability triggers.
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 }
