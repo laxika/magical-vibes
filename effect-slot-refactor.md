@@ -14427,6 +14427,19 @@ were edited by hand.
   `dc54b2f1ae`); its stub now takes the X.
 - `TargetLegalityServiceTest`: two cases for `StackEntryHasOneTargetPredicate`.
 
+**Test runs.**
+
+- Card: the focused set first (the ten converted cards, every card test that builds one of them, and Radiant
+  Performer and Radiate, the other two cards that construct a changed effect: 14 classes, 137 cases, all passing); then
+  the test class of every card with a `Triggers.playerCastsSpell()` or `opponentCastsSpell()` trigger or a cast
+  trigger's `withStackEntryFilter` (386 classes, 3,242 cases): all passing, the new Ink-Treader Nephilim case among
+  them.
+- Application, engine and AI: the whole modules: application 609 of 5,014 (14 cases fewer: the 16 deleted
+  `SpellCastTriggerCollectorServiceTest` cases, the two new `TargetLegalityServiceTest` cases), engine 1
+  (`GameMutationBoundaryRatchetTest`), AI 10 of 1,623. Diffed per case against run 17w3's tree (in a worktree, 610 of
+  5,028): none new; `CopySpellForEachOtherCreatureEffectHandlerTest`'s copy case, which failed there, passes.
+- The full suite was not run here.
+
 ## Prompt
 
 Replace `<N>` with the step number:
