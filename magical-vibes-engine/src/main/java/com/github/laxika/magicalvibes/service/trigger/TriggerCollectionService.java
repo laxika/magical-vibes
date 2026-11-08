@@ -144,11 +144,9 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEff
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfCasualtyPaidEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForXValueEffect;
 import com.github.laxika.magicalvibes.model.effect.DemonstrateEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
-import com.github.laxika.magicalvibes.model.effect.ReplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.NextMatchingSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCastTriggerToSpellsEffect;
@@ -176,10 +174,6 @@ import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityE
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.ReselectTargetAtRandomEffect;
-import com.github.laxika.magicalvibes.model.effect.StormCopyEffect;
-import com.github.laxika.magicalvibes.model.effect.OtherInstantsAndSorceriesCastCountEffect;
-import com.github.laxika.magicalvibes.model.effect.StormEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfWhenChosenPermanentLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -201,6 +195,8 @@ import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsCo
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringSpellWithSuspendCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
+import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.effect.CounterOpponentFirstSpellEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -1134,28 +1130,6 @@ public class TriggerCollectionService {
                             (source != null ? source.getName() : "Emblem")
                                     + "'s emblem triggers — choose target opponent."));
                     log.info("Game {} - emblem mill trigger queued", gameData.id);
-                } else if (effect instanceof StormEffect storm) {
-                    if (!emblem.controllerId().equals(castingPlayerId)) continue;
-                    if (storm.instantOrSorceryOnly()
-                            && !spellCard.hasType(CardType.INSTANT)
-                            && !spellCard.hasType(CardType.SORCERY)) {
-                        continue;
-                    }
-                    StackEntry spellEntry = gameData.stack.stream()
-                            .filter(entry -> entry.getTargetableId().equals(spellCard.getId()))
-                            .findFirst().orElse(null);
-                    if (spellEntry == null) continue;
-                    int copies = Math.max(0, gameData.getTotalSpellsCastThisTurnCount() - 1);
-                    Card source = emblem.sourceCard();
-                    Card sourceCard = source != null ? source : spellCard;
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            sourceCard,
-                            emblem.controllerId(),
-                            sourceCard.getName() + "'s emblem",
-                            new ArrayList<>(List.of(new StormCopyEffect(
-                                    new StackEntry(spellEntry), castingPlayerId, copies,
-                                    storm.tokenCopy(), storm.removeLegendary())))));
                 } else if (effect instanceof DealDamageToAnyTargetOnControllerSpellCastEffect damageTrigger) {
                     if (!emblem.controllerId().equals(castingPlayerId)) continue;
                     if (damageTrigger.spellFilter() != null
@@ -1549,7 +1523,8 @@ public class TriggerCollectionService {
             }
             if (spellEntry != null) {
                 for (int i = 0; i < pendingStorms; i++) {
-                    queueStormTrigger(gameData, spellCard, castingPlayerId, spellEntry, false, false);
+                    queueGrantedStorm(gameData, spellCard, castingPlayerId, spellCard.getName() + "'s ability",
+                            spellEntry, null, CopyTriggeringSpellEffect.storm());
                 }
                 gameData.pendingNextInstantSorceryStormThisTurnCount.remove(castingPlayerId);
                 log.info("Game {} - {} delayed Storm grant(s) applied to {}",
@@ -1751,15 +1726,21 @@ public class TriggerCollectionService {
         // (their options judged as they trigger) and the targeted ones perpetually granted to it.
         List<CardEffect> selfCastEffects = new ArrayList<>();
         if (spellCard.getManaCost() != null) {
+            // A granted replicate (CR 702.56a): "When you cast this spell, if a replicate cost was paid for it, copy it
+            // for each time its replicate cost was paid", its intervening "if" judged here and again as it resolves.
+            // The spell's own replicate with the same cost counts the same payments, so it triggers alone.
+            StackEntry replicatedSpell = findStackEntryByCardId(gameData, spellCard.getId());
             gameQueryService.getSpellCastingAbilityGrantValues(
                             gameData, castingPlayerId, spellCard, Keyword.REPLICATE, castZone).stream()
                     .map(value -> value > 0 ? "{" + value + "}" : spellCard.getManaCost())
                     .distinct()
                     .filter(replicateCost -> spellCard.getTriggerEffects(SpellAbilityWatch.ON_SELF_CAST.trigger(),
                                     SpellAbilityWatch.ON_SELF_CAST.zone()).stream()
-                            .noneMatch(effect -> effect instanceof ReplicateEffect replicate
-                                    && replicateCost.equals(replicate.manaCost())))
-                    .map(ReplicateEffect::new)
+                            .noneMatch(effect -> countsReplicatePayments(effect, replicateCost)))
+                    .filter(replicateCost -> replicatedSpell != null
+                            && replicatedSpell.getRepeatedAdditionalCosts().contains(replicateCost))
+                    .map(replicateCost -> new ConditionalEffect(new RepeatedAdditionalCostPaid(replicateCost),
+                            new CopyTriggeringSpellEffect().withCopies(new RepeatedAdditionalCostCount(replicateCost))))
                     .forEach(selfCastEffects::add);
         }
 
@@ -1996,29 +1977,16 @@ public class TriggerCollectionService {
                     List<CardEffect> grantEffects = castTriggerGrants(perm, SpellCastTriggerGrant.STORM_TO_INSTANT_OR_SORCERY);
                     if (grantEffects.isEmpty()) continue;
 
-                    StackEntry spellEntry = null;
-                    for (StackEntry se : gameData.stack) {
-                        if (se.getTargetableId().equals(spellCard.getId())) {
-                            spellEntry = se;
-                            break;
-                        }
-                    }
+                    StackEntry spellEntry = findStackEntryByCardId(gameData, spellCard.getId());
                     if (spellEntry == null) continue;
 
-                    int copies = gameData.getTotalSpellsCastThisTurnCount() - 1;
-                    StackEntry snapshot = new StackEntry(spellEntry);
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            castingPlayerId,
-                            perm.getCard().getName() + "'s ability",
-                            new ArrayList<>(List.of(new StormCopyEffect(snapshot, castingPlayerId, copies))),
-                            0,
-                            perm.getId()
-                    ));
+                    for (CardEffect grantedStorm : grantEffects) {
+                        queueGrantedStorm(gameData, perm.getCard(), castingPlayerId,
+                                perm.getCard().getName() + "'s ability", spellEntry, perm.getId(), grantedStorm);
+                    }
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                    log.info("Game {} - {} grants Storm to {} ({} copies) for {}",
-                            gameData.id, perm.getCard().getName(), spellCard.getName(), copies, castingPlayerId);
+                    log.info("Game {} - {} grants Storm to {} for {}",
+                            gameData.id, perm.getCard().getName(), spellCard.getName(), castingPlayerId);
                 }
             }
         }
@@ -2039,32 +2007,36 @@ public class TriggerCollectionService {
                 .toList();
     }
 
-    private void queueStormTrigger(GameData gameData, Card spellCard, UUID castingPlayerId,
-                                   StackEntry spellEntry, boolean instantOrSorceryOnly, boolean tokenCopy) {
-        queueStormTrigger(gameData, spellCard, castingPlayerId, spellEntry,
-                instantOrSorceryOnly, tokenCopy, false);
+    /**
+     * Puts a storm trigger an effect gave {@code spellEntry}, the spell just cast, on the stack (CR 702.40a): the granted
+     * {@code effect} as written, with that spell as its triggering spell and the spell's places in the turn's cast
+     * order, from which its copy count is read as it resolves.
+     */
+    private void queueGrantedStorm(GameData gameData, Card sourceCard, UUID controllerId, String description,
+                                   StackEntry spellEntry, UUID sourcePermanentId, CardEffect effect) {
+        StackEntry stormTrigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId, description,
+                new ArrayList<>(List.of(effect)), 0, sourcePermanentId);
+        recordTriggeringSpell(gameData, stormTrigger, spellEntry);
+        gameData.stack.add(stormTrigger);
+        log.info("Game {} - granted Storm trigger queued for {}", gameData.id, spellEntry.getCard().getName());
     }
 
-    private void queueStormTrigger(GameData gameData, Card spellCard, UUID castingPlayerId,
-                                   StackEntry spellEntry, boolean instantOrSorceryOnly,
-                                   boolean tokenCopy, boolean removeLegendary) {
-        int copies = Math.max(0, instantOrSorceryOnly
-                ? (int) gameData.getSpellsCastThisTurn(castingPlayerId).stream()
-                        .filter(card -> card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
-                        .count() - 1
-                : gameData.getTotalSpellsCastThisTurnCount() - 1);
-        gameData.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                spellCard,
-                castingPlayerId,
-                spellCard.getName() + "'s ability",
-                new ArrayList<>(List.of(new StormCopyEffect(
-                        new StackEntry(spellEntry), castingPlayerId, copies, tokenCopy,
-                        removeLegendary,
-                        instantOrSorceryOnly ? new OtherInstantsAndSorceriesCastCountEffect() : null)))
-        ));
-        log.info("Game {} - {} Storm trigger queued ({} copies) for {}",
-                gameData.id, spellCard.getName(), copies, castingPlayerId);
+    /**
+     * Records {@code spellEntry}, the spell just cast, as the triggering spell of {@code trigger}, one of the abilities
+     * its casting triggered that refers to it ("copy it", "copy this spell"): as it is now, kept as it last existed on
+     * the stack once it has left (CR 608.2h), with its places among its caster's spells and every player's spells
+     * this turn, and the cast facts its copy counts read (its X and repeatable additional cost payments).
+     * The ability doesn't target the spell.
+     */
+    private static void recordTriggeringSpell(GameData gameData, StackEntry trigger, StackEntry spellEntry) {
+        UUID spellId = spellEntry.getCard().getId();
+        trigger.setTriggeringCardId(spellId);
+        trigger.setTriggeringSpell(spellEntry);
+        trigger.setTriggeringSpellCastIndex(gameData.getSpellCastIndexThisTurn(spellEntry.getControllerId(), spellId));
+        trigger.setTriggeringSpellTurnCastIndex(gameData.getSpellCastOrdinalThisTurn(spellId) - 1);
+        trigger.setXValue(spellEntry.getXValue());
+        trigger.setRepeatedAdditionalCosts(List.copyOf(spellEntry.getRepeatedAdditionalCosts()));
+        trigger.setNonTargeting(true);
     }
 
     private int spellManaValue(GameData gameData, Card spellCard) {
@@ -2094,8 +2066,9 @@ public class TriggerCollectionService {
                 continue;
             }
             if (copiesThisSpell(effect)) {
-                // "Copy this spell" ("copy it if …", "you may copy it", Banish into Fable's two copies) is one
-                // object on the stack (CR 603.3) whose triggering spell is this spell: the copy is made from the
+                // "Copy this spell" ("copy it if …", "you may copy it", Banish into Fable's two copies, and the
+                // counted copies of storm, replicate, gravestorm and "copy it X times", whose count is read as the
+                // ability resolves) is one object on the stack (CR 603.3) whose triggering spell is this spell: the copy is made from the
                 // spell as the ability resolves, or as it last existed on the stack once it has left (CR 608.2h).
                 // Its options were judged as it triggered; an intervening "if" stays wrapped (CR 603.4) and a
                 // "you may" is asked as it resolves (CR 603.5).
@@ -2108,9 +2081,7 @@ public class TriggerCollectionService {
                         new ArrayList<>(List.of(effect))
                 );
                 copyTrigger.setSourceZone(castZone);
-                copyTrigger.setTriggeringCardId(spellCard.getId());
-                copyTrigger.setTriggeringSpell(selfCastSpellEntry);
-                copyTrigger.setNonTargeting(true);
+                recordTriggeringSpell(gameData, copyTrigger, selfCastSpellEntry);
                 gameData.stack.add(copyTrigger);
                 log.info("Game {} - {} self-cast copy trigger queued for {}",
                         gameData.id, spellCard.getName(), castingPlayerId);
@@ -2136,95 +2107,6 @@ public class TriggerCollectionService {
                 ));
                 log.info("Game {} - {} casualty copy trigger queued for {}",
                         gameData.id, spellCard.getName(), castingPlayerId);
-            } else if (effect instanceof CopyThisSpellForXValueEffect) {
-                StackEntry spellEntry = null;
-                for (StackEntry se : gameData.stack) {
-                    if (se.getTargetableId().equals(spellCard.getId())) {
-                        spellEntry = se;
-                        break;
-                    }
-                }
-                if (spellEntry == null) continue;
-
-                int copies = Math.max(0, spellEntry.getXValue());
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        spellCard,
-                        castingPlayerId,
-                        spellCard.getName() + "'s ability",
-                        new ArrayList<>(List.of(new StormCopyEffect(
-                                new StackEntry(spellEntry), castingPlayerId, copies, false)))
-                ));
-                log.info("Game {} - {} self-cast trigger queued ({} copies) for {}",
-                        gameData.id, spellCard.getName(), copies, castingPlayerId);
-            } else if (effect instanceof ReplicateEffect replicate) {
-                StackEntry spellEntry = null;
-                for (StackEntry se : gameData.stack) {
-                    if (se.getTargetableId().equals(spellCard.getId())) {
-                        spellEntry = se;
-                        break;
-                    }
-                }
-                if (spellEntry == null) continue;
-
-                int copies = replicate.tapFilter() != null
-                        ? Math.max(0, spellEntry.getXValue())
-                        : (int) spellEntry.getRepeatedAdditionalCosts().stream()
-                                .filter(replicate.manaCost()::equals)
-                                .count();
-                if (copies <= 0) continue;
-
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        spellCard,
-                        castingPlayerId,
-                        spellCard.getName() + "'s ability",
-                        new ArrayList<>(List.of(new StormCopyEffect(
-                                new StackEntry(spellEntry), castingPlayerId, copies, replicate.tokenCopy())))
-                ));
-                log.info("Game {} - {} replicate trigger queued ({} copies) for {}",
-                        gameData.id, spellCard.getName(), copies, castingPlayerId);
-            } else if (effect instanceof SpellCastCopyTriggerEffect copyTrigger) {
-                StackEntry spellEntry = null;
-                for (StackEntry se : gameData.stack) {
-                    if (se.getTargetableId().equals(spellCard.getId())) {
-                        spellEntry = se;
-                        break;
-                    }
-                }
-                if (spellEntry == null) continue;
-
-                int copies = copyTrigger.copyCount(gameData, castingPlayerId);
-                StackEntry snapshot = new StackEntry(spellEntry);
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        spellCard,
-                        castingPlayerId,
-                        spellCard.getName() + "'s ability",
-                        new ArrayList<>(List.of(new StormCopyEffect(
-                                snapshot, castingPlayerId, copies, copyTrigger.tokenCopy(), false,
-                                copyTrigger instanceof com.github.laxika.magicalvibes.model.effect.GravestormEffect
-                                        || copyTrigger instanceof com.github.laxika.magicalvibes.model.effect.CoststormEffect
-                                        || copyTrigger instanceof com.github.laxika.magicalvibes.model.effect.CopyThisSpellForEachCommanderCastEffect
-                                        || copyTrigger instanceof com.github.laxika.magicalvibes.model.effect.CopyThisSpellForEachCounterKindEffect
-                                        ? copyTrigger : null)))
-                ));
-                log.info("Game {} - {} spell-copy trigger queued ({} copies) for {}",
-                        gameData.id, spellCard.getName(), copies, castingPlayerId);
-            } else if (effect instanceof StormEffect storm) {
-                StackEntry spellEntry = null;
-                for (StackEntry se : gameData.stack) {
-                    if (se.getTargetableId().equals(spellCard.getId())) {
-                        spellEntry = se;
-                        break;
-                    }
-                }
-                if (spellEntry == null) continue;
-
-                // "for each spell cast before it this turn" — this spell is already recorded, so
-                // subtract it out. Count is fixed here (spells cast after can't precede this one).
-                queueStormTrigger(gameData, spellCard, castingPlayerId, spellEntry,
-                        storm.instantOrSorceryOnly(), storm.tokenCopy(), storm.removeLegendary());
             } else if (effect instanceof CascadeEffect) {
                 StackEntry cascadeTrigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
                         spellCard, castingPlayerId, spellCard.getName() + "'s cascade ability",
@@ -2335,6 +2217,16 @@ public class TriggerCollectionService {
                 }
             }
         }
+    }
+
+    /** Whether {@code effect} is a replicate copy counting the payments of {@code replicateCost}. */
+    private static boolean countsReplicatePayments(CardEffect effect, String replicateCost) {
+        return switch (effect) {
+            case CopyTriggeringSpellEffect copy -> copy.dynamicCopies() instanceof RepeatedAdditionalCostCount count
+                    && replicateCost.equals(count.manaCost());
+            case ConditionalEffect conditional -> countsReplicatePayments(conditional.wrapped(), replicateCost);
+            default -> false;
+        };
     }
 
     /**

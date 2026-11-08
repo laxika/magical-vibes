@@ -9,13 +9,14 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.StormEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -45,7 +46,10 @@ public class RalCracklingWit extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -10,
                 List.of(new DrawCardEffect(3), new CreateEmblemEffect(
-                        List.of(StormEffect.forInstantOrSorcery()),
+                        new TriggeredAbility(Triggers.youCastSpell().withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY)))),
+                                CopyTriggeringSpellEffect.storm()),
                         "Instant and sorcery spells you cast have storm.")),
                 "−10: Draw three cards. You get an emblem with \"Instant and sorcery spells you cast have storm.\""
         ));

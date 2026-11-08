@@ -36,6 +36,7 @@ class EchoStormTest extends BaseCardTest {
         Card commander = new ArcanisTheOmnipotent();
         gd.makeCommander(player1.getId(), commander);
         gd.commanderTaxByCardId.put(commander.getId(), 2);
+        gd.recordCommanderCastFromCommandZone(player1.getId());
 
         cast(fountain.getId());
 
@@ -51,6 +52,7 @@ class EchoStormTest extends BaseCardTest {
         Card commander = new ArcanisTheOmnipotent();
         gd.makeCommander(player1.getId(), commander);
         gd.commanderTaxByCardId.put(commander.getId(), 2);
+        gd.recordCommanderCastFromCommandZone(player1.getId());
 
         harness.setHand(player1, List.of(new EchoStorm()));
         addMana();
@@ -87,6 +89,7 @@ class EchoStormTest extends BaseCardTest {
 
         // Model a commander cast recorded while the cast trigger is still on the stack.
         gd.commanderTaxByCardId.put(commander.getId(), 2);
+        gd.recordCommanderCastFromCommandZone(player1.getId());
         resolveRemainingStack();
 
         assertThat(findPermanents(player1, "Fountain of Youth")).filteredOn(p -> p.getCard().isToken())
@@ -99,6 +102,9 @@ class EchoStormTest extends BaseCardTest {
         Card commander = new ArcanisTheOmnipotent();
         gd.makeCommander(player1.getId(), commander);
         gd.commanderTaxByCardId.put(commander.getId(), 6);
+        gd.recordCommanderCastFromCommandZone(player1.getId());
+        gd.recordCommanderCastFromCommandZone(player1.getId());
+        gd.recordCommanderCastFromCommandZone(player1.getId());
 
         cast(fountain.getId());
 

@@ -236,6 +236,8 @@ import com.github.laxika.magicalvibes.model.amount.SourceManaValueMinusOne;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.SourceToughness;
 import com.github.laxika.magicalvibes.model.amount.SpellsCastBeforeTriggeringSpellThisTurn;
+import com.github.laxika.magicalvibes.model.amount.PermanentsPutIntoGraveyardFromBattlefieldThisTurn;
+import com.github.laxika.magicalvibes.model.amount.DistinctManaValuesAmongOtherSpellsAndLandsPlayedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.SpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.amount.SpellsCastSinceBeginningOfLastTurn;
 import com.github.laxika.magicalvibes.model.amount.SpellsCastFromOutsideHandThisTurn;
@@ -297,6 +299,7 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -388,6 +391,10 @@ public class AmountEvaluationService {
         return switch (amount) {
             case ArtifactsPutIntoGraveyardFromBattlefieldThisTurn ignored ->
                     gameData.artifactsPutIntoGraveyardFromBattlefieldThisTurn;
+            case PermanentsPutIntoGraveyardFromBattlefieldThisTurn ignored ->
+                    gameData.permanentsPutIntoGraveyardFromBattlefieldThisTurn;
+            case DistinctManaValuesAmongOtherSpellsAndLandsPlayedThisTurn ignored ->
+                    countDistinctManaValuesAmongOtherSpellsAndLandsPlayed(gameData, ctx);
             case Fixed f ->
                     f.value();
             case StartingLifeTotal ignored ->
@@ -3350,13 +3357,17 @@ public class AmountEvaluationService {
     }
 
     /**
-     * The matching spells the triggering spell's caster cast this turn before it: those ahead of the place the stack
-     * entry kept for it among the caster's spells this turn as the ability triggered.
+     * The matching spells cast this turn before the triggering spell: those ahead of the place the stack entry kept for
+     * it as the ability triggered, among its caster's spells this turn, or with {@code anyPlayer} among every player's.
      */
     private int countSpellsCastBeforeTriggeringSpell(GameData gameData, SpellsCastBeforeTriggeringSpellThisTurn count,
                                                      AmountContext ctx) {
         StackEntry entry = ctx.stackEntry();
         StackEntry spell = entry == null ? null : entry.getTriggeringSpellSnapshot();
+        if (count.anyPlayer()) {
+            return spell == null ? 0 : countSpellsCastByAnyPlayerBefore(gameData, count.filter(),
+                    entry.getTriggeringSpellTurnCastIndex());
+        }
         if (spell == null || spell.getControllerId() == null || entry.getTriggeringSpellCastIndex() < 0) {
             return 0;
         }
@@ -3368,6 +3379,59 @@ public class AmountEvaluationService {
             if (count.filter() == null
                     || predicateEvaluationService.matchesCardPredicate(earlier, count.filter(), null, gameData,
                     casterId)) {
+                total++;
+            }
+        }
+        return total;
+    }
+
+    /**
+     * The different mana values among the controller's other spells cast (with the X they had on the stack) and lands
+     * played this turn; "other" is the entry's triggering spell, else the resolving entry's card.
+     */
+    private int countDistinctManaValuesAmongOtherSpellsAndLandsPlayed(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null) {
+            return 0;
+        }
+        StackEntry entry = ctx.stackEntry();
+        UUID excludedId = entry == null ? null
+                : entry.getTriggeringCardId() != null ? entry.getTriggeringCardId()
+                : entry.getCard() == null ? null : entry.getCard().getId();
+        Set<Integer> manaValues = new HashSet<>();
+        for (Card spell : gameData.getSpellsCastThisTurn(ctx.controllerId())) {
+            if (!spell.getId().equals(excludedId)) {
+                manaValues.add(gameData.getSpellCastStackManaValue(spell));
+            }
+        }
+        for (Card land : gameData.landCardsPlayedThisTurn.getOrDefault(ctx.controllerId(), List.of())) {
+            manaValues.add(land.getManaValue());
+        }
+        return manaValues.size();
+    }
+
+    /** The matching spells ahead of {@code turnCastIndex} in the turn's cast order across every player. */
+    private int countSpellsCastByAnyPlayerBefore(GameData gameData, CardPredicate filter, int turnCastIndex) {
+        List<UUID> order = gameData.getSpellCastOrderThisTurn();
+        int before = Math.min(turnCastIndex, order.size());
+        if (before <= 0) {
+            return 0;
+        }
+        if (filter == null) {
+            return before;
+        }
+        Map<UUID, Card> spellsById = new HashMap<>();
+        Map<UUID, UUID> castersById = new HashMap<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            for (Card cast : gameData.getSpellsCastThisTurn(playerId)) {
+                spellsById.put(cast.getId(), cast);
+                castersById.put(cast.getId(), playerId);
+            }
+        }
+        int total = 0;
+        for (UUID cardId : order.subList(0, before)) {
+            Card earlier = spellsById.get(cardId);
+            if (earlier != null && predicateEvaluationService.matchesCardPredicate(
+                    earlier, filter, null, gameData, castersById.get(cardId))) {
                 total++;
             }
         }

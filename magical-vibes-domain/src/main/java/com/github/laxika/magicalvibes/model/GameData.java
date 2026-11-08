@@ -7836,6 +7836,30 @@ public class GameData {
     }
 
     /**
+     * The spells cast this turn by every player, as card ids in the order they were cast. A card cast again after
+     * changing zones is a new object (CR 400.7) and appears again.
+     */
+    public List<UUID> getSpellCastOrderThisTurn() {
+        synchronized (spellCastOrderThisTurn) {
+            return List.copyOf(spellCastOrderThisTurn);
+        }
+    }
+
+    /**
+     * The 0-based place of the given card's latest casting among the spells {@code playerId} cast this turn
+     * ({@link #getSpellsCastThisTurn(UUID)}), or {@code -1} when that player didn't cast it this turn.
+     */
+    public int getSpellCastIndexThisTurn(UUID playerId, UUID cardId) {
+        List<Card> spells = getSpellsCastThisTurn(playerId);
+        for (int i = spells.size() - 1; i >= 0; i--) {
+            if (spells.get(i).getId().equals(cardId)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
      * Snapshots per-player spell counts into the given target map, then clears spell tracking for the new turn.
      */
     public void snapshotSpellCountsAndClear(Map<UUID, Integer> target) {

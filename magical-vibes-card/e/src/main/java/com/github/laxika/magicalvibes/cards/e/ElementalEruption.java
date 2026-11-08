@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.StormEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -25,6 +25,6 @@ public class ElementalEruption extends Card {
                 List.of(CardSubtype.DRAGON, CardSubtype.ELEMENTAL),
                 Set.of(Keyword.FLYING, Keyword.PROWESS),
                 Set.of()));
-        addTrigger(Triggers.youCastThisSpell(), new StormEffect());
+        addTrigger(Triggers.youCastThisSpell(), CopyTriggeringSpellEffect.storm());
     }
 }

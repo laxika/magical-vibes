@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
-import com.github.laxika.magicalvibes.model.effect.StormEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -32,6 +32,6 @@ public class WingShards extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsAttackingPredicate())),
                 SacrificeRecipient.TARGET_PLAYER));
-        addTrigger(Triggers.youCastThisSpell(), new StormEffect());
+        addTrigger(Triggers.youCastThisSpell(), CopyTriggeringSpellEffect.storm());
     }
 }

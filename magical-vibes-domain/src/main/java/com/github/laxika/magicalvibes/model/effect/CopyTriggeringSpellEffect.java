@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.SpellsCastBeforeTriggeringSpellThisTurn;
 
 import java.util.List;
 import java.util.Set;
@@ -70,6 +71,15 @@ public record CopyTriggeringSpellEffect(boolean tokenCopy, boolean retargetToSou
     public CopyTriggeringSpellEffect(boolean tokenCopy, boolean retargetToSource, boolean mayChooseNewTargets) {
         this(tokenCopy, retargetToSource, mayChooseNewTargets, false, false, false, Set.of(), Set.of(), Set.of(),
                 List.of(), null, null, 1, null);
+    }
+
+    /**
+     * Storm's copy effect (CR 702.40a: "copy it for each other spell that was cast before it this turn"), the effect of
+     * the spell's {@code Triggers.youCastThisSpell()} ability: as many copies as spells any player cast before the
+     * triggering spell this turn, counted as the ability resolves up to the spell's place in the turn's cast order.
+     */
+    public static CopyTriggeringSpellEffect storm() {
+        return new CopyTriggeringSpellEffect().withCopies(SpellsCastBeforeTriggeringSpellThisTurn.byAnyPlayer());
     }
 
     /** Creates a copy that is controlled by the trigger's controller and targets its source. */

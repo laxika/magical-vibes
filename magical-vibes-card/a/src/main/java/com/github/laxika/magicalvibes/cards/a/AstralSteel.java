@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.StormEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class AstralSteel extends Card {
 
     public AstralSteel() {
-        addTrigger(Triggers.youCastThisSpell(), new StormEffect());
+        addTrigger(Triggers.youCastThisSpell(), CopyTriggeringSpellEffect.storm());
         target(TargetFilters.creature())
                 .addSpellEffect(new BoostTargetCreatureEffect(1, 2));
     }

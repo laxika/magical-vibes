@@ -35,6 +35,8 @@ class EmpyrialStormTest extends BaseCardTest {
         Card commander = new GrizzlyBears();
         gd.makeCommander(player1.getId(), commander);
         gd.commanderTaxByCardId.put(commander.getId(), 4);
+        gd.recordCommanderCastFromCommandZone(player1.getId());
+        gd.recordCommanderCastFromCommandZone(player1.getId());
 
         cast();
 

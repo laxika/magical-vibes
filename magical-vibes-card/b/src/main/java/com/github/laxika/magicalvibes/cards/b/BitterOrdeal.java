@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.effect.GravestormEffect;
+import com.github.laxika.magicalvibes.model.amount.PermanentsPutIntoGraveyardFromBattlefieldThisTurn;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -19,6 +20,7 @@ public class BitterOrdeal extends Card {
                 "Target must be a player."
         ))
                 .addSpellEffect(new SearchTargetLibraryEffect(1, null, LibrarySearchDestination.EXILE, false))
-                .addTrigger(Triggers.youCastThisSpell(), new GravestormEffect());
+                .addTrigger(Triggers.youCastThisSpell(),
+                        new CopyTriggeringSpellEffect().withCopies(new PermanentsPutIntoGraveyardFromBattlefieldThisTurn()));
     }
 }

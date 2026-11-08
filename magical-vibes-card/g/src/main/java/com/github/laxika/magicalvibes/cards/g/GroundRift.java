@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.StormEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -29,6 +29,6 @@ public class GroundRift extends Card {
 
         target(creatureWithoutFlying)
                 .addSpellEffect(new CantBlockThisTurnEffect(TapUntapScope.TARGET));
-        addTrigger(Triggers.youCastThisSpell(), new StormEffect());
+        addTrigger(Triggers.youCastThisSpell(), CopyTriggeringSpellEffect.storm());
     }
 }

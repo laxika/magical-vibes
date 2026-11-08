@@ -1540,7 +1540,9 @@ public class SpellCastTriggerCollectorService {
             );
             entry.setTriggeringCardId(spellCard.getId());
             entry.setTriggeringSpell(triggeringSpell);
-            entry.setTriggeringSpellCastIndex(castIndex(match.gameData(), castingPlayerId, spellCard));
+            entry.setTriggeringSpellCastIndex(
+                    match.gameData().getSpellCastIndexThisTurn(castingPlayerId, spellCard.getId()));
+            entry.setTriggeringSpellTurnCastIndex(match.gameData().getSpellCastOrdinalThisTurn(spellCard.getId()) - 1);
             // The caster stays known if the spell leaves the stack (e.g. is countered) before this resolves.
             entry.setCounteredSpellControllerId(castingPlayerId);
             preservePlanarSource(entry, match);
@@ -1632,7 +1634,9 @@ public class SpellCastTriggerCollectorService {
             // ability (Bloodlord of Vaasgoth's bloodthirst grant), and as it was then once it has left (CR 608.2h).
             entry.setTriggeringCardId(spellCard.getId());
             entry.setTriggeringSpell(triggeringSpell);
-            entry.setTriggeringSpellCastIndex(castIndex(match.gameData(), castingPlayerId, spellCard));
+            entry.setTriggeringSpellCastIndex(
+                    match.gameData().getSpellCastIndexThisTurn(castingPlayerId, spellCard.getId()));
+            entry.setTriggeringSpellTurnCastIndex(match.gameData().getSpellCastOrdinalThisTurn(spellCard.getId()) - 1);
             if (triggeringSpell != null && resolved.stream().anyMatch(effect ->
                     effect instanceof GrantKeywordEffect grant && grant.scope() == GrantScope.TARGETS)) {
                 List<UUID> spellTargets = new ArrayList<>();
@@ -1673,20 +1677,6 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    /**
-     * The just-cast spell's place among its caster's spells cast this turn: its latest casting, as the ability triggers
-     * right after it is cast (a card cast, returned and cast again is a new spell each time). {@code -1} when it isn't
-     * recorded.
-     */
-    private static int castIndex(GameData gameData, UUID castingPlayerId, Card spellCard) {
-        List<Card> spells = gameData.getSpellsCastThisTurn(castingPlayerId);
-        for (int i = spells.size() - 1; i >= 0; i--) {
-            if (spells.get(i).getId().equals(spellCard.getId())) {
-                return i;
-            }
-        }
-        return -1;
-    }
 
     /**
      * The stack description of an ability of {@code sourceCard}: an emblem's ability (its source is the emblem's card,

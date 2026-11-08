@@ -605,6 +605,13 @@ public class StackEntry {
      */
     @Setter private int triggeringSpellCastIndex = -1;
     /**
+     * The triggering spell's place in the turn's cast order across every player ({@code GameData
+     * .getSpellCastOrderThisTurn}), or {@code -1} when none was recorded: the spells before it there are every spell
+     * "cast before it this turn" (storm, CR 702.40a). Set as the ability triggers, as {@link #triggeringSpellCastIndex}
+     * is, so a spell cast in response, or the same card cast again, doesn't move it.
+     */
+    @Setter private int triggeringSpellTurnCastIndex = -1;
+    /**
      * The activated ability an activation trigger was about, when the event was an activation: with
      * {@link #triggeringSpellSnapshot} holding that ability's stack entry as it was when this ability triggered, "copy
      * that spell or ability" copies the ability (Bill Potts). {@code null} otherwise. Immutable, so copies share it.
@@ -1255,6 +1262,7 @@ public class StackEntry {
                 ? null : new StackEntry(source.triggeringSpellSnapshot);
         this.triggeringActivatedAbility = source.triggeringActivatedAbility;
         this.triggeringSpellCastIndex = source.triggeringSpellCastIndex;
+        this.triggeringSpellTurnCastIndex = source.triggeringSpellTurnCastIndex;
         this.triggeringCardGraveyardEntryVersion = source.triggeringCardGraveyardEntryVersion;
         this.sourceGraveyardEntryVersion = source.sourceGraveyardEntryVersion;
         this.triggeringPermanentSnapshot = source.triggeringPermanentSnapshot == null

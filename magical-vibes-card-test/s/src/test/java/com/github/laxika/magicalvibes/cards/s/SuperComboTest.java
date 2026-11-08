@@ -39,8 +39,6 @@ class SuperComboTest extends BaseCardTest {
         castSuperCombo(source, target, List.of("{2}", "{2}"));
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Hill Giant");
@@ -131,9 +129,8 @@ class SuperComboTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.stagedSpellCopies).hasSize(2);
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, false);
+        // Neither target has another legal choice, so no new-target prompt holds the copies off the stack.
+        assertThat(gd.stagedSpellCopies).isEmpty();
         assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
         resolveAllTriggers();
     }

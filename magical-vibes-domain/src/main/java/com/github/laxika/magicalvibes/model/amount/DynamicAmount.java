@@ -17,6 +17,8 @@ public sealed interface DynamicAmount permits
         CardTypesAmongTriggeringCards,
         LifeLostWhenTriggeringPermanentEntered,
         ArtifactsPutIntoGraveyardFromBattlefieldThisTurn,
+        PermanentsPutIntoGraveyardFromBattlefieldThisTurn,
+        DistinctManaValuesAmongOtherSpellsAndLandsPlayedThisTurn,
         AttachmentsOnSource,
         StartingLifeTotal,
         AttachedPermanentColorCount,

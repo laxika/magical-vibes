@@ -3,15 +3,17 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.StormEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "MH2", collectorNumber = "148")
 public class AeveProgenitorOoze extends Card {
@@ -25,6 +27,7 @@ public class AeveProgenitorOoze extends Card {
                                 new com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate(),
                                 new com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate())),
                         com.github.laxika.magicalvibes.model.CardSupertype.LEGENDARY));
-        addTrigger(Triggers.youCastThisSpell(), StormEffect.tokenCopyWithoutLegendary());
+        addTrigger(Triggers.youCastThisSpell(), CopyTriggeringSpellEffect.storm().permanentSpellCopiesAreTokens()
+                .withoutSupertypes(Set.of(CardSupertype.LEGENDARY)));
     }
 }

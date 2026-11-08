@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForEachCommanderCastEffect;
+import com.github.laxika.magicalvibes.model.amount.CommanderCastsFromCommandZoneThisGame;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -18,7 +19,8 @@ import java.util.List;
 public class HatutZerazeStrikeForce extends Card {
 
     public HatutZerazeStrikeForce() {
-        addTrigger(Triggers.youCastThisSpell(), new CopyThisSpellForEachCommanderCastEffect());
+        addTrigger(Triggers.youCastThisSpell(), new CopyTriggeringSpellEffect().permanentSpellCopiesAreTokens()
+                .withCopies(new CommanderCastsFromCommandZoneThisGame()));
 
         PermanentPredicateTargetFilter artifactOrEnchantment = new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(

@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.CoststormEffect;
+import com.github.laxika.magicalvibes.model.amount.DistinctManaValuesAmongOtherSpellsAndLandsPlayedThisTurn;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,6 +19,7 @@ public class Friarball extends Card {
     public Friarball() {
         addSpellEffect(new CreateTokenEffect(
                 "Monk", 2, 2, CardColor.WHITE, List.of(CardSubtype.MONK), Set.of(), Set.of()));
-        addTrigger(Triggers.youCastThisSpell(), new CoststormEffect());
+        addTrigger(Triggers.youCastThisSpell(),
+                new CopyTriggeringSpellEffect().withCopies(new DistinctManaValuesAmongOtherSpellsAndLandsPlayedThisTurn()));
     }
 }

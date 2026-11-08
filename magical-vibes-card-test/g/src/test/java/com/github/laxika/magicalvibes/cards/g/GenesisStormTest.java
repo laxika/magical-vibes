@@ -32,6 +32,8 @@ class GenesisStormTest extends BaseCardTest {
         Card commander = new GrizzlyBears();
         gd.makeCommander(player1.getId(), commander);
         gd.commanderTaxByCardId.put(commander.getId(), 4);
+        gd.recordCommanderCastFromCommandZone(player1.getId());
+        gd.recordCommanderCastFromCommandZone(player1.getId());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
         cast();

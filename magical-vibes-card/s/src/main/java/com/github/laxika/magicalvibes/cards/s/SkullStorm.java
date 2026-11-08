@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.amount.CommanderCastsFromCommandZoneThisGame;
 import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.TargetPlayerLifeTotal;
-import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForEachCommanderCastEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesPermanentOrLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -13,7 +14,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SkullStorm extends Card {
 
     public SkullStorm() {
-        addTrigger(Triggers.youCastThisSpell(), new CopyThisSpellForEachCommanderCastEffect(false));
+        addTrigger(Triggers.youCastThisSpell(),
+                new CopyTriggeringSpellEffect().withCopies(new CommanderCastsFromCommandZoneThisGame()));
         addSpellEffect(EachPlayerSacrificesPermanentOrLosesLifeEffect.opponentsMustSacrifice(
                 new PermanentIsCreaturePredicate(),
                 new HalvedRoundedUp(new TargetPlayerLifeTotal()),

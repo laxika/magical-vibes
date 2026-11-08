@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.amount.PermanentsPutIntoGraveyardFromBattlefieldThisTurn;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.GravestormEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -22,6 +23,7 @@ public class OminousHarvest extends Card {
         ))
                 .addSpellEffect(new DrawCardForTargetPlayerEffect(1, false, true))
                 .addSpellEffect(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER))
-                .addTrigger(Triggers.youCastThisSpell(), new GravestormEffect());
+                .addTrigger(Triggers.youCastThisSpell(),
+                        new CopyTriggeringSpellEffect().withCopies(new PermanentsPutIntoGraveyardFromBattlefieldThisTurn()));
     }
 }

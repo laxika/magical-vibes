@@ -6,9 +6,12 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
+import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
-import com.github.laxika.magicalvibes.model.effect.ReplicateEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -25,6 +28,8 @@ public class Thunderheads extends Card {
                 CardType.CREATURE, 1, "Weird", 3, 3, CardColor.BLUE, null,
                 List.of(CardSubtype.WEIRD), Set.of(Keyword.DEFENDER, Keyword.FLYING), Set.of(),
                 false, false, List.of(), List.of(), false, true, false, 0, Set.of()));
-        addTrigger(Triggers.youCastThisSpell(), new ReplicateEffect("{2}{U}"));
+        addTrigger(Triggers.youCastThisSpell(),
+                TriggerOptions.DEFAULT.withInterveningIf(new RepeatedAdditionalCostPaid("{2}{U}")),
+                new CopyTriggeringSpellEffect().withCopies(new RepeatedAdditionalCostCount("{2}{U}")));
     }
 }

@@ -2,11 +2,14 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
+import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
-import com.github.laxika.magicalvibes.model.effect.ReplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToBattlefieldOnDeathEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -23,6 +26,9 @@ public class ChangingLoyalty extends Card {
         addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
                 new ReturnEnchantedCreatureToBattlefieldOnDeathEffect(true));
 
-        addTrigger(Triggers.youCastThisSpell(), new ReplicateEffect("{2}", true));
+        addTrigger(Triggers.youCastThisSpell(),
+                TriggerOptions.DEFAULT.withInterveningIf(new RepeatedAdditionalCostPaid("{2}")),
+                new CopyTriggeringSpellEffect().permanentSpellCopiesAreTokens()
+                        .withCopies(new RepeatedAdditionalCostCount("{2}")));
     }
 }

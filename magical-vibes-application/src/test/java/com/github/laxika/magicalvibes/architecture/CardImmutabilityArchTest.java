@@ -81,7 +81,6 @@ class CardImmutabilityArchTest {
             "ReturnDyingOpponentCreatureAsTreasureEffectHandler", // changes a fresh runtime copy into a Treasure card
             "ReturnOpponentCreaturesFromGraveyardAsFoodEffectHandler", // changes fresh runtime copies into Food cards
             "MeldWithNamedCreatureEffectHandler", // stamps the set code on the fresh meld-result card it just instantiated
-            "StormCopyEffectHandler", // marks the fresh copy assembled by CopySupport as a token
             "TurnFaceUpCopyService", // restores copy exceptions on the fresh runtime copy installed by PermanentCopierService
             "LudevicCopySupport", // decorates the fresh clone-copy card installed by PermanentCopierService
             "RegisterDelayedBeginningOfCombatTriggerEffectHandler", // assembles a fresh runtime copy for the delayed trigger
