@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfDamagedPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,8 +22,8 @@ public class ContestedWarZone extends Card {
 
     public ContestedWarZone() {
         // Whenever a creature deals combat damage to you, that creature's controller gains control of Contested War Zone.
-        addTrigger(Triggers.permanentDealsDamageToYou(),
-                new DamageSourceControllerGainsControlOfThisPermanentEffect(true, true));
+        addTrigger(Triggers.creatureDealsCombatDamageToYou(),
+                new DamageSourceControllerGainsControlOfDamagedPermanentEffect());
 
         // {T}: Add {C}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));

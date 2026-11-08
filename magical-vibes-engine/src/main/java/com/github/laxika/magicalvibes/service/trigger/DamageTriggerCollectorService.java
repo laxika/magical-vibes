@@ -7,10 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfCombatDamageSourceIntoHandEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfDamagedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GhyrsonStarnKelermorphEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect;
@@ -18,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentWhenSingleTargetCreatureSpellDealsDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardIfEventValueAtLeastEffect;
@@ -31,13 +26,8 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageT
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsPowerDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileDamageSourcePermanentUntilSourceLeavesEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnWhenInstantOrSorceryDealsDamageToPlayerEffect;
-import com.github.laxika.magicalvibes.service.effect.ConditionContext;
-import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -47,15 +37,12 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermane
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCreatureCardInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsOrLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -65,7 +52,6 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -73,12 +59,11 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 /**
- * Trigger collectors for damage-related events (ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE,
- * ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, ON_ANY_PERMANENT_DEALT_DAMAGE, ON_DEALT_DAMAGE, ON_OPPONENT_DEALT_DAMAGE).
+ * Trigger collectors for damage-related events (ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE, ON_ANY_PERMANENT_DEALT_DAMAGE,
+ * ON_DEALT_DAMAGE, ON_OPPONENT_DEALT_DAMAGE).
  */
 @Slf4j
 @Service
@@ -86,9 +71,7 @@ import java.util.UUID;
 public class DamageTriggerCollectorService {
 
     private final GameQueryService gameQueryService;
-    private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
-    private final ConditionEvaluationService conditionEvaluationService;
 
     /**
      * "Whenever a creature you control fights, [effect]" (Foe-Razer Regent's "put two +1/+1 counters on it at the
@@ -408,103 +391,6 @@ public class DamageTriggerCollectorService {
         return damageContext.damageDealt() > lethalDamage;
     }
 
-    // ── ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU ───────────────────────────
-
-    @CollectsDamageTrigger(value = ReturnDamageSourcePermanentToHandEffect.class, watch = DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU)
-    private boolean handleBounceOnDamage(TriggerMatchContext match,
-            ReturnDamageSourcePermanentToHandEffect trigger, TriggerContext ctx) {
-        TriggerContext.DamageToController dc = (TriggerContext.DamageToController) ctx;
-        var gameData = match.gameData();
-
-        Permanent currentSource = gameQueryService.findPermanentById(gameData, dc.sourcePermanentId());
-        if (currentSource == null) return false;
-
-        Permanent watcher = match.permanent();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                watcher.getCard(),
-                match.controllerId(),
-                watcher.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(ReturnToHandEffect.target())),
-                currentSource.getId(),
-                watcher.getId());
-        entry.setNonTargeting(true);
-        gameData.enqueueTrigger(entry);
-        gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
-        log.info("Game {} - {} triggers, returning {} to owner's hand",
-                gameData.id, watcher.getCard().getName(), currentSource.getCard().getName());
-        return true;
-    }
-
-    @CollectsDamageTrigger(value = DamageSourceControllerGainsControlOfThisPermanentEffect.class, watch = DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU)
-    private boolean handleControlTheftOnDamage(TriggerMatchContext match,
-            DamageSourceControllerGainsControlOfThisPermanentEffect controlEffect, TriggerContext ctx) {
-        TriggerContext.DamageToController dc = (TriggerContext.DamageToController) ctx;
-        var gameData = match.gameData();
-
-        if (controlEffect.combatOnly() && !dc.isCombatDamage()) return false;
-
-        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, dc.sourcePermanentId());
-        if (sourcePermanent == null) return false;
-
-        if (controlEffect.creatureOnly() && !gameQueryService.isCreature(gameData, sourcePermanent)) return false;
-
-        UUID sourceControllerId = gameQueryService.findPermanentController(gameData, dc.sourcePermanentId());
-        if (sourceControllerId == null || sourceControllerId.equals(dc.damagedPlayerId())) return false;
-
-        List<CardEffect> effects = new ArrayList<>();
-        effects.add(new DamageSourceControllerGainsControlOfDamagedPermanentEffect());
-        if (controlEffect.untap()) {
-            effects.add(new UntapPermanentsEffect(TapUntapScope.SELF));
-        }
-        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(), match.controllerId(),
-                match.permanent().getCard().getName() + "'s triggered ability", List.copyOf(effects),
-                null, match.permanent().getId());
-        entry.setNonTargeting(true);
-        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
-        entry.setTriggeringPermanentId(sourcePermanent.getId());
-        entry.setTriggeringPermanentControllerId(sourceControllerId);
-        gameData.enqueueTrigger(entry);
-        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
-        return true;
-    }
-
-    @CollectsDamageTrigger(value = PutCounterOnReferencedPermanentEffect.class,
-            watch = DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU)
-    private boolean handleCreatureDealsDamageToYouPutCounter(TriggerMatchContext match,
-            PutCounterOnReferencedPermanentEffect effect, TriggerContext ctx) {
-        if (effect.reference() != PermanentReference.TRIGGERING) return false;
-
-        TriggerContext.DamageToController dc = (TriggerContext.DamageToController) ctx;
-        GameData gameData = match.gameData();
-        Permanent damageSource = gameQueryService.findPermanentById(gameData, dc.sourcePermanentId());
-        if (damageSource == null || !gameQueryService.isCreature(gameData, damageSource)) return false;
-
-        Permanent watcher = match.permanent();
-        Card watcherCard = watcher != null ? watcher.getCard() : match.sourceCard();
-        if (watcherCard == null) return false;
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                watcherCard,
-                match.controllerId(),
-                watcherCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                watcher == null ? null : watcher.getId());
-        entry.setTriggeringPermanentId(damageSource.getId());
-        if (match.sourcePlanarObject() != null) {
-            entry.setSourcePlanarObject(match.sourcePlanarObject().copy());
-        }
-        entry.setNonTargeting(true);
-        gameData.enqueueTrigger(entry);
-
-        gameLogService.append(gameData, GameLog.abilityTriggers(watcherCard));
-        log.info("Game {} - {} triggers to put a counter on the creature that dealt damage",
-                gameData.id, watcherCard.getName());
-        return true;
-    }
-
     @CollectsDamageTrigger(value = PutCounterOnReferencedPermanentEffect.class,
             watch = DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT)
     @CollectsDamageTrigger(value = PutCounterOnReferencedPermanentEffect.class,
@@ -540,52 +426,6 @@ public class DamageTriggerCollectorService {
         gameLogService.append(gameData, GameLog.abilityTriggers(watcherCard));
         log.info("Game {} - {} triggers after a creature dealt damage to an opponent",
                 gameData.id, watcherCard.getName());
-        return true;
-    }
-
-    @CollectsDamageTrigger(value = ExileDamageSourcePermanentUntilSourceLeavesEffect.class,
-            watch = DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU)
-    private boolean handleExileDamageSourceOnDamage(TriggerMatchContext match,
-            ExileDamageSourcePermanentUntilSourceLeavesEffect exileEffect, TriggerContext ctx) {
-        TriggerContext.DamageToController dc = (TriggerContext.DamageToController) ctx;
-        GameData gameData = match.gameData();
-        Permanent watcher = match.permanent();
-
-        if (exileEffect.combatOnly() && !dc.isCombatDamage()) return false;
-
-        Permanent damageSource = gameQueryService.findPermanentById(gameData, dc.sourcePermanentId());
-        if (damageSource == null) return false;
-        if (exileEffect.filter() != null
-                && !predicateEvaluationService.matchesPermanentPredicate(gameData, damageSource, exileEffect.filter())) {
-            return false;
-        }
-        // CR 603.4 — the intervening-"if" is checked as the ability would trigger, and the wrapper
-        // below makes the resolution-time re-check happen too.
-        if (exileEffect.intervening() != null
-                && !conditionEvaluationService.isMet(gameData, exileEffect.intervening(),
-                        ConditionContext.forPermanent(watcher, match.controllerId()))) {
-            return false;
-        }
-
-        CardEffect queued = new ExileTargetPermanentUntilSourceLeavesEffect();
-        if (exileEffect.intervening() != null) {
-            queued = new ConditionalEffect(exileEffect.intervening(), queued);
-        }
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                watcher.getCard(),
-                match.controllerId(),
-                watcher.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(queued)),
-                damageSource.getId(),
-                watcher.getId());
-        // "exile that creature" — the damaging creature is not a chosen target.
-        entry.setNonTargeting(true);
-        gameData.enqueueTrigger(entry);
-
-        gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
-        log.info("Game {} - {} triggers, exiling damage source {} until it leaves",
-                gameData.id, watcher.getCard().getName(), damageSource.getCard().getName());
         return true;
     }
 
@@ -1531,26 +1371,6 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsDamageTrigger(value = MayPayManaEffect.class, watch = DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE)
-    private boolean handleChosenColorSourceDamage(TriggerMatchContext match,
-            MayPayManaEffect trigger, TriggerContext ctx) {
-        TriggerContext.SourceDealsDamage damage = (TriggerContext.SourceDealsDamage) ctx;
-        Permanent watcher = match.permanent();
-        if (watcher == null || watcher.getChosenColor() == null
-                || damage.damageToPlayers().getOrDefault(match.controllerId(), 0) <= 0
-                || !sourceHasColor(match.gameData(), damage, watcher.getChosenColor())) {
-            return false;
-        }
-
-        match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                watcher.getCard(), match.controllerId(), List.of(trigger), true, null, 0, watcher.getId()));
-        gameLogService.append(match.gameData(), GameLog.cardThen(watcher.getCard(),
-                " triggers — choose a target."));
-        log.info("Game {} - {} triggers after a source of the chosen color dealt damage to its controller",
-                match.gameData().id, watcher.getCard().getName());
-        return true;
-    }
-
     @CollectsDamageTrigger(value = OtherChosenPlayerLosesLifeEffect.class,
             watch = DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE)
     private boolean handleOtherChosenPlayerLosesLife(TriggerMatchContext match,
@@ -1672,34 +1492,6 @@ public class DamageTriggerCollectorService {
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} ON_SELF_DEALS_DAMAGE trigger fires ({} damage)",
                 gameData.id, sourceCard.getName(), sd.totalDamage());
-        return true;
-    }
-
-    @CollectsDamageTrigger(value = DealDamageToEachOpponentWhenSingleTargetCreatureSpellDealsDamageEffect.class,
-            watch = DamageWatch.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE)
-    private boolean handleSingleTargetCreatureSpellDealsDamage(TriggerMatchContext match,
-            DealDamageToEachOpponentWhenSingleTargetCreatureSpellDealsDamageEffect effect,
-            TriggerContext ctx) {
-        TriggerContext.SourceDealsDamage sd = (TriggerContext.SourceDealsDamage) ctx;
-        if (match.permanent() == null || sd.singleCreatureSpellTargetId() == null) return false;
-
-        int damage = sd.damageToPermanents().getOrDefault(sd.singleCreatureSpellTargetId(), 0);
-        if (damage <= 0) return false;
-
-        GameData gameData = match.gameData();
-        Permanent watcher = match.permanent();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                watcher.getCard(),
-                match.controllerId(),
-                watcher.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect.triggeredEffect())),
-                null,
-                watcher.getId());
-        entry.setNonTargeting(true);
-        entry.setEventValue(damage);
-        gameData.enqueueTrigger(entry);
-        gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
         return true;
     }
 
@@ -1938,22 +1730,6 @@ public class DamageTriggerCollectorService {
         log.info("Game {} - {} ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE trigger fires ({} damage by {})",
                 match.gameData().id, equipment.getCard().getName(), damage, sd.sourceCard().getName());
         return true;
-    }
-
-    private boolean sourceHasColor(GameData gameData, TriggerContext.SourceDealsDamage damage,
-                                   CardColor color) {
-        if (damage.sourceCard() == null || color == null) return false;
-
-        Set<CardColor> sourceColors;
-        Permanent sourcePermanent = damage.sourcePermanentId() == null
-                ? null
-                : gameQueryService.findPermanentById(gameData, damage.sourcePermanentId());
-        if (sourcePermanent != null) {
-            sourceColors = gameQueryService.getEffectiveColors(gameData, sourcePermanent);
-        } else {
-            sourceColors = gameQueryService.getEffectiveCardColors(gameData, damage.sourceCard());
-        }
-        return gameQueryService.getDamageSourceColors(gameData, sourceColors).contains(color);
     }
 
     /**

@@ -30,10 +30,11 @@ import java.util.Objects;
  * @param spellFilter what the source of the damage must be when it isn't a permanent (a spell, or a card dealing
  *                 damage from another zone), or {@code null}: "whenever a red creature or spell deals damage" is
  *                 {@code Triggers.sourceDealsDamage().withFilter(red creature).withSpellFilter(new
- *                 CardColorPredicate(RED))}. Only a {@link DamageEvent#DEALS_DAMAGE} trigger about another source has
- *                 one. A trigger with a filter or a spell filter triggers only for a source of a kind it has a filter
- *                 for (a permanent source that has left the battlefield is judged on its card's characteristics); one
- *                 with neither for every source. {@link #watchKey()} drops it
+ *                 CardColorPredicate(RED))}. Only a {@link DamageEvent#DEALS_DAMAGE} or
+ *                 {@link DamageEvent#SOURCE_DEALS_DAMAGE_TO_YOU} trigger about another source has one. A trigger
+ *                 with a filter or a spell filter triggers only for a source of a kind it has a filter for (a
+ *                 permanent source that has left the battlefield is judged on its card's characteristics); one with
+ *                 neither for every source. {@link #watchKey()} drops it
  * @param damagedFilter what the permanent dealt the damage must be, or {@code null} for any: "whenever this creature
  *                 deals damage to a Vampire" is {@code Triggers.dealsDamageToCreature().withDamagedFilter(new
  *                 PermanentHasSubtypePredicate(VAMPIRE))}. Only a {@link DamageEvent#DEALS_DAMAGE_TO_CREATURE}
@@ -59,7 +60,7 @@ public record DamageTrigger(DamageEvent event, ObjectRelation relation, Permanen
             throw new IllegalArgumentException("Only a deals-damage-to-a-creature or a deals-damage-to-you-or-a-"
                     + "permanent-you-control trigger has a damaged-permanent filter: " + event);
         }
-        if (spellFilter != null && (event != DamageEvent.DEALS_DAMAGE
+        if (spellFilter != null && (event != DamageEvent.DEALS_DAMAGE && event != DamageEvent.SOURCE_DEALS_DAMAGE_TO_YOU
                 || relation != ObjectRelation.ANY && relation != ObjectRelation.YOU_CONTROL)) {
             throw new IllegalArgumentException(
                     "Only a trigger on another source dealing damage has a spell filter: " + event + " " + relation);
@@ -89,8 +90,9 @@ public record DamageTrigger(DamageEvent event, ObjectRelation relation, Permanen
     }
 
     /**
-     * This {@link DamageEvent#DEALS_DAMAGE} trigger on another source narrowed to a source that isn't a permanent and
-     * matches {@code spellFilter}, as {@link #spellFilter} says: "whenever a red creature or spell deals damage".
+     * This {@link DamageEvent#DEALS_DAMAGE} or {@link DamageEvent#SOURCE_DEALS_DAMAGE_TO_YOU} trigger on another
+     * source narrowed to a source that isn't a permanent and matches {@code spellFilter}, as {@link #spellFilter}
+     * says: "whenever a red creature or spell deals damage".
      */
     public DamageTrigger withSpellFilter(CardPredicate spellFilter) {
         Objects.requireNonNull(spellFilter, "spellFilter");
@@ -152,6 +154,12 @@ public record DamageTrigger(DamageEvent event, ObjectRelation relation, Permanen
         /** A permanent deals damage to you. */
         DEALS_DAMAGE_TO_YOU,
         /**
+         * A source, a permanent or not, deals damage to you: once for each source (Circle of Affliction's ruling), the
+         * damage it dealt to you the event's value. Filtered as {@link #DEALS_DAMAGE} about another source is: the
+         * filter is the source as a permanent, the spell filter the source as a spell or card.
+         */
+        SOURCE_DEALS_DAMAGE_TO_YOU,
+        /**
          * A creature deals damage to a creature. The {@link ObjectRelation} is the creature that deals it
          * ({@link ObjectRelation#THIS}, {@link ObjectRelation#EQUIPPED}, {@link ObjectRelation#YOU_CONTROL},
          * {@link ObjectRelation#ANY}), the filter that creature, the damaged-creature filter the creature dealt the
@@ -179,6 +187,11 @@ public record DamageTrigger(DamageEvent event, ObjectRelation relation, Permanen
         DEALS_NONCOMBAT_DAMAGE_TO_CREATURE,
         /** An instant or sorcery spell deals damage. */
         INSTANT_OR_SORCERY_DEALS_DAMAGE,
+        /**
+         * An instant or sorcery spell that targets only a single creature deals damage to that creature: the creature
+         * is the event's permanent and the damage dealt to it the event's value.
+         */
+        INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_ITS_ONLY_TARGET_CREATURE,
         /**
          * An instant or sorcery spell deals damage to an opponent of its controller: once for each opponent it deals
          * damage to (CR 603.2c), that player being the event's player.

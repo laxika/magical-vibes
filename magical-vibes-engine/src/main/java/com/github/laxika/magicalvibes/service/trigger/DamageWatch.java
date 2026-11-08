@@ -92,8 +92,19 @@ public enum DamageWatch implements TriggerWatch {
     ON_ANY_SOURCE_DEALS_DAMAGE(Triggers.sourceDealsDamage(), Zone.BATTLEFIELD),
     /** "Whenever a source you control deals damage"; the trigger's filters say which source ("a red source"). */
     ON_ALLY_SOURCE_DEALS_DAMAGE(Triggers.sourceYouControlDealsDamage(), Zone.BATTLEFIELD),
+    /**
+     * "Whenever a source deals damage to you", once for each source; the trigger's filters say which source ("of the
+     * chosen color").
+     */
+    ON_ANY_SOURCE_DEALS_DAMAGE_TO_YOU(Triggers.sourceDealsDamageToYou(), Zone.BATTLEFIELD),
     /** "Whenever an instant or sorcery spell you control deals damage". */
     ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE(Triggers.instantOrSorceryYouControlDealsDamage(), Zone.BATTLEFIELD),
+    /**
+     * "Whenever an instant or sorcery spell you control that targets only a single creature deals damage to that
+     * creature".
+     */
+    ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_ITS_ONLY_TARGET_CREATURE(
+            Triggers.instantOrSorceryYouControlDealsDamageToItsOnlyTargetCreature(), Zone.BATTLEFIELD),
     /** "Whenever an instant or sorcery spell you control deals damage to an opponent", once for each opponent. */
     ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_OPPONENT(Triggers.instantOrSorceryYouControlDealsDamageToOpponent(),
             Zone.BATTLEFIELD),

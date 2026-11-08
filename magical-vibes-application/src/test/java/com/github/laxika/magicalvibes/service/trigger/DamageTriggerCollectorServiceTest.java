@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDamageSourceCreatureOrSpellControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -34,7 +33,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
-import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -63,13 +61,11 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -87,7 +83,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -105,12 +100,6 @@ class DamageTriggerCollectorServiceTest {
 
     @Mock
     private CreatureControlService creatureControlService;
-
-    @Mock
-    private PredicateEvaluationService predicateEvaluationService;
-
-    @Mock
-    private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
 
     @Mock
     private TapUntapSupport tapUntapSupport;
@@ -427,8 +416,6 @@ class DamageTriggerCollectorServiceTest {
         }
     }
 
-    // ===== ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU — ReturnDamageSourcePermanentToHandEffect =====
-
     @Nested
     @DisplayName("ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE — the dealer's reflected damage")
     class AllyDealtDamageToCreatureReflection {
@@ -470,320 +457,6 @@ class DamageTriggerCollectorServiceTest {
             assertThat(registry.handles(DamageWatch.ON_SELF_DEALS_DAMAGE_TO_CREATURE,
                     com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect.ofTriggeringPermanent()))
                     .isFalse();
-        }
-    }
-
-    @Nested
-    @DisplayName("ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU — PutCounterOnReferencedPermanentEffect")
-    class PutCounterOnDamageSource {
-
-        @Test
-        @DisplayName("queues a non-targeting trigger for the creature that dealt damage")
-        void queuesTriggerForCreatureDamageSource() {
-            Permanent watcher = createPermanent("Aurification");
-            Permanent source = createPermanent("Grizzly Bears");
-            var effect = new PutCounterOnReferencedPermanentEffect(
-                    PermanentReference.TRIGGERING, CounterType.GOLD);
-            var ctx = new TriggerContext.DamageToController(player1Id, source.getId(), true);
-
-            when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
-            when(gameQueryService.isCreature(gd, source)).thenReturn(true);
-
-            boolean result = registry.dispatch(
-                    match(watcher, player1Id, effect),
-                    DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, effect, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getTriggeringPermanentId()).isEqualTo(source.getId());
-            assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
-        }
-
-        @Test
-        @DisplayName("does not trigger for damage from a noncreature permanent")
-        void doesNotTriggerForNoncreatureDamageSource() {
-            Permanent watcher = createPermanent("Aurification");
-            Permanent source = createPermanent("Llanowar Elves");
-            var effect = new PutCounterOnReferencedPermanentEffect(
-                    PermanentReference.TRIGGERING, CounterType.GOLD);
-            var ctx = new TriggerContext.DamageToController(player1Id, source.getId(), false);
-
-            when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
-            when(gameQueryService.isCreature(gd, source)).thenReturn(false);
-
-            boolean result = registry.dispatch(
-                    match(watcher, player1Id, effect),
-                    DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, effect, ctx);
-
-            assertThat(result).isFalse();
-            assertThat(gd.stack).isEmpty();
-        }
-    }
-
-    @Nested
-    @DisplayName("ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU — ReturnDamageSourcePermanentToHandEffect")
-    class BounceOnDamage {
-
-        @Test
-        @DisplayName("bounces the damage source to its owner's hand and returns true")
-        void bouncesSourceAndReturnsTrue() {
-            Permanent triggerPerm = createPermanent("Dissipation Field");
-            Permanent sourcePerm = createPermanent("Grizzly Bears");
-            var effect = new ReturnDamageSourcePermanentToHandEffect();
-            var ctx = new TriggerContext.DamageToController(player1Id, sourcePerm.getId(), true);
-
-            when(gameQueryService.findPermanentById(gd, sourcePerm.getId())).thenReturn(sourcePerm);
-            when(permanentRemovalService.removePermanentToHand(gd, sourcePerm)).thenReturn(true);
-
-            boolean result = registry.dispatch(
-                    match(triggerPerm, player1Id, effect),
-                    DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, effect, ctx);
-
-            assertThat(result).isTrue();
-            verify(permanentRemovalService).removePermanentToHand(gd, sourcePerm);
-            verify(permanentRemovalService).removeOrphanedAuras(gd);
-            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
-        }
-
-        @Test
-        @DisplayName("returns false when source permanent is no longer on the battlefield")
-        void returnsFalseWhenSourceGone() {
-            Permanent triggerPerm = createPermanent("Dissipation Field");
-            UUID missingSourceId = UUID.randomUUID();
-            var effect = new ReturnDamageSourcePermanentToHandEffect();
-            var ctx = new TriggerContext.DamageToController(player1Id, missingSourceId, true);
-
-            when(gameQueryService.findPermanentById(gd, missingSourceId)).thenReturn(null);
-
-            boolean result = registry.dispatch(
-                    match(triggerPerm, player1Id, effect),
-                    DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, effect, ctx);
-
-            assertThat(result).isFalse();
-            verify(permanentRemovalService, never()).removePermanentToHand(any(), any());
-        }
-
-        @Test
-        @DisplayName("does not broadcast when removePermanentToHand returns false")
-        void noBroadcastWhenRemoveFails() {
-            Permanent triggerPerm = createPermanent("Dissipation Field");
-            Permanent sourcePerm = createPermanent("Grizzly Bears");
-            var effect = new ReturnDamageSourcePermanentToHandEffect();
-            var ctx = new TriggerContext.DamageToController(player1Id, sourcePerm.getId(), true);
-
-            when(gameQueryService.findPermanentById(gd, sourcePerm.getId())).thenReturn(sourcePerm);
-            when(permanentRemovalService.removePermanentToHand(gd, sourcePerm)).thenReturn(false);
-
-            boolean result = registry.dispatch(
-                    match(triggerPerm, player1Id, effect),
-                    DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, effect, ctx);
-
-            assertThat(result).isTrue();
-            verify(permanentRemovalService, never()).removeOrphanedAuras(any());
-            verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
-        }
-    }
-
-    @Nested
-    @DisplayName("ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU — ExileDamageSourcePermanentUntilSourceLeavesEffect")
-    class ExileDamageSourceOnDamage {
-
-        @Test
-        @DisplayName("queues a non-targeting exile trigger aimed at the damage source")
-        void queuesExileTrigger() {
-            Permanent triggerPerm = createPermanent("Hixus, Prison Warden");
-            Permanent sourcePerm = createPermanent("Grizzly Bears");
-            var effect = new com.github.laxika.magicalvibes.model.effect
-                    .ExileDamageSourcePermanentUntilSourceLeavesEffect(null, true);
-            var ctx = new TriggerContext.DamageToController(player1Id, sourcePerm.getId(), true);
-
-            when(gameQueryService.findPermanentById(gd, sourcePerm.getId())).thenReturn(sourcePerm);
-
-            boolean result = registry.dispatch(
-                    match(triggerPerm, player1Id, effect),
-                    DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, effect, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(sourcePerm.getId());
-            assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
-            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(triggerPerm.getId());
-            assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        }
-
-        @Test
-        @DisplayName("does not fire on noncombat damage when combatOnly is set")
-        void skipsNoncombatDamage() {
-            Permanent triggerPerm = createPermanent("Hixus, Prison Warden");
-            Permanent sourcePerm = createPermanent("Grizzly Bears");
-            var effect = new com.github.laxika.magicalvibes.model.effect
-                    .ExileDamageSourcePermanentUntilSourceLeavesEffect(null, true);
-            var ctx = new TriggerContext.DamageToController(player1Id, sourcePerm.getId(), false);
-
-            boolean result = registry.dispatch(
-                    match(triggerPerm, player1Id, effect),
-                    DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, effect, ctx);
-
-            assertThat(result).isFalse();
-            assertThat(gd.stack).isEmpty();
-        }
-
-        @Test
-        @DisplayName("does not fire when the intervening-if is not met")
-        void skipsWhenInterveningIfUnmet() {
-            Permanent triggerPerm = createPermanent("Hixus, Prison Warden");
-            Permanent sourcePerm = createPermanent("Grizzly Bears");
-            var condition = new com.github.laxika.magicalvibes.model.condition.SourceEnteredThisTurn();
-            var effect = new com.github.laxika.magicalvibes.model.effect
-                    .ExileDamageSourcePermanentUntilSourceLeavesEffect(null, true, condition);
-            var ctx = new TriggerContext.DamageToController(player1Id, sourcePerm.getId(), true);
-
-            when(gameQueryService.findPermanentById(gd, sourcePerm.getId())).thenReturn(sourcePerm);
-            when(conditionEvaluationService.isMet(eq(gd), eq(condition), any())).thenReturn(false);
-
-            boolean result = registry.dispatch(
-                    match(triggerPerm, player1Id, effect),
-                    DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, effect, ctx);
-
-            assertThat(result).isFalse();
-            assertThat(gd.stack).isEmpty();
-        }
-    }
-
-    // ===== ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU — DamageSourceControllerGainsControlOfThisPermanentEffect =====
-
-    @Nested
-    @DisplayName("ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU — DamageSourceControllerGainsControlOfThisPermanentEffect")
-    class ControlTheftOnDamage {
-
-        @Test
-        @DisplayName("steals the trigger permanent when combat damage from opponent creature")
-        void stealsOnCombatDamage() {
-            Permanent triggerPerm = createPermanent("Beguiler of Wills");
-            Permanent sourcePerm = createPermanent("Grizzly Bears");
-            var effect = new DamageSourceControllerGainsControlOfThisPermanentEffect(true, true);
-            var ctx = new TriggerContext.DamageToController(player1Id, sourcePerm.getId(), true);
-
-            when(gameQueryService.findPermanentById(gd, sourcePerm.getId())).thenReturn(sourcePerm);
-            when(gameQueryService.isCreature(gd, sourcePerm)).thenReturn(true);
-            when(gameQueryService.findPermanentController(gd, sourcePerm.getId())).thenReturn(player2Id);
-
-            boolean result = registry.dispatch(
-                    match(triggerPerm, player1Id, effect),
-                    DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, effect, ctx);
-
-            assertThat(result).isTrue();
-            verify(creatureControlService).applyControlEffect(eq(gd), eq(player2Id), eq(triggerPerm),
-                    any(com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect.class),
-                    eq(com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT),
-                    any(), any());
-        }
-
-        @Test
-        @DisplayName("untaps the trigger permanent when the effect requests it")
-        void untapsWhenRequested() {
-            Permanent triggerPerm = createPermanent("Contested Game Ball");
-            Permanent sourcePerm = createPermanent("Grizzly Bears");
-            var effect = new DamageSourceControllerGainsControlOfThisPermanentEffect(true, true, true);
-            var ctx = new TriggerContext.DamageToController(player1Id, sourcePerm.getId(), true);
-
-            when(gameQueryService.findPermanentById(gd, sourcePerm.getId())).thenReturn(sourcePerm);
-            when(gameQueryService.isCreature(gd, sourcePerm)).thenReturn(true);
-            when(gameQueryService.findPermanentController(gd, sourcePerm.getId())).thenReturn(player2Id);
-
-            boolean result = registry.dispatch(
-                    match(triggerPerm, player1Id, effect),
-                    DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, effect, ctx);
-
-            assertThat(result).isTrue();
-            verify(tapUntapSupport).untapPermanent(gd, triggerPerm);
-        }
-
-        @Test
-        @DisplayName("returns false when combatOnly=true but damage is noncombat")
-        void returnsFalseForNoncombatWhenCombatOnly() {
-            Permanent triggerPerm = createPermanent("Beguiler of Wills");
-            Permanent sourcePerm = createPermanent("Grizzly Bears");
-            var effect = new DamageSourceControllerGainsControlOfThisPermanentEffect(true, false);
-            var ctx = new TriggerContext.DamageToController(player1Id, sourcePerm.getId(), false);
-
-            boolean result = registry.dispatch(
-                    match(triggerPerm, player1Id, effect),
-                    DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, effect, ctx);
-
-            assertThat(result).isFalse();
-            verify(creatureControlService, never()).applyControlEffect(any(), any(), any(), any(), any(), any(), any());
-        }
-
-        @Test
-        @DisplayName("returns false when source permanent is gone")
-        void returnsFalseWhenSourceGone() {
-            Permanent triggerPerm = createPermanent("Beguiler of Wills");
-            UUID missingSourceId = UUID.randomUUID();
-            var effect = new DamageSourceControllerGainsControlOfThisPermanentEffect(false, false);
-            var ctx = new TriggerContext.DamageToController(player1Id, missingSourceId, true);
-
-            when(gameQueryService.findPermanentById(gd, missingSourceId)).thenReturn(null);
-
-            boolean result = registry.dispatch(
-                    match(triggerPerm, player1Id, effect),
-                    DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, effect, ctx);
-
-            assertThat(result).isFalse();
-        }
-
-        @Test
-        @DisplayName("returns false when creatureOnly=true but source is not a creature")
-        void returnsFalseWhenSourceNotCreature() {
-            Permanent triggerPerm = createPermanent("Beguiler of Wills");
-            Permanent sourcePerm = createPermanent("Some Artifact");
-            var effect = new DamageSourceControllerGainsControlOfThisPermanentEffect(false, true);
-            var ctx = new TriggerContext.DamageToController(player1Id, sourcePerm.getId(), true);
-
-            when(gameQueryService.findPermanentById(gd, sourcePerm.getId())).thenReturn(sourcePerm);
-            when(gameQueryService.isCreature(gd, sourcePerm)).thenReturn(false);
-
-            boolean result = registry.dispatch(
-                    match(triggerPerm, player1Id, effect),
-                    DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, effect, ctx);
-
-            assertThat(result).isFalse();
-        }
-
-        @Test
-        @DisplayName("returns false when source controller is the same as damaged player")
-        void returnsFalseWhenSourceControllerIsDamagedPlayer() {
-            Permanent triggerPerm = createPermanent("Beguiler of Wills");
-            Permanent sourcePerm = createPermanent("Grizzly Bears");
-            var effect = new DamageSourceControllerGainsControlOfThisPermanentEffect(false, false);
-            var ctx = new TriggerContext.DamageToController(player1Id, sourcePerm.getId(), true);
-
-            when(gameQueryService.findPermanentById(gd, sourcePerm.getId())).thenReturn(sourcePerm);
-            when(gameQueryService.findPermanentController(gd, sourcePerm.getId())).thenReturn(player1Id);
-
-            boolean result = registry.dispatch(
-                    match(triggerPerm, player1Id, effect),
-                    DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, effect, ctx);
-
-            assertThat(result).isFalse();
-        }
-
-        @Test
-        @DisplayName("returns false when source controller is null")
-        void returnsFalseWhenSourceControllerNull() {
-            Permanent triggerPerm = createPermanent("Beguiler of Wills");
-            Permanent sourcePerm = createPermanent("Grizzly Bears");
-            var effect = new DamageSourceControllerGainsControlOfThisPermanentEffect(false, false);
-            var ctx = new TriggerContext.DamageToController(player1Id, sourcePerm.getId(), true);
-
-            when(gameQueryService.findPermanentById(gd, sourcePerm.getId())).thenReturn(sourcePerm);
-            when(gameQueryService.findPermanentController(gd, sourcePerm.getId())).thenReturn(null);
-
-            boolean result = registry.dispatch(
-                    match(triggerPerm, player1Id, effect),
-                    DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, effect, ctx);
-
-            assertThat(result).isFalse();
         }
     }
 
@@ -1193,7 +866,7 @@ class DamageTriggerCollectorServiceTest {
         @DisplayName("does not add to stack when controller is null")
         void doesNotAddWhenControllerNull() {
             Permanent damagedCreature = createPermanent("Grizzly Bears");
-            var effect = new ReturnDamageSourcePermanentToHandEffect();
+            var effect = com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect.triggering();
             var ctx = new TriggerContext.DamageToCreature(damagedCreature, 2, player2Id);
 
             when(gameQueryService.findPermanentController(gd, damagedCreature.getId())).thenReturn(null);
@@ -1209,7 +882,7 @@ class DamageTriggerCollectorServiceTest {
         @DisplayName("adds triggered ability for unrecognized effect via default handler")
         void addsTriggeredAbilityForUnrecognizedEffect() {
             Permanent damagedCreature = createPermanent("Custom Creature");
-            var effect = new ReturnDamageSourcePermanentToHandEffect();
+            var effect = com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect.triggering();
             var ctx = new TriggerContext.DamageToCreature(damagedCreature, 2, player2Id);
 
             when(gameQueryService.findPermanentController(gd, damagedCreature.getId())).thenReturn(player1Id);
@@ -1339,6 +1012,25 @@ class DamageTriggerCollectorServiceTest {
             assertThat(registry.handles(DamageWatch.ON_CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT,
                     new com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentEffect(
                             new EventValue()))).isFalse();
+        }
+
+        @Test
+        @DisplayName("The deals-damage-to-you, chosen-color source and only-target-creature abilities' effects go on the stack through no record handler")
+        void theDamageToYouAbilitiesHaveNoRecordHandler() {
+            assertThat(registry.handles(DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU,
+                    com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect.triggering())).isFalse();
+            assertThat(registry.handles(DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU,
+                    new PutCounterOnReferencedPermanentEffect(PermanentReference.TRIGGERING, CounterType.GOLD)))
+                    .isFalse();
+            assertThat(registry.handles(DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE_TO_YOU,
+                    new com.github.laxika.magicalvibes.model.effect.MayPayManaEffect("{1}", new GainLifeEffect(1),
+                            "Pay {1}?"))).isFalse();
+            assertThat(registry.handles(DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE,
+                    new com.github.laxika.magicalvibes.model.effect.MayPayManaEffect("{1}", new GainLifeEffect(1),
+                            "Pay {1}?"))).isFalse();
+            assertThat(registry.handles(DamageWatch.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_ITS_ONLY_TARGET_CREATURE,
+                    new com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect(new EventValue(),
+                            com.github.laxika.magicalvibes.model.effect.DamageRecipient.EACH_OPPONENT))).isFalse();
         }
 
         @Test

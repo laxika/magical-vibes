@@ -7,11 +7,13 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfDamagedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,7 +25,8 @@ public class ContestedGameBall extends Card {
     public ContestedGameBall() {
         addTrigger(Triggers.creatureDealsCombatDamageToYou(),
                 TriggerOptions.ONE_OR_MORE,
-                new DamageSourceControllerGainsControlOfThisPermanentEffect(true, true, true));
+                DamageSourceControllerGainsControlOfDamagedPermanentEffect.attackingPlayer(),
+                new UntapPermanentsEffect(TapUntapScope.SELF));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

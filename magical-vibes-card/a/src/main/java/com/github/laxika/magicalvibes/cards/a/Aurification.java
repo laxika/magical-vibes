@@ -27,7 +27,7 @@ public class Aurification extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentHasCountersPredicate(CounterType.GOLD)));
 
-        addTrigger(Triggers.permanentDealsDamageToYou(),
+        addTrigger(Triggers.permanentDealsDamageToYou().withFilter(new PermanentIsCreaturePredicate()),
                 new PutCounterOnReferencedPermanentEffect(PermanentReference.TRIGGERING, CounterType.GOLD));
         addStaticEffect(new GrantSubtypeEffect(CardSubtype.WALL, GrantScope.ALL_CREATURES_INCLUDING_SELF, false,
                         goldCounterBearer));

@@ -32,8 +32,8 @@ public class DamageSourceControllerGainsControlOfDamagedPermanentEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var controlEffect = (DamageSourceControllerGainsControlOfDamagedPermanentEffect) effect;
-        UUID newControllerId = controlEffect.newControllerId() != null
-                ? controlEffect.newControllerId()
+        UUID newControllerId = controlEffect.attackingPlayerGainsControl()
+                ? gameData.activePlayerId
                 : gameQueryService.findTriggeringPermanentController(gameData, entry);
         UUID damagedPermanentId = entry.getSourcePermanentId();
         if (newControllerId == null || !gameData.playerIds.contains(newControllerId)

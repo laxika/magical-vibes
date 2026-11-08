@@ -967,6 +967,24 @@ public final class Triggers {
         return new DamageTrigger(DamageTrigger.DamageEvent.INSTANT_OR_SORCERY_DEALS_DAMAGE, ObjectRelation.YOU_CONTROL);
     }
 
+    /**
+     * "Whenever an instant or sorcery spell you control that targets only a single creature deals damage to that
+     * creature" (Imodane): that creature is the stack entry's triggering permanent, "that much" its event value.
+     */
+    public static DamageTrigger instantOrSorceryYouControlDealsDamageToItsOnlyTargetCreature() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_ITS_ONLY_TARGET_CREATURE,
+                ObjectRelation.YOU_CONTROL);
+    }
+
+    /**
+     * "Whenever a source deals damage to you", once for each source, the damage dealt to you the event's value;
+     * {@code withFilter} narrows the source as a permanent and {@code withSpellFilter} as a spell or card ("a source of
+     * the chosen color").
+     */
+    public static DamageTrigger sourceDealsDamageToYou() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.SOURCE_DEALS_DAMAGE_TO_YOU, ObjectRelation.ANY);
+    }
+
     /** "Whenever this deals damage". */
     public static DamageTrigger dealsDamage() {
         return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_DAMAGE, ObjectRelation.THIS);

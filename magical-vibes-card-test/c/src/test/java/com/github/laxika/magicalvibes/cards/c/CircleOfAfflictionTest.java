@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.g.GhostlyFlame;
 import com.github.laxika.magicalvibes.cards.m.MireBoa;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.p.Pyrohemia;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -34,6 +36,28 @@ class CircleOfAfflictionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @CardUsed({CircleOfAffliction.class, GhostlyFlame.class, ProdigalPyromancer.class})
+    @DisplayName("A red source still triggers it while Ghostly Flame makes the source a colorless source of damage")
+    void redSourceTriggersUnderGhostlyFlame() {
+        addCircleChoosing(CardColor.RED);
+        harness.addToBattlefield(player2, new GhostlyFlame());
+        preparePlayer1MainPhase();
+        addCreatureReady(player1, new ProdigalPyromancer());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(19);

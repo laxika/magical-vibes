@@ -285,6 +285,40 @@ class DamageTriggerTest {
     }
 
     @Test
+    void aSourceDealsDamageToYouTriggerNamesTheSourceAsAPermanentAndAsASpell() {
+        CardPredicate redSpell = new CardColorPredicate(CardColor.RED);
+        DamageTrigger circle = Triggers.sourceDealsDamageToYou().withFilter(DRAGON).withSpellFilter(redSpell);
+
+        assertThat(circle.filter()).isEqualTo(DRAGON);
+        assertThat(circle.spellFilter()).isEqualTo(redSpell);
+        assertThat(circle.watchKey()).isEqualTo(Triggers.sourceDealsDamageToYou());
+        assertThat(Triggers.sourceDealsDamageToYou()).isNotEqualTo(Triggers.sourceDealsDamage())
+                .isNotEqualTo(Triggers.permanentDealsDamageToYou());
+
+        Card card = new Card();
+        card.addTrigger(circle, DRAW);
+        assertThat(DamageAbilityReader.printed(card, DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE_TO_YOU)).hasSize(1);
+        assertThat(DamageAbilityReader.printed(card, DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE)).isEmpty();
+        assertThat(DamageAbilityReader.trigger(card.getTriggeredAbilities().getFirst(),
+                Triggers.sourceDealsDamageToYou())).isEqualTo(circle);
+    }
+
+    @Test
+    void anInstantOrSorceryDealsDamageToItsOnlyTargetCreatureTriggerHasItsOwnWatch() {
+        Card card = new Card();
+        card.addTrigger(Triggers.instantOrSorceryYouControlDealsDamageToItsOnlyTargetCreature(), DRAW);
+
+        assertThat(Triggers.instantOrSorceryYouControlDealsDamageToItsOnlyTargetCreature())
+                .isNotEqualTo(Triggers.instantOrSorceryYouControlDealsDamage());
+        assertThat(DamageAbilityReader.printed(card,
+                DamageWatch.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_ITS_ONLY_TARGET_CREATURE)).hasSize(1);
+        assertThat(DamageAbilityReader.printed(card, DamageWatch.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE)).isEmpty();
+        assertThatThrownBy(() -> Triggers.instantOrSorceryYouControlDealsDamageToItsOnlyTargetCreature()
+                .withSpellFilter(new CardColorPredicate(CardColor.RED)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     void aCreatureDealsDamageToYouOrYourPermanentTriggerTakesADamagedPermanentFilter() {
         DamageTrigger mangara = Triggers.creatureDealsDamageToYouOrYourPermanent().withFilter(DRAGON)
                 .withDamagedFilter(DRAGON);

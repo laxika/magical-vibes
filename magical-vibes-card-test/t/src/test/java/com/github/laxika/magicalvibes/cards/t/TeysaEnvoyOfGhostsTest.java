@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.r.RoamingThrone;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -35,6 +36,23 @@ class TeysaEnvoyOfGhostsTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(countPermanents(player2, "Spirit")).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed({TeysaEnvoyOfGhosts.class, GrizzlyBears.class, RoamingThrone.class})
+    @DisplayName("With Roaming Throne naming Advisor, the ability triggers an additional time")
+    void triggersAnAdditionalTimeWithRoamingThrone() {
+        harness.addToBattlefield(player2, new TeysaEnvoyOfGhosts());
+        Permanent throne = harness.addToBattlefieldAndReturn(player2, new RoamingThrone());
+        throne.setChosenSubtype(CardSubtype.ADVISOR);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        resolveCombat(player1);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(countPermanents(player2, "Spirit")).isEqualTo(2);
     }
 
     @Test
