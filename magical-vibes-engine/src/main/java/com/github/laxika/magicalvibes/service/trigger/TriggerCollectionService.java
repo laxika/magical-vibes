@@ -140,7 +140,6 @@ import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilit
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfConditionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -174,6 +173,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardOnAllyLandEntersEffec
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.ReselectTargetAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.StormCopyEffect;
@@ -194,7 +194,6 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessSacrificesEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.EnteringCreatureExactStatsConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToActivate;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
@@ -1872,15 +1871,17 @@ public class TriggerCollectionService {
                         SpellAbilityWatch.ON_SELF_CAST.trigger(), SpellAbilityWatch.ON_SELF_CAST.zone());
         if (!perpetualSelfCastEffects.isEmpty()) {
             for (CardEffect grantedAbility : perpetualSelfCastEffects) {
-                if (!grantedAbility.targetSpec().equals(com.github.laxika.magicalvibes.model.effect.TargetSpec.NONE)
-                        || grantedAbility instanceof CopyThisSpellIfConditionEffect) {
+                if (!grantedAbility.targetSpec().equals(com.github.laxika.magicalvibes.model.effect.TargetSpec.NONE)) {
                     selfCastEffects.add(grantedAbility);
                     continue;
                 }
+                // "This spell" is the triggering spell (Inspiring Easel's "copy it"), copied as it last existed on the
+                // stack once it has left (CR 608.2h).
                 StackEntry grantedTrigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, spellCard,
                         castingPlayerId, spellCard.getName() + "'s ability", List.of(grantedAbility));
                 grantedTrigger.setSourceZone(castZone);
                 grantedTrigger.setTriggeringCardId(spellCard.getId());
+                grantedTrigger.setTriggeringSpell(selfCastSpellEntry);
                 grantedTrigger.setNonTargeting(true);
                 gameData.stack.add(grantedTrigger);
             }
@@ -2136,50 +2137,24 @@ public class TriggerCollectionService {
                     && suspend.skipIfCastFromExile() && castZone == Zone.EXILE) {
                 continue;
             }
-            if (effect instanceof ConditionalEffect conditional
-                    && conditional.wrapped() instanceof CopyThisSpellIfConditionEffect) {
-                effect = conditional.wrapped();
-            }
-            if (effect instanceof CopyThisSpellIfConditionEffect trigger) {
-                StackEntry spellEntry = null;
-                for (StackEntry se : gameData.stack) {
-                    if (se.getTargetableId().equals(spellCard.getId())) {
-                        spellEntry = se;
-                        break;
-                    }
-                }
-                if (spellEntry == null) continue;
-
-                StackEntry snapshot = new StackEntry(spellEntry);
-                List<CardEffect> copies = new ArrayList<>();
-                for (int i = 0; i < trigger.copies(); i++) {
-                    copies.add(new CopyControllerCastSpellEffect(snapshot, castingPlayerId,
-                            Set.of(), Set.of(), trigger.tokenCopy()));
-                }
-                CardEffect copyEffect = copies.size() == 1 ? copies.getFirst()
-                        : new SequenceEffect(copies);
-                if (trigger.conditionAtCast()) {
-                    if (!conditionEvaluationService.isMet(gameData, trigger.condition(),
-                            ConditionContext.forStackEntry(spellEntry))) {
-                        continue;
-                    }
-                    if (trigger.optional()) {
-                        copyEffect = new MayEffect(copyEffect, "Copy " + spellCard.getName() + "?");
-                    }
-                } else {
-                    if (trigger.optional()) {
-                        copyEffect = new MayEffect(copyEffect, "Copy " + spellCard.getName() + "?");
-                    }
-                    copyEffect = new ConditionalEffect(trigger.condition(), copyEffect);
-                }
+            if (copiesThisSpell(effect)) {
+                // "Copy this spell" ("copy it if …", "you may copy it", Banish into Fable's two copies) is one
+                // object on the stack (CR 603.3) whose triggering spell is this spell: the copy is made from the
+                // spell as the ability resolves, or as it last existed on the stack once it has left (CR 608.2h).
+                // Its options were judged as it triggered; an intervening "if" stays wrapped (CR 603.4) and a
+                // "you may" is asked as it resolves (CR 603.5).
+                if (selfCastSpellEntry == null) continue;
                 StackEntry copyTrigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         spellCard,
                         castingPlayerId,
                         spellCard.getName() + "'s ability",
-                        new ArrayList<>(List.of(copyEffect))
+                        new ArrayList<>(List.of(effect))
                 );
                 copyTrigger.setSourceZone(castZone);
+                copyTrigger.setTriggeringCardId(spellCard.getId());
+                copyTrigger.setTriggeringSpell(selfCastSpellEntry);
+                copyTrigger.setNonTargeting(true);
                 gameData.stack.add(copyTrigger);
                 log.info("Game {} - {} self-cast copy trigger queued for {}",
                         gameData.id, spellCard.getName(), castingPlayerId);
@@ -2404,6 +2379,21 @@ public class TriggerCollectionService {
                 }
             }
         }
+    }
+
+    /**
+     * Whether {@code effect}, the effect of a "when you cast this spell" ability, copies that spell and does nothing
+     * else: {@link CopyTriggeringSpellEffect}, behind a "you may", an "if" or in a sequence of such steps.
+     */
+    private static boolean copiesThisSpell(CardEffect effect) {
+        return switch (effect) {
+            case CopyTriggeringSpellEffect ignored -> true;
+            case MayEffect may -> may.elseEffect() == null && copiesThisSpell(may.wrapped());
+            case ConditionalEffect conditional -> copiesThisSpell(conditional.wrapped());
+            case SequenceEffect sequence -> !sequence.steps().isEmpty()
+                    && sequence.steps().stream().allMatch(TriggerCollectionService::copiesThisSpell);
+            default -> false;
+        };
     }
 
     private void dispatchSuspendedExiledCardSpellCastTriggers(GameData gameData, UUID castingPlayerId,
@@ -5998,22 +5988,20 @@ public class TriggerCollectionService {
 
     /**
      * "Whenever another creature you control enters", "this creature or another [restricted] creature you control",
-     * "a creature you control", and their "one or more" forms. Sigil Captain's "if that creature is 1/1" is still a
-     * wrapper (effect-slot-refactor.md step 14, run 3b).
+     * "a creature you control", and their "one or more" forms. The trigger pipeline judged an intervening "if" about
+     * the entering creature (Sigil Captain's "if that creature is 1/1", {@code TriggeringPermanentMatches}) as the
+     * ability triggered; it stays wrapped for resolution (CR 603.4).
      */
     private boolean triggerAllyCreatureEnters(GameData gameData, ZoneChangeWatch watch, Permanent perm,
                                               UUID controllerId, List<CardEffect> effects, Entering entering,
                                               TriggerLimit limit) {
         Card enteringCreature = entering.card();
-        Permanent enteringPermanent = entering.permanent();
         var ctx = new TriggerContext.PermanentEnters(enteringCreature, controllerId, null,
                 1 + gameQueryService.countETBExtraTriggers(gameData, controllerId, controllerId, enteringCreature),
                 entering.permanentId());
         boolean triggered = false;
         for (CardEffect effect : effects) {
-            CardEffect resolved = unwrapEnterCreatureConditional(gameData, enteringCreature, perm, effect);
-            if (resolved == null) continue;
-            triggered |= dispatchEntering(gameData, perm, controllerId, watch, effect, resolved, limit, ctx);
+            triggered |= dispatchEntering(gameData, perm, controllerId, watch, effect, limit, ctx);
         }
         return triggered;
     }
@@ -16006,17 +15994,10 @@ public class TriggerCollectionService {
      */
     private boolean dispatchEntering(GameData gameData, Permanent perm, UUID controllerId, ZoneChangeWatch watch,
                                      CardEffect effect, TriggerLimit limit, TriggerContext.PermanentEnters ctx) {
-        return dispatchEntering(gameData, perm, controllerId, watch, effect, effect, limit, ctx);
-    }
-
-    /** {@link #dispatchEntering} for {@code effect} unwrapped from the authored {@code rawEffect}. */
-    private boolean dispatchEntering(GameData gameData, Permanent perm, UUID controllerId, ZoneChangeWatch watch,
-                                     CardEffect rawEffect, CardEffect effect, TriggerLimit limit,
-                                     TriggerContext.PermanentEnters ctx) {
         boolean limited = limit == TriggerLimit.ONCE_EACH_TURN || limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN;
         var effectCtx = limited ? new TriggerContext.PermanentEnters(ctx.enteringCard(), ctx.enteringControllerId(),
                 ctx.defaultTargetPlayerId(), 1, ctx.mayPayTargetCardId()) : ctx;
-        var match = new TriggerMatchContext(gameData, perm, controllerId, rawEffect,
+        var match = new TriggerMatchContext(gameData, perm, controllerId, effect,
                 perm != null ? perm.getCard() : null, null, limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN, limited);
         return dispatch(match, watch, effect, effectCtx);
     }
@@ -16254,27 +16235,6 @@ public class TriggerCollectionService {
             case ENCHANTMENT -> gameQueryService.isEnchantment(gameData, permanent);
             default -> card.hasType(type);
         };
-    }
-
-    /**
-     * Gates Sigil Captain's "if that creature is 1/1", whose wrapper no trigger option replaces yet: its stats are read
-     * with continuous effects applied as the creature entered (CR 613). Returns the wrapped effect if it fires,
-     * {@code null} to skip, or the effect unchanged when it isn't wrapped.
-     */
-    private CardEffect unwrapEnterCreatureConditional(GameData gameData, Card enteringCreature,
-                                                      Permanent source, CardEffect effect) {
-        if (!(effect instanceof EnteringCreatureExactStatsConditionalEffect exactStats)) {
-            return effect;
-        }
-        Permanent enteringPermanent = findPermanentByCard(gameData, enteringCreature);
-        if (enteringPermanent == null
-                || gameQueryService.getEffectivePower(gameData, enteringPermanent) != exactStats.power()
-                || gameQueryService.getEffectiveToughness(gameData, enteringPermanent) != exactStats.toughness()) {
-            return null;
-        }
-        log.info("Game {} - {} triggers for {} entering ({})", gameData.id, source.getCard().getName(),
-                enteringCreature.getName(), exactStats.triggerDescription(enteringCreature));
-        return exactStats.wrapped();
     }
 
     // ── Internal dispatch ──────────────────────────────────────────────

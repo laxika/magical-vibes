@@ -16,14 +16,12 @@ import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToEnteri
 import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTrackedTokensAndCreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EnteringCreatureExactStatsConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToPowerEffect;
@@ -530,28 +528,6 @@ class EnterTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("Ally-creature exact-stats gate bakes a mandatory put-counters on a 1/1 entrant (Sigil Captain)")
-    void allyCreatureMandatoryPutCountersOnEntering1_1() {
-        addAllyCreatureTrigger(ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-                new EnteringCreatureExactStatsConditionalEffect(1, 1,
-                        new PutCountersOnEnteringCreatureEffect(2, false)));
-
-        Card entering = enteringCreature(1, 1);
-        Permanent enteringPermanent = new Permanent(entering);
-        gd.playerBattlefields.get(player1Id).add(enteringPermanent);
-
-        enter(player1Id, entering);
-        service.checkAllyCreatureEntersTriggers(gd, player1Id, entering, 0);
-
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(enteringPermanent.getId());
-        // The exact stats are checked again as the ability resolves (CR 603.4).
-        ConditionalEffect counters = (ConditionalEffect) gd.stack.getFirst().getEffectsToResolve().getFirst();
-        assertThat(counters.wrapped()).isInstanceOf(PutCounterOnTargetPermanentEffect.class);
-    }
-
-    @Test
     void nontokenCreatureCounterAndKeywordGrantShareOneNonTargetingAbility() {
         addAllyCreatureTrigger(ZoneChangeWatch.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
                 new PutCountersOnEnteringCreatureEffect(1, false, List.of(
@@ -623,19 +599,6 @@ class EnterTriggerCollectorServiceTest {
                 .hasSize(2)
                 .hasAtLeastOneElementOfType(BoostTargetCreatureEffect.class)
                 .hasAtLeastOneElementOfType(GrantKeywordEffect.class);
-    }
-
-    @Test
-    @DisplayName("Ally-creature exact-stats gate skips an entrant that is not 1/1")
-    void allyCreatureExactStatsGatesNon1_1() {
-        addAllyCreatureTrigger(ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-                new EnteringCreatureExactStatsConditionalEffect(1, 1,
-                        new PutCountersOnEnteringCreatureEffect(2, false)));
-
-        enter(player1Id, enteringCreature(1, 2));
-        service.checkAllyCreatureEntersTriggers(gd, player1Id, enteringCreature(1, 2), 0);
-
-        assertThat(gd.stack).isEmpty();
     }
 
     @Test

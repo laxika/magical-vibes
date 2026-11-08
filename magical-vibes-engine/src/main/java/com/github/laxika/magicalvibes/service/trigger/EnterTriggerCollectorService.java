@@ -68,7 +68,6 @@ import com.github.laxika.magicalvibes.model.effect.MayPayLifeAndPutCountersOnEnt
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveChosenCounterFromSourceToEnteringCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.EnteringCreatureExactStatsConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToEnteringPowerEffect;
@@ -92,11 +91,6 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentManaValueE
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapEnteringPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -1869,9 +1863,8 @@ public class EnterTriggerCollectorService {
 
     /**
      * "Whenever a creature you control [gated] enters, [you may] put M counters on it"
-     * (Mighty Emergence "you may", Sigil Captain mandatory). The gate is the trigger's filter (Sigil
-     * Captain's still an {@code EnteringCreatureExactStatsConditionalEffect}); here we resolve the entering permanent and either queue a
-     * "you may" ({@code optional}) or bake a mandatory counter placement onto the stack — both whose
+     * (Mighty Emergence "you may"). The gate is the trigger's filter; here we resolve the entering permanent and
+     * either queue a "you may" ({@code optional}) or bake a mandatory counter placement onto the stack — both whose
      * {@code targetId} is that creature, resolved via {@link PutCounterOnTargetPermanentEffect}.
      */
     @CollectsWatchTrigger(value = PutCountersOnEnteringCreatureEffect.class,
@@ -1893,16 +1886,6 @@ public class EnterTriggerCollectorService {
         if (effect.requiredCounterType() != null) {
             counters = new ConditionalEffect(
                     new TargetPermanentMatches(new PermanentHasCountersPredicate(effect.requiredCounterType())),
-                    counters);
-        }
-        if (match.rawEffect() instanceof EnteringCreatureExactStatsConditionalEffect exactStats) {
-            // Intervening "if" (CR 603.4): the entering creature must still have those stats on resolution.
-            counters = new ConditionalEffect(
-                    new TargetPermanentMatches(new PermanentAllOfPredicate(List.of(
-                            new PermanentPowerAtLeastPredicate(exactStats.power()),
-                            new PermanentPowerAtMostPredicate(exactStats.power()),
-                            new PermanentToughnessAtLeastPredicate(exactStats.toughness()),
-                            new PermanentToughnessAtMostPredicate(exactStats.toughness())))),
                     counters);
         }
         List<CardEffect> resolvedEffects = new ArrayList<>(List.of(counters));

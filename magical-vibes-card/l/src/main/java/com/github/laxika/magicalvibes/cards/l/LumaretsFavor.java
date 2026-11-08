@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfConditionEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOS", collectorNumber = "153")
@@ -13,7 +14,8 @@ public class LumaretsFavor extends Card {
     public LumaretsFavor() {
         // Infusion — When you cast this spell, copy it if you gained life this turn. You may choose
         // new targets for the copy.
-        addTrigger(Triggers.youCastThisSpell(), new CopyThisSpellIfConditionEffect(new GainedLifeThisTurn()));
+        addTrigger(Triggers.youCastThisSpell(),
+                new ConditionalEffect(new GainedLifeThisTurn(), new CopyTriggeringSpellEffect()));
 
         // Target creature gets +2/+4 until end of turn. (Targeting auto-derived.)
         addSpellEffect(new BoostTargetCreatureEffect(2, 4));

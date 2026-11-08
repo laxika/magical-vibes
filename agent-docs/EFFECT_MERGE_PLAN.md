@@ -1658,6 +1658,12 @@ All three implement the same interface and are consumed by a **single** dispatch
 `CardPowerAtLeastPredicate` / `CardPowerAtMostPredicate` already exist with matching
 null-power-never-matches semantics, so Min+Max collapse for free (LOW). Folding in `ExactStats`
 needs one new toughness predicate (`CardAllOfPredicate` composes it) — still net −2 (MED).
+**19a status**: done another way. Min and Max are gone, and effect-slot-refactor.md step 15 run 17t removed
+`ExactStats` and `EnterCreatureConditionalEffect`: Sigil Captain's "if that creature is 1/1" is the ability's
+intervening "if" `TriggeringPermanentMatches` on the entering creature, so no wrapper class is left to merge.
+**19a status**: done another way. Min and Max are gone, and effect-slot-refactor.md step 15 run 17t removed
+`ExactStats` and `EnterCreatureConditionalEffect`: Sigil Captain's "if that creature is 1/1" is the ability's
+intervening "if" `TriggeringPermanentMatches` on the entering creature, so no wrapper class is left to merge.
 
 **19b Target**
 ```java

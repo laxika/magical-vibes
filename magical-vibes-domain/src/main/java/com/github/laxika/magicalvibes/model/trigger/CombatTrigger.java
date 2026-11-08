@@ -17,8 +17,10 @@ import java.util.Objects;
  * @param filter   what the creature must be, or {@code null} for any creature: "whenever a Dragon you control attacks"
  *                 is {@code Triggers.creatureYouControlAttacks().withFilter(new PermanentHasSubtypePredicate(DRAGON))}.
  *                 For "this creature blocks" and "this creature becomes blocked" it is the creature on the other side
- *                 of the block, "blocks a creature with flying", "becomes blocked by a white creature" (CR 509.3f);
- *                 for every other event it is the creature that attacks, blocks, becomes blocked or deals the
+ *                 of the block, "blocks a creature with flying", "becomes blocked by a white creature" (CR 509.3f;
+ *                 with {@code TriggerOptions.EACH_BLOCKER} once for each blocker it matches, and on an Aura or
+ *                 Equipment without it once if one or more blockers match: Hedron Blade's "becomes blocked by one or
+ *                 more colorless creatures"); for every other event it is the creature that attacks, blocks, becomes blocked or deals the
  *                 damage, as the engine's combat collectors judge it. "A creature with the same name as this" and "one
  *                 or more goaded creatures" are filters their own collectors read
  *                 ({@link Triggers#creatureWithSameNameDealsCombatDamageToPlayer()},

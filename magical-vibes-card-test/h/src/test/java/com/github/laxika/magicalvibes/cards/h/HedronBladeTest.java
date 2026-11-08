@@ -73,6 +73,25 @@ class HedronBladeTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.DEATHTOUCH)).isFalse();
     }
 
+    @Test
+    @DisplayName("Blocked by a colored and two colorless creatures, the ability triggers once")
+    void triggersOnceForSeveralColorlessBlockers() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blade = addBladeReady(player1);
+        blade.setAttachedTo(attacker.getId());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new Ornithopter());
+        addCreatureReady(player2, new Ornithopter());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0),
+                new BlockerAssignment(2, 0)));
+
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Hedron Blade")).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DEATHTOUCH)).isTrue();
+    }
+
     private void declareBlockers() {
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

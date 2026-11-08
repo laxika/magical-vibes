@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -42,9 +44,14 @@ class BanishIntoFableTest extends BaseCardTest {
         prepareSpell();
 
         harness.castInstant(player1, 0, originalTarget.getId());
-        resolveCopyTo(firstCopyTarget);
-        resolveCopyTo(secondCopyTarget);
+        // "Copy it if …, then copy it if …" is one ability (CR 603.3): both copies are made as it resolves.
+        assertThat(gd.stack).filteredOn(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
+                .hasSize(1);
         harness.passBothPriorities();
+        chooseNewTargetForCopy(firstCopyTarget);
+        chooseNewTargetForCopy(secondCopyTarget);
+        assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(2);
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Knight")).hasSize(3);
         assertThat(findPermanents(player2, "Grizzly Bears")).isEmpty();
@@ -82,14 +89,12 @@ class BanishIntoFableTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
     }
 
-    private void resolveCopyTo(Permanent target) {
-        harness.passBothPriorities();
+    private void chooseNewTargetForCopy(Permanent target) {
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, target.getId());
-        harness.passBothPriorities();
     }
 }

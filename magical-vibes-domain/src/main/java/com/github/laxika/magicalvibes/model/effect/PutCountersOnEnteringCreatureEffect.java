@@ -15,8 +15,9 @@ import java.util.List;
  * {@code MayEffect(PutCounterOnTargetPermanentEffect(counterType, count))} with {@code targetId}
  * set to that creature and {@code sourcePermanentId} set to this permanent; when not {@code optional}
  * it queues the mandatory counter placement directly. Typically narrowed by its trigger's filter (Mighty
- * Emergence's "with power 5 or greater": count = 2, may) or wrapped in an
- * {@link EnteringCreatureExactStatsConditionalEffect} (Sigil Captain: count = 2, is 1/1, mandatory).
+ * Emergence's "with power 5 or greater": count = 2, may). An intervening "if" about the entering creature (Sigil
+ * Captain's "if that creature is 1/1") is the ability's option, with
+ * {@code PutCounterOnReferencedPermanentEffect(PermanentReference.TRIGGERING, …)} as its effect.
  */
 public record PutCountersOnEnteringCreatureEffect(CounterType counterType, DynamicAmount amount, boolean optional,
                                                   CounterType requiredCounterType, List<CardEffect> followUpEffects)

@@ -20,7 +20,6 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CombatOpponentFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -28,8 +27,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroySubtypeCombatOpponentEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedCreatureDealsDamageToDefendingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -64,14 +61,17 @@ public class CombatTriggerService {
 
     /**
      * The effects of the attached permanent {@code perm}'s abilities that {@code watch} reads: its own "whenever
-     * equipped / enchanted creature attacks, blocks or becomes blocked", or the ability it grants the creature. No
-     * Aura or Equipment writes one with a filter or a limit, and this throws on one.
+     * equipped / enchanted creature attacks, blocks or becomes blocked", or the ability it grants the creature. A
+     * "blocks" or "becomes blocked" ability may have a filter on the creature on the other side of the block
+     * ("blocks or becomes blocked by a Vampire", Wooden Stake; CR 509.3f), which the collector judges as the ability
+     * triggers. No Aura or Equipment writes another filter or a limit, and this throws on one.
      */
     private static List<CombatAbilityReader.CombatEffect> attachedCombatEffects(Permanent perm, CombatWatch watch) {
         List<CombatAbilityReader.CombatEffect> reads = CombatAbilityReader.read(
                 WatchedAbilities.printed(perm.getCard(), watch), watch.trigger());
+        boolean blockWatch = watch == CombatWatch.ON_BLOCK || watch == CombatWatch.ON_BECOMES_BLOCKED;
         for (CombatAbilityReader.CombatEffect read : reads) {
-            if (read.filter() != null || read.limit() != TriggerLimit.NONE) {
+            if ((read.filter() != null && !blockWatch) || read.limit() != TriggerLimit.NONE) {
                 throw new IllegalStateException("The attached-permanent combat collector reads no filter or limit: "
                         + read.ability());
             }
@@ -96,10 +96,11 @@ public class CombatTriggerService {
     }
 
     /**
-     * Overload that accepts a combat opponent for subtype-filtered triggers
-     * (e.g. Wooden Stake's "blocks or becomes blocked by a Vampire").
-     * When a {@link DestroySubtypeCombatOpponentEffect} matches the opponent's subtype,
-     * the trigger is auto-targeted and placed directly on the stack as non-targeting.
+     * Overload that accepts the combat opponent: the creature the attached creature blocks, which a "blocks" ability's
+     * filter is judged against (Wooden Stake's "blocks … a Vampire") and which an effect that acts on "that creature"
+     * ({@link CombatOpponentReferencingEffect}) gets as the entry's non-targeting target. Without one, a "becomes
+     * blocked" ability's filter is judged against every creature blocking it ("becomes blocked by one or more colorless
+     * creatures", Hedron Blade).
      */
     public void checkAuraTriggersForCreature(GameData gameData, Permanent creature, CombatWatch slot,
                                               Permanent combatOpponent) {
@@ -150,25 +151,18 @@ public class CombatTriggerService {
                             ability.getFirst().ability().options(), triggerContext)) {
                         continue;
                     }
+                    // The filter on the creature on the other side of the block, as the creature blocks or becomes
+                    // blocked (CR 509.3f).
+                    PermanentPredicate blockFilter = ability.getFirst().filter();
+                    if (blockFilter != null && !matchesCombatOpponent(gameData, creature, combatOpponent, blockFilter)) {
+                        continue;
+                    }
                     List<CardEffect> nonPerBlockerEffects = CombatAbilityReader.effectsOf(ability);
-                    // Bake the creature's controller into effects that need it,
-                    // and transform subtype-filtered combat effects
+                    // Bake the creature's controller into effects that need it
                     List<CardEffect> effectsForStack = new ArrayList<>();
                     boolean autoTargetOpponent = false;
                     for (CardEffect effect : nonPerBlockerEffects) {
-                        if (effect instanceof DestroySubtypeCombatOpponentEffect destroyEffect) {
-                            if (combatOpponent != null
-                                    && permanentHasSubtype(combatOpponent, destroyEffect.requiredSubtype())) {
-                                effectsForStack.add(new DestroyTargetPermanentEffect(destroyEffect.cannotBeRegenerated()));
-                                autoTargetOpponent = true;
-                            }
-                            // If subtype doesn't match, skip this effect
-                        } else if (effect instanceof CombatOpponentFilterEffect conditional) {
-                            if (matchesCombatOpponent(gameData, creature, combatOpponent,
-                                    conditional.opponentFilter())) {
-                                effectsForStack.add(conditional.wrapped());
-                            }
-                        } else if (slot != CombatWatch.ON_ATTACK
+                        if (slot != CombatWatch.ON_ATTACK
                                 && effect instanceof CombatOpponentReferencingEffect c
                                 && c.referencesCombatOpponent()) {
                             if (combatOpponent != null
@@ -374,11 +368,9 @@ public class CombatTriggerService {
     /**
      * For attached permanents (equipment/auras) with effects that trigger per blocking creature
      * (e.g. Infiltration Lens: "Whenever equipped creature becomes blocked by a creature,
-     * you may draw two cards"), creates one stack entry per blocker.
-     * <p>
-     * For {@link DestroySubtypeCombatOpponentEffect} effects, the blocker's subtype is checked
-     * and the effect is transformed to {@link DestroyTargetPermanentEffect} with auto-targeting
-     * (e.g. Wooden Stake's "becomes blocked by a Vampire" trigger).
+     * you may draw two cards"), creates one stack entry per blocker. An ability with a filter on the blocker
+     * ("becomes blocked by a Vampire", Wooden Stake) triggers for each blocker it matches as the blocker becomes a
+     * blocking creature (CR 509.3d, 509.3f).
      */
     public void checkAttachedPerBlockerTriggers(GameData gameData, Permanent attacker,
                                                  List<BlockerAssignment> blockerAssignments,
@@ -389,10 +381,10 @@ public class CombatTriggerService {
 
         gameData.forEachPermanent((ownerId, perm) -> {
             if (perm.isAttached() && perm.getAttachedTo().equals(attacker.getId())) {
-                List<CardEffect> perBlockerEffects = attachedCombatEffects(perm, CombatWatch.ON_BECOMES_BLOCKED).stream()
-                        .filter(CombatAbilityReader.CombatEffect::eachBlocker)
-                        .map(CombatAbilityReader.CombatEffect::effect)
-                        .toList();
+                List<CombatAbilityReader.CombatEffect> perBlockerEffects =
+                        attachedCombatEffects(perm, CombatWatch.ON_BECOMES_BLOCKED).stream()
+                                .filter(CombatAbilityReader.CombatEffect::eachBlocker)
+                                .toList();
                 if (!perBlockerEffects.isEmpty()) {
                     for (BlockerAssignment assignment : blockerAssignments) {
                         if (assignment.attackerIndex() != attackerIndex) {
@@ -400,22 +392,15 @@ public class CombatTriggerService {
                         }
                         Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
 
-                        // Transform subtype-filtered effects for this specific blocker
                         List<CardEffect> transformedEffects = new ArrayList<>();
                         boolean autoTargetBlocker = false;
-                        for (CardEffect effect : perBlockerEffects) {
-                            if (effect instanceof DestroySubtypeCombatOpponentEffect destroyEffect) {
-                                if (permanentHasSubtype(blocker, destroyEffect.requiredSubtype())) {
-                                    transformedEffects.add(new DestroyTargetPermanentEffect(destroyEffect.cannotBeRegenerated()));
-                                    autoTargetBlocker = true;
-                                }
-                                // If subtype doesn't match, skip this effect for this blocker
-                            } else if (effect instanceof CombatOpponentFilterEffect conditional) {
-                                if (predicateEvaluationService.matchesPermanentPredicate(
-                                        gameData, blocker, conditional.opponentFilter())) {
-                                    transformedEffects.add(conditional.wrapped());
-                                }
-                            } else if (effect instanceof CombatOpponentReferencingEffect c && c.referencesCombatOpponent()) {
+                        for (CombatAbilityReader.CombatEffect read : perBlockerEffects) {
+                            if (read.filter() != null && !predicateEvaluationService.matchesPermanentPredicate(
+                                    gameData, blocker, read.filter())) {
+                                continue;
+                            }
+                            CardEffect effect = read.effect();
+                            if (effect instanceof CombatOpponentReferencingEffect c && c.referencesCombatOpponent()) {
                                 if (!(effect instanceof DestroyCombatOpponentAtEndOfCombatEffect destroyEffect)
                                         || predicateEvaluationService.matchesPermanentPredicate(
                                         gameData, blocker, destroyEffect.filter())) {
@@ -490,14 +475,6 @@ public class CombatTriggerService {
         gameData.stack.subList(startIndex, gameData.stack.size()).clear();
         gameData.stack.addAll(apTriggers);
         gameData.stack.addAll(napTriggers);
-    }
-
-    /**
-     * Checks whether a permanent has a given subtype. Checks base subtypes, transient subtypes,
-     * granted subtypes, and the intrinsic Changeling keyword (which grants all creature subtypes).
-     */
-    private static boolean permanentHasSubtype(Permanent permanent, CardSubtype subtype) {
-        return GameQueryService.permanentHasSubtype(permanent, subtype);
     }
 
     private boolean matchesCombatOpponent(GameData gameData, Permanent creature,
