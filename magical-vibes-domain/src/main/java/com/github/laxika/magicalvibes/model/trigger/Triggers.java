@@ -1428,6 +1428,11 @@ public final class Triggers {
         return opponentDrawsCard().nthTimeEachTurn(nth);
     }
 
+    /** "Whenever a player draws a card", once for each card: read only from an emblem (Ob Nixilis Reignited's) */
+    public static LibraryTrigger playerDrawsCard() {
+        return new LibraryTrigger(LibraryTrigger.LibraryEvent.DRAWS, PlayerRelation.ANY);
+    }
+
     /** "Whenever an opponent draws a card", once for each card */
     public static LibraryTrigger opponentDrawsCard() {
         return new LibraryTrigger(LibraryTrigger.LibraryEvent.DRAWS, PlayerRelation.OPPONENT);

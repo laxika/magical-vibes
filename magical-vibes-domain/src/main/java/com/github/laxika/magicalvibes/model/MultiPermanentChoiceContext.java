@@ -100,9 +100,14 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
-    /** Selects zero or more players for an upkeep trigger. */
+    /**
+     * Selects zero or more players for an upkeep trigger whose event was about {@code triggeringPlayerId} ("that
+     * player", the enchanted player whose upkeep it is), which the stack entry it makes carries as its triggering
+     * player.
+     */
     record UpkeepAnyNumberPlayerTargets(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                        UUID sourcePermanentId) implements MultiPermanentChoiceContext {
+                                        UUID sourcePermanentId, UUID triggeringPlayerId)
+            implements MultiPermanentChoiceContext {
 
         public UpkeepAnyNumberPlayerTargets {
             effects = List.copyOf(effects);

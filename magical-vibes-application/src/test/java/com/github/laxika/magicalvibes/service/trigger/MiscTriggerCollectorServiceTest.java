@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
@@ -23,7 +22,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanXPredicate;
@@ -35,9 +33,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCreatureCardInOpponentGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
-import com.github.laxika.magicalvibes.model.effect.NykthosParagonLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -94,6 +90,9 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSu
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.model.effect.MayPayLifeEqualToAmountEffect;
+import com.github.laxika.magicalvibes.model.amount.TriggeringCardManaValue;
+import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -340,8 +339,9 @@ class MiscTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("life-gain may-pay trigger keeps the optional payment on the stack")
+    @DisplayName("life-gain may-pay trigger keeps the optional payment on the stack, with the life gained")
     void lifeGainMayPayTriggerKeepsOptionalPayment() {
+        TriggerCollectorRegistry.scanBean(new LifeGainTriggerCollectorService(gameLogService), registry);
         Permanent perm = createPermanent("Dawn of Hope");
         var effect = new MayPayManaEffect("{2}", new DrawCardEffect(1), "Pay {2} to draw a card?");
         var ctx = new TriggerContext.LifeGain(player1Id, 1);
@@ -352,6 +352,7 @@ class MiscTriggerCollectorServiceTest {
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+        assertThat(gd.stack.getLast().getEventValue()).isEqualTo(1);
     }
 
     @Test
@@ -851,7 +852,7 @@ class MiscTriggerCollectorServiceTest {
     }
 
     @Nested
-    @DisplayName("ON_ENCHANTED_PERMANENT_TAPPED — GivePoisonCountersEffect (ENCHANTED_PERMANENT_CONTROLLER)")
+    @DisplayName("ON_ENCHANTED_PERMANENT_TAPPED — GivePoisonCountersEffect (TRIGGERING_PERMANENT_CONTROLLER)")
     class EnchantedPermanentTapPoison {
 
         @Test
@@ -859,7 +860,7 @@ class MiscTriggerCollectorServiceTest {
         void putsTriggeredAbilityOnStack() {
             Permanent aura = createPermanent("Relic Putrescence");
             Permanent tappedPerm = createPermanent("Sol Ring");
-            var effect = new GivePoisonCountersEffect(1, PoisonRecipient.ENCHANTED_PERMANENT_CONTROLLER);
+            var effect = new GivePoisonCountersEffect(1, PoisonRecipient.TRIGGERING_PERMANENT_CONTROLLER);
             var ctx = new TriggerContext.EnchantedPermanentTap(tappedPerm, player2Id);
 
             boolean result = registry.dispatch(
@@ -876,11 +877,11 @@ class MiscTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("resolved effect targets the tapped permanent's controller at resolution")
-        void resolvedEffectContainsControllerId() {
+        @DisplayName("the effect goes on the stack as written, the tapped permanent its triggering permanent")
+        void effectGoesOnTheStackAsWrittenWithTheTappedPermanent() {
             Permanent aura = createPermanent("Relic Putrescence");
             Permanent tappedPerm = createPermanent("Sol Ring");
-            var effect = new GivePoisonCountersEffect(1, PoisonRecipient.ENCHANTED_PERMANENT_CONTROLLER);
+            var effect = new GivePoisonCountersEffect(1, PoisonRecipient.TRIGGERING_PERMANENT_CONTROLLER);
             var ctx = new TriggerContext.EnchantedPermanentTap(tappedPerm, player2Id);
 
             registry.dispatch(
@@ -888,11 +889,11 @@ class MiscTriggerCollectorServiceTest {
                     TapWatch.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
 
             StackEntry entry = gd.stack.getLast();
-            var resolved = (GivePoisonCountersEffect) entry.getEffectsToResolve().getFirst();
-            assertThat(resolved.recipient()).isEqualTo(PoisonRecipient.TARGET_PERMANENT_CONTROLLER);
-            assertThat(entry.getTargetId()).isEqualTo(tappedPerm.getId());
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+            assertThat(entry.getTargetId()).isNull();
+            assertThat(entry.isNonTargeting()).isTrue();
+            assertThat(entry.getTriggeringPermanentId()).isEqualTo(tappedPerm.getId());
             assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(player2Id);
-            assertThat(resolved.amount()).isEqualTo(new Fixed(1));
         }
 
         @Test
@@ -900,7 +901,7 @@ class MiscTriggerCollectorServiceTest {
         void broadcastsTriggerLog() {
             Permanent aura = createPermanent("Relic Putrescence");
             Permanent tappedPerm = createPermanent("Sol Ring");
-            var effect = new GivePoisonCountersEffect(1, PoisonRecipient.ENCHANTED_PERMANENT_CONTROLLER);
+            var effect = new GivePoisonCountersEffect(1, PoisonRecipient.TRIGGERING_PERMANENT_CONTROLLER);
             var ctx = new TriggerContext.EnchantedPermanentTap(tappedPerm, player2Id);
 
             registry.dispatch(
@@ -1048,26 +1049,26 @@ class MiscTriggerCollectorServiceTest {
         }
     }
 
-    // ===== ON_OPPONENT_LOSES_LIFE — MillOpponentOnLifeLossEffect =====
-
     @Nested
-    @DisplayName("ON_OPPONENT_LOSES_LIFE — MillOpponentOnLifeLossEffect")
+    @DisplayName("ON_OPPONENT_LOSES_LIFE / ON_CONTROLLER_LOSES_LIFE — MillEffect(EventValue, TRIGGERING_PLAYER)")
     class LifeLossMill {
+
+        private final MillEffect effect = new MillEffect(new EventValue(), MillRecipient.TRIGGERING_PLAYER);
 
         private void assertMillTriggerQueued(UUID millingPlayerId, int amount) {
             assertThat(gd.stack).hasSize(1);
             StackEntry entry = gd.stack.getLast();
-            assertThat(entry.getEffectsToResolve())
-                    .containsExactly(new MillEffect(amount, MillRecipient.TARGET_PLAYER));
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
             assertThat(entry.getTargetId()).isEqualTo(millingPlayerId);
+            assertThat(entry.isNonTargeting()).isTrue();
+            assertThat(entry.getEventValue()).isEqualTo(amount);
             verify(graveyardService, never()).resolveMillPlayer(any(), any(), anyInt());
         }
 
         @Test
-        @DisplayName("mills the controller when dispatched from the controller life-loss slot")
+        @DisplayName("the controller is \"that player\" when dispatched from the controller life-loss watch")
         void millsControllerForLifeLost() {
             Permanent master = createPermanent("The Master of Lake-town");
-            var effect = new MillOpponentOnLifeLossEffect();
             var ctx = new TriggerContext.LifeLoss(player1Id, 2);
 
             gd.playerIdToName.put(player1Id, "Player1");
@@ -1081,10 +1082,9 @@ class MiscTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("mills opponent for the amount of life lost and returns true")
+        @DisplayName("the opponent who lost life is \"that player\" and the life lost the event value")
         void millsOpponentForLifeLost() {
             Permanent mindcrank = createPermanent("Mindcrank");
-            var effect = new MillOpponentOnLifeLossEffect();
             var ctx = new TriggerContext.LifeLoss(player2Id, 3);
 
             gd.playerIdToName.put(player2Id, "Player2");
@@ -1096,38 +1096,6 @@ class MiscTriggerCollectorServiceTest {
             assertThat(result).isTrue();
             assertMillTriggerQueued(player2Id, 3);
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
-        }
-
-        @Test
-        @DisplayName("mills correct amount for 1 life lost (singular log message)")
-        void millsSingularAmount() {
-            Permanent mindcrank = createPermanent("Mindcrank");
-            var effect = new MillOpponentOnLifeLossEffect();
-            var ctx = new TriggerContext.LifeLoss(player2Id, 1);
-
-            gd.playerIdToName.put(player2Id, "Player2");
-
-            registry.dispatch(
-                    match(mindcrank, player1Id, effect),
-                    LifeWatch.ON_OPPONENT_LOSES_LIFE, effect, ctx);
-
-            assertMillTriggerQueued(player2Id, 1);
-        }
-
-        @Test
-        @DisplayName("broadcasts log message with player name and card count")
-        void broadcastsLogMessage() {
-            Permanent mindcrank = createPermanent("Mindcrank");
-            var effect = new MillOpponentOnLifeLossEffect();
-            var ctx = new TriggerContext.LifeLoss(player2Id, 5);
-
-            gd.playerIdToName.put(player2Id, "Opponent");
-
-            registry.dispatch(
-                    match(mindcrank, player1Id, effect),
-                    LifeWatch.ON_OPPONENT_LOSES_LIFE, effect, ctx);
-
-            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Mindcrank triggers — Opponent mills 5 cards.")));
         }
     }
 
@@ -1354,10 +1322,12 @@ class MiscTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("Nykthos Paragon life-gain trigger is optional and once per turn")
+    @DisplayName("Nykthos Paragon's \"you may\" goes on the stack as written with the life gained, once per turn on acceptance")
     void nykthosParagonLifeGainTriggerIsOptionalAndOncePerTurn() {
+        TriggerCollectorRegistry.scanBean(new LifeGainTriggerCollectorService(gameLogService), registry);
         Permanent perm = createPermanent("Nykthos Paragon");
-        var effect = new NykthosParagonLifeGainEffect();
+        var effect = new MayEffect(new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE,
+                new EventValue(), new PermanentIsCreaturePredicate()), "Put that many +1/+1 counters?");
         var ctx = new TriggerContext.LifeGain(player1Id, 3);
 
         boolean result = registry.dispatch(
@@ -1366,8 +1336,8 @@ class MiscTriggerCollectorServiceTest {
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getLast().getEffectsToResolve()).singleElement()
-                .isInstanceOf(MayEffect.class);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+        assertThat(gd.stack.getLast().getEventValue()).isEqualTo(3);
         assertThat(gd.stack.getLast().isMarkSourceOncePerTurnOnAcceptance()).isTrue();
         assertThat(gd.oncePerTurnTriggersFiredThisTurn).doesNotContain(perm.getId());
 
@@ -1376,6 +1346,7 @@ class MiscTriggerCollectorServiceTest {
                 LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect,
                 new TriggerContext.LifeGain(player1Id, 4))).isTrue();
         assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getEventValue()).isEqualTo(4);
     }
 
     // ===== ON_CONTROLLER_GAINS_LIFE — LoseLifeEffect(EventValue, TARGET_PLAYER) =====
@@ -1708,6 +1679,32 @@ class MiscTriggerCollectorServiceTest {
             assertThat(entry.getEffectsToResolve()).containsExactly(effect);
             assertThat(entry.getTriggeringCardId()).isEqualTo(bears.getId());
             assertThat(entry.getTriggeringCards()).containsExactly(bears);
+        });
+    }
+
+    @Test
+    @DisplayName("Lorcan's \"pay life equal to its mana value\" goes on the stack as written with the card's graveyard incarnation")
+    void opponentGraveyardCreatureCardMayPayLifeGoesOnTheStackAsWritten() {
+        Permanent perm = createPermanent("Lorcan, Warlock Collector");
+        var effect = new MayPayLifeEqualToAmountEffect(new TriggeringCardManaValue(),
+                new ReturnTriggeringCardFromGraveyardToBattlefieldEffect(false, true, null, 0, CardSubtype.WARLOCK),
+                "Pay life equal to that card's mana value to return it to the battlefield?");
+        Card bears = createCard("Grizzly Bears");
+        gd.graveyardEntryVersions.put(bears.getId(), 4L);
+        var ctx = new TriggerContext.CreatureCardPutIntoGraveyard(bears, player2Id);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect),
+                ZoneChangeWatch.ON_CREATURE_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE,
+                effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+            assertThat(entry.getTriggeringCardId()).isEqualTo(bears.getId());
+            assertThat(entry.getTriggeringCardGraveyardEntryVersion()).isEqualTo(4L);
+            assertThat(entry.getTriggeringCards()).containsExactly(bears);
+            assertThat(entry.isNonTargeting()).isTrue();
         });
     }
 

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.EmblemControllerLosesLifeOnAnyPlayerDrawEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -73,8 +72,6 @@ class ObNixilisReignitedTest extends BaseCardTest {
         assertThat(gd.emblems).hasSize(1);
         Emblem emblem = gd.emblems.getFirst();
         assertThat(emblem.controllerId()).isEqualTo(player2.getId());
-        assertThat(emblem.staticEffects()).singleElement()
-                .isEqualTo(new EmblemControllerLosesLifeOnAnyPlayerDrawEffect(2));
 
         harness.setLibrary(player1, List.of(new ScytheLeopard()));
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));

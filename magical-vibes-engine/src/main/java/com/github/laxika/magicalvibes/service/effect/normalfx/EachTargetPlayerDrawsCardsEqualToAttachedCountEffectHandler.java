@@ -23,8 +23,9 @@ public class EachTargetPlayerDrawsCardsEqualToAttachedCountEffectHandler impleme
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var drawEffect = (EachTargetPlayerDrawsCardsEqualToAttachedCountEffect) effect;
-        int amount = drawEffect.enchantedPlayerId() == null ? 0
-                : damageSupport.countPermanentsAttachedToPlayer(gameData, drawEffect.enchantedPlayerId(), drawEffect.filter());
+        // "Attached to that player": the triggering player, counted as the ability resolves.
+        int amount = entry.getTriggeringPlayerId() == null ? 0
+                : damageSupport.countPermanentsAttachedToPlayer(gameData, entry.getTriggeringPlayerId(), drawEffect.filter());
         for (var playerId : entry.getTargetIds()) {
             for (int i = 0; i < amount; i++) {
                 drawService.resolveDrawCard(gameData, playerId);

@@ -2,18 +2,13 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
-import java.util.UUID;
-
 /**
- * Each chosen player draws cards equal to the number of permanents attached to the enchanted player
- * that match the filter. The enchanted player is captured when the triggered ability is created.
+ * Each target player draws cards equal to the number of permanents matching {@code filter} attached to "that player",
+ * the stack entry's triggering player (the enchanted player whose upkeep it is, Curse of Surveillance), counted as the
+ * ability resolves.
  */
-public record EachTargetPlayerDrawsCardsEqualToAttachedCountEffect(PermanentPredicate filter, UUID enchantedPlayerId)
+public record EachTargetPlayerDrawsCardsEqualToAttachedCountEffect(PermanentPredicate filter)
         implements CardEffect {
-
-    public EachTargetPlayerDrawsCardsEqualToAttachedCountEffect(PermanentPredicate filter) {
-        this(filter, null);
-    }
 
     @Override
     public TargetSpec targetSpec() {

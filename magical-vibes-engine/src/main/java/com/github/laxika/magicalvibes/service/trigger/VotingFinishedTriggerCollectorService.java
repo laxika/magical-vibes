@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ErestorOfTheCouncilEffect;
-import com.github.laxika.magicalvibes.model.effect.ModelOfUnityEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,48 +20,29 @@ public class VotingFinishedTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsActionTrigger(value = ErestorOfTheCouncilEffect.class, watch = ActionWatch.ON_PLAYERS_FINISH_VOTING)
-    private boolean handleErestor(TriggerMatchContext match, ErestorOfTheCouncilEffect trigger,
-                                  TriggerContext context) {
+    /**
+     * "Whenever players finish voting": the ability goes on the stack as the card wrote it, with the vote as the players
+     * finished it as the entry's triggering vote, which its effects read as they resolve (Erestor of the Council, Model
+     * of Unity).
+     */
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_PLAYERS_FINISH_VOTING)
+    private boolean handleVotingFinished(TriggerMatchContext match, CardEffect effect, TriggerContext context) {
         if (!(context instanceof TriggerContext.VotingFinished votingFinished)
                 || match.permanent() == null) {
             return false;
         }
 
         Card sourceCard = match.permanent().getCard();
-        ErestorOfTheCouncilEffect snapshotEffect =
-                new ErestorOfTheCouncilEffect(votingFinished.result());
-        match.gameData().enqueueTrigger(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(snapshotEffect)),
+                new ArrayList<>(List.of(effect)),
                 null,
-                match.permanent().getId()));
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers after voting finishes", match.gameData().id, sourceCard.getName());
-        return true;
-    }
-
-    @CollectsActionTrigger(value = ModelOfUnityEffect.class, watch = ActionWatch.ON_PLAYERS_FINISH_VOTING)
-    private boolean handleModelOfUnity(TriggerMatchContext match, ModelOfUnityEffect trigger,
-                                       TriggerContext context) {
-        if (!(context instanceof TriggerContext.VotingFinished votingFinished)
-                || match.permanent() == null) {
-            return false;
-        }
-
-        Card sourceCard = match.permanent().getCard();
-        ModelOfUnityEffect snapshotEffect = new ModelOfUnityEffect(votingFinished.result());
-        match.gameData().enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(snapshotEffect)),
-                null,
-                match.permanent().getId()));
+                match.permanent().getId());
+        entry.setTriggeringVotingResult(votingFinished.result());
+        match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers after voting finishes", match.gameData().id, sourceCard.getName());
         return true;

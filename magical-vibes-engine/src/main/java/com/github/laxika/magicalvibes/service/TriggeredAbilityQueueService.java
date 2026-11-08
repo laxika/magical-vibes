@@ -1931,6 +1931,9 @@ public class TriggeredAbilityQueueService {
         entry.setTriggeringPermanent(pending.departedPermanent());
         entry.setProducedManaColors(pending.producedManaColors());
         entry.setTriggeringPlayerId(pending.triggeringPlayerId());
+        if (pending.eventValue() != null) {
+            entry.setEventValue(pending.eventValue());
+        }
         if (pending.targetFilter() != null) {
             entry.setTargetFilter(pending.targetFilter());
         }
@@ -2128,6 +2131,9 @@ public class TriggeredAbilityQueueService {
         entry.setTriggeringPermanent(pending.departedPermanent());
         entry.setProducedManaColors(pending.producedManaColors());
         entry.setTriggeringPlayerId(pending.triggeringPlayerId());
+        if (pending.eventValue() != null) {
+            entry.setEventValue(pending.eventValue());
+        }
         gameData.stack.add(entry);
     }
 

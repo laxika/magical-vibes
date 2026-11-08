@@ -94,6 +94,12 @@ public record PutCounterOnTargetPermanentEffect(CounterType counterType, Dynamic
         return new PutCounterOnTargetPermanentEffect(counterType, new Fixed(count), null, targetPredicate, false, null, false);
     }
 
+    /** As {@link #withTargetRestriction(CounterType, int, PermanentPredicate)}, with a count evaluated as it resolves. */
+    public static PutCounterOnTargetPermanentEffect withTargetRestriction(CounterType counterType, DynamicAmount amount,
+                                                                          PermanentPredicate targetPredicate) {
+        return new PutCounterOnTargetPermanentEffect(counterType, amount, null, targetPredicate, false, null, false);
+    }
+
     /**
      * Targeting effect that only places counters when the target matches {@code resolutionCondition}
      * at resolution ("put a +1/+1 counter on target creature you control if it's legendary" — Ancient

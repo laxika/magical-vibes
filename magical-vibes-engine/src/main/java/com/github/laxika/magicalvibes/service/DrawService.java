@@ -8,11 +8,15 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.Emblem;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.trigger.LibraryTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -51,11 +55,8 @@ import com.github.laxika.magicalvibes.model.effect.SharedFateDrawReplacement;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayThisTurnDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOpponentPermanentOnDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemControllerLosesLifeOnAnyPlayerDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseOneToHandDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.IslandSanctuaryEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardThenBottomRestEffect;
 import com.github.laxika.magicalvibes.model.effect.MaySkipDrawReplacementEffect;
@@ -3054,27 +3055,37 @@ public class DrawService {
         checkControllerDrawTriggers(gameData, drawingPlayerId, null);
     }
 
+    /**
+     * The emblems' "whenever [a player / you / an opponent] draws a card" abilities (Ob Nixilis Reignited's "whenever a
+     * player draws a card, you lose 2 life"), which function in the command zone (CR 114.4): each goes on the stack as
+     * one object of its effects, the emblem as its source, the drawing player as the entry's triggering player.
+     * Then the markers still read by class (Teferi's emblem).
+     */
     private void checkEmblemDrawTriggers(GameData gameData, UUID drawingPlayerId) {
         for (Emblem emblem : gameData.emblems) {
+            for (TriggeredAbility ability : emblem.triggeredAbilities()) {
+                boolean triggers = ability.conditions().stream()
+                        .anyMatch(condition -> condition.trigger() instanceof LibraryTrigger draw
+                                && draw.event() == LibraryTrigger.LibraryEvent.DRAWS
+                                && drawnByRelatedPlayer(draw, emblem.controllerId(), drawingPlayerId));
+                if (!triggers) continue;
+                requireOnlyPlainEffects(ability, emblem);
+                Card source = emblem.sourceCard();
+                String description = source.getName() + "'s emblem";
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        source,
+                        emblem.controllerId(),
+                        description,
+                        new ArrayList<>(ability.effects().stream().map(EffectRegistration::effect).toList()));
+                entry.setNonTargeting(true);
+                entry.setTriggeringPlayerId(drawingPlayerId);
+                gameData.stack.add(entry);
+                gameLogService.append(gameData, GameLog.text(description + " triggers."));
+                log.info("Game {} - {} triggers when a player draws", gameData.id, description);
+            }
             for (CardEffect effect : emblem.staticEffects()) {
-                if (effect instanceof EmblemControllerLosesLifeOnAnyPlayerDrawEffect lifeTrigger) {
-                    Card source = emblem.sourceCard();
-                    if (source == null) continue;
-                    String description = source.getName() + "'s emblem";
-                    StackEntry entry = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            source,
-                            emblem.controllerId(),
-                            description,
-                            new ArrayList<>(List.of(
-                                    new LoseLifeEffect(lifeTrigger.amount(), LoseLifeRecipient.CONTROLLER)
-                            ))
-                    );
-                    entry.setNonTargeting(true);
-                    gameData.stack.add(entry);
-                    gameLogService.append(gameData, GameLog.text(description + " triggers."));
-                    log.info("Game {} - {} triggers when a player draws", gameData.id, description);
-                } else if (emblem.controllerId().equals(drawingPlayerId)
+                if (emblem.controllerId().equals(drawingPlayerId)
                         && effect instanceof ExileTargetOpponentPermanentOnDrawEffect) {
                     gameData.queueInteraction(new PermanentChoiceContext.EmblemTriggerTarget(
                             "Teferi's emblem",
@@ -3089,6 +3100,32 @@ public class DrawService {
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.EmblemTriggerTarget.class)) {
             triggeredAbilityQueueService.processNextEmblemTriggerTarget(gameData);
+        }
+    }
+
+    /** Whether {@code drawingPlayerId} is the player {@code draw} names, relative to {@code controllerId}. */
+    private static boolean drawnByRelatedPlayer(LibraryTrigger draw, UUID controllerId, UUID drawingPlayerId) {
+        return switch (draw.player()) {
+            case ANY -> true;
+            case YOU -> controllerId.equals(drawingPlayerId);
+            case OPPONENT -> !controllerId.equals(drawingPlayerId);
+        };
+    }
+
+    /**
+     * The emblem draw reader puts an ability on the stack whole, without targets, filters, counts or options; an ability
+     * with any of them fails loudly instead of triggering wrongly.
+     */
+    private static void requireOnlyPlainEffects(TriggeredAbility ability, Emblem emblem) {
+        boolean plainTrigger = ability.conditions().stream()
+                .allMatch(condition -> !(condition.trigger() instanceof LibraryTrigger draw)
+                        || draw.qualifier() == null && draw.nth() == 0);
+        boolean targets = ability.effects().stream()
+                .map(EffectRegistration::effect)
+                .anyMatch(effect -> effect.targetSpec() != com.github.laxika.magicalvibes.model.effect.TargetSpec.NONE);
+        if (!plainTrigger || targets || !ability.options().equals(TriggerOptions.DEFAULT)) {
+            throw new IllegalStateException(emblem.sourceCard().getName() + "'s emblem has a draw ability its reader "
+                    + "doesn't judge: " + ability);
         }
     }
 

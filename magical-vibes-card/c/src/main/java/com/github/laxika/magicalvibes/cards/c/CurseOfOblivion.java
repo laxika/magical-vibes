@@ -12,6 +12,6 @@ public class CurseOfOblivion extends Card {
 
     public CurseOfOblivion() {
         addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PLAYER),
-                new ExileGraveyardCardsEffect(2, GraveyardExileScope.OWN));
+                new ExileGraveyardCardsEffect(2, GraveyardExileScope.TRIGGERING_PLAYER));
     }
 }

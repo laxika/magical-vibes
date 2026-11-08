@@ -10,6 +10,13 @@ public enum GraveyardExileScope {
     OWN,
 
     /**
+     * "That player exiles {@code count} cards from their graveyard": the player the trigger event was about, the stack
+     * entry's non-targeting {@code targetId} (the enchanted player whose upkeep it is, Curse of Oblivion), choosing
+     * when they have more.
+     */
+    TRIGGERING_PLAYER,
+
+    /**
      * Exiles ALL cards matching the filter from the controller's OWN graveyard (Zombie Mob).
      * A {@code null} filter exiles the whole graveyard. {@code count} is unused.
      */

@@ -216,8 +216,8 @@ public class PermanentChoiceTriggerHandlerService {
             entry.setTriggeringPermanentPowerAtTrigger(stt.triggeringPermanentPowerAtTrigger());
         }
         entry.setSourcePlanarObject(stt.planarSource());
-        entry.setEventValue(stt.triggeringSpellManaValue() != null
-                ? stt.triggeringSpellManaValue()
+        entry.setEventValue(stt.eventValue() != null ? stt.eventValue()
+                : stt.triggeringSpellManaValue() != null ? stt.triggeringSpellManaValue()
                 : stt.spellManaSpentX());
         if (stt.targetFilter() != null) {
             entry.setTargetFilter(stt.targetFilter());
@@ -2581,6 +2581,7 @@ public class PermanentChoiceTriggerHandlerService {
                 context.sourcePermanentId(),
                 targetIds);
         entry.setActivePlayerId(context.controllerId());
+        entry.setTriggeringPlayerId(context.triggeringPlayerId());
         pushTriggeredEntry(gameData, entry);
 
         gameLogService.append(gameData, GameLog.builder().card(context.sourceCard())

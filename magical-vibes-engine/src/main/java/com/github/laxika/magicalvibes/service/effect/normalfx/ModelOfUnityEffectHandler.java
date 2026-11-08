@@ -22,7 +22,7 @@ public class ModelOfUnityEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        VotingResult result = ((ModelOfUnityEffect) effect).votingResult();
+        VotingResult result = entry.getTriggeringVotingResult();
         if (result == null) {
             return;
         }

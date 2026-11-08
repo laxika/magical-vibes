@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawFromBottomOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemControllerLosesLifeOnAnyPlayerDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstNonDrawStepDrawFourReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -49,6 +48,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -408,8 +409,9 @@ class DrawServiceTest {
     @Test
     void emblemAnyPlayerDrawTriggerQueuesLifeLossForItsController() {
         Card source = createCard("Ob Nixilis Reignited", CardType.ENCHANTMENT);
-        gd.emblems.add(new Emblem(player1Id,
-                List.of(new EmblemControllerLosesLifeOnAnyPlayerDrawEffect(2)), source));
+        gd.emblems.add(new Emblem(player1Id, List.of(), source, List.of(), 0L,
+                List.of(new TriggeredAbility(Triggers.playerDrawsCard(),
+                        new LoseLifeEffect(2, LoseLifeRecipient.CONTROLLER)))));
 
         sut.checkControllerDrawTriggers(gd, player2Id);
         sut.checkControllerDrawTriggers(gd, player1Id);
@@ -422,6 +424,22 @@ class DrawServiceTest {
             assertThat(entry.getEffectsToResolve())
                     .containsExactly(new LoseLifeEffect(2, LoseLifeRecipient.CONTROLLER));
         });
+        assertThat(gd.stack).extracting(StackEntry::getTriggeringPlayerId).containsExactly(player2Id, player1Id);
+    }
+
+    @Test
+    void emblemOpponentDrawTriggerIgnoresItsControllersDraw() {
+        Card source = createCard("Emblem source", CardType.ENCHANTMENT);
+        gd.emblems.add(new Emblem(player1Id, List.of(), source, List.of(), 0L,
+                List.of(new TriggeredAbility(Triggers.opponentDrawsCard(),
+                        new LoseLifeEffect(1, LoseLifeRecipient.CONTROLLER)))));
+
+        sut.checkControllerDrawTriggers(gd, player1Id);
+        assertThat(gd.stack).isEmpty();
+
+        sut.checkControllerDrawTriggers(gd, player2Id);
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getTriggeringPlayerId()).isEqualTo(player2Id));
     }
 
     @Test

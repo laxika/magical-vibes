@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
@@ -17,6 +16,11 @@ import java.util.List;
 @Service
 public class LoyaltyCounterTriggerCollectorService {
 
+    /**
+     * "Whenever one or more loyalty counters are removed from this, it deals that much damage to target opponent or
+     * planeswalker" (Chandra, Fire Artisan): the card's effect goes on the stack as written, its target chosen as it
+     * triggers, with the number of counters removed as the entry's event value ("that much").
+     */
     @CollectsCounterTrigger(value = DealDamageToTargetPlayerOrPlaneswalkerEffect.class,
             watch = CounterWatch.ON_SELF_LOYALTY_COUNTERS_REMOVED)
     private boolean handleLoyaltyCountersRemoved(TriggerMatchContext match,
@@ -27,19 +31,17 @@ public class LoyaltyCounterTriggerCollectorService {
         }
 
         GameData gameData = match.gameData();
-        DealDamageToTargetPlayerOrPlaneswalkerEffect resolvedEffect =
-                new DealDamageToTargetPlayerOrPlaneswalkerEffect(removed.amount(), effect.playerRelation());
         gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 match.permanent().getCard(),
                 match.controllerId(),
-                new ArrayList<>(List.of(resolvedEffect)),
+                new ArrayList<>(List.of(effect)),
                 false,
                 new AnyTargetPredicateTargetFilter(
                         new PermanentIsPlaneswalkerPredicate(),
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                         "Target must be an opponent or planeswalker"),
                 0,
-                match.permanent().getId()));
+                match.permanent().getId()).withEventValue(removed.amount()));
         return true;
     }
 }

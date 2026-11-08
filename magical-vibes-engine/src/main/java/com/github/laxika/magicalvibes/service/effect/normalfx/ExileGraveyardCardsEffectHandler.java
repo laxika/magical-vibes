@@ -53,7 +53,13 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ExileGraveyardCardsEffect) effect;
         switch (e.scope()) {
-            case OWN -> resolveOwn(gameData, entry, e);
+            case OWN -> resolveOwn(gameData,
+                    e.affectedPlayerId() != null ? e.affectedPlayerId() : entry.getControllerId(), e.count());
+            case TRIGGERING_PLAYER -> {
+                if (entry.getTargetId() != null && gameData.playerIds.contains(entry.getTargetId())) {
+                    resolveOwn(gameData, entry.getTargetId(), e.count());
+                }
+            }
             case OWN_ALL_MATCHING -> resolveOwnAllMatching(gameData, entry, e);
             case TARGET_CARDS_ANY_GRAVEYARD, TARGET_CARDS_CONTROLLER_GRAVEYARD ->
                     resolveTargetAnyGraveyardCards(gameData, entry, e);
@@ -66,12 +72,8 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         }
     }
 
-    private void resolveOwn(GameData gameData, StackEntry entry, ExileGraveyardCardsEffect e) {
-        UUID affectedPlayerId = e.affectedPlayerId();
-        if (affectedPlayerId == null) {
-            affectedPlayerId = entry.getControllerId();
-        }
-        int count = e.count();
+    /** {@code affectedPlayerId} exiles {@code count} cards from their graveyard, choosing when they have more. */
+    private void resolveOwn(GameData gameData, UUID affectedPlayerId, int count) {
         String playerName = gameData.playerIdToName.get(affectedPlayerId);
         List<Card> graveyard = gameData.playerGraveyards.get(affectedPlayerId);
 

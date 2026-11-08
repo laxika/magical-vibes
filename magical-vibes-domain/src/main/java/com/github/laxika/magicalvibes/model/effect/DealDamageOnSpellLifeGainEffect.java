@@ -3,10 +3,15 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CardColor;
 
 /**
- * Triggered effect ({@code Triggers.youGainLife()}) that deals damage to target creature or player
- * whenever a spell of the specified color causes the controller to gain life.
- * Only triggers when the life gain source is an instant or sorcery spell of the matching color.
- * Used by Firesong and Sunspeaker.
+ * Trigger-condition record for {@code Triggers.youGainLife()}: "Whenever a [color] instant or sorcery spell causes you
+ * to gain life, this deals {@code damage} damage to target creature or player" (Firesong and Sunspeaker). Never resolved
+ * directly: the life-gain collector judges the life gain's source and puts {@link #triggeredEffect()} on the stack with
+ * its target chosen as the ability triggers.
  */
 public record DealDamageOnSpellLifeGainEffect(int damage, CardColor triggeringColor) implements CardEffect {
+
+    /** The damage that goes on the stack. */
+    public CardEffect triggeredEffect() {
+        return new DealDamageToAnyTargetEffect(damage);
+    }
 }

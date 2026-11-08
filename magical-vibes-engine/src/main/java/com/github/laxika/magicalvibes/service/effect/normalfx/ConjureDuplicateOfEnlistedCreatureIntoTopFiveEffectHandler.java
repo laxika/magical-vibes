@@ -4,10 +4,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfEnlistedCreatureIntoTopFiveEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -24,6 +26,7 @@ public class ConjureDuplicateOfEnlistedCreatureIntoTopFiveEffectHandler implemen
 
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,12 +35,16 @@ public class ConjureDuplicateOfEnlistedCreatureIntoTopFiveEffectHandler implemen
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        ConjureDuplicateOfEnlistedCreatureIntoTopFiveEffect conjure =
-                (ConjureDuplicateOfEnlistedCreatureIntoTopFiveEffect) effect;
-        Card source = conjure.creatureCard();
-        if (source == null) {
+        // "A duplicate of that creature": the triggering permanent where it is now, else as it last existed.
+        Permanent enlisted = entry.getTriggeringPermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
+        if (enlisted == null) {
+            enlisted = entry.getTriggeringPermanentSnapshot();
+        }
+        if (enlisted == null) {
             return;
         }
+        Card source = enlisted.getCard();
 
         Card duplicate = source.createConjuredCopy();
         UUID controllerId = entry.getControllerId();

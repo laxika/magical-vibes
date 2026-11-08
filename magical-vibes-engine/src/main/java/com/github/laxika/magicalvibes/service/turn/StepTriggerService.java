@@ -163,7 +163,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedCreatureThenR
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedPermanentAndReattachSourceAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.EachTargetPlayerDrawsCardsEqualToAttachedCountEffect;
 import com.github.laxika.magicalvibes.model.effect.MaySkipDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
@@ -1648,15 +1647,11 @@ public class StepTriggerService {
                 if (effect instanceof AdditionalUpkeepStepEffect && gameData.currentUpkeepIsAdditional) {
                     continue;
                 }
-                // Bake the enchanted player ID into effects that need it
+                // "That player" is the enchanted player: the non-targeting targetId of the entry below
+                // (DealDamageToPlayersEffect's ENCHANTED_PLAYER, ExileGraveyardCardsEffect's TRIGGERING_PLAYER), or
+                // the triggering player of the entry a player-target choice makes, whose excluded player it is
+                // ("any number of target players other than that player").
                 CardEffect effectForStack = effect;
-                if (effect instanceof ExileGraveyardCardsEffect e && e.scope() == GraveyardExileScope.OWN) {
-                    effectForStack = new ExileGraveyardCardsEffect(e.count(), GraveyardExileScope.OWN, null, enchantedPlayerId);
-                } else if (effect instanceof EachTargetPlayerDrawsCardsEqualToAttachedCountEffect e) {
-                    effectForStack = new EachTargetPlayerDrawsCardsEqualToAttachedCountEffect(e.filter(), enchantedPlayerId);
-                }
-                // DealDamageToPlayersEffect(ENCHANTED_PLAYER) reads the enchanted player from the
-                // stack entry's targetId (set below), so no per-effect baking is needed here.
 
                 if (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                         && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
@@ -2420,14 +2415,16 @@ public class StepTriggerService {
             }
 
             if (validPlayerTargets.isEmpty()) {
-                gameData.stack.add(new StackEntry(
+                StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         trigger.sourceCard(),
                         trigger.controllerId(),
                         trigger.sourceCard().getName() + "'s upkeep ability",
                         new ArrayList<>(trigger.effects()),
                         trigger.sourcePermanentId(),
-                        List.of()));
+                        List.of());
+                entry.setTriggeringPlayerId(trigger.excludedPlayerId());
+                gameData.stack.add(entry);
                 processNextUpkeepPlayerTarget(gameData);
                 return;
             }
@@ -2440,7 +2437,8 @@ public class StepTriggerService {
                     validPlayerTargets,
                     validPlayerTargets.size(),
                     new MultiPermanentChoiceContext.UpkeepAnyNumberPlayerTargets(
-                            trigger.sourceCard(), trigger.controllerId(), trigger.effects(), trigger.sourcePermanentId()),
+                            trigger.sourceCard(), trigger.controllerId(), trigger.effects(), trigger.sourcePermanentId(),
+                            trigger.excludedPlayerId()),
                     trigger.sourceCard().getName() + "'s ability — Choose any number of target players other than the enchanted player.");
             return;
         }

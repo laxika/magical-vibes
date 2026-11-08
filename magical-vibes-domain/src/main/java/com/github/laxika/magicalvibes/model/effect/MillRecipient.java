@@ -6,6 +6,11 @@ public enum MillRecipient {
     /** The player remembered by the source permanent's as-enters choice. */
     CHOSEN_PLAYER,
     TARGET_PLAYER,
+    /**
+     * "That player": the player the trigger event was about, the stack entry's non-targeting {@code targetId} (the
+     * player who lost life, Mindcrank). Not a chosen target.
+     */
+    TRIGGERING_PLAYER,
     /** The player whose upkeep is currently resolving; supplied by the trigger entry. */
     ACTIVE_PLAYER,
     EACH_OPPONENT,

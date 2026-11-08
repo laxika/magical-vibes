@@ -1455,7 +1455,7 @@ class StepTriggerServiceTest {
             gd.turnNumber = 2;
             Card curseCard = createCardWithName("Curse of Oblivion");
             curseCard.addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PLAYER),
-                    new ExileGraveyardCardsEffect(2, GraveyardExileScope.OWN, null, null));
+                    new ExileGraveyardCardsEffect(2, GraveyardExileScope.TRIGGERING_PLAYER));
             Permanent cursePerm = new Permanent(curseCard);
             cursePerm.setAttachedTo(player1Id); // Attached to active player
             gd.playerBattlefields.get(player2Id).add(cursePerm);
@@ -1464,6 +1464,9 @@ class StepTriggerServiceTest {
 
             assertThat(gd.stack).isNotEmpty();
             assertThat(gd.stack.getFirst().getDescription()).contains("Curse of Oblivion");
+            assertThat(gd.stack.getFirst().getEffectsToResolve())
+                    .containsExactly(new ExileGraveyardCardsEffect(2, GraveyardExileScope.TRIGGERING_PLAYER));
+            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player1Id);
         }
 
         @Test
@@ -1472,7 +1475,7 @@ class StepTriggerServiceTest {
             gd.turnNumber = 2;
             Card curseCard = createCardWithName("Curse of Oblivion");
             curseCard.addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PLAYER),
-                    new ExileGraveyardCardsEffect(2, GraveyardExileScope.OWN, null, null));
+                    new ExileGraveyardCardsEffect(2, GraveyardExileScope.TRIGGERING_PLAYER));
             Permanent cursePerm = new Permanent(curseCard);
             cursePerm.setAttachedTo(player2Id); // Attached to non-active player
             gd.playerBattlefields.get(player1Id).add(cursePerm);

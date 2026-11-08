@@ -249,8 +249,8 @@
 | secret player vote, damage to each opponent for each vote, and draw for votes received | `m/MobVerdict.java` + `MobVerdictEffect` |
 | secret opponent choices with revealed all-same or mixed damage branches | `p/PrisonersDilemma.java` + `PrisonersDilemmaEffect` |
 | any new vote handler: start with `VotingSupport.voterOrder` and give its vote prompt context `VoteChoiceContext`, so "you may vote an additional time" is offered by `ChoiceHandlerService`/`MultiPermanentChoiceHandlerService`; don't auto-cast a lone-candidate vote while `VotingSupport.mayVoteAgain` | `SecretCouncilEffectHandler` + `VotingSupport` |
-| post-vote trigger that compares the controller's choices with each opponent's choices | `e/ErestorOfTheCouncil.java` + `ErestorOfTheCouncilEffect` + `VotingResult` |
-| post-vote trigger that offers the controller and matching voters a may-scry ability | `m/ModelOfUnity.java` + `ModelOfUnityEffect` + `VotingResult` |
+| post-vote trigger that compares the controller's choices with each opponent's choices | `e/ErestorOfTheCouncil.java` + `ErestorOfTheCouncilEffect` (reads the entry's triggering `VotingResult`) |
+| post-vote trigger that offers the controller and matching voters a may-scry ability | `m/ModelOfUnity.java` + `ModelOfUnityEffect` (reads the entry's triggering `VotingResult`) |
 | exile up to one target creature card from your graveyard, then seek a creature with mana value one higher and perpetually grant menace | `p/PuppetRaiser.java` and `ExileTargetCreatureCardFromGraveyardThenSeekWithMenaceEffect` |
 | Gift token + draw/Seek replacement | `p/PoolResources.java` + `GiftEffect` + `SeekLibraryEffect` |
 | secretly choose land or nonland, then Seek one or more cards of that kind | `c/CunningAzurescaleDiviningDive.java` + `SeekChosenLandOrNonlandEffect` |

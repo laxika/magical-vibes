@@ -705,6 +705,11 @@ public class StackEntry {
      * monarch. Not a target. Most other collectors still give "that player" as the non-targeting {@link #targetId}.
      */
     @Setter private UUID triggeringPlayerId;
+    /**
+     * The vote a "whenever players finish voting" ability triggered on, as the players finished it (Erestor of the
+     * Council, Model of Unity). Immutable. Not a target.
+     */
+    @Setter private VotingResult triggeringVotingResult;
     /** Controller of the triggering permanent when its non-targeting reference was captured. */
     @Setter private UUID triggeringPermanentControllerId;
     /** Owner of the triggering permanent when its non-targeting reference was captured. */
@@ -1291,6 +1296,7 @@ public class StackEntry {
         this.triggeringPermanentId = source.triggeringPermanentId;
         this.triggeringPermanentIds = source.triggeringPermanentIds;
         this.triggeringPlayerId = source.triggeringPlayerId;
+        this.triggeringVotingResult = source.triggeringVotingResult;
         this.triggeringPermanentControllerId = source.triggeringPermanentControllerId;
         this.triggeringPermanentOwnerId = source.triggeringPermanentOwnerId;
         this.triggeringPermanentPowerAtTrigger = source.triggeringPermanentPowerAtTrigger;

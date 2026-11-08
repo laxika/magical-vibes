@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 
-import java.util.UUID;
 
 /**
  * Gives poison counters to one or more players. A single record covers the whole give-poison
@@ -27,20 +26,20 @@ import java.util.UUID;
  * @param affectedPlayerId enchanted permanent's controller, baked in at trigger time
  */
 public record GivePoisonCountersEffect(DynamicAmount amount, PoisonRecipient recipient,
-        CardPredicate spellFilter, UUID affectedPlayerId)
+        CardPredicate spellFilter)
         implements CardEffect, CombatDamageTriggerContextEffect {
 
     public GivePoisonCountersEffect(int amount, PoisonRecipient recipient) {
-        this(new Fixed(amount), recipient, null, null);
+        this(new Fixed(amount), recipient, null);
     }
 
     public GivePoisonCountersEffect(DynamicAmount amount, PoisonRecipient recipient) {
-        this(amount, recipient, null, null);
+        this(amount, recipient, null);
     }
 
     /** Target-player trigger-descriptor constructor. */
     public GivePoisonCountersEffect(int amount, PoisonRecipient recipient, CardPredicate spellFilter) {
-        this(new Fixed(amount), recipient, spellFilter, null);
+        this(new Fixed(amount), recipient, spellFilter);
     }
 
     @Override

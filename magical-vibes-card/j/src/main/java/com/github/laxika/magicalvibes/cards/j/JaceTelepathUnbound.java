@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AllowCastTargetCardFromGraveyardThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
@@ -12,8 +13,12 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -54,7 +59,10 @@ public class JaceTelepathUnbound extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -9,
                 List.of(new CreateEmblemEffect(
-                        List.of(new MillEffect(5, MillRecipient.TARGET_PLAYER)),
+                        new TriggeredAbility(Triggers.youCastSpell(), new MillEffect(5, MillRecipient.TARGET_PLAYER))
+                                .withTargetFilter(new PlayerPredicateTargetFilter(
+                                        new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                                        "Target must be an opponent")),
                         "Whenever you cast a spell, target opponent mills five cards.")),
                 "-9: You get an emblem with \"Whenever you cast a spell, target opponent mills five cards.\""
         ));

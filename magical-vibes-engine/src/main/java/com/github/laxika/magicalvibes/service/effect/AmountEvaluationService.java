@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.amount.BeheldPower;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsDiscardedThisResolution;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongTriggeringCards;
+import com.github.laxika.magicalvibes.model.amount.TriggeringCardManaValue;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongPermanentsSacrificedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongSpellsCastThisTurn;
@@ -664,6 +665,7 @@ public class AmountEvaluationService {
                     ctx.stackEntry() == null ? 0 : ctx.stackEntry().triggeringPermanentCounterCount(c.counterType());
             case CardTypesAmongTriggeringCards ignored ->
                     ctx.stackEntry() == null ? 0 : countCardTypesAmongCards(ctx.stackEntry().getTriggeringCards());
+            case TriggeringCardManaValue ignored -> triggeringCardManaValue(gameData, ctx.stackEntry());
             case AurasAttachedToTriggeringPermanent auras -> {
                 var attachments = ctx.stackEntry() == null ? null : ctx.stackEntry().getTriggeringAttachments();
                 yield attachments == null ? 0 : auras.controlledByYou()
@@ -1470,6 +1472,21 @@ public class AmountEvaluationService {
             return 0;
         }
         return allowNegative ? lastKnownPower : Math.max(0, lastKnownPower);
+    }
+
+    /**
+     * The mana value of {@code entry}'s triggering card: the card as it was in the event (its triggering cards), else
+     * the card where it is now; 0 without one.
+     */
+    private int triggeringCardManaValue(GameData gameData, StackEntry entry) {
+        if (entry == null || entry.getTriggeringCardId() == null) {
+            return 0;
+        }
+        Card card = entry.getTriggeringCards().stream()
+                .filter(eventCard -> eventCard.getId().equals(entry.getTriggeringCardId()))
+                .findFirst()
+                .orElseGet(() -> gameQueryService.findCardById(gameData, entry.getTriggeringCardId()));
+        return card == null ? 0 : card.getManaValue();
     }
 
     /** Mana value of the targeted or spell-cast-triggering spell on the stack; 0 if it has left. */

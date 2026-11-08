@@ -1,14 +1,11 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfEnlistedCreatureIntoTopFiveEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfEnlistedNontokenCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +14,10 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Collects Goblin Morale Sergeant's optional trigger after it enlists a nontoken creature. */
+/**
+ * Collects Goblin Morale Sergeant's "whenever this enlists a nontoken creature" ability: its trigger-condition record's
+ * {@code triggeredEffect()} goes on the stack with the enlisted creature as the entry's triggering permanent.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -41,22 +41,21 @@ public class GoblinMoraleSergeantTriggerCollectorService {
 
         Permanent source = match.permanent();
         Permanent enlisted = attack.enlistedCreature();
-        Card snapshot = enlisted.getCard().createRuntimeCopyWithNewId();
-        snapshot.freeze();
-        MayEffect may = new MayEffect(
-                new ConjureDuplicateOfEnlistedCreatureIntoTopFiveEffect(snapshot),
-                "Conjure a duplicate of the enlisted creature into the top five cards of your library?");
         GameData gameData = match.gameData();
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 source.getCard(),
                 match.controllerId(),
                 source.getCard().getName() + "'s enlist trigger",
-                new ArrayList<>(List.of(may)),
+                new ArrayList<>(List.of(effect.triggeredEffect())),
                 null,
                 source.getId());
         entry.setNonTargeting(true);
         entry.setSourcePermanentSnapshot(new Permanent(source));
+        // "That creature": the enlisted creature, read as the ability resolves (else as it last existed).
+        entry.setTriggeringPermanentId(enlisted.getId());
+        entry.setTriggeringPermanentControllerId(match.controllerId());
+        entry.setTriggeringPermanent(enlisted);
         gameData.enqueueTrigger(entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
         log.info("Game {} - {} conjure trigger queued after enlisting {}",

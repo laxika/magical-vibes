@@ -1,11 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.VotingResult;
-
-/** Model of Unity's trigger, carrying the vote snapshot captured when players finish voting. */
-public record ModelOfUnityEffect(VotingResult votingResult) implements CardEffect {
-
-    public ModelOfUnityEffect() {
-        this(null);
-    }
+/**
+ * Model of Unity's "whenever players finish voting" effect: reads the votes from the stack entry's triggering vote
+ * ({@code StackEntry.getTriggeringVotingResult()}), the vote as the players finished it.
+ */
+public record ModelOfUnityEffect() implements CardEffect {
 }

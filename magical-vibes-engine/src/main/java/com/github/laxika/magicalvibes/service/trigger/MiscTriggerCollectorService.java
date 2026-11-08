@@ -8,10 +8,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
@@ -21,13 +19,11 @@ import com.github.laxika.magicalvibes.model.effect.SourcePermanentSnapshotRequir
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.CradleOfVitalityLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToLifeGainedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileMilledCreatureAndCreateTokenEffect;
@@ -39,14 +35,9 @@ import com.github.laxika.magicalvibes.model.effect.ExileTriggeringPermanentCardF
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherPermanentUnlessDiscardForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
-import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
-import com.github.laxika.magicalvibes.model.effect.NykthosParagonLifeGainEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -66,10 +57,8 @@ import com.github.laxika.magicalvibes.model.effect.KayaSpiritsJusticeEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnSpellLifeGainEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -608,15 +597,15 @@ public class MiscTriggerCollectorService {
     private boolean handleEnchantedPermanentTapPoison(TriggerMatchContext match,
             GivePoisonCountersEffect e, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentTap ept = (TriggerContext.EnchantedPermanentTap) ctx;
-        GivePoisonCountersEffect resolved = new GivePoisonCountersEffect(
-                e.amount(), PoisonRecipient.TARGET_PERMANENT_CONTROLLER);
+        // "Its controller gets a poison counter": TRIGGERING_PERMANENT_CONTROLLER reads the tapped permanent, recorded
+        // below, as the ability resolves (Relic Putrescence).
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s triggered ability",
-                new ArrayList<>(List.of(resolved)),
-                ept.tappedPermanent().getId(),
+                new ArrayList<>(List.of(e)),
+                null,
                 match.permanent().getId()
         );
         entry.setNonTargeting(true);
@@ -854,31 +843,35 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsLifeTrigger(value = MillOpponentOnLifeLossEffect.class, watch = LifeWatch.ON_OPPONENT_LOSES_LIFE)
-    @CollectsLifeTrigger(value = MillOpponentOnLifeLossEffect.class, watch = LifeWatch.ON_CONTROLLER_LOSES_LIFE)
-    private boolean handleMillOnLifeLoss(TriggerMatchContext match,
-            MillOpponentOnLifeLossEffect trigger, TriggerContext ctx) {
+    /**
+     * "Whenever a player loses life, that player mills that many cards" (Mindcrank, The Master of Lake-town): the card's
+     * {@code MillEffect(new EventValue(), TRIGGERING_PLAYER)} goes on the stack as written, the player who lost life as
+     * its non-targeting "that player" and the life lost as the event's value.
+     */
+    @CollectsLifeTrigger(value = MillEffect.class, watch = LifeWatch.ON_OPPONENT_LOSES_LIFE)
+    @CollectsLifeTrigger(value = MillEffect.class, watch = LifeWatch.ON_CONTROLLER_LOSES_LIFE)
+    private boolean handleMillOnLifeLoss(TriggerMatchContext match, MillEffect effect, TriggerContext ctx) {
         TriggerContext.LifeLoss ll = (TriggerContext.LifeLoss) ctx;
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
-        String playerName = gameData.playerIdToName.get(ll.losingPlayerId());
-        int amount = ll.lifeLostAmount();
 
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 cardName + "'s ability",
-                new ArrayList<>(List.of(new MillEffect(amount, MillRecipient.TARGET_PLAYER))),
+                new ArrayList<>(List.of(effect)),
                 ll.losingPlayerId(),
                 match.permanent().getId());
         entry.setNonTargeting(true);
+        entry.setEventValue(ll.lifeLostAmount());
         gameData.enqueueTrigger(entry);
 
+        String playerName = gameData.playerIdToName.get(ll.losingPlayerId());
+        int amount = ll.lifeLostAmount();
         gameLogService.append(gameData, GameLog.cardThen(match.permanent().getCard(),
                 " triggers — " + playerName + " mills " + amount + " card" + (amount != 1 ? "s" : "") + "."));
-        log.info("Game {} - {} triggers on life loss, {} will mill {} cards",
-                gameData.id, cardName, playerName, amount);
+        log.info("Game {} - {} triggers on {} losing {} life", gameData.id, cardName, playerName, amount);
         return true;
     }
 
@@ -1994,10 +1987,13 @@ public class MiscTriggerCollectorService {
                 match.permanent().getId());
         if (ctx instanceof TriggerContext.CreatureCardPutIntoGraveyard creatureCard
                 && creatureCard.creatureCard() != null) {
-            // "That card", as it was put into the graveyard: the ability doesn't look for it there again.
-            entry.setTriggeringCardId(creatureCard.creatureCard().getId());
+            // "That card", as it was put into the graveyard, with its graveyard incarnation (CR 400.7): an effect that
+            // returns "it" finds that incarnation there; "its mana value" reads the card as it was in the event.
+            UUID cardId = creatureCard.creatureCard().getId();
+            entry.setTriggeringCard(cardId, gameData.graveyardEntryVersion(cardId));
             entry.setTriggeringCards(List.of(creatureCard.creatureCard()));
         }
+        entry.setNonTargeting(effect.targetSpec() == TargetSpec.NONE);
         gameData.enqueueTrigger(entry);
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
@@ -2005,52 +2001,26 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsWatchTrigger(value = MayPayLifeEffect.class,
-            watch = ZoneChangeWatch.ON_CREATURE_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
-    private boolean handleCreatureCardPutIntoOpponentGraveyardMayPayLife(TriggerMatchContext match,
-            MayPayLifeEffect mayPay, TriggerContext ctx) {
-        if (!(ctx instanceof TriggerContext.CreatureCardPutIntoGraveyard creatureCard)) {
-            return false;
-        }
-
-        Card triggeringCard = creatureCard.creatureCard();
-        MayPayLifeEffect resolved = new MayPayLifeEffect(
-                triggeringCard.getManaValue(), mayPay.wrapped(), mayPay.prompt(), mayPay.payer(), mayPay.elseEffect());
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(resolved)),
-                null,
-                match.permanent().getId());
-        entry.setTriggeringCardId(triggeringCard.getId());
-        entry.setTriggeringCardGraveyardEntryVersion(
-                match.gameData().graveyardEntryVersion(triggeringCard.getId()));
-        entry.setNonTargeting(true);
-        match.gameData().enqueueTrigger(entry);
-
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers to return {} by paying {} life", match.gameData().id,
-                match.permanent().getCard().getName(), triggeringCard.getName(), triggeringCard.getManaValue());
-        return true;
-    }
-
+    /**
+     * "Whenever you gain life, draw a card / draw that many cards" (Lich's Mastery): the card's draw goes on the stack
+     * as written with the life gained as the event's value, which "that many" ({@code EventValue}) reads.
+     */
     @CollectsLifeTrigger(value = DrawCardEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainDrawCard(TriggerMatchContext match,
             DrawCardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
 
-        gameData.enqueueTrigger(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 cardName + "'s ability",
                 new ArrayList<>(List.of(effect)),
                 null,
-                match.permanent().getId()
-        ));
+                match.permanent().getId());
+        entry.setEventValue(((TriggerContext.LifeGain) ctx).lifeGainedAmount());
+        gameData.enqueueTrigger(entry);
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on life gain (draw a card)", gameData.id, cardName);
@@ -2096,76 +2066,13 @@ public class MiscTriggerCollectorService {
         gameData.queueInteraction(new PermanentChoiceContext.LifeGainTriggerAnyTarget(
                 match.permanent().getCard(),
                 match.controllerId(),
-                List.of(new DealDamageToAnyTargetEffect(effect.damage())),
+                List.of(effect.triggeredEffect()),
                 match.permanent().getId()
         ));
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on spell life gain (source: {})",
                 gameData.id, cardName, lg.sourceCard().getName());
-        return true;
-    }
-
-    @CollectsLifeTrigger(value = CradleOfVitalityLifeGainEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
-    private boolean handleLifeGainPayForCounters(TriggerMatchContext match,
-            CradleOfVitalityLifeGainEffect effect, TriggerContext ctx) {
-        TriggerContext.LifeGain lg = (TriggerContext.LifeGain) ctx;
-        var gameData = match.gameData();
-        String cardName = match.permanent().getCard().getName();
-
-        int lifeGained = lg.lifeGainedAmount();
-        if (lifeGained <= 0) return false;
-
-        // "Target creature" — if no creature is on any battlefield the ability has no legal target
-        // and never goes on the stack.
-        boolean anyCreature = gameData.orderedPlayerIds.stream()
-                .map(gameData.playerBattlefields::get)
-                .filter(java.util.Objects::nonNull)
-                .flatMap(List::stream)
-                .anyMatch(p -> gameQueryService.isCreature(gameData, p));
-        if (!anyCreature) return false;
-
-        // The counter count is locked in at trigger time (life gained by this event). The "you may pay"
-        // choice happens at resolution via MayPayManaEffect; the +1/+1 counters go on the chosen creature.
-        CardEffect payAndCounter = new MayPayManaEffect(effect.manaCost(),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(lifeGained)),
-                "Pay " + effect.manaCost() + " to put " + lifeGained + " +1/+1 counter(s) on target creature?");
-
-        gameData.queueInteraction(new PermanentChoiceContext.LifeGainTriggerAnyTarget(
-                match.permanent().getCard(),
-                match.controllerId(),
-                List.of(payAndCounter),
-                match.permanent().getId(),
-                true));
-
-        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers on life gain ({} life), pay for +1/+1 counters on target creature",
-                gameData.id, cardName, lifeGained);
-        return true;
-    }
-
-    @CollectsLifeTrigger(value = NykthosParagonLifeGainEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
-    private boolean handleNykthosParagonLifeGain(TriggerMatchContext match,
-            NykthosParagonLifeGainEffect effect, TriggerContext ctx) {
-        TriggerContext.LifeGain lifeGain = (TriggerContext.LifeGain) ctx;
-        var gameData = match.gameData();
-        Permanent source = match.permanent();
-        if (source == null || lifeGain.lifeGainedAmount() <= 0) {
-            return false;
-        }
-
-        MayEffect may = new MayEffect(
-                new PutCounterOnEachControlledPermanentEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE,
-                        new Fixed(lifeGain.lifeGainedAmount()),
-                        new PermanentIsCreaturePredicate()),
-                "Put +1/+1 counters on each creature you control?");
-        gameData.queueMayAbility(source.getCard(), match.controllerId(), may, null, source.getId(),
-                lifeGain.lifeGainedAmount(), match.markSourceOncePerTurnOnAcceptance());
-
-        gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
-        log.info("Game {} - {} triggers on life gain ({} life), once per turn on acceptance",
-                gameData.id, source.getCard().getName(), lifeGain.lifeGainedAmount());
         return true;
     }
 
@@ -2757,72 +2664,6 @@ public class MiscTriggerCollectorService {
         }
         gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
         log.info("Game {} - {} triggers on a crime", gameData.id, source.getCard().getName());
-        return true;
-    }
-
-    @CollectsLifeTrigger(value = MayPayManaEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
-    private boolean handleLifeGainMayPayMana(TriggerMatchContext match,
-            MayPayManaEffect effect, TriggerContext ctx) {
-        var gameData = match.gameData();
-        String cardName = match.permanent().getCard().getName();
-
-        if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
-            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    match.permanent().getCard(), match.controllerId(), List.of(effect)));
-            gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
-            log.info("Game {} - {} triggers on life gain and needs a graveyard target",
-                    gameData.id, cardName);
-            return true;
-        }
-        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-            gameData.queueInteraction(new PermanentChoiceContext.LifeGainTriggerAnyTarget(
-                    match.permanent().getCard(),
-                    match.controllerId(),
-                    List.of(effect),
-                    match.permanent().getId()));
-            gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
-            log.info("Game {} - {} triggers on life gain and needs a target",
-                    gameData.id, cardName);
-            return true;
-        }
-
-        gameData.enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                cardName + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId()));
-
-        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers on life gain (may pay {})",
-                gameData.id, cardName, effect.manaCost());
-        return true;
-    }
-
-    @CollectsLifeTrigger(value = DrawCardsEqualToLifeGainedEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
-    private boolean handleDrawCardsEqualToLifeGained(TriggerMatchContext match,
-            DrawCardsEqualToLifeGainedEffect effect, TriggerContext ctx) {
-        TriggerContext.LifeGain lg = (TriggerContext.LifeGain) ctx;
-        var gameData = match.gameData();
-        String cardName = match.permanent().getCard().getName();
-
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                cardName + "'s ability",
-                new ArrayList<>(List.of(new DrawCardEffect(new EventValue()))),
-                null,
-                match.permanent().getId());
-        entry.setEventValue(lg.lifeGainedAmount());
-        gameData.enqueueTrigger(entry);
-
-        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers on life gain, drawing {} cards",
-                gameData.id, cardName, lg.lifeGainedAmount());
         return true;
     }
 

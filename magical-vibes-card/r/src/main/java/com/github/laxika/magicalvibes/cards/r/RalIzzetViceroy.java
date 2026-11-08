@@ -4,17 +4,19 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.CardsInExile;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnControllerSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -43,8 +45,8 @@ public class RalIzzetViceroy extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -8,
                 List.of(new CreateEmblemEffect(
-                        List.of(new DealDamageToAnyTargetOnControllerSpellCastEffect(
-                                4, INSTANT_OR_SORCERY, List.of(new DrawCardEffect(2)))),
+                        new TriggeredAbility(Triggers.youCastSpell().withFilter(INSTANT_OR_SORCERY),
+                                new DealDamageToAnyTargetEffect(4), new DrawCardEffect(2)),
                         "Whenever you cast an instant or sorcery spell, this emblem deals 4 damage to any target and you draw two cards.")),
                 "−8: You get an emblem with \"Whenever you cast an instant or sorcery spell, this emblem deals 4 damage to any target and you draw two cards.\""
         ));

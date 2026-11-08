@@ -4,11 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnControllerSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayCastOrDealDamageEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -40,7 +42,7 @@ public class ChandraTorchOfDefiance extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -7,
                 List.of(new CreateEmblemEffect(
-                        List.of(new DealDamageToAnyTargetOnControllerSpellCastEffect(5)),
+                        new TriggeredAbility(Triggers.youCastSpell(), new DealDamageToAnyTargetEffect(5)),
                         "Whenever you cast a spell, this emblem deals 5 damage to any target."
                 )),
                 "−7: You get an emblem with \"Whenever you cast a spell, this emblem deals 5 damage to any target.\""

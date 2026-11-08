@@ -12,6 +12,6 @@ public class RelicPutrescence extends Card {
 
     public RelicPutrescence() {
         target(TargetFilters.artifact()).addTrigger(Triggers.enchantedPermanentBecomesTapped(),
-                new GivePoisonCountersEffect(1, PoisonRecipient.ENCHANTED_PERMANENT_CONTROLLER));
+                new GivePoisonCountersEffect(1, PoisonRecipient.TRIGGERING_PERMANENT_CONTROLLER));
     }
 }

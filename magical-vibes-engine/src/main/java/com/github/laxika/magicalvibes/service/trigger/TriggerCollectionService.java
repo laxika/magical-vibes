@@ -155,7 +155,6 @@ import com.github.laxika.magicalvibes.model.effect.PutVoyageCounterOnExiledCardE
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnVoyagingCardFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -198,7 +197,6 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnAllyCreatureEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnAllyLandEntersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnControllerSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemArtifactEntersTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemArtifactTapTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemCombatDamageTriggerEffect;
@@ -1054,8 +1052,9 @@ public class TriggerCollectionService {
         // is cleared below.
         collectIncrementTriggers(gameData, spellCard, castingPlayerId);
 
-        // Emblem spell cast triggers (e.g. Venser's emblem, Jace Unraveler of Secrets' emblem, Chandra,
-        // Dressed to Kill's emblem ability). Mana-spent readers must run before clearSpellCastManaSpent.
+        // Emblem spell cast triggers: the emblems' cast abilities (Ajani, Jace, Telepath Unbound, Ral, ...), then the
+        // markers still read by class (Venser's, Jace, Unraveler of Secrets', Garruk's). Mana-spent readers must run
+        // before clearSpellCastManaSpent.
         for (Emblem emblem : gameData.emblems) {
             collectEmblemCastAbilities(gameData, emblem, ctx);
             for (CardEffect effect : emblem.staticEffects()) {
@@ -1107,47 +1106,6 @@ public class TriggerCollectionService {
                     ));
                     gameLogService.append(gameData, GameLog.text(desc + " triggers."));
                     log.info("Game {} - {} creature-spell search trigger queued", gameData.id, desc);
-                } else if (effect instanceof MillEffect mill && mill.recipient() == MillRecipient.TARGET_PLAYER) {
-                    // "Whenever you cast a spell, target opponent mills N cards" (Jace, Telepath
-                    // Unbound's emblem) — the opponent restriction rides the player target filter.
-                    if (!emblem.controllerId().equals(castingPlayerId)) continue;
-                    Card source = emblem.sourceCard();
-                    Card sourceCard = source != null ? source : spellCard;
-                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                            sourceCard,
-                            emblem.controllerId(),
-                            new ArrayList<>(List.of(mill)),
-                            true,
-                            new PlayerPredicateTargetFilter(
-                                    new PlayerRelationPredicate(PlayerRelation.OPPONENT),
-                                    "Target must be an opponent")
-                    ));
-                    gameLogService.append(gameData, GameLog.text(
-                            (source != null ? source.getName() : "Emblem")
-                                    + "'s emblem triggers — choose target opponent."));
-                    log.info("Game {} - emblem mill trigger queued", gameData.id);
-                } else if (effect instanceof DealDamageToAnyTargetOnControllerSpellCastEffect damageTrigger) {
-                    if (!emblem.controllerId().equals(castingPlayerId)) continue;
-                    if (damageTrigger.spellFilter() != null
-                            && !predicateEvaluationService.matchesCardPredicate(
-                                    spellCard, damageTrigger.spellFilter(), null)) {
-                        continue;
-                    }
-                    Card source = emblem.sourceCard();
-                    Card sourceCard = source != null ? source : spellCard;
-                    String desc = (source != null ? source.getName() : "Emblem") + "'s emblem";
-                    List<CardEffect> resolvedEffects = new ArrayList<>();
-                    resolvedEffects.add(new DealDamageToAnyTargetEffect(damageTrigger.damage()));
-                    resolvedEffects.addAll(damageTrigger.additionalEffects());
-                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                            sourceCard,
-                            emblem.controllerId(),
-                            resolvedEffects
-                    ));
-                    gameLogService.append(gameData,
-                            GameLog.text(desc + " triggers — choose a target for " + damageTrigger.damage() + " damage."));
-                    log.info("Game {} - {} damage trigger queued ({})",
-                            gameData.id, desc, damageTrigger.damage());
                 }
             }
         }

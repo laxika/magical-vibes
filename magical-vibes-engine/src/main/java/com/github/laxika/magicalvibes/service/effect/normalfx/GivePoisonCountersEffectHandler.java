@@ -75,11 +75,6 @@ public class GivePoisonCountersEffectHandler implements NormalEffectHandlerBean 
                 if (playerId == null || !gameData.playerIds.contains(playerId)) return;
                 lifeSupport.applyPoisonCounters(gameData, playerId, amount, sourceName, entry.getControllerId());
             }
-            case ENCHANTED_PERMANENT_CONTROLLER -> {
-                UUID playerId = e.affectedPlayerId();
-                if (playerId == null) return;
-                lifeSupport.applyPoisonCounters(gameData, playerId, amount, sourceName, entry.getControllerId());
-            }
         }
     }
 }
