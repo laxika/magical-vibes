@@ -1,18 +1,9 @@
 package com.github.laxika.magicalvibes.model.amount;
 
-import com.github.laxika.magicalvibes.model.CardColor;
-
-import java.util.Set;
-
 /**
- * The number of effective colors of the spell that caused the current triggered ability that are
- * among the given chosen colors. The chosen colors are snapshotted when the trigger is put on the
- * stack, so the count survives the source leaving the battlefield; the spell's colors are read when
- * the ability resolves.
+ * "For each of the chosen colors it is" (Tablet of the Guilds): the number of the triggering spell's effective colors
+ * that are among the colors the ability's source chose, both read as the ability resolves (CR 608.2h): the spell while
+ * it is on the stack, else as it last existed there; the source on the battlefield, else as it last existed there.
  */
-public record TriggeringSpellChosenColorCount(Set<CardColor> chosenColors) implements DynamicAmount {
-
-    public TriggeringSpellChosenColorCount {
-        chosenColors = Set.copyOf(chosenColors);
-    }
+public record TriggeringSpellChosenColorCount() implements DynamicAmount {
 }

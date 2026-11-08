@@ -129,7 +129,6 @@ import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffe
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfCasualtyPaidEffect;
 import com.github.laxika.magicalvibes.model.effect.DemonstrateEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.NextMatchingSpellCostEffect;
@@ -177,7 +176,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTriggeringSpellWithSuspe
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
-import com.github.laxika.magicalvibes.model.effect.CounterOpponentFirstSpellEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnAllyCreatureEntersEffect;
@@ -202,7 +200,6 @@ import com.github.laxika.magicalvibes.model.effect.MayPayLifeEqualToAmountEffect
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchBlueOrBlackCreatureToBattlefieldOnAllyCombatDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchCreatureToBattlefieldOnControllerCastsCreatureSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
@@ -1036,9 +1033,9 @@ public class TriggerCollectionService {
         // is cleared below.
         collectIncrementTriggers(gameData, spellCard, castingPlayerId);
 
-        // Emblem spell cast triggers: the emblems' cast abilities (Ajani, Jace, Telepath Unbound, Ral, ...), then the
-        // markers still read by class (Venser's, Jace, Unraveler of Secrets', Garruk's). Mana-spent readers must run
-        // before clearSpellCastManaSpent.
+        // Emblem spell cast triggers: the emblems' cast abilities (Ajani, Jace, Telepath Unbound, Ral, Jace, Unraveler
+        // of Secrets, Garruk, Caller of Beasts, ...), then the marker still read by class (Venser's). Mana-spent readers
+        // must run before clearSpellCastManaSpent.
         for (Emblem emblem : gameData.emblems) {
             collectEmblemCastAbilities(gameData, emblem, ctx);
             for (CardEffect effect : emblem.staticEffects()) {
@@ -1050,46 +1047,6 @@ public class TriggerCollectionService {
                             List.of(new ExileTargetPermanentEffect()),
                             emblem.sourceCard()
                     ));
-                } else if (effect instanceof CounterOpponentFirstSpellEachTurnEffect) {
-                    // Opponent's first spell this turn — auto-target it on the stack (no choice).
-                    if (emblem.controllerId().equals(castingPlayerId)) continue;
-                    if (gameData.getSpellsCastThisTurnCount(castingPlayerId) != 1) continue;
-                    Card source = emblem.sourceCard();
-                    String desc = (source != null ? source.getName() : "Jace, Unraveler of Secrets")
-                            + "'s emblem";
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            source != null ? source : spellCard,
-                            emblem.controllerId(),
-                            desc,
-                            new ArrayList<>(List.of(new CounterSpellEffect())),
-                            spellCard.getId(),
-                            Zone.STACK
-                    ));
-                    gameLogService.append(gameData,
-                            GameLog.text(desc + " triggers — counter that spell."));
-                    log.info("Game {} - {} counters opponent's first spell this turn",
-                            gameData.id, desc);
-                } else if (effect instanceof SearchCreatureToBattlefieldOnControllerCastsCreatureSpellEffect) {
-                    // Garruk, Caller of Beasts' emblem — fires on the controller's own creature spells.
-                    if (!emblem.controllerId().equals(castingPlayerId)) continue;
-                    if (!spellCard.hasType(CardType.CREATURE)) continue;
-                    Card source = emblem.sourceCard();
-                    String desc = (source != null ? source.getName() : "Garruk, Caller of Beasts")
-                            + "'s emblem";
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            source != null ? source : spellCard,
-                            emblem.controllerId(),
-                            desc,
-                            new ArrayList<>(List.of(new MayEffect(
-                                    new SearchLibraryEffect(
-                                            new CardTypePredicate(CardType.CREATURE),
-                                            LibrarySearchDestination.BATTLEFIELD),
-                                    "Search your library for a creature card and put it onto the battlefield?")))
-                    ));
-                    gameLogService.append(gameData, GameLog.text(desc + " triggers."));
-                    log.info("Game {} - {} creature-spell search trigger queued", gameData.id, desc);
                 }
             }
         }
@@ -1963,7 +1920,8 @@ public class TriggerCollectionService {
      * Records {@code spellEntry}, the spell just cast, as the triggering spell of {@code trigger}, one of the abilities
      * its casting triggered that refers to it ("copy it", "copy this spell"): as it is now, kept as it last existed on
      * the stack once it has left (CR 608.2h), with its places among its caster's spells and every player's spells
-     * this turn, and the cast facts its copy counts read (its X and repeatable additional cost payments).
+     * this turn, and the cast facts its copy counts and intervening "if"s read (its X, repeatable additional cost
+     * payments and casualty payment).
      * The ability doesn't target the spell.
      */
     private static void recordTriggeringSpell(GameData gameData, StackEntry trigger, StackEntry spellEntry) {
@@ -1974,6 +1932,7 @@ public class TriggerCollectionService {
         trigger.setTriggeringSpellTurnCastIndex(gameData.getSpellCastOrdinalThisTurn(spellId) - 1);
         trigger.setXValue(spellEntry.getXValue());
         trigger.setRepeatedAdditionalCosts(List.copyOf(spellEntry.getRepeatedAdditionalCosts()));
+        trigger.setCasualtyCostPaid(spellEntry.isCasualtyCostPaid());
         trigger.setNonTargeting(true);
     }
 
@@ -2022,28 +1981,6 @@ public class TriggerCollectionService {
                 recordTriggeringSpell(gameData, copyTrigger, selfCastSpellEntry);
                 gameData.stack.add(copyTrigger);
                 log.info("Game {} - {} self-cast copy trigger queued for {}",
-                        gameData.id, spellCard.getName(), castingPlayerId);
-            } else if (effect instanceof CopyThisSpellIfCasualtyPaidEffect casualtyTrigger) {
-                StackEntry spellEntry = null;
-                for (StackEntry se : gameData.stack) {
-                    if (se.getTargetableId().equals(spellCard.getId())) {
-                        spellEntry = se;
-                        break;
-                    }
-                }
-                if (spellEntry == null || !spellEntry.isCasualtyCostPaid()) continue;
-
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        spellCard,
-                        castingPlayerId,
-                        spellCard.getName() + "'s ability",
-                        new ArrayList<>(List.of(new CopyControllerCastSpellEffect(
-                                new StackEntry(spellEntry), castingPlayerId, Set.of(), Set.of(),
-                                casualtyTrigger.removedSupertypes(), casualtyTrigger.tokenCopy(), true, false, false,
-                                casualtyTrigger.startingLoyaltyFromX())))
-                ));
-                log.info("Game {} - {} casualty copy trigger queued for {}",
                         gameData.id, spellCard.getName(), castingPlayerId);
             } else if (effect instanceof CascadeEffect) {
                 StackEntry cascadeTrigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,

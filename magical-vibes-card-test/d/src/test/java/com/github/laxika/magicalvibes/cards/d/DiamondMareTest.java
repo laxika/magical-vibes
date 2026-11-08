@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import java.util.List;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.m.Moonlace;
+import com.github.laxika.magicalvibes.cards.l.LeafGilder;
 import com.github.laxika.magicalvibes.cards.s.SnappingDrake;
 import com.github.laxika.magicalvibes.cards.g.GreenwoodSentinel;
 import com.github.laxika.magicalvibes.cards.s.SkyriderPatrol;
@@ -13,7 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DiamondMare.class, GreenwoodSentinel.class, SnappingDrake.class, SkyriderPatrol.class})
+@CardUsed({DiamondMare.class, GreenwoodSentinel.class, SnappingDrake.class, SkyriderPatrol.class, LeafGilder.class, Moonlace.class})
 class DiamondMareTest extends BaseCardTest {
 
     private void castAndChooseColor(CardColor color) {
@@ -102,5 +107,25 @@ class DiamondMareTest extends BaseCardTest {
         harness.handleListChoice(player1, CardColor.BLUE.name());
 
         harness.assertLife(player1, 10);
+    }
+
+    @Test
+    @DisplayName("A spell of the chosen color made colorless in response still gains the life")
+    void spellMadeColorlessInResponseStillGainsLife() {
+        Permanent mare = harness.addToBattlefieldAndReturn(player1, new DiamondMare());
+        mare.setChosenColor(CardColor.GREEN);
+        LeafGilder gilder = new LeafGilder();
+        harness.setHand(player1, List.of(gilder, new Moonlace()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setLife(player1, 20);
+
+        harness.castCreature(player1, 0);
+        assertThat(gd.stack).hasSize(2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, gilder.getId());
+        assertThat(gqs.getEffectiveCardColors(gd, gilder)).isEmpty();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
     }
 }

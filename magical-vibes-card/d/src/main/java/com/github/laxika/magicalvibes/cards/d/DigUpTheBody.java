@@ -4,20 +4,23 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.condition.CasualtyCostPaid;
 import com.github.laxika.magicalvibes.model.effect.CasualtyCost;
-import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfCasualtyPaidEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SNC", collectorNumber = "76")
 public class DigUpTheBody extends Card {
 
     public DigUpTheBody() {
-        addTrigger(Triggers.youCastThisSpell(), new CopyThisSpellIfCasualtyPaidEffect());
+        addTrigger(Triggers.youCastThisSpell(), TriggerOptions.DEFAULT.withInterveningIf(new CasualtyCostPaid()),
+                new CopyTriggeringSpellEffect());
         addCastingCost(new CasualtyCost(1));
         addSpellEffect(new MillEffect(2, MillRecipient.CONTROLLER));
         addSpellEffect(new MayEffect(

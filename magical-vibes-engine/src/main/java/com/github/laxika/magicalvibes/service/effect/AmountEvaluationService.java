@@ -1069,8 +1069,8 @@ public class AmountEvaluationService {
                     targetSpellPower(gameData, ctx);
             case TriggeringSpellColorCount ignored ->
                     triggeringSpellColorCount(gameData, ctx);
-            case TriggeringSpellChosenColorCount chosenAmount ->
-                    triggeringSpellChosenColorCount(gameData, ctx, chosenAmount);
+            case TriggeringSpellChosenColorCount ignored ->
+                    triggeringSpellChosenColorCount(gameData, ctx);
             case TriggeringSpellColorManaSymbols symbolAmount ->
                     triggeringSpellColorManaSymbols(gameData, ctx, symbolAmount);
             case TriggeringSpellTargetCount targetAmount ->
@@ -2257,8 +2257,9 @@ public class AmountEvaluationService {
      * {@code filter} with "the same name as that spell" ({@link CardSharesNameWithTriggeringSpellPredicate}) read
      * from {@code entry}'s triggering spell as the ability resolves: the live spell while it is on the stack, else the
      * entry's snapshot of it (CR 608.2h). A face-down spell, or no triggering spell, has no name, which no card has.
+     * Also read by the effects that filter cards by it ("returns all cards with the same name as that spell").
      */
-    private CardPredicate bindTriggeringSpellName(GameData gameData, CardPredicate filter, StackEntry entry) {
+    public CardPredicate bindTriggeringSpellName(GameData gameData, CardPredicate filter, StackEntry entry) {
         return switch (filter) {
             case null -> null;
             case CardSharesNameWithTriggeringSpellPredicate ignored -> {
@@ -2538,14 +2539,19 @@ public class AmountEvaluationService {
                 : gameQueryService.getEffectiveCardColors(gameData, triggeringSpell).size();
     }
 
-    private int triggeringSpellChosenColorCount(GameData gameData, AmountContext ctx,
-                                                TriggeringSpellChosenColorCount amount) {
+    /**
+     * The triggering spell's effective colors among the colors the source chose ({@link TriggeringSpellChosenColorCount}):
+     * the context's source is the live permanent, else the entry's snapshot of it (CR 608.2h).
+     */
+    private int triggeringSpellChosenColorCount(GameData gameData, AmountContext ctx) {
         Card triggeringSpell = findTriggeringSpell(gameData, ctx);
-        return triggeringSpell == null
-                ? 0
-                : (int) gameQueryService.getEffectiveCardColors(gameData, triggeringSpell).stream()
-                        .filter(amount.chosenColors()::contains)
-                        .count();
+        if (triggeringSpell == null || ctx.sourcePermanent() == null) {
+            return 0;
+        }
+        Set<CardColor> chosenColors = ctx.sourcePermanent().getChosenColors();
+        return (int) gameQueryService.getEffectiveCardColors(gameData, triggeringSpell).stream()
+                .filter(chosenColors::contains)
+                .count();
     }
 
     private int triggeringSpellColorManaSymbols(GameData gameData, AmountContext ctx,

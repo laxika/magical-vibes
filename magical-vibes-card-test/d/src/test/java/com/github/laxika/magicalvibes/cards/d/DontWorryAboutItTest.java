@@ -134,4 +134,22 @@ class DontWorryAboutItTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
     }
+
+    @Test
+    @DisplayName("Casting a card the Aura doesn't enchant copies nothing")
+    void castingAnotherCardCopiesNothing() {
+        Card enchantedCard = new Divination();
+        Card otherCard = new GrizzlyBears();
+        DontWorryAboutIt auraCard = new DontWorryAboutIt();
+        harness.setHand(player1, List.of(auraCard, enchantedCard, otherCard));
+        addAuraMana();
+        harness.castEnchantment(player1, 0, enchantedCard.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 1);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack).noneMatch(entry -> entry.isCopy());
+    }
 }

@@ -15,7 +15,8 @@ import java.util.UUID;
  * {@code attackedTargetId} is the player, planeswalker or battle an attack trigger's event was aimed at, where it isn't
  * the {@code targetId} ({@link #withAttackedTargetId}). {@code sourceGraveyardEntryVersion} is the graveyard incarnation the
  * source card had as an ability of it triggered from a graveyard, or {@code -1}
- * ({@link #withSourceGraveyardEntryVersion}).
+ * ({@link #withSourceGraveyardEntryVersion}). {@code casualtyCostPaid} says whether a casualty cost was paid for the spell,
+ * or for the spell whose cast trigger the entry is ({@link #forStackEntry}).
  */
 public record ConditionContext(
         UUID controllerId,
@@ -53,7 +54,49 @@ public record ConditionContext(
 , boolean treasureManaSpentToActivate, boolean teamworkCostPaid, boolean controlledModifiedCreatureAsCast, boolean copiedSpell,
         UUID attackedTargetId,
         ResolutionResults resolutionResults,
+        long sourceGraveyardEntryVersion,
+        boolean casualtyCostPaid) {
+    /** A context recording no casualty payment ({@link #forStackEntry} reads it from the entry). */
+    public ConditionContext(
+        UUID controllerId,
+        UUID sourcePermanentId,
+        Permanent sourcePermanent,
+        Card sourceCard,
+        boolean kicked,
+        boolean buyback,
+        boolean prowl,
+        boolean madness,
+        boolean castForForetell,
+        boolean overloaded,
+        Zone sourceZone,
+        int xValue,
+        UUID targetId,
+        Card triggeringCard,
+        boolean staticEvaluation,
+        boolean putCounterCostPaid,
+        boolean beholdCostPaid,
+        UUID triggeringPermanentId,
+        Integer triggeringPermanentPowerAtTrigger,
+        Card sacrificedCard,
+        List<String> repeatedAdditionalCosts,
+        boolean alternateCost,
+        boolean spectacle,
+        boolean controlledMountAsCast,
+        boolean controlledFaerieAsCast,
+        boolean collectEvidenceCostPaid,
+        boolean castDuringMainPhase,
+        int eventValue,
+        boolean waterbendCostPaid,
+        boolean giftPromised,
+        boolean revealCardFromHandCostPaid,
+        boolean controlledDragonAsCast
+, boolean treasureManaSpentToActivate, boolean teamworkCostPaid, boolean controlledModifiedCreatureAsCast, boolean copiedSpell,
+        UUID attackedTargetId,
+        ResolutionResults resolutionResults,
         long sourceGraveyardEntryVersion) {
+        this(controllerId, sourcePermanentId, sourcePermanent, sourceCard, kicked, buyback, prowl, madness, castForForetell, overloaded, sourceZone, xValue, targetId, triggeringCard, staticEvaluation, putCounterCostPaid, beholdCostPaid, triggeringPermanentId, triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts, alternateCost, spectacle, controlledMountAsCast, controlledFaerieAsCast, collectEvidenceCostPaid, castDuringMainPhase, eventValue, waterbendCostPaid, giftPromised, revealCardFromHandCostPaid, controlledDragonAsCast, treasureManaSpentToActivate, teamworkCostPaid, controlledModifiedCreatureAsCast, copiedSpell, attackedTargetId, resolutionResults, sourceGraveyardEntryVersion, false);
+    }
+
     /** A context recording no graveyard incarnation of its source ({@link #withSourceGraveyardEntryVersion}). */
     public ConditionContext(
         UUID controllerId,
@@ -490,7 +533,8 @@ public record ConditionContext(
                 entry.isCastDuringMainPhase(), entry.getEventValue(), entry.isWaterbendCostPaid(),
                 entry.isGiftPromised(), entry.isRevealCardFromHandCostPaid(),
                 entry.isControlledDragonAsCast(), entry.getActivationTreasureManaSpent() > 0 || entry.isActivationUsedTreasureMana(), entry.isTeamworkCostPaid(), entry.isControlledModifiedCreatureAsCast(), entry.isCopy(),
-                entry.getAttackedTargetId(), entry.getResolutionResults(), entry.sourceCardGraveyardEntryVersion());
+                entry.getAttackedTargetId(), entry.getResolutionResults(), entry.sourceCardGraveyardEntryVersion(),
+                entry.isCasualtyCostPaid());
     }
 
     public static ConditionContext forPermanent(Permanent permanent, UUID controllerId) {
@@ -577,7 +621,7 @@ public record ConditionContext(
                 spectacle, controlledMountAsCast, controlledFaerieAsCast, collectEvidenceCostPaid,
                 castDuringMainPhase, copiedEventValue, waterbendCostPaid, giftPromised,
                 revealCardFromHandCostPaid, controlledDragonAsCast, treasureManaSpentToActivate, teamworkCostPaid, controlledModifiedCreatureAsCast, copiedSpell,
-                attackedTargetId, resolutionResults, sourceGraveyardEntryVersion);
+                attackedTargetId, resolutionResults, sourceGraveyardEntryVersion, casualtyCostPaid);
     }
 
     public ConditionContext withTeamworkCostPaid(boolean paid) {
@@ -589,7 +633,7 @@ public record ConditionContext(
                 controlledFaerieAsCast, collectEvidenceCostPaid, castDuringMainPhase, eventValue,
                 waterbendCostPaid, giftPromised, revealCardFromHandCostPaid, controlledDragonAsCast,
                 treasureManaSpentToActivate, paid, controlledModifiedCreatureAsCast, copiedSpell,
-                attackedTargetId, resolutionResults, sourceGraveyardEntryVersion);
+                attackedTargetId, resolutionResults, sourceGraveyardEntryVersion, casualtyCostPaid);
     }
 
     /** The same context reading {@code results} as the resolving entry's scratchpad. */
@@ -602,7 +646,7 @@ public record ConditionContext(
                 controlledFaerieAsCast, collectEvidenceCostPaid, castDuringMainPhase, eventValue,
                 waterbendCostPaid, giftPromised, revealCardFromHandCostPaid, controlledDragonAsCast,
                 treasureManaSpentToActivate, teamworkCostPaid, controlledModifiedCreatureAsCast, copiedSpell,
-                attackedTargetId, results, sourceGraveyardEntryVersion);
+                attackedTargetId, results, sourceGraveyardEntryVersion, casualtyCostPaid);
     }
 
     /**
@@ -619,7 +663,7 @@ public record ConditionContext(
                 controlledFaerieAsCast, collectEvidenceCostPaid, castDuringMainPhase, eventValue,
                 waterbendCostPaid, giftPromised, revealCardFromHandCostPaid, controlledDragonAsCast,
                 treasureManaSpentToActivate, teamworkCostPaid, controlledModifiedCreatureAsCast, copiedSpell,
-                newAttackedTargetId, resolutionResults, sourceGraveyardEntryVersion);
+                newAttackedTargetId, resolutionResults, sourceGraveyardEntryVersion, casualtyCostPaid);
     }
 
     /**
@@ -636,7 +680,7 @@ public record ConditionContext(
                 controlledFaerieAsCast, collectEvidenceCostPaid, castDuringMainPhase, eventValue,
                 waterbendCostPaid, giftPromised, revealCardFromHandCostPaid, controlledDragonAsCast,
                 treasureManaSpentToActivate, teamworkCostPaid, controlledModifiedCreatureAsCast, copiedSpell,
-                attackedTargetId, resolutionResults, version);
+                attackedTargetId, resolutionResults, version, casualtyCostPaid);
     }
 
     public ConditionContext withEventValue(int newEventValue) {

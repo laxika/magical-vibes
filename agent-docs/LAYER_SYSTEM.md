@@ -377,7 +377,6 @@ extend the transformer's visitor when a card needs them): `PreventDamageEffect.f
 `TargetingRestrictionEffect`, `GrantControllerCreaturesCantBeTargetedByColorsEffect`,
 `GrantControllerSpellsCantBeCounteredByColorsEffect`, `GrantLifelinkToControllerSpellsByColorEffect`,
 `BoostColorSourceDamageThisTurnEffect`, `DealDamageOnSpellLifeGainEffect`,
-`PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect`,
 `AwardAnyColorManaEffect`'s `subtype`, color/land-type words inside trigger effects other
 than a cast trigger's spell filter, and activated-ability target restrictions. The remaining `CardColor`/`CardSubtype`-carrying
 effect types (token creators, one-shot damage/draw/return effects, costs) consume their

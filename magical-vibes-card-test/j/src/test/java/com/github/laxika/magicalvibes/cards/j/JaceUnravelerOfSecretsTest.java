@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CounterOpponentFirstSpellEachTurnEffect;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -97,9 +96,7 @@ class JaceUnravelerOfSecretsTest extends BaseCardTest {
     @Test
     @DisplayName("Emblem counters opponent's first spell each turn")
     void emblemCountersFirstOpponentSpell() {
-        gd.emblems.add(new Emblem(player1.getId(), List.of(
-                new CounterOpponentFirstSpellEachTurnEffect.Marker()
-        ), new JaceUnravelerOfSecrets()));
+        getEmblem();
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -119,9 +116,7 @@ class JaceUnravelerOfSecretsTest extends BaseCardTest {
     @Test
     @DisplayName("Emblem does not counter opponent's second spell in the same turn")
     void emblemDoesNotCounterSecondSpellSameTurn() {
-        gd.emblems.add(new Emblem(player1.getId(), List.of(
-                new CounterOpponentFirstSpellEachTurnEffect.Marker()
-        ), new JaceUnravelerOfSecrets()));
+        getEmblem();
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -144,9 +139,7 @@ class JaceUnravelerOfSecretsTest extends BaseCardTest {
     @Test
     @DisplayName("Emblem does not trigger when emblem controller casts a spell")
     void emblemDoesNotTriggerOnControllerSpell() {
-        gd.emblems.add(new Emblem(player1.getId(), List.of(
-                new CounterOpponentFirstSpellEachTurnEffect.Marker()
-        ), new JaceUnravelerOfSecrets()));
+        getEmblem();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -224,9 +217,7 @@ class JaceUnravelerOfSecretsTest extends BaseCardTest {
     @Test
     @DisplayName("The emblem counters the opponent's first spell again on the next turn")
     void emblemTriggersAgainNextTurn() {
-        gd.emblems.add(new Emblem(player1.getId(), List.of(
-                new CounterOpponentFirstSpellEachTurnEffect.Marker()
-        ), new JaceUnravelerOfSecrets()));
+        getEmblem();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player2, List.of(new Shock()));
@@ -271,5 +262,13 @@ class JaceUnravelerOfSecretsTest extends BaseCardTest {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
+    }
+
+    /** Player 1 gets the emblem by Jace's −8, resolved. */
+    private void getEmblem() {
+        Permanent jace = addReadyJace(player1);
+        jace.setCounterCount(CounterType.LOYALTY, 8);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
     }
 }

@@ -369,6 +369,7 @@ import com.github.laxika.magicalvibes.model.condition.PutCounterOnCreatureThisTu
 import com.github.laxika.magicalvibes.model.condition.PutCounterOnSourceThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
+import com.github.laxika.magicalvibes.model.condition.CasualtyCostPaid;
 import com.github.laxika.magicalvibes.model.condition.RevealCardFromHandCostPaid;
 import com.github.laxika.magicalvibes.model.condition.SacrificedCardMatches;
 import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageThisTurn;
@@ -758,6 +759,8 @@ public class ConditionEvaluationService {
                     !ctx.kicked();
             case BuybackPaid ignored ->
                     ctx.buyback();
+            case CasualtyCostPaid ignored ->
+                    ctx.casualtyCostPaid();
             case BeholdCostPaid ignored ->
                     ctx.beholdCostPaid();
             case RevealCardFromHandCostPaid ignored -> ctx.revealCardFromHandCostPaid()

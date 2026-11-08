@@ -425,6 +425,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesChosenNameWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsCardExiledWithSourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsCardEnchantedBySourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesColorOrManaValueWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesNameWithCardExiledWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySourceHasSupertypePredicate;
@@ -681,9 +682,13 @@ public class PredicateEvaluationService {
                     yield false;
                 }
                 Permanent source = findPermanentByOriginalCardId(gameData, sourceCardId);
-                CardColor chosenColor = source == null ? null : source.getChosenColor();
-                // The card's colors as effects leave them, as CardColorPredicate reads them.
-                yield chosenColor != null && gameQueryService.getEffectiveCardColors(gameData, card).contains(chosenColor);
+                if (source == null || source.getChosenColors().isEmpty()) {
+                    yield false;
+                }
+                // Any of the colors the source chose ("at least one of the chosen colors"), against the card's colors
+                // as effects leave them, as CardColorPredicate reads them.
+                yield gameQueryService.getEffectiveCardColors(gameData, card).stream()
+                        .anyMatch(source.getChosenColors()::contains);
             }
             case CardKeywordPredicate p -> {
                 if (p.restriction() != null) {
@@ -5347,6 +5352,7 @@ public class PredicateEvaluationService {
             case StackEntryCouldTargetAnotherPermanentPredicate ignored -> false;
             case StackEntrySharesChosenNameWithSourcePredicate ignored -> false;
             case StackEntryIsCardExiledWithSourcePredicate ignored -> false;
+            case StackEntryIsCardEnchantedBySourcePredicate ignored -> false;
             case StackEntrySharesNameWithCardExiledWithSourcePredicate ignored -> false;
             case StackEntrySourceIsColorlessPredicate ignored -> false;
             case StackEntrySourceHasSupertypePredicate ignored -> false;

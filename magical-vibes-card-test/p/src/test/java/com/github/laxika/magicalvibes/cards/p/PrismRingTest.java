@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.m.Moonlace;
 import com.github.laxika.magicalvibes.cards.b.BondedConstruct;
 import com.github.laxika.magicalvibes.cards.l.LeafGilder;
 import com.github.laxika.magicalvibes.model.Card;
@@ -19,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PrismRing.class, LeafGilder.class, BondedConstruct.class})
+@CardUsed({PrismRing.class, LeafGilder.class, BondedConstruct.class, Moonlace.class})
 class PrismRingTest extends BaseCardTest {
 
     private static Card createCreature(String name, List<CardColor> colors) {
@@ -156,6 +157,26 @@ class PrismRingTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Leaf Gilder");
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Leaf Gilder");
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    @DisplayName("A spell of the chosen color made colorless in response still gains the life")
+    void spellMadeColorlessInResponseStillGainsLife() {
+        Permanent ring = harness.addToBattlefieldAndReturn(player1, new PrismRing());
+        ring.setChosenColor(CardColor.GREEN);
+        LeafGilder gilder = new LeafGilder();
+        harness.setHand(player1, List.of(gilder, new Moonlace()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setLife(player1, 20);
+
+        harness.castCreature(player1, 0);
+        assertThat(gd.stack).hasSize(2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, gilder.getId());
+        assertThat(gqs.getEffectiveCardColors(gd, gilder)).isEmpty();
+        harness.passBothPriorities();
+
         harness.assertLife(player1, 21);
     }
 }

@@ -8,8 +8,10 @@ import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.ArrayList;
@@ -30,6 +32,7 @@ public class EachPlayerReturnsCardsFromGraveyardToBattlefieldEffectHandler imple
     private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final GraveyardService graveyardService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,6 +42,8 @@ public class EachPlayerReturnsCardsFromGraveyardToBattlefieldEffectHandler imple
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect) effect;
+        // "All cards with the same name as that spell" is read from the entry's triggering spell as it resolves.
+        CardPredicate filter = amountEvaluationService.bindTriggeringSpellName(gameData, e.filter(), entry);
 
         gameData.pendingGraveyardReturnBatch = new PendingGraveyardReturnBatch(
                 entry.getControllerId(), List.of(), Map.of(), e.underOwnersControl(),
@@ -58,14 +63,14 @@ public class EachPlayerReturnsCardsFromGraveyardToBattlefieldEffectHandler imple
                 List<Card> matching = new ArrayList<>();
                 for (Card card : graveyard) {
                     if ((trackedIds == null || trackedIds.contains(card.getId()))
-                            && predicateEvaluationService.matchesCardPredicate(card, e.filter(), null)) {
+                            && predicateEvaluationService.matchesCardPredicate(card, filter, null)) {
                         matching.add(card);
                     }
                 }
 
                 if (matching.isEmpty()) {
                     String playerName = gameData.playerIdToName.get(playerId);
-                    String filterLabel = CardPredicateUtils.describeFilter(e.filter());
+                    String filterLabel = CardPredicateUtils.describeFilter(filter);
                     gameLogService.append(gameData,
                             GameLog.text(playerName + " has no " + filterLabel + "s in their graveyard."));
                     continue;
@@ -84,7 +89,7 @@ public class EachPlayerReturnsCardsFromGraveyardToBattlefieldEffectHandler imple
                     returnedNamesByPlayer.put(playerId, removed.stream().map(Card::getName).toList());
                 } else {
                     gameData.pendingGraveyardReturnQueue.add(
-                            new PendingGraveyardReturnChoice(playerId, e.maxCount(), e.filter(),
+                            new PendingGraveyardReturnChoice(playerId, e.maxCount(), filter,
                                     GraveyardChoiceDestination.BATTLEFIELD, true,
                                     e.mandatory(), e.fromBattlefieldThisTurn()));
                 }

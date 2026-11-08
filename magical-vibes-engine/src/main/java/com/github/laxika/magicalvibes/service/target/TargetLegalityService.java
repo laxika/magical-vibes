@@ -96,6 +96,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchant
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesChosenNameWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsCardExiledWithSourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsCardEnchantedBySourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesNameWithCardExiledWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySourceHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySourceIsCommanderPredicate;
@@ -5573,6 +5574,10 @@ public class TargetLegalityService {
             return source != null
                     && gameData.getCardsExiledByPermanent(source.getId()).stream()
                     .anyMatch(card -> card.getId().equals(stackEntry.getCard().getId()));
+        }
+        if (predicate instanceof StackEntryIsCardEnchantedBySourcePredicate) {
+            return source != null && source.getAttachedTo() != null && stackEntry.getCard() != null
+                    && source.getAttachedTo().equals(stackEntry.getCard().getId());
         }
         if (predicate instanceof StackEntryHasSourceChosenSubtypePredicate) {
             if (source == null || source.getChosenSubtype() == null

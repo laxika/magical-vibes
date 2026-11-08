@@ -25,10 +25,9 @@ public class HandOfThePraetors extends Card {
                 new PermanentHasKeywordPredicate(Keyword.INFECT)));
 
         // Whenever you cast a creature spell with infect, target player gets a poison counter.
-        addTrigger(Triggers.youCastSpell(),
-                new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER, new CardAllOfPredicate(List.of(
+        addTrigger(Triggers.youCastSpell().withFilter(new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
-                        new CardKeywordPredicate(Keyword.INFECT)
-                ))));
+                        new CardKeywordPredicate(Keyword.INFECT)))),
+                new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER));
     }
 }

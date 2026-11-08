@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 
@@ -11,35 +10,14 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * each player / each opponent / the targeted permanent's controller / the enchanted permanent's
  * controller).
  *
- * <p>When {@code recipient == TARGET_PLAYER} and {@code spellFilter} is non-null, this doubles as a
- * trigger descriptor for {@code Triggers.youCastSpell()}: the trigger fires only when the
- * controller casts a spell matching the predicate. {@code SpellCastTriggerCollectorService}
- * resolves it into a stack entry with a resolution-only copy ({@code spellFilter == null}).
- *
- * <p>When {@code recipient == ENCHANTED_PERMANENT_CONTROLLER}, {@code affectedPlayerId} is
- * {@code null} in the card definition and gets baked in at trigger time by
- * {@code MiscTriggerCollectorService.handleEnchantedPermanentTapPoison} (Relic Putrescence).
- *
  * @param amount           number of poison counters to give
  * @param recipient        who gets the poison counters
- * @param spellFilter      trigger-descriptor filter (target-player spell-cast triggers only)
- * @param affectedPlayerId enchanted permanent's controller, baked in at trigger time
  */
-public record GivePoisonCountersEffect(DynamicAmount amount, PoisonRecipient recipient,
-        CardPredicate spellFilter)
+public record GivePoisonCountersEffect(DynamicAmount amount, PoisonRecipient recipient)
         implements CardEffect, CombatDamageTriggerContextEffect {
 
     public GivePoisonCountersEffect(int amount, PoisonRecipient recipient) {
-        this(new Fixed(amount), recipient, null);
-    }
-
-    public GivePoisonCountersEffect(DynamicAmount amount, PoisonRecipient recipient) {
-        this(amount, recipient, null);
-    }
-
-    /** Target-player trigger-descriptor constructor. */
-    public GivePoisonCountersEffect(int amount, PoisonRecipient recipient, CardPredicate spellFilter) {
-        this(new Fixed(amount), recipient, spellFilter);
+        this(new Fixed(amount), recipient);
     }
 
     @Override

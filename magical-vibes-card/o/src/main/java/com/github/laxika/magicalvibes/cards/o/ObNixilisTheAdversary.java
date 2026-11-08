@@ -7,10 +7,12 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.condition.CasualtyCostPaid;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.CasualtyCost;
+import com.github.laxika.magicalvibes.model.effect.ChooseXValueCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfCasualtyPaidEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
@@ -18,13 +20,13 @@ import com.github.laxika.magicalvibes.model.effect.EachOpponentMayDiscardOrLoseL
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.ChooseXValueCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -34,8 +36,9 @@ import java.util.Set;
 public class ObNixilisTheAdversary extends Card {
 
     public ObNixilisTheAdversary() {
-        addTrigger(Triggers.youCastThisSpell(), new CopyThisSpellIfCasualtyPaidEffect(
-                Set.of(CardSupertype.LEGENDARY), true, true));
+        addTrigger(Triggers.youCastThisSpell(), TriggerOptions.DEFAULT.withInterveningIf(new CasualtyCostPaid()),
+                new CopyTriggeringSpellEffect(true).withoutSupertypes(Set.of(CardSupertype.LEGENDARY))
+                        .withStartingLoyaltyFromX());
         addCastingCost(CasualtyCost.matchingChosenX());
         addCastingCost(new ChooseXValueCost(0, Integer.MAX_VALUE));
 

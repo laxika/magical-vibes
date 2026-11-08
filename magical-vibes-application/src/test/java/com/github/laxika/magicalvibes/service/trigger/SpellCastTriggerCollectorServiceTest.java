@@ -71,11 +71,9 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSameNameCardsFromGraveyardsToBattlefieldOnCreatureSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -730,118 +728,6 @@ class SpellCastTriggerCollectorServiceTest {
         }
     }
 
-    // ===== ON_ANY_PLAYER_CASTS_SPELL — PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect =====
-
-    @Nested
-    @DisplayName("ON_ANY_PLAYER_CASTS_SPELL — PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect")
-    class AnyPlayerColorCounter {
-
-        @Test
-        @DisplayName("triggers when spell color matches and onlyOwnSpells is false")
-        void triggersOnMatchingColor() {
-            Permanent perm = createPermanent("Wurm's Tooth");
-            var effect = new PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect(
-                    Set.of(CardColor.GREEN), 1, false);
-            Card spellCard = createCard("Grizzly Bears", CardColor.GREEN);
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(gd.stack).hasSize(1);
-            var stackEntry = gd.stack.getLast();
-            assertThat(stackEntry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-            assertThat(stackEntry.getSourcePermanentId()).isEqualTo(perm.getId());
-        }
-
-        @Test
-        @DisplayName("stack entry includes PutCountersOnSourceEffect with correct amount")
-        void stackEntryIncludesCorrectEffect() {
-            Permanent perm = createPermanent("Wurm's Tooth");
-            var effect = new PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect(
-                    Set.of(CardColor.GREEN), 2, false);
-            Card spellCard = createCard("Grizzly Bears", CardColor.GREEN);
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
-
-            registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
-
-            var resolved = (PutCountersOnSourceEffect) gd.stack.getLast().getEffectsToResolve().getFirst();
-            assertThat(resolved.amount()).isEqualTo(2);
-        }
-
-        @Test
-        @DisplayName("empty color set triggers on a colorless spell (Managorger Hydra)")
-        void emptyColorSetTriggersOnColorlessSpell() {
-            Permanent perm = createPermanent("Managorger Hydra");
-            var effect = new PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect(Set.of(), 1, false);
-            Card spellCard = createCard("Artifact Spell");
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
-        }
-
-        @Test
-        @DisplayName("returns false when spell color is null")
-        void returnsFalseWhenColorNull() {
-            Permanent perm = createPermanent("Wurm's Tooth");
-            var effect = new PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect(
-                    Set.of(CardColor.GREEN), 1, false);
-            Card spellCard = createCard("Artifact Spell");
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
-
-            assertThat(result).isFalse();
-            assertThat(gd.stack).isEmpty();
-        }
-
-        @Test
-        @DisplayName("returns false when spell color does not match trigger colors")
-        void returnsFalseWhenColorDoesNotMatch() {
-            Permanent perm = createPermanent("Wurm's Tooth");
-            var effect = new PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect(
-                    Set.of(CardColor.GREEN), 1, false);
-            Card spellCard = createCard("Lightning Bolt", CardColor.RED);
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
-
-            assertThat(result).isFalse();
-            assertThat(gd.stack).isEmpty();
-        }
-
-        @Test
-        @DisplayName("returns false when onlyOwnSpells is true")
-        void returnsFalseWhenOnlyOwnSpells() {
-            Permanent perm = createPermanent("Wurm's Tooth");
-            var effect = new PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect(
-                    Set.of(CardColor.GREEN), 1, true);
-            Card spellCard = createCard("Grizzly Bears", CardColor.GREEN);
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
-
-            assertThat(result).isFalse();
-            assertThat(gd.stack).isEmpty();
-        }
-    }
-
     @Test
     @DisplayName("A same-name graveyard trigger goes on the stack as written, the caster its non-targeting player")
     void sameNameGraveyardTriggerGoesOnTheStackAsWritten() {
@@ -869,32 +755,51 @@ class SpellCastTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("A same-name graveyard return trigger only fires for creature spells")
-    void sameNameGraveyardReturnTriggerSnapshotsCreatureSpellName() {
+    @DisplayName("A same-name graveyard return trigger goes on the stack as written, recording the triggering spell")
+    void sameNameGraveyardReturnTriggerGoesOnTheStackAsWritten() {
         Permanent perm = createPermanent("Bloodbond March");
-        var effect = new ReturnSameNameCardsFromGraveyardsToBattlefieldOnCreatureSpellCastEffect();
+        CardEffect returnCards = new EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(
+                Integer.MAX_VALUE, new CardSharesNameWithTriggeringSpellPredicate());
+        CastAbility ability = castAbility(
+                Triggers.playerCastsSpell().withFilter(new CardTypePredicate(CardType.CREATURE)), returnCards);
         Card spellCard = createCard("Grizzly Bears");
-        var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
+        gd.stack.add(new StackEntry(StackEntryType.CREATURE_SPELL, spellCard, player2Id, "Grizzly Bears",
+                new ArrayList<>()));
+        everySpellMatches();
 
-        boolean result = registry.dispatch(match(perm, player1Id, effect),
-                SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+        boolean result = sut.collectCastAbility(match(perm, player1Id, returnCards), ability,
+                new TriggerContext.SpellCast(spellCard, player2Id, true), false);
 
         assertThat(result).isTrue();
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getLast().getTargetId()).isEqualTo(player2Id);
-        assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
-        assertThat(gd.stack.getLast().isNonTargeting()).isTrue();
-        assertThat(gd.stack.getLast().getEffectsToResolve()).singleElement()
-                .isEqualTo(new EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(
-                        Integer.MAX_VALUE, new CardNamedPredicate("Grizzly Bears")));
+        assertThat(gd.stack).hasSize(2);
+        StackEntry entry = gd.stack.getLast();
+        assertThat(entry.getSourcePermanentId()).isEqualTo(perm.getId());
+        assertThat(entry.isNonTargeting()).isTrue();
+        assertThat(entry.getTriggeringCardId()).isEqualTo(spellCard.getId());
+        assertThat(entry.getTriggeringSpellSnapshot().getCard()).isEqualTo(spellCard);
+        assertThat(entry.getEffectsToResolve()).containsExactly(returnCards);
+    }
 
-        gd.stack.clear();
-        Card noncreatureSpell = createInstant("Holy Day");
-        var noncreatureContext = new TriggerContext.SpellCast(noncreatureSpell, player2Id, true);
+    @Test
+    @DisplayName("A filtered poison trigger asks for its target player as it triggers")
+    void filteredPoisonTriggerQueuesItsPlayerTarget() {
+        Permanent perm = createPermanent("Hand of the Praetors");
+        CardEffect poison = new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER);
+        CastAbility ability = castAbility(
+                Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)), poison);
+        Card spellCard = createCard("Plague Stinger");
+        gd.stack.add(new StackEntry(StackEntryType.CREATURE_SPELL, spellCard, player1Id, "Plague Stinger",
+                new ArrayList<>()));
+        everySpellMatches();
 
-        assertThat(registry.dispatch(match(perm, player1Id, effect),
-                SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect, noncreatureContext)).isFalse();
-        assertThat(gd.stack).isEmpty();
+        boolean result = sut.collectCastAbility(match(perm, player1Id, poison), ability,
+                new TriggerContext.SpellCast(spellCard, player1Id, true), false);
+
+        assertThat(result).isTrue();
+        PermanentChoiceContext.SpellTargetTriggerAnyTarget queued =
+                gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
+        assertThat(queued.playerTargetOnly()).isTrue();
+        assertThat(queued.effects()).containsExactly(poison);
     }
 
     @Test
@@ -919,64 +824,6 @@ class SpellCastTriggerCollectorServiceTest {
         assertThat(entry.isNonTargeting()).isTrue();
         assertThat(entry.getTriggeringSpellSnapshot().getCard()).isEqualTo(spellCard);
         assertThat(entry.getEffectsToResolve()).containsExactly(counter);
-    }
-
-    // ===== ON_CONTROLLER_CASTS_SPELL — PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect =====
-
-    @Nested
-    @DisplayName("ON_CONTROLLER_CASTS_SPELL — PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect")
-    class ControllerColorCounter {
-
-        @Test
-        @DisplayName("triggers when spell color matches trigger colors")
-        void triggersOnMatchingColor() {
-            Permanent perm = createPermanent("Quirion Dryad");
-            var effect = new PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect(
-                    Set.of(CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED), 1, true);
-            Card spellCard = createCard("Lightning Bolt", CardColor.RED);
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
-        }
-
-        @Test
-        @DisplayName("returns false when spell color is null")
-        void returnsFalseWhenColorNull() {
-            Permanent perm = createPermanent("Quirion Dryad");
-            var effect = new PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect(
-                    Set.of(CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED), 1, true);
-            Card spellCard = createCard("Artifact Spell");
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
-
-            assertThat(result).isFalse();
-        }
-
-        @Test
-        @DisplayName("returns false when spell color is not in trigger colors (e.g. green for Quirion Dryad)")
-        void returnsFalseWhenColorNotInTriggerColors() {
-            Permanent perm = createPermanent("Quirion Dryad");
-            var effect = new PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect(
-                    Set.of(CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED), 1, true);
-            Card spellCard = createCard("Giant Growth", CardColor.GREEN);
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
-
-            assertThat(result).isFalse();
-            assertThat(gd.stack).isEmpty();
-        }
     }
 
     @Nested
@@ -1543,87 +1390,6 @@ class SpellCastTriggerCollectorServiceTest {
         }
     }
 
-    // ===== ON_CONTROLLER_CASTS_SPELL — GivePoisonCountersEffect (TARGET_PLAYER) =====
-
-    @Nested
-    @DisplayName("ON_CONTROLLER_CASTS_SPELL — GivePoisonCountersEffect (TARGET_PLAYER)")
-    class ControllerPoisonOnSpellCast {
-
-        @Test
-        @DisplayName("adds to pending target triggers when spell matches filter")
-        void addsToPendingTargetTriggers() {
-            Permanent perm = createPermanent("Hand of the Praetors");
-            CardPredicate filter = new CardNamedPredicate("Test Filter");
-            var effect = new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER, filter);
-            Card spellCard = createCard("Plague Stinger");
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
-
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
-                    eq(null), any(), any())).thenReturn(true);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class::isInstance).hasSize(1);
-            assertThat(gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class).playerTargetOnly()).isTrue();
-        }
-
-        @Test
-        @DisplayName("returns false when spell filter is null")
-        void returnsFalseWhenFilterNull() {
-            Permanent perm = createPermanent("Hand of the Praetors");
-            var effect = new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER);
-            Card spellCard = createCard("Plague Stinger");
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
-
-            assertThat(result).isFalse();
-        }
-
-        @Test
-        @DisplayName("returns false when spell does not match filter")
-        void returnsFalseWhenFilterDoesNotMatch() {
-            Permanent perm = createPermanent("Hand of the Praetors");
-            CardPredicate filter = new CardNamedPredicate("Test Filter");
-            var effect = new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER, filter);
-            Card spellCard = createCard("Grizzly Bears");
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
-
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
-                    eq(null), any(), any())).thenReturn(false);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
-
-            assertThat(result).isFalse();
-        }
-
-        @Test
-        @DisplayName("broadcasts log message")
-        void broadcastsLogMessage() {
-            Permanent perm = createPermanent("Hand of the Praetors");
-            CardPredicate filter = new CardNamedPredicate("Test Filter");
-            var effect = new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER, filter);
-            Card spellCard = createCard("Plague Stinger");
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
-
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
-                    eq(null), any(), any())).thenReturn(true);
-
-            registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
-
-            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
-        }
-    }
-
     // ===== ON_OPPONENT_CASTS_SPELL — LoseLifeUnlessDiscardEffect =====
 
     @Nested
@@ -1814,48 +1580,6 @@ class SpellCastTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
-        }
-    }
-
-    // ===== ON_OPPONENT_CASTS_SPELL — PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect =====
-
-    @Nested
-    @DisplayName("ON_OPPONENT_CASTS_SPELL — PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect")
-    class OpponentColorCounter {
-
-        @Test
-        @DisplayName("triggers when opponent's spell color matches")
-        void triggersOnMatchingColor() {
-            Permanent perm = createPermanent("Some Permanent");
-            var effect = new PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect(
-                    Set.of(CardColor.RED), 1, false);
-            Card spellCard = createCard("Lightning Bolt", CardColor.RED);
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL, effect, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
-        }
-
-        @Test
-        @DisplayName("returns false when opponent's spell color does not match")
-        void returnsFalseWhenColorDoesNotMatch() {
-            Permanent perm = createPermanent("Some Permanent");
-            var effect = new PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect(
-                    Set.of(CardColor.RED), 1, false);
-            Card spellCard = createCard("Grizzly Bears", CardColor.GREEN);
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL, effect, ctx);
-
-            assertThat(result).isFalse();
-            assertThat(gd.stack).isEmpty();
         }
     }
 

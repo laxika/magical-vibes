@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondChoosePartnerEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "VOC", collectorNumber = "37")
 @CardRegistration(set = "VOC", collectorNumber = "75")
@@ -45,8 +44,8 @@ public class ThunderingMightmare extends Card {
         addStaticEffect(new ConditionalEffect(
                 new SourceIsPaired(),
                 new GrantTriggeredAbilityEffect(
-                        new TriggeredAbility(Triggers.opponentCastsSpell(),
-                        new PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect(Set.of(), 1, false)),
+                        new TriggeredAbility(Triggers.opponentCastsSpell().anySpell(),
+                        new PutCountersOnSourceEffect(1, 1, 1)),
                         GrantScope.SELF_AND_PAIRED)));
     }
 }

@@ -71,6 +71,7 @@ public sealed interface Condition permits
         BlockedByMinCreatures,
         SourceBlocksWithAtLeastAndOnlyMatchingBlockers,
         BuybackPaid,
+        CasualtyCostPaid,
         CardPutIntoExileThisTurn,
         BeholdCostPaid,
         CollectEvidenceCostPaid,
