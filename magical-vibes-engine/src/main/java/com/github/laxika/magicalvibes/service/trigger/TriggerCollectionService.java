@@ -198,9 +198,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffe
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureExactStatsConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DamagedPlayerOnlyEffect;
 import com.github.laxika.magicalvibes.model.condition.Condition;
-import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToActivate;
-import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfDamagedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
@@ -905,17 +903,6 @@ public class TriggerCollectionService {
         return null;
     }
 
-    /**
-     * Intervening-if (CR 603.4) for a zone-resident spell-cast trigger gated on the mana spent to cast the
-     * spell: the trigger only goes on the stack when the spell's mana spent meets the threshold.
-     */
-    private static boolean spellManaSpentGatesMet(List<CardEffect> effects, int spellManaSpent) {
-        return effects.stream().noneMatch(effect ->
-                effect instanceof ConditionalEffect conditional
-                        && conditional.condition() instanceof SpellManaSpentAtLeast spent
-                        && spellManaSpent < spent.minMana());
-    }
-
     public void checkSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId,
                                        Zone castZone, UUID exiledSourcePermanentId,
                                        boolean castFaceDown) {
@@ -1277,11 +1264,11 @@ public class TriggerCollectionService {
                     if (filter.nthThisTurn() > 0 && !isNthMatchingSpell(gameData, filter, castingPlayerId)) {
                         continue;
                     }
-                    if (!spellManaSpentGatesMet(trigger.effects(), spellManaSpent)) {
-                        continue;
-                    }
+                    // The intervening "if" (CR 603.4: "if five or more mana was spent to cast it", Covercast) with
+                    // the spell's mana spent as X, which the entry carries for the check as it resolves.
                     if (trigger.interveningIf() != null && !conditionEvaluationService.isMet(gameData,
-                            trigger.interveningIf(), ConditionContext.forCard(card, castingPlayerId))) {
+                            trigger.interveningIf(), ConditionContext.forCard(card, castingPlayerId)
+                                    .withXValue(spellManaSpent))) {
                         continue;
                     }
 
@@ -1343,12 +1330,19 @@ public class TriggerCollectionService {
                     SpellFilter filter = watchedSpellFilter(ability, SpellAbilityWatch.HAND_ON_CONTROLLER_CASTS_SPELL,
                             false);
                     if (filter == null) continue;
-                    requireNoOptions(ability, card);
-                    List<CardEffect> effects = ability.effects().stream().map(EffectRegistration::effect).toList();
+                    requireOnlyInterveningIf(ability, card);
+                    Condition interveningIf = ability.options().interveningIf();
                     if (!predicateEvaluationService.matchesCardPredicate(spellCard, filter.spell(), null)
-                            || !spellManaSpentGatesMet(effects, spellManaSpent)) {
+                            || interveningIf != null && !conditionEvaluationService.isMet(gameData, interveningIf,
+                            ConditionContext.forCard(card, castingPlayerId).withXValue(spellManaSpent))) {
                         continue;
                     }
+                    // The intervening "if" (Covercast's mana spent) stays wrapped for the check as it resolves, with
+                    // the spell's mana spent as the entry's X.
+                    List<CardEffect> effects = ability.effects().stream().map(EffectRegistration::effect)
+                            .map(effect -> interveningIf == null ? effect
+                                    : (CardEffect) new ConditionalEffect(interveningIf, effect))
+                            .toList();
                     StackEntry entry = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             card,
@@ -2508,7 +2502,7 @@ public class TriggerCollectionService {
         }
     }
 
-    /** As {@link #requireNoOptions}, for the graveyard reader, which judges an intervening "if" (CR 603.4). */
+    /** As {@link #requireNoOptions}, for the graveyard and hand cast readers, which judge an intervening "if" (CR 603.4). */
     private static void requireOnlyInterveningIf(TriggeredAbility ability, Card card) {
         TriggerOptions options = ability.options();
         if (options.limit() != TriggerLimit.NONE || options.multiplicity() != TriggerMultiplicity.EACH
@@ -6033,11 +6027,9 @@ public class TriggerCollectionService {
         Permanent enteringPermanent = entering.permanent();
         boolean triggered = false;
         for (CardEffect effect : effects) {
-            CardEffect resolved = effect;
-            if (resolved instanceof ConditionalEffect conditional && conditional.condition() instanceof WasCast) {
-                resolved = conditional.wrapped();
-            }
-            CardEffect dispatchEffect = resolved;
+            // The pipeline judged an intervening "if you cast it" (Light-Paws) as the ability triggered and left the
+            // fact unwrapped (TriggeredAbilityStackService.withInterveningIf).
+            CardEffect dispatchEffect = effect;
             // An ability limited to once each turn is one trigger per event, so an extra trigger from a doubler
             // does not give it a second copy.
             int triggerCount = limit != TriggerLimit.NONE ? 1

@@ -26,7 +26,7 @@ public class RiftmarkedKnight extends Card {
     public RiftmarkedKnight() {
         addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
         addTrigger(Triggers.timeCounterRemovedFromThisInExile(),
-                TriggerOptions.DEFAULT.withInterveningIf(new NotCondition(new SourceCardSuspended())),
+                TriggerOptions.DEFAULT.withEventCondition(new NotCondition(new SourceCardSuspended())),
                 new CreateTokenEffect(
                 1,
                 "Knight",

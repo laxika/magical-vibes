@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.amount.SourceIntensity;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.IntensifySourceCardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -30,15 +29,13 @@ public class SummitfestClosingCeremony extends Card {
     public SummitfestClosingCeremony() {
         setStartingIntensity(3);
 
-        CardEffect covercast = new ConditionalEffect(
-                new SpellManaSpentAtLeast(5),
-                new IntensifySourceCardEffect(1));
+        TriggerOptions fiveManaSpent = TriggerOptions.DEFAULT.withInterveningIf(new SpellManaSpentAtLeast(5));
         addTrigger(new TriggerCondition(Triggers.youCastSpell().withFilter(INSTANT_OR_SORCERY), AbilityZones.GRAVEYARD),
-                TriggerOptions.DEFAULT,
-                covercast);
+                fiveManaSpent,
+                new IntensifySourceCardEffect(1));
         addTrigger(new TriggerCondition(Triggers.youCastSpell().withFilter(INSTANT_OR_SORCERY), AbilityZones.HAND),
-                TriggerOptions.DEFAULT,
-                covercast);
+                fiveManaSpent,
+                new IntensifySourceCardEffect(1));
         addSpellEffect(new AwardManaEffect(ManaColor.BLUE, new SourceIntensity()));
         addSpellEffect(new AwardManaEffect(ManaColor.RED, new SourceIntensity()));
         addSpellEffect(new DrawCardEffect());

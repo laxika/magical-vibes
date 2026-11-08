@@ -21,7 +21,7 @@ public class VeilingOddity extends Card {
         // When the last time counter is removed from this card while it's exiled, creatures can't
         // be blocked this turn. The negated suspend condition identifies the last counter event.
         addTrigger(Triggers.timeCounterRemovedFromThisInExile(),
-                TriggerOptions.DEFAULT.withInterveningIf(new NotCondition(new SourceCardSuspended())),
+                TriggerOptions.DEFAULT.withEventCondition(new NotCondition(new SourceCardSuspended())),
                 new MakeAllCreaturesUnblockableEffect());
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(

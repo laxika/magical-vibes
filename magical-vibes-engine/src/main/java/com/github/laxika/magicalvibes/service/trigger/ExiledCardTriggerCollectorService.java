@@ -1,9 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -28,17 +25,6 @@ public class ExiledCardTriggerCollectorService {
     private final GameLogService gameLogService;
     private final ConditionEvaluationService conditionEvaluationService;
 
-    @CollectsCounterTrigger(value = ConditionalEffect.class,
-            watch = CounterWatch.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE)
-    private boolean handleConditionalTimeCounterRemoved(TriggerMatchContext match,
-            ConditionalEffect conditional, TriggerContext ctx) {
-        if (isLastCounterEventCondition(conditional)) {
-            if (((TriggerContext.TimeCounterRemovedFromExile) ctx).remainingCounters() != 0) return false;
-            return handleTimeCounterRemoved(match, conditional, ctx);
-        }
-        return handleTimeCounterRemoved(match, conditional, ctx);
-    }
-
     @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE)
     private boolean handleTimeCounterRemoved(TriggerMatchContext match, CardEffect effect,
             TriggerContext ctx) {
@@ -49,11 +35,9 @@ public class ExiledCardTriggerCollectorService {
             return false;
         }
 
-        // The collector dispatches the first of the effects it read, which go on the stack as one object. The
-        // last-counter clause describes the event; adding a counter later does not undo it.
-        List<CardEffect> triggeredEffects = removed.effects().stream().map(triggeredEffect ->
-                triggeredEffect instanceof ConditionalEffect conditional && isLastCounterEventCondition(conditional)
-                        ? conditional.wrapped() : triggeredEffect).toList();
+        // The collector dispatches the first of the effects it read, which go on the stack as one object; it judged
+        // the abilities' "when the last time counter is removed" event condition from the exiled card.
+        List<CardEffect> triggeredEffects = removed.effects();
 
         GameData gameData = match.gameData();
         if (triggeredEffects.stream().anyMatch(triggeredEffect ->
@@ -79,10 +63,5 @@ public class ExiledCardTriggerCollectorService {
         log.info("Game {} - {} triggers when a time counter is removed from exile",
                 gameData.id, card.getName());
         return true;
-    }
-
-    private boolean isLastCounterEventCondition(ConditionalEffect conditional) {
-        return conditional.condition() instanceof NotCondition not
-                && not.inner() instanceof SourceCardSuspended;
     }
 }

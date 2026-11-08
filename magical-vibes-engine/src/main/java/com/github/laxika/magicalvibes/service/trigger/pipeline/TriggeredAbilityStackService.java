@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.condition.EntryFactCondition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -439,10 +440,13 @@ public class TriggeredAbilityStackService {
      * {@code effect} with the ability's intervening "if" {@code interveningIf} ({@code null} for none) around it, so it
      * is checked again as the ability resolves (CR 603.4). On an ability triggered by an object entering the
      * battlefield ({@code entering}) it goes inside a "you may" that targets nothing, whose collectors bind the choice to
-     * the entering object; the "you may" isn't asked once the "if" is false ({@code EffectResolutionService}).
+     * the entering object; the "you may" isn't asked once the "if" is false ({@code EffectResolutionService}). A fact
+     * fixed as the object entered ({@link EntryFactCondition}: "if you cast it", "if it was kicked") isn't wrapped: it
+     * was judged as the ability triggered, the answer is the same as it resolves, and the stack entry can't always read
+     * how the object was cast.
      */
     static CardEffect withInterveningIf(Condition interveningIf, CardEffect effect, boolean entering) {
-        if (interveningIf == null) {
+        if (interveningIf == null || entering && EntryFactCondition.isEntryFact(interveningIf)) {
             return effect;
         }
         if (entering && effect instanceof MayEffect may && TargetSpec.NONE.equals(may.targetSpec())) {
