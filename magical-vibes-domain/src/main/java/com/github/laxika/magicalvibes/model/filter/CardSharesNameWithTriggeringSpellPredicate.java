@@ -5,7 +5,10 @@ package com.github.laxika.magicalvibes.model.filter;
  * graveyards with the same name as that spell" (the Odyssey shrines). The spell is the resolving stack entry's
  * triggering spell, read as the ability resolves: the live spell while it is on the stack, else the entry's snapshot of
  * it (CR 608.2h). A face-down spell has no name, so it matches nothing. Read by the {@code CardsInGraveyard} count,
- * which has the resolving entry; elsewhere, with no triggering spell, it matches nothing.
+ * which has the resolving entry, and by the effects whose filter the engine binds to the entry's triggering spell
+ * ({@code AmountEvaluationService.bindTriggeringSpellName}): "returns all cards with the same name as that spell", and
+ * Harness the Storm's "target card with the same name as that spell", chosen against the spell the ability triggered on
+ * as it goes on the stack. Elsewhere, with no triggering spell, it matches nothing.
  */
 public record CardSharesNameWithTriggeringSpellPredicate() implements CardPredicate {
 }

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.TargetGroup;
@@ -98,6 +99,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntrySharesChosenNameWit
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsCardExiledWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsCardEnchantedBySourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesNameWithCardExiledWithSourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryHasTypeShowingOnSourceTrackerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySourceHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySourceIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySourceIsColorlessPredicate;
@@ -4199,8 +4201,15 @@ public class TargetLegalityService {
                         card, effect.filter(chosenCreatureType), entry.getCard().getId(), gameData, graveyardOwnerId));
             }
 
+            // "Target card with the same name as that spell" (Harness the Storm) is checked against the entry's
+            // triggering spell, the live spell or as it last existed on the stack (CR 608.2h).
             List<CardEffect> declarativeGraveyardEffects = entry.getEffectsToResolve().stream()
                     .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                    .map(effect -> effect instanceof CastTargetInstantOrSorceryFromGraveyardEffect cast
+                            && cast.filter() != null
+                            ? cast.withFilter(AmountEvaluationService.bindTriggeringSpellName(
+                                    gameData, cast.filter(), entry))
+                            : effect)
                     .toList();
             if (!declarativeGraveyardEffects.isEmpty()) {
                 return declarativeGraveyardEffects.stream().anyMatch(effect ->
@@ -5574,6 +5583,16 @@ public class TargetLegalityService {
             return source != null
                     && gameData.getCardsExiledByPermanent(source.getId()).stream()
                     .anyMatch(card -> card.getId().equals(stackEntry.getCard().getId()));
+        }
+        if (predicate instanceof StackEntryHasTypeShowingOnSourceTrackerPredicate showing) {
+            if (source == null || stackEntry.getCard() == null) {
+                return false;
+            }
+            // A tracker list kept for another object (the permanent was a copy of a different Bucket List) is empty.
+            Set<CardType> covered = source.getCard().getId().equals(source.getTrackedSpellCardTypesSourceCardId())
+                    ? source.getTrackedSpellCardTypes() : Set.of();
+            return showing.trackedTypes().stream()
+                    .anyMatch(type -> !covered.contains(type) && stackEntry.getCard().hasType(type));
         }
         if (predicate instanceof StackEntryIsCardEnchantedBySourcePredicate) {
             return source != null && source.getAttachedTo() != null && stackEntry.getCard() != null

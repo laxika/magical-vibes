@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.cards.o.Opt;
+import com.github.laxika.magicalvibes.cards.t.Twincast;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -16,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 @CardUsed({TooferKeeperOfTheFullGrip.class, Annihilate.class, Divination.class,
-        GrizzlyBears.class, Opt.class, Murder.class})
+        GrizzlyBears.class, Opt.class, Murder.class, Twincast.class})
 class TooferKeeperOfTheFullGripTest extends BaseCardTest {
 
     @Test
@@ -84,5 +85,36 @@ class TooferKeeperOfTheFullGripTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A copy of a spell you control that gives you card advantage triggers it, though it wasn't cast")
+    void triggersForACopyOfASpellYouControl() {
+        addCreatureReady(player1, new TooferKeeperOfTheFullGrip());
+        Divination divination = new Divination();
+        harness.setHand(player1, List.of(divination, new Twincast()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castSorcery(player1, 0);
+        harness.castInstant(player1, 0, divination.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Triggers when it is on the battlefield as the spell resolves, though it wasn't when it was cast")
+    void triggersWhenItArrivesAfterTheSpellWasCast() {
+        harness.castFromHand(player1, new Divination(), "{2}{U}");
+        addCreatureReady(player1, new TooferKeeperOfTheFullGrip());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
     }
 }

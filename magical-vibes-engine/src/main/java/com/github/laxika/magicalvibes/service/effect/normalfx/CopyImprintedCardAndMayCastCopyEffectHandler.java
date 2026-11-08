@@ -53,11 +53,16 @@ public class CopyImprintedCardAndMayCastCopyEffectHandler implements NormalEffec
                 imprintedCards.add(bound.card());
             }
         } else if (copyEffect.copyOtherExiledCard()) {
-            // "Copy the other": every card exiled with the source besides the one that matched the cast
-            // card (a doubled imprint trigger links more than two).
-            gameData.getCardsExiledByPermanent(entry.getSourcePermanentId()).stream()
-                    .filter(card -> !card.getId().equals(copyEffect.matchingExiledCardId()))
-                    .forEach(imprintedCards::add);
+            // "Copy the other": every card exiled with the source besides the first one with the name of the cast card,
+            // read as the ability resolves (a doubled imprint trigger links more than two). None has the name: nothing.
+            StackEntry spell = CopySupport.triggeringSpell(gameData, entry);
+            List<Card> exiled = gameData.getCardsExiledByPermanent(entry.getSourcePermanentId());
+            Card matching = spell == null || spell.getCard() == null ? null : exiled.stream()
+                    .filter(card -> card.getName().equals(spell.getCard().getName()))
+                    .findFirst().orElse(null);
+            if (matching != null) {
+                exiled.stream().filter(card -> card != matching).forEach(imprintedCards::add);
+            }
         } else {
             // A doubled imprint trigger exiles several cards; the ability copies each of them.
             Card imprinted = sourcePermanent != null

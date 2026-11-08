@@ -2003,6 +2003,7 @@ public class GraveyardChoiceHandlerService {
         UUID pendingTriggeringCardId = gameData.graveyardTargetOperation.triggeringCardId;
         long pendingTriggeringCardGraveyardEntryVersion =
                 gameData.graveyardTargetOperation.triggeringCardGraveyardEntryVersion;
+        StackEntry pendingTriggeringSpell = gameData.graveyardTargetOperation.triggeringSpell;
         List<Permanent> pendingAttackingPermanentSnapshots =
                 gameData.graveyardTargetOperation.attackingPermanentSnapshots;
         String pendingChapterName = gameData.graveyardTargetOperation.chapterName;
@@ -2061,6 +2062,7 @@ public class GraveyardChoiceHandlerService {
         gameData.graveyardTargetOperation.triggeringPermanentId = null;
         gameData.graveyardTargetOperation.triggeringCardId = null;
         gameData.graveyardTargetOperation.triggeringCardGraveyardEntryVersion = -1;
+        gameData.graveyardTargetOperation.triggeringSpell = null;
         gameData.graveyardTargetOperation.attackingPermanentSnapshots = List.of();
         gameData.graveyardTargetOperation.chapterName = null;
         gameData.graveyardTargetOperation.spellCounterTargetId = null;
@@ -2209,7 +2211,11 @@ public class GraveyardChoiceHandlerService {
             triggeredEntry.setTriggeringPermanentId(pendingTriggeringPermanentId);
             if (pendingTriggeringCardId != null) {
                 triggeredEntry.setTriggeringCard(pendingTriggeringCardId, pendingTriggeringCardGraveyardEntryVersion);
+            } else if (pendingTriggeringSpell != null) {
+                // The spell a spell-cast ability triggered on ("the same name as that spell"), read as it resolves.
+                triggeredEntry.setTriggeringCardId(pendingTriggeringSpell.getTargetableId());
             }
+            triggeredEntry.setTriggeringSpell(pendingTriggeringSpell);
             triggeredEntry.setAttackingPermanentSnapshots(pendingAttackingPermanentSnapshots);
             if (pendingCard != null && pendingEffects.stream().anyMatch(effect ->
                     effect instanceof ReturnCardFromGraveyardEffect returnEffect

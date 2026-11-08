@@ -2256,6 +2256,24 @@ public class TriggerCollectionService {
         });
     }
 
+    /**
+     * Collects the "whenever a spell you control causes you to gain card advantage" abilities (Toofer, Keeper of the
+     * Full Grip) of the permanents {@code spellEntry}'s controller controls, once {@code spellEntry} finished resolving
+     * and gave that player card advantage (the caller judges it). The abilities trigger on the spell's resolution, not
+     * its cast, so a spell its controller didn't cast counts, and the source must be on the battlefield only as the
+     * spell finishes resolving (CR 603.2).
+     */
+    public void checkSpellCardAdvantageTriggers(GameData gameData, StackEntry spellEntry) {
+        UUID controllerId = spellEntry.getControllerId();
+        if (controllerId == null) return;
+
+        var ctx = new TriggerContext.SpellCardAdvantage(new StackEntry(spellEntry));
+        gameData.forEachPermanent((playerId, perm) -> {
+            if (!playerId.equals(controllerId)) return;
+            dispatchWatch(gameData, perm, playerId, SpellAbilityWatch.ON_CONTROLLER_SPELL_CAUSES_CARD_ADVANTAGE, ctx);
+        });
+    }
+
     /** Fires effects that care when a spell cast by the given player is countered. */
     public void checkControllerSpellCounteredTriggers(GameData gameData, UUID spellControllerId) {
         if (spellControllerId == null) return;
@@ -16840,6 +16858,10 @@ public class TriggerCollectionService {
                             landPlay, null, true);
                     continue;
                 }
+                if (watch == SpellAbilityWatch.ON_CONTROLLER_SPELL_CAUSES_CARD_ADVANTAGE) {
+                    triggered |= collectCardAdvantageAbility(gameData, perm, card, controllerId, ctx, ability);
+                    continue;
+                }
                 // Layer 3 (CR 612.1): the trigger condition is read from the permanent's text-changed words.
                 triggered |= collectUnfilteredAbility(gameData, perm, card, controllerId, watch, ctx, ability,
                         effect -> TextChangeTransformer.transform(effect, perm.getTextReplacements(),
@@ -16864,10 +16886,30 @@ public class TriggerCollectionService {
                         null, true);
                 continue;
             }
+            if (watch == SpellAbilityWatch.ON_CONTROLLER_SPELL_CAUSES_CARD_ADVANTAGE) {
+                triggered |= collectCardAdvantageAbility(gameData, perm, card, controllerId, ctx, ability);
+                continue;
+            }
             triggered |= collectUnfilteredAbility(gameData, perm, card, controllerId, watch, ctx, ability,
                     UnaryOperator.identity(), null, true);
         }
         return triggered;
+    }
+
+    /**
+     * Collects {@code ability}, a "whenever a spell you control causes you to gain card advantage" ability of
+     * {@code perm}, for the spell {@code ctx} names: its limit (CR 603.2h) is judged and marked on {@code perm}, and the
+     * cast collector puts it on the stack as written, as the battlefield collectors collect (with the effects that make
+     * abilities trigger additional times).
+     *
+     * @return whether the ability triggered
+     */
+    private boolean collectCardAdvantageAbility(GameData gameData, Permanent perm, Card sourceCard, UUID controllerId,
+                                                TriggerContext ctx, TriggeredAbility ability) {
+        return collectLimitedAbility(gameData, perm, sourceCard, controllerId,
+                SpellAbilityWatch.ON_CONTROLLER_SPELL_CAUSES_CARD_ADVANTAGE, ctx, ability, null, true, false,
+                match -> spellCastTriggerCollectorService.collectCardAdvantageAbility(match, ability,
+                        (TriggerContext.SpellCardAdvantage) ctx));
     }
 
     /**

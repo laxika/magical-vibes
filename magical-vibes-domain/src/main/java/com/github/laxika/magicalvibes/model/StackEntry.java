@@ -77,8 +77,13 @@ public class StackEntry {
     @Setter private UUID activePlayerId;
     @Setter private String description;
     private List<CardEffect> effectsToResolve;
-    /** Effects to evaluate once this stack entry has finished resolving. */
-    private List<CardEffect> postResolutionEffects = List.of();
+    /**
+     * Each player's card count (cards in hand and nontoken permanents) as this spell began to resolve, its own card
+     * counted in its owner's hand when it was cast from there, or {@code null} when none was taken: what "a spell you
+     * control causes you to gain card advantage" compares with as the spell finishes resolving. Immutable, so copies
+     * share it.
+     */
+    private Map<UUID, Integer> cardCountsBeforeResolution;
     private List<CardEffect> bombardmentOriginalEffectsToResolve;
     /** Index of the effect currently being dispatched by EffectResolutionService. */
     @Setter private int resolvingEffectIndex = -1;
@@ -1130,8 +1135,7 @@ public class StackEntry {
         this.activePlayerId = source.activePlayerId;
         this.description = source.description;
         this.effectsToResolve = new ArrayList<>(source.effectsToResolve);
-        this.postResolutionEffects = source.postResolutionEffects.isEmpty()
-                ? List.of() : new ArrayList<>(source.postResolutionEffects);
+        this.cardCountsBeforeResolution = source.cardCountsBeforeResolution;
         this.bombardmentOriginalEffectsToResolve = source.bombardmentOriginalEffectsToResolve == null
                 ? null : new ArrayList<>(source.bombardmentOriginalEffectsToResolve);
         this.resolvingEffectIndex = source.resolvingEffectIndex;
@@ -1554,22 +1558,16 @@ public class StackEntry {
         effectsToResolve = List.copyOf(effects);
     }
 
-    public void addPostResolutionEffect(CardEffect effect) {
-        List<CardEffect> updated = new ArrayList<>(postResolutionEffects);
-        updated.add(effect);
-        postResolutionEffects = updated;
+    /** Records each player's card count as this spell begins to resolve ({@link #cardCountsBeforeResolution}). */
+    public void setCardCountsBeforeResolution(Map<UUID, Integer> counts) {
+        cardCountsBeforeResolution = counts == null ? null : Map.copyOf(counts);
     }
 
-    /** Replaces the one-shot effects waiting for this entry to finish resolving. */
-    public void replacePostResolutionEffects(List<CardEffect> effects) {
-        postResolutionEffects = List.copyOf(effects);
-    }
-
-    /** Returns and clears the one-shot effects waiting for this entry to finish resolving. */
-    public List<CardEffect> takePostResolutionEffects() {
-        List<CardEffect> effects = postResolutionEffects;
-        postResolutionEffects = List.of();
-        return effects;
+    /** Returns and clears {@link #cardCountsBeforeResolution}, {@code null} when none was taken. */
+    public Map<UUID, Integer> takeCardCountsBeforeResolution() {
+        Map<UUID, Integer> counts = cardCountsBeforeResolution;
+        cardCountsBeforeResolution = null;
+        return counts;
     }
 
     /**

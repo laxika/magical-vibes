@@ -17,7 +17,8 @@ import java.util.function.UnaryOperator;
  * its effect's class, as the abilities whose effect binds the spell or its caster are, until step 15 of
  * effect-slot-refactor.md makes them event references. A copy trigger with a filter ("whenever you copy an instant or
  * sorcery spell") is collected by the spell-copy collector, which reads it the same way; its filter can say only what
- * the copied spell and its stack object must be.
+ * the copied spell and its stack object must be. A {@link SpellEvent#CAUSES_CARD_ADVANTAGE} trigger has no filter: its
+ * reader puts the ability on the stack as written once the spell finished resolving.
  *
  * @param event  what happens to the spell
  * @param player the player who casts or copies the spell, counters it, or controls the countered spell
@@ -53,7 +54,14 @@ public record SpellTrigger(SpellEvent event, PlayerRelation player, SpellFilter 
         /** A spell the player controls is countered: "whenever a spell you control is countered". */
         COUNTERED,
         /** This spell is countered, or doesn't resolve because its targets are illegal. */
-        THIS_COUNTERED_OR_FIZZLES
+        THIS_COUNTERED_OR_FIZZLES,
+        /**
+         * A spell the player controls causes them to gain card advantage: "whenever a spell you control causes you to
+         * gain card advantage" (Toofer, Keeper of the Full Grip). An event of the spell's resolution, not of its cast:
+         * it happens as the spell finishes resolving, when the player has more cards relative to their opponents than
+         * before that spell resolved, so it is read by its own reader, not by an effect's class.
+         */
+        CAUSES_CARD_ADVANTAGE
     }
 
     /** Whether the trigger is about this spell itself. */

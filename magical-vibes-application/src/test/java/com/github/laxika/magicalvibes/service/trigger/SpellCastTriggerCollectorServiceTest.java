@@ -2,6 +2,12 @@ package com.github.laxika.magicalvibes.service.trigger;
 
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.TriggeringSpellMatches;
+import com.github.laxika.magicalvibes.model.filter.StackEntrySharesNameWithCardExiledWithSourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
+import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -99,6 +105,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.lenient;
@@ -1598,6 +1605,85 @@ class SpellCastTriggerCollectorServiceTest {
 
             assertThat(result).isFalse();
             assertThat(gd.stack).hasSize(1);
+        }
+    }
+
+    @Nested
+    @DisplayName("a card-advantage ability and an intervening \"if\" on the triggering spell")
+    class TriggeringSpellAbilities {
+
+        @Test
+        @DisplayName("a card-advantage ability goes on the stack as written, recording the spell that resolved")
+        void cardAdvantageAbilityGoesOnTheStackAsWritten() {
+            Permanent perm = createPermanent("Toofer, Keeper of the Full Grip");
+            CardEffect loseLife = new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT);
+            TriggeredAbility ability = new TriggeredAbility(Triggers.yourSpellCausesYouToGainCardAdvantage(), loseLife);
+            Card spellCard = createInstant("Divination");
+            StackEntry spell = new StackEntry(StackEntryType.INSTANT_SPELL, spellCard, player1Id, "Divination",
+                    new ArrayList<>());
+
+            boolean result = sut.collectCardAdvantageAbility(match(perm, player1Id, loseLife), ability,
+                    new TriggerContext.SpellCardAdvantage(spell));
+
+            assertThat(result).isTrue();
+            StackEntry entry = gd.stack.getLast();
+            assertThat(entry.getSourcePermanentId()).isEqualTo(perm.getId());
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.isNonTargeting()).isTrue();
+            assertThat(entry.getTriggeringCardId()).isEqualTo(spellCard.getId());
+            assertThat(entry.getTriggeringSpellSnapshot().getCard()).isEqualTo(spellCard);
+            assertThat(entry.getEffectsToResolve()).containsExactly(loseLife);
+        }
+
+        @Test
+        @DisplayName("a card-advantage ability with an intervening \"if\" fails loudly")
+        void cardAdvantageAbilityWithAnInterveningIfThrows() {
+            Permanent perm = createPermanent("Toofer, Keeper of the Full Grip");
+            CardEffect loseLife = new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT);
+            TriggeredAbility ability = new TriggeredAbility(Triggers.yourSpellCausesYouToGainCardAdvantage(),
+                    TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()), loseLife);
+            StackEntry spell = new StackEntry(StackEntryType.INSTANT_SPELL, createInstant("Divination"), player1Id,
+                    "Divination", new ArrayList<>());
+
+            assertThatThrownBy(() -> sut.collectCardAdvantageAbility(match(perm, player1Id, loseLife), ability,
+                    new TriggerContext.SpellCardAdvantage(spell)))
+                    .isInstanceOf(IllegalStateException.class);
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("an intervening \"if\" on the triggering spell is judged on the spell as it triggers")
+        void interveningIfOnTheTriggeringSpellIsJudgedAsItTriggers() {
+            Permanent perm = createPermanent("Spellweaver Helix");
+            CardEffect copy = new MayEffect(CopyImprintedCardAndMayCastCopyEffect.otherExiledCard(), "Copy it?");
+            StackEntryPredicate sharesName = new StackEntrySharesNameWithCardExiledWithSourcePredicate();
+            SpellTrigger trigger = Triggers.playerCastsSpell().anySpell();
+            CastAbility ability = CastAbility.of(new TriggeredAbility(trigger,
+                    TriggerOptions.DEFAULT.withInterveningIf(new TriggeringSpellMatches(sharesName)), copy),
+                    trigger.filter());
+            Card matching = createInstant("Fabricate");
+            Card other = createInstant("Annul");
+            gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, matching, player2Id, "Fabricate",
+                    new ArrayList<>()));
+            gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, other, player2Id, "Annul", new ArrayList<>()));
+            everySpellMatches();
+            when(targetLegalityService.matchesStackEntryPredicate(eq(gd), any(StackEntry.class), eq(sharesName),
+                    eq(player1Id), eq(perm)))
+                    .thenAnswer(call -> call.<StackEntry>getArgument(1).getCard() == matching);
+
+            boolean matched = sut.collectCastAbility(match(perm, player1Id, copy), ability,
+                    new TriggerContext.SpellCast(matching, player2Id, true), false);
+            boolean unmatched = sut.collectCastAbility(match(perm, player1Id, copy), ability,
+                    new TriggerContext.SpellCast(other, player2Id, true), false);
+
+            assertThat(matched).isTrue();
+            assertThat(unmatched).isFalse();
+            assertThat(gd.stack).hasSize(3);
+            StackEntry entry = gd.stack.getLast();
+            assertThat(entry.getTriggeringCardId()).isEqualTo(matching.getId());
+            assertThat(entry.getSourcePermanentSnapshot()).isNotNull();
+            assertThat(entry.getEffectsToResolve())
+                    .containsExactly(new ConditionalEffect(new TriggeringSpellMatches(sharesName), copy));
         }
     }
 

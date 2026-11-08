@@ -32,7 +32,6 @@ public class EachPlayerReturnsCardsFromGraveyardToBattlefieldEffectHandler imple
     private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final GraveyardService graveyardService;
-    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,7 +42,7 @@ public class EachPlayerReturnsCardsFromGraveyardToBattlefieldEffectHandler imple
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect) effect;
         // "All cards with the same name as that spell" is read from the entry's triggering spell as it resolves.
-        CardPredicate filter = amountEvaluationService.bindTriggeringSpellName(gameData, e.filter(), entry);
+        CardPredicate filter = AmountEvaluationService.bindTriggeringSpellName(gameData, e.filter(), entry);
 
         gameData.pendingGraveyardReturnBatch = new PendingGraveyardReturnBatch(
                 entry.getControllerId(), List.of(), Map.of(), e.underOwnersControl(),

@@ -55,6 +55,7 @@ public sealed interface StackEntryPredicate permits
         StackEntrySharesChosenNameWithSourcePredicate,
         StackEntryIsCardExiledWithSourcePredicate,
         StackEntrySharesNameWithCardExiledWithSourcePredicate,
+        StackEntryHasTypeShowingOnSourceTrackerPredicate,
         StackEntrySourceIsColorlessPredicate,
         StackEntrySourceHasSupertypePredicate,
         StackEntrySourceIsCommanderPredicate,

@@ -428,6 +428,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryIsCardExiledWithSou
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsCardEnchantedBySourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesColorOrManaValueWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesNameWithCardExiledWithSourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryHasTypeShowingOnSourceTrackerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySourceHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySourceIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySubtypeInPredicate;
@@ -5353,6 +5354,7 @@ public class PredicateEvaluationService {
             case StackEntrySharesChosenNameWithSourcePredicate ignored -> false;
             case StackEntryIsCardExiledWithSourcePredicate ignored -> false;
             case StackEntryIsCardEnchantedBySourcePredicate ignored -> false;
+            case StackEntryHasTypeShowingOnSourceTrackerPredicate ignored -> false;
             case StackEntrySharesNameWithCardExiledWithSourcePredicate ignored -> false;
             case StackEntrySourceIsColorlessPredicate ignored -> false;
             case StackEntrySourceHasSupertypePredicate ignored -> false;

@@ -1205,6 +1205,7 @@ opening-hand actions (`MayEffect(PregameChoiceEffect)`, CR 103.6: the hand) and 
 | `Triggers.youCastSpell()` | Controller casts a spell ("whenever you cast...") |
 | `Triggers.ringTemptsYou()` | The controller is tempted by the Ring |
 | `Triggers.youCopySpell()` | Controller copies an instant or sorcery spell |
+| `Triggers.yourSpellCausesYouToGainCardAdvantage()` | A spell the controller controls finishes resolving and gives them card advantage (Toofer, Keeper of the Full Grip): read by its own reader, not by an effect's class |
 | `Triggers.playerTapsLandForMana()` | Any player taps a land |
 | `Triggers.youTapCreatureForMana()` | The controller taps a creature they control for mana |
 | `Triggers.tappedForMana()` | You tap **this** permanent for mana. Dispatched from the mana-ability tap path only (`TriggerCollectionService.checkSelfTappedForManaTriggers`), so it never fires when the permanent is tapped to attack or by an opponent. Deferred into `pendingManaAbilityTriggers` like every other mana-ability trigger (CR 603.3) — see the timing note below this table. Used by Zhur-Taa Druid (`DealDamageToPlayersEffect(1, EACH_OPPONENT)`) |

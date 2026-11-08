@@ -358,4 +358,24 @@ class SpellweaverHelixTest extends BaseCardTest {
                 .singleElement().satisfies(entry ->
                         assertThat(entry.getCard().getName()).isEqualTo("Sylvan Scrying"));
     }
+
+    @Test
+    @DisplayName("Does nothing if the exiled card with the cast card's name leaves exile before it resolves")
+    void doesNothingIfTheMatchingImprintedCardLeavesExileFirst() {
+        Permanent helix = harness.addToBattlefieldAndReturn(player1, new SpellweaverHelix());
+        Fabricate matching = new Fabricate();
+        SylvanScrying other = new SylvanScrying();
+        gd.addToExile(player1.getId(), matching, helix.getId());
+        gd.addToExile(player1.getId(), other, helix.getId());
+        harness.castFromHand(player1, new Fabricate(), "{2}{U}");
+        gd.removeFromExile(matching.getId());
+        gd.playerHands.get(player1.getId()).add(matching);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).noneMatch(entry -> entry.isCopy());
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getCard().getName()).isEqualTo("Fabricate"));
+    }
 }

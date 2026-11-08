@@ -246,7 +246,7 @@ public class StackResolutionService {
             return;
         }
         if (!gameData.interaction.isAwaitingInput() && gameData.pendingMayAbilities.isEmpty()) {
-            CardAdvantagePostResolutionService.process(gameData, entry);
+            collectCardAdvantageTriggers(gameData, entry);
         }
 
         // Resolution-time may choices are part of the resolving ability, so present them before
@@ -1591,14 +1591,25 @@ public class StackResolutionService {
         battlefieldEntryService.processCreatureETBEffects(gameData, entry.getControllerId(), characteristics,
                 entry.getTargetId(), true, entry.getTargetIds());
         handleSpellDisposition(gameData, entry);
-        CardAdvantagePostResolutionService.process(gameData, entry);
+        collectCardAdvantageTriggers(gameData, entry);
     }
 
     /** Completes disposition for a spell whose effect resolution resumed after player input. */
     public void completeDeferredSpellResolution(GameData gameData, StackEntry entry) {
         checkSagaFinalChapterResolution(gameData, entry);
         handleSpellDisposition(gameData, entry);
-        CardAdvantagePostResolutionService.process(gameData, entry);
+        collectCardAdvantageTriggers(gameData, entry);
+    }
+
+    /**
+     * Collects the "whenever a spell you control causes you to gain card advantage" abilities once {@code entry}, a
+     * spell, finished resolving and gave its controller card advantage against the counts it recorded as it began to
+     * resolve.
+     */
+    private void collectCardAdvantageTriggers(GameData gameData, StackEntry entry) {
+        if (CardAdvantagePostResolutionService.causedCardAdvantage(gameData, entry)) {
+            triggerCollectionService.checkSpellCardAdvantageTriggers(gameData, entry);
+        }
     }
 
     /**

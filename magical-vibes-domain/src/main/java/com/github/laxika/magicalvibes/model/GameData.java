@@ -10799,6 +10799,8 @@ public class GameData {
         copy.graveyardTargetOperation.triggeringCardId = this.graveyardTargetOperation.triggeringCardId;
         copy.graveyardTargetOperation.triggeringCardGraveyardEntryVersion =
                 this.graveyardTargetOperation.triggeringCardGraveyardEntryVersion;
+        copy.graveyardTargetOperation.triggeringSpell = this.graveyardTargetOperation.triggeringSpell == null
+                ? null : new StackEntry(this.graveyardTargetOperation.triggeringSpell);
         copy.graveyardTargetOperation.spellCounterTargetId = this.graveyardTargetOperation.spellCounterTargetId;
         copy.graveyardTargetOperation.permanentTargetIds = this.graveyardTargetOperation.permanentTargetIds == null
                 ? null : new ArrayList<>(this.graveyardTargetOperation.permanentTargetIds);

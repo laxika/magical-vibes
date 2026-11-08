@@ -67,6 +67,12 @@ public record CastTargetInstantOrSorceryFromGraveyardEffect(
         this(scope, withoutPayingManaCost, exileInsteadOfGraveyard, null, anyManaType, 0, null);
     }
 
+    /** This effect with {@code filter} as its additional restriction. */
+    public CastTargetInstantOrSorceryFromGraveyardEffect withFilter(CardPredicate filter) {
+        return new CastTargetInstantOrSorceryFromGraveyardEffect(scope, withoutPayingManaCost, exileInsteadOfGraveyard,
+                filter, anyManaType, copyCount, afterSuccessfulCastEffect);
+    }
+
     @Override
     public TargetSpec targetSpec() {
         CardPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(

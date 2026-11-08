@@ -11,18 +11,15 @@ import java.util.UUID;
  * <p>A non-null {@code boundImprintedCardId} pins the effect to that one exiled card, so a delayed
  * trigger registered by a spell (Surge to Victory) keeps copying the card it exiled even when the
  * same spell is cast again and imprints another card.
+ *
+ * <p>{@code copyOtherExiledCard} is Spellweaver Helix's "you may copy the other": it copies every card exiled with the
+ * source but the first one with the same name as the stack entry's triggering spell, read as the ability resolves (the
+ * live spell, else as it last existed on the stack), and nothing when no exiled card has that name.
  */
 public record CopyImprintedCardAndMayCastCopyEffect(boolean requiresImprintedXCost,
                                                      boolean copyOtherExiledCard,
-                                                     UUID matchingExiledCardId,
                                                      UUID boundImprintedCardId)
         implements ImprintedCardXCostEffect {
-
-    public CopyImprintedCardAndMayCastCopyEffect(boolean requiresImprintedXCost,
-                                                 boolean copyOtherExiledCard,
-                                                 UUID matchingExiledCardId) {
-        this(requiresImprintedXCost, copyOtherExiledCard, matchingExiledCardId, null);
-    }
 
     public CopyImprintedCardAndMayCastCopyEffect() {
         this(true, false, null);
@@ -32,13 +29,13 @@ public record CopyImprintedCardAndMayCastCopyEffect(boolean requiresImprintedXCo
         this(requiresImprintedXCost, false, null);
     }
 
-    public static CopyImprintedCardAndMayCastCopyEffect otherExiledCard(UUID matchingExiledCardId) {
-        return new CopyImprintedCardAndMayCastCopyEffect(false, true, matchingExiledCardId);
+    /** "You may copy the other" exiled card than the one with the triggering spell's name (Spellweaver Helix). */
+    public static CopyImprintedCardAndMayCastCopyEffect otherExiledCard() {
+        return new CopyImprintedCardAndMayCastCopyEffect(false, true, null);
     }
 
     public CopyImprintedCardAndMayCastCopyEffect boundTo(UUID imprintedCardId) {
-        return new CopyImprintedCardAndMayCastCopyEffect(
-                requiresImprintedXCost, copyOtherExiledCard, matchingExiledCardId, imprintedCardId);
+        return new CopyImprintedCardAndMayCastCopyEffect(requiresImprintedXCost, copyOtherExiledCard, imprintedCardId);
     }
 
     @Override

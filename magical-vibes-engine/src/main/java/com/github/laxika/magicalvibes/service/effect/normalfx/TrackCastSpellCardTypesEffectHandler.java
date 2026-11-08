@@ -12,6 +12,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import java.util.List;
 
+/**
+ * Resolves {@link TrackCastSpellCardTypesEffect}: marks the triggering spell's tracked types on the source's tracker
+ * list and queues the draws and the sacrifice its completion calls for.
+ */
 @Component
 @RequiredArgsConstructor
 public class TrackCastSpellCardTypesEffectHandler implements NormalEffectHandlerBean {
@@ -34,9 +38,13 @@ public class TrackCastSpellCardTypesEffectHandler implements NormalEffectHandler
             source.getTrackedSpellCardTypes().clear();
             source.setTrackedSpellCardTypesSourceCardId(source.getCard().getId());
         }
+        // "That type" is the triggering spell's, as it was when the ability triggered.
+        StackEntry spell = entry.getTriggeringSpellSnapshot() != null ? entry.getTriggeringSpellSnapshot()
+                : CopySupport.triggeringSpell(gameData, entry);
+        if (spell == null || spell.getCard() == null) return;
         boolean markedNewType = false;
-        for (var type : tracker.castTypes()) {
-            if (tracker.trackedTypes().contains(type)) {
+        for (var type : tracker.trackedTypes()) {
+            if (spell.getCard().hasType(type)) {
                 markedNewType |= source.getTrackedSpellCardTypes().add(type);
             }
         }

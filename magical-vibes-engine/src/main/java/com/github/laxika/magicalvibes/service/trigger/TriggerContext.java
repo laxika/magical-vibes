@@ -60,6 +60,12 @@ public sealed interface TriggerContext {
         }
     }
 
+    /**
+     * Context for "whenever a spell you control causes you to gain card advantage": {@code spell} is the spell that just
+     * finished resolving, as it was on the stack then.
+     */
+    record SpellCardAdvantage(StackEntry spell) implements TriggerContext {}
+
     /** Context for a scheme being set in motion. */
     record SchemeSetInMotion(StackEntry schemeEntry, UUID settingPlayerId) implements TriggerContext {}
 

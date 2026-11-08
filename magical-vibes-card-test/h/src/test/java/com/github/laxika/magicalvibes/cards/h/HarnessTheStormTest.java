@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.a.AncientGrudge;
 import com.github.laxika.magicalvibes.cards.b.BurnFromWithin;
+import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.d.DenyExistence;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.l.LightningAxe;
@@ -21,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({HarnessTheStorm.class, LightningBolt.class, Shock.class, AncientGrudge.class,
         FountainOfYouth.class, MagmaticChasm.class, BurnFromWithin.class, LightningAxe.class,
-        HulkingDevil.class, DenyExistence.class})
+        HulkingDevil.class, DenyExistence.class, Cancel.class})
 class HarnessTheStormTest extends BaseCardTest {
 
     @Test
@@ -220,5 +221,30 @@ class HarnessTheStormTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(3);
         assertThat(gd.stack.getLast().getCard().getId()).isEqualTo(graveyardCard.getId());
         harness.assertNotInGraveyard(player1, "Deny Existence");
+    }
+
+    @Test
+    @DisplayName("Still casts the target card when the spell cast from hand is countered in response")
+    void castsTheTargetAfterTheHandSpellIsCountered() {
+        MagmaticChasm graveyardCard = new MagmaticChasm();
+        MagmaticChasm handCard = new MagmaticChasm();
+        harness.addToBattlefield(player1, new HarnessTheStorm());
+        harness.setGraveyard(player1, List.of(graveyardCard));
+        harness.setHand(player1, List.of(handCard));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castSorcery(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(graveyardCard.getId()));
+        harness.passPriority(player1);
+        harness.setHand(player2, List.of(new Cancel()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.castInstant(player2, 0, handCard.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(handCard).doesNotContain(graveyardCard);
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getCard().getId()).isEqualTo(graveyardCard.getId()));
     }
 }

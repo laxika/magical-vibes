@@ -3031,6 +3031,9 @@ public class TriggeredAbilityQueueService {
                 filter = graveyardFilter.predicate();
                 scope = graveyardFilter.scope();
             }
+            // "Target card with the same name as that spell" (Harness the Storm) is chosen against the spell the
+            // ability triggered on, as it goes on the stack (CR 603.3d).
+            filter = AmountEvaluationService.bindTriggeringSpellName(gameData, filter, null, pending.triggeringSpell());
             Integer aggregateManaValueCap = pending.graveyardTargetMaxManaValue() != null
                     ? pending.graveyardTargetMaxManaValue()
                     : describedTarget != null && describedTarget.maximumManaValue() != null
@@ -3150,6 +3153,8 @@ public class TriggeredAbilityQueueService {
             gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger =
                     pending.sourcePowerAtTrigger();
             gameData.graveyardTargetOperation.triggeringPermanentId = pending.triggeringPermanentId();
+            gameData.graveyardTargetOperation.triggeringSpell = pending.triggeringSpell() == null
+                    ? null : new StackEntry(pending.triggeringSpell());
             gameData.graveyardTargetOperation.attackingPermanentSnapshots = pending.attackingPermanentSnapshots();
             gameData.graveyardTargetOperation.sourcePermanentId = pending.sourcePermanentId();
             gameData.graveyardTargetOperation.markSourceOncePerTurnOnAcceptance =
@@ -3277,6 +3282,10 @@ public class TriggeredAbilityQueueService {
         entry.setNonTargeting(true);
         entry.setAlternateCost(pending.sourceAlternateCostAtTrigger());
         entry.setTriggeringPermanentId(pending.triggeringPermanentId());
+        if (pending.triggeringSpell() != null) {
+            entry.setTriggeringCardId(pending.triggeringSpell().getTargetableId());
+            entry.setTriggeringSpell(pending.triggeringSpell());
+        }
         gameData.stack.add(entry);
         gameLogService.append(gameData, GameLog.text(description + " triggers targeting no cards."));
         log.info("Game {} - {} triggered ability pushed onto stack with 0 graveyard targets",

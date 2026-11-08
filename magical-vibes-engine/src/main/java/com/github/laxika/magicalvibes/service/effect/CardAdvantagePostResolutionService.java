@@ -4,91 +4,62 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CardAdvantageSpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/** Resolves post-spell card-advantage trigger markers at the point the spell finishes resolving. */
+/**
+ * Judges "a spell you control causes you to gain card advantage" (Toofer, Keeper of the Full Grip): you gain card
+ * advantage each time a spell you control resolves and you end up having more cards relative to your opponents than
+ * before that spell resolved. A player's cards are the cards in their hand and their nontoken permanents; a spell cast
+ * from its owner's hand still counts as one of that player's cards before it resolves.
+ */
 public final class CardAdvantagePostResolutionService {
 
     private CardAdvantagePostResolutionService() {
     }
 
     /**
-     * Recaptures the card counts a card-advantage trigger compares against, as the spell begins to
-     * resolve: card advantage is measured against the state before that spell resolved, so changes
-     * made by spells that resolved after it was cast do not count toward it.
+     * Records each player's card count on {@code spellEntry} as the spell begins to resolve, so changes made by spells
+     * that resolved after it was cast don't count toward it. Abilities don't cause card advantage this way, so an
+     * ability's entry records none.
      */
     public static void snapshotBeforeResolution(GameData gameData, StackEntry spellEntry) {
-        List<CardEffect> pending = spellEntry.getPostResolutionEffects();
-        if (pending.isEmpty()) {
+        if (spellEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                || spellEntry.getEntryType() == StackEntryType.ACTIVATED_ABILITY) {
             return;
         }
-        List<CardEffect> updated = new java.util.ArrayList<>(pending.size());
-        for (CardEffect effect : pending) {
-            if (effect instanceof CardAdvantageSpellCastTriggerEffect trigger && trigger.isPrepared()) {
-                Map<UUID, Integer> counts = new HashMap<>();
-                for (UUID playerId : gameData.playerIds) {
-                    counts.put(playerId, cardResourceCount(gameData, playerId));
-                }
-                if (trigger.handSpellOwnerId() != null) {
-                    counts.merge(trigger.handSpellOwnerId(), 1, Integer::sum);
-                }
-                updated.add(trigger.withCardCountsBefore(counts));
-            } else {
-                updated.add(effect);
-            }
+        Map<UUID, Integer> counts = new HashMap<>();
+        for (UUID playerId : gameData.playerIds) {
+            counts.put(playerId, cardResourceCount(gameData, playerId));
         }
-        spellEntry.replacePostResolutionEffects(updated);
+        Card spellCard = spellEntry.getCard();
+        if (spellCard != null && !spellEntry.isCopy() && spellEntry.getOwnerId() != null
+                && gameData.wasSpellCastFromHandThisTurn(spellCard.getId())) {
+            counts.merge(spellEntry.getOwnerId(), 1, Integer::sum);
+        }
+        spellEntry.setCardCountsBeforeResolution(counts);
     }
 
-    public static void process(GameData gameData, StackEntry spellEntry) {
-        for (CardEffect effect : spellEntry.takePostResolutionEffects()) {
-            if (!(effect instanceof CardAdvantageSpellCastTriggerEffect trigger)
-                    || !trigger.isPrepared()
-                    || !causedCardAdvantage(gameData, trigger)
-                    || !sourceOnBattlefield(gameData, trigger.sourcePermanentId())) {
-                continue;
-            }
-
-            StackEntry triggerEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    trigger.sourceCard(),
-                    trigger.controllerId(),
-                    trigger.sourceCard().getName() + "'s ability",
-                    List.of(new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT)),
-                    null,
-                    trigger.sourcePermanentId());
-            triggerEntry.setTriggeringCardId(trigger.spellCardId());
-            triggerEntry.setNonTargeting(true);
-            gameData.stack.add(triggerEntry);
+    /**
+     * Whether {@code spellEntry}, which just finished resolving, gave its controller card advantage: their gain in cards
+     * since it began to resolve is greater than their opponents' gain together. Clears the counts the spell recorded,
+     * so a spell is judged once; {@code false} for an entry that recorded none.
+     */
+    public static boolean causedCardAdvantage(GameData gameData, StackEntry spellEntry) {
+        Map<UUID, Integer> before = spellEntry.takeCardCountsBeforeResolution();
+        UUID controllerId = spellEntry.getControllerId();
+        if (before == null || controllerId == null) {
+            return false;
         }
-    }
-
-    private static boolean causedCardAdvantage(GameData gameData,
-                                                CardAdvantageSpellCastTriggerEffect trigger) {
-        UUID controllerId = trigger.controllerId();
-        int controllerDelta = cardResourceCount(gameData, controllerId)
-                - trigger.cardCountsBefore().getOrDefault(controllerId, 0);
+        int controllerDelta = cardResourceCount(gameData, controllerId) - before.getOrDefault(controllerId, 0);
         int opponentsDelta = gameData.orderedPlayerIds.stream()
                 .filter(playerId -> !playerId.equals(controllerId))
-                .mapToInt(playerId -> cardResourceCount(gameData, playerId)
-                        - trigger.cardCountsBefore().getOrDefault(playerId, 0))
+                .mapToInt(playerId -> cardResourceCount(gameData, playerId) - before.getOrDefault(playerId, 0))
                 .sum();
         return controllerDelta > opponentsDelta;
-    }
-
-    private static boolean sourceOnBattlefield(GameData gameData, UUID sourcePermanentId) {
-        return gameData.playerBattlefields.values().stream()
-                .filter(java.util.Objects::nonNull)
-                .flatMap(List::stream)
-                .anyMatch(permanent -> permanent.getId().equals(sourcePermanentId));
     }
 
     private static int cardResourceCount(GameData gameData, UUID playerId) {

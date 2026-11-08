@@ -445,6 +445,11 @@ public final class Triggers {
         return new SpellTrigger(SpellTrigger.SpellEvent.COUNTERED, PlayerRelation.YOU);
     }
 
+    /** "Whenever a spell you control causes you to gain card advantage" (Toofer, Keeper of the Full Grip). */
+    public static SpellTrigger yourSpellCausesYouToGainCardAdvantage() {
+        return new SpellTrigger(SpellTrigger.SpellEvent.CAUSES_CARD_ADVANTAGE, PlayerRelation.YOU);
+    }
+
     /** "When this spell is countered or doesn't resolve because its targets are illegal", from the stack. */
     public static SpellTrigger thisSpellCounteredOrFizzles() {
         return new SpellTrigger(SpellTrigger.SpellEvent.THIS_COUNTERED_OR_FIZZLES, PlayerRelation.YOU);

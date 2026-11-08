@@ -3330,7 +3330,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      * {@code graveyardOwnerId} narrows the searched graveyards to a single player — "target creature
      * card from <em>that player's</em> graveyard" (Ink-Eyes, Servant of Oni, where "that player" is
      * the one the source dealt combat damage to). {@code null} keeps the effect's own
-     * {@code GraveyardSearchScope}.
+     * {@code GraveyardSearchScope}. {@code triggeringSpell} is the spell a spell-cast ability triggered on, as it was on
+     * the stack then, or {@code null}: a target restricted by it ("target card with the same name as that spell",
+     * Harness the Storm) is chosen against it, and the stack entry keeps it for the check as the ability resolves.
      */
     record SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                        UUID graveyardOwnerId, int minCount, int xValue, int maxCount,
@@ -3340,12 +3342,28 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                        UUID sourcePermanentId,
                                        boolean markSourceOncePerTurnOnAcceptance,
                                        List<Permanent> attackingPermanentSnapshots,
-                                       Integer graveyardTargetMaxManaValue)
+                                       Integer graveyardTargetMaxManaValue,
+                                       StackEntry triggeringSpell)
     implements PermanentChoiceContext {
 
         public SpellGraveyardTargetTrigger {
             attackingPermanentSnapshots = attackingPermanentSnapshots == null
                     ? List.of() : List.copyOf(attackingPermanentSnapshots);
+            triggeringSpell = triggeringSpell == null ? null : new StackEntry(triggeringSpell);
+        }
+
+        public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                           UUID graveyardOwnerId, int minCount, int xValue, int maxCount,
+                                           Integer sourcePowerAtTrigger,
+                                           boolean sourceAlternateCostAtTrigger,
+                                           UUID triggeringPermanentId,
+                                           UUID sourcePermanentId,
+                                           boolean markSourceOncePerTurnOnAcceptance,
+                                           List<Permanent> attackingPermanentSnapshots,
+                                           Integer graveyardTargetMaxManaValue) {
+            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, maxCount,
+                    sourcePowerAtTrigger, sourceAlternateCostAtTrigger, triggeringPermanentId, sourcePermanentId,
+                    markSourceOncePerTurnOnAcceptance, attackingPermanentSnapshots, graveyardTargetMaxManaValue, null);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -3369,7 +3387,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         public SpellGraveyardTargetTrigger withGraveyardTargetMaxManaValue(Integer maxManaValue) {
             return new SpellGraveyardTargetTrigger(sourceCard, controllerId, effects, graveyardOwnerId, minCount,
                     xValue, maxCount, sourcePowerAtTrigger, sourceAlternateCostAtTrigger, triggeringPermanentId,
-                    sourcePermanentId, markSourceOncePerTurnOnAcceptance, attackingPermanentSnapshots, maxManaValue);
+                    sourcePermanentId, markSourceOncePerTurnOnAcceptance, attackingPermanentSnapshots, maxManaValue,
+                    triggeringSpell);
+        }
+
+        /** This choice for a spell-cast ability that triggered on {@code spell}, as it was on the stack then. */
+        public SpellGraveyardTargetTrigger withTriggeringSpell(StackEntry spell) {
+            return new SpellGraveyardTargetTrigger(sourceCard, controllerId, effects, graveyardOwnerId, minCount,
+                    xValue, maxCount, sourcePowerAtTrigger, sourceAlternateCostAtTrigger, triggeringPermanentId,
+                    sourcePermanentId, markSourceOncePerTurnOnAcceptance, attackingPermanentSnapshots,
+                    graveyardTargetMaxManaValue, spell);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,

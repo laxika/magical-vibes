@@ -72,6 +72,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYourPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryHasTypeShowingOnSourceTrackerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -2284,6 +2285,29 @@ class TargetLegalityServiceTest {
             gd.recordSpellCast(player1Id, creature);
             assertThat(sut.matchesStackEntryPredicate(gd, new StackEntry(creature, player1Id), firstOfKind,
                     player1Id, null)).isFalse();
+        }
+
+        @Test
+        @DisplayName("matches StackEntryHasTypeShowingOnSourceTrackerPredicate for a tracked type without a counter")
+        void matchesTypeShowingOnSourceTrackerPredicate() {
+            Permanent source = new Permanent(createCreature("Bucket List", CardColor.BLUE));
+            var showing = new StackEntryHasTypeShowingOnSourceTrackerPredicate(
+                    Set.of(CardType.ARTIFACT, CardType.CREATURE));
+            StackEntry creatureSpell = new StackEntry(createCreature("Bear", CardColor.GREEN), player1Id);
+            Card instant = createTargetingSpell("Shock", CardColor.RED);
+            StackEntry instantSpell = new StackEntry(instant, player1Id);
+
+            assertThat(sut.matchesStackEntryPredicate(gd, creatureSpell, showing, player1Id, source)).isTrue();
+            assertThat(sut.matchesStackEntryPredicate(gd, instantSpell, showing, player1Id, source)).isFalse();
+            assertThat(sut.matchesStackEntryPredicate(gd, creatureSpell, showing, player1Id, null)).isFalse();
+
+            source.setTrackedSpellCardTypesSourceCardId(source.getCard().getId());
+            source.getTrackedSpellCardTypes().add(CardType.CREATURE);
+            assertThat(sut.matchesStackEntryPredicate(gd, creatureSpell, showing, player1Id, source)).isFalse();
+
+            // A tracker list kept for another card is empty for this one.
+            source.setTrackedSpellCardTypesSourceCardId(UUID.randomUUID());
+            assertThat(sut.matchesStackEntryPredicate(gd, creatureSpell, showing, player1Id, source)).isTrue();
         }
 
         @Test

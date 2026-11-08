@@ -105,6 +105,11 @@ public class GraveyardTargetOperationState {
     public UUID triggeringCardId;
     /** The graveyard incarnation {@link #triggeringCardId} had as the ability triggered, {@code -1} for none. */
     public long triggeringCardGraveyardEntryVersion = -1;
+    /**
+     * The spell a spell-cast ability triggered on, as it was on the stack then, retained through graveyard target
+     * selection for the stack entry ("target card with the same name as that spell"), or {@code null}.
+     */
+    public StackEntry triggeringSpell;
     /** Attack destination captured for an attack trigger whose graveyard target is chosen interactively. */
     public UUID attackedTargetId;
     /** Chapter name for saga chapter graveyard targets (e.g. "I", "II"). */

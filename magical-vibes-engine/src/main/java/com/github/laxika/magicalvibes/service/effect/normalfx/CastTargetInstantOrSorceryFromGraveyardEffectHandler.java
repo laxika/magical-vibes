@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFro
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,7 +34,11 @@ public class CastTargetInstantOrSorceryFromGraveyardEffectHandler implements Nor
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (CastTargetInstantOrSorceryFromGraveyardEffect) effect;
+        var unbound = (CastTargetInstantOrSorceryFromGraveyardEffect) effect;
+        // "Target card with the same name as that spell" is the triggering spell's name as the ability resolves; the
+        // cast offered below carries it, so the cast checks the card against the same name.
+        CardPredicate filter = AmountEvaluationService.bindTriggeringSpellName(gameData, unbound.filter(), entry);
+        var e = filter == unbound.filter() ? unbound : unbound.withFilter(filter);
 
         UUID controllerId = entry.getControllerId();
 

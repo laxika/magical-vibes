@@ -41,6 +41,8 @@ public enum SpellAbilityWatch implements TriggerWatch {
     ON_CONTROLLER_COUNTERS_SPELL(Triggers.youCounterSpell(), Zone.BATTLEFIELD),
     /** "Whenever a spell you control is countered". */
     ON_CONTROLLER_SPELL_COUNTERED(Triggers.yourSpellCountered(), Zone.BATTLEFIELD),
+    /** "Whenever a spell you control causes you to gain card advantage", read by its own reader. */
+    ON_CONTROLLER_SPELL_CAUSES_CARD_ADVANTAGE(Triggers.yourSpellCausesYouToGainCardAdvantage(), Zone.BATTLEFIELD),
     /** "When this spell is countered or doesn't resolve", read from the spell. */
     ON_SELF_SPELL_COUNTERED_OR_FIZZLED(Triggers.thisSpellCounteredOrFizzles(), Zone.STACK),
     /** "Whenever you play a land". */

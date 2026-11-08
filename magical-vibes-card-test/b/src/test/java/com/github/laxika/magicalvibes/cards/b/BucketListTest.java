@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
 import com.github.laxika.magicalvibes.cards.h.HexParasite;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({BucketList.class, DarksteelRelic.class, BlightedAgent.class, PsychicSurgery.class,
-        TriumphOfTheHordes.class, WarReport.class, HexParasite.class})
+        TriumphOfTheHordes.class, WarReport.class, HexParasite.class, Naturalize.class})
 class BucketListTest extends BaseCardTest {
 
     @Test
@@ -128,5 +129,34 @@ class BucketListTest extends BaseCardTest {
     private void castAndResolve(Card spell, String manaCost) {
         harness.castFromHand(player1, spell, manaCost);
         resolveAllTriggers();
+    }
+
+    @Test
+    void doesNotTriggerForASpellOfNoShowingType() {
+        harness.addToBattlefield(player1, new BucketList());
+        castAndResolve(new DarksteelRelic(), "{0}");
+
+        DarksteelRelic secondArtifact = new DarksteelRelic();
+        harness.castFromHand(player1, secondArtifact, "{0}");
+
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getCard().getId()).isEqualTo(secondArtifact.getId()));
+    }
+
+    @Test
+    void drawsEvenIfBucketListLeavesBeforeItsAbilityResolves() {
+        Permanent bucketList = harness.addToBattlefieldAndReturn(player1, new BucketList());
+        harness.setHand(player1, List.of());
+        harness.castFromHand(player1, new DarksteelRelic(), "{0}");
+        harness.passPriority(player1);
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.castInstant(player2, 0, bucketList.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bucketList);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 }

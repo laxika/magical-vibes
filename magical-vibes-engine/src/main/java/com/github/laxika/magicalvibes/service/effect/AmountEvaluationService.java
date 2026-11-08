@@ -2257,32 +2257,74 @@ public class AmountEvaluationService {
      * {@code filter} with "the same name as that spell" ({@link CardSharesNameWithTriggeringSpellPredicate}) read
      * from {@code entry}'s triggering spell as the ability resolves: the live spell while it is on the stack, else the
      * entry's snapshot of it (CR 608.2h). A face-down spell, or no triggering spell, has no name, which no card has.
-     * Also read by the effects that filter cards by it ("returns all cards with the same name as that spell").
+     * Also read by the effects that filter cards by it ("returns all cards with the same name as that spell"). A filter
+     * without the predicate is returned as it is.
      */
-    public CardPredicate bindTriggeringSpellName(GameData gameData, CardPredicate filter, StackEntry entry) {
+    public static CardPredicate bindTriggeringSpellName(GameData gameData, CardPredicate filter, StackEntry entry) {
+        return entry == null ? bindTriggeringSpellName(gameData, filter, null, null)
+                : bindTriggeringSpellName(gameData, filter, entry.getTriggeringCardId(),
+                entry.getTriggeringSpellSnapshot());
+    }
+
+    /**
+     * {@link #bindTriggeringSpellName(GameData, CardPredicate, StackEntry)} for a triggering spell that isn't on a
+     * stack entry yet: the spell whose card is {@code triggeringCardId} while it is on the stack, else
+     * {@code triggeringSpellSnapshot} (its card's id when {@code triggeringCardId} is {@code null}). A target chosen as
+     * a spell-cast ability goes on the stack (Harness the Storm's) reads it this way.
+     */
+    public static CardPredicate bindTriggeringSpellName(GameData gameData, CardPredicate filter, UUID triggeringCardId,
+                                                        StackEntry triggeringSpellSnapshot) {
         return switch (filter) {
             case null -> null;
             case CardSharesNameWithTriggeringSpellPredicate ignored -> {
-                String name = triggeringSpellName(gameData, entry);
+                String name = triggeringSpellName(gameData, triggeringCardId, triggeringSpellSnapshot);
                 yield name == null ? new CardNotPredicate(new CardTruePredicate()) : new CardNamedPredicate(name);
             }
-            case CardAllOfPredicate all -> new CardAllOfPredicate(all.predicates().stream()
-                    .map(part -> bindTriggeringSpellName(gameData, part, entry)).toList());
-            case CardAnyOfPredicate any -> new CardAnyOfPredicate(any.predicates().stream()
-                    .map(part -> bindTriggeringSpellName(gameData, part, entry)).toList());
-            case CardNotPredicate not -> new CardNotPredicate(bindTriggeringSpellName(gameData, not.predicate(), entry));
+            case CardAllOfPredicate all -> {
+                List<CardPredicate> parts = bindTriggeringSpellNames(gameData, all.predicates(), triggeringCardId,
+                        triggeringSpellSnapshot);
+                yield parts == null ? filter : new CardAllOfPredicate(parts);
+            }
+            case CardAnyOfPredicate any -> {
+                List<CardPredicate> parts = bindTriggeringSpellNames(gameData, any.predicates(), triggeringCardId,
+                        triggeringSpellSnapshot);
+                yield parts == null ? filter : new CardAnyOfPredicate(parts);
+            }
+            case CardNotPredicate not -> {
+                CardPredicate bound = bindTriggeringSpellName(gameData, not.predicate(), triggeringCardId,
+                        triggeringSpellSnapshot);
+                yield bound == not.predicate() ? filter : new CardNotPredicate(bound);
+            }
             default -> filter;
         };
     }
 
-    private static String triggeringSpellName(GameData gameData, StackEntry entry) {
-        if (entry == null || entry.getTriggeringCardId() == null) {
+    /** {@code parts} each bound by {@link #bindTriggeringSpellName}, or {@code null} when none changed. */
+    private static List<CardPredicate> bindTriggeringSpellNames(GameData gameData, List<CardPredicate> parts,
+                                                               UUID triggeringCardId,
+                                                               StackEntry triggeringSpellSnapshot) {
+        List<CardPredicate> bound = parts.stream()
+                .map(part -> bindTriggeringSpellName(gameData, part, triggeringCardId, triggeringSpellSnapshot))
+                .toList();
+        for (int i = 0; i < parts.size(); i++) {
+            if (bound.get(i) != parts.get(i)) {
+                return bound;
+            }
+        }
+        return null;
+    }
+
+    private static String triggeringSpellName(GameData gameData, UUID triggeringCardId,
+                                              StackEntry triggeringSpellSnapshot) {
+        UUID spellCardId = triggeringCardId != null ? triggeringCardId
+                : triggeringSpellSnapshot == null ? null : triggeringSpellSnapshot.getTargetableId();
+        if (spellCardId == null) {
             return null;
         }
         StackEntry spell = gameData.stack.stream()
-                .filter(se -> se.getTargetableId().equals(entry.getTriggeringCardId()))
+                .filter(se -> se.getTargetableId().equals(spellCardId))
                 .findFirst()
-                .orElse(entry.getTriggeringSpellSnapshot());
+                .orElse(triggeringSpellSnapshot);
         return spell == null || spell.isCastFaceDown() ? null : spell.getCard().getName();
     }
 
