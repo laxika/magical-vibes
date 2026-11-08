@@ -69,14 +69,9 @@ public class CopyTargetAbilityEffectHandler implements NormalEffectHandlerBean {
                     targetEntry, copyCard, copyControllerId, targetEntry.getTargetId());
             copyEntry.setTargetFilter(targetEntry.getTargetFilter());
             copyEntry.setDamageSourceCard(targetEntry.getDamageSourceCard());
-            copyEntry.setTriggeringPermanentId(targetEntry.getTriggeringPermanentId());
-            copyEntry.setTriggeringPermanentControllerId(targetEntry.getTriggeringPermanentControllerId());
-            copyEntry.setTriggeringCardId(targetEntry.getTriggeringCardId());
-            copyEntry.setEventValue(targetEntry.getEventValue());
             copyEntry.setSourcePermanentSnapshot(targetEntry.getSourcePermanentSnapshot());
             copyEntry.setNonTargeting(targetEntry.isNonTargeting());
             copyEntry.setChosenPermanentId(targetEntry.getChosenPermanentId());
-            copyEntry.setAttackedTargetId(targetEntry.getAttackedTargetId());
 
             copySupport.addCopyToStack(gameData, copyEntry);
 

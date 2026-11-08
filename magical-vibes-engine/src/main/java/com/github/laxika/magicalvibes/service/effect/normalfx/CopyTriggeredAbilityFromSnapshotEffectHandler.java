@@ -46,14 +46,9 @@ public class CopyTriggeredAbilityFromSnapshotEffectHandler implements NormalEffe
         copyEntry.setDamageSourceCard(snapshot.getDamageSourceCard());
         copyEntry.setTargetGroupSizes(snapshot.getTargetGroupSizes());
         copyEntry.setPrimaryTargetStoredSeparately(snapshot.isPrimaryTargetStoredSeparately());
-        copyEntry.setTriggeringPermanentId(snapshot.getTriggeringPermanentId());
-        copyEntry.setTriggeringPermanentControllerId(snapshot.getTriggeringPermanentControllerId());
-        copyEntry.setTriggeringCardId(snapshot.getTriggeringCardId());
-        copyEntry.setEventValue(snapshot.getEventValue());
         copyEntry.setSourcePermanentSnapshot(snapshot.getSourcePermanentSnapshot());
         copyEntry.setNonTargeting(snapshot.isNonTargeting());
         copyEntry.setChosenPermanentId(snapshot.getChosenPermanentId());
-        copyEntry.setAttackedTargetId(snapshot.getAttackedTargetId());
 
         copySupport.addCopyToStack(gameData, copyEntry);
         gameLogService.append(gameData, GameLog.textCardText(

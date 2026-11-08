@@ -1169,8 +1169,6 @@ public class StackEntry {
         this.collectEvidenceCostPaid = source.collectEvidenceCostPaid;
         this.beholdCostPaid = source.beholdCostPaid;
         this.beholdPower = source.beholdPower;
-        this.triggeringPermanentKeywordsAtLeave = source.triggeringPermanentKeywordsAtLeave == null
-                ? null : EnumSet.copyOf(source.triggeringPermanentKeywordsAtLeave);
         this.beholdPermanentId = source.beholdPermanentId;
         this.revealCardFromHandCostPaid = source.revealCardFromHandCostPaid;
         this.casualtyCostPaid = source.casualtyCostPaid;
@@ -1212,44 +1210,19 @@ public class StackEntry {
         this.sourcePlanarObject = source.sourcePlanarObject == null ? null : source.sourcePlanarObject.copy();
         this.spellDamageContinuation = source.spellDamageContinuation;
         this.stateTriggerEffectIndex = source.stateTriggerEffectIndex;
-        this.attackedTargetId = source.attackedTargetId;
-        this.triggeringCardExileEntryVersion = source.triggeringCardExileEntryVersion;
-        this.attackingPermanentSnapshots = source.attackingPermanentSnapshots.stream().map(Permanent::new).toList();
-        this.defendingPlayerId = source.defendingPlayerId;
         this.causedPileGroupingOrGuessThisTurn = source.causedPileGroupingOrGuessThisTurn;
-        this.eventValue = source.eventValue;
-        this.cardsLookedAtWhileScrying = source.cardsLookedAtWhileScrying;
-        this.combatOpponentPowerAtTrigger = source.combatOpponentPowerAtTrigger;
-        this.combatOpponentToughnessAtTrigger = source.combatOpponentToughnessAtTrigger;
         this.gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard = source.gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard;
         this.recordLibraryGraveyardCount = source.recordLibraryGraveyardCount;
         this.markSourceOncePerTurnOnAcceptance = source.markSourceOncePerTurnOnAcceptance;
-        this.producedManaColors = source.producedManaColors;
         this.awaitingProducedManaColor = source.awaitingProducedManaColor;
         this.acceptedPlayerIds = source.acceptedPlayerIds;
-        this.grantingPermanentId = source.grantingPermanentId;
-        this.dyingPermanentManaValue = source.dyingPermanentManaValue;
-        this.graveyardTargetMaxManaValue = source.graveyardTargetMaxManaValue;
-        this.linkedExiledCardId = source.linkedExiledCardId;
-        this.triggeringPermanentLastKnownCard = source.triggeringPermanentLastKnownCard;
         this.counteredPermanentIdsThisResolution.addAll(source.counteredPermanentIdsThisResolution);
         this.counteredSpellControllerId = source.counteredSpellControllerId;
-        this.eventPlayerIds = source.eventPlayerIds.isEmpty() ? List.of() : new ArrayList<>(source.eventPlayerIds);
-        this.eventNontokenPlayerIds = source.eventNontokenPlayerIds.isEmpty()
-                ? List.of() : new ArrayList<>(source.eventNontokenPlayerIds);
-        this.eventTargetedPlayerIds = source.eventTargetedPlayerIds.isEmpty()
-                ? List.of() : new ArrayList<>(source.eventTargetedPlayerIds);
-        this.eventDestroyedPlayerIds = source.eventDestroyedPlayerIds.isEmpty()
-                ? List.of() : new ArrayList<>(source.eventDestroyedPlayerIds);
-        this.eventCardIds = source.eventCardIds.isEmpty() ? List.of() : new ArrayList<>(source.eventCardIds);
-        this.eventCardGraveyardEntryVersions.putAll(source.eventCardGraveyardEntryVersions);
         this.resolutionExiledCardIds = source.resolutionExiledCardIds;
         this.resolutionResults = source.resolutionResults;
-        this.eventManaValues = source.eventManaValues.isEmpty() ? List.of() : new ArrayList<>(source.eventManaValues);
         this.sourcePermanentSnapshot = source.sourcePermanentSnapshot;
         this.sacrificedAttachedEquipmentIds = source.sacrificedAttachedEquipmentIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.sacrificedAttachedEquipmentIds);
-        this.attachedPermanentSnapshot = source.attachedPermanentSnapshot;
         this.chosenPermanentId = source.chosenPermanentId;
         this.chosenPermanentPowerAtLastKnown = source.chosenPermanentPowerAtLastKnown;
         this.chosenPermanentToughnessAtLastKnown = source.chosenPermanentToughnessAtLastKnown;
@@ -1259,25 +1232,11 @@ public class StackEntry {
         this.chosenObjectCard = source.chosenObjectCard;
         this.searchedPermanentIds = source.searchedPermanentIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.searchedPermanentIds);
-        this.triggeringCardId = source.triggeringCardId;
         this.triggerOrderChosen = source.triggerOrderChosen;
-        this.triggeringCardSnapshot = source.triggeringCardSnapshot;
-        this.triggeringSpellTargetIds = source.triggeringSpellTargetIds;
-        this.triggeringSpellSnapshot = source.triggeringSpellSnapshot == null
-                ? null : new StackEntry(source.triggeringSpellSnapshot);
-        this.triggeringActivatedAbility = source.triggeringActivatedAbility;
-        this.triggeringSpellCastIndex = source.triggeringSpellCastIndex;
-        this.triggeringSpellTurnCastIndex = source.triggeringSpellTurnCastIndex;
-        this.triggeringCardGraveyardEntryVersion = source.triggeringCardGraveyardEntryVersion;
-        this.sourceGraveyardEntryVersion = source.sourceGraveyardEntryVersion;
-        this.triggeringPermanentSnapshot = source.triggeringPermanentSnapshot == null
-                ? null : new Permanent(source.triggeringPermanentSnapshot);
-        this.triggeringAttachments = source.triggeringAttachments;
         this.mixedZoneTargetPermanentIds.putAll(source.mixedZoneTargetPermanentIds);
         this.mixedZoneTargetGraveyardVersions.putAll(source.mixedZoneTargetGraveyardVersions);
         this.targetCardGraveyardVersions.putAll(source.targetCardGraveyardVersions);
         this.targetGraveyardEntryVersion = source.targetGraveyardEntryVersion;
-        this.triggeringCards = source.triggeringCards;
         this.sacrificedCardId = source.sacrificedCardId;
         this.sacrificedCardGraveyardVersions = source.sacrificedCardGraveyardVersions;
         this.sacrificedCardIds = source.sacrificedCardIds.isEmpty()
@@ -1293,15 +1252,6 @@ public class StackEntry {
         this.exiledCostCardId = source.exiledCostCardId;
         this.exiledCostCardSnapshot = source.exiledCostCardSnapshot;
         this.activatedAbilityExiledCardIds = source.activatedAbilityExiledCardIds;
-        this.triggeringPermanentId = source.triggeringPermanentId;
-        this.triggeringPermanentIds = source.triggeringPermanentIds;
-        this.triggeringPlayerId = source.triggeringPlayerId;
-        this.triggeringVotingResult = source.triggeringVotingResult;
-        this.triggeringPermanentControllerId = source.triggeringPermanentControllerId;
-        this.triggeringPermanentOwnerId = source.triggeringPermanentOwnerId;
-        this.triggeringPermanentPowerAtTrigger = source.triggeringPermanentPowerAtTrigger;
-        this.sourcePowerAtTrigger = source.sourcePowerAtTrigger;
-        this.triggeringPermanentToughnessAtTrigger = source.triggeringPermanentToughnessAtTrigger;
         this.convokeCreatureIds = source.convokeCreatureIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.convokeCreatureIds);
         this.convokeConniveCreatureIdsToProcess = source.convokeConniveCreatureIdsToProcess == null
@@ -1340,6 +1290,71 @@ public class StackEntry {
         this.drawnCardIdsThisResolution.addAll(source.drawnCardIdsThisResolution);
         source.noncombatExcessDamageTriggerEffectsFired.forEach((sourceId, effects) ->
                 this.noncombatExcessDamageTriggerEffectsFired.put(sourceId, new HashSet<>(effects)));
+        copyTriggerEventFrom(source);
+    }
+
+    /**
+     * Copies what {@code source}'s trigger event was about onto this entry: the triggering permanent (with its
+     * last-known snapshot and attachments), card, cards, spell, activated ability, player and vote, the event's value,
+     * player and card payloads, the attack it was about, and the facts the collector fixed from the event as the
+     * ability triggered (the granting permanent, the linked exiled card, the source's graveyard incarnation and power).
+     * The copy constructor copies every field through here, and a copy of an ability ({@code CopySupport}) copies
+     * just these: a copy of a triggered ability is another instance of the same ability, so its "that creature", "its
+     * counters" and "that player" mean the same objects as the original's (CR 707.10, CR 608.2h). A field that
+     * records the trigger event belongs here, not in the copy constructor, so neither copy can drop it.
+     */
+    public void copyTriggerEventFrom(StackEntry source) {
+        this.triggeringPermanentKeywordsAtLeave = source.triggeringPermanentKeywordsAtLeave == null
+                ? null : EnumSet.copyOf(source.triggeringPermanentKeywordsAtLeave);
+        this.triggeringCardExileEntryVersion = source.triggeringCardExileEntryVersion;
+        this.attackedTargetId = source.attackedTargetId;
+        this.attackingPermanentSnapshots = source.attackingPermanentSnapshots.stream().map(Permanent::new).toList();
+        this.defendingPlayerId = source.defendingPlayerId;
+        this.eventValue = source.eventValue;
+        this.cardsLookedAtWhileScrying = source.cardsLookedAtWhileScrying;
+        this.combatOpponentPowerAtTrigger = source.combatOpponentPowerAtTrigger;
+        this.combatOpponentToughnessAtTrigger = source.combatOpponentToughnessAtTrigger;
+        this.producedManaColors = source.producedManaColors;
+        this.grantingPermanentId = source.grantingPermanentId;
+        this.dyingPermanentManaValue = source.dyingPermanentManaValue;
+        this.graveyardTargetMaxManaValue = source.graveyardTargetMaxManaValue;
+        this.linkedExiledCardId = source.linkedExiledCardId;
+        this.triggeringPermanentLastKnownCard = source.triggeringPermanentLastKnownCard;
+        this.eventPlayerIds = source.eventPlayerIds.isEmpty() ? List.of() : new ArrayList<>(source.eventPlayerIds);
+        this.eventNontokenPlayerIds = source.eventNontokenPlayerIds.isEmpty()
+                ? List.of() : new ArrayList<>(source.eventNontokenPlayerIds);
+        this.eventTargetedPlayerIds = source.eventTargetedPlayerIds.isEmpty()
+                ? List.of() : new ArrayList<>(source.eventTargetedPlayerIds);
+        this.eventDestroyedPlayerIds = source.eventDestroyedPlayerIds.isEmpty()
+                ? List.of() : new ArrayList<>(source.eventDestroyedPlayerIds);
+        this.eventCardIds = source.eventCardIds.isEmpty() ? List.of() : new ArrayList<>(source.eventCardIds);
+        this.eventCardGraveyardEntryVersions.clear();
+        this.eventCardGraveyardEntryVersions.putAll(source.eventCardGraveyardEntryVersions);
+        this.eventManaValues = source.eventManaValues.isEmpty() ? List.of() : new ArrayList<>(source.eventManaValues);
+        this.attachedPermanentSnapshot = source.attachedPermanentSnapshot;
+        this.triggeringCardId = source.triggeringCardId;
+        this.triggeringCardSnapshot = source.triggeringCardSnapshot;
+        this.triggeringCardGraveyardEntryVersion = source.triggeringCardGraveyardEntryVersion;
+        this.triggeringCards = source.triggeringCards;
+        this.triggeringSpellTargetIds = source.triggeringSpellTargetIds;
+        this.triggeringSpellSnapshot = source.triggeringSpellSnapshot == null
+                ? null : new StackEntry(source.triggeringSpellSnapshot);
+        this.triggeringActivatedAbility = source.triggeringActivatedAbility;
+        this.triggeringSpellCastIndex = source.triggeringSpellCastIndex;
+        this.triggeringSpellTurnCastIndex = source.triggeringSpellTurnCastIndex;
+        this.sourceGraveyardEntryVersion = source.sourceGraveyardEntryVersion;
+        this.triggeringPermanentSnapshot = source.triggeringPermanentSnapshot == null
+                ? null : new Permanent(source.triggeringPermanentSnapshot);
+        this.triggeringAttachments = source.triggeringAttachments;
+        this.triggeringPermanentId = source.triggeringPermanentId;
+        this.triggeringPermanentIds = source.triggeringPermanentIds;
+        this.triggeringPlayerId = source.triggeringPlayerId;
+        this.triggeringVotingResult = source.triggeringVotingResult;
+        this.triggeringPermanentControllerId = source.triggeringPermanentControllerId;
+        this.triggeringPermanentOwnerId = source.triggeringPermanentOwnerId;
+        this.triggeringPermanentPowerAtTrigger = source.triggeringPermanentPowerAtTrigger;
+        this.triggeringPermanentToughnessAtTrigger = source.triggeringPermanentToughnessAtTrigger;
+        this.sourcePowerAtTrigger = source.sourcePowerAtTrigger;
     }
 
     public void addGrantedTriggeredEffectOnEntry(EffectSlot slot, CardEffect effect) {

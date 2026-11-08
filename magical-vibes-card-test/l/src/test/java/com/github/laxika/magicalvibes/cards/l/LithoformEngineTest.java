@@ -3,10 +3,12 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.b.BubbleSnare;
 import com.github.laxika.magicalvibes.cards.c.CliffhavenKitesail;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
+import com.github.laxika.magicalvibes.cards.f.FelisaFangOfSilverquill;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IntoTheRoil;
 import com.github.laxika.magicalvibes.cards.p.ProwlingFelidar;
 import com.github.laxika.magicalvibes.cards.t.TrialOfZeal;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -23,7 +25,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({LithoformEngine.class, CounselOfTheSoratami.class, GrizzlyBears.class, TrialOfZeal.class,
-        BubbleSnare.class, CliffhavenKitesail.class, ProwlingFelidar.class, IntoTheRoil.class})
+        BubbleSnare.class, CliffhavenKitesail.class, ProwlingFelidar.class, IntoTheRoil.class,
+        FelisaFangOfSilverquill.class})
 class LithoformEngineTest extends BaseCardTest {
 
     @Test
@@ -184,6 +187,28 @@ class LithoformEngineTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, felidar.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A copied death trigger counts the counters the creature died with")
+    void copiedDeathTriggerCountsTheCountersTheCreatureDiedWith() {
+        addReadyEngine();
+        harness.addToBattlefield(player1, new FelisaFangOfSilverquill());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        bears.setMarkedDamage(4);
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+        harness.activateAbility(player1, 0, 0, null, gd.stack.getFirst().getTargetableId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Inkling")).hasSize(2);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Inkling")).hasSize(4);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addReadyEngine() {

@@ -63,16 +63,11 @@ public class CopyTargetTriggeredAbilityEffectHandler implements NormalEffectHand
                 targetEntry, copyCard, copyControllerId, targetEntry.getTargetId());
         copyEntry.setTargetFilter(targetEntry.getTargetFilter());
         copyEntry.setDamageSourceCard(targetEntry.getDamageSourceCard());
-        copyEntry.setTriggeringPermanentId(targetEntry.getTriggeringPermanentId());
-        copyEntry.setTriggeringPermanentControllerId(targetEntry.getTriggeringPermanentControllerId());
-        copyEntry.setTriggeringCardId(targetEntry.getTriggeringCardId());
-        copyEntry.setEventValue(targetEntry.getEventValue());
         // CR 707.10: a copy keeps the decisions made for the original, so convoking creatures it refers to are the same.
         copyEntry.setConvokeCreatureIds(targetEntry.getConvokeCreatureIds());
         copyEntry.setSourcePermanentSnapshot(targetEntry.getSourcePermanentSnapshot());
         copyEntry.setNonTargeting(targetEntry.isNonTargeting());
         copyEntry.setChosenPermanentId(targetEntry.getChosenPermanentId());
-        copyEntry.setAttackedTargetId(targetEntry.getAttackedTargetId());
 
         copySupport.addCopyToStack(gameData, copyEntry);
 

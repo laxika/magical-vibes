@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BogardanHellkite;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HangarbackWalker;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.t.TrialOfZeal;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -23,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({StrionicResonator.class, TrialOfZeal.class, LlanowarElves.class, GrizzlyBears.class,
-        Shock.class, BogardanHellkite.class, StaffOfTheFlameMagus.class})
+        Shock.class, BogardanHellkite.class, StaffOfTheFlameMagus.class, HangarbackWalker.class})
 class StrionicResonatorTest extends BaseCardTest {
 
     private Permanent addReadyResonator() {
@@ -40,6 +42,30 @@ class StrionicResonatorTest extends BaseCardTest {
             }
         }
         throw new AssertionError("Permanent not found: " + name);
+    }
+
+    @Test
+    @DisplayName("A copied death trigger counts the counters the creature died with")
+    void copiedDeathTriggerReadsTheCreatureThatDied() {
+        addReadyResonator();
+        Permanent walker = addCreatureReady(player1, new HangarbackWalker());
+        walker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        walker.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+        harness.activateAbility(player1, findBattlefieldIndex(player1, "Strionic Resonator"), null,
+                gd.stack.getFirst().getTargetableId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Thopter")).hasSize(2);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Thopter")).hasSize(4);
+        assertThat(gd.stack).isEmpty();
     }
 
     private UUID triggeredAbilityCardIdOnStack() {
