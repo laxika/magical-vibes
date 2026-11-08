@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.ArchfiendOfDespair;
 import com.github.laxika.magicalvibes.cards.e.Exsanguinate;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RakdosCharm;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,7 +21,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SowerOfDiscord.class, Shock.class, ArchfiendOfDespair.class, Exsanguinate.class})
+@CardUsed({SowerOfDiscord.class, Shock.class, ArchfiendOfDespair.class, Exsanguinate.class,
+        GrizzlyBears.class, RakdosCharm.class})
 class SowerOfDiscordTest extends BaseCardTest {
 
     @Test
@@ -119,6 +122,43 @@ class SowerOfDiscordTest extends BaseCardTest {
 
         harness.assertLife(player1, 14);
         harness.assertLife(player2, 14);
+    }
+
+    @Test
+    void combatDamageFromTwoCreaturesTriggersOnceForTheTotal() {
+        castSowerOfDiscord();
+        harness.handleMultiplePermanentsChosen(player1, List.of(player1.getId(), player2.getId()));
+        Permanent firstBear = addCreatureReady(player2, new GrizzlyBears());
+        Permanent secondBear = addCreatureReady(player2, new GrizzlyBears());
+        firstBear.setAttacking(true);
+        secondBear.setAttacking(true);
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().equals("Sower of Discord's ability triggers."))
+                .hasSize(1);
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void noncombatDamageFromTwoSourcesAtOnceTriggersOncePerPlayer() {
+        castSowerOfDiscord();
+        harness.handleMultiplePermanentsChosen(player1, List.of(player1.getId(), player2.getId()));
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new RakdosCharm()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, 2, null);
+        resolveAllTriggers();
+
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().equals("Sower of Discord's ability triggers."))
+                .hasSize(2);
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
     }
 
     @Test

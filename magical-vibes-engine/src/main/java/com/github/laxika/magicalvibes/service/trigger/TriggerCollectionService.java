@@ -4270,6 +4270,53 @@ public class TriggerCollectionService {
     }
 
     /**
+     * Collects every permanent's printed "whenever damage is dealt to a player" abilities
+     * ({@link DamageWatch#ON_PLAYER_DEALT_DAMAGE}) for the damage {@code damagedPlayerId} was dealt in one damage event,
+     * whatever sources dealt it: the ability triggers once for the event, not once for each source (CR 603.2c; Boros
+     * Reckoner's ruling). The callers sum the event's damage to the player: {@code CombatDamageService} the combat
+     * damage of one combat damage step (CR 510.2), {@code DamageSupport.flushSourceDamageReflections} the noncombat
+     * damage of one resolution damage event. Each ability triggers when its damaged-player filter matches the player
+     * (judged with the watcher as the predicate's source) and its intervening "if" and event condition hold, judged
+     * with the player as the context's target and the damage as the event value (CR 603.4). It goes on the stack as one
+     * object with the effects the card wrote (CR 603.3): the player its non-targeting {@code targetId} and triggering
+     * player, the damage its event value, the watcher's snapshot.
+     */
+    public void checkPlayerDealtDamageTriggers(GameData gameData, UUID damagedPlayerId, int damage) {
+        if (damage <= 0 || damagedPlayerId == null) return;
+        DamageWatch watch = DamageWatch.ON_PLAYER_DEALT_DAMAGE;
+        Trigger watched = watch.trigger();
+        var event = new TriggerContext.DamageToControllerAmount(damagedPlayerId, damage);
+        gameData.forEachBattlefield((controllerId, battlefield) -> {
+            for (Permanent watcher : List.copyOf(battlefield)) {
+                if (gameQueryService.hasLostPrintedAbilities(gameData, watcher)) continue;
+                List<TriggeredAbility> printed = DamageAbilityReader.printed(watcher.getCard(), watch);
+                if (printed.isEmpty()) continue;
+                TriggerJudge judge = conditionEvaluationService.judge(gameData,
+                        ConditionContext.forPermanent(watcher, controllerId).withTargetId(damagedPlayerId), damage);
+                for (TriggeredAbility ability : judge.filter(printed)) {
+                    DamageTrigger trigger = DamageAbilityReader.trigger(ability, watched);
+                    if (trigger.damagedPlayerFilter() != null && !targetLegalityService.matchesPlayerPredicate(
+                            gameData, controllerId, damagedPlayerId, trigger.damagedPlayerFilter(), watcher.getId())) {
+                        continue;
+                    }
+                    List<DamageAbilityReader.DamageEffect> read = DamageAbilityReader.read(ability, watched);
+                    for (DamageAbilityReader.DamageEffect effect : read) {
+                        DamageAbilityReader.requireNoLimitOrMultiplicity(effect, watched);
+                    }
+                    List<CardEffect> effects = DamageAbilityReader.effectsOf(read);
+                    if (effects.isEmpty()) continue;
+                    var match = new TriggerMatchContext(gameData, watcher, controllerId, effects.getFirst());
+                    dispatch(match, watch, effects.getFirst(), event, () -> {
+                        queueDamageRecipientAbility(gameData, watcher, controllerId, effects, damagedPlayerId, true,
+                                damage);
+                        return true;
+                    });
+                }
+            }
+        });
+    }
+
+    /**
      * Whether the recipient of a source's damage matches the recipient filters of {@code trigger}: a player by its
      * damaged-player filter, a permanent by its damaged filter (on its snapshot as it was dealt the damage, or as it is
      * now). A trigger with neither filter matches every recipient; one with a filter only for one kind of recipient
@@ -4292,8 +4339,8 @@ public class TriggerCollectionService {
     }
 
     /**
-     * Puts a "deals damage to a permanent or player" ability of {@code watcher} on the stack, as
-     * {@link #collectDamageRecipientAbilities} says.
+     * Puts a "deals damage to a permanent or player" or "damage is dealt to a player" ability of {@code watcher} on the
+     * stack, as {@link #collectDamageRecipientAbilities} and {@link #checkPlayerDealtDamageTriggers} say.
      */
     private void queueDamageRecipientAbility(GameData gameData, Permanent watcher, UUID controllerId,
             List<CardEffect> effects, UUID recipientId, boolean playerRecipient, int damage) {

@@ -1001,8 +1001,8 @@ public final class Triggers {
      * each permanent and player it deals damage to, that permanent or player the stack entry's non-targeting
      * {@code targetId} (also its triggering permanent or triggering player) and the damage dealt to it the event's
      * value. {@code withFilter} / {@code withSpellFilter} narrow the source, {@code withDamagedFilter} /
-     * {@code withDamagedPlayerFilter} the recipient: "whenever damage is dealt to one of the chosen players" (Sower of
-     * Discord) is {@code .withDamagedPlayerFilter(new PlayerChosenBySourcePredicate())}.
+     * {@code withDamagedPlayerFilter} the recipient. "Whenever damage is dealt to [a player]", which triggers once for
+     * each damage event however many sources deal it, is {@link #playerDealtDamage()}.
      */
     public static DamageTrigger sourceDealsDamageToPermanentOrPlayer() {
         return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_DAMAGE_TO_PERMANENT_OR_PLAYER, ObjectRelation.ANY);
@@ -1037,6 +1037,17 @@ public final class Triggers {
     /** "Whenever a creature deals damage to enchanted planeswalker". */
     public static DamageTrigger creatureDealsDamageToEnchantedPlaneswalker() {
         return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER, ObjectRelation.ANY);
+    }
+
+    /**
+     * "Whenever damage is dealt to a player", whoever deals it: once for each player and each damage event, however
+     * many sources deal it (all the combat damage of one combat damage step is one event), that player the stack
+     * entry's non-targeting {@code targetId} and triggering player and the total damage dealt to them in the event the
+     * event's value. {@code withDamagedPlayerFilter} narrows the player: "whenever damage is dealt to one of the chosen
+     * players" (Sower of Discord) is {@code .withDamagedPlayerFilter(new PlayerChosenBySourcePredicate())}.
+     */
+    public static DamageTrigger playerDealtDamage() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.PLAYER_DEALT_DAMAGE, ObjectRelation.ANY);
     }
 
     /** "Whenever you're dealt damage". */

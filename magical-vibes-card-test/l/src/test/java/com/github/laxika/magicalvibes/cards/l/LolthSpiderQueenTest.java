@@ -189,6 +189,27 @@ class LolthSpiderQueenTest extends BaseCardTest {
         assertThat(gd.getLife(player3.getId())).isEqualTo(18);
     }
 
+    @Test
+    @DisplayName("With two opponents dealt combat damage at once the emblem triggers for each of them")
+    void emblemTriggersForEachDamagedOpponent() {
+        Player player3 = addThirdPlayer();
+        addReadyLolth(player1, 8);
+        Permanent firstBear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondBear = addCreatureReady(player1, new GrizzlyBears());
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        firstBear.setAttacking(true);
+        firstBear.setAttackTarget(player2.getId());
+        secondBear.setAttacking(true);
+        secondBear.setAttackTarget(player3.getId());
+        resolveCombat(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(12);
+        assertThat(gd.getLife(player3.getId())).isEqualTo(12);
+    }
+
     private Player addThirdPlayer() {
         UUID player3Id = UUID.randomUUID();
         Player player3 = new Player(player3Id, "Charlie");

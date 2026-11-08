@@ -27,6 +27,7 @@ public final class PendingSourceDamage {
     private final List<TriggeredAbility> selfDealsDamageAbilities;
     private UUID singleCreatureSpellTargetId;
     private final Set<UUID> instantOrSorceryDamageRecipients = new LinkedHashSet<>();
+    private ResolutionDamageEvent damageEvent;
 
     public PendingSourceDamage(Card sourceCard, UUID controllerId, UUID sourcePermanentId, int amount) {
         this(sourceCard, controllerId, sourcePermanentId, amount, null);
@@ -164,6 +165,22 @@ public final class PendingSourceDamage {
         }
     }
 
+    /**
+     * The resolution damage event the batch's damage was first dealt in, or {@code null} when it was dealt outside
+     * one: batches of several sources with the same event are one damage event ("whenever damage is dealt to a
+     * player" triggers once for it).
+     */
+    public ResolutionDamageEvent getDamageEvent() {
+        return damageEvent;
+    }
+
+    /** Records the resolution damage event the batch's damage is dealt in, unless one is recorded already. */
+    public void rememberDamageEvent(ResolutionDamageEvent event) {
+        if (damageEvent == null) {
+            damageEvent = event;
+        }
+    }
+
     public void recordInstantOrSorceryDamageRecipient(UUID recipientId) {
         if (recipientId != null) {
             instantOrSorceryDamageRecipients.add(recipientId);
@@ -196,6 +213,7 @@ public final class PendingSourceDamage {
         copy.damageToPermanentControllers.addAll(damageToPermanentControllers);
         copy.damageRecipients.addAll(damageRecipients);
         copy.instantOrSorceryDamageRecipients.addAll(instantOrSorceryDamageRecipients);
+        copy.damageEvent = damageEvent;
         return copy;
     }
 

@@ -99,7 +99,7 @@ public enum DamageWatch implements TriggerWatch {
     ON_ANY_SOURCE_DEALS_DAMAGE_TO_YOU(Triggers.sourceDealsDamageToYou(), Zone.BATTLEFIELD),
     /**
      * "Whenever a source deals damage to a permanent or player", once for each source and recipient; the trigger's
-     * filters say which source and which recipient ("one of the chosen players").
+     * filters say which source and which recipient.
      */
     ON_ANY_SOURCE_DEALS_DAMAGE_TO_PERMANENT_OR_PLAYER(Triggers.sourceDealsDamageToPermanentOrPlayer(), Zone.BATTLEFIELD),
     /** "Whenever another source you control deals damage to a permanent or player", once for each source and recipient. */
@@ -127,6 +127,11 @@ public enum DamageWatch implements TriggerWatch {
     /** "Whenever a creature deals damage to enchanted planeswalker". */
     ON_CREATURE_DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER(
             Triggers.creatureDealsDamageToEnchantedPlaneswalker(), Zone.BATTLEFIELD),
+    /**
+     * "Whenever damage is dealt to a player", once for each player and damage event; the trigger's damaged-player
+     * filter says which player ("one of the chosen players").
+     */
+    ON_PLAYER_DEALT_DAMAGE(Triggers.playerDealtDamage(), Zone.BATTLEFIELD),
     /** "Whenever you're dealt damage". */
     ON_CONTROLLER_DEALT_DAMAGE(Triggers.youAreDealtDamage(), Zone.BATTLEFIELD),
     /** "Whenever a source you control deals damage to you". */

@@ -333,17 +333,17 @@ class DamageTriggerTest {
     @Test
     void aDealsDamageToAPermanentOrPlayerTriggerFiltersTheRecipientAndHasItsOwnWatches() {
         PlayerChosenBySourcePredicate chosen = new PlayerChosenBySourcePredicate();
-        DamageTrigger sower = Triggers.sourceDealsDamageToPermanentOrPlayer().withDamagedPlayerFilter(chosen)
+        DamageTrigger filtered = Triggers.sourceDealsDamageToPermanentOrPlayer().withDamagedPlayerFilter(chosen)
                 .withDamagedFilter(DRAGON);
 
-        assertThat(sower.damagedPlayerFilter()).isEqualTo(chosen);
-        assertThat(sower.damagedFilter()).isEqualTo(DRAGON);
-        assertThat(sower.watchKey()).isEqualTo(Triggers.sourceDealsDamageToPermanentOrPlayer());
+        assertThat(filtered.damagedPlayerFilter()).isEqualTo(chosen);
+        assertThat(filtered.damagedFilter()).isEqualTo(DRAGON);
+        assertThat(filtered.watchKey()).isEqualTo(Triggers.sourceDealsDamageToPermanentOrPlayer());
         assertThat(Triggers.anotherSourceYouControlDealsDamageToPermanentOrPlayer())
                 .isNotEqualTo(Triggers.sourceDealsDamageToPermanentOrPlayer());
 
         Card card = new Card();
-        card.addTrigger(sower, DRAW);
+        card.addTrigger(filtered, DRAW);
         card.addTrigger(Triggers.anotherSourceYouControlDealsDamageToPermanentOrPlayer(), DRAW);
         assertThat(DamageAbilityReader.printed(card, DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE_TO_PERMANENT_OR_PLAYER))
                 .hasSize(1);
@@ -353,6 +353,26 @@ class DamageTriggerTest {
         assertThatThrownBy(() -> Triggers.sourceDealsDamage().withDamagedPlayerFilter(chosen))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> Triggers.sourceDealsDamageToPermanentOrPlayer().withCombatDamageOnly())
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void aPlayerDealtDamageTriggerFiltersThePlayerAndHasItsOwnWatch() {
+        PlayerChosenBySourcePredicate chosen = new PlayerChosenBySourcePredicate();
+        DamageTrigger sower = Triggers.playerDealtDamage().withDamagedPlayerFilter(chosen);
+
+        assertThat(sower.damagedPlayerFilter()).isEqualTo(chosen);
+        assertThat(sower.watchKey()).isEqualTo(Triggers.playerDealtDamage());
+        assertThat(Triggers.playerDealtDamage()).isNotEqualTo(Triggers.sourceDealsDamageToPermanentOrPlayer());
+
+        Card card = new Card();
+        card.addTrigger(sower, DRAW);
+        assertThat(DamageAbilityReader.printed(card, DamageWatch.ON_PLAYER_DEALT_DAMAGE)).hasSize(1);
+        assertThat(DamageAbilityReader.printed(card, DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE_TO_PERMANENT_OR_PLAYER))
+                .isEmpty();
+        assertThatThrownBy(() -> Triggers.playerDealtDamage().withFilter(DRAGON))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> Triggers.youAreDealtDamage().withDamagedPlayerFilter(chosen))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 

@@ -16,7 +16,7 @@ public class SowerOfDiscord extends Card {
 
     public SowerOfDiscord() {
         addStaticEffect(new ChoosePlayerOnEnterEffect(2));
-        addTrigger(Triggers.sourceDealsDamageToPermanentOrPlayer()
+        addTrigger(Triggers.playerDealtDamage()
                         .withDamagedPlayerFilter(new PlayerChosenBySourcePredicate()),
                 new LoseLifeEffect(new EventValue(), LoseLifeRecipient.OTHER_CHOSEN_PLAYER));
     }

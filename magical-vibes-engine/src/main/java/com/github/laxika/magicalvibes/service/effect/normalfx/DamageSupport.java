@@ -1994,6 +1994,7 @@ public class DamageSupport {
                             damagedPermanentId,
                             snapshotSelfDealsDamageAbilities(gameData, sourceCard, sourcePermanentId),
                             singleCreatureSpellTargetId);
+            batch.rememberDamageEvent(gameData.openDamageEvent);
             gameData.pendingSourceDamageForReflection.put(damageEventKey, batch);
         } else {
             batch.rememberSingleCreatureSpellTarget(singleCreatureSpellTargetId);
@@ -2077,6 +2078,25 @@ public class DamageSupport {
                         gameData, batch.getSourceCard(), batch.getControllerId(), true);
             }
         }
+        damageToPlayersByEvent(batches.values()).forEach(damageToPlayers -> damageToPlayers.forEach(
+                (playerId, damage) -> triggerCollectionService.checkPlayerDealtDamageTriggers(
+                        gameData, playerId, damage)));
+    }
+
+    /**
+     * The damage each player was dealt in each damage event of {@code batches}, every source's summed: the batches
+     * with the same resolution damage event are one event (CR 603.2c: "whenever damage is dealt to a player" triggers
+     * once for it), and a batch dealt outside one is an event of its own.
+     */
+    private static List<Map<UUID, Integer>> damageToPlayersByEvent(Collection<PendingSourceDamage> batches) {
+        Map<Object, Map<UUID, Integer>> byEvent = new LinkedHashMap<>();
+        for (PendingSourceDamage batch : batches) {
+            Object event = batch.getDamageEvent() != null ? batch.getDamageEvent() : batch;
+            Map<UUID, Integer> damageToPlayers = byEvent.computeIfAbsent(event, ignored -> new LinkedHashMap<>());
+            batch.getDamageToPlayers().forEach((playerId, damage) ->
+                    damageToPlayers.merge(playerId, damage, Integer::sum));
+        }
+        return new ArrayList<>(byEvent.values());
     }
 
     private List<TriggeredAbility> snapshotSelfDealsDamageAbilities(GameData gameData, Card sourceCard,

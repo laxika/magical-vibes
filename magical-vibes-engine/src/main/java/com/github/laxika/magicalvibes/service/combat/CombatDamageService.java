@@ -833,9 +833,13 @@ public class CombatDamageService {
         // "Whenever a [creature] deals damage" abilities trigger as the damage is dealt, so a watcher
         // that is destroyed by that same damage (a Sliver watching itself) must be scanned before
         // state-based actions remove it. The triggers are put on the stack after the other combat
-        // damage triggers, as they were when this ran after the state-based actions.
+        // damage triggers, as they were when this ran after the state-based actions. "Whenever damage is
+        // dealt to a player" (Sower of Discord) triggers once for each player dealt combat damage in this
+        // step, the damage of every source summed, scanned with them.
         int beforeSourceDamageReflections = gameData.stack.size();
         processSourceDealsDamageReflectionTriggers(gameData, state, defenderId, damagedCreatureSnapshots);
+        combatDamageByPlayer(state, defenderId).forEach((playerId, damage) ->
+                triggerCollectionService.checkPlayerDealtDamageTriggers(gameData, playerId, damage));
         List<StackEntry> sourceDamageReflectionTriggers = new ArrayList<>(
                 gameData.stack.subList(beforeSourceDamageReflections, gameData.stack.size()));
         gameData.stack.subList(beforeSourceDamageReflections, gameData.stack.size()).clear();
@@ -1970,6 +1974,25 @@ public class CombatDamageService {
             }
             gameData.recordDamageSourceControlledBy(entry.getKey().getId(), sourceControllerId);
         }
+    }
+
+    /**
+     * The combat damage each player was dealt in this combat damage step, every source's summed (CR 510.2: it is
+     * dealt simultaneously, one event): the damage assigned to a player and the damage redirected to one.
+     */
+    private Map<UUID, Integer> combatDamageByPlayer(CombatDamageState state, UUID defenderId) {
+        Map<UUID, Integer> damageByPlayer = new LinkedHashMap<>();
+        state.combatDamageDealtToPlayer.forEach((source, damage) -> {
+            if (damage > 0) {
+                damageByPlayer.merge(state.combatDamagePlayerRecipients.getOrDefault(source, defenderId), damage,
+                        Integer::sum);
+            }
+        });
+        state.redirectedCombatDamageToPlayers.forEach((playerId, damageBySource) -> damageBySource.values()
+                .forEach(damage -> {
+                    if (damage > 0) damageByPlayer.merge(playerId, damage, Integer::sum);
+                }));
+        return damageByPlayer;
     }
 
     private void processSourceDealsDamageReflectionTriggers(GameData gameData, CombatDamageState state,

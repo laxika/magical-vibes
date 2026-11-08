@@ -49,11 +49,11 @@ import java.util.Objects;
  *                 {@link DamageEvent#DEALS_DAMAGE_TO_PERMANENT_OR_PLAYER} trigger, judged on a permanent dealt the
  *                 damage; {@link #watchKey()} drops it
  * @param damagedPlayerFilter what the player dealt the damage must be, or {@code null}: "whenever damage is dealt to
- *                 one of the chosen players" is {@code Triggers.sourceDealsDamageToPermanentOrPlayer()
- *                 .withDamagedPlayerFilter(new PlayerChosenBySourcePredicate())}. Only a
- *                 {@link DamageEvent#DEALS_DAMAGE_TO_PERMANENT_OR_PLAYER} trigger has one. A trigger with a damaged
- *                 filter or a damaged-player filter triggers only for a permanent or player of a kind it has a filter
- *                 for; one with neither for every permanent and player. {@link #watchKey()} drops it
+ *                 one of the chosen players" is {@code Triggers.playerDealtDamage().withDamagedPlayerFilter(new
+ *                 PlayerChosenBySourcePredicate())}. Only a {@link DamageEvent#PLAYER_DEALT_DAMAGE} or
+ *                 {@link DamageEvent#DEALS_DAMAGE_TO_PERMANENT_OR_PLAYER} trigger has one. On the latter, a trigger
+ *                 with a damaged filter or a damaged-player filter triggers only for a permanent or player of a kind it
+ *                 has a filter for; one with neither for every permanent and player. {@link #watchKey()} drops it
  * @param combatOnly whether only combat damage counts: "whenever this creature deals combat damage to a creature".
  *                 Only a {@link DamageEvent#DEALS_DAMAGE_TO_CREATURE} trigger has it; {@link #watchKey()} drops it
  */
@@ -75,9 +75,14 @@ public record DamageTrigger(DamageEvent event, ObjectRelation relation, Permanen
                     + "permanent-you-control or a deals-damage-to-a-permanent-or-player trigger has a "
                     + "damaged-permanent filter: " + event);
         }
-        if (damagedPlayerFilter != null && event != DamageEvent.DEALS_DAMAGE_TO_PERMANENT_OR_PLAYER) {
+        if (damagedPlayerFilter != null && event != DamageEvent.DEALS_DAMAGE_TO_PERMANENT_OR_PLAYER
+                && event != DamageEvent.PLAYER_DEALT_DAMAGE) {
+            throw new IllegalArgumentException("Only a player-dealt-damage or a deals-damage-to-a-permanent-or-player "
+                    + "trigger has a damaged-player filter: " + event);
+        }
+        if (event == DamageEvent.PLAYER_DEALT_DAMAGE && (filter != null || relation != ObjectRelation.ANY)) {
             throw new IllegalArgumentException(
-                    "Only a deals-damage-to-a-permanent-or-player trigger has a damaged-player filter: " + event);
+                    "A player-dealt-damage trigger names no source: " + relation + " " + filter);
         }
         if (spellFilter != null && (event != DamageEvent.DEALS_DAMAGE && event != DamageEvent.SOURCE_DEALS_DAMAGE_TO_YOU
                 && event != DamageEvent.DEALS_DAMAGE_TO_PERMANENT_OR_PLAYER
@@ -138,9 +143,9 @@ public record DamageTrigger(DamageEvent event, ObjectRelation relation, Permanen
     }
 
     /**
-     * This {@link DamageEvent#DEALS_DAMAGE_TO_PERMANENT_OR_PLAYER} trigger narrowed to a player dealt the damage who
-     * matches {@code damagedPlayerFilter}, as {@link #damagedPlayerFilter} says: "whenever damage is dealt to one of the
-     * chosen players".
+     * This {@link DamageEvent#PLAYER_DEALT_DAMAGE} or {@link DamageEvent#DEALS_DAMAGE_TO_PERMANENT_OR_PLAYER} trigger
+     * narrowed to a player dealt the damage who matches {@code damagedPlayerFilter}, as {@link #damagedPlayerFilter}
+     * says: "whenever damage is dealt to one of the chosen players".
      */
     public DamageTrigger withDamagedPlayerFilter(PlayerPredicate damagedPlayerFilter) {
         Objects.requireNonNull(damagedPlayerFilter, "damagedPlayerFilter");
@@ -260,6 +265,14 @@ public record DamageTrigger(DamageEvent event, ObjectRelation relation, Permanen
         ONE_OR_MORE_CREATURES_DEALT_EXCESS_NONCOMBAT_DAMAGE,
         /** You're dealt damage. */
         YOU_DEALT_DAMAGE,
+        /**
+         * Damage is dealt to a player, whoever deals it: once for each player and each damage event, however many
+         * sources deal it in that event (CR 603.2c; Boros Reckoner's ruling: "if … dealt damage by multiple sources at
+         * once, … its ability triggers once"), that player the event's player and the total damage dealt to them in the
+         * event the event's value. Its relation is {@link ObjectRelation#ANY}, it has no filter, and the damaged-player
+         * filter narrows the player ("one of the chosen players").
+         */
+        PLAYER_DEALT_DAMAGE,
         /** An opponent is dealt damage. */
         OPPONENT_DEALT_DAMAGE,
         /** An opponent is dealt noncombat damage. */
