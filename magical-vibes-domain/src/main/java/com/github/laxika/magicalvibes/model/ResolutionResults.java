@@ -20,11 +20,13 @@ import java.util.UUID;
  *                   its result even when nothing was drawn, so a later step never reads an older draw
  * @param counteredSpell whether the most recent counter step actually countered its target spell ("this
  *                   way"); a counter step records its result even when nothing was countered
+ * @param copiedSpell whether the most recent copy step copied its spell ("if you don't copy a spell this way"); a
+ *                   copy step records its result even when nothing was copied
  */
 public record ResolutionResults(List<DepartureResult> departures, List<UUID> pickedIds, List<UUID> drawnCardIds,
-                                boolean counteredSpell) {
+                                boolean counteredSpell, boolean copiedSpell) {
 
-    public static final ResolutionResults EMPTY = new ResolutionResults(List.of(), List.of(), List.of(), false);
+    public static final ResolutionResults EMPTY = new ResolutionResults(List.of(), List.of(), List.of(), false, false);
 
     public ResolutionResults {
         departures = List.copyOf(departures);
@@ -34,22 +36,27 @@ public record ResolutionResults(List<DepartureResult> departures, List<UUID> pic
 
     /** These results with {@code results} as the latest step's departures, replacing the earlier ones. */
     public ResolutionResults withDepartures(List<DepartureResult> results) {
-        return new ResolutionResults(results, pickedIds, drawnCardIds, counteredSpell);
+        return new ResolutionResults(results, pickedIds, drawnCardIds, counteredSpell, copiedSpell);
     }
 
     /** These results with {@code ids} as the latest picks, replacing the earlier ones. */
     public ResolutionResults withPickedIds(List<UUID> ids) {
-        return new ResolutionResults(departures, ids, drawnCardIds, counteredSpell);
+        return new ResolutionResults(departures, ids, drawnCardIds, counteredSpell, copiedSpell);
     }
 
     /** These results with {@code ids} as the latest draw step's drawn cards, replacing the earlier ones. */
     public ResolutionResults withDrawnCardIds(List<UUID> ids) {
-        return new ResolutionResults(departures, pickedIds, ids, counteredSpell);
+        return new ResolutionResults(departures, pickedIds, ids, counteredSpell, copiedSpell);
     }
 
     /** These results with {@code countered} as the latest counter step's outcome, replacing the earlier one. */
     public ResolutionResults withCounteredSpell(boolean countered) {
-        return new ResolutionResults(departures, pickedIds, drawnCardIds, countered);
+        return new ResolutionResults(departures, pickedIds, drawnCardIds, countered, copiedSpell);
+    }
+
+    /** These results with {@code copied} as the latest copy step's outcome, replacing the earlier one. */
+    public ResolutionResults withCopiedSpell(boolean copied) {
+        return new ResolutionResults(departures, pickedIds, drawnCardIds, counteredSpell, copied);
     }
 
     /** Whether a permanent was sacrificed this way, wherever it ended up. */

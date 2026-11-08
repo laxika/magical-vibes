@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.b.BashToBits;
 import com.github.laxika.magicalvibes.cards.c.CombatResearch;
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
+import com.github.laxika.magicalvibes.cards.d.Deflection;
 import com.github.laxika.magicalvibes.cards.d.DualShot;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -26,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({VesuvanDuplimancy.class, GiantGrowth.class, IsamaruHoundOfKonda.class,
         BashToBits.class, Spellbook.class, DualShot.class, GrizzlyBears.class,
-        CombatResearch.class, Unsummon.class, RayOfCommand.class, LiquimetalCoating.class, SeedsOfStrength.class})
+        CombatResearch.class, Unsummon.class, RayOfCommand.class, LiquimetalCoating.class, SeedsOfStrength.class, Counterspell.class, Deflection.class})
 class VesuvanDuplimancyTest extends BaseCardTest {
 
     @Test
@@ -218,5 +220,50 @@ class VesuvanDuplimancyTest extends BaseCardTest {
         return gd.playerBattlefields.get(player.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList();
+    }
+
+    @Test
+    @DisplayName("Copies the spell's original target after the spell is redirected")
+    void copiesTheOriginalTargetAfterTheSpellIsRedirected() {
+        harness.addToBattlefield(player1, new VesuvanDuplimancy());
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent replacement = harness.addToBattlefieldAndReturn(player2, new IsamaruHoundOfKonda());
+        GiantGrowth spell = new GiantGrowth();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player2, List.of(new Deflection()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+
+        harness.castInstant(player1, 0, original.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, spell.getId());
+        harness.handlePermanentChosen(player2, replacement.getId());
+        harness.passBothPriorities();
+
+        assertThat(tokenCopies(player1))
+                .singleElement()
+                .satisfies(token -> assertThat(token.getCard().getName()).isEqualTo("Grizzly Bears"));
+    }
+
+    @Test
+    @DisplayName("Creates the token even when the spell is countered before the ability resolves")
+    void copiesEvenWhenTheSpellIsCounteredBeforeTheTriggerResolves() {
+        harness.addToBattlefield(player1, new VesuvanDuplimancy());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        GiantGrowth spell = new GiantGrowth();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, spell.getId());
+        harness.assertInGraveyard(player1, "Giant Growth");
+        harness.passBothPriorities();
+
+        assertThat(tokenCopies(player1))
+                .singleElement()
+                .satisfies(token -> assertThat(token.getCard().getName()).isEqualTo("Grizzly Bears"));
     }
 }

@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetedSpellPermanentEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -34,10 +32,12 @@ public class CreateTokenCopyOfTargetedSpellPermanentEffectHandler implements Nor
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         CreateTokenCopyOfTargetedSpellPermanentEffect copyEffect =
                 (CreateTokenCopyOfTargetedSpellPermanentEffect) effect;
-        if (copyEffect.spellSnapshot() == null) return;
+        StackEntry spell = copyEffect.requiresTargetStillControlled()
+                ? CopySupport.triggeringSpell(gameData, entry)
+                : entry.getTriggeringSpellSnapshot();
+        if (spell == null) return;
 
-        List<UUID> validTargetIds = validTargetIds(gameData, entry, currentSpellEntry(gameData, copyEffect.spellSnapshot()),
-                copyEffect.requiresTargetStillControlled());
+        List<UUID> validTargetIds = validTargetIds(gameData, entry, spell, copyEffect.requiresTargetStillControlled());
         if (validTargetIds.isEmpty()) return;
 
         UUID chosenId = entry.getTargetId();
@@ -56,43 +56,41 @@ public class CreateTokenCopyOfTargetedSpellPermanentEffectHandler implements Nor
         gameData.rerunCurrentEffectAfterInteraction = false;
         StackEntry copyEntry = new StackEntry(entry.getCard(), entry.getControllerId());
         copyEntry.setTargetId(chosenId);
-        Card lastKnownCard = entry.lastKnownPermanentCard(chosenId);
-        if (lastKnownCard != null) {
-            copyEntry.rememberLastKnownPermanentCard(chosenId, lastKnownCard);
+        Permanent lastKnown = departedPermanent(gameData, chosenId);
+        if (lastKnown != null && gameQueryService.findPermanentById(gameData, chosenId) == null) {
+            copyEntry.rememberLastKnownPermanentCard(chosenId, lastKnown.getCard());
         }
         tokenCopyHandler.resolve(gameData, copyEntry, copyEffect.copyEffect());
     }
 
     /**
-     * The spell as it is now while it is still on the stack, so a retargeted spell is judged by its
-     * current targets (intervening "if", CR 603.4); otherwise the snapshot taken when the trigger was
-     * collected stands in for the spell's last known information.
+     * The spell's permanent targets that can be copied. With {@code requiresTargetStillControlled} (Orvar, the
+     * All-Form's rulings, 2021-02-05) only a target other than the source still on the battlefield under the ability
+     * controller's control; otherwise a target that changed control or left the battlefield too, copied as it last
+     * existed there (CR 608.2h).
      */
-    private StackEntry currentSpellEntry(GameData gameData, StackEntry spellSnapshot) {
-        StackEntry live = gameQueryService.findStackEntryByCardId(gameData, spellSnapshot.getCard().getId());
-        return live != null ? live : spellSnapshot;
-    }
-
-    /**
-     * The spell's permanent targets that can still be copied. The trigger's condition was judged when the
-     * spell was cast. With {@code requiresTargetStillControlled} (Orvar, the All-Form ruling, 2021-02-05) only
-     * targets still on the battlefield under the trigger controller's control can be copied; otherwise a target
-     * that changed control or left the battlefield is still copied, using its last known card (CR 608.2h).
-     */
-    private List<UUID> validTargetIds(GameData gameData, StackEntry entry, StackEntry spellSnapshot,
+    private List<UUID> validTargetIds(GameData gameData, StackEntry entry, StackEntry spell,
                                       boolean requiresTargetStillControlled) {
-        List<UUID> targetIds = permanentTargetIds(gameData, spellSnapshot);
         List<UUID> validIds = new ArrayList<>();
-        for (UUID targetId : targetIds) {
+        for (UUID targetId : permanentTargetIds(gameData, spell)) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             boolean copiable = requiresTargetStillControlled
-                    ? target != null && entry.getControllerId().equals(gameData.findControllerOf(target))
-                    : target != null || entry.lastKnownPermanentCard(targetId) != null;
+                    ? target != null && !targetId.equals(entry.getSourcePermanentId())
+                    && entry.getControllerId().equals(gameData.findControllerOf(target))
+                    : target != null || departedPermanent(gameData, targetId) != null;
             if (copiable) {
                 validIds.add(targetId);
             }
         }
         return validIds;
+    }
+
+    /** The permanent {@code permanentId} as it last existed on the battlefield, or {@code null} when none was kept. */
+    private static Permanent departedPermanent(GameData gameData, UUID permanentId) {
+        return gameData.departedPermanentSnapshots.values().stream()
+                .filter(snapshot -> snapshot.getId().equals(permanentId))
+                .findFirst()
+                .orElse(null);
     }
 
     private List<UUID> permanentTargetIds(GameData gameData, StackEntry spellSnapshot) {

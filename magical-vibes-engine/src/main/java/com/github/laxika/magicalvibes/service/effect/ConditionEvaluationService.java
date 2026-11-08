@@ -351,6 +351,8 @@ import com.github.laxika.magicalvibes.model.condition.OpponentSearchedLibraryThi
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.condition.CardDrawnThisWay;
 import com.github.laxika.magicalvibes.model.condition.SpellCounteredThisWay;
+import com.github.laxika.magicalvibes.model.condition.SpellCopiedThisWay;
+import com.github.laxika.magicalvibes.model.condition.TriggeringSpellMatches;
 import com.github.laxika.magicalvibes.model.condition.OwnsCardInAllZones;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PermanentLeftBattlefieldUnderYourControlThisTurn;
@@ -1380,6 +1382,9 @@ public class ConditionEvaluationService {
                     : ctx.resolutionResults().anyDestroyed();
             case CardDrawnThisWay ignored -> !ctx.resolutionResults().drawnCardIds().isEmpty();
             case SpellCounteredThisWay ignored -> ctx.resolutionResults().counteredSpell();
+            case SpellCopiedThisWay ignored -> ctx.resolutionResults().copiedSpell();
+            // The context carries no triggering spell: EffectResolutionService judges it against the resolving entry's.
+            case TriggeringSpellMatches ignored -> false;
             case VoidCondition ignored ->
                     gameData.nonlandPermanentLeftBattlefieldThisTurn || gameData.spellWarpedThisTurn;
             case DidntActivateLoyaltyAbilityThisTurn ignored ->

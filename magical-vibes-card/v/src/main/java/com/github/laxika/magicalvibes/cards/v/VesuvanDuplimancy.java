@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -32,8 +32,8 @@ public class VesuvanDuplimancy extends Card {
         StackEntryPredicate triggerCondition = new StackEntryAllOfPredicate(List.of(
                 new StackEntryIsSingleTargetPredicate(),
                 new StackEntryTargetsPermanentPredicate(targetFilter)));
-        addTrigger(Triggers.youCastSpell(),
-                new CreateTokenCopyOfTargetedSpellPermanentEffect(triggerCondition,
+        addTrigger(Triggers.youCastSpell().withStackEntryFilter(triggerCondition),
+                new CreateTokenCopyOfTargetedSpellPermanentEffect(
                         CreateTokenCopyOfTargetPermanentEffect.nonLegendary(
                                 List.of(), Set.of(), null, null, Map.of())));
     }

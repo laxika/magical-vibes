@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.d.Distress;
 import com.github.laxika.magicalvibes.cards.d.Deflection;
 import com.github.laxika.magicalvibes.cards.d.DepartTheRealm;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({OrvarTheAllForm.class, Distress.class, GrizzlyBears.class, IntoTheVoid.class,
-        Deflection.class, DepartTheRealm.class, Island.class})
+        Deflection.class, DepartTheRealm.class, Island.class, Counterspell.class})
 class OrvarTheAllFormTest extends BaseCardTest {
 
     @Test
@@ -199,5 +200,47 @@ class OrvarTheAllFormTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validPlayerIds()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Copies the other permanent you control when the spell also targets Orvar")
+    void copiesTheOtherTargetWhenTheSpellAlsoTargetsOrvar() {
+        Permanent orvar = harness.addToBattlefieldAndReturn(player1, new OrvarTheAllForm());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new IntoTheVoid()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castSorcery(player1, 0, List.of(orvar.getId(), bears.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .singleElement()
+                .satisfies(token -> assertThat(token.getCard().getName()).isEqualTo("Grizzly Bears"));
+    }
+
+    @Test
+    @DisplayName("Copies the target of a spell countered before the ability resolves")
+    void copiesTheTargetOfASpellCounteredBeforeTheTriggerResolves() {
+        harness.addToBattlefield(player1, new OrvarTheAllForm());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        DepartTheRealm spell = new DepartTheRealm();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, spell.getId());
+        harness.assertInGraveyard(player1, "Depart the Realm");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .singleElement()
+                .satisfies(token -> assertThat(token.getCard().getName()).isEqualTo("Grizzly Bears"));
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
     }
 }

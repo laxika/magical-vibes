@@ -4,11 +4,15 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -23,7 +27,9 @@ import org.springframework.stereotype.Component;
  * controller permanent control of every permanent matching the effect's predicate that they do not
  * already control, reusing the layer-2 control machinery with a per-permanent
  * {@link GainControlOfTargetEffect} floating effect. Optional rider effects are resolved in list
- * order for the snapshot of permanents gained by this resolution, after all control changes.
+ * order for the snapshot of permanents gained by this resolution, after all control changes; a rider's
+ * {@link SequenceEffect} steps run in order and a {@link ConditionalEffect} rider only when its condition holds
+ * (Loki, God of Lies' "if it's your turn, untap that creature and it gains haste").
  */
 @Component
 @RequiredArgsConstructor
@@ -33,6 +39,7 @@ public class GainControlOfAllPermanentsMatchingEffectHandler implements NormalEf
     private final PredicateEvaluationService predicateEvaluationService;
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final GainControlOfTargetEffectHandler gainControlOfTargetEffectHandler;
+    private final ConditionEvaluationService conditionEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -79,7 +86,7 @@ public class GainControlOfAllPermanentsMatchingEffectHandler implements NormalEf
         creatureControlService.applyControlEffectSimultaneously(gameData, controllerId, simultaneous,
                 controlEffect, duration.toEffectDuration(), entry.getCard().getName());
 
-        for (CardEffect thenEffect : e.thenEffects()) {
+        for (CardEffect thenEffect : riderSteps(gameData, entry, e.thenEffects())) {
             EffectHandler handler = effectHandlerRegistry.getHandler(thenEffect);
             if (handler == null) {
                 continue;
@@ -97,18 +104,42 @@ public class GainControlOfAllPermanentsMatchingEffectHandler implements NormalEf
     }
 
     /**
-     * What the spell that triggered {@code entry} targets: its target and declared targets on the stack, else as it was
-     * when the ability triggered, once it has left the stack (CR 608.2h). Empty for an entry no spell triggered.
+     * The rider effects to apply, in order: a {@link SequenceEffect}'s steps, and a {@link ConditionalEffect}'s
+     * effect when its condition holds as the ability resolves ("if it's your turn, untap that creature").
+     */
+    private List<CardEffect> riderSteps(GameData gameData, StackEntry entry, List<CardEffect> riders) {
+        List<CardEffect> steps = new ArrayList<>();
+        for (CardEffect rider : riders) {
+            switch (rider) {
+                case SequenceEffect sequence -> steps.addAll(riderSteps(gameData, entry, sequence.steps()));
+                case ConditionalEffect conditional -> {
+                    if (conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forStackEntry(entry))) {
+                        steps.addAll(riderSteps(gameData, entry, List.of(conditional.wrapped())));
+                    }
+                }
+                default -> steps.add(rider);
+            }
+        }
+        return steps;
+    }
+
+    /**
+     * What the spell that triggered {@code entry} targeted as the ability triggered ("that creature", "those
+     * permanents": the objects of the trigger event, which a target changed later doesn't move; compare Vesuvan
+     * Duplimancy's ruling of 2022-09-09), its target and declared targets; the live spell's when no snapshot was
+     * kept. Empty for an entry no spell triggered.
      */
     private static List<UUID> triggeringSpellTargetIds(GameData gameData, StackEntry entry) {
         if (entry.getTriggeringCardId() == null) {
             return List.of();
         }
-        StackEntry spell = gameData.stack.stream()
-                .filter(candidate -> candidate != entry
-                        && entry.getTriggeringCardId().equals(candidate.getTargetableId()))
-                .findFirst()
-                .orElse(entry.getTriggeringSpellSnapshot());
+        StackEntry spell = entry.getTriggeringSpellSnapshot() != null ? entry.getTriggeringSpellSnapshot()
+                : gameData.stack.stream()
+                        .filter(candidate -> candidate != entry
+                                && entry.getTriggeringCardId().equals(candidate.getTargetableId()))
+                        .findFirst()
+                        .orElse(null);
         if (spell == null) {
             return List.of();
         }

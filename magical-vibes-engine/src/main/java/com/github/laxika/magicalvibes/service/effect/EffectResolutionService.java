@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -12,6 +13,7 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.TriggeringCardMatches;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasSubtype;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.condition.TriggeringSpellMatches;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
@@ -76,6 +78,10 @@ public class EffectResolutionService {
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private DepartureService departureService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.target.TargetLegalityService targetLegalityService;
 
     private final ConditionEvaluationService conditionEvaluationService;
     private final EffectHandlerRegistry registry;
@@ -684,6 +690,16 @@ public class EffectResolutionService {
                                    ConditionContext context) {
         if (condition instanceof NotCondition not) {
             return !isConditionMet(gameData, entry, not.inner(), context);
+        }
+        // "Copy that spell if it targets a permanent or player": the triggering spell as the ability resolves, the live
+        // spell or as it last existed on the stack (CR 608.2h), judged from the ability's controller and source.
+        if (condition instanceof TriggeringSpellMatches matches) {
+            StackEntry spell = com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport
+                    .triggeringSpell(gameData, entry);
+            Permanent source = entry.getSourcePermanentId() == null ? null
+                    : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            return spell != null && targetLegalityService.matchesStackEntryPredicate(gameData, spell, matches.filter(),
+                    entry.getControllerId(), source != null ? source : entry.getSourcePermanentSnapshot());
         }
         // Declared attackers that left the battlefield are judged by who they were attacking before they
         // left; attackers still on the battlefield (or phased out) are judged by their current status.

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.c.ConeOfFlame;
+import com.github.laxika.magicalvibes.cards.d.Deflection;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
@@ -21,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({LokiGodOfLies.class, GiantGrowth.class, GrizzlyBears.class, Shock.class,
-        ConeOfFlame.class, SeedsOfStrength.class, Unsummon.class, HolyStrength.class})
+        ConeOfFlame.class, SeedsOfStrength.class, Unsummon.class, HolyStrength.class, Deflection.class})
 class LokiGodOfLiesTest extends BaseCardTest {
 
     private void prepareMainPhase(com.github.laxika.magicalvibes.model.Player activePlayer) {
@@ -232,5 +233,27 @@ class LokiGodOfLiesTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Holy Strength");
         harness.passBothPriorities();
         assertThat(findPermanent(player1, "Holy Strength").getAttachedTo()).isEqualTo(target.getId());
+    }
+
+    @Test
+    void gainsControlOfTheOriginalTargetAfterTheSpellIsRedirected() {
+        harness.addToBattlefield(player1, new LokiGodOfLies());
+        Permanent original = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent replacement = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareMainPhase(player1);
+        GiantGrowth spell = new GiantGrowth();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player2, List.of(new Deflection()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+
+        harness.castInstant(player1, 0, original.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, spell.getId());
+        harness.handlePermanentChosen(player2, replacement.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(original).doesNotContain(replacement);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(replacement);
     }
 }

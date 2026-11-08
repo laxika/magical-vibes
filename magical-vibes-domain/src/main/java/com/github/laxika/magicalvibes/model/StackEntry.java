@@ -559,6 +559,15 @@ public class StackEntry {
         resolutionResults = resolutionResults.withCounteredSpell(countered);
     }
 
+    /**
+     * Records whether the copy step being resolved copied its spell, replacing that of earlier steps. A copy step
+     * calls this even when nothing was copied (false), so "if you don't copy a spell this way" reads this step's
+     * result.
+     */
+    public void recordCopiedSpell(boolean copied) {
+        resolutionResults = resolutionResults.withCopiedSpell(copied);
+    }
+
     /** Records what a player picked in the step being resolved, for the next step to act on. */
     public void recordPicks(List<UUID> pickedIds) {
         resolutionResults = resolutionResults.withPickedIds(pickedIds);

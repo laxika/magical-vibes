@@ -4,7 +4,6 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -57,11 +56,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureWhenSingleTargetSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -268,65 +263,6 @@ class SpellCastTriggerCollectorServiceTest {
             assertThat(result).isFalse();
             assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class::isInstance)
                     .hasSize(1);
-        }
-    }
-
-    @Nested
-    @DisplayName("ON_CONTROLLER_CASTS_SPELL — single-target creature control trigger")
-    class SingleTargetCreatureControlTrigger {
-
-        @Test
-        @DisplayName("binds the triggering spell's sole creature target")
-        void bindsSoleCreatureTarget() {
-            Permanent source = createPermanent("Loki, God of Lies");
-            Permanent target = createPermanent("Grizzly Bears");
-            Card spell = createInstant("Giant Growth");
-            gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id,
-                    spell.getName(), List.of(), 0, target.getId(), java.util.Map.of()));
-            var effect = new GainControlOfTargetCreatureWhenSingleTargetSpellCastEffect();
-
-            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
-            when(gameQueryService.isCreature(gd, target)).thenReturn(true);
-
-            boolean result = registry.dispatch(match(source, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect,
-                    new TriggerContext.SpellCast(spell, player1Id, true));
-
-            assertThat(result).isTrue();
-            StackEntry triggeredAbility = gd.stack.getLast();
-            assertThat(triggeredAbility.getTargetId()).isEqualTo(target.getId());
-            assertThat(triggeredAbility.isNonTargeting()).isTrue();
-            assertThat(triggeredAbility.getTriggeringCardId()).isEqualTo(spell.getId());
-            assertThat(triggeredAbility.getEffectsToResolve()).hasSize(2);
-            assertThat(triggeredAbility.getEffectsToResolve().getFirst())
-                    .isEqualTo(new GainControlOfTargetEffect(ControlDuration.END_OF_TURN));
-            ConditionalEffect rider = (ConditionalEffect) triggeredAbility.getEffectsToResolve().getLast();
-            assertThat(rider.wrapped()).isInstanceOf(SequenceEffect.class);
-            SequenceEffect sequence = (SequenceEffect) rider.wrapped();
-            assertThat(sequence.steps()).containsExactly(
-                    new UntapPermanentsEffect(com.github.laxika.magicalvibes.model.effect.TapUntapScope.TARGET),
-                    new GrantKeywordEffect(com.github.laxika.magicalvibes.model.Keyword.HASTE,
-                            com.github.laxika.magicalvibes.model.effect.GrantScope.TARGET));
-        }
-
-        @Test
-        @DisplayName("does not trigger for multiple distinct targets")
-        void doesNotTriggerForMultipleDistinctTargets() {
-            Permanent source = createPermanent("Loki, God of Lies");
-            Permanent firstTarget = createPermanent("First creature");
-            Permanent secondTarget = createPermanent("Second creature");
-            Card spell = createInstant("Two-target spell");
-            gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id,
-                    spell.getName(), List.of(), null,
-                    List.of(firstTarget.getId(), secondTarget.getId())));
-            var effect = new GainControlOfTargetCreatureWhenSingleTargetSpellCastEffect();
-
-            boolean result = registry.dispatch(match(source, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect,
-                    new TriggerContext.SpellCast(spell, player1Id, true));
-
-            assertThat(result).isFalse();
-            assertThat(gd.stack).hasSize(1);
         }
     }
 

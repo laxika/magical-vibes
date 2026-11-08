@@ -23,9 +23,9 @@ import java.util.UUID;
  * @param triggeringPlayerId the player the triggered ability's event was about (the stack entry's triggering player:
  *        the player dealt damage), for {@link PermanentControlledByTriggeringPlayerPredicate}'s "that player controls";
  *        {@code null} elsewhere.
- * @param triggeringSpellTargetIds what the spell that triggered the resolving ability targets (its target and declared
- *        targets), for {@link PermanentIsTargetOfTriggeringSpellPredicate}'s "those permanents" (Dack Fayden's emblem);
- *        empty elsewhere.
+ * @param triggeringSpellTargetIds what the spell that triggered the resolving ability targeted as the ability
+ *        triggered (its target and declared targets), for {@link PermanentIsTargetOfTriggeringSpellPredicate}'s "those
+ *        permanents" / "that creature" (Dack Fayden's emblem, Loki, God of Lies); empty elsewhere.
  */
 public record FilterContext(
         GameData gameData,

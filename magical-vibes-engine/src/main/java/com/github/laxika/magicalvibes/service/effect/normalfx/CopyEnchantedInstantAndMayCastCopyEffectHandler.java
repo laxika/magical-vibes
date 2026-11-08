@@ -42,15 +42,13 @@ public class CopyEnchantedInstantAndMayCastCopyEffectHandler implements NormalEf
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        CopyEnchantedInstantAndMayCastCopyEffect copyEffect =
-                (CopyEnchantedInstantAndMayCastCopyEffect) effect;
         // The enchanted card is read from Volute's last existence on the battlefield, so a Volute that
         // left in response still identifies the card it was enchanting (even if that card has since been
         // exiled), while one that fell off because its card left enchanted nothing.
         Permanent volute = entry.getSourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         Permanent lastKnownVolute = volute != null ? volute : entry.getSourcePermanentSnapshot();
-        UUID enchantedCardId = lastKnownVolute != null ? lastKnownVolute.getAttachedTo() : copyEffect.enchantedCardId();
+        UUID enchantedCardId = lastKnownVolute != null ? lastKnownVolute.getAttachedTo() : null;
         Card enchantedCard = enchantedCardId == null ? null
                 : volute != null ? gameQueryService.findCardInGraveyardById(gameData, enchantedCardId)
                 : gameQueryService.findCardById(gameData, enchantedCardId);

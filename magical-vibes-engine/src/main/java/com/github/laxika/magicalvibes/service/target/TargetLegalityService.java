@@ -5925,7 +5925,7 @@ public class TargetLegalityService {
             return source != null && source.getId().equals(stackEntry.getSourcePermanentId());
         }
         if (predicate instanceof StackEntryTargetsPermanentPredicate targetsPermanent) {
-            return targetsAnyMatchingPermanent(gameData, stackEntry, targetsPermanent.filter(), controllerId);
+            return targetsAnyMatchingPermanent(gameData, stackEntry, targetsPermanent.filter(), controllerId, source);
         }
         if (predicate instanceof StackEntryTargetsOnlySingleCreaturePredicate) {
             return targetsOnlySingleCreature(gameData, stackEntry);
@@ -6015,9 +6015,16 @@ public class TargetLegalityService {
         return false;
     }
 
+    /**
+     * Whether {@code stackEntry} targets a permanent matching {@code filter}, judged from {@code controllerId} and the
+     * ability's {@code source} ("other permanents you control": not the source itself).
+     */
     private boolean targetsAnyMatchingPermanent(GameData gameData, StackEntry stackEntry,
-                                                 PermanentPredicate filter, UUID controllerId) {
+                                                 PermanentPredicate filter, UUID controllerId, Permanent source) {
         FilterContext ctx = FilterContext.of(gameData).withSourceControllerId(controllerId);
+        if (source != null) {
+            ctx = ctx.withSourcePermanentId(source.getId()).withSourceCardId(source.getOriginalCard().getId());
+        }
         if (stackEntry.getTargetId() != null && matchesTarget(gameData, stackEntry.getTargetId(), filter, ctx)) {
             return true;
         }

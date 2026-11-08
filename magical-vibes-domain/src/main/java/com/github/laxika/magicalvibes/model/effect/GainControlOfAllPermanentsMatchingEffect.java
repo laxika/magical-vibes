@@ -18,7 +18,8 @@ import java.util.List;
  * <p>Optional {@code thenEffects} resolve for every permanent gained after all control changes have
  * been applied. They are useful for riders such as untapping and granting haste to exactly the
  * permanents seized by the effect; the rider effects must resolve synchronously and use their
- * target as the stack entry's target.
+ * target as the stack entry's target. A {@link SequenceEffect} rider runs its steps in order, and a
+ * {@link ConditionalEffect} rider runs only when its condition holds as the ability resolves.
  *
  * @param predicate narrows which permanents (any controller) are seized
  * @param duration  how long the control gain lasts
