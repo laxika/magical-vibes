@@ -278,7 +278,7 @@ class ExileGraveyardCardsEffectHandlerTest {
         when(predicateEvaluationService.matchesCardPredicate(noncreature, creatureFilter, null)).thenReturn(false);
 
         ExileGraveyardCardsEffect effect = new ExileGraveyardCardsEffect(
-                0, GraveyardExileScope.TARGET_PLAYER_ALL_MATCHING, null, null,
+                0, GraveyardExileScope.TARGET_PLAYER_ALL_MATCHING, null,
                 false, false, false, creatureFilter, false);
         StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Grey Host Reinforcements"),
                 player1Id, "Grey Host Reinforcements", List.of(effect), 0, player2Id, null);

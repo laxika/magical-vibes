@@ -25,7 +25,7 @@ public class Malanthrope extends Card {
                 "Target must be a player"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new ExileGraveyardCardsEffect(0, GraveyardExileScope.TARGET_PLAYER_ALL_MATCHING,
-                        null, null, false, false, false, new CardTypePredicate(CardType.CREATURE)),
+                        null, false, false, false, new CardTypePredicate(CardType.CREATURE)),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue())));
     }
 }

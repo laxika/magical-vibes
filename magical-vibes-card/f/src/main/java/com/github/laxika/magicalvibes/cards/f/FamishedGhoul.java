@@ -19,7 +19,7 @@ public class FamishedGhoul extends Card {
                 "{1}{B}",
                 List.of(new SacrificeSelfCost(),
                         new ExileGraveyardCardsEffect(2, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
-                                null, null, false, false, false, null, false, true)),
+                                null, false, false, false, null, false, true)),
                 "{1}{B}, Sacrifice this creature: Exile up to two target cards from a single graveyard."
         ));
     }

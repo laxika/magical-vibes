@@ -30,9 +30,7 @@ public class CreateTokensForExiledCardsWithSourceEffectHandler implements Normal
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var tokenEffect = (CreateTokensForExiledCardsWithSourceEffect) effect;
-        UUID sourcePermanentId = tokenEffect.sourcePermanentId() != null
-                ? tokenEffect.sourcePermanentId()
-                : entry.getSourcePermanentId();
+        UUID sourcePermanentId = entry.getSourcePermanentId();
         if (sourcePermanentId == null) {
             return;
         }

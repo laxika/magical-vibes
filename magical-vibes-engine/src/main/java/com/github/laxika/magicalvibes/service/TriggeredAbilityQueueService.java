@@ -2161,13 +2161,25 @@ public class TriggeredAbilityQueueService {
                         .toList();
                 prompt = pending.sourceCard().getName() + "'s ability - Choose a target permanent.";
             } else {
-                // Collect valid targets: all creatures on all battlefields + all players
+                // The permanents the effect's declared target admits: "any target" (CR 115.4) also offers
+                // planeswalkers and battles, "target creature or player" (Firesong and Sunspeaker) only creatures.
+                PermanentPredicate restriction = pending.effects().stream()
+                        .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
+                        .findFirst()
+                        .flatMap(effect -> effect.targetSpec().targetPredicate().permanentRestriction())
+                        .filter(declared -> !declared.equals(ANY_TARGET_PERMANENTS))
+                        .orElse(null);
+                FilterContext restrictionContext = new FilterContext(gameData, pending.sourceCard().getId(),
+                        pending.controllerId(), null, null);
                 validPermanentTargets = new ArrayList<>();
                 for (UUID pid : gameData.orderedPlayerIds) {
                     List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                     if (battlefield == null) continue;
                     for (Permanent p : battlefield) {
-                        boolean permanentTypeAllowed = gameQueryService.isCreature(gameData, p)
+                        boolean permanentTypeAllowed = restriction != null && !pending.creaturesOnly()
+                                ? predicateEvaluationService.matchesPermanentPredicate(p, restriction,
+                                        restrictionContext)
+                                : gameQueryService.isCreature(gameData, p)
                                 || (!pending.creaturesOnly()
                                 && (gameQueryService.isPlaneswalker(gameData, p)
                                 || gameQueryService.isBattle(gameData, p)));

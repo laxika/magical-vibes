@@ -35,7 +35,7 @@ public class MayCastCardsExiledWithSourceEffectHandler implements NormalEffectHa
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID sourcePermanentId = ((MayCastCardsExiledWithSourceEffect) effect).sourcePermanentId();
+        UUID sourcePermanentId = entry.getSourcePermanentId();
         if (sourcePermanentId == null) return;
 
         List<ExiledCardEntry> exiled;

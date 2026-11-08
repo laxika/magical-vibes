@@ -41,7 +41,7 @@ public class DeathInHeaven extends Card {
                 new MillEffect(2, MillRecipient.TARGET_PLAYER),
                 new ExileGraveyardCardsEffect(
                         0, GraveyardExileScope.TARGET_PLAYER_ENTIRE,
-                        null, null, false, true, false));
+                        null, false, true, false));
     }
 
     private SagaChapterTargetGroup anyPlayerTargetGroup() {

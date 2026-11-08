@@ -1,25 +1,16 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.UUID;
-
 /**
  * Leaves-the-battlefield trigger for an Aura that destroys the creature it enchanted.
  *
- * <p>The enchanted creature's permanent ID is captured when the Aura leaves, because the Aura is
- * no longer on the battlefield when the trigger resolves.</p>
+ * <p>The enchanted creature is the one the Aura was attached to as it last existed on the battlefield, read as the
+ * ability resolves from the stack entry's source snapshot ({@code StackEntry.getSourcePermanentSnapshot()}).</p>
  *
- * @param enchantedPermanentId the creature the Aura was attached to, or {@code null} in the card
- *                             definition before trigger collection
- * @param cannotBeRegenerated  whether the destruction ignores regeneration shields
+ * @param cannotBeRegenerated whether the destruction ignores regeneration shields
  */
-public record DestroyEnchantedCreatureOnLeaveEffect(UUID enchantedPermanentId,
-                                                     boolean cannotBeRegenerated) implements CardEffect {
+public record DestroyEnchantedCreatureOnLeaveEffect(boolean cannotBeRegenerated) implements CardEffect {
 
     public DestroyEnchantedCreatureOnLeaveEffect() {
-        this(null, true);
-    }
-
-    public DestroyEnchantedCreatureOnLeaveEffect(UUID enchantedPermanentId) {
-        this(enchantedPermanentId, true);
+        this(true);
     }
 }

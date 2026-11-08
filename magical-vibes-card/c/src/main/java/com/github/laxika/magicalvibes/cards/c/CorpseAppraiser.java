@@ -20,7 +20,7 @@ public class CorpseAppraiser extends Card {
         CardTypePredicate creatureCard = new CardTypePredicate(CardType.CREATURE);
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
-                        creatureCard, null, false, false, true, creatureCard, false, true),
+                        creatureCard, false, false, true, creatureCard, false, true),
                 new ConditionalEffect(new EventValueAtLeast(1),
                         LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(3, 1))));
     }

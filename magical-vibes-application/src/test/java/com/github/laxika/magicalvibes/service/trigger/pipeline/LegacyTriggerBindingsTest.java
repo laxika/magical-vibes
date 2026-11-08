@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourcePowerCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedCreatureOnLeaveEffect;
@@ -43,7 +43,6 @@ import com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
@@ -497,18 +496,18 @@ class LegacyTriggerBindingsTest {
     }
 
     @Test
-    @DisplayName("ControllerLosesGameOnLeavesEffect converts to TargetPlayerLosesGameEffect")
-    void controllerLosesGameConverts() {
+    @DisplayName("\"You lose the game\" goes on the stack as written, controlled by the leaving permanent's controller")
+    void controllerLosesGameGoesOnTheStackAsWritten() {
         Card card = createCreature("Pact Creature", 5, 5);
-        var effect = new ControllerLosesGameOnLeavesEffect();
+        var effect = new ControllerLosesGameEffect();
         Permanent perm = new Permanent(card);
         var ctx = leaves(perm, PLAYER1_ID);
 
         trigger(ctx, effect);
 
         assertThat(gd.stack).hasSize(1);
-        var resolved = (TargetPlayerLosesGameEffect) gd.stack.get(0).getEffectsToResolve().get(0);
-        assertThat(resolved.playerId()).isEqualTo(PLAYER1_ID);
+        assertThat(gd.stack.get(0).getEffectsToResolve()).containsExactly(effect);
+        assertThat(gd.stack.get(0).getControllerId()).isEqualTo(PLAYER1_ID);
     }
 
     @Test
@@ -543,8 +542,8 @@ class LegacyTriggerBindingsTest {
     }
 
     @Test
-    @DisplayName("DestroyEnchantedCreatureOnLeaveEffect captures the attached permanent ID")
-    void destroyEnchantedCreatureCapturesAttachedPermanent() {
+    @DisplayName("DestroyEnchantedCreatureOnLeaveEffect goes on the stack as written, the Aura as it last existed its source")
+    void destroyEnchantedCreatureKeepsTheAuraAsItLastExisted() {
         Permanent aura = new Permanent(createEnchantment("Leaving Aura"));
         Permanent creature = new Permanent(createCreature("Enchanted Creature", 2, 2));
         aura.setAttachedTo(creature.getId());
@@ -554,9 +553,10 @@ class LegacyTriggerBindingsTest {
         trigger(ctx, effect);
 
         assertThat(gd.stack).hasSize(1);
-        var captured = (DestroyEnchantedCreatureOnLeaveEffect) gd.stack.get(0).getEffectsToResolve().get(0);
-        assertThat(captured.enchantedPermanentId()).isEqualTo(creature.getId());
-        assertThat(captured.cannotBeRegenerated()).isTrue();
+        StackEntry entry = gd.stack.get(0);
+        assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+        assertThat(entry.getSourcePermanentId()).isEqualTo(aura.getId());
+        assertThat(entry.getSourcePermanentSnapshot().getAttachedTo()).isEqualTo(creature.getId());
     }
 
     @Test

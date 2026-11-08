@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.UUID;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,8 +14,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves a reanimation Aura's leaves-the-battlefield sacrifice (e.g. Animate Dead): the creature
- * that was enchanted by the Aura is sacrificed by its controller. The enchanted creature's permanent
- * ID was baked into the effect at trigger time (before the Aura left the battlefield).
+ * that was enchanted by the Aura is sacrificed by its controller. The enchanted creature is the one the Aura was
+ * attached to as it last existed on the battlefield, read from the stack entry's source snapshot.
  */
 @Slf4j
 @Component
@@ -31,12 +32,16 @@ public class SacrificeEnchantedCreatureOnLeaveEffectHandler implements NormalEff
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (SacrificeEnchantedCreatureOnLeaveEffect) effect;
-        if (e.enchantedPermanentId() == null) {
+        // "That creature": the creature the Aura was attached to as it last existed on the battlefield, else the
+        // reanimated creature an Aura that could not attach chose.
+        Permanent aura = entry.getSourcePermanentSnapshot();
+        UUID enchantedPermanentId = aura == null ? null
+                : aura.getAttachedTo() != null ? aura.getAttachedTo() : aura.getChosenPermanentId();
+        if (enchantedPermanentId == null) {
             return;
         }
 
-        Permanent enchantedCreature = gameQueryService.findPermanentById(gameData, e.enchantedPermanentId());
+        Permanent enchantedCreature = gameQueryService.findPermanentById(gameData, enchantedPermanentId);
         if (enchantedCreature == null) {
             // Creature already left the battlefield (e.g. it died, which is what removed the Aura).
             log.info("Game {} - enchanted creature no longer on battlefield, skipping sacrifice", gameData.id);

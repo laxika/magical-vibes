@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -31,6 +31,6 @@ public class LichsMastery extends Card {
         addTrigger(Triggers.youLoseLife(), new ExileForEachLifeLostEffect());
 
         // "When Lich's Mastery leaves the battlefield, you lose the game."
-        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new ControllerLosesGameOnLeavesEffect());
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new ControllerLosesGameEffect());
     }
 }

@@ -34,7 +34,7 @@ public class GeneralKudroOfDrannith extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.HUMAN))),
                         ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
                 new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD,
-                        null, null, true, false, false));
+                        null, true, false, false));
 
         var largeCreatureFilter = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

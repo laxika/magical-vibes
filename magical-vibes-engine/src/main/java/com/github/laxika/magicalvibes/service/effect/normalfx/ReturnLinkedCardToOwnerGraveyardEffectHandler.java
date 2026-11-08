@@ -28,7 +28,9 @@ public class ReturnLinkedCardToOwnerGraveyardEffectHandler implements NormalEffe
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID linkedCardId = ((ReturnLinkedCardToOwnerGraveyardEffect) effect).linkedCardId();
+        // The leaving token's link, as the token last existed on the battlefield.
+        UUID linkedCardId = entry.getSourcePermanentSnapshot() == null
+                ? null : entry.getSourcePermanentSnapshot().getChosenPermanentId();
         if (linkedCardId == null) {
             return;
         }

@@ -1,14 +1,9 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.UUID;
-
 /**
- * Returns the card linked to a leaving token from exile to its owner's graveyard.
- * The card ID is bound by the self-leaves trigger collector from the leaving permanent's link.
+ * "When this token leaves the battlefield, return the exiled card to its owner's graveyard": returns the card linked to
+ * the leaving token from exile to its owner's graveyard. The link is the token's chosen permanent id, read as the
+ * ability resolves from the stack entry's source as it last existed ({@code StackEntry.getSourcePermanentSnapshot()}).
  */
-public record ReturnLinkedCardToOwnerGraveyardEffect(UUID linkedCardId) implements CardEffect {
-
-    public ReturnLinkedCardToOwnerGraveyardEffect() {
-        this(null);
-    }
+public record ReturnLinkedCardToOwnerGraveyardEffect() implements CardEffect {
 }

@@ -28,7 +28,7 @@ public class ReleaseToMemory extends Card {
         ));
         // Exile target opponent's graveyard; the creature cards among them are counted for the Spirits.
         addSpellEffect(new ExileGraveyardCardsEffect(
-                0, GraveyardExileScope.TARGET_PLAYER_ALL_MATCHING, null, null, false, false, false,
+                0, GraveyardExileScope.TARGET_PLAYER_ALL_MATCHING, null, false, false, false,
                 new CardTypePredicate(CardType.CREATURE)));
         addSpellEffect(new CreateTokenEffect(new EventValue(), "Spirit", 1, 1,
                 null, List.of(CardSubtype.SPIRIT), Set.of(), Set.of()));

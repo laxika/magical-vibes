@@ -36,7 +36,7 @@ public class KayaOrzhovUsurper extends Card {
         addActivatedAbility(new ActivatedAbility(
                 +1,
                 List.of(new ExileGraveyardCardsEffect(2, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
-                                null, null, false, false, false, new CardTypePredicate(CardType.CREATURE),
+                                null, false, false, false, new CardTypePredicate(CardType.CREATURE),
                                 false, true, false, false),
                         new GainLifeEffect(new Scaled(new Min(new EventValue(), new Fixed(1)), 2))),
                 "+1: Exile up to two target cards from a single graveyard. You gain 2 life if at least one creature card was exiled this way."

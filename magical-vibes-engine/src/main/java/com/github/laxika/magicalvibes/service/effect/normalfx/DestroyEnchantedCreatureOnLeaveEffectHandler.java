@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.UUID;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,7 +11,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves the captured destruction of an Aura's former enchanted creature. */
+/** Destroys the creature an Aura was attached to as it last existed on the battlefield (the entry's source snapshot). */
 @Component
 @RequiredArgsConstructor
 public class DestroyEnchantedCreatureOnLeaveEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
@@ -26,11 +27,14 @@ public class DestroyEnchantedCreatureOnLeaveEffectHandler implements NormalEffec
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         DestroyEnchantedCreatureOnLeaveEffect e = (DestroyEnchantedCreatureOnLeaveEffect) effect;
-        if (e.enchantedPermanentId() == null) {
+        // The creature the Aura was attached to as it last existed on the battlefield.
+        UUID enchantedPermanentId = entry.getSourcePermanentSnapshot() == null
+                ? null : entry.getSourcePermanentSnapshot().getAttachedTo();
+        if (enchantedPermanentId == null) {
             return;
         }
 
-        Permanent enchantedCreature = gameQueryService.findPermanentById(gameData, e.enchantedPermanentId());
+        Permanent enchantedCreature = gameQueryService.findPermanentById(gameData, enchantedPermanentId);
         if (enchantedCreature == null) {
             return;
         }

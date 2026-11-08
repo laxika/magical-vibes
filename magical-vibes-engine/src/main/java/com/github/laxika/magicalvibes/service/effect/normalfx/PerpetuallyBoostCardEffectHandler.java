@@ -33,6 +33,14 @@ public class PerpetuallyBoostCardEffectHandler implements NormalEffectHandlerBea
         AmountContext context = AmountContext.forStackEntry(entry, source);
         int powerBoost = amountEvaluationService.evaluate(gameData, boost.powerBoost(), context);
         int toughnessBoost = amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), context);
+        if (boost.card() == null) {
+            // "That Vehicle perpetually gets …": the card of the permanent the trigger event was about, as it was then.
+            Permanent triggering = entry.getTriggeringPermanentSnapshot();
+            if (triggering != null && triggering.getCard() != null) {
+                PerpetualCardPowerToughnessSupport.remember(gameData, triggering.getCard(), powerBoost, toughnessBoost);
+            }
+            return;
+        }
         Card boosted = boostedCard(boost, source);
         PerpetualCardPowerToughnessSupport.remember(gameData, boosted, powerBoost, toughnessBoost);
         if (boosted != boost.card() && source.getCard() != null

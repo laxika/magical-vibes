@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -16,40 +15,20 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForEmergeSacrificeEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenForImprintedCardOwnerEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokensForExiledCardsWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedCreatureOnLeaveEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyMerfolkTappedForSourceAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTokensCreatedWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTokensCreatedWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.MayCastCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryAndReturnExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnLinkedCardToOwnerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardAndShuffleTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfExiledWhileActivatingCraftAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -57,7 +36,6 @@ import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
-import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
@@ -74,20 +52,17 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 /**
- * Puts the pilot families' triggered abilities on the stack with the event data their effects need: the moved
- * object's last-known power, counters, attachments and links, its graveyard entry version, the spell it was
- * sacrificed for. These are the old slot collectors' {@code @CollectsTrigger} handlers, moved here when their
- * families left {@code EffectSlot} (effect-slot-refactor.md step 10b) and now reading the {@link ZoneChangeEvent}
- * instead of a {@code TriggerContext}. Like the collectors, they bind that data into the effects, choose how the
- * ability waits for its targets or its mode, and decline an ability whose bound effect would do nothing or whose
- * handler checks an intervening "if" of its own.
+ * Puts the pilot families' triggered abilities on the stack with the event data their effects read from the stack
+ * entry: the moved object as it last existed (the entry's source snapshot and triggering permanent, with its power,
+ * counters, attachments and links), its graveyard entry version, the spell it was sacrificed for. These are the old
+ * slot collectors' {@code @CollectsTrigger} handlers, moved here when their families left {@code EffectSlot}
+ * (effect-slot-refactor.md step 10b) and now reading the {@link ZoneChangeEvent} instead of a {@code TriggerContext}.
+ * They record the event on the entry, choose how the ability waits for its targets or its mode, and decline an
+ * ability whose effect would do nothing or whose handler checks an intervening "if" of its own.
  *
  * <p>{@link TriggeredAbilityStackService} calls it for an ability of one effect, after the ability's options let it
- * trigger. A handler is chosen by the effect's class
- * as the collectors chose one: the class itself, then the class of the effect a {@link MayEffect},
- * {@link MayPayManaEffect} or {@link MayPayTapPermanentsEffect} wraps, then the event's default. Step 15 of the
- * refactor replaces the binding with effects that read the event stored on the stack entry, and removes this
- * class.
+ * trigger. A handler is chosen by the effect's class, else the event's default; a "you may" is the effect itself, never
+ * unwrapped (CR 603.5). Step 16 of the refactor removes this class with the registry.
  */
 @Slf4j
 @Service
@@ -335,33 +310,18 @@ public class LegacyTriggerBindings {
         register(h, PutSelfOnBottomOfOwnersLibraryAndReturnExiledCardsEffect.class,
                 this::handlePutSelfOnBottomAndReturnExiledCards);
         register(h, CreateTokenForEmergeSacrificeEffect.class, this::handleCreateTokenForEmergeSacrifice);
-        register(h, DestroyMerfolkTappedForSourceAbilitiesEffect.class,
-                this::handleDestroyMerfolkTappedForSourceAbilities);
         register(h, ChooseOneEffect.class, this::handleModalDeathTrigger);
     }
 
     private void registerLeaveHandlers() {
         Map<Class<? extends CardEffect>, Handler> h = leaveHandlers;
         register(h, ChooseOneAtTriggerTimeEffect.class, this::handleModalSelfLeavesTrigger);
-        register(h, ReturnLinkedCardToOwnerGraveyardEffect.class, this::handleReturnLinkedCardToOwnerGraveyard);
-        register(h, ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect.class,
-                this::handleReturnAllCardsExiledWithSourceToOwnerGraveyard);
         register(h, ReturnTargetCardsFromGraveyardToBattlefieldEffect.class,
                 this::handleReturnTargetCardsFromGraveyardSelfLeaves);
         register(h, SelfExiledWhileActivatingCraftAbilityEffect.class,
                 this::handleSelfExiledWhileActivatingCraftAbility);
-        register(h, ControllerLosesGameOnLeavesEffect.class, this::handleControllerLosesGameOnLeaves);
         register(h, RemoveLinkedPermanentEffect.class, this::handleRemoveLinkedPermanent);
-        register(h, DestroyTokensCreatedWithSourceEffect.class, this::handleDestroyTokensCreatedWithSourceOnLeave);
-        register(h, ExileTokensCreatedWithSourceEffect.class, this::handleExileTokensCreatedWithSourceOnLeave);
-        register(h, MayCastCardsExiledWithSourceEffect.class, this::handleMayCastCardsExiledWithSourceOnLeave);
-        register(h, SacrificeEnchantedCreatureOnLeaveEffect.class, this::handleSacrificeEnchantedCreatureOnLeave);
-        register(h, DestroyEnchantedCreatureOnLeaveEffect.class, this::handleDestroyEnchantedCreatureOnLeave);
         register(h, ReturnAllCardsExiledWithSourceEffect.class, this::handleReturnAllCardsExiledWithSourceOnLeave);
-        register(h, CreateTokenForImprintedCardOwnerEffect.class,
-                this::handleSelfLeavesCreateTokenForImprintedCardOwner);
-        register(h, CreateTokensForExiledCardsWithSourceEffect.class,
-                this::handleSelfLeavesCreateTokensForExiledCardsWithSource);
         register(h, TargetPlayerGainsLifeEffect.class, this::handleSelfLeavesTargetPlayerGainsLife);
     }
 
@@ -498,31 +458,6 @@ public class LegacyTriggerBindings {
         ));
         return true;
     }
-    private boolean handleDestroyMerfolkTappedForSourceAbilities(Ctx c, DestroyMerfolkTappedForSourceAbilitiesEffect effect) {
-        Permanent dyingPermanent = c.dyingPermanent() != null ? c.dyingPermanent() : c.permanent();
-        if (dyingPermanent == null) {
-            return false;
-        }
-
-        CardEffect resolved = new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
-                new PermanentHasSubtypePredicate(CardSubtype.MERFOLK),
-                new PermanentAnyOfPredicate(dyingPermanent.getTappedPermanentsForAbilityThisTurn().stream()
-                        .map(id -> (PermanentPredicate) new PermanentIsSpecificPermanentPredicate(id))
-                        .toList())
-        )));
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                c.dyingCard(),
-                c.controllerId(),
-                c.dyingCard().getName() + "'s ability",
-                new ArrayList<>(List.of(resolved)),
-                null,
-                dyingPermanent.getId()
-        );
-        entry.setSourcePermanentSnapshot(new Permanent(dyingPermanent));
-        c.gameData().stack.add(entry);
-        return true;
-    }
     private boolean handleModalDeathTrigger(Ctx c, ChooseOneEffect effect) {
         c.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
                 c.dyingCard(), c.controllerId(), effect, c.permanent().getId()));
@@ -579,34 +514,6 @@ public class LegacyTriggerBindings {
         logSelfLeaves(c);
         return true;
     }
-    private boolean handleReturnLinkedCardToOwnerGraveyard(Ctx c, ReturnLinkedCardToOwnerGraveyardEffect effect) {
-        UUID linkedCardId = c.permanent().getChosenPermanentId();
-        if (linkedCardId == null) {
-            return false;
-        }
-        c.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                c.dyingCard(),
-                c.controllerId(),
-                c.dyingCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new ReturnLinkedCardToOwnerGraveyardEffect(linkedCardId)))
-        ));
-        logSelfLeaves(c);
-        return true;
-    }
-    private boolean handleReturnAllCardsExiledWithSourceToOwnerGraveyard(Ctx c, ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect effect) {
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                c.dyingCard(),
-                c.controllerId(),
-                c.dyingCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect())),
-                null,
-                c.permanent().getId());
-        c.gameData().stack.add(entry);
-        logSelfLeaves(c);
-        return true;
-    }
     private boolean handleReturnTargetCardsFromGraveyardSelfLeaves(Ctx c, ReturnTargetCardsFromGraveyardToBattlefieldEffect effect) {
         graveyardTargetingService.handleReturnToBattlefieldETBTargeting(c.gameData(), c.controllerId(),
                 c.dyingCard(), List.of(effect), effect, effect.maxTargets());
@@ -621,126 +528,38 @@ public class LegacyTriggerBindings {
         return handleSelfLeavesDefault(c, effect.wrapped());
     }
 
-    private boolean handleControllerLosesGameOnLeaves(Ctx c, ControllerLosesGameOnLeavesEffect effect) {
-        c.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                c.dyingCard(),
-                c.controllerId(),
-                c.dyingCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new TargetPlayerLosesGameEffect(c.controllerId())))
-        ));
-        logSelfLeaves(c);
-        return true;
-    }
-
+    /**
+     * "When this leaves the battlefield, exile / sacrifice the linked permanent": the effect goes on the stack as the
+     * card wrote it and reads the link from the entry's source as it last existed (its chosen permanent) as it
+     * resolves. A bond never forged (no token was created) or already broken doesn't trigger.
+     */
     private boolean handleRemoveLinkedPermanent(Ctx c, RemoveLinkedPermanentEffect effect) {
-        // The partner id is stored on the leaving permanent; if the bond was never forged (no token was
-        // created) or was already broken, the trigger simply does nothing (CR 603.4-style no-op).
         UUID linkedId = c.permanent().getChosenPermanentId();
         if (linkedId == null) {
             return false;
         }
-        Permanent linked = gameQueryService.findPermanentById(c.gameData(), linkedId);
-        UUID linkedCardId = linked == null ? null : linked.getCard().getId();
         // SACRIFICE_PARTNER: the sacrifice ability belongs to the partner (e.g. "when the token leaves, sacrifice
         // this enchantment"), so it is controlled by the partner's controller, which can differ from the leaving
         // token's controller.
         UUID abilityControllerId = c.controllerId();
-        if (effect.mode() == RemoveLinkedPermanentEffect.Mode.SACRIFICE_PARTNER && linked != null) {
+        if (effect.mode() == RemoveLinkedPermanentEffect.Mode.SACRIFICE_PARTNER
+                && gameQueryService.findPermanentById(c.gameData(), linkedId) != null) {
             UUID partnerControllerId = gameQueryService.findPermanentController(c.gameData(), linkedId);
             if (partnerControllerId != null) {
                 abilityControllerId = partnerControllerId;
             }
         }
-        // Bake the linked id into the effect (not the stack entry's targetId, which resolution would
-        // validate against the source card's spell target filter and fizzle — Dance of Many's ETB filter
-        // is "nontoken creature", which the token itself fails).
-        c.gameData().stack.add(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 c.dyingCard(),
                 abilityControllerId,
                 c.dyingCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new RemoveLinkedPermanentEffect(effect.mode(), linkedId, linkedCardId)))
-        ));
-        logSelfLeaves(c);
-        return true;
-    }
-
-    private boolean handleDestroyTokensCreatedWithSourceOnLeave(Ctx c, DestroyTokensCreatedWithSourceEffect effect) {
-        // The source has already left, so its id is baked into the effect — the stack entry cannot
-        // carry a sourcePermanentId that still resolves to a battlefield permanent.
-        c.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                c.dyingCard(),
-                c.controllerId(),
-                c.dyingCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new DestroyTokensCreatedWithSourceEffect(
-                        effect.cannotBeRegenerated(), c.permanent().getId())))
-        ));
-        logSelfLeaves(c);
-        return true;
-    }
-
-    private boolean handleExileTokensCreatedWithSourceOnLeave(Ctx c, ExileTokensCreatedWithSourceEffect effect) {
-        c.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                c.dyingCard(),
-                c.controllerId(),
-                c.dyingCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new ExileTokensCreatedWithSourceEffect(
-                        c.permanent().getId(), effect.atNextEndStep())))
-        ));
-        logSelfLeaves(c);
-        return true;
-    }
-
-    private boolean handleMayCastCardsExiledWithSourceOnLeave(Ctx c, MayCastCardsExiledWithSourceEffect effect) {
-        // The source has already left, so the id the exiled cards are tracked under is baked into
-        // the effect — nothing on the stack can resolve it back to a battlefield permanent.
-        c.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                c.dyingCard(),
-                c.controllerId(),
-                c.dyingCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new MayCastCardsExiledWithSourceEffect(c.permanent().getId())))
-        ));
-        logSelfLeaves(c);
-        return true;
-    }
-
-    private boolean handleSacrificeEnchantedCreatureOnLeave(Ctx c, SacrificeEnchantedCreatureOnLeaveEffect effect) {
-        // Capture the enchanted creature's permanent id before the Aura is gone. An Aura that could not
-        // attach keeps the reanimated creature as its chosen permanent, so that creature is still sacrificed.
-        UUID enchantedId = c.permanent().getAttachedTo() != null
-                ? c.permanent().getAttachedTo()
-                : c.permanent().getChosenPermanentId();
-        if (enchantedId == null) {
-            return false;
-        }
-        c.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                c.dyingCard(),
-                c.controllerId(),
-                c.dyingCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new SacrificeEnchantedCreatureOnLeaveEffect(enchantedId)))
-        ));
-        logSelfLeaves(c);
-        return true;
-    }
-
-    private boolean handleDestroyEnchantedCreatureOnLeave(Ctx c, DestroyEnchantedCreatureOnLeaveEffect effect) {
-        UUID enchantedId = c.permanent().getAttachedTo();
-        if (enchantedId == null) {
-            return false;
-        }
-        c.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                c.dyingCard(),
-                c.controllerId(),
-                c.dyingCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new DestroyEnchantedCreatureOnLeaveEffect(
-                        enchantedId, effect.cannotBeRegenerated())))
-        ));
+                new ArrayList<>(List.of(effect)),
+                c.permanent().getId(),
+                List.of());
+        entry.setSourcePermanentSnapshot(new Permanent(c.permanent()));
+        entry.setTriggeringPermanent(c.dyingPermanent());
+        c.gameData().stack.add(entry);
         logSelfLeaves(c);
         return true;
     }
@@ -761,65 +580,6 @@ public class LegacyTriggerBindings {
                 sourcePermanentId,
                 List.of()
         ));
-        logSelfLeaves(c);
-        return true;
-    }
-
-    /**
-     * "When this permanent leaves the battlefield, the imprinted card's owner creates an X/X token."
-     * The source is already gone by the time the trigger resolves, so the blueprint's dynamic
-     * power/toughness is evaluated here against the leaving permanent and frozen into the queued effect.
-     */
-    private boolean handleSelfLeavesCreateTokenForImprintedCardOwner(Ctx c, CreateTokenForImprintedCardOwnerEffect effect) {
-        Card imprintedCard = c.gameData().getImprintedCard(c.dyingCard());
-        if (imprintedCard == null) {
-            return false;
-        }
-
-        CreateTokenEffect blueprint = effect.tokenEffect();
-        AmountContext amountContext = new AmountContext(c.controllerId(), c.permanent(), null, 0, 0);
-        CreateTokenEffect frozen = blueprint.withPowerToughness(
-                amountEvaluationService.evaluate(c.gameData(), blueprint.power(), amountContext),
-                amountEvaluationService.evaluate(c.gameData(), blueprint.toughness(), amountContext));
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                c.dyingCard(),
-                c.controllerId(),
-                c.dyingCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new CreateTokenForImprintedCardOwnerEffect(frozen))),
-                c.permanent().getId(),
-                List.of()
-        );
-        entry.setSourcePermanentSnapshot(new Permanent(c.permanent()));
-        entry.setNonTargeting(true);
-        c.gameData().stack.add(entry);
-        logSelfLeaves(c);
-        return true;
-    }
-
-    private boolean handleSelfLeavesCreateTokensForExiledCardsWithSource(Ctx c, CreateTokensForExiledCardsWithSourceEffect effect) {
-        boolean hasExiledCard;
-        synchronized (c.gameData().exiledCards) {
-            hasExiledCard = c.gameData().exiledCards.stream()
-                    .anyMatch(exiled -> c.permanent().getId().equals(exiled.sourcePermanentId()));
-        }
-        if (!hasExiledCard) {
-            return false;
-        }
-
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                c.dyingCard(),
-                c.controllerId(),
-                c.dyingCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new CreateTokensForExiledCardsWithSourceEffect(
-                        effect.tokenEffect(), c.permanent().getId()))),
-                c.permanent().getId(),
-                List.of()
-        );
-        entry.setSourcePermanentSnapshot(new Permanent(c.permanent()));
-        entry.setNonTargeting(true);
-        c.gameData().stack.add(entry);
         logSelfLeaves(c);
         return true;
     }
@@ -892,8 +652,6 @@ public class LegacyTriggerBindings {
         return withPermanent.withTriggeringCard(cardId, c.gameData().graveyardEntryVersion(cardId));
     }
 
-
-
     /**
      * The mana value limit of the graveyard target of {@code effect} ({@code ReturnCardFromGraveyardEffect
      * .dynamicMaxManaValue()}), evaluated as the ability triggers with {@code lastKnown}, the object that died as it
@@ -910,8 +668,6 @@ public class LegacyTriggerBindings {
         return amountEvaluationService.evaluateAtDeath(c.gameData(), target.maximumManaValue(), c.controllerId(),
                 lastKnown);
     }
-
-
 
     private UUID findPendingEnterTarget(GameData gameData, Permanent source) {
         return gameData.stack.stream()

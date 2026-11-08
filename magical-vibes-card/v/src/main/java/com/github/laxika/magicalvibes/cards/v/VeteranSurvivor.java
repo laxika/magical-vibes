@@ -23,7 +23,7 @@ public class VeteranSurvivor extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped()),
                 new ExileGraveyardCardsEffect(
                         1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
-                        null, null, false, true, false, null, false, true));
+                        null, false, true, false, null, false, true));
 
         addStaticEffect(new ConditionalEffect(
                 new SourceExiledCardsThreshold(3),

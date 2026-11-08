@@ -111,6 +111,10 @@ class SkyclaveApparitionTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bearsId);
 
         destroyApparition(harness.getPermanentId(player1, "Skyclave Apparition"));
+        // The leaves ability goes on the stack above the enters ability and finds no exiled card.
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard().getName().equals("Illusion"));
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Skyclave Apparition");

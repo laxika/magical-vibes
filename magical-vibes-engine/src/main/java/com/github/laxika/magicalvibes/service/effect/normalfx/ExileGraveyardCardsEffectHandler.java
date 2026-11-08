@@ -54,7 +54,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         var e = (ExileGraveyardCardsEffect) effect;
         switch (e.scope()) {
             case OWN -> resolveOwn(gameData,
-                    e.affectedPlayerId() != null ? e.affectedPlayerId() : entry.getControllerId(), e.count());
+                    entry.getControllerId(), e.count());
             case TRIGGERING_PLAYER -> {
                 if (entry.getTargetId() != null && gameData.playerIds.contains(entry.getTargetId())) {
                     resolveOwn(gameData, entry.getTargetId(), e.count());
@@ -104,7 +104,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
     }
 
     private void resolveOwnAllMatching(GameData gameData, StackEntry entry, ExileGraveyardCardsEffect e) {
-        UUID playerId = e.affectedPlayerId() != null ? e.affectedPlayerId() : entry.getControllerId();
+        UUID playerId = entry.getControllerId();
         String playerName = gameData.playerIdToName.get(playerId);
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
         UUID sourcePermanentId = null;

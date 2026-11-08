@@ -30,7 +30,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileMilledCreatureAndCreateT
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringLandFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardsExiledWithSourceOnUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringPermanentCardFromLibraryWithCroakCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherPermanentUnlessDiscardForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -128,10 +127,10 @@ public class MiscTriggerCollectorService {
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new PerpetuallyBoostCardEffect(
-                        crew.vehicle().getCard(), effect.powerBoost(), effect.toughnessBoost()))),
+                new ArrayList<>(List.of(effect.triggeredEffect())),
                 null,
                 match.permanent().getId());
+        entry.setTriggeringPermanent(crew.vehicle());
         entry.setTriggeringPermanentId(crew.vehicle().getId());
         entry.setNonTargeting(true);
         match.gameData().pendingActivatedAbilityCostTriggers.add(entry);
@@ -197,16 +196,6 @@ public class MiscTriggerCollectorService {
                 .filter(triggeredEffect -> !(triggeredEffect instanceof
                         com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect)
                         || match.permanent().getChosenPermanentId() != null)
-                .map(triggeredEffect -> triggeredEffect instanceof com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect remove
-                        ? new com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect(
-                                remove.mode(), match.permanent().getChosenPermanentId(), null)
-                        : triggeredEffect instanceof ReturnCardsExiledWithSourceOnUntapEffect
-                        ? new ReturnCardsExiledWithSourceOnUntapEffect(
-                                match.gameData().exileReturnOnPermanentLeave
-                                        .getOrDefault(match.permanent().getId(), List.of()).stream()
-                                        .map(pending -> pending.card().getId())
-                                        .collect(java.util.stream.Collectors.toSet()))
-                        : triggeredEffect)
                 .toList();
         if (triggeredEffects.isEmpty()) return true;
 
@@ -230,14 +219,21 @@ public class MiscTriggerCollectorService {
                         "becomes untapped", match.permanent().getId()));
             }
         } else {
-            match.gameData().enqueueTrigger(new StackEntry(
+            StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     card,
                     su.controllerId(),
                     card.getName() + "'s ability",
                     new ArrayList<>(triggeredEffects),
                     null,
-                    match.permanent().getId()));
+                    match.permanent().getId());
+            // "Return that exiled card" (Tawnos's Coffin): the cards exiled with this permanent as it untapped are the
+            // entry's triggering cards, which the return reads as it resolves.
+            entry.setTriggeringCards(match.gameData().exileReturnOnPermanentLeave
+                    .getOrDefault(match.permanent().getId(), List.of()).stream()
+                    .map(pending -> pending.card())
+                    .toList());
+            match.gameData().enqueueTrigger(entry);
         }
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(card));
         log.info("Game {} - {} triggers on becoming untapped", match.gameData().id, card.getName());

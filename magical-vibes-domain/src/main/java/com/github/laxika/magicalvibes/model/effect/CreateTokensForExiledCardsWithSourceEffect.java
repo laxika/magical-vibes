@@ -3,19 +3,13 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 
-import java.util.UUID;
-
 /**
  * Creates one token for each owner of cards still exiled with the source permanent, with the
- * token's power and toughness equal to the summed mana values of that owner's cards.
+ * token's power and toughness equal to the summed mana values of that owner's cards. The source is the stack
+ * entry's source permanent, which a "when this leaves the battlefield" ability's entry keeps after the source is gone.
  */
-public record CreateTokensForExiledCardsWithSourceEffect(CreateTokenEffect tokenEffect,
-                                                         UUID sourcePermanentId)
+public record CreateTokensForExiledCardsWithSourceEffect(CreateTokenEffect tokenEffect)
         implements CardEffect, TokenCreatingEffect {
-
-    public CreateTokensForExiledCardsWithSourceEffect(CreateTokenEffect tokenEffect) {
-        this(tokenEffect, null);
-    }
 
     @Override
     public DynamicAmount tokenAmount() {

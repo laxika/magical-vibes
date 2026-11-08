@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.ColdWaterSnapper;
@@ -20,7 +23,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({FiresongAndSunspeaker.class, Shock.class, GrizzlyBears.class, WhitesunsPassage.class,
-        SoothingBalm.class, DeepFreeze.class, ColdWaterSnapper.class})
+        SoothingBalm.class, DeepFreeze.class, ColdWaterSnapper.class, JaceBeleren.class,
+        InvasionOfZendikar.class})
 class FiresongAndSunspeakerTest extends BaseCardTest {
 
     @Test
@@ -199,5 +203,27 @@ class FiresongAndSunspeakerTest extends BaseCardTest {
         var choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validIds()).doesNotContain(snapper.getId());
+    }
+
+    @Test
+    @DisplayName("Target creature or player: a planeswalker or a battle is not a legal target")
+    void lifeGainTriggerOffersOnlyCreaturesAndPlayers() {
+        harness.addToBattlefield(player1, new FiresongAndSunspeaker());
+        var bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        var jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        jace.setCounterCount(CounterType.LOYALTY, 3);
+        var battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfZendikar());
+        battle.setProtectorPlayerId(player1.getId());
+        battle.setCounterCount(CounterType.DEFENSE, 3);
+        harness.setHand(player1, List.of(new WhitesunsPassage()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(jace, battle);
+        var choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(bears.getId(), player1.getId(), player2.getId());
+        assertThat(choice.validIds()).doesNotContain(jace.getId(), battle.getId());
     }
 }

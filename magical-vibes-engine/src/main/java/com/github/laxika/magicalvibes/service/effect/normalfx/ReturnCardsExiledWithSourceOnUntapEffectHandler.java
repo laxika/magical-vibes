@@ -22,10 +22,9 @@ public class ReturnCardsExiledWithSourceOnUntapEffectHandler implements NormalEf
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        if (entry.getSourcePermanentId() != null
-                && effect instanceof ReturnCardsExiledWithSourceOnUntapEffect returnEffect) {
+        if (entry.getSourcePermanentId() != null) {
             permanentRemovalService.returnExileReturnsOnSourceEvent(
-                    gameData, entry.getSourcePermanentId(), returnEffect.primaryCardIds());
+                    gameData, entry.getSourcePermanentId(), java.util.Set.copyOf(entry.triggeringCardIds()));
         }
     }
 }

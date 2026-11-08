@@ -16,8 +16,8 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves {@link DestroyTokensCreatedWithSourceEffect}: destroys every battlefield permanent
  * registered under the source in {@code GameData.sourceCreatedTokens}, no matter who controls it
- * now. The source id comes from the effect when a leaves-the-battlefield collector baked it in,
- * otherwise from the stack entry.
+ * now. The source is the stack entry's source permanent, which a leaves-the-battlefield ability's entry keeps
+ * after the source is gone.
  */
 @Component
 @RequiredArgsConstructor
@@ -34,9 +34,7 @@ public class DestroyTokensCreatedWithSourceEffectHandler implements NormalEffect
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var destroy = (DestroyTokensCreatedWithSourceEffect) effect;
 
-        UUID sourceId = destroy.sourcePermanentId() != null
-                ? destroy.sourcePermanentId()
-                : entry.getSourcePermanentId();
+        UUID sourceId = entry.getSourcePermanentId();
         if (sourceId == null) {
             return;
         }

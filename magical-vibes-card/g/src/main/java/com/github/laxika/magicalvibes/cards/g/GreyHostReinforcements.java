@@ -24,7 +24,6 @@ public class GreyHostReinforcements extends Card {
                 0,
                 GraveyardExileScope.TARGET_PLAYER_ALL_MATCHING,
                 null,
-                null,
                 false,
                 false,
                 false,

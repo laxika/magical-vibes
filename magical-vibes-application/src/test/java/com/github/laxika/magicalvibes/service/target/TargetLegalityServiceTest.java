@@ -320,7 +320,7 @@ class TargetLegalityServiceTest {
         Card source = createCreature("Source", CardColor.BLACK);
         ExileGraveyardCardsEffect optional = new ExileGraveyardCardsEffect(2,
                 GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
-                null, null, false, false, false, null, false, true);
+                null, false, false, false, null, false, true);
         ActivatedAbility ability = new ActivatedAbility(false, "{1}{B}", List.of(optional), "Exile up to two cards.");
 
         sut.validateActivatedAbilityTargeting(gd, player1Id, ability,

@@ -288,7 +288,7 @@ class GraveyardTargetingServiceTest {
         Card graveyardCard = new Card();
         gd.playerGraveyards.get(player1Id).add(graveyardCard);
         ExileGraveyardCardsEffect exile = new ExileGraveyardCardsEffect(
-                3, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD, null, null, false, true, false);
+                3, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD, null, false, true, false);
 
         service.handleGraveyardCardsExileETBTargeting(gd, player1Id, card, List.of(exile), exile);
 

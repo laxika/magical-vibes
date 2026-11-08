@@ -1,16 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.Set;
-import java.util.UUID;
-
-/** Returns cards tracked by the source's source-linked exile-return entries after it untaps. */
-public record ReturnCardsExiledWithSourceOnUntapEffect(Set<UUID> primaryCardIds) implements CardEffect {
-
-    public ReturnCardsExiledWithSourceOnUntapEffect() {
-        this(Set.of());
-    }
-
-    public ReturnCardsExiledWithSourceOnUntapEffect {
-        primaryCardIds = primaryCardIds == null ? Set.of() : Set.copyOf(primaryCardIds);
-    }
+/**
+ * "When this becomes untapped, return that exiled card" (Tawnos's Coffin): returns the cards the source's linked exile
+ * tracked as it became untapped, the stack entry's triggering cards, through their source-linked exile-return entries.
+ */
+public record ReturnCardsExiledWithSourceOnUntapEffect() implements CardEffect {
 }

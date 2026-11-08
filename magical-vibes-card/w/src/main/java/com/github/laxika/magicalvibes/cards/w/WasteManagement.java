@@ -42,10 +42,10 @@ public class WasteManagement extends Card {
                         new Kicked(),
                         new ExileGraveyardCardsEffect(
                                 2, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
-                                null, null, false, false, false, creatureCard, false, true),
+                                null, false, false, false, creatureCard, false, true),
                         new ExileGraveyardCardsEffect(
                                 0, GraveyardExileScope.TARGET_PLAYER_ALL_MATCHING,
-                                null, null, false, false, false, creatureCard, false)));
+                                null, false, false, false, creatureCard, false)));
 
         addSpellEffect(new CreateTokenEffect(
                 new EventValue(), "Rogue", 2, 2, CardColor.BLACK,

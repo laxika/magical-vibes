@@ -38,7 +38,7 @@ public class CanoptekScarabSwarm extends Card {
                 "Target must be a player"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new ExileGraveyardCardsEffect(0, GraveyardExileScope.TARGET_PLAYER_ALL_MATCHING,
-                        null, null, false, false, false, artifactOrLand),
+                        null, false, false, false, artifactOrLand),
                 scarab));
     }
 }

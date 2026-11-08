@@ -21,7 +21,7 @@ public class PitOfOfferings extends Card {
     public PitOfOfferings() {
         addStaticEffect(new EntersTappedEffect());
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ExileGraveyardCardsEffect(
-                3, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD, null, null, false, true, false, null, false, true));
+                3, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD, null, false, true, false, null, false, true));
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
         addActivatedAbility(new ActivatedAbility(
                 true,

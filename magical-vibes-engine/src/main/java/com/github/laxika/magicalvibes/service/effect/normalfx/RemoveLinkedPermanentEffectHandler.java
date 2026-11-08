@@ -15,9 +15,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Removes the permanent linked to the trigger source (Dance of Many's mutual bond). The trigger
- * collector bakes the linked permanent's id into the stack entry's {@code targetId}; here we clear the
- * partner's back-reference first so removing it does not re-trigger the reciprocal removal, then exile
+ * Removes the permanent linked to the trigger source (Dance of Many's mutual bond). The link is read as the ability
+ * resolves from the source, else from the source as it last existed (the stack entry's source snapshot); the
+ * partner's back-reference is cleared first so removing it does not re-trigger the reciprocal removal, then exile
  * or sacrifice it per {@link RemoveLinkedPermanentEffect.Mode}. A sacrifice is the resolution step's
  * departure ({@link StepDepartureSupport#sacrifice}), so it asks its CR 616.1 questions before the
  * permanent leaves.
@@ -41,13 +41,16 @@ public class RemoveLinkedPermanentEffectHandler implements NormalEffectHandlerBe
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (RemoveLinkedPermanentEffect) effect;
 
-        // The leaves-battlefield collector bakes the id in before the source is gone; the
-        // becomes-untapped trigger leaves it null and the still-present source carries the link.
+        // An engine-built delayed trigger names the linked permanent; a card's own ability reads the link from its
+        // source: the still-present source (becomes untapped), else the source as it last existed (leaves the
+        // battlefield).
         UUID linkedId = e.linkedPermanentId();
         Permanent source = entry.getSourcePermanentId() == null ? null
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (linkedId == null) {
-            linkedId = source == null ? null : source.getChosenPermanentId();
+            linkedId = source != null ? source.getChosenPermanentId()
+                    : entry.getSourcePermanentSnapshot() == null ? null
+                    : entry.getSourcePermanentSnapshot().getChosenPermanentId();
         }
         if (source != null && linkedId != null && linkedId.equals(source.getChosenPermanentId())) {
             source.setChosenPermanentId(null);

@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
  */
 public record DealDamageOnSpellLifeGainEffect(int damage, CardColor triggeringColor) implements CardEffect {
 
-    /** The damage that goes on the stack. */
+    /** The damage that goes on the stack: "target creature or player", never a planeswalker or a battle. */
     public CardEffect triggeredEffect() {
-        return new DealDamageToAnyTargetEffect(damage);
+        return new DealDamageToTargetCreatureOrPlayerEffect(damage);
     }
 }

@@ -21,7 +21,7 @@ public class HedonistsTrove extends Card {
                 "Target must be an opponent"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ExileGraveyardCardsEffect(0, GraveyardExileScope.TARGET_PLAYER_ENTIRE,
-                        null, null, false, true, false));
+                        null, false, true, false));
         addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 false, null, false, false, 0, null, true, false, false));
     }

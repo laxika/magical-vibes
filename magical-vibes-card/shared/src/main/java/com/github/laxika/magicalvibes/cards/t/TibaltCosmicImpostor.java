@@ -52,7 +52,7 @@ public class TibaltCosmicImpostor extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -8,
                 List.of(
-                        new ExileGraveyardCardsEffect(0, GraveyardExileScope.ALL_PLAYERS, null, null, false,
+                        new ExileGraveyardCardsEffect(0, GraveyardExileScope.ALL_PLAYERS, null, false,
                                 true, false, null, false, false),
                         new AwardManaEffect(ManaColor.RED, 3)
                 ),

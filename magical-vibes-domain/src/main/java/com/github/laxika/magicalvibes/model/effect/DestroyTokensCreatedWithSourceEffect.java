@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.UUID;
-
 /**
  * Destroys every token still on the battlefield that was created with the source permanent —
  * "destroy all tokens created with this enchantment. They can't be regenerated" (Tombstone
@@ -9,19 +7,10 @@ import java.util.UUID;
  * by the paired creation effect (an {@link EachPlayerCreatesTokenEffect} with
  * {@code recordAsCreatedWithSource}), so the tokens are found regardless of who controls them now.
  *
- * <p>Works on {@code Triggers.endStep(ActivePlayer.ANY)} (the stack entry carries the source permanent id) and on
- * "when this leaves the battlefield", where the source is already gone and the collector bakes its
- * id into {@code sourcePermanentId} instead.
+ * <p>The source is the stack entry's source permanent, which a "when this leaves the battlefield" ability's entry
+ * keeps after the source is gone.
  *
- * @param cannotBeRegenerated       whether the destroyed tokens can be regenerated
- * @param sourcePermanentId         source permanent id baked in by a leaves-the-battlefield
- *                                  collector; null means "read it off the stack entry"
+ * @param cannotBeRegenerated whether the destroyed tokens can be regenerated
  */
-public record DestroyTokensCreatedWithSourceEffect(boolean cannotBeRegenerated, UUID sourcePermanentId)
-        implements CardEffect {
-
-    /** Card-facing shape; the source permanent is read off the resolving stack entry. */
-    public DestroyTokensCreatedWithSourceEffect(boolean cannotBeRegenerated) {
-        this(cannotBeRegenerated, null);
-    }
+public record DestroyTokensCreatedWithSourceEffect(boolean cannotBeRegenerated) implements CardEffect {
 }
