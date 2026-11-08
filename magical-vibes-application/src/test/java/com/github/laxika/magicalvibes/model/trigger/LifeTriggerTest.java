@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.trigger;
 
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
@@ -12,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.trigger.LifeAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.LifeWatch;
 import org.junit.jupiter.api.Test;
@@ -29,6 +32,7 @@ class LifeTriggerTest {
 
     private static final CardEffect DRAW = new DrawCardEffect(1);
     private static final CardEffect GAIN = new GainLifeEffect(2);
+    private static final CardPredicate WHITE = new CardColorPredicate(CardColor.WHITE);
 
     @Test
     void everyLifeTriggerFunctionsFromTheBattlefieldByDefault() {
@@ -87,6 +91,28 @@ class LifeTriggerTest {
         assertThat(first.watchKey()).isEqualTo(Triggers.youGainLife());
         assertThat(Triggers.youGainLife().watchKey()).isEqualTo(Triggers.youGainLife());
         assertThatThrownBy(first::firstTimeEachTurn).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void theSpellFilterIsDroppedFromTheWatchKeyAndReadFromTheAbility() {
+        LifeTrigger whiteSpell = Triggers.youGainLife().causedBySpell(WHITE);
+        Card card = new Card();
+        card.addTrigger(whiteSpell, DRAW);
+
+        assertThat(whiteSpell.watchKey()).isEqualTo(Triggers.youGainLife());
+        assertThat(LifeAbilityReader.readPrinted(card, LifeWatch.ON_CONTROLLER_GAINS_LIFE)).singleElement()
+                .satisfies(read -> {
+                    assertThat(read.effect()).isSameAs(DRAW);
+                    assertThat(read.spellFilter()).isEqualTo(WHITE);
+                });
+        assertThatThrownBy(() -> LifeAbilityReader.printedEffects(card, LifeWatch.ON_CONTROLLER_GAINS_LIFE))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("spell filter");
+        assertThatThrownBy(() -> Triggers.youLoseLife().causedBySpell(WHITE))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> whiteSpell.causedBySpell(WHITE)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> LifeAbilityReader.read(new TriggeredAbility(
+                Triggers.opponentGainsLife().causedBySpell(WHITE), DRAW), Triggers.opponentGainsLife()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

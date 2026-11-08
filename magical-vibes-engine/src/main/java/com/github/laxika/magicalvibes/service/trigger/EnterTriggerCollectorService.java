@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTrackedTokensAndCreateTokenCopyOfTargetPermanentEffect;
@@ -627,9 +626,7 @@ public class EnterTriggerCollectorService {
             logTriggered(match);
             return true;
         }
-        boolean usesEnteringTarget = may.wrapped() instanceof DiscardCardThenEffect discard
-                && discard.useEntryTarget();
-        UUID mayTargetId = usesEnteringTarget ? enteringPermanentId : pe.defaultTargetPlayerId();
+        UUID mayTargetId = pe.defaultTargetPlayerId();
         Permanent enteringPermanent = enteringPermanentId == null
                 ? null : gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {

@@ -376,7 +376,7 @@ Chosen-as-enters colors stay handled by the resolution-time `chosenColor` update
 extend the transformer's visitor when a card needs them): `PreventDamageEffect.fromColors(...)`,
 `TargetingRestrictionEffect`, `GrantControllerCreaturesCantBeTargetedByColorsEffect`,
 `GrantControllerSpellsCantBeCounteredByColorsEffect`, `GrantLifelinkToControllerSpellsByColorEffect`,
-`BoostColorSourceDamageThisTurnEffect`, `DealDamageOnSpellLifeGainEffect`,
+`BoostColorSourceDamageThisTurnEffect`, a life-gain trigger's `causedBySpell` filter,
 `AwardAnyColorManaEffect`'s `subtype`, color/land-type words inside trigger effects other
 than a cast trigger's spell filter, and activated-ability target restrictions. The remaining `CardColor`/`CardSubtype`-carrying
 effect types (token creators, one-shot damage/draw/return effects, costs) consume their

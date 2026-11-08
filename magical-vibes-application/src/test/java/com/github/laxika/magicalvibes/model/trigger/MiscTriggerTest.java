@@ -214,6 +214,23 @@ class MiscTriggerTest {
     }
 
     @Test
+    void aCrewObjectFilterIsDroppedFromTheWatchKeyAndReadFromTheAbility() {
+        ObjectActionTrigger flyingCrews = Triggers.creatureYouControlCrewsVehicle().withObjectFilter(FLYING);
+
+        assertThat(flyingCrews.watchKey()).isEqualTo(Triggers.creatureYouControlCrewsVehicle());
+        assertThat(MiscAbilityReader.read(new TriggeredAbility(flyingCrews, DRAW),
+                MiscWatch.ON_ALLY_CREATURE_CREWS_VEHICLE.trigger()))
+                .extracting(MiscAbilityReader.MiscEffect::effect, MiscAbilityReader.MiscEffect::objectFilter)
+                .containsExactly(tuple(DRAW, FLYING));
+        assertThatThrownBy(() -> MiscAbilityReader.effects(List.of(new TriggeredAbility(flyingCrews, DRAW)),
+                MiscWatch.ON_ALLY_CREATURE_CREWS_VEHICLE.trigger()))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("object filter");
+        assertThatThrownBy(() -> Triggers.becomesCrewed().withObjectFilter(FLYING))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> flyingCrews.withObjectFilter(FLYING)).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     void theFirstCrewOrSaddleEachTurnIsWatchedByItsEventAndJudgedByTheUnkeyedMark() {
         assertThat(Triggers.becomesCrewedForFirstTimeEachTurn().watchKey()).isEqualTo(Triggers.becomesCrewed());
         assertThat(Triggers.becomesSaddledForFirstTimeEachTurn().watchKey()).isEqualTo(Triggers.becomesSaddled());

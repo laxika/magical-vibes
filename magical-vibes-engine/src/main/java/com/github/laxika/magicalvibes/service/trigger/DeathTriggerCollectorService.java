@@ -25,17 +25,10 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemCreatureDeathTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerDiscardsCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerMayDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerMaySearchLibraryForSameNameEffect;
-import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentOfDyingCreatureControllerDrawsAndGainsLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerMaySearchLibraryForCreatureToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -188,15 +181,6 @@ public class DeathTriggerCollectorService {
                 (match, effect, context) -> handleAnyCreatureDeathTap(match, (TapPermanentsEffect) effect, context));
         registerCreatureDeath(CreatureDeathWatch.ANY, MayEffect.class,
                 (match, effect, context) -> handleAnyCreatureDeathMay(match, (MayEffect) effect, context));
-        registerCreatureDeath(CreatureDeathWatch.ANY, DyingCreatureControllerMayDrawCardEffect.class,
-                (match, effect, context) -> handleAnyCreatureDeathDyingControllerDraws(match,
-                        (DyingCreatureControllerMayDrawCardEffect) effect, context));
-        registerCreatureDeath(CreatureDeathWatch.ANY, DyingCreatureControllerDiscardsCardEffect.class,
-                (match, effect, context) -> handleAnyCreatureDeathDyingControllerDiscards(match,
-                        (DyingCreatureControllerDiscardsCardEffect) effect, context));
-        registerCreatureDeath(CreatureDeathWatch.ANY, DyingCreatureControllerSacrificesPermanentsEffect.class,
-                (match, effect, context) -> handleAnyCreatureDeathDyingControllerSacrifices(match,
-                        (DyingCreatureControllerSacrificesPermanentsEffect) effect, context));
         registerCreatureDeath(CreatureDeathWatch.ANY,
                 EachOpponentOfDyingCreatureControllerDrawsAndGainsLifeEffect.class,
                 (match, effect, context) -> handleAnyCreatureDeathBountyReward(match,
@@ -1565,67 +1549,19 @@ public class DeathTriggerCollectorService {
         } else {
             // Pass the source permanent id so wrapped source-referencing effects (e.g.
             // PutCountersOnSourceEffect for Scavenger Drake's optional +1/+1 counter) can resolve.
+            int stackSizeBefore = match.gameData().stack.size();
             match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), may,
                     null, match.permanent().getId());
-            StackEntry entry = match.gameData().stack.getLast();
-            markDyingCard(match.gameData(), entry, dyingCard);
-            if (ctx instanceof TriggerContext.CreatureDeath death) {
-                recordDyingCreature(entry, death);
+            // Every copy an effect that makes the ability trigger additional times added records the creature that
+            // died, not just the last one (Drivnod, Carnage Dominus with Fecundity).
+            for (int i = stackSizeBefore; i < match.gameData().stack.size(); i++) {
+                StackEntry entry = match.gameData().stack.get(i);
+                markDyingCard(match.gameData(), entry, dyingCard);
+                if (ctx instanceof TriggerContext.CreatureDeath death) {
+                    recordDyingCreature(entry, death);
+                }
             }
         }
-        logAnyCreatureDeath(match);
-        return true;
-    }
-
-    boolean handleAnyCreatureDeathDyingControllerDraws(TriggerMatchContext match,
-            DyingCreatureControllerMayDrawCardEffect effect, TriggerContext ctx) {
-        // Fecundity: the dying creature's controller (not the source's controller) may draw.
-        TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
-        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(), match.controllerId(), match.permanent().getCard().getName() + "'s ability",
-                List.of(MayEffect.forPlayer(new com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect(1),
-                        "Draw a card?", cd.dyingCreatureControllerId())),
-                cd.dyingCreatureControllerId(), match.permanent().getId());
-        entry.setNonTargeting(true);
-        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
-        match.gameData().enqueueTrigger(entry);
-        logAnyCreatureDeath(match);
-        return true;
-    }
-
-    boolean handleAnyCreatureDeathDyingControllerDiscards(TriggerMatchContext match,
-            DyingCreatureControllerDiscardsCardEffect effect, TriggerContext ctx) {
-        // Bereavement: the dying creature's controller (not the source's controller) discards a card.
-        TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new DiscardEffect(1, DiscardRecipient.TRIGGERING_PLAYER))),
-                cd.dyingCreatureControllerId(),
-                match.permanent().getId());
-        entry.setNonTargeting(true);
-        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
-        match.gameData().stack.add(entry);
-        logAnyCreatureDeath(match);
-        return true;
-    }
-
-    boolean handleAnyCreatureDeathDyingControllerSacrifices(TriggerMatchContext match,
-            DyingCreatureControllerSacrificesPermanentsEffect effect, TriggerContext ctx) {
-        // Earthlink: the dying creature's controller (not the source's controller) sacrifices.
-        TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new SacrificePermanentsEffect(
-                        effect.count(), effect.filter(), SacrificeRecipient.TRIGGERING_PERMANENT_CONTROLLER)))
-        );
-        entry.setTriggeringPermanentControllerId(cd.dyingCreatureControllerId());
-        match.gameData().stack.add(entry);
         logAnyCreatureDeath(match);
         return true;
     }

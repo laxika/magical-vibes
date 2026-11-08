@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.AttachTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ControlChangeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.DayNightTrigger;
@@ -57,10 +58,12 @@ public final class MiscAbilityReader {
      * @param door              the door of the Room the watched condition is on ("when you unlock this door", 0 for
      *                          the left one, 1 for the right one), or {@code null} for every other condition
      * @param firstTimeEachTurn the watched condition is "becomes crewed / saddled for the first time each turn"
+     * @param objectFilter      what the object that takes the action must be, as a permanent ("this or another
+     *                          legendary creature you control crews a Vehicle"), or {@code null} for any
      * @param simultaneousWithPrevious the registration happens at the same time as the effect before it
      */
     public record MiscEffect(CardEffect effect, TriggeredAbility ability, Integer door, boolean firstTimeEachTurn,
-                             boolean simultaneousWithPrevious) {
+                             PermanentPredicate objectFilter, boolean simultaneousWithPrevious) {
 
         public MiscEffect {
             Objects.requireNonNull(effect, "effect");
@@ -98,7 +101,7 @@ public final class MiscAbilityReader {
 
         /** This read with {@code effect} in place of its effect. */
         public MiscEffect withEffect(CardEffect effect) {
-            return new MiscEffect(effect, ability, door, firstTimeEachTurn, simultaneousWithPrevious);
+            return new MiscEffect(effect, ability, door, firstTimeEachTurn, objectFilter, simultaneousWithPrevious);
         }
     }
 
@@ -155,11 +158,12 @@ public final class MiscAbilityReader {
             throw new IllegalStateException("A first-time-each-turn trigger takes no limit: " + ability);
         }
         Integer door = condition instanceof ObjectActionTrigger object ? object.door() : null;
+        PermanentPredicate objectFilter = condition instanceof ObjectActionTrigger object ? object.objectFilter() : null;
         Condition interveningIf = options.interveningIf();
         List<MiscEffect> effects = new ArrayList<>(ability.effects().size());
         for (EffectRegistration registration : ability.effects()) {
             effects.add(new MiscEffect(wrapped(registration.effect(), interveningIf), ability, door,
-                    firstTimeEachTurn, registration.simultaneousWithPrevious()));
+                    firstTimeEachTurn, objectFilter, registration.simultaneousWithPrevious()));
         }
         return effects;
     }
@@ -202,13 +206,14 @@ public final class MiscAbilityReader {
     }
 
     /**
-     * Throws when {@code effect}'s ability has a door, a first time or a limit, which the collector of {@code watched}
-     * doesn't read.
+     * Throws when {@code effect}'s ability has a door, a first time, an object filter or a limit, which the collector
+     * of {@code watched} doesn't read.
      */
     public static void requireNothingToJudge(MiscEffect effect, Trigger watched) {
-        if (effect.door() != null || effect.firstTimeEachTurn() || effect.limit() != TriggerLimit.NONE) {
-            throw new IllegalStateException("The collector of " + watched + " judges no door, first time or limit: "
-                    + effect.ability());
+        if (effect.door() != null || effect.firstTimeEachTurn() || effect.objectFilter() != null
+                || effect.limit() != TriggerLimit.NONE) {
+            throw new IllegalStateException("The collector of " + watched + " judges no door, first time or limit, "
+                    + "nor an object filter: " + effect.ability());
         }
     }
 
@@ -230,9 +235,10 @@ public final class MiscAbilityReader {
         }
         Trigger first = conditions.getFirst();
         if (conditions.stream().anyMatch(trigger -> !Objects.equals(door(trigger), door(first))
-                || firstTimeEachTurn(trigger) != firstTimeEachTurn(first))) {
+                || firstTimeEachTurn(trigger) != firstTimeEachTurn(first)
+                || !Objects.equals(objectFilter(trigger), objectFilter(first)))) {
             throw new IllegalStateException("The conditions of one ability watched as " + watched
-                    + " must have the same door and first time: " + ability);
+                    + " must have the same door, first time and object filter: " + ability);
         }
         return first;
     }
@@ -246,6 +252,10 @@ public final class MiscAbilityReader {
 
     private static Integer door(Trigger trigger) {
         return trigger instanceof ObjectActionTrigger object ? object.door() : null;
+    }
+
+    private static PermanentPredicate objectFilter(Trigger trigger) {
+        return trigger instanceof ObjectActionTrigger object ? object.objectFilter() : null;
     }
 
     private static boolean firstTimeEachTurn(Trigger trigger) {

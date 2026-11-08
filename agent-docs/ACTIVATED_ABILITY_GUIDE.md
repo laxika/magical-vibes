@@ -1260,6 +1260,7 @@ opening-hand actions (`MayEffect(PregameChoiceEffect)`, CR 103.6: the hand) and 
 | `Triggers.spellOrAbilityCausesItsControllerToShuffle()` | A spell or ability causes its controller to shuffle their library ("causes its controller to shuffle"): fires on every permanent only when the shuffling player is the controller of the resolving spell or ability (`LibraryShuffleHelper`). The shuffling player is the trigger's target. Used by Widespread Panic |
 | `Triggers.opponentSearchesTheirLibrary()` | Opponent searches their own library; the searching player is baked in as `targetId` (Ob Nixilis, Unshackled) |
 | `Triggers.youGainLife()` | Controller gains life |
+| `Triggers.youGainLife().causedBySpell(CardPredicate)` | Controller gains life from a matching spell (Firesong and Sunspeaker): the spell itself, not an ability of its card |
 | `Triggers.opponentDealtNoncombatDamage()` | Opponent dealt noncombat damage |
 | `Triggers.opponentDealtDamageByRedInstantSorceryOrPlaneswalkerYouControl() from the graveyard` | Opponent dealt damage by your red instant/sorcery spell or red planeswalker, fired from your graveyard |
 | `Triggers.sourceYouControlDealsNoncombatDamageToOpponent() from the graveyard` | A source you control deals noncombat damage to an opponent, fired from your graveyard |

@@ -11,6 +11,10 @@ package com.github.laxika.magicalvibes.model.effect;
  *   <li>{@link #TRIGGERING_PLAYER} — the player whose spell or ability caused the trigger
  *       (stack entry's {@code targetId}) discards without targeting; the discard is marked as
  *       opponent-caused when that player differs from the effect controller.</li>
+ *   <li>{@link #TRIGGERING_PERMANENT_CONTROLLER} — the controller of the permanent the trigger event was about
+ *       (the stack entry's triggering permanent: its current controller while it is on the battlefield, else as it
+ *       last existed there) discards without targeting: "whenever a green creature dies, its controller discards a
+ *       card" (Bereavement).</li>
  *   <li>{@link #TARGET_PERMANENT_CONTROLLER} — the controller of the targeted permanent (stack
  *       entry's {@code targetId} is a permanent, not a player) discards; the effect does not add its
  *       own target and sets {@code discardCausedByOpponent = true}. Used by "destroy target creature;
@@ -34,6 +38,8 @@ public enum DiscardRecipient {
     TARGET_PLAYER,
     /** The player whose spell or ability caused the trigger; supplied by the trigger entry. */
     TRIGGERING_PLAYER,
+    /** The controller of the stack entry's triggering permanent, as it last existed on the battlefield if it left. */
+    TRIGGERING_PERMANENT_CONTROLLER,
     /** The player whose upkeep is currently resolving; supplied by the trigger entry. */
     ACTIVE_PLAYER,
     TARGET_PERMANENT_CONTROLLER,

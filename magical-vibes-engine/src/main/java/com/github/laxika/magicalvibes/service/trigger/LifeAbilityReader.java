@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.trigger.LifeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LifeTrigger.LifeEvent;
 import com.github.laxika.magicalvibes.model.trigger.PlayerRelation;
@@ -27,8 +28,9 @@ import java.util.UUID;
  * view of them. The collectors judge the ability's trigger-level parts from
  * the ability itself: its own event ({@link LifeEffect#event()}: "an opponent loses life for the first time during
  * each of their turns" is read by the "an opponent loses life" collector), "for the first time each turn"
- * ({@link LifeEffect#firstTimeEachTurn()}, a count of the player's events) and the limit ({@link LifeEffect#limit()},
- * marked by {@link TriggeredAbility#limitKey()} on the source).
+ * ({@link LifeEffect#firstTimeEachTurn()}, a count of the player's events), the spell that causes the life gain
+ * ({@link LifeEffect#spellFilter()}, judged by the "you gain life" collector) and the limit
+ * ({@link LifeEffect#limit()}, marked by {@link TriggeredAbility#limitKey()} on the source).
  * <p>
  * The intervening "if" (CR 603.4) and the event condition (CR 603.2) are the ability's options: its collector judges
  * them as the ability triggers, in the context of its event, from the records' {@code ability()} or through a
@@ -52,10 +54,12 @@ public final class LifeAbilityReader {
      *                          life" collector judges
      * @param firstTimeEachTurn whether only the player's first such event each turn triggers the ability, counting
      *                          those before the source was on the battlefield ({@link LifeTrigger#firstEachTurn()})
+     * @param spellFilter       what the spell that causes the life gain must be ({@link LifeTrigger#spellFilter()}),
+     *                          or {@code null} for any source
      * @param simultaneousWithPrevious the registration happens at the same time as the effect before it
      */
     public record LifeEffect(CardEffect effect, TriggeredAbility ability, LifeEvent event, boolean firstTimeEachTurn,
-                             boolean simultaneousWithPrevious) {
+                             CardPredicate spellFilter, boolean simultaneousWithPrevious) {
 
         public LifeEffect {
             Objects.requireNonNull(effect, "effect");
@@ -97,7 +101,7 @@ public final class LifeAbilityReader {
 
         /** This read with {@code effect} in place of its effect. */
         public LifeEffect withEffect(CardEffect effect) {
-            return new LifeEffect(effect, ability, event, firstTimeEachTurn, simultaneousWithPrevious);
+            return new LifeEffect(effect, ability, event, firstTimeEachTurn, spellFilter, simultaneousWithPrevious);
         }
     }
 
@@ -163,6 +167,9 @@ public final class LifeAbilityReader {
                 && limit != TriggerLimit.DO_ONLY_ONCE_EACH_TURN) {
             throw new IllegalStateException("No life collector reads " + limit + ": " + ability);
         }
+        if (condition.spellFilter() != null && condition.player() != PlayerRelation.YOU) {
+            throw new IllegalStateException("No life collector judges the spell of " + condition + ": " + ability);
+        }
         if (condition.firstEachTurn()) {
             if (condition.player() != PlayerRelation.YOU || condition.event() == LifeEvent.PAYS) {
                 throw new IllegalStateException("No life collector counts " + condition + ": " + ability);
@@ -185,7 +192,7 @@ public final class LifeAbilityReader {
                 effect = new ConditionalEffect(interveningIf, effect);
             }
             effects.add(new LifeEffect(effect, ability, condition.event(), condition.firstEachTurn(),
-                    registration.simultaneousWithPrevious()));
+                    condition.spellFilter(), registration.simultaneousWithPrevious()));
         }
         return effects;
     }
@@ -206,13 +213,25 @@ public final class LifeAbilityReader {
     }
 
     /**
-     * Throws when {@code effect}'s ability has a narrower event, a count or a limit, which the collector of
-     * {@code watched} doesn't read.
+     * Throws when {@code effect}'s ability has a narrower event, a count, a spell filter or a limit, which the
+     * collector of {@code watched} doesn't read.
      */
     public static void requireNothingToJudge(LifeEffect effect, Trigger watched) {
         requireWatchedEvent(effect, watched);
         requireNoCount(effect, watched);
+        requireNoSpellFilter(effect, watched);
         requireNoLimit(effect, watched);
+    }
+
+    /**
+     * Throws when {@code effect}'s ability triggers only on a life gain a matching spell causes, which the collector
+     * of {@code watched} doesn't judge.
+     */
+    public static void requireNoSpellFilter(LifeEffect effect, Trigger watched) {
+        if (effect.spellFilter() != null) {
+            throw new IllegalStateException("The collector of " + watched + " judges no spell filter: "
+                    + effect.ability());
+        }
     }
 
     /**

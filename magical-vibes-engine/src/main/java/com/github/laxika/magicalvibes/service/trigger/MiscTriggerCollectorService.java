@@ -43,7 +43,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaDrawXCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostVehicleWhenMatchingCreatureCrewsEffect;
 import com.github.laxika.magicalvibes.model.effect.RelicBindTapEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
@@ -57,7 +56,7 @@ import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateT
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageOnSpellLifeGainEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -68,7 +67,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -103,40 +101,6 @@ public class MiscTriggerCollectorService {
     private final ConditionEvaluationService conditionEvaluationService;
     private final ETBTokenTargetService etbTokenTargetService;
     private PermanentRemovalService permanentRemovalService;
-
-    @CollectsMiscTrigger(value = PerpetuallyBoostVehicleWhenMatchingCreatureCrewsEffect.class,
-            watch = MiscWatch.ON_ALLY_CREATURE_CREWS_VEHICLE)
-    private boolean handlePerpetualVehicleBoostOnCrew(
-            TriggerMatchContext match, PerpetuallyBoostVehicleWhenMatchingCreatureCrewsEffect effect,
-            TriggerContext ctx) {
-        if (!(ctx instanceof TriggerContext.CreatureCrewsVehicle crew)) {
-            return false;
-        }
-        FilterContext filterContext = FilterContext.of(match.gameData())
-                .withSourceCardId(match.permanent().getCard().getId())
-                .withSourceControllerId(match.controllerId())
-                .withSourcePermanentId(match.permanent().getId())
-                .withSourcePermanentSnapshot(match.permanent());
-        if (!predicateEvaluationService.matchesPermanentPredicate(
-                crew.crewingCreature(), effect.crewingCreaturePredicate(), filterContext)) {
-            return false;
-        }
-
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect.triggeredEffect())),
-                null,
-                match.permanent().getId());
-        entry.setTriggeringPermanent(crew.vehicle());
-        entry.setTriggeringPermanentId(crew.vehicle().getId());
-        entry.setNonTargeting(true);
-        match.gameData().pendingActivatedAbilityCostTriggers.add(entry);
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        return true;
-    }
 
     public MiscTriggerCollectorService(GameLogService gameLogService,
                                        @Lazy GraveyardService graveyardService,
@@ -2045,30 +2009,23 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsLifeTrigger(value = DealDamageOnSpellLifeGainEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
-    private boolean handleLifeGainDealDamageOnSpell(TriggerMatchContext match,
-            DealDamageOnSpellLifeGainEffect effect, TriggerContext ctx) {
-        TriggerContext.LifeGain lg = (TriggerContext.LifeGain) ctx;
-        var gameData = match.gameData();
-        String cardName = match.permanent().getCard().getName();
-
-        // Only triggers when the life gain source is an instant or sorcery spell of the matching color
-        if (lg.sourceEntryType() == null) return false;
-        if (lg.sourceEntryType() != StackEntryType.INSTANT_SPELL
-                && lg.sourceEntryType() != StackEntryType.SORCERY_SPELL) return false;
-        if (lg.sourceCard() == null || !lg.sourceCard().getColors().contains(effect.triggeringColor())) return false;
-
-        // Queue for target selection (creature or player)
-        gameData.queueInteraction(new PermanentChoiceContext.LifeGainTriggerAnyTarget(
+    /**
+     * "Deals N damage to target creature or player" (Firesong and Sunspeaker): its target is chosen as the ability goes
+     * on the stack (CR 603.3d); the trigger's spell filter was judged as it triggered.
+     */
+    @CollectsLifeTrigger(value = DealDamageToTargetCreatureOrPlayerEffect.class,
+            watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
+    private boolean handleLifeGainDamageTargetCreatureOrPlayer(TriggerMatchContext match,
+            DealDamageToTargetCreatureOrPlayerEffect effect, TriggerContext ctx) {
+        match.gameData().queueInteraction(new PermanentChoiceContext.LifeGainTriggerAnyTarget(
                 match.permanent().getCard(),
                 match.controllerId(),
-                List.of(effect.triggeredEffect()),
+                List.of(effect),
                 match.permanent().getId()
         ));
-
-        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers on spell life gain (source: {})",
-                gameData.id, cardName, lg.sourceCard().getName());
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers on life gain (damage to target creature or player)",
+                match.gameData().id, match.permanent().getCard().getName());
         return true;
     }
 

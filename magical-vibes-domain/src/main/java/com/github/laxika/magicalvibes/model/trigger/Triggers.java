@@ -2021,7 +2021,11 @@ public final class Triggers {
         return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.CREWS_VEHICLE, ObjectRelation.THIS);
     }
 
-    /** "Whenever a creature you control crews a Vehicle", this creature included */
+    /**
+     * "Whenever a creature you control crews a Vehicle", this creature included; "when this or another legendary
+     * creature you control crews a Vehicle" with {@link ObjectActionTrigger#withObjectFilter} the crewing creature.
+     * The Vehicle is the stack entry's triggering permanent ("that Vehicle").
+     */
     public static ObjectActionTrigger creatureYouControlCrewsVehicle() {
         return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.CREWS_VEHICLE, ObjectRelation.YOU_CONTROL);
     }

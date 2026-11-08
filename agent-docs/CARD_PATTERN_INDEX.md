@@ -391,7 +391,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | combat damage creates a Treasure, then exiles a random card with mana value equal to that damage from the damaged player's library and grants normal-cost casting permission until end of turn | `Triggers.dealsCombatDamageToPlayer()` + `SequenceEffect.of(CreateTokenEffect.ofTreasureToken(1), ExileRandomCardWithManaValueFromDamagedPlayerLibraryEffect())` |
 | perpetually modify a physical card's power and toughness | `PerpetuallyBoostCardEffect` + `GameData.perpetualCardPowerToughnessModifiers` |
 | perpetually boost other own creatures and matching creature cards in hand of a chosen type | `ChooseSubtypeOnEnterEffect` + `GrantChosenSubtypeToOwnCreaturesEffect.toSelf()` + `PerpetuallyBoostOtherOwnCreaturesAndHandCreatureCardsOfChosenSubtypeEffect` |
-| perpetually boost a Vehicle when a matching creature crews it | `Triggers.creatureYouControlCrewsVehicle()` + `PerpetuallyBoostVehicleWhenMatchingCreatureCrewsEffect` |
+| perpetually boost a Vehicle when a matching creature crews it | `Triggers.creatureYouControlCrewsVehicle().withObjectFilter(...)` + `PerpetuallyBoostCardEffect.ofTriggeringPermanent(p, t)` |
 | choose a nonland hand card that perpetually costs less to cast | `ChooseCardFromHandToPerpetuallyReduceCastCostEffect` + `GameData.perpetualCardCastCostReductions` |
 | ETB makes each owned card with `{X}` in its mana cost perpetually cost {1} less | `s/ScalarScholar.java` + `PerpetuallyReduceCostForMatchingOwnedCardsEffect(new CardHasXInManaCostPredicate(), 1)` |
 | target opponent chooses X cards from hand; look at them and may cast one revealed spell for free | `e/ExtractBrain.java` + `RevealCardsChooseOneToCastEffect` |

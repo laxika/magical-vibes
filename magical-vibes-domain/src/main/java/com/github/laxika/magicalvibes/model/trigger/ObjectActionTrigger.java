@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.trigger;
 
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.Objects;
 
@@ -20,11 +21,17 @@ import java.util.Objects;
  * @param door   which door of the Room the ability is on, 0 for the left one and 1 for the right one, for
  *               {@link ObjectAction#DOOR_UNLOCKED} ("when you unlock this door", CR 709.5h:
  *               {@code Triggers.doorUnlocked(1)}); {@code null} for every other action and for the trigger the
- *               collector watches. The explore and exploit collectors judge the filter from the ability
- *               ({@code ActionAbilityReader}), and the door collector the door ({@code MiscAbilityReader}), so
- *               {@link #watchKey()} drops them
+ *               collector watches
+ * @param objectFilter what the object that takes the action must be, as a permanent, or {@code null} for any: the
+ *               creature that crews ("when this or another legendary creature you control crews a Vehicle" is
+ *               {@code Triggers.creatureYouControlCrewsVehicle().withObjectFilter(...)}), judged from the ability's
+ *               source as the action is taken. Only {@link ObjectAction#CREWS_VEHICLE} takes one. The explore and
+ *               exploit collectors judge the filter from the ability ({@code ActionAbilityReader}), and the door and
+ *               crew collectors the door and the object filter ({@code MiscAbilityReader}), so {@link #watchKey()}
+ *               drops them
  */
-public record ObjectActionTrigger(ObjectAction action, ObjectRelation object, CardPredicate filter, Integer door)
+public record ObjectActionTrigger(ObjectAction action, ObjectRelation object, CardPredicate filter, Integer door,
+                                  PermanentPredicate objectFilter)
         implements Trigger {
 
     public ObjectActionTrigger {
@@ -37,11 +44,19 @@ public record ObjectActionTrigger(ObjectAction action, ObjectRelation object, Ca
             throw new IllegalArgumentException("Only a door-unlocked trigger names a door, 0 or 1: " + action
                     + " " + door);
         }
+        if (objectFilter != null && action != ObjectAction.CREWS_VEHICLE) {
+            throw new IllegalArgumentException("Only a crew trigger takes an object filter: " + action);
+        }
+    }
+
+    /** A trigger with {@code filter} and {@code door} and no object filter. */
+    public ObjectActionTrigger(ObjectAction action, ObjectRelation object, CardPredicate filter, Integer door) {
+        this(action, object, filter, door, null);
     }
 
     /** A trigger on any object of {@code action} that relates to the source as {@code object} says. */
     public ObjectActionTrigger(ObjectAction action, ObjectRelation object) {
-        this(action, object, null, null);
+        this(action, object, null, null, null);
     }
 
     /**
@@ -53,13 +68,25 @@ public record ObjectActionTrigger(ObjectAction action, ObjectRelation object, Ca
         if (this.filter != null) {
             throw new IllegalStateException("This trigger already has a filter: " + this);
         }
-        return new ObjectActionTrigger(action, object, filter, door);
+        return new ObjectActionTrigger(action, object, filter, door, objectFilter);
     }
 
     /**
-     * The trigger the collectors read this one's abilities by: without its {@link #filter} and {@link #door}, and,
-     * for "becomes crewed / saddled for the first time each turn", the "becomes crewed / saddled" trigger, whose
-     * collector judges the first time from the ability's trigger ({@code MiscAbilityReader}).
+     * This trigger narrowed to an action taken by a permanent that matches {@code objectFilter}, as
+     * {@link #objectFilter} says: "when this or another legendary creature you control crews a Vehicle".
+     */
+    public ObjectActionTrigger withObjectFilter(PermanentPredicate objectFilter) {
+        Objects.requireNonNull(objectFilter, "objectFilter");
+        if (this.objectFilter != null) {
+            throw new IllegalStateException("This trigger already has an object filter: " + this);
+        }
+        return new ObjectActionTrigger(action, object, filter, door, objectFilter);
+    }
+
+    /**
+     * The trigger the collectors read this one's abilities by: without its {@link #filter}, {@link #door} and
+     * {@link #objectFilter}, and, for "becomes crewed / saddled for the first time each turn", the "becomes crewed /
+     * saddled" trigger, whose collector judges the first time from the ability's trigger ({@code MiscAbilityReader}).
      */
     @Override
     public Trigger watchKey() {
@@ -68,7 +95,8 @@ public record ObjectActionTrigger(ObjectAction action, ObjectRelation object, Ca
             case BECOMES_SADDLED_FOR_FIRST_TIME_EACH_TURN -> ObjectAction.BECOMES_SADDLED;
             default -> action;
         };
-        return watched == action && filter == null && door == null ? this : new ObjectActionTrigger(watched, object);
+        return watched == action && filter == null && door == null && objectFilter == null
+                ? this : new ObjectActionTrigger(watched, object);
     }
 
     /** A card becomes plotted in exile (CR 702.170a), so its "becomes plotted" ability functions from there. */

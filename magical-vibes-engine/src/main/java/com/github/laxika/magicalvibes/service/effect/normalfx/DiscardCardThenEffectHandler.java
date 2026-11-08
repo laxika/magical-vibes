@@ -134,6 +134,7 @@ public class DiscardCardThenEffectHandler implements NormalEffectHandlerBean {
                 yield gameData.playerIds.contains(targetId)
                         ? targetId : gameQueryService.findPermanentController(gameData, targetId);
             }
+            case TRIGGERING_PERMANENT_CONTROLLER -> gameQueryService.findTriggeringPermanentController(gameData, entry);
             default -> entry.getControllerId();
         };
     }

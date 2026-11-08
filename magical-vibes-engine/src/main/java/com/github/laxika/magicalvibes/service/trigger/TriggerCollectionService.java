@@ -11612,6 +11612,10 @@ public class TriggerCollectionService {
                             && gameData.getLifeGainedThisTurn(gainingPlayerId) != lifeGainedAmount) {
                         continue;
                     }
+                    // "Whenever a [filter] spell causes you to gain life": the spell itself, not an ability of its card.
+                    if (first.spellFilter() != null && !lifeGainCausedBySpell(gameData, perm, ctx, first.spellFilter())) {
+                        continue;
+                    }
                     // The event condition ("during your turn", a Class's level) and intervening "if" (CR 603.4), as
                     // the ability triggers; an intervening "if" stays around each effect, checked again as it resolves.
                     if (!watchJudge(gameData, perm, playerId, ctx).triggers(ability)
@@ -11644,6 +11648,20 @@ public class TriggerCollectionService {
         collectLifeGainOpponentLifeLossTriggers(gameData, gainingPlayerId, lifeGainedAmount);
         collectTemporaryGlobalTriggers(gameData, LifeWatch.ON_ANY_PLAYER_GAINS_LIFE, gainingPlayerId, lifeGainedAmount);
         collectEmblemLifeGainTriggers(gameData, gainingPlayerId, lifeGainedAmount);
+    }
+
+    /**
+     * Whether the life gain {@code lifeGain} was caused by a spell matching {@code spellFilter}, judged from the
+     * ability's source {@code perm}: the source of the life gain is a spell's stack entry (the spell resolving, or its
+     * lifelink damage), not a triggered or activated ability of its card.
+     */
+    private boolean lifeGainCausedBySpell(GameData gameData, Permanent perm, TriggerContext.LifeGain lifeGain,
+                                          CardPredicate spellFilter) {
+        return lifeGain.sourceCard() != null && lifeGain.sourceEntryType() != null
+                && lifeGain.sourceEntryType() != StackEntryType.TRIGGERED_ABILITY
+                && lifeGain.sourceEntryType() != StackEntryType.ACTIVATED_ABILITY
+                && predicateEvaluationService.matchesCardPredicate(lifeGain.sourceCard(), spellFilter,
+                perm.getCard().getId(), gameData, lifeGain.sourceCard().getOwnerId(), perm.getId(), null);
     }
 
     /**
@@ -13740,8 +13758,7 @@ public class TriggerCollectionService {
                                                           TriggerContext context) {
         boolean triggered = false;
         for (CardEffect effect : effects) {
-            if (effect instanceof com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldEffect
-                    || effect instanceof com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerMayDrawCardEffect) {
+            if (effect instanceof com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldEffect) {
                 triggered |= dispatch(new TriggerMatchContext(gameData, source, controllerId, effect), slot, effect,
                         context);
             }
@@ -16481,7 +16498,22 @@ public class TriggerCollectionService {
             return false;
         }
         boolean triggered = false;
-        if (watch == MiscWatch.ON_SELF_ROOM_DOOR_UNLOCKED) {
+        if (watch == MiscWatch.ON_ALLY_CREATURE_CREWS_VEHICLE) {
+            if (!(ctx instanceof TriggerContext.CreatureCrewsVehicle crew)
+                    || first.objectFilter() != null && !predicateEvaluationService.matchesPermanentPredicate(
+                    crew.crewingCreature(), first.objectFilter(), FilterContext.of(gameData)
+                            .withSourceCardId(perm.getCard().getId())
+                            .withSourceControllerId(controllerId)
+                            .withSourcePermanentId(perm.getId())
+                            .withSourcePermanentSnapshot(perm))) {
+                return false;
+            }
+            List<CardEffect> abilityEffects = effects.stream().map(MiscAbilityReader.MiscEffect::effect).toList();
+            CardEffect firstEffect = abilityEffects.getFirst();
+            triggered = dispatch(new TriggerMatchContext(gameData, perm, controllerId, firstEffect), watch,
+                    firstEffect, ctx, () -> collectCrewAbility(gameData, perm, controllerId, abilityEffects,
+                            crew.vehicle()));
+        } else if (watch == MiscWatch.ON_SELF_ROOM_DOOR_UNLOCKED) {
             List<CardEffect> abilityEffects = effects.stream().map(MiscAbilityReader.MiscEffect::effect).toList();
             CardEffect firstEffect = abilityEffects.getFirst();
             triggered = dispatch(new TriggerMatchContext(gameData, perm, controllerId, firstEffect), watch,
@@ -16497,6 +16529,36 @@ public class TriggerCollectionService {
             first.markLimit(gameData, perm.getId());
         }
         return triggered;
+    }
+
+    /**
+     * Puts a "whenever [a creature you control] crews a Vehicle" ability of {@code source} on the stack as it is
+     * written, all its {@code effects} one object (CR 603.3), with the crewed {@code vehicle} as the entry's
+     * triggering permanent ("that Vehicle"). It triggers as the crew cost is paid, so it waits with the other
+     * cost-payment triggers until the crew ability is on the stack.
+     */
+    private boolean collectCrewAbility(GameData gameData, Permanent source, UUID controllerId,
+                                       List<CardEffect> effects, Permanent vehicle) {
+        if (effects.stream().anyMatch(effect -> effect.targetSpec().declaredTarget() != null
+                || source.getCard().getEffectTargetIndex(effect) >= 0)) {
+            throw new IllegalStateException("No crew collector chooses targets: " + source.getCard().getName());
+        }
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                source.getCard(),
+                controllerId,
+                source.getCard().getName() + "'s ability",
+                new ArrayList<>(effects),
+                null,
+                source.getId());
+        entry.setTriggeringPermanent(vehicle);
+        entry.setTriggeringPermanentId(vehicle.getId());
+        entry.setNonTargeting(true);
+        gameData.pendingActivatedAbilityCostTriggers.add(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
+        log.info("Game {} - {} triggers as a creature crews {}", gameData.id, source.getCard().getName(),
+                vehicle.getCard().getName());
+        return true;
     }
 
     /**
