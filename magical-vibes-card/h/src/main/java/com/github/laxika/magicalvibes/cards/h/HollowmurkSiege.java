@@ -24,7 +24,7 @@ public class HollowmurkSiege extends Card {
         addStaticEffect(new ChooseModeOnEnterEffect(List.of("Sultai", "Abzan")));
 
         addTrigger(Triggers.countersPutOnCreatureYouControl(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode("Sultai"))
+                TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode("Sultai"))
                         .withLimit(TriggerLimit.ONCE_EACH_TURN),
                 new DrawCardEffect(1));
 

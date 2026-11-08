@@ -197,12 +197,8 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureExactStatsConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DamagedPlayerOnlyEffect;
-import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
-import com.github.laxika.magicalvibes.model.condition.ImprintedCardNameMatchesEnteringPermanent;
-import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
-import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToActivate;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
@@ -6010,8 +6006,8 @@ public class TriggerCollectionService {
     }
 
     /**
-     * "Whenever another artifact you control enters". An intervening "if" that counts permanents
-     * (Voldaren Bloodcaster) is checked as it triggers and left wrapped for resolution (CR 603.4).
+     * "Whenever another artifact you control enters". The trigger pipeline judged an intervening "if" that counts
+     * permanents (Voldaren Bloodcaster) as the ability triggered; it stays wrapped for resolution (CR 603.4).
      */
     private boolean triggerAllyArtifactEnters(GameData gameData, ZoneChangeWatch watch, Permanent perm,
                                               UUID controllerId, List<CardEffect> effects, Entering entering,
@@ -6022,12 +6018,6 @@ public class TriggerCollectionService {
                 entering.permanentId());
         boolean triggered = false;
         for (CardEffect effect : effects) {
-            if (effect instanceof ConditionalEffect conditional
-                    && conditional.condition() instanceof ControlsPermanentCount
-                    && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                    ConditionContext.forPermanent(perm, controllerId))) {
-                continue;
-            }
             triggered |= dispatchEntering(gameData, perm, controllerId, watch, effect, limit, ctx);
         }
         return triggered;
@@ -6113,19 +6103,11 @@ public class TriggerCollectionService {
                 1 + gameQueryService.countETBExtraTriggers(gameData, controllerId, landControllerId, enteringLand),
                 null);
         boolean triggered = false;
+        // The trigger pipeline judged each ability's event condition (Invader Parasite's name match) and intervening
+        // "if" ("if that player controls more lands than you", Archaeomancer's Map; "had another land enter", Tunnel
+        // Ignus) against the entering land and its controller; the intervening "if" stays wrapped for resolution.
         for (CardEffect effect : effects) {
-            // Archaeomancer's Map uses an intervening "if": check the land counts both when the ability would
-            // trigger and again when it resolves.
-            if (effect instanceof ConditionalEffect conditional
-                    && conditional.condition() instanceof com.github.laxika.magicalvibes.model.condition.TargetPlayerControlsMoreLandsThanController
-                    && !gameQueryService.controlsMoreLandsThan(gameData, landControllerId, controllerId)) {
-                continue;
-            }
-            CardEffect resolved = unwrapImprintedCardNameConditional(gameData, enteringLand, perm, effect);
-            if (resolved == null) continue;
-            resolved = unwrapPermanentEnteredThisTurnConditional(gameData, landControllerId, resolved);
-            if (resolved == null) continue;
-            triggered |= dispatchEnter(gameData, perm, controllerId, watch, resolved, ctx);
+            triggered |= dispatchEnter(gameData, perm, controllerId, watch, effect, ctx);
         }
         return triggered;
     }
@@ -7623,8 +7605,11 @@ public class TriggerCollectionService {
                 || triggeringEntry.getMixedZoneTargetPermanentIds().containsValue(source.getId());
         if (!source.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, source)
                 && (sourceIsTarget || !source.getCard().getKeywords().contains(Keyword.WARD))) {
+            // Each ability's event condition (a chosen mode, Catch of the Day; "while saddled") and intervening
+            // "if" (CR 603.4), judged from the source as it triggers.
             effects.addAll(TargetAbilityReader.printedEffects(source.getCard(),
-                    TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL));
+                    TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
+                    conditionEvaluationService.judge(gameData, ConditionContext.forPermanent(source, controllerId))));
         }
         effects.addAll(TargetAbilityReader.grantedToPermanentEffects(source, TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL));
         // Granted ward ("each legendary permanent you control has ward {2}") is a "this permanent becomes
@@ -7866,7 +7851,8 @@ public class TriggerCollectionService {
         if (!source.isCloaked() && !source.isFaceDown()
                 && !gameQueryService.hasLostPrintedAbilities(gameData, source)) {
             effects.addAll(TargetAbilityReader.printedEffects(source.getCard(),
-                    TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL));
+                    TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
+                    conditionEvaluationService.judge(gameData, ConditionContext.forPermanent(source, controllerId))));
         }
         // Abilities granted to this permanent itself still apply when its printed ones don't.
         effects.addAll(TargetAbilityReader.grantedToPermanentEffects(source, TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL));
@@ -16291,40 +16277,6 @@ public class TriggerCollectionService {
         return conditional.wrapped();
     }
 
-    /**
-     * Gates an enter trigger on the entering permanent's name matching the source's imprinted card
-     * (Invader Parasite).
-     */
-    private CardEffect unwrapImprintedCardNameConditional(GameData gameData, Card enteringCard, Permanent source, CardEffect effect) {
-        if (effect instanceof ConditionalEffect conditional
-                && conditional.condition() instanceof ImprintedCardNameMatchesEnteringPermanent) {
-            UUID controllerId = gameQueryService.findPermanentController(gameData, source.getId());
-            ConditionContext ctx = ConditionContext.forPermanent(source, controllerId).withTriggeringCard(enteringCard);
-            if (!conditionEvaluationService.isMet(gameData, conditional.condition(), ctx)) {
-                return null;
-            }
-            return conditional.wrapped();
-        }
-        return effect;
-    }
-
-    /**
-     * Gates an enter trigger on at least {@code minCount} permanents matching a predicate having
-     * entered under {@code affectedPlayerId}'s control this turn (Landfall count).
-     */
-    private CardEffect unwrapPermanentEnteredThisTurnConditional(GameData gameData, UUID affectedPlayerId, CardEffect effect) {
-        if (effect instanceof ConditionalEffect conditional
-                && conditional.condition() instanceof PermanentEnteredThisTurn) {
-            ConditionContext ctx = new ConditionContext(affectedPlayerId, null, null, null,
-                    false, false, false, false, null, 0, null, null, false);
-            if (!conditionEvaluationService.isMet(gameData, conditional.condition(), ctx)) {
-                return null;
-            }
-            return conditional.wrapped();
-        }
-        return effect;
-    }
-
     // ── Internal dispatch ──────────────────────────────────────────────
 
     /**
@@ -17359,18 +17311,9 @@ public class TriggerCollectionService {
     private boolean dispatchSlotEffect(GameData gameData, Permanent perm, UUID controllerId,
             Object slot, TriggerContext ctx, CardEffect effect, boolean markOnAcceptance,
             boolean triggersOnlyOnceEachTurn) {
-        CardEffect conditionedEffect = effect;
-        if (effect instanceof ConditionalEffect conditional
-                && conditional.condition() instanceof SourceHasChosenMode) {
-            if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
-                    ConditionContext.forPermanent(perm, controllerId))) {
-                return false;
-            }
-            conditionedEffect = conditional.wrapped();
-        }
         return dispatch(new TriggerMatchContext(gameData, perm, controllerId, effect,
                         perm != null ? perm.getCard() : null, null, markOnAcceptance, triggersOnlyOnceEachTurn),
-                slot, conditionedEffect, ctx);
+                slot, effect, ctx);
     }
 
     /**

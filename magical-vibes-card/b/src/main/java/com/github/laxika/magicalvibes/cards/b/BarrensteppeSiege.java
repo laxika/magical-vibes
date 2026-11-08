@@ -24,7 +24,7 @@ public class BarrensteppeSiege extends Card {
         addStaticEffect(new ChooseModeOnEnterEffect(List.of("Abzan", "Mardu")));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode("Abzan")),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode("Abzan")),
                 new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()));
 

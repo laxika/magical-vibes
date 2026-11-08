@@ -29,7 +29,7 @@ public class PalaceSiege extends Card {
         addStaticEffect(new ChooseModeOnEnterEffect(List.of(KHANS, DRAGONS)));
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(KHANS)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(KHANS)),
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
                         .filter(new CardTypePredicate(CardType.CREATURE))
@@ -37,7 +37,7 @@ public class PalaceSiege extends Card {
                         .build());
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(DRAGONS)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(DRAGONS)),
                 SequenceEffect.of(new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT), new GainLifeEffect(2)));
     }
 }

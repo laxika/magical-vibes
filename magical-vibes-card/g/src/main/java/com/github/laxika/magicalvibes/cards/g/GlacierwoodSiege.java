@@ -26,7 +26,7 @@ public class GlacierwoodSiege extends Card {
                         .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),
                                 new CardTypePredicate(CardType.SORCERY)))),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode("Temur")),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode("Temur")),
                 new MillEffect(4, MillRecipient.TARGET_PLAYER));
 
         addStaticEffect(new ConditionalEffect(

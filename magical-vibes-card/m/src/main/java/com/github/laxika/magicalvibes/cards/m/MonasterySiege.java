@@ -27,7 +27,7 @@ public class MonasterySiege extends Card {
         addStaticEffect(new ChooseModeOnEnterEffect(List.of(KHANS, DRAGONS)));
 
         addTrigger(Triggers.drawStep(ActivePlayer.YOU),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(KHANS)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(KHANS)),
                 SequenceEffect.of(new DrawCardEffect(1), new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
 
         addStaticEffect(new ConditionalEffect(new SourceHasChosenMode(DRAGONS),

@@ -1133,11 +1133,12 @@ public class ConditionEvaluationService {
                             && ctx.controllerId() != null
                             && gameQueryService.controlsMoreCreaturesThan(
                             gameData, ctx.targetId(), ctx.controllerId());
-            case TargetPlayerControlsMoreLandsThanController ignored ->
-                    ctx.targetId() != null
-                            && ctx.controllerId() != null
-                            && gameQueryService.controlsMoreLandsThan(
-                            gameData, ctx.targetId(), ctx.controllerId());
+            case TargetPlayerControlsMoreLandsThanController ignored -> {
+                UUID thatPlayerId = thatPlayer(gameData, ctx);
+                yield thatPlayerId != null
+                        && ctx.controllerId() != null
+                        && gameQueryService.controlsMoreLandsThan(gameData, thatPlayerId, ctx.controllerId());
+            }
             case TargetPlayerAttackedControllerDuringLastTurn ignored ->
                 ctx.targetId() != null
                         && ctx.controllerId() != null
@@ -4491,12 +4492,13 @@ public class ConditionEvaluationService {
     }
 
     private long countPermanentsEnteredThisTurn(GameData gameData, ConditionContext ctx, PermanentEnteredThisTurn c) {
+        UUID playerId = c.scope() == CountScope.TARGET_PLAYER ? thatPlayer(gameData, ctx) : ctx.controllerId();
         Stream<Card> entered = c.scope() == CountScope.ANY_PLAYER
                 ? gameData.permanentsEnteredBattlefieldThisTurn.values().stream().flatMap(List::stream)
-                : ctx.controllerId() == null
+                : playerId == null
                         ? Stream.empty()
                         : gameData.permanentsEnteredBattlefieldThisTurn
-                                .getOrDefault(ctx.controllerId(), List.of()).stream();
+                                .getOrDefault(playerId, List.of()).stream();
         return entered
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(card, c.predicate(), null))
                 .count();
@@ -4827,14 +4829,34 @@ public class ConditionEvaluationService {
         return found.size();
     }
 
+    /**
+     * "That player" of a trigger event about a permanent: the context's target when it is a player, else the
+     * controller of the context's triggering permanent (as the trigger pipeline judges a "whenever a land an opponent
+     * controls enters" ability's intervening "if": Archaeomancer's Map, Tunnel Ignus).
+     */
+    private UUID thatPlayer(GameData gameData, ConditionContext ctx) {
+        if (ctx.targetId() != null && gameData.playerIds.contains(ctx.targetId())) {
+            return ctx.targetId();
+        }
+        return ctx.triggeringPermanentId() == null ? null
+                : gameQueryService.findPermanentController(gameData, ctx.triggeringPermanentId());
+    }
+
     private boolean imprintedCardNameMatches(GameData gameData, ConditionContext ctx) {
-        if (ctx.triggeringCard() == null) return false;
+        // The entering permanent: the context's triggering card, else its triggering permanent's (as the trigger
+        // pipeline judges an enter trigger's options).
+        Card entering = ctx.triggeringCard();
+        if (entering == null && ctx.triggeringPermanentId() != null) {
+            Permanent triggering = gameQueryService.findPermanentById(gameData, ctx.triggeringPermanentId());
+            entering = triggering == null ? null : triggering.getCard();
+        }
+        if (entering == null) return false;
         Permanent source = sourcePermanent(gameData, ctx);
         if (source == null) return false;
         Card imprintedCard = gameData.getImprintedCard(source.getCard());
         // The imprint refers to "the exiled card": once it has left exile there is none to match.
         return imprintedCard != null && gameData.findExiledCard(imprintedCard.getId()) != null
-                && imprintedCard.getName().equals(ctx.triggeringCard().getName());
+                && imprintedCard.getName().equals(entering.getName());
     }
 
     private boolean isFreerunningMet(GameData gameData, UUID controllerId) {

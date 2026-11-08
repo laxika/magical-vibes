@@ -32,10 +32,10 @@ public class FrontierSiege extends Card {
         addStaticEffect(new ChooseModeOnEnterEffect(List.of(KHANS, DRAGONS)));
 
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(KHANS)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(KHANS)),
                 new AwardManaEffect(ManaColor.GREEN, 2));
         addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(KHANS)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(KHANS)),
                 new AwardManaEffect(ManaColor.GREEN, 2));
 
         target(TargetFilters.creatureAnOpponentControls())
@@ -44,7 +44,7 @@ public class FrontierSiege extends Card {
                                         Triggers.CREATURE,
                                         new PermanentHasKeywordPredicate(Keyword.FLYING))),
                                 ObjectRelation.ANOTHER_YOU_CONTROL),
-                        TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(DRAGONS)),
+                        TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(DRAGONS)),
                         new MayEffect(
                                 new EnteringCreatureFightsTargetCreatureEffect(),
                                 "Have that creature fight target creature you don't control?"));

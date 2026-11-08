@@ -34,7 +34,7 @@ public class BattleOfHooverDam extends Card {
         addStaticEffect(new ChooseModeOnEnterEffect(List.of(NCR, LEGION)));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(NCR)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(NCR)),
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardAllOfPredicate(List.of(
@@ -48,7 +48,7 @@ public class BattleOfHooverDam extends Card {
 
         target(TargetFilters.creatureYouControl())
                 .addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
-                        TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(LEGION)),
+                        TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(LEGION)),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2));
     }
 }

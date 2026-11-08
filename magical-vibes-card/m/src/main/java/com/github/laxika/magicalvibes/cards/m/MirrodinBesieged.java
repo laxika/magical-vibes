@@ -35,7 +35,7 @@ public class MirrodinBesieged extends Card {
         addStaticEffect(new ChooseModeOnEnterEffect(List.of(MIRRAN, PHYREXIAN)));
 
         addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.ARTIFACT)),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(MIRRAN)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(MIRRAN)),
                 new CreateTokenEffect("Myr", 1, 1, null,
                         List.of(CardSubtype.MYR), Set.of(), Set.of(CardType.ARTIFACT)));
 
@@ -43,7 +43,7 @@ public class MirrodinBesieged extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(PHYREXIAN)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(PHYREXIAN)),
                 SequenceEffect.of(
                         new DrawCardEffect(1),
                         new DiscardEffect(1, DiscardRecipient.CONTROLLER),

@@ -35,11 +35,11 @@ public class PhenomenonInvestigators extends Card {
         var believeHorror = new CreateTokenEffect(1, "Horror", 2, 2, CardColor.BLACK,
                         List.of(CardSubtype.HORROR), Set.of(), Set.of(CardType.ENCHANTMENT));
         addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.YOU_CONTROL),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(BELIEVE)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(BELIEVE)),
                 believeHorror);
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(DOUBT)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(DOUBT)),
                 new MayEffect(
                         new ReturnPermanentOwnedByPlayerToHandThenEffect(
                                 new PermanentNotPredicate(new PermanentIsLandPredicate()),

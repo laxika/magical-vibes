@@ -30,11 +30,11 @@ public class OutpostSiege extends Card {
         addStaticEffect(new ChooseModeOnEnterEffect(List.of(KHANS, DRAGONS)));
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(KHANS)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(KHANS)),
                 new ExileTopCardMayPlayThisTurnEffect(1, false));
 
         addTrigger(Triggers.leavesBattlefield(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(DRAGONS)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(DRAGONS)),
                 new DealDamageToAnyTargetEffect(1));
     }
 }

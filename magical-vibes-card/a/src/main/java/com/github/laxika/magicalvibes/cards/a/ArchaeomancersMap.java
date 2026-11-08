@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerControlsMoreLandsThanController;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -38,10 +38,9 @@ public class ArchaeomancersMap extends Card {
                 new SearchLibraryEffect(new Fixed(2), basicPlains, LibrarySearchDestination.HAND));
 
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.OPPONENT_CONTROLS),
-                new ConditionalEffect(
-                        new TargetPlayerControlsMoreLandsThanController(),
-                        new MayEffect(
-                                new PutCardToBattlefieldEffect(new CardTypePredicate(CardType.LAND), "land"),
-                                "Put a land card from your hand onto the battlefield?")));
+                TriggerOptions.DEFAULT.withInterveningIf(new TargetPlayerControlsMoreLandsThanController()),
+                new MayEffect(
+                        new PutCardToBattlefieldEffect(new CardTypePredicate(CardType.LAND), "land"),
+                        "Put a land card from your hand onto the battlefield?"));
     }
 }

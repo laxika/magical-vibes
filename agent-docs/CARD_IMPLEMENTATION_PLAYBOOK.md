@@ -622,7 +622,7 @@ Which engine layers support each condition. Check this before using a conditiona
 | `ConditionalEffect(new SourceAttackedThisTurn(), wrapped)` | yes | - | - | "as long as this permanent attacked this turn" — reads the source's turn attack record, so the condition remains true after combat. The Lunar Whale |
 | `TriggerOptions.DEFAULT.withEventCondition(new NotCondition(new SourceExertedThisTurn()))` + `MayEffect(<exert>)` | yes | - | - | "if this creature hasn't been exerted this turn, you may exert it as it attacks" — reads `GameData.permanentsExertedThisTurn` (recorded by every exert path via `checkExertTriggers`); the event condition is checked as the creature attacks, and the exert choice is made as the ability resolves. Combat Celebrant |
 | `ConditionalEffect(new DefendingPlayerPoisoned(), wrapped)` | - | yes | - |
-| `ConditionalEffect(new PermanentEnteredThisTurn(predicate, minCount), wrapped)` | - | yes | - | Defaults to permanents entering under the controller's control; pass `CountScope.ANY_PLAYER` for an unqualified "a permanent entered" condition |
+| `ConditionalEffect(new PermanentEnteredThisTurn(predicate, minCount), wrapped)` | - | yes | - | Defaults to permanents entering under the controller's control; pass `CountScope.ANY_PLAYER` for an unqualified "a permanent entered" condition, `CountScope.TARGET_PLAYER` for "that player" of a trigger event (as an intervening "if": Tunnel Ignus) |
 | `ConditionalEffect(new ControllerTurn(), wrapped)` | yes | - | - |
 | `ConditionalEffect(new ControllerMainPhase(), wrapped)` | - | yes | - | source/controller is the active player during precombat or postcombat main |
 | `ConditionalEffect(new NotControllerTurn(), wrapped)` | yes | - | - |

@@ -32,7 +32,7 @@ public class StruggleForProjectPurity extends Card {
         addStaticEffect(new ChooseModeOnEnterEffect(List.of(BROTHERHOOD, ENCLAVE)));
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(BROTHERHOOD)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(BROTHERHOOD)),
                 SequenceEffect.of(
                         new EachOpponentDrawsCardEffect(1),
                         new DrawCardEffect(new CardsDrawnThisResolution())));

@@ -35,14 +35,14 @@ public class CitadelSiege extends Card {
         var target = target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(), "Target must be a creature"));
         target.addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(KHANS)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(KHANS)),
                 PutCounterOnTargetPermanentEffect.withTargetRestriction(
                         CounterType.PLUS_ONE_PLUS_ONE, 2,
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentControlledBySourceControllerPredicate()))));
         target.addTrigger(Triggers.beginningOfCombat(ActivePlayer.OPPONENT),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(DRAGONS)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(DRAGONS)),
                 new TapPermanentsEffect(TapUntapScope.TARGET,
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

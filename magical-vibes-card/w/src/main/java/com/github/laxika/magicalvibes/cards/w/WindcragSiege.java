@@ -27,7 +27,7 @@ public class WindcragSiege extends Card {
                         new PermanentTruePredicate(), new SourceHasChosenMode("Mardu")));
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode("Jeskai")),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode("Jeskai")),
                 new CreateTokenEffect(
                         1, "Goblin", 1, 1, CardColor.RED, Set.of(CardColor.RED),
                         List.of(CardSubtype.GOBLIN), Set.of(), Set.of(Keyword.LIFELINK, Keyword.HASTE)));
