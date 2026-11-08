@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RashmiEternitiesCrafter.class, Forest.class, GrizzlyBears.class, LlanowarElves.class,
+@CardUsed({RashmiEternitiesCrafter.class, Cancel.class, Forest.class, GrizzlyBears.class, LlanowarElves.class,
         CatharticReunion.class, RuleOfLaw.class})
 class RashmiEternitiesCrafterTest extends BaseCardTest {
 
@@ -169,6 +170,31 @@ class RashmiEternitiesCrafterTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(top);
         assertThat(gd.stack).noneMatch(entry -> entry.getCard() == top);
         harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("A first spell countered before the ability resolves still sets the mana value")
+    void counteredSpellsManaValueIsUsedAsItLastExistedOnTheStack() {
+        setupRashmi();
+        Card top = new LlanowarElves();
+        setLibraryTop(top);
+        Card bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.setHand(player2, List.of(new Cancel()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castInstant(player2, 0, bears.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears);
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
     }
 
     private void setupRashmi() {

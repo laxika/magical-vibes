@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -23,10 +23,11 @@ public class ImminentDoom extends Card {
         // Whenever you cast a spell with mana value equal to the number of doom counters on this
         // enchantment, this enchantment deals that much damage to any target. Then put a doom
         // counter on this enchantment.
-        // Damage is snapshotted at trigger time (CountersOnSource → Fixed in the collector).
+        // "That much" is the number of doom counters as the ability triggered (its ruling), which is the triggering
+        // spell's mana value.
         addTrigger(Triggers.youCastSpell()
                         .withStackEntryFilter(new StackEntryManaValueEqualsSourceCountersPredicate(CounterType.DOOM)),
-                new DealDamageToAnyTargetEffect(new CountersOnSource(CounterType.DOOM)),
+                new DealDamageToAnyTargetEffect(new TargetSpellManaValue()),
                 new PutCountersOnSelfEffect(CounterType.DOOM));
     }
 }

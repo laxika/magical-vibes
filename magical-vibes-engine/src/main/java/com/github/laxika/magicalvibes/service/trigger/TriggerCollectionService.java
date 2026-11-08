@@ -203,7 +203,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTriggeringSpellWithSuspe
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterOpponentFirstSpellEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToManaSpentToCastToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnAllyCreatureEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnAllyLandEntersEffect;
@@ -1063,8 +1062,8 @@ public class TriggerCollectionService {
         // is cleared below.
         collectIncrementTriggers(gameData, spellCard, castingPlayerId);
 
-        // Emblem spell cast triggers (e.g. Venser's emblem, Jace Unraveler of Secrets' emblem,
-        // Chandra Dressed to Kill's emblem). Mana-spent readers must run before clearSpellCastManaSpent.
+        // Emblem spell cast triggers (e.g. Venser's emblem, Jace Unraveler of Secrets' emblem, Chandra,
+        // Dressed to Kill's emblem ability). Mana-spent readers must run before clearSpellCastManaSpent.
         for (Emblem emblem : gameData.emblems) {
             collectEmblemCastAbilities(gameData, emblem, ctx);
             for (CardEffect effect : emblem.staticEffects()) {
@@ -1135,27 +1134,6 @@ public class TriggerCollectionService {
                             (source != null ? source.getName() : "Emblem")
                                     + "'s emblem triggers — choose target opponent."));
                     log.info("Game {} - emblem mill trigger queued", gameData.id);
-                } else if (effect instanceof DealDamageEqualToManaSpentToCastToAnyTargetEffect damageTrigger) {
-                    if (!emblem.controllerId().equals(castingPlayerId)) continue;
-                    if (damageTrigger.spellFilter() != null
-                            && !predicateEvaluationService.matchesCardPredicate(
-                                    spellCard, damageTrigger.spellFilter(), null)) {
-                        continue;
-                    }
-                    int manaSpent = gameData.getSpellCastManaSpent(spellCard.getId());
-                    Card source = emblem.sourceCard();
-                    Card sourceCard = source != null ? source : spellCard;
-                    String desc = (source != null ? source.getName() : "Chandra, Dressed to Kill")
-                            + "'s emblem";
-                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                            sourceCard,
-                            emblem.controllerId(),
-                            new ArrayList<>(List.of(new DealDamageToAnyTargetEffect(manaSpent)))
-                    ));
-                    gameLogService.append(gameData,
-                            GameLog.text(desc + " triggers — choose a target for " + manaSpent + " damage."));
-                    log.info("Game {} - {} emblem mana-spent damage trigger queued ({} damage)",
-                            gameData.id, desc, manaSpent);
                 } else if (effect instanceof StormEffect storm) {
                     if (!emblem.controllerId().equals(castingPlayerId)) continue;
                     if (storm.instantOrSorceryOnly()

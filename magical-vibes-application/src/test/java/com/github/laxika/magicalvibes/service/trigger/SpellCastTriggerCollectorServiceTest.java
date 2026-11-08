@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
@@ -56,7 +57,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlaye
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSpellManaValueToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -2069,92 +2069,31 @@ class SpellCastTriggerCollectorServiceTest {
         }
     }
 
-    // ===== ON_CONTROLLER_CASTS_SPELL — DealDamageEqualToSpellManaValueToAnyTargetEffect =====
-
     @Nested
-    @DisplayName("ON_CONTROLLER_CASTS_SPELL — DealDamageEqualToSpellManaValueToAnyTargetEffect")
-    class ControllerManaValueDamage {
+    @DisplayName("ON_OPPONENT_CASTS_SPELL — damage equal to the triggering spell's mana value")
+    class ManaValueDamage {
 
         @Test
-        @DisplayName("adds to pending target triggers when spell matches filter")
-        void addsToPendingTargetTriggers() {
+        @DisplayName("queues the effect as written, its target choice carrying the spell and its mana value")
+        void queuesTheEffectAsWrittenWithTheSpellsManaValue() {
             Permanent perm = createPermanent("Kaervek the Merciless");
-            CardPredicate filter = new CardNamedPredicate("Test Filter");
-            var effect = new DealDamageEqualToSpellManaValueToAnyTargetEffect(filter);
             Card spellCard = createCard("Grizzly Bears");
             spellCard.setManaCost("{1}{G}");
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
+            gd.stack.add(new StackEntry(
+                    StackEntryType.CREATURE_SPELL, spellCard, player2Id, spellCard.getName(), List.of(), 0));
+            everySpellMatches();
+            var damage = new DealDamageToAnyTargetEffect(new TargetSpellManaValue());
+            when(amountEvaluationService.referencesTargetSpellManaValue(new TargetSpellManaValue())).thenReturn(true);
 
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
-                    eq(null), any(), any())).thenReturn(true);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+            boolean result = sut.collectCastAbility(match(perm, player1Id, damage),
+                    castAbility(Triggers.opponentCastsSpell().anySpell(), damage),
+                    new TriggerContext.SpellCast(spellCard, player2Id, true), true);
 
             assertThat(result).isTrue();
-            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class::isInstance).hasSize(1);
-        }
-
-        @Test
-        @DisplayName("resolved effect has damage equal to spell's mana value")
-        void resolvedEffectHasCorrectDamage() {
-            Permanent perm = createPermanent("Kaervek the Merciless");
-            CardPredicate filter = new CardNamedPredicate("Test Filter");
-            var effect = new DealDamageEqualToSpellManaValueToAnyTargetEffect(filter);
-            Card spellCard = createCard("Grizzly Bears");
-            spellCard.setManaCost("{1}{G}");
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
-
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
-                    eq(null), any(), any())).thenReturn(true);
-
-            registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
-
-            var resolved = (DealDamageToAnyTargetEffect) gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class).effects().getFirst();
-            assertThat(resolved.damage()).isEqualTo(new Fixed(2));
-        }
-
-        @Test
-        @DisplayName("returns false when spell does not match filter")
-        void returnsFalseWhenFilterDoesNotMatch() {
-            Permanent perm = createPermanent("Kaervek the Merciless");
-            CardPredicate filter = new CardNamedPredicate("Test Filter");
-            var effect = new DealDamageEqualToSpellManaValueToAnyTargetEffect(filter);
-            Card spellCard = createCard("Grizzly Bears");
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
-
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
-                    eq(null), any(), any())).thenReturn(false);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
-
-            assertThat(result).isFalse();
-            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)).isFalse();
-        }
-
-        @Test
-        @DisplayName("broadcasts log message with damage amount")
-        void broadcastsLogMessage() {
-            Permanent perm = createPermanent("Kaervek the Merciless");
-            CardPredicate filter = new CardNamedPredicate("Test Filter");
-            var effect = new DealDamageEqualToSpellManaValueToAnyTargetEffect(filter);
-            Card spellCard = createCard("Grizzly Bears");
-            spellCard.setManaCost("{1}{G}");
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
-
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
-                    eq(null), any(), any())).thenReturn(true);
-
-            registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
-
-            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Kaervek the Merciless's triggered ability triggers — choose a target for 2 damage.")));
+            var queued = gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
+            assertThat(queued.effects()).containsExactly(damage);
+            assertThat(queued.triggeringSpellManaValue()).isEqualTo(2);
+            assertThat(queued.triggeringCardId()).isEqualTo(spellCard.getId());
         }
     }
 

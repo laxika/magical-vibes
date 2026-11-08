@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfByCastSpellManaValueEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -24,8 +26,8 @@ public class RenegadeBull extends Card {
                 new CardTypePredicate(CardType.SORCERY)));
         GraveyardSearchScope ownGraveyard = GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
 
-        addTrigger(Triggers.youCastSpell(),
-                new BoostSelfByCastSpellManaValueEffect(instantOrSorcery, false));
+        addTrigger(Triggers.youCastSpell().withFilter(instantOrSorcery),
+                new BoostSelfEffect(new TargetSpellManaValue(), new Fixed(0)));
 
         target(new GraveyardCardPredicateTargetFilter(instantOrSorcery, ownGraveyard), 0, 1)
                 .addTrigger(Triggers.attacks(),

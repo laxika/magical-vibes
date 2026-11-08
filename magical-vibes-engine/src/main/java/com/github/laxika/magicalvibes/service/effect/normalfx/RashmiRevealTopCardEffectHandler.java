@@ -6,11 +6,14 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.effect.RashmiRevealTopCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -24,6 +27,7 @@ import java.util.UUID;
 public class RashmiRevealTopCardEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,7 +36,6 @@ public class RashmiRevealTopCardEffectHandler implements NormalEffectHandlerBean
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        RashmiRevealTopCardEffect rashmiEffect = (RashmiRevealTopCardEffect) effect;
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
         if (deck == null || deck.isEmpty()) {
@@ -49,7 +52,10 @@ public class RashmiRevealTopCardEffectHandler implements NormalEffectHandlerBean
                 .text(" from the top of their library (" + entry.getCard().getName() + ").")
                 .build());
 
-        if (topCard.hasType(CardType.LAND) || topCard.getManaValue() >= rashmiEffect.spellManaValue()) {
+        // "That spell's mana value": the triggering spell's, as it last existed on the stack once it has left (CR 608.2h).
+        int spellManaValue = amountEvaluationService.evaluate(gameData, new TargetSpellManaValue(),
+                AmountContext.forStackEntry(entry, null));
+        if (topCard.hasType(CardType.LAND) || topCard.getManaValue() >= spellManaValue) {
             deck.removeFirst();
             gameData.addCardToHand(controllerId, topCard);
             gameLogService.append(gameData, GameLog.cardThen(topCard,

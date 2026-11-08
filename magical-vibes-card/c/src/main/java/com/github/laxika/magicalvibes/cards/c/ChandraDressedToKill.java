@@ -5,14 +5,17 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToManaSpentToCastToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayCastMatchingThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -55,8 +58,9 @@ public class ChandraDressedToKill extends Card {
                         new ExileTopCardsMayCastMatchingThisTurnEffect(
                                 5, new CardColorPredicate(CardColor.RED)),
                         new CreateEmblemEffect(
-                                List.of(new DealDamageEqualToManaSpentToCastToAnyTargetEffect(
-                                        new CardColorPredicate(CardColor.RED))),
+                                new TriggeredAbility(
+                                        Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.RED)),
+                                        new DealDamageToAnyTargetEffect(new ManaSpentToCast())),
                                 "Whenever you cast a red spell, this emblem deals X damage to any "
                                         + "target, where X is the amount of mana spent to cast that spell.")
                 ),
