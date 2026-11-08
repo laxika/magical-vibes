@@ -71,7 +71,7 @@ public class BlacksmithsTalent extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),
                 "Target must be an Equipment you control"))
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                        TriggerOptions.DEFAULT.withInterveningIf(
+                        TriggerOptions.DEFAULT.withEventCondition(
                                 new AllOf(List.of(new SourceCounterThreshold(1, CounterType.LEVEL)))),
                         new AttachTargetEquipmentToTargetCreatureEffect());
         target(TargetFilters.creatureYouControl(), 0, 1);

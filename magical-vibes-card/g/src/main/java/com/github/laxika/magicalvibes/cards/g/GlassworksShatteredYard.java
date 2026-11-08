@@ -38,7 +38,7 @@ public class GlassworksShatteredYard extends Card {
                                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())))));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceRoomDoorUnlocked(1)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceRoomDoorUnlocked(1)),
                 new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
     }
 }

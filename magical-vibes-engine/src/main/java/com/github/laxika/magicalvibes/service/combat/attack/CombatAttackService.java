@@ -38,7 +38,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackTokenCreation;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackUntap;
@@ -54,7 +53,6 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.Condition;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToHandEffect;
@@ -1187,13 +1185,6 @@ public class CombatAttackService {
                 // pack tactics' declared attackers, whose wrapper comes off once judged.
                 allEffects.replaceAll(e -> declaredAttackWrappers.contains(e) ? ((ConditionalEffect) e).wrapped() : e);
 
-                // Granted abilities can bundle the opponent/otherwise branches in a SequenceEffect
-                // (e.g. Scriv's Contract). Resolve those event conditions now, while the declared
-                // attack target is still available; a normal stack-entry condition context points
-                // at the triggering permanent instead.
-                allEffects.replaceAll(effect -> resolveAttackedTargetConditions(
-                        gameData, attacker, playerId, effect));
-                allEffects.removeIf(Objects::isNull);
 
 
                 if (!allEffects.isEmpty()) {
@@ -3504,42 +3495,6 @@ public class CombatAttackService {
             log.info("Game {} - {} delayed attack damage trigger fires", gameData.id,
                     action.sourceCard().getName());
         }
-    }
-
-    private CardEffect resolveAttackedTargetConditions(GameData gameData, Permanent attacker,
-                                                       UUID attackerControllerId, CardEffect effect) {
-        if (effect instanceof ConditionalEffect conditional
-                && isAttackedTargetOpponentCondition(conditional.condition())) {
-            ConditionContext context = ConditionContext.forPermanent(attacker, attackerControllerId)
-                    .withTargetId(attacker.getAttackTarget());
-            return conditionEvaluationService.isMet(gameData, conditional.condition(), context)
-                    ? conditional.wrapped() : null;
-        }
-        if (!(effect instanceof SequenceEffect sequence)) {
-            return effect;
-        }
-
-        List<CardEffect> resolvedSteps = sequence.steps().stream()
-                .map(step -> resolveAttackedTargetConditions(gameData, attacker,
-                        attackerControllerId, step))
-                .filter(Objects::nonNull)
-                .toList();
-        if (resolvedSteps.isEmpty()) {
-            return null;
-        }
-        if (resolvedSteps.size() == 1) {
-            return resolvedSteps.getFirst();
-        }
-        if (resolvedSteps.size() == sequence.steps().size()) {
-            return effect;
-        }
-        return sequence.withSteps(resolvedSteps);
-    }
-
-    private boolean isAttackedTargetOpponentCondition(Condition condition) {
-        return condition instanceof AttackedTargetIsOpponent
-                || condition instanceof NotCondition not
-                && not.inner() instanceof AttackedTargetIsOpponent;
     }
 
     private void validateMaximumAttackRequirements(GameData gameData, UUID playerId,

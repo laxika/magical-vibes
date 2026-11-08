@@ -1,5 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.r.Reconnaissance;
+import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
+import java.util.ArrayList;
+import java.util.UUID;
 import com.github.laxika.magicalvibes.cards.z.ZulaportCutthroat;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -97,6 +103,57 @@ class ScrivTheObligatorTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Contract")))
                 .hasSize(2)
                 .allSatisfy(p -> assertThat(p.getAttachedTo()).isEqualTo(target.getId()));
+    }
+
+    @Test
+    void contractBoostsCreatureAttackingAnotherOpponentOfAuraController() {
+        Player player3 = addThirdPlayer();
+        Permanent target = addCreatureReady(player2, new ZulaportCutthroat());
+        castScriv(target);
+        harness.setLife(player2, 20);
+
+        declareAttackersAt(player2, target, player3.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @CardUsed(Reconnaissance.class)
+    void contractReadsTheAttackAsItResolves() {
+        Player player3 = addThirdPlayer();
+        Permanent target = addCreatureReady(player2, new ZulaportCutthroat());
+        harness.addToBattlefield(player2, new Reconnaissance());
+        castScriv(target);
+        harness.setLife(player2, 20);
+
+        declareAttackersAt(player2, target, player3.getId());
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).size() - 1, null, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(target.isAttacking()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
+    private Player addThirdPlayer() {
+        UUID thirdPlayerId = UUID.randomUUID();
+        Player player3 = new Player(thirdPlayerId, "Charlie");
+        gd.playerIds.add(thirdPlayerId);
+        gd.orderedPlayerIds.add(thirdPlayerId);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(thirdPlayerId, "Charlie");
+        gd.playerDecks.put(thirdPlayerId, new ArrayList<>());
+        gd.playerHands.put(thirdPlayerId, new ArrayList<>());
+        gd.playerBattlefields.put(thirdPlayerId, new ArrayList<>());
+        gd.playerGraveyards.put(thirdPlayerId, new ArrayList<>());
+        gd.playerCommandZones.put(thirdPlayerId, new ArrayList<>());
+        gd.playerManaPools.put(thirdPlayerId, new ManaPool());
+        gd.playerLifeTotals.put(thirdPlayerId, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), thirdPlayerId, "Charlie");
+        return player3;
     }
 
     private void castScriv(Permanent target) {

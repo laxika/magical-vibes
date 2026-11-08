@@ -609,6 +609,12 @@ public class StackEntry {
      */
     @Setter private long triggeringCardGraveyardEntryVersion = -1;
     /**
+     * The graveyard incarnation the ability's source card had as the ability triggered from a graveyard, or {@code -1}
+     * when none was recorded: "if this card is in your graveyard" is false for a card that left the graveyard and came
+     * back, a new object (CR 400.7). Read through {@link #sourceCardGraveyardEntryVersion()}.
+     */
+    @Setter private long sourceGraveyardEntryVersion = -1;
+    /**
      * The permanent the trigger event was about, as it last existed on the battlefield (CR 603.10a, CR 608.2h): the
      * creature that died, the permanent that left or was sacrificed. Effects read "its counters", "its name", "its
      * mana value" and "that creature" from it as they resolve; {@code null} when the event was about no departed
@@ -1242,6 +1248,7 @@ public class StackEntry {
                 ? null : new StackEntry(source.triggeringSpellSnapshot);
         this.triggeringActivatedAbility = source.triggeringActivatedAbility;
         this.triggeringCardGraveyardEntryVersion = source.triggeringCardGraveyardEntryVersion;
+        this.sourceGraveyardEntryVersion = source.sourceGraveyardEntryVersion;
         this.triggeringPermanentSnapshot = source.triggeringPermanentSnapshot == null
                 ? null : new Permanent(source.triggeringPermanentSnapshot);
         this.triggeringAttachments = source.triggeringAttachments;
@@ -2172,6 +2179,18 @@ public class StackEntry {
         }
         return counterType == null ? triggeringPermanentSnapshot.getTotalCounterCount()
                 : triggeringPermanentSnapshot.getCounterCount(counterType);
+    }
+
+    /**
+     * The graveyard incarnation of the ability's source card as the ability triggered ("this card" of "if this card is
+     * in your graveyard"), or {@code -1} when none was recorded: the one the collector recorded, else, when the source
+     * card is the triggering card ("when this dies", "when this is put into your graveyard"), the triggering card's.
+     */
+    public long sourceCardGraveyardEntryVersion() {
+        if (sourceGraveyardEntryVersion >= 0) {
+            return sourceGraveyardEntryVersion;
+        }
+        return card != null && card.getId().equals(triggeringCardId) ? triggeringCardGraveyardEntryVersion : -1;
     }
 
     /**

@@ -35,7 +35,7 @@ public class CaseOfTheCrimsonPulse extends Card {
                 new SolveSourceEffect());
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSolved()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsSolved()),
                 new DiscardOwnHandThenDrawEffect(new Fixed(2)));
     }
 }

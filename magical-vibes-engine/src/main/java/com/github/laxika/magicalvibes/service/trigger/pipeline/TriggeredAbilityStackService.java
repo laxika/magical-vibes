@@ -254,11 +254,7 @@ public class TriggeredAbilityStackService {
         UUID sourceId = candidate.sourceObjectId();
         List<CardEffect> effects = new ArrayList<>(registrations.size());
         for (EffectRegistration registration : registrations) {
-            CardEffect effect = kind == LegacyTriggerBindings.Kind.DIES
-                    ? triggerCollectionService.bindSelfDeathEffect(gameData, candidate.sourceCard(),
-                    event.permanent(), registration.effect())
-                    : registration.effect();
-            effects.add(withInterveningIf(interveningIf, effect, false));
+            effects.add(withInterveningIf(interveningIf, registration.effect(), false));
         }
         boolean markOnAcceptance = options.limit() == TriggerLimit.DO_ONLY_ONCE_EACH_TURN;
         int lastKnownPower = event.permanent() != null && event.permanent().getLastKnownPower() != null

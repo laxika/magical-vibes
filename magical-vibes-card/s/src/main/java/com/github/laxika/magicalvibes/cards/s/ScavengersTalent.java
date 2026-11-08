@@ -72,7 +72,7 @@ public class ScavengersTalent extends Card {
                 new MillEffect(2, MillRecipient.TARGET_PLAYER));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceClassLevelAtLeast(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceClassLevelAtLeast(3)),
                 new MayEffect(
                         new SacrificePermanentsThenEffect(
                                 3,

@@ -44,7 +44,7 @@ public class RoaringFurnaceSteamingSauna extends Card {
         addStaticEffect(new ConditionalEffect(new SourceRoomDoorUnlocked(1),
                 new NoMaximumHandSizeEffect()));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceRoomDoorUnlocked(1)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceRoomDoorUnlocked(1)),
                 new DrawCardEffect(1));
     }
 }

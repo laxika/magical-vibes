@@ -56,7 +56,6 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -68,10 +67,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -96,8 +93,6 @@ class LegacyTriggerBindingsTest {
     private GraveyardTargetingSupport graveyardTargetingSupport;
     @Mock
     private GraveyardTargetingService graveyardTargetingService;
-    @Mock
-    private TriggerCollectionService triggerCollectionService;
 
     private LegacyTriggerBindings bindings;
 
@@ -114,9 +109,7 @@ class LegacyTriggerBindingsTest {
     void setUp() {
         bindings = new LegacyTriggerBindings(gameQueryService, predicateEvaluationService, gameLogService,
                 amountEvaluationService, conditionEvaluationService, graveyardTargetingSupport,
-                graveyardTargetingService, triggerCollectionService);
-        lenient().when(triggerCollectionService.bindSelfDeathEffect(any(), any(), any(), any()))
-                .thenAnswer(invocation -> invocation.getArgument(3));
+                graveyardTargetingService);
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
         gd.orderedPlayerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));
         gd.playerIdToName.put(PLAYER1_ID, "Player1");

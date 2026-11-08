@@ -1776,11 +1776,11 @@ public class ConditionEvaluationService {
                     isSourceCardInCommandZone(gameData, ctx);
             case SourceCardOnBattlefield ignored ->
                     isSourceCardOnBattlefield(gameData, ctx);
-            case SourceCardInGraveyard graveyardCondition ->
+            case SourceCardInGraveyard ignored ->
                     isSourceCardInGraveyard(gameData, ctx)
-                            && (graveyardCondition.expectedEntryVersion() < 0
-                            || ctx.sourceCard() != null && gameData.graveyardEntryVersion(ctx.sourceCard().getId())
-                            == graveyardCondition.expectedEntryVersion());
+                            && (ctx.sourceGraveyardEntryVersion() < 0
+                            || gameData.graveyardEntryVersion(ctx.sourceCard().getId())
+                            == ctx.sourceGraveyardEntryVersion());
             case SourceCardInExile ignored ->
                     isSourceCardInExile(gameData, ctx);
             case SourceCardInExileWithFetchCounter ignored ->

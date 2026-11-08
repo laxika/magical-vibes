@@ -2997,18 +2997,18 @@ public class CombatDamageService {
                     if (read.oneOrMore() && !firedBatchedAllyTriggerSources.add(card.getId())) {
                         continue;
                     }
-                    // Bind "source card in graveyard" to this graveyard incarnation (CR 400.7) so the
-                    // ability does nothing if the card has left and returned to the graveyard.
+                    // The entry keeps this graveyard incarnation (CR 400.7), so "if this card is in your graveyard"
+                    // is false once the card has left and returned to the graveyard.
                     StackEntry se = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             card,
                             attackerId,
                             card.getName() + "'s graveyard trigger",
-                            List.of(triggerCollectionService.bindSourceCardInGraveyardVersion(
-                                    gameData, read.effect(), card.getId()))
+                            List.of(read.effect())
                     );
                     se.setTriggeringCardId(card.getId());
                     se.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
+                    se.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
                     se.setNonTargeting(true);
                     gameData.stack.add(se);
                     gameLogService.append(gameData, GameLog.cardThen(card,
@@ -3061,11 +3061,10 @@ public class CombatDamageService {
                         gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData, card), dealtCombatDamage,
                         Zone.GRAVEYARD), dealtCombatDamage);
                 if (effects.isEmpty()) continue;
-                List<CardEffect> boundEffects = effects.stream()
-                        .map(e -> triggerCollectionService.bindSourceCardInGraveyardVersion(gameData, e, card.getId()))
-                        .toList();
+                // The target choice carries this graveyard incarnation to the entry (CR 400.7).
                 gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                        card, playerId, new ArrayList<>(boundEffects), null));
+                        card, playerId, new ArrayList<>(effects), null)
+                        .withSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId())));
                 gameLogService.append(gameData, GameLog.cardThen(card, "'s graveyard trigger triggers."));
             }
         }

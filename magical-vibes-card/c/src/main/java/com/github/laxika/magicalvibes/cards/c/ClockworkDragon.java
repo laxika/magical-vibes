@@ -24,7 +24,7 @@ public class ClockworkDragon extends Card {
         // At end of combat, if this creature attacked or blocked this combat, remove a +1/+1
         // counter from it. The combat condition is checked as the end-of-combat trigger fires.
         addTrigger(Triggers.endOfCombat(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceAttackedOrBlockedThisCombat()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceAttackedOrBlockedThisCombat()),
                 new RemoveCounterFromSourceAtEndOfCombatEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         // {3}: Put a +1/+1 counter on this creature.

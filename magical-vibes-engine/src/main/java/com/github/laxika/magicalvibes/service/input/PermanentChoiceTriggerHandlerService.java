@@ -1170,6 +1170,7 @@ public class PermanentChoiceTriggerHandlerService {
             }
             entry.setTriggeringPermanentId(att.triggeringPermanentId());
             entry.setTriggeringPlayerId(att.triggeringPlayerId());
+            entry.setSourceGraveyardEntryVersion(att.sourceGraveyardEntryVersion());
             entry.setActivePlayerId(gameData.activePlayerId);
             pushTriggeredEntry(gameData, entry);
             if (att.triggeringPermanentId() != null) {
@@ -1208,6 +1209,7 @@ public class PermanentChoiceTriggerHandlerService {
             }
             entry.setTriggeringPermanentId(att.triggeringPermanentId());
             entry.setTriggeringPlayerId(att.triggeringPlayerId());
+            entry.setSourceGraveyardEntryVersion(att.sourceGraveyardEntryVersion());
             entry.setActivePlayerId(gameData.activePlayerId);
             pushTriggeredEntry(gameData, entry);
             gameLogService.append(gameData, GameLog.cardThen(att.sourceCard(), "'s ability targets nothing."));
@@ -1261,6 +1263,7 @@ public class PermanentChoiceTriggerHandlerService {
         }
         entry.setTriggeringPermanentId(att.triggeringPermanentId());
         entry.setTriggeringPlayerId(att.triggeringPlayerId());
+        entry.setSourceGraveyardEntryVersion(att.sourceGraveyardEntryVersion());
         entry.setActivePlayerId(gameData.activePlayerId);
         pushTriggeredEntry(gameData, entry);
         if (att.triggeringPermanentId() != null) {

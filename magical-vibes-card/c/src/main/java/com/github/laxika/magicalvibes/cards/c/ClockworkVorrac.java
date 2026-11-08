@@ -21,7 +21,7 @@ public class ClockworkVorrac extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4)));
 
         addTrigger(Triggers.endOfCombat(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceAttackedOrBlockedThisCombat()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceAttackedOrBlockedThisCombat()),
                 new RemoveCounterFromSourceAtEndOfCombatEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         addActivatedAbility(new ActivatedAbility(true, null,

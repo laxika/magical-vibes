@@ -19,8 +19,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatOpponentFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
@@ -197,26 +195,6 @@ public class CombatTriggerService {
                                         may.prompt(), may.elseEffect(), may.choicePlayer(), may.choicePlayerId())
                                 : e);
                     }
-                    if (slot == CombatWatch.ON_ATTACK) {
-                        // "if it's attacking one of your opponents" is read from the Aura's controller, who
-                        // controls the Aura's own trigger (Scriv's Contract), against the declared attack target.
-                        ConditionContext auraOwnerAttackContext = ConditionContext
-                                .forPermanent(perm, auraOwnerId)
-                                .withTargetId(creature.getAttackTarget());
-                        List<CardEffect> attackOpponentResolved = new ArrayList<>();
-                        for (CardEffect e : effectsForStack) {
-                            attackOpponentResolved.addAll(resolveAttackedTargetOpponentSteps(
-                                    gameData, e, auraOwnerAttackContext));
-                        }
-                        effectsForStack.clear();
-                        effectsForStack.addAll(attackOpponentResolved);
-                        effectsForStack.replaceAll(e -> e instanceof EnchantedCreatureControllerLosesLifeEffect loss
-                                && loss.affectedPlayerId() == null
-                                ? new EnchantedCreatureControllerLosesLifeEffect(
-                                        loss.amount(), finalCreatureControllerId)
-                                : e);
-                    }
-
                     if (effectsForStack.isEmpty()) continue;
 
                     int previousCopies = slot == CombatWatch.ON_ATTACK
@@ -331,7 +309,10 @@ public class CombatTriggerService {
                                 if (triggeringPlayerId != null) {
                                     trigger.setNonTargeting(true);
                                 }
-                                if (effectsForStack.stream().anyMatch(EnchantedCreatureControllerLosesLifeEffect.class::isInstance)) {
+                                // "Its controller loses life" reads the enchanted creature's controller as the ability
+                                // resolves, also as a step or behind an "if" (Scriv's Contract's "otherwise").
+                                if (effectsForStack.stream().anyMatch(
+                                        CombatTriggerService::losesLifeAsEnchantedCreatureController)) {
                                     trigger.setTargetId(creature.getId());
                                     trigger.setNonTargeting(true);
                                     trigger.setTriggeringPermanentControllerId(finalCreatureControllerId);
@@ -542,27 +523,17 @@ public class CombatTriggerService {
         return matches[0];
     }
 
-    private List<CardEffect> resolveAttackedTargetOpponentSteps(GameData gameData, CardEffect effect,
-                                                               ConditionContext context) {
-        if (!(effect instanceof SequenceEffect sequence)
-                || sequence.steps().stream().noneMatch(this::isAttackedTargetOpponentConditional)) {
-            return List.of(effect);
-        }
-        List<CardEffect> resolved = new ArrayList<>();
-        for (CardEffect step : sequence.steps()) {
-            if (!isAttackedTargetOpponentConditional(step)) {
-                resolved.add(step);
-            } else if (conditionEvaluationService.isMet(gameData, ((ConditionalEffect) step).condition(), context)) {
-                resolved.add(((ConditionalEffect) step).wrapped());
-            }
-        }
-        return resolved;
-    }
-
-    private boolean isAttackedTargetOpponentConditional(CardEffect effect) {
-        return effect instanceof ConditionalEffect conditional
-                && (conditional.condition() instanceof AttackedTargetIsOpponent
-                || conditional.condition() instanceof NotCondition not
-                && not.inner() instanceof AttackedTargetIsOpponent);
+    /**
+     * Whether {@code effect} has the enchanted creature's controller lose life, alone, as a step of a sequence or
+     * behind an effect's "if".
+     */
+    private static boolean losesLifeAsEnchantedCreatureController(CardEffect effect) {
+        return switch (effect) {
+            case EnchantedCreatureControllerLosesLifeEffect ignored -> true;
+            case ConditionalEffect conditional -> losesLifeAsEnchantedCreatureController(conditional.wrapped());
+            case SequenceEffect sequence -> sequence.steps().stream()
+                    .anyMatch(CombatTriggerService::losesLifeAsEnchantedCreatureController);
+            default -> false;
+        };
     }
 }

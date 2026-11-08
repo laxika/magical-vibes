@@ -40,7 +40,7 @@ public class TheMindStone extends Card {
                 )),
                 "Target must be another nonland permanent you control"
         ), 0, 1).addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsHarnessed()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsHarnessed()),
                 FlickerEffect.flickerTarget());
     }
 }

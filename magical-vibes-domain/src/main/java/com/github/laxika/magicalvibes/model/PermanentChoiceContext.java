@@ -1570,11 +1570,21 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  the stack entry built from this choice carries for its {@code EventValue} amounts.
      *  {@code triggeringPlayerId} is the player the event was about (a damage trigger's player dealt damage),
      *  against which the targets' "that player controls" is judged; the stack entry carries it as its
-     *  triggering player. */
+     *  triggering player. {@code sourceGraveyardEntryVersion} is the graveyard incarnation of a graveyard source
+     *  (Vengeful Pharaoh) as the ability triggered, or {@code -1}, which the stack entry keeps. */
     record AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                UUID sourcePermanentId, UUID choosingPlayerId,
                                UUID attackedTargetId, UUID triggeringPermanentId, Integer xValue,
-                               int eventValue, UUID triggeringPlayerId) implements PermanentChoiceContext {
+                               int eventValue, UUID triggeringPlayerId,
+                               long sourceGraveyardEntryVersion) implements PermanentChoiceContext {
+
+        public AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                   UUID sourcePermanentId, UUID choosingPlayerId,
+                                   UUID attackedTargetId, UUID triggeringPermanentId, Integer xValue,
+                                   int eventValue, UUID triggeringPlayerId) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, choosingPlayerId,
+                    attackedTargetId, triggeringPermanentId, xValue, eventValue, triggeringPlayerId, -1L);
+        }
 
         public AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                    UUID sourcePermanentId, UUID choosingPlayerId,
@@ -1586,13 +1596,25 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         /** This choice with {@code eventValue} as the amount of the event the ability triggered on. */
         public AttackTriggerTarget withEventValue(int eventValue) {
             return new AttackTriggerTarget(sourceCard, controllerId, effects, sourcePermanentId, choosingPlayerId,
-                    attackedTargetId, triggeringPermanentId, xValue, eventValue, triggeringPlayerId);
+                    attackedTargetId, triggeringPermanentId, xValue, eventValue, triggeringPlayerId,
+                    sourceGraveyardEntryVersion);
         }
 
         /** This choice with {@code triggeringPlayerId} as the player the event was about ("that player"). */
         public AttackTriggerTarget withTriggeringPlayer(UUID triggeringPlayerId) {
             return new AttackTriggerTarget(sourceCard, controllerId, effects, sourcePermanentId, choosingPlayerId,
-                    attackedTargetId, triggeringPermanentId, xValue, eventValue, triggeringPlayerId);
+                    attackedTargetId, triggeringPermanentId, xValue, eventValue, triggeringPlayerId,
+                    sourceGraveyardEntryVersion);
+        }
+
+        /**
+         * This choice with {@code version} as the graveyard incarnation its source card had as the ability triggered
+         * from a graveyard, which the entry built from it keeps ({@code StackEntry.setSourceGraveyardEntryVersion},
+         * CR 400.7).
+         */
+        public AttackTriggerTarget withSourceGraveyardEntryVersion(long version) {
+            return new AttackTriggerTarget(sourceCard, controllerId, effects, sourcePermanentId, choosingPlayerId,
+                    attackedTargetId, triggeringPermanentId, xValue, eventValue, triggeringPlayerId, version);
         }
 
         public AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,

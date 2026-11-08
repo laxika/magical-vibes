@@ -35,7 +35,7 @@ public class SmokyLoungeMistySalon extends Card {
         )));
 
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceRoomDoorUnlocked(0)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceRoomDoorUnlocked(0)),
                 new AwardRestrictedManaEffect(ManaColor.RED, 2, new ManaRestriction.RoomSpellsOrUnlocks()));
 
         DynamicAmount unlockedDoors = new UnlockedRoomDoorsCount(CountScope.CONTROLLER);

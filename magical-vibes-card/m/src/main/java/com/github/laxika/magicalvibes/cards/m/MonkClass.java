@@ -45,7 +45,7 @@ public class MonkClass extends Card {
                 "this Class is level 1"));
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(2, CounterType.LEVEL)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceCounterThreshold(2, CounterType.LEVEL)),
                 new ExileTopCardMayPlayWhileExiledEffect(
                         new ControllerCastSpellThisTurn(new CardTruePredicate()), false, false,
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND))));

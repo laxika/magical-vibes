@@ -251,7 +251,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardsToTargetPlay
 import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToBattlefieldUnderOwnerControlEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
-import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -1363,28 +1362,28 @@ public class StepTriggerService {
                                 gameData.id, card.getName());
                     } else if (effect instanceof MayPayManaEffect mayPay) {
                         gameData.queueMayAbility(card, activePlayerId, mayPay, null);
+                        // "If this card is in your graveyard" reads this graveyard stay (CR 400.7).
+                        gameData.stack.getLast().setSourceGraveyardEntryVersion(
+                                gameData.graveyardEntryVersion(card.getId()));
                     } else if (effect instanceof MayEffect may) {
                         // Bind this graveyard stay so a card that left and re-entered the graveyard
                         // is not acted on by the old trigger (CR 400.7).
                         gameData.queueMayAbility(card, activePlayerId, may, card.getId());
+                        gameData.stack.getLast().setSourceGraveyardEntryVersion(
+                                gameData.graveyardEntryVersion(card.getId()));
                     } else {
-                        // Bind the source-in-graveyard check to this graveyard stay so an old trigger
-                        // cannot act after the card has left and re-entered the graveyard (CR 603.4).
+                        // The entry keeps this graveyard stay, which the source-in-graveyard check reads, so an old
+                        // trigger cannot act after the card has left and re-entered the graveyard (CR 400.7).
                         long sourceEntryVersion = gameData.graveyardEntryVersion(card.getId());
-                        CardEffect boundEffect = effect;
-                        if (effect instanceof ConditionalEffect conditional
-                                && conditional.condition() instanceof SourceCardInGraveyard) {
-                            boundEffect = new ConditionalEffect(new SourceCardInGraveyard(sourceEntryVersion),
-                                    conditional.wrapped());
-                        }
                         StackEntry upkeepEntry = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 card,
                                 activePlayerId,
                                 card.getName() + "'s upkeep ability",
-                                new ArrayList<>(List.of(boundEffect))
+                                new ArrayList<>(List.of(effect))
                         );
                         upkeepEntry.setTriggeringCardGraveyardEntryVersion(sourceEntryVersion);
+                        upkeepEntry.setSourceGraveyardEntryVersion(sourceEntryVersion);
                         gameData.stack.add(upkeepEntry);
 
                         gameLogService.append(gameData, GameLog.cardThen(card, "'s upkeep ability triggers."));

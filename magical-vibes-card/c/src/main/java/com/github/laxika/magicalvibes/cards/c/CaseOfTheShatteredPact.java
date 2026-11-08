@@ -44,7 +44,7 @@ public class CaseOfTheShatteredPact extends Card {
 
         target(TargetFilters.creatureYouControl())
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                        TriggerOptions.DEFAULT.withInterveningIf(new AllOf(List.of(new SourceIsSolved()))),
+                        TriggerOptions.DEFAULT.withEventCondition(new AllOf(List.of(new SourceIsSolved()))),
                         new GrantKeywordEffect(Set.of(
                                         Keyword.FLYING,
                                         Keyword.DOUBLE_STRIKE,

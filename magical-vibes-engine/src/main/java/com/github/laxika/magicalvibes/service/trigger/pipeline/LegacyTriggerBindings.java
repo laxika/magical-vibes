@@ -62,7 +62,6 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -186,7 +185,6 @@ public class LegacyTriggerBindings {
     private final ConditionEvaluationService conditionEvaluationService;
     private final GraveyardTargetingSupport graveyardTargetingSupport;
     private final GraveyardTargetingService graveyardTargetingService;
-    private final TriggerCollectionService triggerCollectionService;
 
     private final Map<Class<? extends CardEffect>, Handler> deathHandlers = new HashMap<>();
     private final Map<Class<? extends CardEffect>, Handler> leaveHandlers = new HashMap<>();
@@ -197,8 +195,7 @@ public class LegacyTriggerBindings {
                                  @Lazy AmountEvaluationService amountEvaluationService,
                                  @Lazy ConditionEvaluationService conditionEvaluationService,
                                  @Lazy GraveyardTargetingSupport graveyardTargetingSupport,
-                                 @Lazy GraveyardTargetingService graveyardTargetingService,
-                                 @Lazy TriggerCollectionService triggerCollectionService) {
+                                 @Lazy GraveyardTargetingService graveyardTargetingService) {
         this.gameQueryService = gameQueryService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.gameLogService = gameLogService;
@@ -206,7 +203,6 @@ public class LegacyTriggerBindings {
         this.conditionEvaluationService = conditionEvaluationService;
         this.graveyardTargetingSupport = graveyardTargetingSupport;
         this.graveyardTargetingService = graveyardTargetingService;
-        this.triggerCollectionService = triggerCollectionService;
         registerDeathHandlers();
         registerLeaveHandlers();
     }
@@ -237,7 +233,10 @@ public class LegacyTriggerBindings {
         };
     }
 
-    /** "When this dies": the dying card's graveyard incarnation is bound first. */
+    /**
+     * "When this dies". The dying card is the entry's triggering card, with its graveyard incarnation, which "if this
+     * card is in your graveyard" reads (CR 400.7).
+     */
     private boolean dies(Ctx c, CardEffect effect) {
         if (effect instanceof ExileSourceCardFromGraveyardAndShuffleTopCardsEffect
                 && !c.controllerId().equals(gameQueryService.findGraveyardOwnerById(c.gameData(),
@@ -245,9 +244,7 @@ public class LegacyTriggerBindings {
             // Triumph of Saint Katherine exiles itself and cards from its controller's library into one pile.
             return false;
         }
-        CardEffect bound = triggerCollectionService.bindSelfDeathEffect(c.gameData(), c.dyingCard(),
-                c.dyingPermanent(), effect);
-        return dispatch(deathHandlers, c, bound, this::handleDeathDefault);
+        return dispatch(deathHandlers, c, effect, this::handleDeathDefault);
     }
 
     /** "When you sacrifice this": the death handlers. */

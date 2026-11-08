@@ -65,7 +65,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPermanen
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGreaterThanSourcePower;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasGreaterPowerOrToughnessThanSource;
-import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -1272,13 +1271,13 @@ public class TriggerCollectionService {
                         continue;
                     }
 
-                    // Bind "source card in graveyard" to this graveyard incarnation (CR 400.7) so the
-                    // ability does nothing if the card has left and returned to the graveyard.
                     List<CardEffect> boundEffects = trigger.effects().stream()
                             .map(e -> trigger.interveningIf() == null ? e
                                     : (CardEffect) new ConditionalEffect(trigger.interveningIf(), e))
-                            .map(e -> bindSourceCardInGraveyardVersion(gameData, e, card.getId()))
                             .toList();
+                    // "If this card is in your graveyard" reads this graveyard incarnation from the entry (CR 400.7),
+                    // so the ability does nothing if the card has left and returned to the graveyard.
+                    long sourceEntryVersion = gameData.graveyardEntryVersion(card.getId());
                     if (trigger.manaCost() != null) {
                         // "you may pay {X}" pattern — queue MayPayManaEffect on the stack
                         CardEffect resolvedEffect = boundEffects.getFirst();
@@ -1297,8 +1296,8 @@ public class TriggerCollectionService {
                                 (UUID) null,
                                 (UUID) null);
                         mayPayEntry.setTriggeringCardId(card.getId());
-                        mayPayEntry.setTriggeringCardGraveyardEntryVersion(
-                                gameData.graveyardEntryVersion(card.getId()));
+                        mayPayEntry.setTriggeringCardGraveyardEntryVersion(sourceEntryVersion);
+                        mayPayEntry.setSourceGraveyardEntryVersion(sourceEntryVersion);
                         gameData.stack.add(mayPayEntry);
                     } else {
                         StackEntry entry = new StackEntry(
@@ -1309,7 +1308,8 @@ public class TriggerCollectionService {
                                 new ArrayList<>(boundEffects)
                         );
                         entry.setTriggeringCardId(spellCard.getId());
-                        entry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
+                        entry.setTriggeringCardGraveyardEntryVersion(sourceEntryVersion);
+                        entry.setSourceGraveyardEntryVersion(sourceEntryVersion);
                         entry.setXValue(spellManaSpent);
                         gameData.stack.add(entry);
                     }
@@ -12704,17 +12704,6 @@ public class TriggerCollectionService {
     // ── Death / leaves-battlefield triggers ───────────────────────────
 
     /**
-     * {@code effect}, a "when this dies" effect of {@code dyingCard}, bound to its graveyard incarnation (CR 400.7).
-     * The card that died is the stack entry's triggering card, and the permanent, with what was attached to it, its
-     * triggering permanent (CR 603.10a).
-     */
-    public CardEffect bindSelfDeathEffect(GameData gameData, Card dyingCard, Permanent dyingPermanent,
-                                          CardEffect effect) {
-        UUID dyingCardId = dyingPermanent != null ? dyingPermanent.getOriginalCard().getId() : dyingCard.getId();
-        return bindSourceCardInGraveyardVersion(gameData, effect, dyingCardId);
-    }
-
-    /**
      * Puts one "whenever [an object] dies" ability of {@code perm} on the stack for {@code death}, binding the event
      * data its effects need the way the old slot collector of {@code watch} did. The trigger pipeline has already
      * decided that the ability triggers: its relation, its filter, the zone it functions from and the look-back of
@@ -13652,11 +13641,6 @@ public class TriggerCollectionService {
     private boolean queueGraveyardCreaturePutTrigger(GameData gameData, Card sourceCard, UUID controllerId,
                                                       CardEffect resolved) {
         long sourceEntryVersion = gameData.graveyardEntryVersion(sourceCard.getId());
-        if (resolved instanceof ConditionalEffect conditional
-                && conditional.condition() instanceof SourceCardInGraveyard) {
-            resolved = new ConditionalEffect(new SourceCardInGraveyard(sourceEntryVersion),
-                    conditional.wrapped());
-        }
         if (resolved instanceof MayPayManaEffect mayPay) {
             gameData.queueMayAbility(sourceCard, controllerId, mayPay, null);
         } else if (resolved instanceof MayEffect may) {
@@ -13671,8 +13655,10 @@ public class TriggerCollectionService {
             ));
         }
         // CR 400.7: the trigger refers to this stay of the card in the graveyard; once the card
-        // leaves and returns, it is a new object the trigger can no longer move.
+        // leaves and returns, it is a new object the trigger can no longer move, and "if this card
+        // is in your graveyard" is false.
         gameData.stack.getLast().setTriggeringCardGraveyardEntryVersion(sourceEntryVersion);
+        gameData.stack.getLast().setSourceGraveyardEntryVersion(sourceEntryVersion);
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} graveyard trigger fires when a creature enters a graveyard",
                 gameData.id, sourceCard.getName());
@@ -17336,26 +17322,6 @@ public class TriggerCollectionService {
             log.info("Game {} - {} increment trigger queued (mana spent {})",
                     gameData.id, perm.getCard().getName(), manaSpent);
         });
-    }
-
-    /**
-     * Binds a "if this card is in your graveyard" death condition to the graveyard incarnation the
-     * dying card has now, so a trigger collected for an earlier death cannot act on a later one (CR 400.7).
-     */
-    public CardEffect bindSourceCardInGraveyardVersion(GameData gameData, CardEffect effect, UUID dyingCardId) {
-        if (effect instanceof ConditionalEffect conditional
-                && conditional.condition() instanceof SourceCardInGraveyard) {
-            return new ConditionalEffect(new SourceCardInGraveyard(gameData.graveyardEntryVersion(dyingCardId)),
-                    conditional.wrapped());
-        }
-        if (effect instanceof MayPayManaEffect mayPay
-                && mayPay.wrapped() instanceof ConditionalEffect inner
-                && inner.condition() instanceof SourceCardInGraveyard) {
-            return new MayPayManaEffect(mayPay.manaCost(), mayPay.dynamicManaCost(),
-                    bindSourceCardInGraveyardVersion(gameData, inner, dyingCardId), mayPay.prompt(),
-                    mayPay.payer(), mayPay.elseEffect(), mayPay.lifeCost(), mayPay.sourceIsTriggeringPermanent());
-        }
-        return effect;
     }
 
     /**

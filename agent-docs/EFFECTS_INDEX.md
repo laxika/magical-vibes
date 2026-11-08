@@ -7111,7 +7111,7 @@ Spell-cast triggers that refer to the spell that triggered them carry its identi
 - `TransformToBackFaceEffect(true)` flips the source instead of transforming it, bypassing transform restrictions and transform-event triggers (Akki Lavarunner).
 - `EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffect(CounterType, int, CardEffect)` accepts `GoadTriggeringCreatureUntilNextTurnEffect` to goad each creature that receives counters (Agitator Ant); the default form retains the player attack restriction.
 - `MiracleRevealEffect`, `MiracleMayCastEffect`, and `MayCastForMiracleCostEffect` preserve an optional `xReduction` when a granted miracle discount exceeds the fixed generic mana component. It reduces the announced X component without reducing additional casting costs.
-- `SourceClassLevelAtLeast(int level)` checks a Class permanent's separate level state rather than level counters, for Class ability conditions and advancement.
+- `SourceClassLevelAtLeast(int level)` checks a Class permanent's separate level state rather than level counters, for Class ability conditions (a triggered one's event condition, CR 716.2a) and advancement.
 - `CastExiledCardWithoutPayingManaCostEffect(UUID, true)` grants haste until end of turn to the resulting creature. `(UUID, false, true)` grants native suspend haste for as long as the same player controls the resulting permanent. Alaundo's granted casting ability and native suspend create separate last-counter triggers.
 - `ToxicEffect(int value)` is a STATIC marker for a toxic ability's value. Combat damage applies the summed values from damaging creatures as poison counters through the existing player-counter path, without a stack trigger.
 

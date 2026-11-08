@@ -37,7 +37,7 @@ public class TheSoulStone extends Card {
                 "{6}{B}, {T}, Exile a creature you control: Harness The Soul Stone."
         ));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsHarnessed()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsHarnessed()),
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardTypePredicate(CardType.CREATURE))
