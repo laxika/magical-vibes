@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.d.Deflection;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GoldMyr;
@@ -23,7 +24,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DackFayden.class, Forest.class, GiantGrowth.class, GoldMyr.class, GrizzlyBears.class, LeoninScimitar.class, TandemTactics.class})
+@CardUsed({DackFayden.class, Deflection.class, Forest.class, GiantGrowth.class, GoldMyr.class, GrizzlyBears.class, LeoninScimitar.class, TandemTactics.class})
 class DackFaydenTest extends BaseCardTest {
 
     @Test
@@ -184,6 +185,33 @@ class DackFaydenTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Emblem gains control of the permanent the spell targeted as it was cast, even after a redirect")
+    void emblemGainsControlOfOriginalTargetAfterRedirect() {
+        addReadyDack(player1, 6);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        Permanent original = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent replacement = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        GiantGrowth spell = new GiantGrowth();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player2, List.of(new Deflection()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+
+        harness.castInstant(player1, 0, original.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, spell.getId());
+        harness.handlePermanentChosen(player2, replacement.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.findPermanentController(gd, original.getId())).isEqualTo(player1.getId());
+        assertThat(gqs.findPermanentController(gd, replacement.getId())).isEqualTo(player2.getId());
     }
 
     @Test
