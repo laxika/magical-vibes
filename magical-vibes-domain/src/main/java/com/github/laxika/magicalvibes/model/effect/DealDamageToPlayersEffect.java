@@ -17,11 +17,27 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
  * player that match the predicate, and {@code amount} is ignored.
  *
  * @param unpreventable whether the damage can't be prevented
+ * @param damageSource  which object deals the damage: the ability's source, or the permanent that dealt the damage
+ *                      the trigger event was about ({@link #dealtByEventDamageSource()}); never {@code null}
  */
 public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
                                         PermanentPredicate attachedCountFilter, boolean unpreventable,
-                                        boolean recordDamageDealt, TargetFilter triggeredTargetFilter)
+                                        boolean recordDamageDealt, TargetFilter triggeredTargetFilter,
+                                        DamageSource damageSource)
         implements DamageDealingEffect, CombatDamageTriggerContextEffect, TriggeringSpellManaValueEffect {
+
+    public DealDamageToPlayersEffect {
+        if (damageSource == null) {
+            damageSource = DamageSource.ABILITY_SOURCE;
+        }
+    }
+
+    public DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
+                                     PermanentPredicate attachedCountFilter, boolean unpreventable,
+                                     boolean recordDamageDealt, TargetFilter triggeredTargetFilter) {
+        this(amount, recipient, attachedCountFilter, unpreventable, recordDamageDealt, triggeredTargetFilter,
+                DamageSource.ABILITY_SOURCE);
+    }
 
     public DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
                                      PermanentPredicate attachedCountFilter, boolean unpreventable,
@@ -37,13 +53,23 @@ public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient re
     /** Records actual damage in the entry's event value for a subsequent effect. */
     public DealDamageToPlayersEffect recordingDamageDealt() {
         return new DealDamageToPlayersEffect(amount, recipient, attachedCountFilter, unpreventable, true,
-                triggeredTargetFilter);
+                triggeredTargetFilter, damageSource);
     }
 
     /** Supplies a target filter for trigger-time target selection when the effect is granted. */
     public DealDamageToPlayersEffect withTriggeredTargetFilter(TargetFilter targetFilter) {
         return new DealDamageToPlayersEffect(amount, recipient, attachedCountFilter, unpreventable,
-                recordDamageDealt, targetFilter);
+                recordDamageDealt, targetFilter, damageSource);
+    }
+
+    /**
+     * The permanent that dealt the damage the trigger event was about deals this damage instead of the ability's
+     * source ({@link DamageSource#EVENT_DAMAGE_SOURCE}): "that Archer deals that much damage to that creature's
+     * controller" (Greatbow Doyen), "it deals that much damage to the chosen player" (Saskia the Unyielding).
+     */
+    public DealDamageToPlayersEffect dealtByEventDamageSource() {
+        return new DealDamageToPlayersEffect(amount, recipient, attachedCountFilter, unpreventable,
+                recordDamageDealt, triggeredTargetFilter, DamageSource.EVENT_DAMAGE_SOURCE);
     }
 
     public DealDamageToPlayersEffect(int damage, DamageRecipient recipient) {

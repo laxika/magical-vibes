@@ -492,6 +492,30 @@ public class StackEntry {
     }
 
     /**
+     * Records {@code dealer}, controlled by {@code controllerId}, as the permanent that dealt the damage this trigger
+     * event was about ({@link #getEventDamageSource()}); the entry keeps a copy of its own.
+     */
+    public void setEventDamageSource(Permanent dealer, UUID controllerId) {
+        this.eventDamageSource = dealer == null ? null : new Permanent(dealer);
+        this.eventDamageSourceControllerId = dealer == null ? null : controllerId;
+    }
+
+    /**
+     * The permanent that dealt the damage this trigger event was about ({@link #getEventDamageSource()}), for an
+     * effect whose damage it deals.
+     *
+     * @throws IllegalStateException when the ability reached the stack without one
+     */
+    public Permanent requireEventDamageSource() {
+        if (eventDamageSource == null) {
+            throw new IllegalStateException(description + " has the creature that dealt the damage deal damage, but "
+                    + "reached the stack without it: its collector must record the event's damage source "
+                    + "(setEventDamageSource)");
+        }
+        return eventDamageSource;
+    }
+
+    /**
      * The permanent that granted this triggered ability ({@link #getGrantingPermanentId()}), for an effect that names it.
      *
      * @throws IllegalStateException when the ability reached the stack without its granting permanent
@@ -638,6 +662,19 @@ public class StackEntry {
     /** The Auras and Equipment attached to {@link #triggeringPermanentSnapshot} just before it left (CR 603.10a). */
     private com.github.laxika.magicalvibes.model.rules.DepartedAttachments triggeringAttachments =
             com.github.laxika.magicalvibes.model.rules.DepartedAttachments.NONE;
+    /**
+     * The permanent that dealt the damage a damage trigger event was about, as it dealt the damage ("that Archer" of
+     * Greatbow Doyen, "it" of "whenever a creature you control deals combat damage to a player, it deals that much
+     * damage to …"): set by the collector that puts such an ability on the stack through
+     * {@link #setEventDamageSource}, and read by an effect whose damage that permanent deals
+     * ({@code DamageSource.EVENT_DAMAGE_SOURCE}, CR 608.2h). {@code null} when the event was about no single
+     * damage-dealing permanent.
+     */
+    private Permanent eventDamageSource;
+    /** The controller of {@link #eventDamageSource} as it dealt the damage. */
+    private UUID eventDamageSourceControllerId;
+    /** {@link #eventDamageSource}'s keywords when it left the battlefield, or null while it is still there. */
+    @Setter private Set<Keyword> eventDamageSourceKeywordsAtLeave;
     /** Mixed-zone card targets remember their original permanent identity or graveyard incarnation. */
     private final Map<UUID, UUID> mixedZoneTargetPermanentIds = new HashMap<>();
     private final Map<UUID, Long> mixedZoneTargetGraveyardVersions = new HashMap<>();
@@ -1295,8 +1332,9 @@ public class StackEntry {
 
     /**
      * Copies what {@code source}'s trigger event was about onto this entry: the triggering permanent (with its
-     * last-known snapshot and attachments), card, cards, spell, activated ability, player and vote, the event's value,
-     * player and card payloads, the attack it was about, and the facts the collector fixed from the event as the
+     * last-known snapshot and attachments), card, cards, spell, activated ability, player and vote, the permanent that
+     * dealt the event's damage, the event's value, player and card payloads, the attack it was about, and the facts
+     * the collector fixed from the event as the
      * ability triggered (the granting permanent, the linked exiled card, the source's graveyard incarnation and power).
      * The copy constructor copies every field through here, and a copy of an ability ({@code CopySupport}) copies
      * just these: a copy of a triggered ability is another instance of the same ability, so its "that creature", "its
@@ -1306,6 +1344,10 @@ public class StackEntry {
     public void copyTriggerEventFrom(StackEntry source) {
         this.triggeringPermanentKeywordsAtLeave = source.triggeringPermanentKeywordsAtLeave == null
                 ? null : EnumSet.copyOf(source.triggeringPermanentKeywordsAtLeave);
+        this.eventDamageSource = source.eventDamageSource == null ? null : new Permanent(source.eventDamageSource);
+        this.eventDamageSourceControllerId = source.eventDamageSourceControllerId;
+        this.eventDamageSourceKeywordsAtLeave = source.eventDamageSourceKeywordsAtLeave == null
+                ? null : EnumSet.copyOf(source.eventDamageSourceKeywordsAtLeave);
         this.triggeringCardExileEntryVersion = source.triggeringCardExileEntryVersion;
         this.attackedTargetId = source.attackedTargetId;
         this.attackingPermanentSnapshots = source.attackingPermanentSnapshots.stream().map(Permanent::new).toList();

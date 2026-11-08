@@ -10,7 +10,8 @@ import com.github.laxika.magicalvibes.model.condition.Enchanted;
 import com.github.laxika.magicalvibes.model.condition.Equipped;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOtherOpponentEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -33,7 +34,7 @@ public class KoseiPenitentWarlord extends Card {
                         new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                         SequenceEffect.of(
                                 new DrawCardEffect(new EventValue()),
-                                new DealDamageToEachOtherOpponentEffect())),
+                                new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.EACH_OTHER_OPPONENT))),
                         GrantScope.SELF)));
     }
 }

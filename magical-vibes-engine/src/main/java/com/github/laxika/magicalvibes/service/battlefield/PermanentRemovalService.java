@@ -2598,17 +2598,26 @@ public class PermanentRemovalService {
         return Optional.empty();
     }
 
+    /**
+     * Records {@code target}'s keywords as it leaves the battlefield on every stack entry that names it as its
+     * triggering permanent or as the permanent that dealt its event's damage, which read it as it last existed there
+     * (CR 608.2h): "it deals that much damage" with the lifelink it had.
+     */
     private void snapshotTriggeringPermanentKeywords(GameData gameData, Permanent target) {
         Set<Keyword> keywords = null;
         for (StackEntry entry : gameData.stack) {
-            if (!target.getId().equals(entry.getTriggeringPermanentId())) continue;
+            boolean triggering = target.getId().equals(entry.getTriggeringPermanentId());
+            boolean dealer = entry.getEventDamageSource() != null
+                    && target.getId().equals(entry.getEventDamageSource().getId());
+            if (!triggering && !dealer) continue;
             if (keywords == null) {
                 keywords = EnumSet.noneOf(Keyword.class);
                 for (Keyword keyword : Keyword.values()) {
                     if (gameQueryService.hasKeyword(gameData, target, keyword)) keywords.add(keyword);
                 }
             }
-            entry.setTriggeringPermanentKeywordsAtLeave(EnumSet.copyOf(keywords));
+            if (triggering) entry.setTriggeringPermanentKeywordsAtLeave(EnumSet.copyOf(keywords));
+            if (dealer) entry.setEventDamageSourceKeywordsAtLeave(EnumSet.copyOf(keywords));
         }
     }
 

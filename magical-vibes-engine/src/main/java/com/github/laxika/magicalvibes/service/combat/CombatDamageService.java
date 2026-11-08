@@ -53,7 +53,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageAssignmentToDefendingPlayerAndCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.CombatDamageDealerReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
@@ -2413,6 +2412,7 @@ public class CombatDamageService {
                 // The combat damage dealt is the event value: "discards that many cards" (Needle Specter),
                 // "draw that many cards" (Hunter's Insight) and the like read it as the ability resolves.
                 se.setEventValue(damageDealt);
+                se.setEventDamageSource(creature, attackerId);
                 se.setGrantingPermanentId(grantingPermanents.get(candidateEffect));
                 se.setNonTargeting(true);
                 gameData.stack.add(se);
@@ -2933,20 +2933,15 @@ public class CombatDamageService {
                     se.setTriggeringPermanentIds(dealerIds);
                     if (!read.oneOrMore()) {
                         // "It" / "that creature" is the creature that dealt the damage, which the effects read from
-                        // the entry as the ability resolves.
+                        // the entry as the ability resolves, and "it deals that much damage" has it deal the damage.
                         se.setTriggeringPermanentId(creature.getId());
                         se.setTriggeringPermanentControllerId(attackerId);
                         se.setTriggeringPermanent(creature);
+                        se.setEventDamageSource(creature, attackerId);
                     }
                     se.setNonTargeting(true);
                     if (read.marksLimitOnAcceptance()) {
                         se.setMarkSourceOncePerTurnOnAcceptance(true);
-                    }
-                    if (firedEffect instanceof CombatDamageDealerReferencingEffect) {
-                        se.setTriggeringPermanentId(creature.getId());
-                        se.setTriggeringPermanentControllerId(attackerId);
-                        se.setDamageSourceCard(creature.getCard());
-                        se.setSourcePermanentSnapshot(new Permanent(perm));
                     }
                     gameData.stack.add(se);
                     read.markLimit(gameData, perm.getId());

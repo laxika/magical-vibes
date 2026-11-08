@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.ChoosePlayerOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToChosenPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,6 +17,7 @@ public class SaskiaTheUnyielding extends Card {
         addStaticEffect(new ChoosePlayerOnEnterEffect());
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
                         .withFilter(new PermanentIsCreaturePredicate()),
-                new DealDamageToChosenPlayerEffect(new EventValue()));
+                new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.CHOSEN_PLAYER)
+                        .dealtByEventDamageSource());
     }
 }

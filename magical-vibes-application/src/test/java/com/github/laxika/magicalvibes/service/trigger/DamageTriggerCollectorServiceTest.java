@@ -12,9 +12,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeri
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDamageSourceCreatureOrSpellControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ReflectAllyDamageToDamagedCreatureControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -40,7 +41,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsOrLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -417,34 +417,8 @@ class DamageTriggerCollectorServiceTest {
     }
 
     @Nested
-    @DisplayName("ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE — the dealer's reflected damage")
+    @DisplayName("ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE — no class-keyed handler")
     class AllyDealtDamageToCreatureReflection {
-
-        @Test
-        @DisplayName("the creature that dealt the damage is the entry's source, the damaged creature its triggering permanent")
-        void queuesTheReflectionFromTheDealer() {
-            Permanent doyen = createPermanent("Greatbow Doyen");
-            Permanent archer = createPermanent("Elvish Archer");
-            Permanent damaged = createPermanent("Serra Angel");
-            var effect = new ReflectAllyDamageToDamagedCreatureControllerEffect();
-            var ctx = new TriggerContext.CreatureDealsDamageToCreature(archer, damaged.getId(), 3, false,
-                    damaged, player2Id);
-
-            boolean result = registry.dispatch(
-                    match(doyen, player1Id, effect),
-                    DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE, effect, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(gd.stack).hasSize(1);
-            StackEntry entry = gd.stack.getFirst();
-            assertThat(entry.getSourcePermanentId()).isEqualTo(archer.getId());
-            assertThat(entry.getControllerId()).isEqualTo(player1Id);
-            assertThat(entry.getTriggeringPermanentId()).isEqualTo(damaged.getId());
-            assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(player2Id);
-            assertThat(entry.getEventValue()).isEqualTo(3);
-            assertThat(entry.isNonTargeting()).isTrue();
-            assertThat(entry.getEffectsToResolve()).containsExactly(effect.triggeredEffect());
-        }
 
         @Test
         @DisplayName("the abilities the cards write with trigger filters have no class-keyed handler on the watch")
@@ -454,6 +428,9 @@ class DamageTriggerCollectorServiceTest {
                     .isFalse();
             assertThat(registry.handles(DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE,
                     new PutCountersOnSourceEffect(1, 1, 1))).isFalse();
+            assertThat(registry.handles(DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE,
+                    new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER)
+                            .dealtByEventDamageSource())).isFalse();
             assertThat(registry.handles(DamageWatch.ON_SELF_DEALS_DAMAGE_TO_CREATURE,
                     com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect.ofTriggeringPermanent()))
                     .isFalse();

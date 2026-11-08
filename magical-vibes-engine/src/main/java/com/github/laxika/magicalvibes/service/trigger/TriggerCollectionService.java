@@ -9091,8 +9091,8 @@ public class TriggerCollectionService {
      * damage, the creature dealt it, combat only) and its intervening "if" holds (CR 603.4), judged with the creature
      * dealt the damage as the context's triggering permanent (Maarika's "if that creature was dealt excess damage this
      * turn"), and goes on the stack as one object with the effects the card wrote (CR 603.3): the creature dealt the
-     * damage is its triggering permanent, the damage its event value. A one-effect ability whose effect has a
-     * class-keyed handler on the watch (Greatbow Doyen's) goes to that handler instead.
+     * damage is its triggering permanent, the creature that dealt it its event damage source, the damage its event
+     * value.
      */
     private void collectDealsDamageToCreatureAbilities(GameData gameData, Permanent watcher, UUID controllerId,
             List<DamageWatch> watches, boolean readGrants, DealsDamageToCreatureEvent event) {
@@ -9134,10 +9134,6 @@ public class TriggerCollectionService {
                 List<CardEffect> effects = DamageAbilityReader.effectsOf(read);
                 if (effects.isEmpty()) continue;
                 TriggerMatchContext match = new TriggerMatchContext(gameData, watcher, controllerId, effects.getFirst());
-                if (effects.size() == 1 && registry.handles(watch, effects.getFirst())) {
-                    dispatch(match, watch, effects.getFirst(), context);
-                    continue;
-                }
                 dispatch(match, watch, effects.getFirst(), context, () -> {
                     queueDealsDamageToCreatureAbility(gameData, watcher, controllerId, effects, event);
                     return true;
@@ -9156,8 +9152,9 @@ public class TriggerCollectionService {
     /**
      * Puts a "deals damage to a creature" ability of {@code watcher} on the stack: its source and controller the
      * watcher's, the creature dealt the damage its triggering permanent (with that creature's controller as it was
-     * dealt the damage, for "that creature's controller" once it has left), the damage its event value. The effects
-     * read them as they resolve ("destroy that creature", "tap that creature", "that much").
+     * dealt the damage, for "that creature's controller" once it has left), the creature that dealt it its event
+     * damage source (for "that Archer deals …"), the damage its event value. The effects read them as they resolve
+     * ("destroy that creature", "tap that creature", "that much").
      */
     private void queueDealsDamageToCreatureAbility(GameData gameData, Permanent watcher, UUID controllerId,
             List<CardEffect> effects, DealsDamageToCreatureEvent event) {
@@ -9173,6 +9170,7 @@ public class TriggerCollectionService {
         entry.setEventValue(event.damage());
         entry.setTriggeringPermanentId(event.damagedCreatureId());
         entry.setTriggeringPermanentControllerId(event.damagedCreatureControllerId());
+        entry.setEventDamageSource(event.damageSource(), event.damageSourceControllerId());
         entry.setSourcePermanentSnapshot(new Permanent(watcher));
         gameData.enqueueTrigger(entry);
 

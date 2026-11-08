@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.SourcePowerAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOtherOpponentEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,6 +20,7 @@ public class VincentVengefulAtoner extends Card {
                 TriggerOptions.ONE_OR_MORE,
                 new PutCountersOnSourceEffect(1, 1, 1));
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new ConditionalEffect(new SourcePowerAtLeast(7), new DealDamageToEachOtherOpponentEffect()));
+                new ConditionalEffect(new SourcePowerAtLeast(7),
+                        new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.EACH_OTHER_OPPONENT)));
     }
 }

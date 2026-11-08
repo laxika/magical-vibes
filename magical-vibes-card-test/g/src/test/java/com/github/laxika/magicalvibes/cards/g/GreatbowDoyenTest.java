@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.ActOfAggression;
 import com.github.laxika.magicalvibes.cards.f.FemerefArchers;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KeenEyedArchers;
+import com.github.laxika.magicalvibes.cards.l.LoxodonWarhammer;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SkyhunterSkirmisher;
 import com.github.laxika.magicalvibes.cards.t.Terror;
@@ -22,10 +23,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({GreatbowDoyen.class, ActOfAggression.class, KeenEyedArchers.class, GrizzlyBears.class, SerraAngel.class,
-        FemerefArchers.class, SkyhunterSkirmisher.class, Terror.class})
+        FemerefArchers.class, SkyhunterSkirmisher.class, Terror.class, LoxodonWarhammer.class})
 class GreatbowDoyenTest extends BaseCardTest {
-
-    // ===== Static: other Archer creatures you control get +1/+1 =====
 
     @Test
     @DisplayName("The damaged creature's controller as the ability resolves is dealt the damage")
@@ -84,8 +83,6 @@ class GreatbowDoyenTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, archer)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, archer)).isEqualTo(2);
     }
-
-    // ===== Trigger: an Archer you control deals damage to a creature =====
 
     @Test
     @DisplayName("Greatbow Doyen reflects its own combat damage to the blocker's controller")
@@ -250,6 +247,53 @@ class GreatbowDoyenTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The Archer, not Greatbow Doyen, deals the reflected damage")
+    void theArcherDealsTheReflectedDamage() {
+        Permanent doyen = addCreatureReady(player1, new GreatbowDoyen());
+        Permanent archer = addCreatureReady(player1, new FemerefArchers());
+        Permanent flyer = addCreatureReady(player2, new SkyhunterSkirmisher());
+        flyer.setAttacking(true);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 1, null, flyer.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.damageDealtBySourceToPlayerThisTurn(archer.getId(), player2.getId())).isEqualTo(4);
+        assertThat(gd.damageDealtBySourceToPlayerThisTurn(doyen.getId(), player2.getId())).isZero();
+    }
+
+    @Test
+    @DisplayName("An Archer that left the battlefield deals the reflected damage with the lifelink it had")
+    void departedArcherDealsTheReflectedDamageWithItsLifelink() {
+        addCreatureReady(player1, new GreatbowDoyen());
+        Permanent archer = addCreatureReady(player1, new FemerefArchers());
+        Permanent warhammer = harness.addToBattlefieldAndReturn(player1, new LoxodonWarhammer());
+        warhammer.setAttachedTo(archer.getId());
+        Permanent flyer = addCreatureReady(player2, new SkyhunterSkirmisher());
+        flyer.setAttacking(true);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 1, null, flyer.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 24);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player2, List.of(new Terror()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.ensurePriority(player2);
+        harness.castInstant(player2, 0, archer.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Femeref Archers");
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        harness.assertLife(player1, 28);
     }
 
     /** Adds {@code blockerCard} to {@code blocker}'s battlefield blocking the attacker at {@code attackerIndex}. */

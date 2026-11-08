@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardIfEventValueAtLeastEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
-import com.github.laxika.magicalvibes.model.effect.ReflectAllyDamageToDamagedCreatureControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageToEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsPowerDamageToAnyTargetEffect;
@@ -283,41 +282,6 @@ public class DamageTriggerCollectorService {
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers after an ally source dealt noncombat damage to a creature",
                 gameData.id, match.permanent().getCard().getName());
-        return true;
-    }
-
-    /**
-     * "Whenever an Archer you control deals damage to a creature, that Archer deals that much damage to that creature's
-     * controller" (Greatbow Doyen; the collector judged the trigger's filter on the Archer). The Archer deals the
-     * damage (CR 608.2h), so it is the entry's source; the creature dealt the damage is its triggering permanent,
-     * "that much" its event value and "that creature's controller" read as the ability resolves.
-     */
-    @CollectsDamageTrigger(value = ReflectAllyDamageToDamagedCreatureControllerEffect.class,
-            watch = DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE)
-    private boolean handleAllyDealtDamageToCreatureReflection(TriggerMatchContext match,
-            ReflectAllyDamageToDamagedCreatureControllerEffect reflect, TriggerContext ctx) {
-        TriggerContext.CreatureDealsDamageToCreature dc = (TriggerContext.CreatureDealsDamageToCreature) ctx;
-        Permanent damageSource = dc.damageSource();
-        if (match.permanent() == null || damageSource == null || dc.damagedCreatureId() == null) return false;
-
-        GameData gameData = match.gameData();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                damageSource.getCard(),
-                match.controllerId(),
-                damageSource.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(reflect.triggeredEffect())),
-                (UUID) null,
-                damageSource.getId());
-        entry.setNonTargeting(true);
-        entry.setEventValue(dc.damageDealt());
-        entry.setTriggeringPermanentId(dc.damagedCreatureId());
-        entry.setTriggeringPermanentControllerId(dc.damagedCreatureControllerId());
-        gameData.enqueueTrigger(entry);
-
-        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} reflects {} damage to {}", gameData.id, match.permanent().getCard().getName(),
-                dc.damageDealt(), gameData.playerIdToName.get(dc.damagedCreatureControllerId()));
         return true;
     }
 

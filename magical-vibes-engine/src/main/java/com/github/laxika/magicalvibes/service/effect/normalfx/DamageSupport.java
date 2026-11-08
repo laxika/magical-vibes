@@ -725,6 +725,34 @@ public class DamageSupport {
         }
     }
 
+    /**
+     * The entry {@code entry}'s damage is dealt through when the permanent that dealt the damage its trigger event was
+     * about deals it ({@code DamageSource.EVENT_DAMAGE_SOURCE}): that permanent is its source and its controller the
+     * source's controller, so the damage has that permanent's characteristics (CR 120.3, CR 608.2h): its lifelink
+     * gains its controller life, its infect gives poison counters, protection from its colors prevents the damage, and
+     * "whenever a source deals damage" sees it. A permanent that has left the battlefield deals it as it last existed
+     * there: the keywords it had as it left when the entry recorded them, else as it dealt the event's damage.
+     */
+    public StackEntry entryDealtByEventDamageSource(GameData gameData, StackEntry entry) {
+        Permanent dealer = entry.requireEventDamageSource();
+        Permanent live = gameQueryService.findPermanentById(gameData, dealer.getId());
+        UUID controllerId = live == null ? null : gameQueryService.findPermanentController(gameData, live.getId());
+        if (controllerId == null) controllerId = entry.getEventDamageSourceControllerId();
+        Card dealerCard = live != null ? live.getCard() : dealer.getCard();
+        StackEntry damageEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, dealerCard, controllerId,
+                entry.getDescription(), List.of(), entry.getTargetId(), dealer.getId());
+        damageEntry.setDamageSourceCard(dealerCard);
+        damageEntry.setDamageSourceControllerId(controllerId);
+        if (live == null) {
+            if (entry.getEventDamageSourceKeywordsAtLeave() != null) {
+                damageEntry.setTriggeringPermanentKeywordsAtLeave(entry.getEventDamageSourceKeywordsAtLeave());
+            } else {
+                damageEntry.setSourcePermanentSnapshot(dealer);
+            }
+        }
+        return damageEntry;
+    }
+
     public boolean isDamageSourcePreventedWithLog(GameData gameData, StackEntry entry) {
         Card source = entry.getEffectiveDamageSourceCard();
         if (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {

@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOtherOpponentEffect;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CMD", collectorNumber = "161")
@@ -12,6 +14,6 @@ public class HydraOmnivore extends Card {
 
     public HydraOmnivore() {
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new DealDamageToEachOtherOpponentEffect());
+                new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.EACH_OTHER_OPPONENT));
     }
 }
